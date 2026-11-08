@@ -292,6 +292,12 @@ const EXTRAS = [
   X('status-moved-and-told-elsewhere', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({ crossed: { queued: 1, seq: 4 } }) } }),
   X('status-moved-not-told-elsewhere', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({ crossed: { queued: 0, why: 'The other installation could not be reached yet — it tries again.' } }) } }),
   X('status-cancelled-reversal-posted', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Reversed SI-7 by JV-9.' } }) } }),
+  X('status-cancelled-reversed-by-the-hook', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Reversed SI-7 by JV-9.', reversed: 1 } }) } }),
+  X('status-cancelled-already-reversed', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, already: true, duplicate: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Already reversed SI-7 — by JV-9.' } }) } }),
+  X('status-cancelled-duplicate', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { duplicate: true } }) } }),
+  X('status-cancelled-books-off', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { off: true } }) } }),
+  X('status-cancelled-books-refused', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { refused: 'The period is closed.' } }) } }),
+  X('overlay-catalogue-read-fails', 'GET ' + C + '/:chit_id/catalogue-overlay', 500, { patch: { itemmatch: { loadCatalogue: async () => { throw new Error(SECRET_SQL); } } } }),
   X('status-cancelled-nothing-posted', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { none: true } }) } }),
   X('status-already', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: NOOP } }),
   /* ── the lists and the read ── */
@@ -1115,6 +1121,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
   const allowed = checkAllowList(recording);
+  const { prune, shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist'));
+  const statusAnswers = Object.values(recording).filter((one) => one.route === 'PUT ' + C + '/:chit_id/status' && one.status === 200 && one.body);
+  check('PUT status: prune() drops no key from any of the ' + statusAnswers.length + ' recorded answers (every books branch: reversed, already, duplicate, off, refused, none)', statusAnswers.length >= 13 && statusAnswers.every((one) => prune(shapeOf(one.route).schema, one.body).dropped.length === 0), statusAnswers.map((one) => prune(shapeOf(one.route).schema, one.body).dropped));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const rows = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));

@@ -156,11 +156,6 @@
    "reason": "the chit id is not read: the overlay is the caller's own catalogue and answers 200 with has_catalogue false when there is none, so there is no missing chit to answer 404"
   },
   {
-   "route": "GET /api/chits/:chit_id/catalogue-overlay",
-   "status": 500,
-   "reason": "a catalogue that cannot be read is the same empty answer as no catalogue (the amend box must still work as free text), so the route answers 200 and never 500"
-  },
-  {
    "route": "GET /api/chits/pulse",
    "status": 500,
    "reason": "a pulse that fails must not silence the screen: the route answers 200 with w null (\"cannot tell\") by design and logs the fault with the request id"
@@ -198,7 +193,7 @@
   {
    "route": "POST /api/chits/:chit_id/raida/:raida_id/dispute",
    "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+   "reason": "lib/raida linkDispute answers an issue the shop does not hold with 400 CHIT_BAD_REQUEST (\"No issue with that id.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
   },
   {
    "route": "POST /api/chits/register/entries/:raida_id/accept",
@@ -218,12 +213,12 @@
   {
    "route": "POST /api/chits/register/subjects/:subject_id/close",
    "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
   },
   {
    "route": "POST /api/chits/register/subjects/:subject_id/entries",
    "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
   }
  ],
  "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",

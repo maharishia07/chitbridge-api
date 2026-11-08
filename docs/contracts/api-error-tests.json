@@ -489,7 +489,8 @@
  ],
  "GET /api/chits/:chit_id/catalogue-overlay": [
   401,
-  422
+  422,
+  500
  ],
  "GET /api/chits/:chit_id/costs": [
   401,

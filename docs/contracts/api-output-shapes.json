@@ -22871,6 +22871,21 @@
               "words": {
                 "type": "string"
               },
+              "reversed": {
+                "type": "number"
+              },
+              "already": {
+                "type": "boolean"
+              },
+              "duplicate": {
+                "type": "boolean"
+              },
+              "off": {
+                "type": "boolean"
+              },
+              "refused": {
+                "type": "string"
+              },
               "none": {
                 "type": "boolean"
               }
@@ -22888,7 +22903,7 @@
         "additionalProperties": false,
         "x-closed-by": "recordings"
       },
-      "observed": 8,
+      "observed": 13,
       "open": [],
       "closed_by": "recordings",
       "example": {

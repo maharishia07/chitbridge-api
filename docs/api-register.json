@@ -63195,7 +63195,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5237,
-   "hash": "65ca95ae6160ac3b",
+   "hash": "b4028826f237799e",
    "does": "",
    "errors": {
     "count": 0,
@@ -63268,7 +63268,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "65ca95ae6160ac3b"
+    "stale_since": "b4028826f237799e"
    },
    "status": "partial",
    "callers": [
