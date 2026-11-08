@@ -277,6 +277,11 @@ jobs:
           S41_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/isolation-s41.test.cjs
+      - name: CAT-264a · the commercial stamp (b845) on real Postgres as cb_app, RLS on — each key of the one list moves it; is_active, a rename and the CUR-1 backfill do not
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cat-264a-commercial-stamp.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
