@@ -225,6 +225,8 @@ async function applyLiveOffers(entity, items, total, viewer) {
 async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order'); // F6: bound the line count
+  /* ORD-96: a line that is not an item (null, a number, a text, a list) is the buyer's mistake — refused here in words, before any read or write, not left to fail as a 500 on `.kind` of null */
+  if (rawItems.some((line) => line === null || typeof line !== 'object' || Array.isArray(line))) throw _422('Each line must be an item to order');
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
   // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
   const cat = await withEntity(null, (db) =>
