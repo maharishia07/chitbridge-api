@@ -1651,6 +1651,8 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code);
+  if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
   if (!stop || is_draft) {
@@ -1667,6 +1669,29 @@ async function sendBridge(sendState, req, res) {
   }
   business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
   cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
+}
+
+/**
+ * CTR-211 — the carried invoice says one engine figure two ways (a bridge step and its ValDtls figure): a FAULT, so refused before anything is stored, with
+ * NO override, and ONE service ticket (lib/money-check.raisePair). Both values are read, never worked out.
+ */
+async function sendPairRefusal(sendState, pair, req, res) {
+  const { sender_id, business_json } = sendState;
+  const filed = await require('../lib/money-check').raisePair(sender_id, pair, { bill: business_json.bill_no, client_ref: sendState.client_ref, engine: 'tax@' + sendMoneyScope.engineVersion() });
+  const words = pairWords(pair, filed);
+  res.locals.code = 'MONEY_UNBALANCED';
+  return problem(req, res, {
+    status: 409,
+    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
+  });
+}
+
+/** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
+function pairWords(pair, filed) {
+  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || 'amount';
+  const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
+  return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
 }
 
 /**

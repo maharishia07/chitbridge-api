@@ -2769,7 +2769,7 @@
    "status": "409",
    "title": "The money does not add up",
    "shopkeeper": "The bill does not add up, so it was not sent.",
-   "hint": "Check the bill, or the owner can let it through and say why.",
+   "hint": "If the bill total, taxable amount or round-off does not agree with the invoice, the bill was refused and cannot be let through; we have been told, so make the bill again and tell us if it repeats. If a step of the bill does not add up, check the bill, or the owner can let it through and say why.",
    "owner_area": "chits",
    "since": "2026-10-30"
   },
