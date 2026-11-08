@@ -903,6 +903,8 @@ const ENGINE_OTHER = [
   /* LEAN-PLAN §8 #3 (2026-10-31) — chit-move.js is moveStatus lifted out of routes/chits.js (the ONE status writer over rail-status, so lib no longer
      requires a route); chit-crossing.js is the delivery-agent crossing + message copies it needs, lifted with it. CB's own plumbing, no engine rule. */
   'chit-move.js', 'chit-crossing.js',
+  /* RAIL-205 (2026-11-09) — chit-ceiling.js: the widest total, quantity and price a chit's own columns hold, read off their declared precision; send and amend refuse past it. CB's own plumbing over its own schema, no engine rule. */
+  'chit-ceiling.js',
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',
