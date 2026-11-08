@@ -142,10 +142,9 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     const taxable = await send(body(invoiceWith((i) => { i.ValDtls.AssVal = 150; })));
     ok('the taxable pair (bridge taxable 200 vs AssVal 150) → 409 naming it, one ticket', taxable.status === 409 && taxable.answer.pair === 'taxable' && taxable.copies === null && taxable.tickets.length === 1, J(taxable.answer));
 
-    /* H22: CGST edited to 10 under the 236 total. The engine carries each head in ValDtls, but NO bridge step carries a head alone: seeing it takes a SUM of heads,
-       which the send may not do (CTR-211 design). Pinned as OPEN so it is never claimed; it turns green when the engine writes per-head bridge steps. */
+    /* H22 (closed by CTR-214, engine v1.84.0 writes bridge.heads): CGST edited to 10 under the 236 total, no sum needed — the head pairs compare two carried figures */
     const h22 = await send(body(invoiceWith((i) => { i.ValDtls.CgstVal = 10; })));
-    console.log('   OPEN H22 (needs an engines change, see the PR): CGST 10 under 236 answered ' + h22.status + ', tickets ' + h22.tickets.length + ' - no bridge step carries CGST alone to compare; not counted, not claimed');
+    ok('H22: CGST 10 under 236 → 409 naming total:CgstVal (bridge 1800, carried 1000), one ticket', h22.status === 409 && h22.answer.pair === 'total:CgstVal' && h22.answer.bridge_minor === 1800 && h22.answer.carried_minor === 1000 && h22.copies === null && h22.tickets.length === 1, J(h22.answer));
 
     const h20 = await send(body(invoiceWith((i) => { i._cb.bridge = { ok: false, step: 'total', unexplained_minor: 6400, words: 'Does not add up at total', steps: [{ name: 'taxable', amount: i.ValDtls.AssVal, amount_minor: 20000 }, { name: 'round_off', amount: 0, amount_minor: 0 }, { name: 'total', amount: i.ValDtls.TotInvVal, amount_minor: 23600 }] }; })));
     ok('H20: a bridge that says ok:false still stops 409 MONEY_UNBALANCED', h20.status === 409 && h20.answer.code === 'MONEY_UNBALANCED' && h20.copies === null, J(h20.answer));
@@ -166,6 +165,7 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     /* the minor unit is the BRIDGE's own decimals (the seller pack's currency), never the chit's stated currency (here INR, 2 places) */
     const inPlaces = (i, places, total, taxable) => {
       i._cb.bridge.decimals = places;
+      delete i._cb.bridge.heads; /* the fixture re-scales the steps by hand; heads in 2 places would not match (a fixture artefact, CTR-214) */
       i.ValDtls.TotInvVal = total;
       i.ValDtls.AssVal = taxable;
       i.ValDtls.RndOffAmt = 0;
@@ -240,6 +240,73 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     await strip('a missing figure cannot be overridden by a typed reason', (i) => { delete i.ValDtls.AssVal; }, { money_override: { by: 'Asha', why: 'owner says it is right' } });
     const noBridge = await send(body(invoiceWith((i) => { delete i._cb.bridge; delete i.ValDtls.TotInvVal; })));
     ok('NO bridge at all (an old till) still sends: 200, no ticket', noBridge.status === 200 && noBridge.tickets.length === 0, J([noBridge.status, noBridge.answer]));
+
+    /* ===== CTR-214: the head pairs (engine v1.84.0 bridge.heads[] against ValDtls.*Val and _cb.slabs[]). Hand figures (this test only): T1 = IN intra, 1 x 180.00 @5% + 2 x 100.50 @18%:
+       CGST 4.50 + 18.09 = 22.59 [2259], SGST 22.59, slab 5 base 180.00 [18000] CGST 4.50 [450], slab 18 base 201.00 [20100] CGST 18.09 [1809]. ===== */
+    const sendOf = require(path.join(API, 'lib', 'send-money'));
+    const two = [line('Tea', 180, 1, 5), line('Rice', 100.5, 2, 18)];
+    const t1 = (edit, party) => {
+      const inv = JSON.parse(J(taxLines.invoiceFor({ lines: two, seller: taxLines.partyOf(party || shopRow), buyer: {}, currency: 'INR', at: '2026-11-08T05:00:00Z', priceIncludesTax: false }).invoice));
+      if (edit) edit(inv);
+      return inv;
+    };
+    const body2 = (inv, extra) => Object.assign(body(inv, extra), { line_items: two });
+    const heads = t1()._cb.bridge.heads;
+    ok('T1: the engine wrote heads: total CGST 2259 / SGST 2259, slab 5 (450, base 18000), slab 18 (1809, base 20100)', Array.isArray(heads) && heads.length === 3 && heads[0].minor.CgstVal === 2259 && heads[0].minor.SgstVal === 2259 && heads[1].rate === 5 && heads[1].minor.CgstVal === 450 && heads[1].base_minor === 18000 && heads[2].minor.CgstVal === 1809 && heads[2].base_minor === 20100 && heads.every((row) => row.currency === 'INR'), J(heads));
+    const t1ok = await send(body2(t1(), { currency: 'INR' }));
+    ok('T1: a correct two-rate bill passes the send: 200, no ticket', t1ok.status === 200 && t1ok.tickets.length === 0, J([t1ok.status, t1ok.answer]));
+    const t5 = await send(body2(t1((i) => { i.ValDtls.CgstVal = 22.6; i.ValDtls.SgstVal = 22.58; })));
+    ok('T5: CGST +0.01 / SGST -0.01 (total, taxable, round-off and the sum untouched) → 409, pair total:CgstVal 2259 vs 2260, nothing stored, ONE ticket', t5.status === 409 && t5.answer.pair === 'total:CgstVal' && t5.answer.bridge_minor === 2259 && t5.answer.carried_minor === 2260 && t5.copies === null && t5.tickets.length === 1, J(t5.answer));
+    ok('T5: the shopkeeper sentence shows both figures with the point in place, no field path; the ticket carries the paths', /22\.59/.test(t5.answer.words) && /22\.60/.test(t5.answer.words) && !/_cb|ValDtls|minor/.test(t5.answer.words) && t5.tickets[0].t.money_mismatch.bridge_field === '_cb.bridge.heads[total].minor.CgstVal' && t5.tickets[0].t.money_mismatch.carried_field === 'ValDtls.CgstVal', J([t5.answer.words, t5.tickets[0] && t5.tickets[0].t.money_mismatch]));
+    const slabMove = await send(body2(t1((i) => { i._cb.slabs[0].CgstVal = 4.51; })));
+    ok('a split moved inside ONE rate (slab 5 CGST 4.51, ValDtls untouched) → 409 slab:5:CgstVal 450 vs 451, one ticket', slabMove.status === 409 && slabMove.answer.pair === 'slab:5:CgstVal' && slabMove.answer.bridge_minor === 450 && slabMove.answer.carried_minor === 451 && slabMove.tickets.length === 1, J(slabMove.answer));
+    const baseMove = await send(body2(t1((i) => { i._cb.slabs[0].AssVal = 181; i._cb.slabs[1].AssVal = 200; })));
+    ok('a taxable base moved between rates (181 / 200, same 381) → 409 slab:5:base 18000 vs 18100', baseMove.status === 409 && baseMove.answer.pair === 'slab:5:base' && baseMove.answer.bridge_minor === 18000 && baseMove.answer.carried_minor === 18100, J(baseMove.answer));
+    const planted = await send(body2(t1((i) => { i.ValDtls.IgstVal = 0.01; })));
+    ok('0.01 planted on a head the engine zeroed (IGST) → 409 total:IgstVal 0 vs 1 (plain equality, the api names no head)', planted.status === 409 && planted.answer.pair === 'total:IgstVal' && planted.answer.bridge_minor === 0 && planted.answer.carried_minor === 1, J(planted.answer));
+    const cur = await send(body2(t1(), { currency: 'USD' }));
+    ok('a head row in INR on a USD chit → 409 heads:currency, one ticket (CUR-1)', cur.status === 409 && cur.answer.pair === 'heads:currency' && cur.tickets.length === 1, J(cur.answer));
+    const dup = await send(body2(t1((i) => { i._cb.slabs.push(Object.assign({}, i._cb.slabs[0])); })));
+    ok('a duplicate GstRt row planted in _cb.slabs (3 carried, 2 heads rows) → 409 heads:slabs 2 vs 3', dup.status === 409 && dup.answer.pair === 'heads:slabs' && dup.answer.bridge_minor === 2 && dup.answer.carried_minor === 3, J(dup.answer));
+    const noRow = await send(body2(t1((i) => { i._cb.slabs[1].GstRt = 12; })));
+    ok('a heads slab row with no carried slab of that rate (18 renamed 12) → 409 slab:18, missing figure, "missing its e-invoice tax amount"', noRow.status === 409 && noRow.answer.pair === 'slab:18' && noRow.answer.missing === 'figure' && /missing its e-invoice tax amount/.test(noRow.answer.words), J(noRow.answer));
+    const twin = await send({ ...body2(t1((i) => { i.ValDtls.CgstVal = 22.6; })), client_ref: 'c214-a' });
+    const twin2 = await send({ ...body2(t1((i) => { i.ValDtls.CgstVal = 22.6; })), client_ref: 'c214-b' }, true);
+    ok('the same refused bill under a new client_ref is ONE ticket (the key is shop, bill, pair and both minor values)', twin.status === 409 && twin2.status === 409 && TICKETS.length === 1, J(TICKETS.length));
+    /* no heads: a COUNTER bill before the floor passes and is counted; on or after the floor it is refused; a bill built here (where 'send') with no heads is refused */
+    const before = sendOf.headsAbsentCount();
+    const oldTill = await send(body2(t1((i) => { delete i._cb.bridge.heads; })));
+    ok('a counter bill dated 8 Nov 2026 with no heads (an old till) → 200, no ticket, COUNTED', oldTill.status === 200 && oldTill.tickets.length === 0 && sendOf.headsAbsentCount() === before + 1, J([oldTill.status, oldTill.answer, before, sendOf.headsAbsentCount()]));
+    const afterFloor = await send(body2(t1((i) => { delete i._cb.bridge.heads; }), { billed_at: sendOf.HEADS_COUNTER_FLOOR + 'T05:00:00Z' }));
+    ok('a counter bill dated on the floor (' + sendOf.HEADS_COUNTER_FLOOR + ') with no heads → 409 pair heads, "tax amount", one ticket', afterFloor.status === 409 && afterFloor.answer.pair === 'heads' && afterFloor.answer.missing === 'rows' && /missing its e-invoice tax amount/.test(afterFloor.answer.words) && afterFloor.tickets.length === 1, J(afterFloor.answer));
+    const realBuild = taxLines.invoiceFor;
+    taxLines.invoiceFor = (q) => { const out = realBuild(q); delete out.invoice._cb.bridge.heads; return out; };
+    const atSend = await send({ ...body2(t1()), business_json: { bill_no: 'S1-0001', billed_at: '2026-11-08T05:00:00Z', customer: { name: 'Walk-in' } } });
+    taxLines.invoiceFor = realBuild;
+    ok('a bill BUILT AT SEND with its heads stripped (the tamper case) → 409 pair heads, nothing stored, one ticket', atSend.status === 409 && atSend.answer.pair === 'heads' && atSend.copies === null && atSend.tickets.length === 1, J([atSend.status, atSend.answer]));
+    const builtAtSend = await send({ ...body2(t1()), business_json: { bill_no: 'S2-0001', billed_at: '2026-11-08T05:00:00Z', customer: { name: 'Walk-in' } } });
+    ok('a bill built at send by the real engine carries heads and passes: 200, no ticket', builtAtSend.status === 200 && builtAtSend.tickets.length === 0, J([builtAtSend.status, builtAtSend.answer]));
+    const draftNoHeads = await send({ ...body2(t1((i) => { delete i._cb.bridge.heads; i.ValDtls.CgstVal = 1; })), is_draft: true });
+    ok('a draft with a planted head is never stopped', draftNoHeads.status === 200, J(draftNoHeads.answer));
+
+    /* T2 to T4 and T6 at the compare itself, with the real engine (hand figures in the cases): every pair of a correct bill agrees → null */
+    const au = { identity_id: SHOP, country: 'AU', gstn: '51824753556', policy_flags: { price_includes_tax: 'no' }, display_name: 'AU Shop' };
+    const ae = { identity_id: SHOP, country: 'AE', gstn: '100123456700003', policy_flags: { price_includes_tax: 'no' }, display_name: 'AE Shop' };
+    const mk = (party, buyer, lines, currency) => JSON.parse(J(taxLines.invoiceFor({ lines, seller: taxLines.partyOf(party), buyer: buyer || {}, currency, at: '2026-11-08T05:00:00Z', priceIncludesTax: false }).invoice));
+    const send0 = { where: 'send' };
+    const T2 = mk(shopRow, { state: 'Karnataka', pos: '29' }, [line('Item', 99.99, 3, 18)], 'INR');
+    ok('T2 IN inter-state (IGST 18% of 299.97 = 53.9946, half-up 53.99 [5399]): the engine wrote IGST 5399 in heads and the compare agrees', !!T2._cb.bridge.heads && T2._cb.bridge.heads[0].minor.IgstVal === 5399 && sendOf.pairMismatchOf(T2, 'INR', send0) === null, J(T2._cb.bridge.heads));
+    const T2bad = JSON.parse(J(T2));
+    T2bad.ValDtls.IgstVal = 54;
+    ok('T2 tamper: IGST 54.00 → refused total:IgstVal', (sendOf.pairMismatchOf(T2bad, 'INR', send0) || {}).pair === 'total:IgstVal', '');
+    const T3 = mk(au, {}, [Object.assign(line('Bread', 4.5, 1, 0), { supply_kind: 'gst_free' }), line('Pen', 20, 1, 10)], 'AUD');
+    ok('T3 AU, a GST-free line plus a 10% line: heads written (rate 0 slab, no TaxVal carried reads 0) and the compare agrees', !!T3._cb.bridge.heads && sendOf.pairMismatchOf(T3, 'AUD', send0) === null, J(T3._cb.bridge.heads));
+    const T4 = mk(ae, {}, [line('Item', 100, 1, 5)], 'AED');
+    ok('T4 AE 5% on 100.00 (VAT 5.00 [500]): heads written and the compare agrees', !!T4._cb.bridge.heads && sendOf.pairMismatchOf(T4, 'AED', send0) === null, J(T4._cb.bridge.heads));
+    const T6 = mk(shopRow, {}, [line('A', 0.3, 1, 5), line('B', 0.3, 1, 5), line('C', 0.3, 1, 5)], 'INR');
+    const reRound = JSON.parse(J(T6));
+    reRound.ValDtls.CgstVal = 0.02;
+    ok('T6 round-off per line (3 x 0.30 @5%: CGST 0.01 each = 0.03 [3]): a later re-round to 0.02 is a disagreement, not rounding', T6._cb.bridge.heads[0].minor.CgstVal === 3 && sendOf.pairMismatchOf(T6, 'INR', send0) === null && (sendOf.pairMismatchOf(reRound, 'INR', send0) || {}).pair === 'total:CgstVal', J(T6._cb.bridge.heads));
 
     const draft = await send({ ...body(invoiceWith((i) => { i.ValDtls.TotInvVal = 300; })), is_draft: true });
     ok('a draft is never stopped, no ticket', draft.status === 200 && draft.tickets.length === 0, J([draft.status, draft.answer]));

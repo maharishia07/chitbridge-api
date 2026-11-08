@@ -1652,7 +1652,7 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
-  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code);
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), at: business_json.billed_at, bill: business_json.bill_no });
   if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
@@ -1689,7 +1689,7 @@ async function sendPairRefusal(sendState, pair, req, res) {
 
 /** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
 function pairWords(pair, filed) {
-  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || 'amount';
+  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || (/^(total|slab|heads)[:]?/.test(pair.pair) ? 'tax amount' : 'amount');
   const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
   if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
   return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
@@ -2257,7 +2257,7 @@ async function sendSummary(sendState, req, res) {
     total_value: summary.total_value,
     money: moneyBlock,
     /* ACC-206: the figures name their writer (who computed, who copied, when) — what a later disagreement is reported from */
-    stamps: moneyBlock ? sendMoneyScope.stampsOf(now.toISOString(), sendState.moneyScope && sendState.moneyScope.kind === 'carried' ? 'counter' : 'send') : undefined,
+    stamps: moneyBlock ? sendMoneyScope.stampsOf(now.toISOString(), sendMoneyScope.whereOf(sendState.moneyScope)) : undefined,
     offers: offersApplied,
     currency_code,
     priority_external: ext_priority,
