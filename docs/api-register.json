@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 128,
-  "meets": 510,
+  "partial": 127,
+  "meets": 511,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -22211,11 +22211,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c58e08fca2facb60"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#1038: whole handler, contract and lib/catalogue-search.js re-read after its hash moved; response shape, error shapes, status codes and sentences unchanged, caller-scoped (entity_id=$1), only change is the narrower search (named top-level scalar fields, cost keys excluded, LIKE-escaped; stated in PR); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-catalogue.js",
