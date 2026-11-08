@@ -2955,19 +2955,19 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/books": {
-   "hash": "afb388714ad3d9af",
+   "hash": "e2e8bbb2e50fede2",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/integrations/books/skip": {
-   "hash": "918358dc8a020ca7",
+   "hash": "d86df23c95c37d1d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/integrations/heartbeat": {
@@ -2987,11 +2987,11 @@
    "lifecycle": "stable"
   },
   "POST /api/invoice/build": {
-   "hash": "b7fcd845681fd8a0",
+   "hash": "9f9dfe1002e8b7e5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#925",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/keys": {
@@ -3099,11 +3099,11 @@
    "lifecycle": "stable"
   },
   "POST /api/pricing/price": {
-   "hash": "d3b57ed9daecd0aa",
+   "hash": "802889fd8570fa57",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/products": {
@@ -3347,19 +3347,19 @@
    "lifecycle": "stable"
   },
   "POST /api/tax/compute": {
-   "hash": "5bd01e8d7f6c816d",
+   "hash": "db720732b4da51d8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#925",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/tax/rate": {
-   "hash": "49a51c284f6fbf44",
+   "hash": "f06e00970724f9d6",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/testing/cases/close": {
@@ -3523,11 +3523,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/price": {
-   "hash": "3a149ca9b4b713e5",
+   "hash": "8801009fddb9db3b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/hide": {
