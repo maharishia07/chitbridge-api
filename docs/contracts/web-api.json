@@ -6607,6 +6607,32 @@
         "amount_minor": 26600
        }
       ],
+      "heads": [
+       {
+        "level": "total",
+        "currency": "INR",
+        "minor": {
+         "CgstVal": 0,
+         "SgstVal": 0,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "TaxVal": 0
+        }
+       },
+       {
+        "level": "slab",
+        "rate": 0,
+        "base_minor": 0,
+        "currency": "INR",
+        "minor": {
+         "CgstVal": 0,
+         "SgstVal": 0,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "TaxVal": 0
+        }
+       }
+      ],
       "lines": [
        {
         "line": 0,
@@ -6696,6 +6722,32 @@
          "name": "gross",
          "amount": 266,
          "amount_minor": 26600
+        }
+       ],
+       "heads": [
+        {
+         "level": "total",
+         "currency": "INR",
+         "minor": {
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "TaxVal": 0
+         }
+        },
+        {
+         "level": "slab",
+         "rate": 0,
+         "base_minor": 0,
+         "currency": "INR",
+         "minor": {
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "TaxVal": 0
+         }
         }
        ],
        "lines": [

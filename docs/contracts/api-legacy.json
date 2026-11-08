@@ -22404,6 +22404,42 @@
       "error": "Failed to get children",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
     }
    ]
   },
@@ -50081,14 +50117,12 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {
@@ -50115,26 +50149,22 @@
     },
     {
      "scenario": "nothing-found",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {
      "scenario": "issue-no-such-supply",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {

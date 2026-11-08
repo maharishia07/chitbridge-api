@@ -65,7 +65,7 @@ const same = (left, right) => left.status === right.status && JSON.stringify(Obj
       const before = (await movesOf(A, id)).length;
       const foreign = await j('/api/supplies/' + id + '/issue', { method: 'POST', token: B.token, body: { qty: 1, ref: RUN + '-U0' } });
       const unknown = await j('/api/supplies/' + UNKNOWN_UUID + '/issue', { method: 'POST', token: B.token, body: { qty: 1, ref: RUN + '-U0' } });
-      expect(same(foreign, unknown) && foreign.status === 400, 'foreign ' + foreign.status + ' ' + JSON.stringify(foreign.b).slice(0, 160) + ' vs unknown ' + unknown.status + ' ' + JSON.stringify(unknown.b).slice(0, 160));
+      expect(same(foreign, unknown) && foreign.status === 404 && foreign.b.code === 'NOT_FOUND', /* OPS-114: unknown id is 404 (was 400 'no such supply') */ 'foreign ' + foreign.status + ' ' + JSON.stringify(foreign.b).slice(0, 160) + ' vs unknown ' + unknown.status + ' ' + JSON.stringify(unknown.b).slice(0, 160));
       expect((await movesOf(A, id)).length === before && (await movesOf(B, id)).length === 0, 'a movement was written for a foreign id');
       ok(await j('/api/supplies/' + id + '/issue', { method: 'POST', token: A.token, body: { qty: 1, ref: RUN + '-U1' } }), 'own issue');
       expect(near(await balanceOf(A, id), 2), 'balance after using 1 of 3: ' + await balanceOf(A, id));

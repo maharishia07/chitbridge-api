@@ -190,6 +190,7 @@ router.openapi = (function () {
   };
   const body = {
     type: 'object',
+    additionalProperties: false /* CAT-284: the DOCUMENTED shape is closed; the route stays tolerant (an unknown key is ignored) until a /v2, Athi API-43 */,
     required: ['lines'],
     properties: {
       lines: { type: 'array', items: line },

@@ -33,6 +33,9 @@ const { UUID_RE } = require('../lib/trace');
 
 const ctx = (req) => auth.entityOf(req);
 
+/** OPS-114 (S36): a purchase is a money write, so it REQUIRES one Idempotency-Key per attempt (no key: 422 IDEMPOTENCY_KEY_REQUIRED; the same key with another body: 422 IDEMPOTENCY_CONFLICT; the same key and body: the first answer); the web's supplyBuy already sends it (idem: 'attempt') */
+const onceOnly = require('../middleware/idempotency').requireKey();
+
 /** OPS-74: a supply id in the address that is not a uuid names nothing — 404 in the route's own not-found words, before the database sees it */
 router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.notFound() })));
 
@@ -113,7 +116,7 @@ function purchaseSays(out) {
  * ⚠️ EVERY LINE IS RECORDED AND COSTED. Only the ones the shop keeps stock of move a balance — the rest are
  * expensed on receipt. Nothing is ignored: money left the business, and there may be input credit to claim.
  */
-router.post('/purchase', auth, ...contract.checked('POST /purchase'), async (req, res) => {
+router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), async (req, res) => {
   try {
     const out = await supplies.purchase(ctx(req), req.body || {}, withEntity, { actor_id: req.identity && req.identity.identity_id });
     if (out.error) return problem(req, res, { status: 400, ...words.refused(out.error) });
@@ -132,6 +135,7 @@ router.post('/:id/issue', auth, ...contract.checked('POST /:id/issue'), async (r
       actor_id: req.identity && req.identity.identity_id,
       ref: (req.body || {}).ref
     });
+    if (r.notFound) return problem(req, res, { status: 404, ...words.notFound() });
     if (r.error) return problem(req, res, { status: 400, ...words.refused(r.error) });
     if (!r.ok) return problem(req, res, { status: 400, ...words.refused(r.why) });
     res.json({ message: 'Recorded as used', balance: r.balance });

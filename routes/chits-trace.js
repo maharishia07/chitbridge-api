@@ -43,17 +43,21 @@ router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, r
     const me = entityId(req);
     const id = req.params.id;
     if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
+    /* RAIL-207: the parent must be a chit this login holds a copy of (RLS), else the answer is the unknown id's 404, never an empty 200 that tells a stranger nothing and a holder the same;
+       one statement: the parent row joined to its children, so a chit with no child still answers its own empty list and the trip count stays one */
     const r = await withEntity(me, (db) =>
       db.query(
-        `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
-              summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace'->'parents' @> $1::jsonb
-        ORDER BY created_at ASC`,
-        [JSON.stringify(id)]
+        `SELECT c.chit_id, c.entity_id, c.direction, c.manual_subject, c.auto_subject,
+              c.summary_json->'trace' AS trace
+         FROM (SELECT chit_id FROM chit_header WHERE chit_id = $2::uuid LIMIT 1) p
+         LEFT JOIN chit_header c ON c.summary_json->'trace'->'parents' @> $1::jsonb
+        ORDER BY c.created_at ASC`,
+        [JSON.stringify(id), id]
       )
     );
-    res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
+    const children = r.rows.filter((row) => row.chit_id);
+    res.json({ parent_chit_id: id, count: children.length, children });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to get children'));
   }

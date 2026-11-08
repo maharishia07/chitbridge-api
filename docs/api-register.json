@@ -5,12 +5,12 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 153,
-  "meets": 485,
+  "partial": 149,
+  "meets": 489,
   "columns": {
    "strict_input": {
-    "applies": 350,
-    "failing": 46
+    "applies": 347,
+    "failing": 44
    },
    "output_allowlist": {
     "applies": 638,
@@ -18,11 +18,11 @@
    },
    "foreign_id_404": {
     "applies": 203,
-    "failing": 20
+    "failing": 18
    },
    "idempotent_money_write": {
     "applies": 11,
-    "failing": 3
+    "failing": 2
    },
    "inbound_validated": {
     "applies": 6,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 36
+    "failing": 34
    }
   },
   "reported": {
@@ -47,6 +47,7 @@
     "failing": 479
    }
   },
+  "tolerant_outward": 3,
   "output_allowlist_from_recordings": 133
  },
  "machine_columns": [
@@ -281,7 +282,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "cap-period.js 2/109"
+     "cap-period.js 2/63"
     ]
    },
    "measured": {
@@ -4528,7 +4529,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-period.js 2/109"
+     "cap-period.js 2/63"
     ]
    },
    "measured": {
@@ -5630,7 +5631,7 @@
     "wire": 3,
     "screens": [
      "cap-entry.js 1/8",
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -6077,7 +6078,7 @@
     "screens": [
      "cap-bank.js 1/8",
      "cap-books.js 1/43",
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -7038,7 +7039,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-period.js 2/109"
+     "cap-period.js 2/63"
     ]
    },
    "measured": {
@@ -7144,7 +7145,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -7460,7 +7461,7 @@
     "wire": 3,
     "screens": [
      "accounts.html 7/14",
-     "cap-period.js 7/109"
+     "cap-period.js 7/63"
     ]
    },
    "measured": {
@@ -7667,7 +7668,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -10207,7 +10208,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
    "line": 41,
-   "hash": "e0f68ab161a07cc0",
+   "hash": "e0208c65b6d7d905",
    "does": "",
    "errors": {
     "count": 0,
@@ -10237,11 +10238,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -10276,13 +10277,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: stranger and unknown id answer 404 NOT_FOUND, held chit with no child keeps 200 count 0, one statement; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -10304,7 +10305,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 68,
+   "line": 72,
    "hash": "bddc64e2800083d8",
    "does": "",
    "errors": {
@@ -11539,7 +11540,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 259,
+   "line": 263,
    "hash": "e4d84f8cefe1d1a4",
    "does": "",
    "errors": {
@@ -11637,7 +11638,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 303,
+   "line": 307,
    "hash": "f15e538c4e88a8b4",
    "does": "",
    "errors": {
@@ -11738,7 +11739,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 475,
+   "line": 479,
    "hash": "8f9238406a761e84",
    "does": "",
    "errors": {
@@ -24812,7 +24813,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 40,
+   "line": 43,
    "hash": "59f8df87e6c03a6f",
    "does": "",
    "errors": {
@@ -29378,7 +29379,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -31486,7 +31487,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 82,
+   "line": 85,
    "hash": "11c5de3b07e9af43",
    "does": "",
    "errors": {
@@ -33511,7 +33512,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -33618,7 +33619,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -33725,7 +33726,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -33832,7 +33833,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -34153,7 +34154,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -34584,7 +34585,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -35452,7 +35453,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -35511,7 +35512,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -35557,10 +35558,10 @@
    ],
    "offline": "idempotent",
    "round_trips": {
-    "trips": 50,
+    "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 50/109"
+     "cap-period.js 4/63"
     ]
    },
    "measured": {
@@ -36935,7 +36936,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -36973,11 +36974,11 @@
     "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#747 stage2",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "idempotent",
    "round_trips": {
-    "trips": 50,
+    "trips": 5,
     "wire": null,
     "screens": []
    },
@@ -37511,7 +37512,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -37617,7 +37618,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "cap-period.js 6/109"
+     "cap-period.js 6/63"
     ]
    },
    "measured": {
@@ -37723,7 +37724,7 @@
     "trips": 5,
     "wire": null,
     "screens": [
-     "cap-period.js 5/109"
+     "cap-period.js 5/63"
     ]
    },
    "measured": {
@@ -38166,7 +38167,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/109"
+     "cap-period.js 1/63"
     ]
    },
    "measured": {
@@ -50710,7 +50711,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -52366,7 +52367,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -52374,7 +52375,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -52392,6 +52393,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -52464,7 +52468,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -52472,7 +52476,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -52490,6 +52494,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -52530,7 +52537,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 58,
-   "hash": "802889fd8570fa57",
+   "hash": "1a7ce6f875846cf0",
    "does": "",
    "errors": {
     "count": 0,
@@ -52570,7 +52577,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -52588,6 +52595,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -52602,7 +52612,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1023: API-43 tolerant outward (Athi 8 Nov); 13 columns read in the register row, strict_input exempt only while schema_in is true; backward compatible, a closed body is relaxed so no caller breaks; handler and contract unchanged otherwise",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57081,7 +57091,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 58,
+   "line": 61,
    "hash": "3b16aa55740768ab",
    "does": "",
    "errors": {
@@ -57185,8 +57195,8 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 129,
-   "hash": "f9eb6f6c08a77034",
+   "line": 132,
+   "hash": "062ce99b9f77f313",
    "does": "",
    "errors": {
     "count": 0,
@@ -57220,7 +57230,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -57255,13 +57265,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: unknown or another shop id answers 404 NOT_FOUND like PATCH /:id; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
@@ -57287,7 +57297,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 116,
+   "line": 119,
    "hash": "bd2e466d1f7552ff",
    "does": "",
    "errors": {
@@ -57326,7 +57336,7 @@
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -57361,17 +57371,17 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
-   "offline": "online-only",
+   "offline": "idempotent",
    "round_trips": {
     "trips": 0,
     "wire": 0,
@@ -63312,7 +63322,7 @@
      "cap-finance-cheques.js 0/1",
      "cap-finance-returns.js 0/6",
      "cap-marketing.js 0/5",
-     "cap-period.js 0/109",
+     "cap-period.js 0/63",
      "cap-register.js 0/23",
      "cap-settings.js 0/21",
      "cap-shop.js 0/17",

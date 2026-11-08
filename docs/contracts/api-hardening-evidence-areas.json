@@ -1597,7 +1597,8 @@
    "output_allowlist": true
   },
   "POST /api/supplies/:id/issue": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/supplies/purchase": {
    "output_allowlist": true
