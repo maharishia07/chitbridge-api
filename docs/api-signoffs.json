@@ -1867,19 +1867,19 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/locale": {
-   "hash": "e55ea05cc2141a4a",
+   "hash": "8c7f8667671d7623",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/prefs/:kind": {
-   "hash": "3a7c9f99a608bfbf",
+   "hash": "667cb4fea86280f3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/policy": {
@@ -4720,6 +4720,22 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/entities/constitutions": {
+   "hash": "40fdcd90b8ecda55",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "PATCH /api/entities/:id/erase": {
+   "hash": "4ba9104804d71d4e",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
    "lifecycle": "stable"
   }
  }

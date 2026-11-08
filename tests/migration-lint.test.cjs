@@ -272,6 +272,7 @@ function forbiddenWords(doc) {
  * ITS REASON. An entry nobody needs any more fails the stale check, so this list only shrinks. (F4, critic 25 Oct)
  */
 const VOCABULARY_ALLOWED = {
+  'chit_header.currency_code': 'CUR-1 slice 3 (b846, not yet run): the header currency is the SAME fact as chit_detail.currency_code on the same chit (D1 reconciles D2, plan PM/CUR-1-PLAN), so it takes the chit tables’ one name, as chit_proposal.currency_code did; a different name would make the header and its details look like two facts',
   'chit_proposal.currency_code': 'b796 already ran in PRODUCTION: the column carries the same value as chit_header/chit_detail.currency_code on the chit it proposes for (one name across the chit tables); never renamed',
   'chit_proposal.note': 'b796 already ran in PRODUCTION: the round’s own one-line note, a different fact from the chit’s notes column; never renamed',
   'membership_certificate.note': 'b790 already ran in PRODUCTION (25 Oct): the certificate’s one-line operator note (why it was suspended or revoked), a different fact from any chit notes column; never renamed (DB-85)'

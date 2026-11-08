@@ -13,7 +13,7 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { problem, uuidParam, textParam } = require('../lib/problem');
+const { problem, uuidParam, textParam, softFault } = require('../lib/problem');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
@@ -388,21 +388,25 @@ router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REF
 // and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
 // Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
 router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) => {
-  const CS = require('../lib/country-setup');
-  const at = await CS.atSignup();
-  const spin = {
-    installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
-    allowed_countries: at.allowed,
-    countries: CS.offered(at, req.query && req.query.tz)
-  };
   try {
-    const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
-      FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
-    res.json(Object.assign({ constitutions: r.rows }, spin));
-  } catch (e) {
-    /* STD2: never silent — the person sees no vertical chooser (the default setup applies); the countries still paint */
-    require('../lib/logger').warn('entities.constitutions: catalogue unread — the vertical chooser is hidden', { why: String(e && e.message) });
-    res.json(Object.assign({ constitutions: [] }, spin));
+    const CS = require('../lib/country-setup');
+    const at = await CS.atSignup();
+    const spin = {
+      installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
+      allowed_countries: at.allowed,
+      countries: CS.offered(at, req.query && req.query.tz)
+    };
+    try {
+      const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
+        FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
+      res.json(Object.assign({ constitutions: r.rows }, spin));
+    } catch (e) {
+      /* STD2: never silent — the catalogue is unread, so the person sees no vertical chooser (the default setup applies); the countries still paint. Logged with the request id, nothing of the cause is answered */
+      softFault(req, e);
+      res.json(Object.assign({ constitutions: [] }, spin));
+    }
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Sign-up choices failed')); /* the installation or the country packs could not be read: before, no answer at all */
   }
 });
 
@@ -1485,9 +1489,9 @@ const ROUTABLE = [
  * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
  */
 router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (req, res) => {
-  const me = auth.entityOf(req);
-  const q = req.query || {};
   try {
+    const me = auth.entityOf(req);
+    const q = req.query || {};
     const r = await query('SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
     const row = r.rows[0] || {};
     const out = await require('../lib/raiseticket').preview(
@@ -1496,7 +1500,7 @@ router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (
     );
     res.json(out);
   } catch (e) {
-    res.json({ ok: false, why: safeErr(e) }); /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
+    res.json({ ok: false, why: softFault(req, e) }); /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
   }
 });
 

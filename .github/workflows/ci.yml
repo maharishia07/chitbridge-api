@@ -282,6 +282,12 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/cat-264a-commercial-stamp.realstack.cjs
+      - name: CUR-1 slice 3 · chit_header.currency_code (b846) and the b847 backfill on real Postgres — seeded as cb_app in two entities, backfilled as the owner; every bucket, mismatch kept as two codes, idempotent, rollback
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CUR1_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cur1-header-currency.realstack.cjs
       - name: CAT-313/314 · GET /api/products?q= searches the named visible fields only (a hidden cost is never a search hit) and % _ \ match themselves (real Postgres)
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
