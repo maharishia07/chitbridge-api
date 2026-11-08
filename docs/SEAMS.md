@@ -37,7 +37,7 @@ of file each thing is; this says what already does the job.
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
-| 54 | `record` | `access-events.js` |  |
+| 55 | `record` | `access-events.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 53 | `pack` | `books-store.js` |  |
 | 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |

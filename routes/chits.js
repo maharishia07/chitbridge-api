@@ -2893,7 +2893,9 @@ async function sendAnswer(sendState, req, res) {
     /* ⭐ CTRY-76: present only when this bill went out as NOT a tax invoice because the buyer is not named (sendPaper) — the counter asks for the buyer */
     not_invoice: sendState.paper || undefined,
     /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
-    cash_step: sendState.cashStep // undefined (absent) unless an offline replay was let through
+    cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
+    /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
+    credit_cap: sendState.creditCap
   }));
 
   /**

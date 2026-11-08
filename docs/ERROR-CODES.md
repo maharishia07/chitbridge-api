@@ -110,6 +110,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INVOICE_MONEY_LOCKED | 409 | Already invoiced | This bill is already invoiced. A change in price needs a credit or debit note. | Ask for a credit or debit note instead of changing the bill. | accounting | 2026-11-07 |
 | INVOICE_INCREASE_REFUSED | 409 | Not a decrease | This change does not lower a bill that is already invoiced. A raise needs a debit note, which is not available yet. | Ask for the same or a lower price. | accounting | 2026-11-08 |
 | CREDIT_NOTE_NOT_ISSUED | 409 | Credit note not issued | The credit note could not be issued, so the change was not applied on either side. | Try again; if it repeats, tell us. | accounting | 2026-11-08 |
+| CREDIT_NOTE_NOT_CHECKED | 409 | Credit note not checked | This credit note could not be checked against its bill, so it was not saved. | Send it again; if it repeats, tell us. | chits | 2026-11-08 |
+| CREDIT_NOTE_NOT_JUDGED | 200 | Credit note not checked against a bill | This credit note was not checked against a bill. | Check that the credit is not more than the bill. | chits | 2026-11-08 |
 | CREDIT_NOTE_OVER_BILL | 409 | Credit note too large | This credit note would credit more than the bill was for. | Credit no more than is left on the bill (the message says how much), or check the bill number. | chits | 2026-11-08 |
 | PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |
 | PROPOSAL_NOT_FOUND | 404 | No such proposal | There is no such proposal on this chit. | Open the chit again and pick one of its rounds. | rail | 2026-10-25 |

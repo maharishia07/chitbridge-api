@@ -122,6 +122,20 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   });
   ok('SQL shape · two statements, every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 2 && typed.every(Boolean), JSON.stringify(typed));
 
+  /* a note that is NOT judged says so on the answer (sendState.creditCap → credit_cap), and a failed read is a refusal in words, never a bare 500 */
+  const stateOf = (extra) => Object.assign({ sender_id: SHOP, chit_id: 'c0000000-0000-4000-8000-0000000000aa', purpose: 'credit_note', currency_code: 'INR', is_draft: false, business_json: { till: { id: 'C1' }, against: { bill_no: 'B-9' }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } }, extra || {});
+  const unjudged = stateOf();
+  await cap.holdUnderLock({ query: async (sql) => { if (/ANY/.test(sql)) return { rows: [] }; return { rows: [] }; } }, unjudged);
+  ok('a note whose bill is not found carries the warning credit_cap { code CREDIT_NOTE_NOT_JUDGED, why }', unjudged.creditCap && unjudged.creditCap.code === 'CREDIT_NOTE_NOT_JUDGED' && /not checked/.test(unjudged.creditCap.why), JSON.stringify(unjudged.creditCap));
+  const judgedState = stateOf({ business_json: { till: { id: 'C1' }, against: { bill_no: 'B-1', chit_id: BILL }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } });
+  await world(3540).sendNote(10, { business_json: judgedState.business_json });
+  ok('a judged note carries no warning', judgedState.creditCap === undefined);
+  const broken = await cap.holdUnderLock({ query: async () => { throw Object.assign(new Error('column h.x does not exist'), { code: '42703' }); } }, stateOf()).then(() => null, (e) => e);
+  ok('a failed read is a refusal in words with a registered code (409 CREDIT_NOTE_NOT_CHECKED), not an internal error', broken && broken.refused === true && broken.status === 409 && broken.code === 'CREDIT_NOTE_NOT_CHECKED' && /could not be checked/.test(broken.message) && !/column/.test(broken.message), broken && broken.message);
+  const sendSrc = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  ok('the send answer carries credit_cap from sendState.creditCap', /credit_cap: sendState.creditCap/.test(sendSrc));
+  ok('chit_detail holds the currency (as books-store reads it): the bill query joins it, never h.currency_code', /d.currency_code/.test(code) && !/h.currency_code/.test(code));
+
   const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
   const write = src.indexOf('async function sendWrite'), legacy = src.indexOf('async function sendLegacyWrite');
   const inWrite = src.indexOf('creditCap.holdUnderLock(entityClient, sendState)', write), inLegacy = src.indexOf('creditCap.holdUnderLock(client, sendState)', legacy);
