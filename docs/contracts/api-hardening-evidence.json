@@ -308,9 +308,11 @@
    "output_allowlist": true
   },
   "POST /api/pricing/price": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/invoice/build": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/invoice/:chit_id": {
@@ -331,6 +333,7 @@
    "foreign_id_404": true
   },
   "POST /api/integrations/books": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/integrations/status": {
@@ -382,7 +385,11 @@
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
   },
+  "POST /api/till/offer-item": {
+   "strict_input": true
+  },
   "POST /api/till/price": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/rate": {
@@ -1424,9 +1431,11 @@
    "output_allowlist": true
   },
   "POST /api/tax/rate": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/tax/compute": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/books/status": {
