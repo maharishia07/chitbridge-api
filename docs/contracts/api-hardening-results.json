@@ -1241,6 +1241,15 @@
     "pass": true
    }
   },
+  "POST /api/till/recheck": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
+   }
+  },
   "POST /api/till/rate": {
    "strict_input": {
     "pass": true

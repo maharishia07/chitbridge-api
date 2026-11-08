@@ -3549,6 +3549,11 @@
   409,
   500
  ],
+ "POST /api/till/recheck": [
+  400,
+  401,
+  403
+ ],
  "POST /api/till/reconcile": [
   401,
   403,

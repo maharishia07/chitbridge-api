@@ -392,6 +392,9 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/till/recheck": {
+   "strict_input": true
+  },
   "POST /api/till/rate": {
    "strict_input": true
   },

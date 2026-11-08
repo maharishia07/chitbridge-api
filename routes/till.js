@@ -2198,6 +2198,79 @@ function priceInput(body) {
 }
 
 /**
+ * ── ⭐⭐ POST /api/till/recheck — WHAT IS THE CATALOGUE SAYING ABOUT THESE PRODUCTS, RIGHT NOW (CTR-212 S1) ──
+ * The counter asks before it takes a bill's number (and when a parked bill is picked up again): the item ids on the cart in, the shop's CURRENT rows out,
+ * through the SAME tillItem projection the snapshot uses, so a price, a rate, a status and a hsn mean here what they mean there.
+ * ⚠️ WHY NOT THE DELTA SNAPSHOT: a product DELETED from the catalogue is not late, it is gone — GET /snapshot?since never lists it (liveCountRead, above).
+ * This door answers every id it was asked: found:false is the answer for a row that no longer exists, never silence (and never a price of 0).
+ * ⚠️ IT ONLY READS. It computes no money: the counter refreshes its cart rows from this and runs its own engine (price → billMoney) once.
+ * ⚠️ WHAT THE TILL CHARGES IS NOT ONLY THE ROW (CTR-212 §11, cb-catalogue): a brand's published price, a store's "use", a slab / category / face rate edit move the
+ * charge with no write to the product row. So a NETWORK LINE ('src:<source>:<sku>') is read the way the snapshot reads it (addNetworkLines: found:false when the brand
+ * withdrew it or it is unpriced here), and the answer carries `slabs` · `categories` · `face` (taxBlock, the snapshot's own) so the counter resolves the rate with the same
+ * pack it resolves it with at sale. A SOFT-removed product is read as the row it is: active:false (a delta never sees that; this door does).
+ * An id that is no id at all is answered found:false.
+ * `stamp` = the row's own price_changed_at (null when no price change was ever stamped): only POST /price writes it today, so the counter compares the
+ * carried VALUES (price · rate · status) and does not rely on the stamp (CTR-212 R2; the writers that do not stamp are listed in docs/critique/CTR-212.md).
+ * Who: a till key (scope till). Trips: the rows (one transaction), the category master, the tax shelf, and the adoption read only when a network line is asked.
+ */
+const RECHECK_MAX = 200; /* item ids in one ask: a cart is a handful; 200 is a generous ceiling, as POST /stock/bulk's 500 is for a shelf edit */
+router.post('/recheck', auth, auth.requireScope('till'), ...checked('POST /recheck'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const ids = recheckIds(req.body);
+    if (!ids.length) return refuseBad(req, res, 'item_ids required');
+    if (ids.length > RECHECK_MAX) return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + RECHECK_MAX + ' products in one check.') });
+    const shopIds = ids.filter((id) => UUID_RE.test(id));
+    const found = shopIds.length ? await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, shopIds])) : { rows: [] };
+    const master = await readCategoryMaster(entity_id);
+    const rows = new Map(found.rows.map((row) => [String(row.item_id), row]));
+    const network = await recheckNetwork(entity_id, ids, master.catNames);
+    const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false }).catch(log.orElse('till POST /recheck: the tax shelf could not be read — answered with none', null));
+    res.json({ at: new Date().toISOString(), items: ids.map((id) => recheckAnswer(id, rows.get(id), master.catNames, network)), ...taxBlock(shelf) });
+  } catch (e) {
+    problem(req, res, failed(e, req));
+  }
+});
+
+/** the network lines among the asked ids, as the snapshot would send them now → Map(item_id → counter row), or null when none was asked (no adoption read then) */
+async function recheckNetwork(entity_id, ids, catNames) {
+  if (!ids.some((id) => /^src:/.test(id))) return null;
+  const lines = [];
+  const reads = ownReads(entity_id, null);
+  const ownRead = (name) => withEntity(entity_id, reads[name]);
+  const adopted = await ownRead('adoption'); /* ⚠️ not addNetworkLines: it swallows a failed read, and a brand line that could not be read must not be answered "gone" */
+  if (adopted.rows.length) await pushNetworkLines(entity_id, adopted.rows, lines, { unpriced: 0 }, (id, data) => tillItem(id, data, [], catNames));
+  return new Map(lines.map((line) => [line.item_id, line]));
+}
+
+/** POST /recheck input: the product ids asked about (text, blanks and repeats dropped, order kept) */
+function recheckIds(body) {
+  const given = body && typeof body === 'object' ? body : {};
+  const asked = Array.isArray(given.item_ids) ? given.item_ids.map((entry) => String(entry || '')).filter(Boolean) : [];
+  return Array.from(new Set(asked));
+}
+
+/** a network line's answer: its counter row as the snapshot would send it now, or found:false (withdrawn by the brand, unpriced here); a failed read throws, so the counter treats the whole check as failed, never as a deletion */
+function networkAnswer(item_id, network) {
+  if (!network) return { item_id, found: null, checked: false, why: 'network_not_read' };
+  const line = network.get(item_id);
+  if (!line) return { item_id, found: false, checked: true };
+  return Object.assign({}, line, { found: true, checked: true, active: true, stamp: null });
+}
+
+/**
+ * one id's answer: the counter row (tillItem, so status is the snapshot's own word) with found · active · stamp beside it.
+ * A network line is read by networkAnswer; an id with no row is found:false; a row is found:true. Whether a retired or inactive row still bills is the counter's one rule, from status and active (S2a), not a second answer here.
+ */
+function recheckAnswer(item_id, row, catNames, network) {
+  if (/^src:/.test(item_id)) return networkAnswer(item_id, network);
+  if (!row) return { item_id, found: false, checked: true };
+  const data = row.item_data || {};
+  const projected = tillItem(item_id, data, [], catNames);
+  return Object.assign(projected, { found: true, checked: true, active: row.is_active !== false, stamp: data.price_changed_at || null });
+}
+
+/**
  * W1-TILL: the shop's money through the ONE reader (country-setup.shopMoney — its own, else its pack's; as /snapshot and connectors read it).
  * A shop nobody gave money is REFUSED with the one sentence (NO_MONEY) — never INR written into a price by name. One identities read, as before.
  */

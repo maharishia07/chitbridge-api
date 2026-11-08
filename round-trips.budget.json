@@ -4565,6 +4565,15 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/till/recheck": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true,
+      "basis": "CTR-212 S1: stub floor (answers 400 on an empty body). Real: the rows (1 transaction), the category master, the tax shelf, and the adoption read only when a network line is asked; live measure on sit-in pending"
+    },
     "POST /api/till/reconcile": {
       "file": "till.js",
       "trips": 0,

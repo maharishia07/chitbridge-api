@@ -62972,6 +62972,246 @@
      }
     }
    ]
+  },
+  "POST /api/till/recheck": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    }
+   ]
   }
  },
  "global": {
