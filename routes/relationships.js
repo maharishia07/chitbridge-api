@@ -966,7 +966,7 @@ router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/group
     const owner = ctx(req);
     const groups = customerGroups.cleanGroups(req.body && req.body.groups);
     const r = await withEntity(owner, (db) =>
-      db.query(`UPDATE customer_list SET groups = $1 WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id, groups`, [
+      db.query(`UPDATE customer_list SET groups = $1 WHERE customer_list_id = $2 AND owner_entity_id = $3 AND ${require('../lib/party-live').liveSql('customer_list')} RETURNING customer_list_id, groups`, [
         groups,
         req.params.id,
         owner
