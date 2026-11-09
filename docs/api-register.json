@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 101,
-  "meets": 537,
+  "partial": 100,
+  "meets": 538,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -35566,11 +35566,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "73f2e0872e725f03"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1076 stage2b: replay answers the stored entry (replayed:true, nothing recomputed), reused challan with another amount, head or currency is 409 BOOKS_CONFLICT (contract inline [409], scene, api-legacy, error-tests row), lock gst|<head> sorted in one call by pay and close, realstack 6/6 on real Postgres; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
