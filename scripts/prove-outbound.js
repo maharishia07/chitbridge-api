@@ -30,7 +30,7 @@ const crypto = require('crypto');
  * j() now retries past a platform blip, and a platform that never answers ABORTS as "could not test" (exit 2)
  * instead of counting as a failed check (exit 1). Those are different answers and must never share an exit code.
  */
-const { API, j, signIn } = require('./_proof');
+const { j, signIn } = require('./_proof');
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;
 

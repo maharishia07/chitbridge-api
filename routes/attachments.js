@@ -28,7 +28,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const { query, withEntity } = require('../db');
+const { withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const storage = require('../lib/storage');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json

@@ -27,7 +27,7 @@ const crypto = require('crypto');
    blip (502/503/504, socket errors) but never a real answer. A platform that never replies aborts as
    "could not test" (exit 2), never as a failed check (exit 1) — conflating those turned a Railway 502 into an
    overnight open defect on 2026-08-09. This was 9 copies of j() and 31 copies of the base URL. */
-const { API, j, signIn } = require('./_proof');
+const { j } = require('./_proof');
 
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;

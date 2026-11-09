@@ -21,11 +21,6 @@ async function customerId(api) {
   if (!api.seeds.customer) { const listBody = await must(api, 'GET', '/api/crm/parties'); api.seeds.customer = (listBody.parties.find((x) => x.roles && x.roles.customer) || {}).party_id; }
   return api.seeds.customer;
 }
-/** a supplier party of the load shop */
-async function supplierId(api) {
-  if (!api.seeds.supplier) { const listBody = await must(api, 'GET', '/api/crm/parties'); api.seeds.supplier = (listBody.parties.find((x) => x.roles && x.roles.supplier) || {}).party_id; }
-  return api.seeds.supplier;
-}
 /** an lt- cash payment received (a books_payment row to propose/confirm against) */
 async function newPayment(api) {
   const out = await must(api, 'POST', '/api/books/payments', { party_id: await customerId(api), direction: 'in', amount: 1 + Math.floor(Math.random() * 9000) / 100, mode: 'cash', client_ref: 'lt-pay-' + randomHex() });
