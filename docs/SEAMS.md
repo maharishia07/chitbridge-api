@@ -193,6 +193,7 @@ of file each thing is; this says what already does the job.
 | 14 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 14 | `check` | `network-app.js` |  |
 | 14 | `refuse_` | `bookpack.js` | an Error with status 422 — |
+| 14 | `minor` | `bounds.js` | B.minor({ column, signed }) → whole minor units (a fraction of a minor unit is refused), at least 0 unless a c |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |

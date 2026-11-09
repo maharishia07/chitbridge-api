@@ -212,6 +212,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* SHARED-CHECKS 0a (2026-11-09): the schema fragments a route names for a quantity, minor-unit amount, day, text, page and list bound (ceilings read off chit-ceiling). Decides no money, tax or rule. */
+  'bounds.js',
   /* CUR-1 (2026-11-09, ACC-331/332): which cells of a bill or a journal can carry a currency and the one refusal of another currency (lib/money.assertSameCurrency decides). Decides no money rule. */
   'currency-cells.js',
   /* CAT-313 (2026-11-09): the SQL condition of the product search (named visible fields, literal LIKE). Decides no money, tax or rule. */
