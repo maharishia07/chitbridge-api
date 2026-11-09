@@ -58,6 +58,7 @@ const web = path.join(ROOT, 'docs', 'contracts', 'web-api.json');
 if (fs.existsSync(web)) formatsIn(JSON.parse(fs.readFileSync(web, 'utf8')), 'web-api.json', found);
 const bad = unregistered(found).filter((item) => !isDocumented(item));
 const stale = DOCUMENTED_ONLY.filter((row) => !found.some((item) => item.format === row.format && item.where === row.where));
+check('the documented-only list may only shrink (at most 1 line)', DOCUMENTED_ONLY.length <= 1, String(DOCUMENTED_ONLY.length) + ' lines');
 check('the documented-only list has no stale line', stale.length === 0, stale.map((row) => row.where).join('; '));
 check('every format a contract names is registered (' + found.length + ' named)', bad.length === 0, bad.slice(0, 5).map((item) => item.format + ' at ' + item.where).join('; '));
 console.log('\n' + checks + ' checks, ' + failed + ' failed');
