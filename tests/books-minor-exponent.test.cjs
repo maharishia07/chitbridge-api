@@ -75,6 +75,9 @@ async function runCase(c) {
     require(path.join(H.API, 'lib', 'books-hooks')).forget(SHOP);
     const kept = (X.T.setting.get(SHOP) || {}).functional_currency;
     X.T.parties.push({ owner: SHOP, party_id: CUST, party_no: 'P-00001', name: 'Ravi Stores', customer: true, credit_days: 10 });
+    /* FIN-78: a write-off needs a due to write off — the customer owes 1,000,000 minor first, more than the write-off (500) and the payment (500 major, 500000 minor in KWD) take */
+    const codeOfRole = (role) => String(X.T.accounts.find((x) => x.entity_id === SHOP && x.role === role).code);
+    await q('POST', '/entries', { narration: 'bill', date: '2026-09-09', lines: [{ code: codeOfRole('debtors'), dr_minor: 1000000, party_id: CUST }, { code: codeOfRole('sales'), cr_minor: 1000000 }] });
     const wo = await q('POST', '/write-off', { party_id: CUST, amount_minor: 500, reason: 'bad debt', date: '2026-09-10' });
     const pay = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount: 500, mode: 'cash', received_at: '2026-09-11' });
     const paid = X.T.payments[X.T.payments.length - 1];
