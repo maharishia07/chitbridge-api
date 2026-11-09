@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 103,
-  "meets": 535,
+  "partial": 100,
+  "meets": 538,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -5422,11 +5422,12 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 821,
-   "hash": "9ef6b60dac2b6391",
+   "hash": "315608c54cc7f650",
    "does": "",
    "errors": {
     "count": 3,
     "statuses": [
+     400,
      401,
      403,
      404,
@@ -5483,6 +5484,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     404,
@@ -5507,11 +5509,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9ef6b60dac2b6391"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js",
@@ -25001,11 +25002,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7d620eeddb9eb249"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month or form GIVEN and unreadable is 400 DATE_INVALID / BAD_FORM (BAD_FORM registered by the reviewer), absent keeps this month and gstr1; 4 scenes in api-legacy, 400 in error tests; web sends only YYYY-MM and gstr1|gstr3b; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "helpers.js"
@@ -25206,11 +25206,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b0fb95da2f4e8a1c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],

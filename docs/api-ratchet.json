@@ -1,10 +1,10 @@
 {
  "version": 1,
  "stage": "2b",
- "updated": "2026-11-08",
+ "updated": "2026-11-09",
  "total": 638,
- "not_meeting": 101,
- "codes_total": 581,
+ "not_meeting": 100,
+ "codes_total": 582,
  "codes_pending": 0,
  "raw_error_writes": 1,
  "routes_without_does": 628,

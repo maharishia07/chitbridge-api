@@ -3521,10 +3521,10 @@
       "code": "BAD_FORM",
       "message": "form must be one of: gstr1, gstr3b.",
       "type": "https://chitbridge.com/problems/bad_form",
-      "title": "Bad form",
+      "title": "Return form not offered",
       "status": 400,
       "detail": "form must be one of: gstr1, gstr3b.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Pick GSTR-1 or GSTR-3B and try again.",
       "request_id": "req-test",
       "field": "form"
      },
@@ -3533,10 +3533,10 @@
       "code": "BAD_FORM",
       "message": "form must be one of: gstr1, gstr3b.",
       "type": "https://chitbridge.com/problems/bad_form",
-      "title": "Bad form",
+      "title": "Return form not offered",
       "status": 400,
       "detail": "form must be one of: gstr1, gstr3b.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Pick GSTR-1 or GSTR-3B and try again.",
       "request_id": "req-test",
       "field": "form"
      }
