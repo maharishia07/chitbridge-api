@@ -965,13 +965,7 @@ router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/group
     if (req.api_key) return problem(req, res, { status: 403, ...words.keyFence() });
     const owner = ctx(req);
     const groups = customerGroups.cleanGroups(req.body && req.body.groups);
-    const r = await withEntity(owner, (db) =>
-      db.query(`UPDATE customer_list SET groups = $1 WHERE customer_list_id = $2 AND owner_entity_id = $3 AND ${require('../lib/party-live').liveSql('customer_list')} RETURNING customer_list_id, groups`, [
-        groups,
-        req.params.id,
-        owner
-      ])
-    );
+    const r = await withEntity(owner, (db) => customerGroups.setGroups(db, owner, req.params.id, groups));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     res.json({ ok: true, groups: r.rows[0].groups });
   } catch (err) {

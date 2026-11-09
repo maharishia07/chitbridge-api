@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 286,
+    "applies": 285,
     "failing": 39
    },
    "rate_limited": {
@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 711,
+   "line": 712,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -13141,7 +13141,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 619,
+   "line": 620,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -13215,7 +13215,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -13357,7 +13357,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 649,
+   "line": 650,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -13457,7 +13457,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 691,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -23547,7 +23547,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1059,
+   "line": 1053,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -23640,7 +23640,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1071,
+   "line": 1065,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -30973,7 +30973,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 985,
+   "line": 979,
    "hash": "967b68cf080c3479",
    "does": "",
    "errors": {
@@ -45156,7 +45156,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45189,7 +45189,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 700,
+   "line": 701,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45264,7 +45264,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45468,7 +45468,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45497,7 +45497,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 636,
+   "line": 637,
    "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
@@ -45570,7 +45570,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45677,7 +45677,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45914,8 +45914,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 659,
-   "hash": "21948004b6ff4f9d",
+   "line": 660,
+   "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
     "count": 0,
@@ -45987,7 +45987,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46016,7 +46016,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 673,
+   "line": 674,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46120,7 +46120,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 722,
+   "line": 723,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -54341,7 +54341,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 963,
-   "hash": "2e173065a6d44af7",
+   "hash": "6bb989bdfab21b84",
    "does": "",
    "errors": {
     "count": 0,
@@ -54356,9 +54356,7 @@
     "codes": []
    },
    "reads": [],
-   "writes": [
-    "customer_list"
-   ],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -54408,14 +54406,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
