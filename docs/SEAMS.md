@@ -10,12 +10,12 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 158 | `list` | `amend.js` |  |
 | 128 | `rows` | `crm.js` | still in them: |
-| 117 | `words` | `variant.browser.js` |  |
+| 118 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 113 | `read` | `books-cashflow.js` | Trips: |
 | 102 | `answer` | `availability.js` | from March; then nearest. |
-| 95 | `money` | `bill-privacy.js` |  |
+| 96 | `money` | `bill-privacy.js` |  |
 | 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
@@ -48,7 +48,7 @@ of file each thing is; this says what already does the job.
 | 49 | `view` | `books-payables.js` | group: |
 | 48 | `again` | `signin-ui.js` |  |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 47 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
+| 48 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 45 | `read` | `cap-print.js` |  |
 | 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 44 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
@@ -120,12 +120,12 @@ of file each thing is; this says what already does the job.
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `keep` | `signin.js` | see. |
 | 22 | `form` | `accounts-shell.js` |  |
+| 22 | `entries` | `books-store.js` |  |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `says` | `adopt.js` |  |
-| 21 | `entries` | `books-store.js` |  |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
 | 21 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
@@ -170,6 +170,7 @@ of file each thing is; this says what already does the job.
 | 16 | `verdict` | `rail-thread.js` |  |
 | 16 | `label` | `screen-id.js` |  |
 | 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
+| 16 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 16 | `series` | `gst-returns.js` | `paid_on`: |
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
@@ -180,7 +181,6 @@ of file each thing is; this says what already does the job.
 | 15 | `bkDate` | `cap-books.js` |  |
 | 15 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
 | 15 | `offers` | `network-app.js` |  |
-| 15 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
@@ -192,6 +192,7 @@ of file each thing is; this says what already does the job.
 | 14 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 14 | `check` | `network-app.js` |  |
 | 14 | `refuse_` | `bookpack.js` | an Error with status 422 — |
+| 14 | `minor` | `bounds.js` | B.minor({ column, signed }) → whole minor units (a fraction of a minor unit is refused), at least 0 unless a c |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
@@ -206,4 +207,3 @@ of file each thing is; this says what already does the job.
 | 13 | `confirm` | `lab-kit.js` | opts: |
 | 13 | `dialog` | `ui.js` | modal(); the corner X is modal()'s own .mx. |
 | 13 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
-| 13 | `tables` | `bookpack.js` | the CSV parts: |
