@@ -11,7 +11,7 @@
  *       contact-prefs GET and POST · customer groups by list id.
  *   · the money doors are the same 4xx a stranger gets, and payment rows for C / S = 0, journal lines naming C / S = 0.
  *   · a PRIVACY REQUEST about C stays allowed (201): hiding is not erasing, the shop still holds the person's data, so an access or erasure request
- *     must be loggable and its due date must run (decision pack: PM/CRM-248-DELETED-PARTY-DECISION-PACK-2026-11-09.md).
+ *     must be loggable and its due date must run (decision pack: docs/critique/CRM-247-248.md).
  *   · the live control party D keeps working on every door (a fix that refuses everything is not a fix).
  *   · import: C's phone in a lead import = ONE new party (added 1, merged 0, a NEW id, not C's); C stays deleted (GET 404) and keeps hidden_at;
  *     C's NAME re-imported is NOT merged into C: skipped with the word, C untouched (restore vs new is the owner's decision).
