@@ -8,6 +8,6 @@ SELECT jsonb_build_object(
   'india_shops_missing_advance', (SELECT count(*) FROM ledger_account g WHERE g.code = 'G1800' AND upper(g.pack_code) = 'IN'
       AND (SELECT count(*) FROM ledger_account x WHERE x.entity_id = g.entity_id AND x.role LIKE 'tax\_advance\_%') < 4),
   'partial_shops', (SELECT coalesce(jsonb_agg(g.entity_id ORDER BY g.entity_id), '[]'::jsonb) FROM ledger_account g WHERE g.code = 'G1800' AND upper(g.pack_code) = 'IN'
-      AND (SELECT count(*) FROM ledger_account x WHERE x.entity_id = g.entity_id AND x.role LIKE 'tax_advance_%') < 4),
+      AND (SELECT count(*) FROM ledger_account x WHERE x.entity_id = g.entity_id AND x.role LIKE 'tax\_advance\_%') < 4),
   'advance_rows', (SELECT count(*) FROM ledger_account WHERE role LIKE 'tax\_advance\_%')
 ) AS acc336_slice1;
