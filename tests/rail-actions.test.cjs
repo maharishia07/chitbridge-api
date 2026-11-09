@@ -279,6 +279,11 @@ const tally = {};
   t('not a bill (a task, an order, a bill I issued) → the rail\'s answer, the same object', RA.forBill('bill_issued', gap, task) === task && RA.forBill(null, gap, task) === task);
   t('the chit read composes it (routes/chits.js: railActions.forBill over docOf + books_wait)', /railActions\.forBill\(\s*_doc,\s*bundle\.books_wait,/.test(SRC) && /doc: _doc,/.test(SRC) && /books_wait: bundle\.books_wait \|\| null/.test(SRC));
 
+  /* RAIL-193: the status words a delivery is refused on are the rail's own — states of its table and ends of the road, the refusal word one of rail.WHY */
+  t('RAIL-193 · deliveryOn: the withdrawn words are states of rail.TRANSITIONS and of the closed bucket', RA.WITHDRAWN.every((w) => Object.keys(rail.TRANSITIONS).includes(w) && RA.BUCKETS.close.includes(w)));
+  t('RAIL-193 · deliveryOn refuses rejected and cancelled with the rail word wrong_step and a sentence naming the status', ['rejected', 'cancelled'].every((w) => { const v = RA.deliveryOn(w); return v.ok === false && v.why === 'wrong_step' && Object.keys(rail.WHY).includes(v.why) && v.from === w && v.say.includes(w); }));
+  t('RAIL-193 · deliveryOn lets every other status through (a completed copy still takes a correction)', Object.keys(rail.TRANSITIONS).filter((w) => !RA.WITHDRAWN.includes(w)).every((w) => RA.deliveryOn(w).ok === true));
+
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);

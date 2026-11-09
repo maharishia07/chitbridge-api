@@ -223,7 +223,7 @@ function checkRoutes(base, head, ratchet, hotfix) {
 }
 
 /* the stages in order; a stage only moves forward */
-const STAGES = ['1a', '1b', '2', 'all'];
+const STAGES = ['1a', '1b', '2', '2b', 'all'];
 
 /** the STAGE constant in a checkout's own tools/api-register.cjs (the base register is built by the HEAD's tool, so its .stage is the head's) */
 function stageOfCode(checkout) {
