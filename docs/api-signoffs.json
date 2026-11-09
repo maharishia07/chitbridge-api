@@ -2419,11 +2419,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/write-off": {
-   "hash": "4a83f18d6fc594f8",
+   "hash": "2e07e6f1853975a0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1072 stage 2b FIN-78: refusal 409 BOOKS_CONFLICT read from the carried party balance under the party lock in the writing transaction, replay (client_ref) answers before it, sentence names amount and currency and leaks nothing, four contract places present; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/year/:fy/close": {
