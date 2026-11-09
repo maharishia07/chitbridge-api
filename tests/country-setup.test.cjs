@@ -182,6 +182,12 @@ const call = (port, method, p, body) => new Promise((done) => {
     au.some((x) => x.role === 'gst_collected' && x.code === '2200' && x.sch3_line === 'GST and other statutory liabilities') && !au.some((x) => x.role === 'output_cgst')
     && ae.some((x) => x.role === 'output_vat') && ind.some((x) => x.role === 'output_cgst' && x.sch3_line === 'Other current liabilities') && au.filter((x) => x.is_group).every((x) => x.sch3_line),
     JSON.stringify(au.find((x) => x.role === 'gst_collected')));
+  /* ACC-336 slice 0 (engines v1.85.0): an India shop's chart gains the four tax-paid-in-advance assets, codes equal to b850; AU and AE gain none */
+  const adv = [['tax_advance_cgst', '1830'], ['tax_advance_sgst', '1831'], ['tax_advance_igst', '1832'], ['tax_advance_cess', '1833']];
+  ok('ACC-336 chart: chartRows(IN) carries the four advance rows 1830-1833 (the codes b850 backfills); AU and AE carry none',
+    adv.every(([role, code]) => ind.filter((x) => x.role === role && x.code === code).length === 1) && ind.filter((x) => /^tax_advance_/.test(x.role)).length === 4
+    && !au.some((x) => /^tax_advance_/.test(x.role)) && !ae.some((x) => /^tax_advance_/.test(x.role)),
+    JSON.stringify(ind.filter((x) => /^tax_advance_/.test(x.role))));
   ok('CS2 chart: the legacy year twin is filled by the ONE door (fy_start_month 7 for AU, 1 for AE) so the v1.20.0 core reads the pack\'s year; India unchanged', E.packs().packFor('AU').fy_start_month === 7 && E.packs().packFor('AE').fy_start_month === 1 && E.packs().packFor('IN').fy_start_month === 4 && E.packs().fiscalYearOf('2026-08-01', E.packs().packFor('AU')) === '2026-27' && E.packs().fiscalYearOf('2026-08-01', E.packs().packFor('AE')) === '2026');
 
   /* ── B · the BOOKS routes refuse a pack-less entity with the sentence (through the real router, the in-memory rig) ── */
