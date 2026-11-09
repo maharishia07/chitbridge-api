@@ -7692,6 +7692,18 @@
       "error": "Which customer?",
       "message": "Which customer?"
      }
+    },
+    {
+     "scenario": "write-off-above-due",
+     "status": 409,
+     "body_keys": {
+      "error": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off.",
+      "message": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off."
+     },
+     "fixture": {
+      "error": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off.",
+      "message": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off."
+     }
     }
    ]
   },

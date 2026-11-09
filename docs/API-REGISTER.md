@@ -1405,7 +1405,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books/write-off** · books · cb-accounting · meets standard
 - does: _not yet written_
-- errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
+- errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 409, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: - · actions: -
 
