@@ -11,7 +11,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, bill, finish } = H;
-const RUN = 'sq' + (Date.now() % 1e8).toString(36);
+const RUN = 'sq' + (Date.now() % 1e8).toString(36).padStart(6, '0'); // padded: a User ID needs 8+ characters; below 36^5 ms the base-36 part is only 5
 const PRICE = 250, QTY = 4; /* hand-computed: 4 x 250 = 1000 */
 
 /** the counter's invoice for the one line, tax-free (CBTax.determine()'s form), so the chit carries its money: total_value 1000 on chit_detail */
