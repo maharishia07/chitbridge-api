@@ -232,6 +232,7 @@ const WRITES_READY = [
   X('date-given-pl-both-bad', 'GET /api/books/pl', 400, { url: MOUNT + '/pl?from=03%2F10%2F2026&to=03%2F10%2F2026' }),
   X('date-given-bs-read', 'GET /api/books/bs', 400, { url: MOUNT + '/bs?asOf=tomorrow' }),
   X('date-given-dues-read', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=2026-02-30' }),
+  X('date-given-dues-year-out-of-range', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=9999-12-31' }), /* FIN-103: a day outside the books' years (1900-2100) is a 400, it was a RangeError 500 */
   X('date-given-ledger-read', 'GET /api/books/ledger/:account', 400, { url: MOUNT + '/ledger/1300?from=31-12-2026', patch: LEDGER_PATCH }),
   X('outbox-retried', 'POST /api/books/outbox/retry', 200, { patch: { hooks: { retryOutbox: async () => RETRIED } } }),
   X('payment-preview-advance', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000 }, patch: { books: { proposeFor: async () => PROPOSAL, duplicateWarnings: async () => [] } } }),
@@ -374,6 +375,12 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('gstr1-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr1' }),
   X('gstr3b-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr3b' }),
   X('ledger-of-a-registered-shop', 'GET /api/tax/ledger', 200, { setup: IN_SHOP, url: '/api/tax/ledger?month=2026-10' }),
+  /* ACC-333 / ACC-334: a month or form the caller GIVES and the books cannot read is a 400 naming the field (month 2026-13 · 0001-01 · 9999-12 were 500; abc · 2026-02-30 and form gstr9 were a 200 with a default) */
+  X('gstr-month-not-a-month', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-13&form=gstr1' }),
+  X('gstr-month-year-out-of-range', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=9999-12' }),
+  X('gstr-month-words', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=abc' }),
+  X('gstr-form-unknown', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr9' }),
+  X('ledger-month-not-a-month', 'GET /api/tax/ledger', 400, { setup: IN_SHOP, url: '/api/tax/ledger?month=0001-01' }),
   X('rated-lines-no-hsn', 'POST /api/tax/rate', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1 }] } }),
   X('computed-unregistered-seller', 'POST /api/tax/compute', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
   X('computed-non-india-seller', 'POST /api/tax/compute', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 10 }] } }),

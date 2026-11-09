@@ -307,11 +307,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/dues": {
-   "hash": "e118d9e7968db836",
+   "hash": "315608c54cc7f650",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#946 CTRY-94",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/events": {
@@ -1483,11 +1483,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/gstr": {
-   "hash": "3113f5dee04bf883",
+   "hash": "7d620eeddb9eb249",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month or form GIVEN and unreadable is 400 DATE_INVALID / BAD_FORM (BAD_FORM registered by the reviewer), absent keeps this month and gstr1; 4 scenes in api-legacy, 400 in error tests; web sends only YYYY-MM and gstr1|gstr3b; 13 columns true",
    "lifecycle": "stable"
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1499,11 +1499,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/ledger": {
-   "hash": "8ab7064027271479",
+   "hash": "b0fb95da2f4e8a1c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#957 expense_no_tax added",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
    "lifecycle": "stable"
   },
   "GET /api/testing/cases": {

@@ -68864,6 +68864,36 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/books-month-given.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "FIN-103 / ACC-333 / ACC-334: a date, month or GSTR form the caller GIVES is read once (books-period dateGiven / monthGiven, years 1900-2100) and a bad one is a 400, never a 500 and never a default.",
+   "claim": "FIN-103 / ACC-333 / ACC-334: a date, month or GSTR form the caller GIVES is read once (books-period dateGiven / monthGiven, years 1900-2100) and a bad one is a 400, never a 500 and never a default.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 63 lines. Run: node chitbridge-api/tests/books-month-given.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/books-period.js",
+    "lib/tax-copy.js",
+    "lib/tax-contract.js",
+    "routes/tax.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-09T00:20:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/books-dates-tz.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
