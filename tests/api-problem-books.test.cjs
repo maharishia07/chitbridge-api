@@ -338,6 +338,8 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('key-required', 'PATCH /api/books/payments/:id', 422, { body: { advice_shared_at: true }, noKey: true }),
   X('key-required', 'POST /api/books/payments/:id/confirm', 422, { body: { allocations: [] }, noKey: true }),
   X('key-required', 'POST /api/books/gst/pay', 422, { body: { fy: '2026-27', period: 6, amounts: { cgst_minor: 1 }, bank: 'bank', challan_no: 'CPIN1' }, noKey: true }),
+  /* ACC-275: a challan number already recorded for another amount or head is a conflict (409 BOOKS_CONFLICT), never a replay that echoes the typed figures */
+  X('challan-reused-other-amount', 'POST /api/books/gst/pay', 409, { body: { fy: '2026-27', period: 6, amounts: { cgst_minor: 9000 }, bank: 'bank', challan_no: 'CPIN1' }, patch: { period: { gstPay: async () => { throw Object.assign(new Error('Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment.'), { code: 'BOOKS_CONFLICT', status: 409 }); } } } }),
   X('window-too-long', 'GET /api/books/bank/rail', 400, { url: MOUNT + '/bank/rail?from=2020-01-01&to=2026-01-01' }),
   X('nothing-to-change', 'PATCH /api/books/payments/:id', 400, { body: {} }),
   X('which-advice-chit', 'PATCH /api/books/payments/:id', 400, { body: { advice_chit_id: 'not-an-id' } }),

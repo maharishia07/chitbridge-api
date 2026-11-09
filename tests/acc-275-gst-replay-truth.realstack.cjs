@@ -54,13 +54,15 @@ async function whileHeld(lock, shop, doors, pg) {
   await lock.query('BEGIN');
   await lock.query(LOCK_SQL, [shop.entity, 'gst|cgst']);
   let released = false;
-  const waiting = doors.map((door) => door().then((reply) => { expect(released, 'a door answered while gst|cgst was held: ' + said(reply)); return reply; }));
+  const early = [];
+  const waiting = doors.map((door) => door().then((reply) => { if (!released) early.push(said(reply)); return reply; }));
   await pause(900);
   const entries = Number((await pg.query("SELECT COUNT(*)::int AS n FROM journal_entry WHERE entity_id = $1 AND source_ref LIKE 'gst%'", [shop.entity])).rows[0].n);
-  expect(entries === 0, entries + ' gst entries written while the lock was held');
   released = true;
   await lock.query('COMMIT');
-  return Promise.all(waiting);
+  const replies = await Promise.all(waiting);
+  expect(!early.length && entries === 0, 'while gst|cgst was held: ' + entries + ' gst entries written; answered early: ' + early.join(' | '));
+  return replies;
 }
 
 (async () => {

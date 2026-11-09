@@ -5474,6 +5474,18 @@
       "error": "Missing Idempotency-Key",
       "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
+    },
+    {
+     "scenario": "challan-reused-other-amount",
+     "status": 409,
+     "body_keys": {
+      "error": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment.",
+      "message": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment."
+     },
+     "fixture": {
+      "error": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment.",
+      "message": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment."
+     }
     }
    ]
   },

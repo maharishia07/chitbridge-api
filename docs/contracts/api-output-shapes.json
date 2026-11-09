@@ -18526,6 +18526,9 @@
           },
           "off": {
             "type": "boolean"
+          },
+          "replayed": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,
