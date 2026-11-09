@@ -47,7 +47,7 @@ D.pre = async (sql, p) => {
   if (/^SELECT body FROM party_interaction/.test(sql)) return { rows: D.interactions.filter((i) => i.owner === p[0] && i.party_id === p[1] && i.kind === 'call').sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 2).map((i) => ({ body: i.body })) };
   if (/^SELECT txn_count FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2 AND added_via = 'lead'/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
   if (/^INSERT INTO memberships/.test(sql)) { assert.ok(state.table); const r = { membership_id: 'm' + (MEM.length + 1), entity_id: p[0], item_id: p[2], kind: p[3], grp: p[4], at: new Date().toISOString() }; MEM.push(r); return { rows: [r] }; }
-  if (/^SELECT EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) OR/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
+  if (/^SELECT EXISTS \(SELECT 1 FROM customer_list c WHERE c\.owner_entity_id = \$1 AND c\.customer_identity_id = \$2 AND .*\) AS ok/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
   return null;
 };
 const post = (id, body) => t.post('/parties/' + id + '/outcome', body);

@@ -45,8 +45,9 @@ function make() {
     if (/FROM books_setting/.test(sql)) return { rows: data.country ? [{ country: data.country, enabled: true }] : [] };
     /* the Ledger-side reads of the timeline */
     /* partyOn (a list or the books) — before the party_item timeline read, since partyOn names party_item too (#770) */
-    if (/EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) AS customer/.test(sql)) {
-      return { rows: [{ customer: data.cust.some((r) => r.owner === p[0] && r.party_id === p[1]), supplier: data.sup.some((r) => r.owner === p[0] && r.party_id === p[1]), ledgered: data.ledger.some((r) => r.entity === p[0] && r.party_id === p[1]) }] };
+    if (/EXISTS \(SELECT 1 FROM customer_list c WHERE c\.owner_entity_id = \$1 AND c\.customer_identity_id = \$2 AND .* AS customer/.test(sql)) {   /* CRM-247: customer / supplier = a LIVE row (no hidden_at), listed = any row */
+      const mine = (rows) => rows.filter((r) => r.owner === p[0] && r.party_id === p[1]);
+      return { rows: [{ customer: mine(data.cust).some((r) => !r.hidden_at), supplier: mine(data.sup).some((r) => !r.hidden_at), listed: mine(data.cust).length + mine(data.sup).length > 0, ledgered: data.ledger.some((r) => r.entity === p[0] && r.party_id === p[1]) }] };
     }
     if (/FROM party_item/.test(sql)) return { rows: data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.created_at < p[2]).slice(0, p[3]) };
     if (/FROM books_change_log/.test(sql)) return { rows: data.changes.filter((r) => r.entity === p[0] && r.row_id === p[1] && r.at < p[2]).slice(0, p[3]) };

@@ -13214,7 +13214,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -45155,7 +45155,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -45263,7 +45263,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -45467,7 +45467,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -45569,7 +45569,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -45676,7 +45676,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -45986,7 +45986,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -54414,7 +54414,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
