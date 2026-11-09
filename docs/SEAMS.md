@@ -164,7 +164,6 @@ of file each thing is; this says what already does the job.
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
-| 16 | `panel` | `sides.js` |  |
 | 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
 | 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 16 | `series` | `gst-returns.js` | `paid_on`: |
