@@ -251,6 +251,12 @@ function create() {
     async paymentsSince(db, e, party, direction, since) { return clone(T.payments.filter((p) => p.entity_id === e && p.party_id === party && p.direction === direction && String(p.created_at || '') >= String(since)).reverse()); },
     /* C3: the advisory lock has no memory shape — a test that needs the race stands in its own (tests/pay-fix twoClients) */
     async lockParty() {},
+    async lockTaxHeads() {} /* ACC-275: the same — the race is proved on real Postgres (tests/acc-275-gst-replay-truth.realstack.cjs) */,
+    async entryDebitsByRole(db, e, entryId) {
+      const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};
+      rows.forEach((l) => { const role = (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; by[role] = by[role] || { role, dr_minor: 0, currency: l.currency }; by[role].dr_minor += l.dr_minor; });
+      return Object.values(by);
+    },
     async paymentsOfChit(db, e, chit) { const key = 'chitpay:' + chit; return T.payments.filter((x) => x.entity_id === e && (x.client_ref === key || String(x.client_ref || '').indexOf(key + ':') === 0)).map((p) => ({ payment_id: p.payment_id, amount_minor: p.amount_minor, currency: p.currency, client_ref: p.client_ref })); },
     async paymentByRef(db, e, ref) { const p = T.payments.find((x) => x.entity_id === e && x.client_ref === String(ref)); return p ? { payment_id: p.payment_id, mode: p.mode } : null; },
     async cheques(db, e, all, limit) {

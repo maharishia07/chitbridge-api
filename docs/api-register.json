@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 98,
-  "meets": 540,
+  "partial": 97,
+  "meets": 541,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -35492,7 +35492,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "48e7fbc7c749a012",
+   "hash": "73f2e0872e725f03",
    "does": "",
    "errors": {
     "count": 2,
@@ -35500,6 +35500,7 @@
      401,
      403,
      404,
+     409,
      422,
      500
     ],
@@ -35547,6 +35548,7 @@
     401,
     403,
     404,
+    409,
     422,
     500
    ],
@@ -35569,11 +35571,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "48e7fbc7c749a012"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1076 stage2b: replay answers the stored entry (replayed:true, nothing recomputed), reused challan with another amount, head or currency is 409 BOOKS_CONFLICT (contract inline [409], scene, api-legacy, error-tests row), lock gst|<head> sorted in one call by pay and close, realstack 6/6 on real Postgres; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
