@@ -146,7 +146,6 @@ of file each thing is; this says what already does the job.
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `today` | `kural.js` |  |
 | 18 | `more` | `lab-kit.js` | idKey: |
-| 18 | `panel` | `sides.js` |  |
 | 18 | `later` | `signin-ui.js` |  |
 | 18 | `verify` | `bookpack.js` | manifest's own hash. |
 | 18 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
