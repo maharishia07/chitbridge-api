@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 101,
-  "meets": 537,
+  "partial": 103,
+  "meets": 535,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -24928,12 +24928,13 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 98,
-   "hash": "3113f5dee04bf883",
+   "line": 99,
+   "hash": "7d620eeddb9eb249",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -24976,6 +24977,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -24999,10 +25001,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7d620eeddb9eb249"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "helpers.js"
@@ -25132,11 +25135,12 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "8ab7064027271479",
+   "hash": "b0fb95da2f4e8a1c",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -25179,6 +25183,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -25201,10 +25206,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#957 expense_no_tax added",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b0fb95da2f4e8a1c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -57449,7 +57455,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 183,
+   "line": 185,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -57553,7 +57559,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 146,
+   "line": 148,
    "hash": "f06e00970724f9d6",
    "does": "",
    "errors": {

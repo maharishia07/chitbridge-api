@@ -95,13 +95,15 @@ function droppedWords(dropped, reasons) {
 }
 
 /** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
+const GSTR_FORMS = ['gstr1', 'gstr3b']; /* the returns this file builds; absent → gstr1 (the contract's default), a form GIVEN and not one of these is a 400, never gstr1 (ACC-334) */
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
+    const form = String(req.query.form || 'gstr1').toLowerCase();
+    if (!GSTR_FORMS.includes(form)) return problem(req, res, Object.assign(taxSaid(400, 'BAD_FORM', 'form must be one of: ' + GSTR_FORMS.join(', ') + '.'), { field: 'form' }));
     const me = ctx(req);
     const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
     /* ACC-266 C5: a return built from a short month is wrong — say so instead of handing out the file */
     if ((dropped || []).length) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', droppedWords(dropped, droppedWhy), { dropped: dropped.slice(0, DROPPED_NAMED) }));
-    const form = String(req.query.form || 'gstr1').toLowerCase();
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
     /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */
     if (out.ok === false) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', out.why));

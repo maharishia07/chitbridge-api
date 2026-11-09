@@ -791,6 +791,7 @@ const GUARDS = [
   'api-strict-input-status.test.cjs', // U1 (8 Nov, was run by no CI job): PINS what an unknown body key answers, per route, on the real app (the cases of tools/api-contract-tests.cjs: stand-in database, r
   'bell-delivery.test.js', // U1 (8 Nov, was run by no CI job): A BELL IS WATCHED FOR DELIVERY, NOT FOR CONNECTION ([TILL-167], BACKLOG TILL-146).
   'books-date-given.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-274: a date the caller GIVES is read once, by books-period.dateGiven (dateOf and routes/books.js dateQ both go through it).
+  'books-month-given.test.cjs', // FIN-103 / ACC-333 / ACC-334: a given date, month or GSTR form is read once (books-period.dateGiven / monthGiven, years 1900-2100); a bad one is a 400, never a 500 or a default.
   'cat-258-unpriced-bands.test.cjs', // U1 (8 Nov, was run by no CI job): CAT-258: an UNPRICED tiered line is "no price set", never a free band, and no bill prices it at 0.
   'ctp-query-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): API-7 (S34): the answer to a signed CTP question names its keys.
   'ctr-186-till-deliver-to.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctr-186-till-deliver-to.test.cjs — CTR-186: THE COUNTER RECORDS WHERE THE GOODS GO.
