@@ -68864,6 +68864,36 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/books-month-given.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "FIN-103 / ACC-333 / ACC-334: a date, month or GSTR form the caller GIVES is read once (books-period dateGiven / monthGiven, years 1900-2100) and a bad one is a 400, never a 500 and never a default.",
+   "claim": "FIN-103 / ACC-333 / ACC-334: a date, month or GSTR form the caller GIVES is read once (books-period dateGiven / monthGiven, years 1900-2100) and a bad one is a 400, never a 500 and never a default.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 63 lines. Run: node chitbridge-api/tests/books-month-given.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/books-period.js",
+    "lib/tax-copy.js",
+    "lib/tax-contract.js",
+    "routes/tax.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-09T00:20:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/books-dates-tz.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -86246,6 +86276,36 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-07T12:02:26+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec-desk-why-and-verify-trips.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-139 CLASS + S8: A ROUTING FAULT NEVER PUTS EXCEPTION TEXT IN WHY, AND LOGIN/VERIFY REFUSES ALIKE",
+   "claim": "A routing read that throws gives route.why one fixed sentence (the preview and raise answers carry no exception text); POST /api/catalogue/:bridge_id/login/verify answers an unknown contact, a wrong code, a locked row and an expired code with one body and the same database round trips, writing no row for an unknown contact.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 118 lines. Run: node chitbridge-api/tests/sec-desk-why-and-verify-trips.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/otp.js",
+    "lib/workroute.js",
+    "lib/bill-privacy.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-08T23:45:32.551Z"
   },
   {
    "case_key": "chitbridge-api/tests/signin-routes.test.cjs",
@@ -108545,6 +108605,31 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-19T19:29:06+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/party-live.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CRM-247/248: A DELETED PARTY (hidden_at) IS READ IN ONE PLACE; PARTYON, THE IMPORT PLAN AND THE REFUSAL.",
+   "claim": "CRM-247/248: A DELETED PARTY (hidden_at) IS READ IN ONE PLACE; PARTYON, THE IMPORT PLAN AND THE REFUSAL.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 62 lines. Run: node chitbridge-api/tests/party-live.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-09T00:21:00.089Z"
   }
  ]
 }

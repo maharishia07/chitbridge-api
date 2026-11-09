@@ -389,6 +389,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_FORM",
+   "status": "400",
+   "title": "Return form not offered",
+   "shopkeeper": "That return is not one we build. Ask for GSTR-1 or GSTR-3B.",
+   "hint": "Pick GSTR-1 or GSTR-3B and try again.",
+   "owner_area": "tax",
+   "since": "2026-11-09"
+  },
+  {
    "code": "BAD_GROUP",
    "status": "400",
    "title": "Not a stage",

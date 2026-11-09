@@ -37,6 +37,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | AUTO_TOKEN | varies | Auto token | This sign-in is no longer valid. | Sign in again. | auth | 2026-10-22 |
 | A_INVARIANT | 422 | Rule would be loosened | That would loosen a rule the platform has set. | Only tighten the setting, never loosen it. | governance | 2026-10-23 |
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
+| BAD_FORM | 400 | Return form not offered | That return is not one we build. Ask for GSTR-1 or GSTR-3B. | Pick GSTR-1 or GSTR-3B and try again. | tax | 2026-11-09 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
 | BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number. | Send a price of 0 or more, as a number. | tax | 2026-10-23 |
