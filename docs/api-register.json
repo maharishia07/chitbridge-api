@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 110,
-  "meets": 528,
+  "partial": 112,
+  "meets": 526,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -40,7 +40,7 @@
    },
    "parameterised_query": {
     "applies": 286,
-    "failing": 39
+    "failing": 40
    },
    "rate_limited": {
     "applies": 638,
@@ -1144,7 +1144,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 711,
+   "line": 712,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -13144,7 +13144,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 619,
+   "line": 620,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -13360,7 +13360,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 649,
+   "line": 650,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -13460,7 +13460,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 691,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -45189,7 +45189,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 700,
+   "line": 701,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45497,7 +45497,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 636,
+   "line": 637,
    "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
@@ -45914,8 +45914,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 659,
-   "hash": "21948004b6ff4f9d",
+   "line": 660,
+   "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
     "count": 0,
@@ -45987,10 +45987,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "afd2b3b81ec2c619"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -46016,7 +46017,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 673,
+   "line": 674,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46120,7 +46121,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 722,
+   "line": 723,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -54339,7 +54340,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 963,
-   "hash": "2e173065a6d44af7",
+   "hash": "6aae400f6ff94b1e",
    "does": "",
    "errors": {
     "count": 0,
@@ -54401,7 +54402,7 @@
    ],
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": false
    },
    "reported_applies": {
@@ -54413,10 +54414,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6aae400f6ff94b1e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],

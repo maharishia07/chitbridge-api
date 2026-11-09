@@ -108514,6 +108514,31 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-19T19:29:06+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/party-live.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CRM-247/248: A DELETED PARTY (hidden_at) IS READ IN ONE PLACE; PARTYON, THE IMPORT PLAN AND THE REFUSAL.",
+   "claim": "CRM-247/248: A DELETED PARTY (hidden_at) IS READ IN ONE PLACE; PARTYON, THE IMPORT PLAN AND THE REFUSAL.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 62 lines. Run: node chitbridge-api/tests/party-live.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-09T00:21:00.089Z"
   }
  ]
 }
