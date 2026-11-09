@@ -15,14 +15,16 @@
 --    tally_group / sch3_line / saft_grouping / pack_version are COPIED from the same shop's prepaid_expenses row (same group), never typed here.
 -- WHICH SHOPS. Only India: pack_code IN and the shop has its G1800 group row. Australia and the UAE get NO row: their wording is TO CONFIRM against the ATO and EmaraTax
 --    primary pages (design section 10) and the role is not in their packs yet; theirs is a later file once a person has read those pages.
--- A SHOP THAT USES 1830-1833 ITSELF keeps its ledger (DO NOTHING); that shop gets no advance ledger and the api falls back to paid_note.
+-- A SHOP THAT USES ONE OF 1830-1833 ITSELF: ON CONFLICT DO NOTHING works PER ROW, so that shop keeps its own ledger and still gets the other heads (a 3-of-4 chart,
+--    a partial shop). Slice 2 therefore decides per head: a head with no advance ledger answers excess_paid and paid_note for that head only, and a test runs on a 3-of-4 chart.
+--    The READ file names the partial shops (partial_shops) so a person can resolve them.
 -- FRESH DB: no shop exists, 0 rows is expected and gives a NOTICE.
 -- ROLL BACK (only rows no entry or balance uses; the FKs refuse the rest, so it can never orphan a posting):
 --    DELETE FROM ledger_account a WHERE a.role IN ('tax_advance_cgst','tax_advance_sgst','tax_advance_igst','tax_advance_cess')
 --      AND NOT EXISTS (SELECT 1 FROM journal_line l WHERE l.account_id = a.account_id) AND NOT EXISTS (SELECT 1 FROM account_balance b WHERE b.account_id = a.account_id);
 -- CHECK (read-only, one row; READ-2026-11-09-2-acc336-s1-check.sql gives all of it as one cell):
 --    SELECT count(*) AS shops_missing_advance FROM ledger_account g WHERE g.code = 'G1800' AND upper(g.pack_code) = 'IN'
---      AND (SELECT count(*) FROM ledger_account x WHERE x.entity_id = g.entity_id AND x.role LIKE 'tax\_advance\_%') < 4;   Expect 0 after the run (except a shop that uses 1830-1833 itself, see above).
+--      AND (SELECT count(*) FROM ledger_account x WHERE x.entity_id = g.entity_id AND x.role LIKE 'tax\_advance\_%') < 4;   Expect 0 after the run (a partial shop, see above, counts here).
 -- RLS: unchanged. ledger_account stays ENABLED + FORCED with its entity policy; each row carries its own shop's entity_id.
 
 DO $$
