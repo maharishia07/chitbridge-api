@@ -2458,6 +2458,14 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
+  "POST /api/catalogue/:bridge_id/support": {
+   "hash": "81696fd76afddafd",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
+   "lifecycle": "stable"
+  },
   "POST /api/catalogue/:bridge_id/support/start": {
    "hash": "7d9d4681880be122",
    "names_clear": true,
@@ -3843,11 +3851,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/status": {
-   "hash": "994de2d1f6d92849",
+   "hash": "d21dfa8eab8017d4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler re-read after PPL-45 (#1058): the dispute-handler clear runs inside the removal transaction, a failure rolls the removal back and answers the one fixed 500 sentence; owner-only, caller-scoped 404, task routing 400s, reactivate refusals (503/429) as registered; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/tasks/route": {

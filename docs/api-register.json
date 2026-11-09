@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 101,
-  "meets": 537,
+  "partial": 99,
+  "meets": 539,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -39404,13 +39404,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -61837,11 +61837,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d21dfa8eab8017d4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler re-read after PPL-45 (#1058): the dispute-handler clear runs inside the removal transaction, a failure rolls the removal back and answers the one fixed 500 sentence; owner-only, caller-scoped 404, task routing 400s, reactivate refusals (503/429) as registered; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
