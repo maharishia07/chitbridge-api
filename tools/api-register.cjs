@@ -22,7 +22,9 @@ const reported = require('./api-reported.cjs');
 const TOOLS_DIR = __dirname;
 const rootArg = process.argv.indexOf('--root');
 const ROOT = rootArg > 0 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(TOOLS_DIR, '..');
-const STAGE = '2';
+/* 2b (9 Nov 2026): the thirteen columns of stage 2, and a route reads "meets standard" only with a sign-off made at stage 2 (dated on or after SIGNOFF_STAGE_FROM); a seven-column stamp of 23 Oct no longer counts */
+const STAGE = '2b';
+const SIGNOFF_STAGE_FROM = '2026-10-24';
 const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes', 'strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
 /* the six hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
 const HARDENING_COLUMNS = ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
@@ -425,9 +427,15 @@ function lineOf(fileText, leaf) {
   return found ? fileText.slice(0, found.index).split('\n').length : 0;
 }
 
+/** the ISO date inside a sign-off stamp ("cb-api ... 2026-11-08 PR#9"), or null when it shows none */
+const stampDate = (stamp) => { const found = /\d{4}-\d\d-\d\d/.exec(String(stamp || '')); return found ? found[0] : null; };
+
+/** a sign-off counts only when its stamp is dated at stage 2 or later (S15: no grandfathering of the seven-column stage); an undated stamp is not current */
+const signedAtStage = (stamp) => { const date = stampDate(stamp); return !!date && date >= SIGNOFF_STAGE_FROM; };
+
 /** status: "meets standard" is every machine column AND a current cb-api sign-off (S15); some columns, or a missing sign-off, is "partial" */
 function statusOf(columns, human) {
-  if (MACHINE_COLUMNS.every((name) => columns[name]) && human && human.signed_off_by_date) return 'meets standard';
+  if (MACHINE_COLUMNS.every((name) => columns[name]) && human && signedAtStage(human.signed_off_by_date)) return 'meets standard';
   /* progress is the seven core columns: a hardening column that does not apply passes for free and would make every route look begun */
   return MACHINE_COLUMNS.slice(0, MACHINE_COLUMNS.length - HARDENING_COLUMNS.length).some((name) => columns[name]) ? 'partial' : 'not started';
 }
@@ -620,4 +628,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

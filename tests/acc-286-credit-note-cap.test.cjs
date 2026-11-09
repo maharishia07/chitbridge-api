@@ -85,7 +85,7 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   for (const amount of [165, 165, 0.05]) auAnswers.push(await verdict(au.sendNote(amount, { currency_code: 'AUD' })));
   ok('AU · A$330.00 bill: two notes of A$165.00 fill it, A$0.05 more is refused', auAnswers.join(',') === 'ok,ok,CREDIT_NOTE_OVER_BILL', auAnswers.join(','));
 
-  ok('a bill that cannot be found is not judged (known limit, logged): the note goes through', (await verdict(world(null).sendNote(1180))) === 'ok');
+  ok('CTR-234 · a bill that cannot be found is REFUSED (409 BILL_NOT_RECORDED), never a refund with no bill behind it', (await verdict(world(null).sendNote(1180))) === 'BILL_NOT_RECORDED');
   const free = world(3540);
   const noTill = await verdict(free.sendNote(9999, { business_json: { against: { bill_no: 'B-1', chit_id: BILL }, invoice: { ValDtls: { TotInvVal: 9999 } } } }));
   const draft = await verdict(free.sendNote(9999, { is_draft: true }));
@@ -126,8 +126,8 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   /* a note that is NOT judged says so on the answer (sendState.creditCap → credit_cap), and a failed read is a refusal in words, never a bare 500 */
   const stateOf = (extra) => Object.assign({ sender_id: SHOP, chit_id: 'c0000000-0000-4000-8000-0000000000aa', purpose: 'credit_note', currency_code: 'INR', is_draft: false, business_json: { till: { id: 'C1' }, against: { bill_no: 'B-9' }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } }, extra || {});
   const unjudged = stateOf();
-  await cap.holdUnderLock({ query: async (sql) => { if (/ANY/.test(sql)) return { rows: [] }; return { rows: [] }; } }, unjudged);
-  ok('a note whose bill is not found carries the warning credit_cap { code CREDIT_NOTE_NOT_JUDGED, why }', unjudged.creditCap && unjudged.creditCap.code === 'CREDIT_NOTE_NOT_JUDGED' && /not checked/.test(unjudged.creditCap.why), JSON.stringify(unjudged.creditCap));
+  await cap.holdUnderLock({ query: async (sql) => ({ rows: /ANY/.test(sql) ? [Object.assign(row(BILL, null, 'B-9'), { till_id: 'C1' })] : [] }) }, unjudged);
+  ok('a note whose bill carries no total carries the warning credit_cap { code CREDIT_NOTE_NOT_JUDGED, why }', unjudged.creditCap && unjudged.creditCap.code === 'CREDIT_NOTE_NOT_JUDGED' && /not checked/.test(unjudged.creditCap.why), JSON.stringify(unjudged.creditCap));
   const judgedState = stateOf({ business_json: { till: { id: 'C1' }, against: { bill_no: 'B-1', chit_id: BILL }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } });
   await world(3540).sendNote(10, { business_json: judgedState.business_json });
   ok('a judged note carries no warning', judgedState.creditCap === undefined);

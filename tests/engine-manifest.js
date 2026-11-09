@@ -212,6 +212,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* CUR-1 (2026-11-09, ACC-331/332): which cells of a bill or a journal can carry a currency and the one refusal of another currency (lib/money.assertSameCurrency decides). Decides no money rule. */
+  'currency-cells.js',
   /* CAT-313 (2026-11-09): the SQL condition of the product search (named visible fields, literal LIKE). Decides no money, tax or rule. */
   'catalogue-search.js',
   /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */

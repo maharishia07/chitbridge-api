@@ -71491,6 +71491,37 @@
    "changed_at": "2026-11-08T23:50:57+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/acc-331-currency-cells.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CUR-1 (ACC-331, ACC-332): a bill's payment parts and lines and a journal's lines name the document's currency or none; another currency is refused 409 CURRENCY_MISMATCH naming the field, offline. Run: node tests/acc-331-currency-cells.test.cjs",
+   "claim": "CUR-1 (ACC-331, ACC-332): a bill's payment parts and lines and a journal's lines name the document's currency or none; another currency is refused 409 CURRENCY_MISMATCH naming the field, offline. Run: node tests/acc-331-currency-cells.test.cjs",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 72 lines. Run: node chitbridge-api/tests/acc-331-currency-cells.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 115,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/currency-cells.js",
+    "lib/books-manual.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-09T23:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/crm-204-contact-email.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

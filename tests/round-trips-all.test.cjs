@@ -78,6 +78,8 @@ function answer(text, params) {
   wire += 1;
   /* readBatch sends BEGIN; ...; COMMIT; as one simple-protocol text and slices the middle out of an array of results */
   if (/^\s*BEGIN;/.test(String(text))) return Array.from({ length: 200 }, empty);
+  /* the idempotency store is its own table: a fixture_row is the ROUTE's row, not a held key (a claimed key would answer 409 in progress) */
+  if (/idempotency_key/i.test(String(text)) && !probe(text, params)) return /^\s*INSERT/i.test(String(text)) ? { rows: [{ idem_key: 'rt' }], rowCount: 1, fields: [], command: 'INSERT' } : empty(); /* the claim is the one statement that must win */
   return probe(text, params) || (fixtureRow ? { rows: [fixtureRow], rowCount: 1, fields: [], command: 'SELECT' } : empty());
 }
 class FakePool {
@@ -202,6 +204,7 @@ async function fire(port, route) {
   const timer = setTimeout(() => ac.abort(), 6000);
   try {
     const opts = { method, signal: ac.signal, headers: Object.assign({ 'content-type': 'application/json' }, (budget.routes[route] && budget.routes[route].fixture_headers) || {}) }; /* fixture_headers: a header the route needs to reach its own work (renew: the device a legacy token names) */
+    if (budget.routes[route] && budget.routes[route].fixture_customer) opts.headers.authorization = 'Bearer ' + require('jsonwebtoken').sign({ identity_id: ID, identity_type: 'customer', parent_entity_id: ID, bridge_id: 'shopper' }, process.env.JWT_SECRET, { expiresIn: '5m' }); /* fixture_customer: the route is the storefront shopper's own (customer-auth), so the stub signs one in */
     if (method !== 'GET' && method !== 'DELETE') opts.body = JSON.stringify((budget.routes[route] && budget.routes[route].fixture_body) || {}); /* fixture_body: the smallest valid body, so the stub reaches the route's own work instead of a 400 */
     const r = await realFetch('http://127.0.0.1:' + port + url, opts);
     await r.text().catch(() => '');

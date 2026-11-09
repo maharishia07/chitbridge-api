@@ -19,11 +19,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
-   "hash": "cb4788656770100d",
+   "hash": "a60976f3208018cd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped delete, non-uuid and foreign id both 404 in one sentence; no handler change in the PR",
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id": {
@@ -499,11 +499,19 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
-   "hash": "d607d6f62eb7d0de",
+   "hash": "9ff18aab5c5a8c64",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, unknown shop 404 in words; no handler change in the PR",
+   "lifecycle": "stable"
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "hash": "fd244df69e65d2b2",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped list, paged, one 401/404 sentence; no handler change in the PR",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/support/preview": {
@@ -523,11 +531,11 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network-store/:networkId": {
-   "hash": "985e2513117c90be",
+   "hash": "f7ae322fc1cc3543",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, no node attribution, 404/503 in words; no handler change in the PR",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network/:bridge_id": {
@@ -1147,19 +1155,19 @@
    "lifecycle": "stable"
   },
   "GET /api/integrations/docs/:id": {
-   "hash": "597a2e449ca230ab",
+   "hash": "4c1714a8b02753ad",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/download/:id": {
-   "hash": "966e1a6d5ef10766",
+   "hash": "af7c9d3016789066",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/kit": {
@@ -1171,11 +1179,11 @@
    "lifecycle": "stable"
   },
   "GET /api/integrations/kit/*": {
-   "hash": "9f494cd2f4297967",
+   "hash": "348b9c92a4977ecb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/profile-map": {
@@ -2179,11 +2187,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/entries": {
-   "hash": "7f802d11b091f732",
+   "hash": "642ac0ba6bec7bb8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#731 stage2",
+   "signed_off_by_date": "cb-api-reviewer 2026-11-09 PR#1060 stage2",
    "lifecycle": "stable"
   },
   "POST /api/books/entries/:id/reverse": {
@@ -2431,7 +2439,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-security (independent re-sign at stage 2b, not the builder) 2026-11-09 PR#1064: handler and contract re-read; one 400 sentence for unknown contact, wrong, expired-lock; code spent on use; 5-miss lock + catalogue limiter; names_clear, sentence_plain, backward_compatible pass; residual: unknown contact skips the attempt UPDATE (ms timing, follow-up)",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/order/confirm": {
@@ -2447,15 +2455,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
-   "lifecycle": "stable"
-  },
-  "POST /api/catalogue/:bridge_id/support": {
-   "hash": "81696fd76afddafd",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/support/start": {
@@ -2463,7 +2463,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/enquiry/:item_id": {
@@ -2531,11 +2531,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/deliver-lines": {
-   "hash": "4896e7d335ee37ca",
+   "hash": "2230812987fb9ca7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1063 RAIL-191/192/193: new 400 CHIT_AMOUNT_TOO_LARGE (was 500) and two 409 CHIT_CONFLICT (correction under zero; rejected or cancelled copy, why wrong_step like withdraw) are additive, thrown inside lib/deliverline.record before any write so every caller is covered; replayed client_ref skipped; inline [409], 3 error scenes, 3 frozen answers, error-tests row; truth test runs in the T2 loop; 13 columns pass; deliveryOn in rail-actions is a stopgap until an engines deliver action",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/payment": {
@@ -4027,11 +4027,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/integrations/streams": {
-   "hash": "1d8791f0df7ece41",
+   "hash": "9f7a6d4d41aa7697",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "PUT /api/network-design": {

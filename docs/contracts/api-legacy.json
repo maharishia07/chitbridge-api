@@ -4884,6 +4884,22 @@
       "request_id": "req-test",
       "field": "date"
      }
+    },
+    {
+     "scenario": "entry-line-other-currency",
+     "status": 409,
+     "body_keys": {
+      "code": "CURRENCY_MISMATCH",
+      "error": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "message": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "field": "lines[0].currency"
+     },
+     "fixture": {
+      "code": "CURRENCY_MISMATCH",
+      "error": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "message": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "field": "lines[0].currency"
+     }
     }
    ]
   },
@@ -23605,6 +23621,60 @@
      "fixture": {
       "error": "Failed to record delivery",
       "message": "Nothing to record"
+     }
+    },
+    {
+     "scenario": "delivery-past-the-column",
+     "status": 400,
+     "body_keys": {
+      "error": "Amount too large",
+      "code": "CHIT_AMOUNT_TOO_LARGE",
+      "message": "A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.",
+      "field": "quantity",
+      "line": 1,
+      "max": "999999999999999.999",
+      "currency_code": null
+     },
+     "fixture": {
+      "error": "Amount too large",
+      "code": "CHIT_AMOUNT_TOO_LARGE",
+      "message": "A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.",
+      "field": "quantity",
+      "line": 1,
+      "max": "999999999999999.999",
+      "currency_code": null
+     }
+    },
+    {
+     "scenario": "delivery-correction-too-large",
+     "status": 409,
+     "body_keys": {
+      "error": "Correction too large",
+      "message": "Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.",
+      "line": 1,
+      "delivered": 1
+     },
+     "fixture": {
+      "error": "Correction too large",
+      "message": "Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.",
+      "line": 1,
+      "delivered": 1
+     }
+    },
+    {
+     "scenario": "delivery-on-a-rejected-copy",
+     "status": 409,
+     "body_keys": {
+      "error": "Order closed",
+      "message": "This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.",
+      "why": "wrong_step",
+      "from": "rejected"
+     },
+     "fixture": {
+      "error": "Order closed",
+      "message": "This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.",
+      "why": "wrong_step",
+      "from": "rejected"
      }
     }
    ]
@@ -62623,6 +62693,34 @@
     },
     {
      "scenario": "release-at-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     }
+    },
+    {
+     "scenario": "release-at-empty",
      "status": 400,
      "body_keys": {
       "error": "validation",
