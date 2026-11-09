@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 101,
-  "meets": 537,
+  "partial": 102,
+  "meets": 536,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -37981,7 +37981,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1799,
-   "hash": "4a83f18d6fc594f8",
+   "hash": "2e07e6f1853975a0",
    "does": "",
    "errors": {
     "count": 2,
@@ -37990,6 +37990,7 @@
      401,
      403,
      404,
+     409,
      422,
      500
     ],
@@ -38042,6 +38043,7 @@
     401,
     403,
     404,
+    409,
     422,
     500
    ],
@@ -38063,10 +38065,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2e07e6f1853975a0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

@@ -345,6 +345,8 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('cheque-step-unnamed', 'POST /api/books/cheques/:id/status', 400, { body: {} }),
   X('dispute-bill-unnamed', 'POST /api/books/parties/:id/dispute', 400, { body: {} }),
   X('write-off-customer-unnamed', 'POST /api/books/write-off', 400, { body: {} }),
+  /* FIN-78: a write-off above what is still owed (the ledger refuses it before any row) is a 409 in one sentence naming the amount still owed and the currency */
+  X('write-off-above-due', 'POST /api/books/write-off', 409, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => { throw Object.assign(new Error('Only ₹0 (INR) is still owed, so ₹5 cannot be written off.'), { code: 'BOOKS_CONFLICT', status: 409 }); } } } }),
   X('opening-no-rows', 'POST /api/books/opening', 400, { body: {} }),
   X('import-not-confirmed', 'POST /api/books/move-in/import', 400, { body: {} }),
   X('dues-staff-collections', 'GET /api/books/dues', 403, { setup: { who: STAFF }, url: MOUNT + '/dues?finance=1' }),
