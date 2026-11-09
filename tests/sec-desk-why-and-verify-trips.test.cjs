@@ -5,6 +5,10 @@
  *           joins route.why into the preview and raise answers); the text goes to the log. (2) POST /api/catalogue/:bridge_id/login/verify (SEC-139 class):
  *           an unknown contact, a wrong code, a locked row and an expired code give one answer and run the same database round trips, and no row is
  *           written for a contact that does not exist.
+ * ⚠️ WHAT THIS PROVES: the same NUMBER of database round trips, not the same latency (a no-match UPDATE takes no xid and does no WAL flush, so a
+ *    count proves the count, not the timing). EXCEPTION, stated plainly: for a real row with a wrong code verifyOtp also asks otherCodeOk first
+ *    (lib/installer-token installerOk, lib/dev-otp testerGuess: an in-memory guess counter, not a DB trip, and only where TESTER_CODE or the installer
+ *    token is set - the testing-phase door); unknown and locked rows skip it, and this test does not cover that gap.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/catalogue.js and lib/otp.js over a stand-in db.
  * FLOW      stand-in db records each statement → routeFor / the real route → answers compared → round trips compared
  * CARD      18-identity-sign-in-and-access/sign-in
