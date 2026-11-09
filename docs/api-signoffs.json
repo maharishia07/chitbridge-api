@@ -307,11 +307,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/dues": {
-   "hash": "e118d9e7968db836",
+   "hash": "315608c54cc7f650",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#946 CTRY-94",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/events": {
@@ -743,7 +743,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "GET /api/crm/parties/:id/timeline": {
@@ -1483,11 +1483,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/gstr": {
-   "hash": "3113f5dee04bf883",
+   "hash": "7d620eeddb9eb249",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month or form GIVEN and unreadable is 400 DATE_INVALID / BAD_FORM (BAD_FORM registered by the reviewer), absent keeps this month and gstr1; 4 scenes in api-legacy, 400 in error tests; web sends only YYYY-MM and gstr1|gstr3b; 13 columns true",
    "lifecycle": "stable"
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1499,11 +1499,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/ledger": {
-   "hash": "8ab7064027271479",
+   "hash": "b0fb95da2f4e8a1c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#957 expense_no_tax added",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
    "lifecycle": "stable"
   },
   "GET /api/testing/cases": {
@@ -2419,11 +2419,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/write-off": {
-   "hash": "4a83f18d6fc594f8",
+   "hash": "2e07e6f1853975a0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1072 stage 2b FIN-78: refusal 409 BOOKS_CONFLICT read from the carried party balance under the party lock in the writing transaction, replay (client_ref) answers before it, sentence names amount and currency and leaks nothing, four contract places present; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/year/:fy/close": {
@@ -2456,6 +2456,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
+   "lifecycle": "stable"
+  },
+  "POST /api/catalogue/:bridge_id/support": {
+   "hash": "81696fd76afddafd",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/support/start": {
@@ -2751,7 +2759,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/groups": {
@@ -2759,7 +2767,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/leads": {
@@ -2775,7 +2783,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/parties/:id/contact-prefs": {
@@ -2783,7 +2791,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/parties/:id/interactions": {
@@ -2791,7 +2799,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/parties/:id/outcome": {
@@ -2811,11 +2819,11 @@
    "lifecycle": "stable"
   },
   "POST /api/crm/privacy-requests": {
-   "hash": "21948004b6ff4f9d",
+   "hash": "afd2b3b81ec2c619",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/privacy-requests/:id/answer": {
@@ -3323,11 +3331,11 @@
    "lifecycle": "stable"
   },
   "POST /api/relationships/customers/:id/groups": {
-   "hash": "2e173065a6d44af7",
+   "hash": "6bb989bdfab21b84",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/relationships/suppliers": {
@@ -3843,11 +3851,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/status": {
-   "hash": "994de2d1f6d92849",
+   "hash": "d21dfa8eab8017d4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler re-read after PPL-45 (#1058): the dispute-handler clear runs inside the removal transaction, a failure rolls the removal back and answers the one fixed 500 sentence; owner-only, caller-scoped 404, task routing 400s, reactivate refusals (503/429) as registered; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/tasks/route": {

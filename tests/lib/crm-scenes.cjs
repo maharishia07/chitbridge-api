@@ -149,7 +149,7 @@ function preOf(D, W, row) {
       return { rows: p[1].map((id) => ({ customer_identity_id: id })) };
     }
     if (/^UPDATE customer_list SET added_via = 'lead' WHERE/.test(sql)) return { rows: [] };
-    if (/^SELECT customer_identity_id AS id FROM customer_list WHERE owner_entity_id = .1 AND customer_identity_id = ANY/.test(sql)) return { rows: D.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ id: r.party_id })) };
+    if (/^SELECT customer_identity_id AS id FROM customer_list c WHERE c.owner_entity_id = .1 AND c.customer_identity_id = ANY/.test(sql)) return { rows: D.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ id: r.party_id })) };
     if (/^INSERT INTO memberships .* SELECT .1, .2, v.id/.test(sql)) return { rows: p[4].map((id, i) => ({ membership_id: 'mm' + i, item_id: id, kind: p[2], grp: p[5][i], at: '2026-10-12T09:00:00.000Z' })) };
     if (/^INSERT INTO party_interaction .* SELECT .1, v.pid, 'note'/.test(sql)) return { rows: [], rowCount: p[1].length };
     return null;

@@ -611,10 +611,11 @@ router.post('/walk-ins/add', auth, noKey, ...checked('POST /walk-ins/add'), asyn
 });
 
 /* ── CO1 privacy: contact consent (K2, b306) and the request register (K4 · K11, b307) — lib/privacy.js (PV, required at the top) ── */
-/** the party must be on this shop's list (the same test the log uses) */
-async function mine(h, owner, id) {
+/** the party must be on this shop's list (the same test the log uses), and still LIVE — a deleted party answers 404 like a stranger (CRM-247, books-store.partyOn).
+ *  `opt.removedOk`: the privacy-request log keeps taking a deleted party — hiding is not erasing, so the person's access / erasure request must still start its clock. */
+async function mine(h, owner, id, opt) {
   const on = await require('../lib/books-store').partyOn(h, owner, id);
-  if (!on.customer && !on.supplier) throw bad(NOT_YOUR_PARTY, 404, 'NOT_FOUND');
+  if (!on.customer && !on.supplier && !(opt && opt.removedOk && on.removed)) throw bad(NOT_YOUR_PARTY, 404, 'NOT_FOUND');
 }
 router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:id/contact-prefs'), async (req, res) => {
   try {
@@ -662,7 +663,7 @@ router.post('/privacy-requests', auth, noKey, ...checked('POST /privacy-requests
       b = req.body || {};
     if (b.party_id != null && !UUID.test(String(b.party_id))) throw bad(NOT_A_PARTY_ID, 400, 'BAD_ID');
     const r = await withEntity(owner, async (h) => {
-      if (b.party_id) await mine(h, owner, b.party_id);
+      if (b.party_id) await mine(h, owner, b.party_id, { removedOk: true });
       return PV.logRequest(h, owner, b, byOf(req));
     });
     res.status(201).json({ request: r });
