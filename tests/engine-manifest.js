@@ -218,6 +218,8 @@ const INFRA_LIBS = [
   'catalogue-search.js',
   /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */
   'party-contact.js',
+  /* CRM-247/248 (2026-11-09): the one SQL predicate for a deleted party (hidden_at). Decides no money, tax or rule. */
+  'party-live.js',
   /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
      the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
      No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */

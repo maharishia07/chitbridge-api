@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 101,
-  "meets": 537,
+  "partial": 98,
+  "meets": 540,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 286,
+    "applies": 285,
     "failing": 39
    },
    "rate_limited": {
@@ -299,7 +299,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1986,
+   "line": 1987,
    "hash": "a60976f3208018cd",
    "does": "",
    "errors": {
@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 711,
+   "line": 712,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -5422,11 +5422,12 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 821,
-   "hash": "9ef6b60dac2b6391",
+   "hash": "315608c54cc7f650",
    "does": "",
    "errors": {
     "count": 3,
     "statuses": [
+     400,
      401,
      403,
      404,
@@ -5483,6 +5484,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     404,
@@ -5507,11 +5509,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9ef6b60dac2b6391"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js",
@@ -8348,7 +8349,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1965,
+   "line": 1966,
    "hash": "fd244df69e65d2b2",
    "does": "",
    "errors": {
@@ -8443,7 +8444,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1939,
+   "line": 1940,
    "hash": "a2a86a8787fc122a",
    "does": "",
    "errors": {
@@ -8730,7 +8731,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2076,
+   "line": 2077,
    "hash": "6aa1a26163f26d86",
    "does": "",
    "errors": {
@@ -13141,7 +13142,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 619,
+   "line": 620,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -13215,7 +13216,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -13357,7 +13358,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 649,
+   "line": 650,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -13457,7 +13458,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 691,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -23547,7 +23548,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1059,
+   "line": 1053,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -23640,7 +23641,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1071,
+   "line": 1065,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -24928,12 +24929,13 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 98,
-   "hash": "3113f5dee04bf883",
+   "line": 99,
+   "hash": "7d620eeddb9eb249",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -24976,6 +24978,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -24999,7 +25002,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month or form GIVEN and unreadable is 400 DATE_INVALID / BAD_FORM (BAD_FORM registered by the reviewer), absent keeps this month and gstr1; 4 scenes in api-legacy, 400 in error tests; web sends only YYYY-MM and gstr1|gstr3b; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25132,11 +25135,12 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "8ab7064027271479",
+   "hash": "b0fb95da2f4e8a1c",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -25179,6 +25183,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -25201,7 +25206,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#957 expense_no_tax added",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30973,7 +30978,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 985,
+   "line": 979,
    "hash": "967b68cf080c3479",
    "does": "",
    "errors": {
@@ -37981,7 +37986,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1799,
-   "hash": "4a83f18d6fc594f8",
+   "hash": "2e07e6f1853975a0",
    "does": "",
    "errors": {
     "count": 2,
@@ -37990,6 +37995,7 @@
      401,
      403,
      404,
+     409,
      422,
      500
     ],
@@ -38042,6 +38048,7 @@
     401,
     403,
     404,
+    409,
     422,
     500
    ],
@@ -38063,7 +38070,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1072 stage 2b FIN-78: refusal 409 BOOKS_CONFLICT read from the carried party balance under the party lock in the writing transaction, replay (client_ref) answers before it, sentence names amount and currency and leaks nothing, four contract places present; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -38992,7 +38999,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1889,
+   "line": 1890,
    "hash": "9d34219e5166cb7b",
    "does": "",
    "errors": {
@@ -39404,13 +39411,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -39532,7 +39539,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2101,
+   "line": 2102,
    "hash": "26a9b0367a693d59",
    "does": "",
    "errors": {
@@ -39744,7 +39751,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2008,
+   "line": 2009,
    "hash": "fb327e3e6d43c1cf",
    "does": "",
    "errors": {
@@ -45156,7 +45163,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45189,7 +45196,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 700,
+   "line": 701,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45264,7 +45271,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45468,7 +45475,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45497,7 +45504,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 636,
+   "line": 637,
    "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
@@ -45570,7 +45577,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45677,7 +45684,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45914,8 +45921,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 659,
-   "hash": "21948004b6ff4f9d",
+   "line": 660,
+   "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
     "count": 0,
@@ -45987,7 +45994,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46016,7 +46023,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 673,
+   "line": 674,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46120,7 +46127,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 722,
+   "line": 723,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -54341,7 +54348,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 963,
-   "hash": "2e173065a6d44af7",
+   "hash": "6bb989bdfab21b84",
    "does": "",
    "errors": {
     "count": 0,
@@ -54356,9 +54363,7 @@
     "codes": []
    },
    "reads": [],
-   "writes": [
-    "customer_list"
-   ],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -54408,14 +54413,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57449,7 +57454,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 183,
+   "line": 185,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -57553,7 +57558,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 146,
+   "line": 148,
    "hash": "f06e00970724f9d6",
    "does": "",
    "errors": {
@@ -61837,11 +61842,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d21dfa8eab8017d4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler re-read after PPL-45 (#1058): the dispute-handler clear runs inside the removal transaction, a failure rolls the removal back and answers the one fixed 500 sentence; owner-only, caller-scoped 404, task routing 400s, reactivate refusals (503/429) as registered; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",

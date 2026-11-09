@@ -30,7 +30,7 @@ const customerAuth = require('../middleware/customer-auth'); // T2.4 — the sto
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's whole-list reads */
-const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
+const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode, decoyAttempt } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify'); // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build'); // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container'); // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
@@ -1883,8 +1883,9 @@ router.post(
  * lib/otp verifyOtp, untouched.
  */
 async function codeHolds(row, typed, names) {
-  if (!row) return false;
-  return (await verifyOtp(query, row, typed, { names })).ok; // SEC1: the typed contact, for TESTER_NAMES
+  const verdict = row ? await verifyOtp(query, row, typed, { names }) : { ok: false }; // SEC1: the typed contact, for TESTER_NAMES
+  if (!verdict.ok && !verdict.counted) await decoyAttempt(query); /* SEC-139: an unknown contact, a locked row and an expired code spend the round trip a wrong code does, and write no row */
+  return verdict.ok;
 }
 router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {

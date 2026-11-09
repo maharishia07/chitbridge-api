@@ -561,7 +561,9 @@ const GUARDS = [
   'request-log.test.cjs', // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
   'signin-contact.test.cjs', // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
   'signin-enumeration.test.cjs', // SEC-139: before a secret is proven an unknown account, a known one sent no secret and a wrong secret get ONE answer (and about the same time) on actors/login, entities/verify, signin/verify; no CHOOSE_IDENTITY list at verify; check-login one constant answer
+  'sec-desk-why-and-verify-trips.test.cjs', // SEC-139 class + S8: a routing fault gives route.why one fixed sentence (no exception text in preview or raise); login/verify answers unknown, wrong, locked and expired alike with the same DB round trips
   'sec-130a-duplicate-email.test.cjs', // ⭐ SEC-130 (A): a duplicate e-mail answers a stranger the same as a free one (register, party PATCH); the owner keeps honest words about their own list
+  'party-live.test.cjs', // CRM-247/248: "deleted" is hidden_at, read in ONE place (lib/party-live): partyOn live/removed, an import never matches a deleted party's phone or merges into its name, refused like a stranger
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
@@ -791,6 +793,7 @@ const GUARDS = [
   'api-strict-input-status.test.cjs', // U1 (8 Nov, was run by no CI job): PINS what an unknown body key answers, per route, on the real app (the cases of tools/api-contract-tests.cjs: stand-in database, r
   'bell-delivery.test.js', // U1 (8 Nov, was run by no CI job): A BELL IS WATCHED FOR DELIVERY, NOT FOR CONNECTION ([TILL-167], BACKLOG TILL-146).
   'books-date-given.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-274: a date the caller GIVES is read once, by books-period.dateGiven (dateOf and routes/books.js dateQ both go through it).
+  'books-month-given.test.cjs', // FIN-103 / ACC-333 / ACC-334: a given date, month or GSTR form is read once (books-period.dateGiven / monthGiven, years 1900-2100); a bad one is a 400, never a 500 or a default.
   'cat-258-unpriced-bands.test.cjs', // U1 (8 Nov, was run by no CI job): CAT-258: an UNPRICED tiered line is "no price set", never a free band, and no bill prices it at 0.
   'ctp-query-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): API-7 (S34): the answer to a signed CTP question names its keys.
   'ctr-186-till-deliver-to.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctr-186-till-deliver-to.test.cjs — CTR-186: THE COUNTER RECORDS WHERE THE GOODS GO.
