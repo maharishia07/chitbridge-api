@@ -9,15 +9,15 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 157 | `list` | `amend.js` |  |
-| 127 | `rows` | `crm.js` | still in them: |
+| 158 | `list` | `amend.js` |  |
+| 128 | `rows` | `crm.js` | still in them: |
 | 117 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 111 | `read` | `books-cashflow.js` | Trips: |
+| 112 | `read` | `books-cashflow.js` | Trips: |
 | 102 | `answer` | `availability.js` | from March; then nearest. |
-| 93 | `money` | `bill-privacy.js` |  |
-| 83 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 95 | `money` | `bill-privacy.js` |  |
+| 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -31,9 +31,9 @@ of file each thing is; this says what already does the job.
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 64 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
+| 63 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `here` | `screen-id.js` |  |
-| 62 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 60 | `items` | `books-store.js` | PERF1: |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -44,23 +44,23 @@ of file each thing is; this says what already does the job.
 | 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 51 | `toast` | `accounts-shell.js` |  |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 51 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
-| 49 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 48 | `again` | `signin-ui.js` |  |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 46 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
+| 47 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 45 | `read` | `cap-print.js` |  |
 | 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 44 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 43 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 42 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 41 | `rules` | `docnumber.js` | the rule set for a country — |
 | 40 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 40 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
-| 40 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `host` | `chit-sheet.js` |  |
 | 39 | `status` | `books-engines.js` | what the health screen says about the engines — |
@@ -110,10 +110,10 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `view` | `country-ready.js` |  |
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
+| 25 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
-| 24 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
@@ -187,6 +187,7 @@ of file each thing is; this says what already does the job.
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 15 | `where` | `istest.js` | READING is_test is fine and stays — |
+| 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 14 | `cols` | `cap-catalogue.js` |  |
@@ -196,7 +197,6 @@ of file each thing is; this says what already does the job.
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
-| 14 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 14 | `edit` | `person-session.js` |  |
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 14 | `fault` | `speech.js` | const SPEECH_FAULT = 'Speech could not be read just now — |

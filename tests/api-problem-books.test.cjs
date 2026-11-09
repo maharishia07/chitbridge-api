@@ -261,6 +261,8 @@ const WRITES_READY = [
   X('entry-posted-moved', 'POST /api/books/entries', 200, { body: { narration: 'Rent', date: '2026-09-28', lines: [] }, patch: { books: { postEntry: async () => JOURNAL_MOVED } } }),
   X('entry-replayed', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [], client_ref: 'c1' }, patch: { books: { postEntry: async () => DUPLICATE } } }),
   X('entry-ledger-off', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [] }, patch: { books: { postEntry: async () => OFF } } }),
+  /* CUR-1 · ACC-332: a journal line that names another currency than the shop's is refused 409 CURRENCY_MISMATCH, nothing posted */
+  X('entry-line-other-currency', 'POST /api/books/entries', 409, { body: { narration: 'Rent', lines: [{ account: '5100', dr_minor: 10000, currency: 'USD' }, { account: '1000', cr_minor: 10000 }] } }),
   X('entry-reversed', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL } } }),
   X('entry-reversed-reopens', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL_REOPENS } } }),
   X('write-off-posted', 'POST /api/books/write-off', 200, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => JOURNAL } } }),
