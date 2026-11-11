@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 97,
-  "meets": 541,
+  "partial": 92,
+  "meets": 546,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -8031,13 +8031,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23317,11 +23317,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2c73efd115705c67"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -52540,13 +52539,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -53806,11 +53805,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dba1915afac8678d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -64227,11 +64225,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dec2d5f5962bac59"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-country.js"
    ],
