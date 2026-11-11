@@ -52839,11 +52839,11 @@
      "scenario": "list-db-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -52876,11 +52876,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -52888,23 +52888,23 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
      "scenario": "thrown-409-with-unregistered-code",
      "status": 409,
      "body_keys": {
-      "error": "SOMETHING_ELSE",
-      "message": "A relayed sentence."
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "SOMETHING_ELSE",
-      "message": "A relayed sentence."
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -53091,11 +53091,11 @@
      "scenario": "code-read-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -53128,11 +53128,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53140,11 +53140,11 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53409,11 +53409,11 @@
      "scenario": "verify-stamp-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "40001",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "40001",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -53434,11 +53434,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53446,11 +53446,11 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53725,11 +53725,11 @@
      "scenario": "put-db-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "23514",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "23514",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -53774,11 +53774,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53786,11 +53786,11 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53798,11 +53798,11 @@
      "status": 503,
      "body_keys": {
       "error": "VAULT_ENC_UNCONFIGURED",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "VAULT_ENC_UNCONFIGURED",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {

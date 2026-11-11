@@ -95,9 +95,11 @@ function checkWords() {
   const plain = words.faultOf(new Error(SECRET_SQL), req);
   check('faultOf: an error with no status is a 500 INTERNAL, the generic sentence, nothing of its cause', plain.status === 500 && plain.code === 'INTERNAL' && sameValue(plain.legacy, { error: 'Server error', message: SAFE }) && !LEAK.test(JSON.stringify(plain)), plain);
   const coded = words.faultOf(sqlError('42501'), req);
-  check('faultOf: the error\'s own `code` is still the old `error` key (FROZEN; listed for cb-security), the sentence stays generic', coded.status === 500 && coded.legacy.error === '42501' && coded.legacy.message === SAFE && coded.detail !== '42501', coded);
+  check('faultOf: a database code is NEVER the old `error` key any more (closed 11 Nov 2026, the cb-security finding): "Server error", the sentence generic', coded.status === 500 && coded.legacy.error === 'Server error' && coded.legacy.message === SAFE && !JSON.stringify(coded).includes('42501'), coded);
   const unreachable = words.faultOf(Object.assign(new Error(RELAYED_WORDS), { status: 503 }), req);
-  check('faultOf: a thrown 503 relays its own words in the old `message` (FROZEN), the Problem detail stays generic', unreachable.status === 503 && unreachable.code === 'INTERNAL' && unreachable.legacy.message === RELAYED_WORDS && unreachable.detail !== RELAYED_WORDS, unreachable);
+  check('faultOf: a thrown 503 no longer relays its own words anywhere: the generic sentence in `message` and in the Problem detail', unreachable.status === 503 && unreachable.code === 'INTERNAL' && unreachable.legacy.message === SAFE && !JSON.stringify(unreachable).includes(RELAYED_WORDS), unreachable);
+  const foreign = words.faultOf(Object.assign(new Error(RELAYED_WORDS), { status: 409, code: 'SOMETHING_ELSE' }), req);
+  check('faultOf: a 4xx whose code is not ours keeps its status under IDOC_REFUSED and says only the generic sentence; its words and its code are not echoed', foreign.status === 409 && foreign.code === 'IDOC_REFUSED' && foreign.legacy.error === 'Server error' && foreign.legacy.message === SAFE && !JSON.stringify(foreign).includes(RELAYED_WORDS) && !JSON.stringify(foreign).includes('SOMETHING_ELSE'), foreign);
   const odd = words.faultOf(Object.assign(new Error('x'), { status: 'soon' }), req);
   check('faultOf: a status that is not an HTTP failure is a 500', odd.status === 500, odd);
   const library = words.libraryRefusal({ status: 429, body: { error: 'Locked', code: 'OTP_LOCKED', message: 'Too many incorrect attempts — request a new code.' } });
@@ -140,9 +142,9 @@ function checkContractShape(routes, router) {
   check('POST /verify declares 400 and 429 (a computed status: both literals written) beside the 404 and the 403', [400, 403, 404, 429, 503].every((status) => declared(KEYS.VERIFY).includes(status)), declared(KEYS.VERIFY));
 }
 
-/** a library that raises an error carrying a status: the status and the old keys are kept, and the words are relayed whatever the status (the old catch); none carries foreign words today */
+/** a library that raises an error carrying a status: the status and the old keys are kept, and the words are NOT relayed (closed 11 Nov 2026): the status is kept, the sentence is the generic one */
 async function checkCarriedStatus(port, scenarios) {
-  console.log('\n-- a status a library carries is passed on, its words relayed, as it always was --');
+  console.log('\n-- a status a library carries is passed on, its words kept out of the answer --');
   const frozenAll = legacyRoutes();
   const modules = sources();
   for (const scenario of scenarios) {
@@ -157,7 +159,7 @@ async function checkCarriedStatus(port, scenarios) {
     const frozen = (frozenAll[scenario.route] || { answers: [] }).answers.find((one) => one.scenario === scenario.id);
     const keys = frozen ? Object.keys(frozen.fixture) : [];
     check(label + ': the status is passed on (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.text]);
-    check(label + ': the old keys are kept and the words are relayed', answer.json && answer.json.message === scenario.says && typeof answer.json.error === 'string', answer.json);
+    check(label + ': the old keys are kept and only the generic sentence is said', answer.json && answer.json.message === SAFE && !JSON.stringify(answer.json).includes(RELAYED_WORDS) && typeof answer.json.error === 'string', answer.json);
     check(label + ': the answer is a Problem with a code', answer.json && /problem\+json/.test(answer.type) && typeof answer.json.code === 'string' && answer.json.status === answer.status, answer.type);
     check(label + ': it was frozen before the sweep, status and every old key in order', !!frozen && frozen.status === answer.status && sameValue(keys.map((name) => answer.json[name]), keys.map((name) => frozen.fixture[name])) && sameValue(Object.keys(answer.json).slice(0, keys.length), keys), frozen);
   }
