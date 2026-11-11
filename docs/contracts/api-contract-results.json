@@ -2475,7 +2475,7 @@
    ]
   },
   "POST /api/chits/:chit_id/costs": {
-   "cases": 4,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2667,7 +2667,7 @@
    ]
   },
   "POST /api/chits/send": {
-   "cases": 6,
+   "cases": 18,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3059,7 +3059,7 @@
    ]
   },
   "POST /api/governance/conformance": {
-   "cases": 2,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3859,7 +3859,7 @@
    ]
   },
   "POST /api/testing/results": {
-   "cases": 2,
+   "cases": 14,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3867,7 +3867,7 @@
    ]
   },
   "POST /api/testing/results/junit": {
-   "cases": 2,
+   "cases": 11,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4379,7 +4379,7 @@
    ]
   },
   "PUT /api/testing/cmdb/:ci": {
-   "cases": 4,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

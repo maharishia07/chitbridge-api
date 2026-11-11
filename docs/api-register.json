@@ -5,16 +5,16 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 40,
-  "meets": 599,
+  "partial": 41,
+  "meets": 598,
   "columns": {
    "strict_input": {
-    "applies": 329,
-    "failing": 5
+    "applies": 325,
+    "failing": 1
    },
    "output_allowlist": {
     "applies": 639,
-    "failing": 4
+    "failing": 3
    },
    "foreign_id_404": {
     "applies": 202,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 639,
-    "failing": 15
+    "failing": 8
    }
   },
   "reported": {
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "tolerant_outward": 22,
+  "tolerant_outward": 26,
   "output_allowlist_from_recordings": 145
  },
  "machine_columns": [
@@ -1707,7 +1707,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2808,7 +2808,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 700,
-   "hash": "245eb03a3418e641",
+   "hash": "da8032c1771607db",
    "does": "",
    "errors": {
     "count": 0,
@@ -2831,9 +2831,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -19021,7 +19021,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-iddocs.js 2/106"
+     "cap-iddocs.js 2/10"
     ]
    },
    "measured": {
@@ -32140,7 +32140,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -32182,7 +32182,7 @@
     "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -39987,7 +39987,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -40029,8 +40029,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -40287,7 +40287,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -40329,8 +40329,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -40490,7 +40490,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -40532,8 +40532,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -40981,7 +40981,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4213,
-   "hash": "f07c1d1194dee405",
+   "hash": "9cb42a8345e6c19c",
    "does": "",
    "errors": {
     "count": 0,
@@ -41051,10 +41051,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9cb42a8345e6c19c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43419,7 +43420,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 408,
-   "hash": "d43294ebda426ddd",
+   "hash": "b68ccb2d02c48523",
    "does": "",
    "errors": {
     "count": 0,
@@ -43494,10 +43495,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b68ccb2d02c48523"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-readiness.js",
@@ -46345,7 +46347,7 @@
    "owner_agent": "cb-security",
    "file": "routes/csp-report.js",
    "line": 82,
-   "hash": "89893d50e45000c9",
+   "hash": "db1572b136f913fc",
    "does": "",
    "errors": {
     "count": 0,
@@ -46371,8 +46373,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -48523,7 +48525,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 246,
-   "hash": "7369a8d143536622",
+   "hash": "4c35f4d6a5970028",
    "does": "",
    "errors": {
     "count": 0,
@@ -48552,7 +48554,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -48560,7 +48562,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -48577,6 +48579,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the handler takes the whole body as the thing to check when data is absent, so the body is the record; scope is text and data an object, a junk value is refused 422, the key itself is never stored"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -48593,7 +48598,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7369a8d143536622"
+    "stale_since": "4c35f4d6a5970028"
    },
    "status": "partial",
    "callers": [],
@@ -49192,7 +49197,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -49240,10 +49245,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 8,
     "screens": [
-     "cap-iddocs.js 50/106"
+     "cap-iddocs.js 2/10"
     ]
    },
    "measured": {
@@ -49307,7 +49312,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -49355,10 +49360,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 8,
     "screens": [
-     "cap-iddocs.js 50/106"
+     "cap-iddocs.js 2/10"
     ]
    },
    "measured": {
@@ -56483,7 +56488,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 957,
+   "line": 961,
    "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
@@ -56673,7 +56678,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 959,
+   "line": 963,
    "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
@@ -56970,7 +56975,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 958,
+   "line": 962,
    "hash": "1405487d7309082d",
    "does": "",
    "errors": {
@@ -57923,7 +57928,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -57966,8 +57971,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 10,
     "screens": []
    },
    "measured": {
@@ -58326,7 +58331,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -58368,7 +58373,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 1,
     "wire": null,
     "screens": []
    },
@@ -58789,7 +58794,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1435,
-   "hash": "3fa30109f7c3575d",
+   "hash": "a43d32f3ef0358f7",
    "does": "",
    "errors": {
     "count": 0,
@@ -58822,7 +58827,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -58830,7 +58835,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -58847,6 +58852,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the Testing screen and the CI key post a result or a run of them; an unknown key is ignored and never stored, every named key is text or null, a junk value is refused 400 in the board's two keys"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": false,
@@ -58863,7 +58871,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3fa30109f7c3575d"
+    "stale_since": "a43d32f3ef0358f7"
    },
    "status": "partial",
    "callers": [],
@@ -58888,7 +58896,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1613,
-   "hash": "f3c36632f8490c7d",
+   "hash": "505771ada9129966",
    "does": "",
    "errors": {
     "count": 0,
@@ -58921,7 +58929,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -58929,7 +58937,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -58946,6 +58954,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the JUnit report travels as the text of xml beside run options; the CI key and the toolset post it from older and newer scripts, so an unknown key is ignored; xml and every option are text, a junk value is refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": false,
@@ -58962,7 +58973,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f3c36632f8490c7d"
+    "stale_since": "505771ada9129966"
    },
    "status": "partial",
    "callers": [],
@@ -64681,7 +64692,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-iddocs.js 4/106",
+     "cap-iddocs.js 4/10",
      "cap-workforce.js 4/19"
     ]
    },
@@ -65427,7 +65438,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1136,
-   "hash": "3f9fb8b5cb7e82ea",
+   "hash": "0cb0f2c65965c8bf",
    "does": "",
    "errors": {
     "count": 0,
@@ -65464,7 +65475,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -65472,7 +65483,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -65490,6 +65501,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the body IS the CMDB record (lib/cmdb.js shape); a key beyond system, title and source travels inside the record, is never acted on, and the record is capped at 64 KB; the three named keys are typed, a junk value is refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
