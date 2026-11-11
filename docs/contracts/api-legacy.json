@@ -59031,12 +59031,12 @@
      "body_keys": {
       "error": "Idempotency conflict",
       "code": "IDEMPOTENCY_CONFLICT",
-      "message": "This key or document reference was already sent with different contents. Send the changed document under a new key."
+      "message": "This Idempotency-Key was already used with a different request."
      },
      "fixture": {
       "error": "Idempotency conflict",
       "code": "IDEMPOTENCY_CONFLICT",
-      "message": "This key or document reference was already sent with different contents. Send the changed document under a new key."
+      "message": "This Idempotency-Key was already used with a different request."
      }
     },
     {
@@ -59045,12 +59045,12 @@
      "body_keys": {
       "error": "In progress",
       "code": "IDEMPOTENCY_IN_PROGRESS",
-      "message": "The first try of this document is still being handled. Keep it and send it again in a moment."
+      "message": "A request with this Idempotency-Key is still being processed."
      },
      "fixture": {
       "error": "In progress",
       "code": "IDEMPOTENCY_IN_PROGRESS",
-      "message": "The first try of this document is still being handled. Keep it and send it again in a moment."
+      "message": "A request with this Idempotency-Key is still being processed."
      }
     }
    ]

@@ -492,7 +492,7 @@ async function emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, copyTo, p
 async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc, idempotencyKey }) {
   const payload_hash = hashPayload(payload); // the ONLY trace of the raw document we keep
   const claim = await claimReceipt({ entityId: entity_id, actorId: actor.identity_id, docType: doc_type, docRef: doc_ref, payloadHash: payload_hash, idempotencyKey });
-  if (claim.state === 'conflict' || claim.state === 'in_progress') return { state: claim.state, receipt_id: null, payload_hash, outcome: claim.state, chit_id: null, idempotent: true, note: null };
+  if (['conflict', 'in_progress', 'unreadable'].includes(claim.state)) return { state: claim.state, receipt_id: null, payload_hash, outcome: claim.state, chit_id: null, idempotent: true, note: null };
   if (claim.state === 'duplicate') {
     const held = claim.held;
     return { receipt_id: held.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: held.chit_id || null, idempotent: true, note: null };
@@ -519,6 +519,7 @@ async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, do
 function erpReceiptRefusal(out, actor) {
   if (out.state === 'conflict') return { status: 422, ...words.keyReused() };
   if (out.state === 'in_progress') return { status: 409, ...words.receiptInProgress() };
+  if (out.state === 'unreadable') return { status: 503, ...words.chitNotDelivered() }; /* the receipt that blocked the claim cannot be read back: retryable, never a 2xx */
   if (out.outcome !== 'failed') return null;
   logger.error('connectors.erp-ingest: outcome chit not delivered, the agent keeps the document', { actor: actor.identity_id, why: String(out.emit_error && out.emit_error.message).slice(0, 200) });
   const known = require('../lib/knownerr').known(out.emit_error);

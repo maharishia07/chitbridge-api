@@ -13,3 +13,4 @@ Source: a critic review of routes/connectors.js (processErpDocument) and docs/cr
 - doc_ref as the key turns a same-ref different-body push into 422; the agent must park such an event, not retry it.
 - Twin: no web change.
 (e) VERDICT: BUILD WITH CHANGES (the key column; reuse CHIT_NOT_DELIVERED and IDEMPOTENCY_CONFLICT; keep the old behaviour until b852 has run).
+- b853 (11 Nov, critic): the old unique index drops in its own file, 2 minutes or one restart after b852, so an instance with a cached 'no column' answer never writes a row the new index cannot see.

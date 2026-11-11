@@ -17,10 +17,10 @@ const API = path.join(__dirname, '..');
 process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test'; process.env.JWT_SECRET = 'erp-idem-test';
 const SHOP = '11111111-1111-4111-8111-111111111111', ACTOR = '22222222-2222-4222-8222-222222222222', PARTY = '33333333-3333-4333-8333-333333333333';
 const ROUTE = 'POST /api/connectors/erp-ingest';
-const STALE_MS = 6 * 60 * 1000;
+const STALE_MS = (require(path.join(API, 'middleware', 'idempotency')).IN_PROGRESS_STALE_MINUTES + 1) * 60 * 1000; /* one minute past the gate's own limit: the ONE stale limit */
 
 /* ── the stand-in database: connector_receipt with its unique key, and what the door reads around it ── */
-let receipts = [], keyed = true, reclaimSql = '';
+let receipts = [], keyed = true, reclaimSql = '', hideHeld = false;
 const tidy = (sql) => String(sql).replace(/\s+/g, ' ').trim();
 const sameKey = (row, actor, column, value) => row.actor_id === actor && row[column] === value;
 function insertReceipt(p, withKey) {
@@ -33,7 +33,7 @@ function insertReceipt(p, withKey) {
 function receiptRows(s, p) {
   if (/^INSERT INTO connector_receipt/.test(s)) return insertReceipt(p, /idem_key\)/.test(s));
   const column = /AND idem_key = \$2/.test(s) ? 'idem_key' : 'payload_hash';
-  if (/^SELECT receipt_id, outcome, chit_id, payload_hash, received_at FROM connector_receipt/.test(s)) return receipts.filter((r) => sameKey(r, p[0], column, p[1])).map((r) => ({ ...r }));
+  if (/^SELECT receipt_id, outcome, chit_id, payload_hash, received_at FROM connector_receipt/.test(s)) return hideHeld ? [] : receipts.filter((r) => sameKey(r, p[0], column, p[1])).map((r) => ({ ...r }));
   if (/^UPDATE connector_receipt SET outcome = 'pending'/.test(s)) {
     reclaimSql = s; /* the stand-in applies the rule itself, so K4b reads the statement's own words */
     const hit = receipts.filter((r) => sameKey(r, p[0], column, p[1]) && (r.outcome === 'failed' || (r.outcome === 'pending' && r.received_at < p[3])));
@@ -81,7 +81,7 @@ function send(server, body, headers) {
     req.on('error', reject); req.write(data); req.end();
   });
 }
-const fresh = () => { receipts = []; chits = []; deliverFails = null; keyed = true; };
+const fresh = () => { receipts = []; chits = []; deliverFails = null; keyed = true; hideHeld = false; };
 const doc = (amount, extra) => Object.assign({ payload: { doc_type: 'invoice', amount }, to: PARTY }, extra || {});
 const hashOf = (payload) => crypto.createHash('sha256').update(require(path.join(API, 'lib', 'canon')).canon(payload)).digest('hex');
 
@@ -122,6 +122,13 @@ const hashOf = (payload) => crypto.createHash('sha256').update(require(path.join
     const refOther = await send(server, doc(555, { doc_ref: 'INV-1' }));
     ok('K6b the same doc_ref with a different body → 422 as well', refOther.status === 422 && refOther.body.code === 'IDEMPOTENCY_CONFLICT' && chits.length === 1, refOther);
 
+    fresh(); deliverFails = new Error('down'); await send(server, doc(100)); deliverFails = null;
+    const [raceA, raceB] = await Promise.all([send(server, doc(100)), send(server, doc(100))]);
+    ok('K4c two retries of a failed document at once: ONE chit is made, the other retry is told to keep it (409) or finds the done receipt, never a second chit', chits.length === 1 && [raceA, raceB].some((r) => r.status === 200 && r.body.outcome === 'processed') && [raceA, raceB].every((r) => r.status === 200 || r.status === 409) && [raceA, raceB].every((r) => !(r.status === 200 && r.body.outcome === 'duplicate' && !r.body.chit_id)), { raceA, raceB, chits });
+    fresh(); receipts.push({ receipt_id: 'x', entity_id: SHOP, actor_id: ACTOR, doc_type: 'invoice', doc_ref: null, payload_hash: hashOf(doc(100).payload), outcome: 'processed', chit_id: 'c', received_at: new Date(), idem_key: 'p:' + hashOf(doc(100).payload) }); hideHeld = true;
+    const unreadable = await send(server, doc(100));
+    ok('K7 the receipt that blocked the claim cannot be read back: 503 (retryable), never a 200 duplicate of nothing; no chit', unreadable.status === 503 && unreadable.body.code === 'CHIT_NOT_DELIVERED' && chits.length === 0, unreadable);
+    fresh();
     console.log('— L · before b852 (no idem_key column) —');
     fresh(); keyed = false; deliverFails = new Error('down');
     const legacyFail = await send(server, doc(100));
@@ -153,6 +160,7 @@ const hashOf = (payload) => crypto.createHash('sha256').update(require(path.join
     const pick = (more) => identityOf(Object.assign({ keyed: true, docType: 'invoice', payloadHash: 'abc' }, more));
     ok('N3 identityOf: the header beats doc_ref, doc_ref beats the hash, the hash is the last resort', pick({ idempotencyKey: 'k', docRef: 'R' }).source === 'header' && pick({ docRef: 'R' }).source === 'doc_ref' && pick({}).source === 'hash' && pick({}).value === 'p:abc');
     ok('N4 identityOf fails closed before b852: only the payload hash can identify a document, a header and a doc_ref are not trusted as a key then', pick({ keyed: false, idempotencyKey: 'k', docRef: 'R' }).column === 'payload_hash');
+    ok('N6 the stale limit and the 409/422 words are the idempotency gate own (no second constant, no second sentence)', require(path.join(API, 'lib', 'erp-receipt')).PENDING_STALE_MINUTES === require(path.join(API, 'middleware', 'idempotency')).IN_PROGRESS_STALE_MINUTES && other.body.message === require(path.join(API, 'middleware', 'idempotency')).KEY_CONFLICT.message && busy.body.message === require(path.join(API, 'middleware', 'idempotency')).KEY_IN_PROGRESS.message, { conflict: other.body.message, busy: busy.body.message });
     ok('N5 identityOf: the key is a hash, never the raw header or reference, and two doc_types with one reference differ', !/order-77/.test(pick({ idempotencyKey: 'order-77' }).value) && pick({ docRef: 'R' }).value !== pick({ docRef: 'R', docType: 'credit_note' }).value);
   } finally { server.close(); }
   console.log('\n' + (fail ? 'FAIL' : 'ok') + ' — ' + pass + ' checks passed, ' + fail + ' failed');
