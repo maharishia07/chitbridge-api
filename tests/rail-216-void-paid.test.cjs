@@ -49,7 +49,7 @@ const IDEM = { n: 0 };
     if (/^SELECT purpose, sender_entity_id, business_json FROM chit_header/.test(s)) return HEAD[p[0]] ? [{ purpose: HEAD[p[0]].purpose, sender_entity_id: HEAD[p[0]].sender, business_json: copyBusiness(HEAD[p[0]], p[1]) }] : [];
     if (/^SELECT business_json->'payment' AS payment FROM chit_header/.test(s)) return HEAD[p[0]] ? [{ payment: copyBusiness(HEAD[p[0]], p[1]).payment || null }] : [];
     if (/^SELECT 1 FROM state_log WHERE chit_id/.test(s)) return LOG.filter((r) => r.chit_id === p[0] && r.entity_id === p[1] && r.action === 'payment_marked').slice(0, 1).map(() => ({ '?column?': 1 }));
-    if (/^SELECT chit_log_targets\(/.test(s)) { LOG.push({ chit_id: p[0], entity_id: p[1], action: p[2] }); return [{ chit_log_targets: null }]; }
+    if (/^SELECT chit_log_targets\(/.test(s)) { LOG.push({ chit_id: p[0], entity_id: p[1], action: p[2], actor: p[3] }); return [{ chit_log_targets: null }]; }
     if (/^INSERT INTO state_log/.test(s)) { LOG.push({ chit_id: p[0], entity_id: p[1], action: p[2] }); return []; }
     if (/jsonb_build_object\('payment'/.test(s)) { const c = HEAD[p[1]]; c.buyerBusiness = Object.assign({}, c.buyerBusiness, { payment: JSON.parse(p[0]) }); return [{ chit_id: p[1] }]; }
     if (/- 'payment' WHERE chit_id/.test(s)) { const c = HEAD[p[0]]; delete (c.buyerBusiness || {}).payment; return [{ chit_id: p[0] }]; }
@@ -171,6 +171,18 @@ const IDEM = { n: 0 };
   const gateSrc = fs.readFileSync(path.join(H.API, 'lib', 'rail-status.js'), 'utf8'), routeSrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
   const voidSrc = routeSrc.slice(routeSrc.indexOf("router.put('/:chit_id/void'"), routeSrc.indexOf('// POST /chits/assign-bulk'));
   t('statusGate asks paidRefusal; the void route only words the verdict (no paidFactsOf in the route, no second status path)', /paidRefusal\(db, entity_id, chit_id/.test(gateSrc) && !/paidFactsOf/.test(voidSrc) && !/SET current_status/.test(voidSrc));
+
+  console.log('\n— 8 · a buyer whose payment folder (R-1400) is restricted still counts; the marker is not news —');
+  const policy = require(path.join(H.API, 'lib', 'policy')); const policyGet = policy.get;
+  policy.get = async () => { throw new Error('the folder level must not be consulted by the paid notice'); };
+  inv = await makeInvoice(11, 'invoice');
+  const payR = await BUYER_PAYS(inv.chit, 77);
+  v = await VOID(inv.chit);
+  policy.get = policyGet;
+  t('the buyer\'s Mark-paid delivers the marker whatever the folder level (policy never read) → void 409 paid', payR.status === 200 && v.status === 409 && v.body.why === 'paid', payR.status + '/' + v.status);
+  const notifSrc = fs.readFileSync(path.join(H.API, 'routes', 'notifications.js'), 'utf8');
+  t('the marker carries no actor (action_by_identity_id NULL), so the bell feed and badge never count it', LOG.some((x) => x.action === 'payment_marked') && LOG.filter((x) => x.action === 'payment_marked').every((x) => x.actor === null));
+  t('the seller\'s detail timeline leaves the marker out', /action NOT IN \('read', 'payment_marked'\)/.test(routeSrc));
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');

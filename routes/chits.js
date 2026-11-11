@@ -3756,7 +3756,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
         `SELECT action, action_by_identity_id, action_by_display_name, previous_status,
                 new_status, detail, created_at
          FROM state_log
-         WHERE chit_id = $1 AND entity_id = $2 AND action != 'read'
+         WHERE chit_id = $1 AND entity_id = $2 AND action NOT IN ('read', 'payment_marked') /* RAIL-216: the payment marker is the withdraw check's fact, not a history line */
          ORDER BY created_at ASC`,
         [chit_id, entity_id]
       );
@@ -5121,7 +5121,7 @@ async function markChitPaid(db, press) {
     [JSON.stringify(payment), chit_id, entity_id]
   );
   if (!marked.rows.length) return null;
-  await chitPaid.tellPaid(db, entity_id, chit_id, { id: payment.by }); /* RAIL-216: the sender's own timeline learns it (its withdraw asks) */
+  await chitPaid.tellPaid(db, entity_id, chit_id); /* RAIL-216: the sender's own timeline learns it (its withdraw asks) */
   return { books };
 }
 /** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
