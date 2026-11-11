@@ -419,6 +419,9 @@
   "GET /api/events/stats": {
    "output_allowlist": true
   },
+  "GET /api/facts/:card": {
+   "output_allowlist": true
+  },
   "GET /api/folders": {
    "output_allowlist": true
   },
