@@ -146,6 +146,7 @@
 </div>
 
 <main>
+  <div id="nomoney" role="status" data-testid="promo-no-country" style="margin:8px 12px;padding:10px 14px;border-radius:8px;background:#FFF4D6;color:#5A3E00;font:600 15px system-ui,sans-serif" hidden></div>
   <!--
     ⭐⭐⭐ PAIRING, FROM THE TELEVISION'S SIDE. Athi, 2026-09-09: *"please add pairing so we can test 1 to many devices."*
     A TV remote is a D-pad and an on-screen keyboard. Six characters is about the most anyone will type on one, and it is the
@@ -385,6 +386,7 @@ async function readShop(){
     if (kept) { try { S = JSON.parse(kept); } catch (_) { S = null; } }
   }
   document.getElementById('shopname').textContent = S ? ((S.shop && S.shop.name) || 'this shop') : 'could not read the shop';
+  paintNoMoney();
 }
 
 /* ═══ 1 · WHAT IS WORTH SHOWING — the rules, in one place ═════════════════════════════════════════════════════
@@ -454,21 +456,33 @@ function hourBand(){ var h = new Date().getHours();
  * wrong price, while a code beside a number is merely plain.
  */
 function money(n){
-  var v = Number(n) || 0, cur = (S && S.shop && S.shop.currency) || 'INR';
+  var v = Number(n) || 0, cur = (S && S.shop && S.shop.currency) || '';
+  if (!cur) return '—';   /* CTRY-72: a shop with no money prints no figure, never rupees (the page says why: noMoneyWords) */
   if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(v, cur); } catch (_) {} }
   return cur + ' ' + v.toLocaleString(undefined, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
-function live(){ return ((S && S.items) || []).filter(function(i){ return i.avail !== 'unavailable' && Number(i.price) > 0; }); }
+/* CTRY-72: a shop with no stated money (no country) advertises no price; the banner above the stage says why (the till snapshot's shop.money_why, the ONE sentence) */
+function noMoneyWords(){
+  if (!S || !S.shop || S.shop.currency) return '';
+  return (S.shop.money_why && S.shop.money_why.why) || 'No money is set for this shop.';
+}
+function paintNoMoney(){
+  var box = document.getElementById('nomoney'), words = noMoneyWords();
+  if (!box) return;
+  box.hidden = !words;
+  if (words) box.innerHTML = esc(words) + ' <a href="/settings.html#/country" data-testid="promo-country-link" style="color:inherit">Country setup</a>';
+}
+function live(){ if (noMoneyWords()) return []; return ((S && S.items) || []).filter(function(i){ return i.avail !== 'unavailable' && Number(i.price) > 0; }); }
 
 /* the offer engine's own sentence for a product — never a second opinion about what an offer says */
 function offersOf(i){
   if (!window.CBOffers || !S) return [];
   try {
     return CBOffers.forLine({ key:i.item_id, item_id:i.item_id, sku:i.code, category:i.category, qty:1, unitPrice:Number(i.price)||0 },
-      (S.offers || []), { currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() }) || [];
+      (S.offers || []), { currency:(S.shop && S.shop.currency) || '', now:new Date().toISOString() }) || [];
   } catch (_) { return []; }
 }
 function offerWords(o){
-  try { var p = CBOffers.promise(o, { currency:(S.shop && S.shop.currency)||'INR', now:new Date(), money:money }); if (p) return p; } catch (_) {}
+  try { var p = CBOffers.promise(o, { currency:(S.shop && S.shop.currency)||'', now:new Date(), money:money }); if (p) return p; } catch (_) {}
   return o.label || o.name || 'Offer';
 }
 
