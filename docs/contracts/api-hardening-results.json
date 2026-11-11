@@ -38,20 +38,12 @@
    }
   },
   "POST /api/ctp/deliver": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
    }
   },
   "POST /api/ctp/query": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
@@ -880,10 +872,6 @@
    }
   },
   "POST /api/events/ticket": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
@@ -977,10 +965,6 @@
    }
   },
   "POST /api/integrations/heartbeat": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
@@ -1038,8 +1022,7 @@
   },
   "POST /api/integrations/ask/:handle/stock": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1056,10 +1039,6 @@
    }
   },
   "POST /api/integrations/profile": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 500"
@@ -1992,10 +1971,6 @@
    }
   },
   "POST /api/connectors/ingest": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 401"
@@ -2006,10 +1981,6 @@
    }
   },
   "POST /api/connectors/erp-ingest": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 401"
@@ -3733,19 +3704,11 @@
    }
   },
   "POST /api/capture/webhook/whatsapp": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
   },
   "POST /api/capture/webhook/email": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }

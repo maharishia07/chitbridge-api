@@ -59036,6 +59036,58 @@
       "error": "Forbidden",
       "message": "Not sent: the recipient is not a ChitBridge id. A device sends only to its own shop and the shop’s own customers or suppliers."
      }
+    },
+    {
+     "scenario": "erp-ingest-to-is-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to",
+        "message": "to must be string or null."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "to must be string or null.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "to",
+      "errors": [
+       {
+        "field": "to",
+        "code": "WRONG_VALUE",
+        "detail": "to must be string or null."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to",
+        "message": "to must be string or null."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "to must be string or null.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "to",
+      "errors": [
+       {
+        "field": "to",
+        "code": "WRONG_VALUE",
+        "detail": "to must be string or null."
+       }
+      ]
+     }
     }
    ]
   },
@@ -59395,6 +59447,110 @@
      "fixture": {
       "error": "Forbidden",
       "message": "Not sent: the recipient is not a ChitBridge id. A device sends only to its own shop and the shop’s own customers or suppliers."
+     }
+    },
+    {
+     "scenario": "ingest-value-is-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "value",
+        "message": "value must be null or string or number or boolean."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "value must be null or string or number or boolean.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "value",
+      "errors": [
+       {
+        "field": "value",
+        "code": "WRONG_VALUE",
+        "detail": "value must be null or string or number or boolean."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "value",
+        "message": "value must be null or string or number or boolean."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "value must be null or string or number or boolean.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "value",
+      "errors": [
+       {
+        "field": "value",
+        "code": "WRONG_VALUE",
+        "detail": "value must be null or string or number or boolean."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "ingest-heartbeat-flag-is-a-word",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "heartbeat_only",
+        "message": "heartbeat_only must be one of: true, false, 0, 1, ."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "heartbeat_only must be one of: true, false, 0, 1, .",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "heartbeat_only",
+      "errors": [
+       {
+        "field": "heartbeat_only",
+        "code": "WRONG_VALUE",
+        "detail": "heartbeat_only must be one of: true, false, 0, 1, ."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "heartbeat_only",
+        "message": "heartbeat_only must be one of: true, false, 0, 1, ."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "heartbeat_only must be one of: true, false, 0, 1, .",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "heartbeat_only",
+      "errors": [
+       {
+        "field": "heartbeat_only",
+        "code": "WRONG_VALUE",
+        "detail": "heartbeat_only must be one of: true, false, 0, 1, ."
+       }
+      ]
      }
     }
    ]

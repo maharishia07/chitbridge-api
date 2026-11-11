@@ -2307,7 +2307,7 @@
    ]
   },
   "POST /api/capture/webhook/email": {
-   "cases": 2,
+   "cases": 13,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2315,7 +2315,7 @@
    ]
   },
   "POST /api/capture/webhook/whatsapp": {
-   "cases": 2,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2739,7 +2739,7 @@
    ]
   },
   "POST /api/connectors/erp-ingest": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2747,7 +2747,7 @@
    ]
   },
   "POST /api/connectors/ingest": {
-   "cases": 2,
+   "cases": 13,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2899,7 +2899,7 @@
    ]
   },
   "POST /api/ctp/deliver": {
-   "cases": 4,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2907,7 +2907,7 @@
    ]
   },
   "POST /api/ctp/query": {
-   "cases": 6,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3355,7 +3355,7 @@
    ]
   },
   "POST /api/offers/evaluate": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3363,7 +3363,7 @@
    ]
   },
   "POST /api/offers/explain": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3371,7 +3371,7 @@
    ]
   },
   "POST /api/pricing/price": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4091,7 +4091,7 @@
    ]
   },
   "POST /deliver": {
-   "cases": 4,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4099,7 +4099,7 @@
    ]
   },
   "POST /query": {
-   "cases": 6,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

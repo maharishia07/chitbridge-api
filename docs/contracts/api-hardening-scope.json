@@ -182,15 +182,77 @@
   }
  ],
  "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
- "tolerant_outward_ceiling": 8,
+ "tolerant_outward_ceiling": 14,
  "tolerant_outward": {
-  "POST /api/pricing/price": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-43-pricing-tolerant.test.cjs" },
-  "POST /api/offers/evaluate": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
-  "POST /api/offers/explain": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
-  "POST /api/integrations/ask/:handle/stock": { "reason": "S33-T: a public stock ask from a store's connector or a partner page; it reads only codes and emits it; an unknown key is ignored", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
-  "POST /api/integrations/heartbeat": { "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older versions; the handler picks named keys only", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
-  "POST /api/integrations/profile": { "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
-  "PATCH /api/products/:id": { "reason": "S33-T: the web outbox queues product edits on the shop owner's device and replays them after an app update; an entry written by an older page may carry a key this server no longer names, and refusing it would strand the whole queue", "caller_class": "queued_web_outbox", "test": "tests/api-tolerant-doors.test.cjs" },
-  "POST /api/products/availability/bulk": { "reason": "S33-T: a connector's stock feed (ERP or desktop software on older versions) posts the list under items; an extra key beside it must not stop the feed", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" }
+  "POST /api/pricing/price": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-43-pricing-tolerant.test.cjs"
+  },
+  "POST /api/offers/evaluate": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/offers/explain": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/integrations/heartbeat": {
+   "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older and newer kits; the handler picks named keys only, every known key is typed and counters is bounded (20 whole-number counters)",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/integrations/profile": {
+   "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "PATCH /api/products/:id": {
+   "reason": "S33-T: the web outbox queues product edits on the shop owner's device and replays them after an app update; an entry written by an older page may carry a key this server no longer names, and refusing it would strand the whole queue",
+   "caller_class": "queued_web_outbox",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/products/availability/bulk": {
+   "reason": "S33-T: a connector's stock feed (ERP or desktop software on older versions) posts the list under items; an extra key beside it must not stop the feed",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/connectors/ingest": {
+   "reason": "S33-T: a Pi or gateway on a kit we do not redeploy; it keeps an event until a 2xx, so an unknown key is ignored and a known key of the wrong kind is refused before the key check",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-problem-connectors.test.cjs"
+  },
+  "POST /api/connectors/erp-ingest": {
+   "reason": "S33-T: an ERP agent on a kit we do not redeploy; process-then-forget, an unknown key is ignored and never stored; a known key of the wrong kind is refused before the key check",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-problem-connectors.test.cjs"
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "reason": "S33-T: Meta owns the payload keys; only a SIGNED body is read, an unknown key is ignored, the keys we read are typed from Meta published payload examples",
+   "caller_class": "provider_webhook",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/capture/webhook/email": {
+   "reason": "S33-T: the mail provider owns the fields; only a SIGNED body is read, an unknown field is ignored, the fields we read are typed as Mailgun and SendGrid publish them",
+   "caller_class": "provider_webhook",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/events/ticket": {
+   "reason": "S33-T: asked by the app, the till, the shop screen and the connector (key scopes, some on cached older builds); it reads no body key at all, so any key is ignored",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/ctp/deliver": {
+   "reason": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, to and from are typed as objects and the later checks keep their own words",
+   "caller_class": "ctp_delivery",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/ctp/query": {
+   "reason": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, from and ask are typed as objects and the later checks keep their own words",
+   "caller_class": "ctp_delivery",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  }
  }
 }

@@ -1379,6 +1379,9 @@
   "POST /api/integrations/:actor_id/approve": {
    "output_allowlist": true
   },
+  "POST /api/integrations/profile": {
+   "output_allowlist": true
+  },
   "POST /api/invoice/build": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"

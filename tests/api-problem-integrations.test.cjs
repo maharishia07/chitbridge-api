@@ -33,7 +33,8 @@ const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json')
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const ALLOW = require('./lib/allowlist-world.cjs');
 const APPROVE_ROUTE = 'POST /api/integrations/:actor_id/approve'; /* the one writer whose 200 the generator's stand-in database cannot reach: proved here, in the route file's own world */
-const isApprove = (route) => route === APPROVE_ROUTE;
+const PROFILE_ROUTE = 'POST /api/integrations/profile'; /* S33-T: its 200 is closed from the recorded answers (tools/api-allowlist.cjs --from-recordings), proved here by the one shared allowlist-world */
+const isApprove = (route) => route === APPROVE_ROUTE || route === PROFILE_ROUTE;
 const MINE = (route) => / \/api\/integrations\//.test(route);
 const argv = process.argv.slice(2);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
@@ -372,7 +373,7 @@ function checkAllowList(recording) {
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
     check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its schema lists', held, { answers: answers.length, errors: fits.errors });
   });
-  const proved = ALLOW.checkAllowList(recording, { [APPROVE_ROUTE]: contract.APPROVE_OPERATION }, check); /* S34: the approve answer ({ ok, enrol }) is closed and every recorded 200 fits it */
+  const proved = ALLOW.checkAllowList(recording, { [APPROVE_ROUTE]: contract.APPROVE_OPERATION, [PROFILE_ROUTE]: contract.PROFILE_OPERATION }, check); /* S34: the approve answer ({ ok, enrol }) is closed and every recorded 200 fits it */
   check('the filter dropped no key of any answer these scenes gave', droppedCount() === 0, droppedCount());
   return proved;
 }

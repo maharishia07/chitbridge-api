@@ -3072,6 +3072,22 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
    "lifecycle": "stable"
   },
+  "POST /api/capture/webhook/email": {
+   "hash": "b73279ffac1b0343",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+   "lifecycle": "stable"
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "hash": "4acc0a1e4076da0a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+   "lifecycle": "stable"
+  },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "hash": "9d34219e5166cb7b",
    "names_clear": true,
@@ -3616,6 +3632,14 @@
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
    "lifecycle": "stable"
   },
+  "POST /api/events/ticket": {
+   "hash": "3214cd54f41afe2d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+   "lifecycle": "stable"
+  },
   "POST /api/folders": {
    "hash": "a35c61b13fd33d04",
    "names_clear": true,
@@ -3769,11 +3793,11 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/ask/:handle/stock": {
-   "hash": "a1cb8e5641aacb95",
+   "hash": "aa16ade8f3f0dd21",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
    "lifecycle": "stable"
   },
   "POST /api/integrations/books": {
@@ -3793,19 +3817,19 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/heartbeat": {
-   "hash": "8ed7f2679a6d6f0e",
+   "hash": "f354f8f23256a292",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
    "lifecycle": "stable"
   },
   "POST /api/integrations/profile": {
-   "hash": "144599f781125548",
+   "hash": "6627938ea0d3c11c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
    "lifecycle": "stable"
   },
   "POST /api/invoice/build": {
