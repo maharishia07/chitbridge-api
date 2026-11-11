@@ -13888,6 +13888,7 @@
         "required": [
           "have",
           "currency",
+          "money_why",
           "vertical",
           "pick",
           "lists",
@@ -13901,6 +13902,12 @@
           "currency": {
             "type": [
               "string",
+              "null"
+            ]
+          },
+          "money_why": {
+            "type": [
+              "object",
               "null"
             ]
           },

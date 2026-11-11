@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 14,
-  "meets": 624,
+  "partial": 15,
+  "meets": 623,
   "columns": {
    "strict_input": {
     "applies": 324,
@@ -22548,15 +22548,17 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2109,
-   "hash": "b43ae7cffcf356bd",
+   "hash": "90e163f95d15ad4a",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      401,
      500
     ],
-    "codes": []
+    "codes": [
+     "NO_MONEY"
+    ]
    },
    "reads": [
     "catalogue_items",
@@ -22615,10 +22617,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign) 2026-11-11 PR#1099 stage2: handler read; store_id/store_name only added to the open lists[] card, read-only, auth and errors unchanged, store failures logged never relayed, 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "90e163f95d15ad4a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -53747,7 +53750,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2212,
+   "line": 2214,
    "hash": "2b6ce9414d7f54fc",
    "does": "",
    "errors": {
