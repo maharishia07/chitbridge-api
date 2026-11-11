@@ -4006,8 +4006,8 @@
     },
     "POST /api/network-offers/:id/choice": {
       "file": "network-offers.js",
-      "trips": 1,
-      "wire": 1,
+      "trips": 4,
+      "wire": 14,
       "fired": true,
       "status": 200
     },

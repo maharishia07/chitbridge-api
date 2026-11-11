@@ -146,11 +146,6 @@
    "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"
   },
   {
-   "route": "POST /api/network-offers/:id/choice",
-   "status": 404,
-   "reason": "RAIL-207: the id is checked for its shape only (400 OFFER_UNKNOWN) and the choice is written to the caller's own flags; the route reads no offer row, so a well-formed unknown id answers 200 and never 404 (whether it should is cb-network's, foreign_id_404 stays open)"
-  },
-  {
    "route": "GET /api/chits/:chit_id/costs",
    "status": 404,
    "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"

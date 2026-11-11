@@ -63870,6 +63870,54 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
+    },
+    {
+     "scenario": "choice-unknown-offer",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
+    },
+    {
+     "scenario": "choice-ended-offer",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
     }
    ]
   },
