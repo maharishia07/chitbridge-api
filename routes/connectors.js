@@ -482,11 +482,11 @@ async function emitSignalChit({
 // (1) CLAIM the receipt (lib/erp-receipt: the caller's Idempotency-Key, else the document's doc_ref, else the payload hash; a failed or long-pending receipt is claimed again, so a retry runs the emit).
 // (2) PROCESS by emitting only the SUMMARY (doc_type/ref/amount) as a co-held chit. (3) FORGET — finalise the receipt; the raw payload is NEVER written.
 // Returns the receipt shape; `state` says why no emit ran ('conflict' · 'in_progress'), and a failed emit keeps its error on a hidden `emit_error` for the door to answer non-2xx (a 2xx lost the document).
-async function emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, cc, payload }) {
+async function emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, copyTo, payload }) {
   const extra = { doc_type, doc_ref };
   if (payload.amount != null) extra.amount = payload.amount;
   if (payload.currency) extra.currency = String(payload.currency).slice(0, 8);
-  const emit = await emitSignalChit({ entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc, kind: 'erp_document', signal: doc_type, value: doc_ref, extra, device_id: doc_ref, bridge_id: null });
+  const emit = await emitSignalChit({ entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc: copyTo, kind: 'erp_document', signal: doc_type, value: doc_ref, extra, device_id: doc_ref, bridge_id: null });
   return emit.chit_id;
 }
 async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc, idempotencyKey }) {
@@ -503,7 +503,7 @@ async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, do
     note = null,
     emit_error = null;
   try {
-    chit_id = await emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, cc, payload });
+    chit_id = await emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, copyTo: cc, payload });
   } catch (e) {
     outcome = 'failed';
     emit_error = e;

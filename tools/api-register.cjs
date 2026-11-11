@@ -315,18 +315,24 @@ const tolerantOutwardOf = (list) => Object.fromEntries(Object.entries(list || {}
  * S36 passes such a route ONLY while its test file proves the cases in MACHINE_KEYED_CASES; a listed route whose test is missing or does not carry the cases fails --check and does not pass the column.
  */
 const MACHINE_KEYED_CASES = ['K1 ', 'K2 ', 'K3 ', 'K4 ', 'K5 ', 'K6 ']; /* the case ids the test prints: same payload once · two payloads two chits · failed emit 503 then retry · stale pending re-claimed · header beats hash · same key other body 422 */
-/** the sentence for one machine_keyed entry that is not sound; '' when it is */
-function machineKeyedProblem(entry, byKey) {
+/** the sentence for the shape of one machine_keyed entry (route, key order, reason, test named); '' when it is whole */
+function machineKeyedShapeProblem(entry, byKey) {
   const name = 'machine_keyed: "' + (entry && entry.route) + '"';
   if (!entry || typeof entry !== 'object' || !entry.route) return 'machine_keyed: each entry must be { route, key_order, reason, test }';
   if (!byKey.has(entry.route)) return name + ' is not a route of the app';
   if (!Array.isArray(entry.key_order) || entry.key_order.length === 0) return name + ' needs a key_order (the keys it dedupes by, in order)';
-  if (!hasReason(entry.reason)) return name + ' needs a reason of at least ' + MIN_REASON + ' characters';
+  return hasReason(entry.reason) ? '' : name + ' needs a reason of at least ' + MIN_REASON + ' characters';
+}
+/** the sentence for the proof of one machine_keyed entry: its test file exists and carries the route and the cases; '' when it does */
+function machineKeyedProofProblem(entry) {
+  const name = 'machine_keyed: "' + entry.route + '"';
   if (!entry.test || !fs.existsSync(path.join(ROOT, String(entry.test)))) return name + ' test file ' + entry.test + ' does not exist';
   const text = fs.readFileSync(path.join(ROOT, String(entry.test)), 'utf8');
   const missing = [entry.route].concat(MACHINE_KEYED_CASES).filter((needle) => !text.includes(needle));
   return missing.length ? name + ' test file ' + entry.test + ' does not prove ' + missing.map((word) => '"' + word.trim() + '"').join(', ') : '';
 }
+/** the sentence for one machine_keyed entry that is not sound; '' when it is */
+const machineKeyedProblem = (entry, byKey) => machineKeyedShapeProblem(entry, byKey) || machineKeyedProofProblem(entry);
 /** the routes whose machine_keyed entry holds (with no byKey the route is taken as real: the register's own check names an unreal route) */
 const machineKeyedOf = (list) => new Set((Array.isArray(list) ? list : []).filter((entry) => !machineKeyedProblem(entry, new Map([[entry && entry.route, true]]))).map((entry) => entry.route));
 /** the sentences for the machine_keyed list, for --check */

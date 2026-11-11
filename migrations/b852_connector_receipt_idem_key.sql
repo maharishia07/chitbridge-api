@@ -16,6 +16,5 @@ UPDATE public.connector_receipt SET idem_key = 'p:' || payload_hash WHERE idem_k
 
 CREATE UNIQUE INDEX IF NOT EXISTS connector_receipt_key_idx ON public.connector_receipt (actor_id, idem_key);
 
--- the old one-per-body index would refuse a second key for the same bytes; keep a plain index for the lookup by hash
-DROP INDEX IF EXISTS public.connector_receipt_idem_idx;
-CREATE INDEX IF NOT EXISTS connector_receipt_hash_idx ON public.connector_receipt (actor_id, payload_hash);
+-- the old one-per-body index would refuse a second key for the same bytes; nothing reads receipts by payload_hash alone once idem_key is there, so no replacement
+DROP INDEX IF EXISTS connector_receipt_idem_idx;

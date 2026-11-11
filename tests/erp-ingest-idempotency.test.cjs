@@ -149,6 +149,11 @@ const hashOf = (payload) => crypto.createHash('sha256').update(require(path.join
     ok('N1 the scope file lists ' + ROUTE + ' as machine_keyed with a key order, a reason and this file', scope.machine_keyed.some((e) => e.route === ROUTE && e.key_order.length === 3 && e.test === 'tests/erp-ingest-idempotency.test.cjs'), scope.machine_keyed);
     const op = require(path.join(API, 'lib', 'connectors-contract')).OPERATIONS[ROUTE];
     ok('N2 the contract declares 422 and 503 for the door', !!op && !!op.responses['422'] && !!op.responses['503'], op && Object.keys(op.responses));
+    const { identityOf } = require(path.join(API, 'lib', 'erp-receipt'));
+    const pick = (more) => identityOf(Object.assign({ keyed: true, docType: 'invoice', payloadHash: 'abc' }, more));
+    ok('N3 identityOf: the header beats doc_ref, doc_ref beats the hash, the hash is the last resort', pick({ idempotencyKey: 'k', docRef: 'R' }).source === 'header' && pick({ docRef: 'R' }).source === 'doc_ref' && pick({}).source === 'hash' && pick({}).value === 'p:abc');
+    ok('N4 identityOf fails closed before b852: only the payload hash can identify a document, a header and a doc_ref are not trusted as a key then', pick({ keyed: false, idempotencyKey: 'k', docRef: 'R' }).column === 'payload_hash');
+    ok('N5 identityOf: the key is a hash, never the raw header or reference, and two doc_types with one reference differ', !/order-77/.test(pick({ idempotencyKey: 'order-77' }).value) && pick({ docRef: 'R' }).value !== pick({ docRef: 'R', docType: 'credit_note' }).value);
   } finally { server.close(); }
   console.log('\n' + (fail ? 'FAIL' : 'ok') + ' — ' + pass + ' checks passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
