@@ -723,10 +723,12 @@
     },
     "GET /api/catalogue/network/:bridge_id": {
       "file": "catalogue.js",
-      "trips": 50,
+      "trips": 706,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "shape: one resolveEntity + one publicViewFor per department, the root counted in the cap of 40 members (MAX_DEPARTMENTS); measured 56 at 3 departments, 166 at 9, 454 at 25, 706 at 39 (about 18 per stocked department); budgeted at the cap"
     },
     "GET /api/channels": {
       "file": "channels.js",
@@ -1803,10 +1805,12 @@
     },
     "GET /api/products/media/:item_id/:mid": {
       "file": "products.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "flat: blob lookup, the item read, the bytes (STORAGE_ADAPTER=db on sit-au); 3 at every fire"
     },
     "GET /api/products/starter-columns": {
       "file": "products.js",
@@ -2611,14 +2615,6 @@
       "fired": true,
       "status": 422
     },
-    "POST /api/assist/resolve": {
-      "file": "assist.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 410,
-      "floor_is_cost": "retired on purpose: it answers 410 ASSIST_REVIEW_RETIRED before any query (routes/assist.js, the handler is one problem() call), so the 410 the stub gets is the whole cost"
-    },
     "POST /api/attachments": {
       "file": "attachments.js",
       "trips": 0,
@@ -3042,10 +3038,12 @@
     },
     "POST /api/catalogue/:bridge_id/order/confirm": {
       "file": "catalogue.js",
-      "trips": 50,
+      "trips": 33,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "flat in the lines: 24 trips at 1, 3 and 30 lines, new or returning customer; 33 on the first (cold) call of a fresh process, which is the ceiling"
     },
     "POST /api/catalogue/:bridge_id/order/start": {
       "file": "catalogue.js",
@@ -3112,17 +3110,21 @@
     },
     "POST /api/catalogue/network-store/:networkId/order": {
       "file": "catalogue.js",
-      "trips": 50,
+      "trips": 831,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "shape: about 20 per store in the cart (a view read and one fragment chit each) on top of the member read; 34 at 1 store, 75 at 3, 831 at 39 stores in a 40-member network; budgeted at the cap"
     },
     "POST /api/catalogue/photo-extract": {
       "file": "catalogue.js",
-      "trips": 50,
+      "trips": 7,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "our own round trips only: the vision call answered by a local stub inside the measuring process (sit-au holds no ANTHROPIC_API_KEY); 7 first fire, 6 after"
     },
     "POST /api/channels": {
       "file": "channels.js",
@@ -3133,10 +3135,23 @@
     },
     "POST /api/channels/:id/approve": {
       "file": "channels.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "status": "verified"
+      }
     },
     "POST /api/channels/:id/auto-raise": {
       "file": "channels.js",
@@ -3155,10 +3170,23 @@
     },
     "POST /api/channels/:id/revoke": {
       "file": "channels.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "status": "declared"
+      }
     },
     "POST /api/channels/:id/template": {
       "file": "channels.js",
@@ -3169,10 +3197,26 @@
     },
     "POST /api/channels/:id/template-approve": {
       "file": "channels.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_body": {
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "name": "order_status_update"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "templates": {}
+      }
     },
     "POST /api/chits/:chit_id/amend": {
       "file": "chits.js",
@@ -3623,19 +3667,23 @@
     },
     "POST /api/ctp/deliver": {
       "file": "ctp.js",
-      "trips": 50,
+      "trips": 16,
       "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "the stub answers 400 on the empty body (a floor, not the cost) now that the harness mounts ctp.js at /api/ctp as server.js does; needs a live measure or a fixture"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "a sealed CTP/1 envelope from a measuring peer (key served on loopback, CB_CTP_ALLOW_PRIVATE=1); 12 steady, 14 to 16 when the sender stub is first made; flat at 1 recipient and 0 lines versus 22 recipients and 40 lines",
+      "extra": true
     },
     "POST /api/ctp/query": {
       "file": "ctp.js",
-      "trips": 50,
+      "trips": 44,
       "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "the stub answers 400 on the empty body (a floor, not the cost) now that the harness mounts ctp.js at /api/ctp as server.js does; needs a live measure or a fixture"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "one door, several questions, the dearest is the line: search 44, catalogue 22 (3-item shop), resolve 7; the peer asked as the pinned master so the membership pass is the cheap path",
+      "extra": true
     },
     "POST /api/definitions": {
       "file": "definitions.js",
@@ -3820,17 +3868,42 @@
     },
     "POST /api/identity/documents/:scheme/code": {
       "file": "identity-docs.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "VAULT_ENC_KEY": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "fixture_path": "/api/identity/documents/EMAIL/code",
+      "fixture_row": {
+        "identity_id": "e1",
+        "value_enc": "{\"v\":1,\"alg\":\"aes-256-gcm\",\"iv\":\"rTOmH48Y4u2ryK5D\",\"tag\":\"jcatMTPwn/oCZUqztJf3wA==\",\"ct\":\"qajpguFipDQcMGAQQ0nRce1rRM05BQ==\"}",
+        "status": "unverified",
+        "verification_ref": "otp:bcdbe3ac34bf8b307333da8854fa664ec108a906c0169b393535406051d559f4:4102444800000:0"
+      }
     },
     "POST /api/identity/documents/:scheme/verify": {
       "file": "identity-docs.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "VAULT_ENC_KEY": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "fixture_path": "/api/identity/documents/EMAIL/verify",
+      "fixture_body": {
+        "code": "123456"
+      },
+      "fixture_row": {
+        "identity_id": "e1",
+        "value_enc": "{\"v\":1,\"alg\":\"aes-256-gcm\",\"iv\":\"rTOmH48Y4u2ryK5D\",\"tag\":\"jcatMTPwn/oCZUqztJf3wA==\",\"ct\":\"qajpguFipDQcMGAQQ0nRce1rRM05BQ==\"}",
+        "status": "unverified",
+        "verification_ref": "otp:bcdbe3ac34bf8b307333da8854fa664ec108a906c0169b393535406051d559f4:4102444800000:0"
+      }
     },
     "POST /api/integrations/:actor_id/approve": {
       "file": "integrations.js",
@@ -4524,10 +4597,21 @@
     },
     "POST /api/testing/cases/gherkin": {
       "file": "testing.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_body": {
+        "text": "Feature: Rt\n\n  Scenario: CTR-001 One\n    Given a\n    Then b\n\n  Scenario: CTR-002 Two\n    Given a\n    Then b"
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {},
+        "version": 1,
+        "case_id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "POST /api/testing/cases/import": {
       "file": "testing.js",
@@ -4553,10 +4637,17 @@
     },
     "POST /api/testing/cmdb/seed": {
       "file": "testing.js",
-      "trips": 50,
+      "trips": 1,
       "wire": null,
-      "fired": false,
-      "why": "answered 500 on the stub"
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {},
+        "version": 1
+      }
     },
     "POST /api/testing/evidence": {
       "file": "testing.js",
@@ -4715,10 +4806,12 @@
     },
     "POST /api/till/pair/claim": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 1,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "flat: one key mint; the in-memory pair code is made and claimed in the same process"
     },
     "POST /api/till/price": {
       "file": "till.js",

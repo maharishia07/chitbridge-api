@@ -133,7 +133,6 @@ module.exports = {
     'GET /api/catalogue/network/:bridge_id': { skip: ['no-header', "public door: no sign-in, so no X-DB-Trips; the load shop has no published shop window (404 Shop not found)"] },
     'DELETE /api/catalogue/:bridge_id/my-documents/:id': { skip: ['role', "needs a storefront customer login and a document that customer filed; the load shop holds no such customer"] },
     'GET /api/assist/resolve': { skip: ['fixture', "404 Unknown container or version: resolving needs a regional version, and the assistant limiter (429 for 10 minutes) stopped further tries"] },
-    'POST /api/assist/resolve': { skip: ['precondition', "the route is retired on purpose: it answers 410 ASSIST_REVIEW_RETIRED (gap review superseded), so it has no database work to measure"] },
     'GET /api/integrations/kit/*': { make: async () => ({ params: { '*': 'core.js' } }) },
     'GET /api/integrations/docs/:id': { make: async () => ({ params: { id: 'tally' } }) },
     'GET /api/integrations/download/:id': { make: async () => ({ params: { id: 'csv' } }) },

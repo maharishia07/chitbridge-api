@@ -5,6 +5,7 @@
  * R2 with six loaded stores, readStoreLists answers six entries and cardOf makes six cards each carrying its store id and name
  * R3 PARITY: a store's rows equal the constant's rows (name, unit, price, category, names) in the constant's order, all six
  * R4 a store that is not registered / not loaded / unreadable falls back to the constant: card store_id null, same rows, no throw
+ * R8 a store registered but EMPTY answers from the constant (card store_id null), never an empty card (fixholds CAT-124 registered-but-empty)
  * R5 the result is kept for a minute (one lookup), invalidate() forces a new read; a failed lookup is not kept
  * Run: node tests/cat124-reference-store-lists.test.cjs · no DB, no network.   CARD 06-catalogue-pim/README
  */
@@ -70,6 +71,21 @@ const ALL = Object.keys(BP.BLUEPRINTS);
     R.invalidate();
     const lookup = { query: async () => { throw new Error('down'); }, withEntity: async () => { throw new Error('x'); } };
     assert.ok(cards(await R.readStoreLists(lookup)).every((c) => c.store_id === null));
+  });
+  await okA('R8 a store registered but EMPTY (no items, no categories) is answered from the constant, never by an empty card', async () => {
+    R.invalidate();
+    const db = fakeDb(ALL);
+    const full = db.io.withEntity;
+    const emptyId = (key) => '00000000-0000-4000-8000-0000000000' + String(R.STORES.findIndex((s) => s.key === key) + 10);
+    db.io.withEntity = async (id, fn) => (id === emptyId('fish') ? fn({ query: async () => ({ rows: [] }) }) : full(id, fn));
+    const stored = await R.readStoreLists(db.io);
+    assert.ok(!stored.has('fish'), 'the empty store must not be an entry (the lab would show a blank card)');
+    assert.strictEqual(stored.size, 5);
+    const fish = R.cardOf(BP, 'fish', stored.get('fish'));
+    assert.strictEqual(fish.store_id, null);
+    assert.strictEqual(fish.store_name, null);
+    assert.ok(fish.count > 0 && fish.count === BP.blueprint('fish').starter.length && fish.rows.length === fish.count, 'the card holds the constant rows');
+    assert.ok(cards(stored).filter((c) => c.key !== 'fish').every((c) => c.store_id && c.count > 0), 'the five loaded stores still answer from their stores');
   });
   await okA('R5 kept for a minute; invalidate reads again; a failed lookup is not kept', async () => {
     R.invalidate();

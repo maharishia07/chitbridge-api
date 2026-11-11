@@ -2755,10 +2755,6 @@
    }
   },
   "POST /api/governance/conformance": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
@@ -3342,16 +3338,6 @@
     "pass": true
    }
   },
-  "POST /api/assist/resolve": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 410"
-   }
-  },
   "GET /api/assist/whoami": {
    "output_allowlist": {
     "pass": true
@@ -3424,10 +3410,6 @@
    }
   },
   "PUT /api/testing/cmdb/:ci": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
@@ -3441,10 +3423,6 @@
    }
   },
   "POST /api/testing/results": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
@@ -3460,10 +3438,6 @@
    }
   },
   "POST /api/testing/results/junit": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }

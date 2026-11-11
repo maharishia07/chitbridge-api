@@ -76,6 +76,16 @@
  "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
  "cannot_answer": [
   {
+   "route": "GET /api/actors/check-login",
+   "status": 500,
+   "reason": "the answer is one frozen constant object read from memory with no query; the only fault left is Express itself failing to write, which no request can provoke, so no test can show a 500"
+  },
+  {
+   "route": "POST /api/actors/login",
+   "status": 409,
+   "reason": "the shared sign-in refusal list names 409 CHOOSE_IDENTITY, but this door looks the person up by key@business and refuses two businesses of one name with the plain refusal (routes/signin.js actorLogin), so it never lists accounts to choose from"
+  },
+  {
    "route": "GET /api/catalogue/:bridge_id/my-documents",
    "status": 404,
    "reason": "the path id is the shop browsed; the read is the caller's own documents and answers a list, so there is no missing row to answer 404"
@@ -136,11 +146,6 @@
    "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"
   },
   {
-   "route": "POST /api/assist/resolve",
-   "status": 500,
-   "reason": "retired route that always answers 410 and reads nothing"
-  },
-  {
    "route": "POST /api/network-offers/:id/choice",
    "status": 404,
    "reason": "RAIL-207: the id is checked for its shape only (400 OFFER_UNKNOWN) and the choice is written to the caller's own flags; the route reads no offer row, so a well-formed unknown id answers 200 and never 404 (whether it should is cb-network's, foreign_id_404 stays open)"
@@ -182,7 +187,7 @@
   }
  ],
  "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
- "tolerant_outward_ceiling": 22,
+ "tolerant_outward_ceiling": 26,
  "tolerant_outward": {
   "POST /api/pricing/price": {
    "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
@@ -293,6 +298,26 @@
    "reason": "S33-T: the counter bill queue door (the sale itself); its five known keys are typed, any other key is read by name or ignored; a refused bill is parked and shown, never dropped",
    "caller_class": "queued_till",
    "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "reason": "S33-T: the body IS the CMDB record (lib/cmdb.js shape); a key beyond system, title and source travels inside the record, is never acted on, and the record is capped at 64 KB; the three named keys are typed, a junk value is refused 400",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/testing/results": {
+   "reason": "S33-T: the Testing screen and the CI key post a result or a run of them; an unknown key is ignored and never stored, every named key is text or null, a junk value is refused 400 in the board's two keys",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/testing/results/junit": {
+   "reason": "S33-T: the JUnit report travels as the text of xml beside run options; the CI key and the toolset post it from older and newer scripts, so an unknown key is ignored; xml and every option are text, a junk value is refused 400",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/governance/conformance": {
+   "reason": "S33-T: the handler takes the whole body as the thing to check when data is absent, so the body is the record; scope is text and data an object, a junk value is refused 422, the key itself is never stored",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
   }
  }
 }

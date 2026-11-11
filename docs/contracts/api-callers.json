@@ -906,9 +906,6 @@
    "cap-assist.js",
    "core.js"
   ],
-  "POST /api/assist/resolve": [
-   "core.js"
-  ],
   "POST /api/attachments": [
    "app.html",
    "attach-ui.js"
@@ -1747,7 +1744,6 @@
   "PATCH /api/products/:id",
   "PATCH /api/relationships/suppliers/:id",
   "POST /api/assist/publish",
-  "POST /api/assist/resolve",
   "POST /api/chits/:chit_id/archive",
   "POST /api/chits/:chit_id/restore",
   "POST /api/chits/:chit_id/unarchive",

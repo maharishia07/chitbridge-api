@@ -1,4 +1,8 @@
 'use strict';
+// OWNS      the live proof of partial delivery and the unit fix behind it
+// CALLED BY tests/rail126-send-typed.test.cjs (static: the body it sends carries no key the send door never read (send_to_self)) · by hand against a running server: node scripts/prove-partial.js
+// FLOW      running api → POST /api/chits/send (typed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/line-model
 /**
  * prove-partial.js — PARTIAL DELIVERY, and the unit bug that made it lie.
  *
@@ -145,8 +149,7 @@ async function pure() {
         purpose: 'order',
         manual_subject: subject,
         line_items: lines,
-        recipients: myId ? [{ entity_id: myId, role: 'to' }] : [],
-        send_to_self: true
+        recipients: myId ? [{ entity_id: myId, role: 'to' }] : []
       }
     });
     const det = await P.j('/api/chits/' + s.b.chit_id, auth);

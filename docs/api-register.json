@@ -2,19 +2,19 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 639,
-  "no_does": 629,
+  "routes": 638,
+  "no_does": 628,
   "not_started": 0,
-  "partial": 40,
-  "meets": 599,
+  "partial": 14,
+  "meets": 624,
   "columns": {
    "strict_input": {
-    "applies": 329,
-    "failing": 5
+    "applies": 324,
+    "failing": 0
    },
    "output_allowlist": {
-    "applies": 639,
-    "failing": 4
+    "applies": 638,
+    "failing": 2
    },
    "foreign_id_404": {
     "applies": 202,
@@ -29,8 +29,8 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 639,
-    "failing": 15
+    "applies": 638,
+    "failing": 0
    }
   },
   "reported": {
@@ -43,11 +43,11 @@
     "failing": 39
    },
    "rate_limited": {
-    "applies": 639,
+    "applies": 638,
     "failing": 479
    }
   },
-  "tolerant_outward": 22,
+  "tolerant_outward": 26,
   "output_allowlist_from_recordings": 145
  },
  "machine_columns": [
@@ -588,9 +588,9 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "core.js 1/57",
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -693,7 +693,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -808,7 +808,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "core.js 1/57"
     ]
    },
@@ -1707,7 +1707,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1746,11 +1746,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8e332cc92b68afef"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1115 diff read: a fault of ours now goes to the one error handler (Problem 500 with request id), no behaviour change; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
@@ -1865,11 +1864,11 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
-     "catalogue-lines.js 1/90",
+     "app.html 1/108",
+     "catalogue-lines.js 1/43",
      "combo-mode.js 1/15",
      "core.js 1/57",
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -1973,7 +1972,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "catalogue-lines.js 1/90"
+     "catalogue-lines.js 1/43"
     ]
    },
    "measured": {
@@ -2072,8 +2071,8 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "app.html 2/155",
-     "catalogue-lines.js 2/90"
+     "app.html 2/108",
+     "catalogue-lines.js 2/43"
     ]
    },
    "measured": {
@@ -2379,7 +2378,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-suppliers.js 1/5",
      "core.js 1/57"
     ]
@@ -2592,7 +2591,7 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "app.html 2/155",
+     "app.html 2/108",
      "cap-admin.js 2/106",
      "cap-chit2.js 2/15",
      "cap-workforce.js 2/19",
@@ -2808,7 +2807,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 700,
-   "hash": "245eb03a3418e641",
+   "hash": "da8032c1771607db",
    "does": "",
    "errors": {
     "count": 0,
@@ -2831,9 +2830,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -2866,13 +2865,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1115 diff read: a fault of ours now goes to the one error handler (Problem 500 with request id), no behaviour change; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -2881,7 +2880,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -3185,7 +3184,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -3842,7 +3841,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-admin.js 1/106",
      "cap-assist.js 1/2"
     ]
@@ -4120,7 +4119,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -4137,7 +4136,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 755,
+   "line": 748,
    "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
@@ -4216,7 +4215,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-assist.js 1/2"
     ]
    },
@@ -4316,7 +4315,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "app.html 3/155",
+     "app.html 3/108",
      "attach-ui.js 3/3"
     ]
    },
@@ -5963,7 +5962,7 @@
     "wire": 3,
     "screens": [
      "accounts.html 2/14",
-     "app.html 2/155",
+     "app.html 2/108",
      "cap-books.js 2/43",
      "cap-move-in.js 2/5",
      "crm.html 2/2",
@@ -8141,7 +8140,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-catalogue.js 1/13",
      "cap-catsetup.js 1/14"
     ]
@@ -8525,7 +8524,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -8816,7 +8815,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -8972,7 +8971,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9005,15 +9004,14 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8f390660936e440b"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 706,
     "wire": null,
     "screens": []
    },
@@ -9341,7 +9339,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "authority-forms.html 1/30",
      "cap-admin.js 1/106",
      "cap-books.js 1/43",
@@ -9359,7 +9357,7 @@
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
      "tasks.html 1/2",
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -9461,7 +9459,7 @@
     "trips": 2,
     "wire": 8,
     "screens": [
-     "app.html 2/155"
+     "app.html 2/108"
     ]
    },
    "measured": {
@@ -9766,7 +9764,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-dispute.js 1/5",
      "screen-id.js 1/5",
      "screens.js 1/6",
@@ -9881,7 +9879,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-chit2.js 1/15",
      "cap-crm-record.js 1/8",
      "cap-dispute.js 1/5",
@@ -10592,7 +10590,7 @@
     "trips": 3,
     "wire": 7,
     "screens": [
-     "app.html 3/155",
+     "app.html 3/108",
      "cap-admin.js 3/106"
     ]
    },
@@ -10698,7 +10696,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "app.html 2/155",
+     "app.html 2/108",
      "authority-forms.html 2/30",
      "cap-admin.js 2/106"
     ]
@@ -10797,7 +10795,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -11385,8 +11383,8 @@
     "trips": 1,
     "wire": 5,
     "screens": [
-     "app.html 1/155",
-     "till.html 1/179"
+     "app.html 1/108",
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -11504,7 +11502,7 @@
     "trips": 1,
     "wire": 5,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "authority-forms.html 1/30",
      "cap-admin.js 1/106",
      "cap-bank.js 1/8",
@@ -11515,7 +11513,7 @@
      "cap-repeat.js 1/7",
      "rail-advice.js 1/3",
      "screen-id.js 1/5",
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -11906,7 +11904,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-folders.js 0/22",
      "cap-mis.js 0/3"
     ]
@@ -12713,7 +12711,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-admin.js 1/106",
      "cap-settings.js 1/21",
      "screen-id.js 1/5",
@@ -13736,7 +13734,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-categories.js 1/6",
      "cap-catsetup.js 1/14",
      "core.js 1/57"
@@ -13844,7 +13842,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-categories.js 1/6"
     ]
    },
@@ -14240,7 +14238,7 @@
     "trips": 6,
     "wire": 2,
     "screens": [
-     "app.html 6/155",
+     "app.html 6/108",
      "avatar.js 6/6",
      "cap-admin.js 6/106",
      "cap-country.js 6/12",
@@ -14249,7 +14247,7 @@
      "cap-shop.js 6/17",
      "cap-workforce.js 6/19",
      "catalogue.html 6/6",
-     "till.html 6/179"
+     "till.html 6/130"
     ]
    },
    "measured": {
@@ -14452,7 +14450,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -14655,7 +14653,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -14852,7 +14850,7 @@
     "trips": 7,
     "wire": 1,
     "screens": [
-     "app.html 7/155"
+     "app.html 7/108"
     ]
    },
    "measured": {
@@ -14951,7 +14949,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-crm.js 0/9"
     ]
    },
@@ -15338,9 +15336,9 @@
     "wire": 0,
     "screens": [
      "core.js 0/57",
-     "promo.html 0/67",
+     "promo.html 0/18",
      "rail-bell.js 0/4",
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -15439,9 +15437,9 @@
     "wire": 0,
     "screens": [
      "core.js 0/57",
-     "promo.html 0/67",
+     "promo.html 0/18",
      "rail-bell.js 0/4",
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -16819,7 +16817,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-messages.js 1/4",
      "cap-worklist.js 1/12",
      "screens.js 1/6"
@@ -18152,7 +18150,7 @@
     "trips": 4,
     "wire": 10,
     "screens": [
-     "app.html 4/155",
+     "app.html 4/108",
      "cap-print.js 4/16",
      "cap-readiness.js 4/25",
      "cap-shop.js 4/17"
@@ -18539,7 +18537,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -18736,7 +18734,7 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "app.html 2/155"
+     "app.html 2/108"
     ]
    },
    "measured": {
@@ -19021,7 +19019,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-iddocs.js 2/106"
+     "cap-iddocs.js 2/10"
     ]
    },
    "measured": {
@@ -21077,11 +21075,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a0d06b8ea42b5e78"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -21479,7 +21476,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "app.html 3/155",
+     "app.html 3/108",
      "rail-bell.js 3/4"
     ]
    },
@@ -21724,13 +21721,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -21841,7 +21838,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-books.js 1/43",
      "cap-employees.js 1/5",
      "cap-tasks.js 1/7",
@@ -22223,7 +22220,7 @@
     "trips": 2,
     "wire": 9,
     "screens": [
-     "app.html 2/155",
+     "app.html 2/108",
      "cap-catalogue.js 2/13",
      "cap-categories.js 2/6",
      "cap-catsetup.js 2/14",
@@ -22327,7 +22324,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "catalogue-lines.js 1/90"
+     "catalogue-lines.js 1/43"
     ]
    },
    "measured": {
@@ -22432,8 +22429,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
-     "catalogue-lines.js 1/90"
+     "app.html 1/108",
+     "catalogue-lines.js 1/43"
     ]
    },
    "measured": {
@@ -22532,8 +22529,8 @@
     "trips": 5,
     "wire": 9,
     "screens": [
-     "app.html 5/155",
-     "catalogue-lines.js 5/90"
+     "app.html 5/108",
+     "catalogue-lines.js 5/43"
     ]
    },
    "measured": {
@@ -22630,7 +22627,7 @@
     "trips": 4,
     "wire": 7,
     "screens": [
-     "catalogue-lines.js 4/90"
+     "catalogue-lines.js 4/43"
     ]
    },
    "measured": {
@@ -22685,7 +22682,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -22718,22 +22715,21 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6552c50215b46546"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "app.html 50/155",
-     "catalogue-lines.js 50/90"
+     "app.html 3/108",
+     "catalogue-lines.js 3/43"
     ]
    },
    "measured": {
@@ -22831,9 +22827,9 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-catsetup.js 0/14",
-     "catalogue-lines.js 0/90"
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -22933,7 +22929,7 @@
     "wire": 13,
     "screens": [
      "cap-catalogue.js 5/13",
-     "catalogue-lines.js 5/90"
+     "catalogue-lines.js 5/43"
     ]
    },
    "measured": {
@@ -23032,8 +23028,8 @@
     "trips": 6,
     "wire": 13,
     "screens": [
-     "catalogue-lines.js 6/90",
-     "till.html 6/179"
+     "catalogue-lines.js 6/43",
+     "till.html 6/130"
     ]
    },
    "measured": {
@@ -23327,7 +23323,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "app.html 2/155",
+     "app.html 2/108",
      "cap-definitions.js 2/17"
     ]
    },
@@ -23526,7 +23522,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-definitions.js 1/17"
     ]
    },
@@ -23820,7 +23816,7 @@
     "trips": 4,
     "wire": 10,
     "screens": [
-     "app.html 4/155",
+     "app.html 4/108",
      "cap-admin.js 4/106",
      "cap-chit2.js 4/15",
      "cap-suppliers.js 4/5"
@@ -23926,7 +23922,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-chit2.js 1/15"
     ]
    },
@@ -24027,7 +24023,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -24319,7 +24315,7 @@
     "trips": 5,
     "wire": 6,
     "screens": [
-     "app.html 5/155",
+     "app.html 5/108",
      "cap-catalogue.js 5/13",
      "cap-catsetup.js 5/14"
     ]
@@ -26999,7 +26995,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -27095,7 +27091,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -27191,7 +27187,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -27289,7 +27285,7 @@
     "trips": 0,
     "wire": null,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -27390,7 +27386,7 @@
     "wire": 11,
     "screens": [
      "cap-match.js 3/3",
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -27490,7 +27486,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -27588,7 +27584,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -27686,7 +27682,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -27786,7 +27782,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/179"
+     "till.html 4/130"
     ]
    },
    "measured": {
@@ -27887,7 +27883,7 @@
     "trips": 1,
     "wire": null,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -27985,7 +27981,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -28095,8 +28091,8 @@
     "trips": 17,
     "wire": 46,
     "screens": [
-     "promo.html 17/67",
-     "till.html 17/179"
+     "promo.html 17/18",
+     "till.html 17/130"
     ]
    },
    "measured": {
@@ -28196,7 +28192,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -28296,7 +28292,7 @@
     "wire": 4,
     "screens": [
      "cap-mis-trend.js 1/1",
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -28392,7 +28388,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "till.html 2/179"
+     "till.html 2/130"
     ]
    },
    "measured": {
@@ -28492,7 +28488,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -28590,7 +28586,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -30427,7 +30423,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-admin.js 1/106",
      "cap-country.js 1/12",
      "cap-network.js 1/3",
@@ -30751,13 +30747,13 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-catalogue.js 0/13",
      "cap-categories.js 0/6",
-     "catalogue-lines.js 0/90",
+     "catalogue-lines.js 0/43",
      "combo-mode.js 0/15",
      "core.js 0/57",
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -31062,7 +31058,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-books.js 0/43",
      "cap-crm-record.js 0/8"
     ]
@@ -31177,7 +31173,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-books.js 0/43",
      "cap-crm-record.js 0/8",
      "cap-suppliers.js 0/5",
@@ -31894,7 +31890,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-employees.js 0/5",
      "cap-workforce.js 0/19"
     ]
@@ -32140,7 +32136,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -32182,7 +32178,7 @@
     "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -32191,7 +32187,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -32274,13 +32270,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -32289,7 +32285,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -32598,7 +32594,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-assist.js 0/2",
      "screen-id.js 0/5",
      "tasks.html 0/2"
@@ -32707,7 +32703,7 @@
     "trips": 6,
     "wire": 12,
     "screens": [
-     "app.html 6/155"
+     "app.html 6/108"
     ]
    },
    "measured": {
@@ -32809,7 +32805,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -32909,7 +32905,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -33103,107 +33099,9 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-admin.js 0/106",
      "cap-assist.js 0/2",
-     "core.js 0/57"
-    ]
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "POST /api/assist/resolve",
-   "method": "POST",
-   "path": "/api/assist/resolve",
-   "owner_area": "assist",
-   "owner_agent": "cb-ai",
-   "file": "routes/assist.js",
-   "line": 749,
-   "hash": "9f02935797a24cbc",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     401,
-     410,
-     422,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    401,
-    410,
-    422,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": false,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial",
-   "callers": [
-    "core.js"
-   ],
-   "offline": "queueable",
-   "round_trips": {
-    "trips": 0,
-    "wire": 0,
-    "screens": [
      "core.js 0/57"
     ]
    },
@@ -33311,7 +33209,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "attach-ui.js 0/3"
     ]
    },
@@ -35877,13 +35775,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38291,7 +38189,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "intake.html 1/5"
     ]
    },
@@ -38778,13 +38676,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -39092,7 +38990,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -39173,7 +39071,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -39209,15 +39107,14 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f640389f83a89f58"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 33,
     "wire": null,
     "screens": []
    },
@@ -39630,7 +39527,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -39695,7 +39592,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -39730,15 +39627,14 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1f2b998c43f174b9"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 831,
     "wire": null,
     "screens": []
    },
@@ -39790,7 +39686,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -39824,15 +39720,14 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fb327e3e6d43c1cf"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 7,
     "wire": null,
     "screens": []
    },
@@ -39987,7 +39882,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -40029,8 +39924,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -40221,13 +40116,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40287,7 +40182,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -40329,8 +40224,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -40490,7 +40385,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -40532,8 +40427,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -40642,7 +40537,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "workflow.js 1/1"
     ]
    },
@@ -40748,7 +40643,7 @@
     "trips": 1,
     "wire": 7,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-chit2.js 1/15",
      "core.js 1/57",
      "screens.js 1/6"
@@ -40962,7 +40857,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-admin.js 1/106"
     ]
    },
@@ -40981,7 +40876,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4213,
-   "hash": "f07c1d1194dee405",
+   "hash": "9cb42a8345e6c19c",
    "does": "",
    "errors": {
     "count": 0,
@@ -41051,7 +40946,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: QA-142 read: figures typed and bounded (money below 10^13, minutes int32, derived amount re-checked), 422 naming the field; web sends no cost body; qa-142-cost-figures 77 ok; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41169,7 +41064,7 @@
      "cap-chit2.js 1/15",
      "cap-tasks.js 1/7",
      "cap-worklist.js 1/12",
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -41282,7 +41177,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-crm-record.js 0/8",
      "cap-dispute.js 0/5",
      "cap-legend.js 0/0",
@@ -41501,7 +41396,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -42395,7 +42290,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "core.js 1/57"
     ]
    },
@@ -42499,7 +42394,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "core.js 1/57"
     ]
    },
@@ -42603,7 +42498,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "core.js 1/57"
     ]
    },
@@ -42709,7 +42604,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "core.js 0/57"
     ]
    },
@@ -43419,7 +43314,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 408,
-   "hash": "d43294ebda426ddd",
+   "hash": "b68ccb2d02c48523",
    "does": "",
    "errors": {
     "count": 0,
@@ -43494,7 +43389,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: typed keys, unknown key ignored (S33-T tolerant_outward, queued till); handler reads checked against SEND_BODY; rail126-send-typed 39 ok; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43511,12 +43406,12 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-readiness.js 0/25",
      "cap-tasks.js 0/7",
      "intake.html 0/5",
      "rail-advice.js 0/3",
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -46345,7 +46240,7 @@
    "owner_agent": "cb-security",
    "file": "routes/csp-report.js",
    "line": 82,
-   "hash": "89893d50e45000c9",
+   "hash": "db1572b136f913fc",
    "does": "",
    "errors": {
     "count": 0,
@@ -46371,8 +46266,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -46409,13 +46304,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1115 diff read: a fault of ours now goes to the one error handler (Problem 500 with request id), no behaviour change; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -46488,7 +46383,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -46529,15 +46424,14 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8e2652bcacb72fab"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 16,
     "wire": null,
     "screens": []
    },
@@ -46606,7 +46500,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -46645,15 +46539,14 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c97f729a16051dfd"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 44,
     "wire": null,
     "screens": []
    },
@@ -46871,7 +46764,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -46975,7 +46868,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -47078,7 +46971,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-register.js 0/23",
      "cap-worklist.js 0/12",
      "intake.html 0/5",
@@ -47184,7 +47077,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "intake.html 0/5",
      "register-form.js 0/3"
     ]
@@ -47289,9 +47182,9 @@
     "wire": 0,
     "screens": [
      "core.js 0/57",
-     "promo.html 0/67",
+     "promo.html 0/18",
      "rail-bell.js 0/4",
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -47394,7 +47287,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-folders.js 0/22"
     ]
    },
@@ -48300,7 +48193,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-assist.js 0/2",
      "cap-dispute.js 0/5",
      "cap-readiness.js 0/25"
@@ -48523,7 +48416,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 246,
-   "hash": "7369a8d143536622",
+   "hash": "4c35f4d6a5970028",
    "does": "",
    "errors": {
     "count": 0,
@@ -48552,7 +48445,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -48560,7 +48453,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -48577,6 +48470,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the handler takes the whole body as the thing to check when data is absent, so the body is the record; scope is text and data an object, a junk value is refused 422, the key itself is never stored"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -48591,11 +48487,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7369a8d143536622"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49026,7 +48921,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -49192,7 +49087,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -49240,10 +49135,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 8,
     "screens": [
-     "cap-iddocs.js 50/106"
+     "cap-iddocs.js 2/10"
     ]
    },
    "measured": {
@@ -49307,7 +49202,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -49355,10 +49250,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 8,
     "screens": [
-     "cap-iddocs.js 50/106"
+     "cap-iddocs.js 2/10"
     ]
    },
    "measured": {
@@ -50187,7 +50082,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "app.html 3/155",
+     "app.html 3/108",
      "cap-admin.js 3/106",
      "cap-settings.js 3/21"
     ]
@@ -52271,7 +52166,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "rail-bell.js 0/4"
     ]
    },
@@ -52371,7 +52266,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "rail-bell.js 1/4"
     ]
    },
@@ -52465,11 +52360,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b443772f4998f191"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52990,7 +52884,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-catalogue.js 0/13",
      "combo-mode.js 0/15"
     ]
@@ -53099,7 +52993,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "catalogue-lines.js 0/90"
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -53209,8 +53103,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
-     "catalogue-lines.js 0/90"
+     "app.html 0/108",
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -53313,7 +53207,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "catalogue-lines.js 3/90"
+     "catalogue-lines.js 3/43"
     ]
    },
    "measured": {
@@ -53414,7 +53308,7 @@
     "trips": 8,
     "wire": null,
     "screens": [
-     "catalogue-lines.js 8/90"
+     "catalogue-lines.js 8/43"
     ]
    },
    "measured": {
@@ -53519,8 +53413,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
-     "catalogue-lines.js 0/90"
+     "app.html 0/108",
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -53731,8 +53625,8 @@
     "wire": 0,
     "screens": [
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/90",
-     "till.html 0/179"
+     "catalogue-lines.js 0/43",
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -53835,8 +53729,8 @@
     "wire": 0,
     "screens": [
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/90",
-     "till.html 0/179"
+     "catalogue-lines.js 0/43",
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -53935,7 +53829,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "catalogue-lines.js 3/90"
+     "catalogue-lines.js 3/43"
     ]
    },
    "measured": {
@@ -54036,9 +53930,9 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-catsetup.js 0/14",
-     "catalogue-lines.js 0/90"
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -54137,8 +54031,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
-     "catalogue-lines.js 0/90"
+     "app.html 0/108",
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -54445,7 +54339,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-crm-record.js 0/8",
      "cap-crm.js 0/9"
     ]
@@ -54549,7 +54443,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155"
+     "app.html 1/108"
     ]
    },
    "measured": {
@@ -54659,7 +54553,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-books.js 0/43",
      "cap-crm-record.js 0/8",
      "cap-crm.js 0/9",
@@ -56483,7 +56377,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 957,
+   "line": 961,
    "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
@@ -56673,7 +56567,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 959,
+   "line": 963,
    "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
@@ -56851,7 +56745,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -56970,7 +56864,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 958,
+   "line": 962,
    "hash": "1405487d7309082d",
    "does": "",
    "errors": {
@@ -57140,13 +57034,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -57231,13 +57125,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -57923,7 +57817,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -57966,8 +57860,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 10,
     "screens": []
    },
    "measured": {
@@ -58326,7 +58220,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -58368,7 +58262,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 1,
     "wire": null,
     "screens": []
    },
@@ -58569,7 +58463,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -58771,7 +58665,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -58789,7 +58683,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1435,
-   "hash": "3fa30109f7c3575d",
+   "hash": "a43d32f3ef0358f7",
    "does": "",
    "errors": {
     "count": 0,
@@ -58822,7 +58716,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -58830,7 +58724,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -58847,6 +58741,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the Testing screen and the CI key post a result or a run of them; an unknown key is ignored and never stored, every named key is text or null, a junk value is refused 400 in the board's two keys"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": false,
@@ -58861,11 +58758,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3fa30109f7c3575d"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -58888,7 +58784,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1613,
-   "hash": "f3c36632f8490c7d",
+   "hash": "505771ada9129966",
    "does": "",
    "errors": {
     "count": 0,
@@ -58921,7 +58817,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -58929,7 +58825,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -58946,6 +58842,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the JUnit report travels as the text of xml beside run options; the CI key and the toolset post it from older and newer scripts, so an unknown key is ignored; xml and every option are text, a junk value is refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": false,
@@ -58960,11 +58859,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f3c36632f8490c7d"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -59167,7 +59065,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -59271,7 +59169,7 @@
     "trips": 7,
     "wire": 19,
     "screens": [
-     "till.html 7/179"
+     "till.html 7/130"
     ]
    },
    "measured": {
@@ -59373,7 +59271,7 @@
     "trips": 7,
     "wire": null,
     "screens": [
-     "till.html 7/179"
+     "till.html 7/130"
     ]
    },
    "measured": {
@@ -59473,7 +59371,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/179"
+     "till.html 6/130"
     ]
    },
    "measured": {
@@ -59573,7 +59471,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/179"
+     "till.html 6/130"
     ]
    },
    "measured": {
@@ -59680,7 +59578,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -59781,7 +59679,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -59887,7 +59785,7 @@
     "trips": 1,
     "wire": 6,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -59988,8 +59886,8 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/155",
-     "till.html 1/179"
+     "app.html 1/108",
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -60045,7 +59943,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -60078,22 +59976,21 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d548871784442c21"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "promo.html",
     "till.html"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 1,
     "wire": null,
     "screens": [
-     "promo.html 50/67",
-     "till.html 50/179"
+     "promo.html 1/18",
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -60202,7 +60099,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -60305,7 +60202,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/179"
+     "till.html 6/130"
     ]
    },
    "measured": {
@@ -60405,7 +60302,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/179"
+     "till.html 4/130"
     ]
    },
    "measured": {
@@ -60505,7 +60402,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/179"
+     "till.html 4/130"
     ]
    },
    "measured": {
@@ -60610,7 +60507,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/179"
+     "till.html 4/130"
     ]
    },
    "measured": {
@@ -60719,7 +60616,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -60920,7 +60817,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -61028,7 +60925,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -61134,7 +61031,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/179"
+     "till.html 4/130"
     ]
    },
    "measured": {
@@ -61238,7 +61135,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -61342,7 +61239,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -61446,7 +61343,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "till.html 2/179"
+     "till.html 2/130"
     ]
    },
    "measured": {
@@ -61546,7 +61443,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/179"
+     "till.html 1/130"
     ]
    },
    "measured": {
@@ -61651,7 +61548,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -61754,7 +61651,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/179"
+     "till.html 3/130"
     ]
    },
    "measured": {
@@ -62181,7 +62078,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-admin.js 0/106",
      "cap-tasks.js 0/7",
      "core.js 0/57",
@@ -62290,7 +62187,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "core.js 0/57"
     ]
    },
@@ -62908,7 +62805,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-catsetup.js 0/14"
     ]
    },
@@ -63125,7 +63022,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "core.js 0/57"
     ]
    },
@@ -63232,7 +63129,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "core.js 0/57"
     ]
    },
@@ -63337,7 +63234,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "core.js 1/57"
     ]
    },
@@ -63469,7 +63366,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-assist.js 0/2",
      "cap-bank.js 0/8",
      "cap-books.js 0/43",
@@ -63497,7 +63394,7 @@
      "core.js 0/57",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
-     "till.html 0/179"
+     "till.html 0/130"
     ]
    },
    "measured": {
@@ -63599,7 +63496,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-books.js 1/43",
      "chit-sheet.js 1/2"
     ]
@@ -63708,7 +63605,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "core.js 0/57"
     ]
    },
@@ -63931,7 +63828,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/155",
+     "app.html 1/108",
      "cap-categories.js 1/6",
      "cap-definitions.js 1/17",
      "core.js 1/57"
@@ -64040,7 +63937,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155"
+     "app.html 0/108"
     ]
    },
    "measured": {
@@ -64681,7 +64578,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-iddocs.js 4/106",
+     "cap-iddocs.js 4/10",
      "cap-workforce.js 4/19"
     ]
    },
@@ -65098,8 +64995,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
-     "catalogue-lines.js 0/90"
+     "app.html 0/108",
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -65201,9 +65098,9 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/155",
+     "app.html 0/108",
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/90"
+     "catalogue-lines.js 0/43"
     ]
    },
    "measured": {
@@ -65427,7 +65324,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1136,
-   "hash": "3f9fb8b5cb7e82ea",
+   "hash": "0cb0f2c65965c8bf",
    "does": "",
    "errors": {
     "count": 0,
@@ -65464,7 +65361,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -65472,7 +65369,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -65490,6 +65387,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the body IS the CMDB record (lib/cmdb.js shape); a key beyond system, title and source travels inside the record, is never acted on, and the record is capped at 64 KB; the three named keys are typed, a junk value is refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -65501,13 +65401,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "record.html"
    ],

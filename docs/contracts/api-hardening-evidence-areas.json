@@ -56,8 +56,9 @@
    "output_allowlist": true
   },
   "DELETE /api/keys/:jti": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "DELETE /api/products/:id": {
    "output_allowlist": true

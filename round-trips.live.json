@@ -266,7 +266,15 @@
   "PUT /api/assist/catalogue-source": 4,
   "PUT /api/assist/region-override": 4,
   "POST /api/books/gst/pay": 4,
-  "POST /api/books/payments/:id/confirm": 5
+  "POST /api/books/payments/:id/confirm": 5,
+  "GET /api/catalogue/network/:bridge_id": 706,
+  "GET /api/products/media/:item_id/:mid": 3,
+  "POST /api/catalogue/:bridge_id/order/confirm": 33,
+  "POST /api/catalogue/network-store/:networkId/order": 831,
+  "POST /api/catalogue/photo-extract": 7,
+  "POST /api/ctp/deliver": 16,
+  "POST /api/ctp/query": 44,
+  "POST /api/till/pair/claim": 1
  },
  "measured": {
   "POST /api/network/entities": {
@@ -832,6 +840,54 @@
    "status": 200,
    "basis": "live from sit-in 2026-11-08",
    "at": "2026-11-08"
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "trips": 706,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "GET /api/products/media/:item_id/:mid": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "POST /api/catalogue/:bridge_id/order/confirm": {
+   "trips": 33,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "trips": 831,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "POST /api/catalogue/photo-extract": {
+   "trips": 7,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "POST /api/ctp/deliver": {
+   "trips": 16,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "POST /api/ctp/query": {
+   "trips": 44,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
+  },
+  "POST /api/till/pair/claim": {
+   "trips": 1,
+   "status": 200,
+   "basis": "live from sit-au 2026-11-11",
+   "at": "2026-11-11"
   }
  },
  "_about": "Live counts of the routes the harness reached (tools/live-trips.cjs, SPD-39): measured[route] = { trips, status, basis, at }; routes[route] carries the same trips for tests/round-trips-all.test.cjs."
