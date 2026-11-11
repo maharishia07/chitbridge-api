@@ -67,6 +67,7 @@ of file each thing is; this says what already does the job.
 | 39 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
+| 38 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
@@ -90,10 +91,10 @@ of file each thing is; this says what already does the job.
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 31 | `note` | `dbwatch.js` |  |
+| 31 | `hold` | `orders.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 30 | `account` | `home-facts.js` | OMITTED: |
-| 30 | `hold` | `orders.js` |  |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 14 | `edit` | `person-session.js` |  |
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 14 | `fault` | `speech.js` | const SPEECH_FAULT = 'Speech could not be read just now — |
-| 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
