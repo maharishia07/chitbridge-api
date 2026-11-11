@@ -1,14 +1,15 @@
 /**
- * tests/rail126-send-strict.test.cjs — RAIL-126 (a): our own web send is a CLOSED schema (an unknown key on POST /api/chits/send is a 400 that names it).
+ * tests/rail126-send-typed.test.cjs — RAIL-126 (a) under S33-T: POST /api/chits/send is a TOLERANT door whose every named key is typed.
  *
- * OWNS      the proof that POST /send refuses a key it does not list (one problem, CHIT_INVALID, the key named), that every key a caller really sends
- *           (the web screens, the counter, the api's own senders) is still accepted, and that the inbound tolerant reader (part b, the CTP envelope) is untouched.
+ * OWNS      the proof that an unknown key (zz_unknown) on POST /send is ignored (200, the same as without it, never named in an answer), that a JUNK VALUE in a known key is a 400 in the chits problem shape
+ *           (CHIT_INVALID, the key named), that every key a caller really sends (the web screens, the counter, the api's own senders) is still accepted, and that the inbound tolerant reader (part b, the CTP envelope) is untouched.
+ *           The door's tolerant entry and its end-to-end proof are in docs/contracts/api-hardening-scope.json and tests/api-tolerant-till.test.cjs; this file holds the per-key kinds.
  * CALLED BY scripts/guards.cjs (the offline gate).
  * FLOW      lib/chits-contract routeChecks('POST /send') (the same check routes/chits.js mounts) over a tiny express app; lib/ctpenvelope for part (b). No db, no network.
  * CARD      01-rail-core-the-chit/chits-routes
  * MIN unit-per-rule
  * MIN refusal-path
- * Run: node tests/rail126-send-strict.test.cjs
+ * Run: node tests/rail126-send-typed.test.cjs
  */
 'use strict';
 const path = require('path');
@@ -63,41 +64,46 @@ function post(port, body) {
   const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
   const port = server.address().port;
   try {
-    /* 1 · an unknown key is a 400, in the one problem shape, naming the key */
-    const stray = await post(port, { recipients: [{ self: true }], purpose: 'order', surprise_field: 1 });
-    ok('an unknown key is refused 400', stray.status === 400, stray);
-    ok('the refusal is the chits problem (CHIT_INVALID)', stray.body && stray.body.code === 'CHIT_INVALID', stray.body);
-    ok('the refusal names the key', JSON.stringify(stray.body).includes('surprise_field'), stray.body);
-    ok('the refusal says it is not accepted here', JSON.stringify(stray.body).includes('not accepted here'), stray.body);
-    const two = await post(port, { recipients: [{ self: true }], zzz: 1, yyy: 2 });
-    ok('every stray key is named, not only the first', two.status === 400 && JSON.stringify(two.body).includes('zzz') && JSON.stringify(two.body).includes('yyy'), two.body);
-    const draftStray = await post(port, { is_draft: true, whatever: true });
-    ok('a draft with a stray key is refused too', draftStray.status === 400, draftStray);
+    /* 1 · an unknown key is ignored (S33-T): the same answer as without it, and the answer never names it */
+    const plain = await post(port, { recipients: [{ self: true }], purpose: 'order' });
+    const stray = await post(port, { recipients: [{ self: true }], purpose: 'order', zz_unknown: 'zz_unknown_canary_value' });
+    ok('an unknown key (zz_unknown) is ignored: 200 as without it', stray.status === 200 && plain.status === 200 && JSON.stringify(stray.body) === JSON.stringify(plain.body), stray);
+    const draftStray = await post(port, { is_draft: true, zz_unknown: 1 });
+    ok('a draft with an unknown key goes too', draftStray.status === 200, draftStray);
+    /* 1b · a junk value in a known key is a 400 problem naming the key (the problem shape: code CHIT_INVALID) */
+    const JUNK = { subject: { a: 1 }, schema_values: 'x', is_draft: 'maybe', send_as_label: 5, external_priority: 7, promote_draft_id: 3, forwarded_from: [], client_ref: 9, message: {}, trace: 'x', retention_days: 'soon', expires_at: 20270101, self_copy: 'everyone', line_items: 'none', business_json: 'x', purpose: 'nope', manual_subject: 5 };
+    for (const [key, value] of Object.entries(JUNK)) {
+      const refused = await post(port, Object.assign({ recipients: [{ self: true }] }, { [key]: value }));
+      ok('junk in ' + key + ' is a 400 problem naming it', refused.status === 400 && refused.body && refused.body.code === 'CHIT_INVALID' && JSON.stringify(refused.body).includes(key), refused.body);
+    }
 
     /* 2 · every real caller's body still goes through */
     for (const [who, body] of Object.entries(BODIES)) {
       const got = await post(port, JSON.parse(JSON.stringify(body)));
       ok('real body accepted: ' + who, got.status === 200, got);
     }
-    /* 3 · the allow-list holds exactly the keys callers send: none missing, and SEND_BODY names each of them */
+    /* 3 · SEND_BODY names every key a caller sends, and types each (an untyped key would fail the register's knownKeysTyped) */
     const listed = Object.keys(input.SEND_BODY);
-    const missing = REAL_KEYS.filter((key) => !listed.includes(key));
-    ok('SEND_BODY lists every key a caller sends (' + REAL_KEYS.length + ')', missing.length === 0, missing);
+    const missing = REAL_KEYS.filter((key) => !listed.includes(key) && !['recipients', 'receivers'].includes(key)); /* the two recipient lists are judged by recipientsRule, with its own words */
+    ok('SEND_BODY types every key a caller sends but the two recipient lists (' + (REAL_KEYS.length - 2) + ')', missing.length === 0, missing);
+    ok('every key SEND_BODY names is typed', Object.values(input.SEND_BODY).every((rule) => rule.type || rule.enum), Object.keys(input.SEND_BODY));
     const sentKeys = new Set(Object.values(BODIES).flatMap((body) => Object.keys(body)));
     ok('the sample bodies together use every real key', REAL_KEYS.every((key) => sentKeys.has(key)), REAL_KEYS.filter((key) => !sentKeys.has(key)));
     /* 4 · the existing typed rules are untouched */
     const wrongPurpose = await post(port, { recipients: [{ self: true }], purpose: 'nope' });
     ok('a wrong purpose is still its own 400', wrongPurpose.status === 400 && JSON.stringify(wrongPurpose.body).includes('purpose'), wrongPurpose.body);
+    const lone = await post(port, { recipients: 'me' });
+    ok('a recipients value that is not a list is still the recipients rule own 400', lone.status === 400 && JSON.stringify(lone.body).includes('recipient'), lone.body);
     const nobody = await post(port, { purpose: 'order' });
     ok('no recipient is still its own 400', nobody.status === 400, nobody.body);
   } finally {
     server.close();
   }
 
-  /* 4b · the live proof scripts (they need a running server, so they are read, not run) send no key the closed body refuses */
+  /* 4b · the live proof scripts (they need a running server, so they are read, not run) send no key the send door never read */
   for (const file of ['scripts/prove-line-events.js', 'scripts/prove-line-threads.js', 'scripts/prove-partial.js', 'scripts/prove-three-party-messaging.js', 'scripts/prove-usecases.js']) {
     const src = require('fs').readFileSync(require('path').join(__dirname, '..', file), 'utf8');
-    ok(file + ' sends no send_to_self (the closed POST /send refuses it)', !/send_to_selfs*:/.test(src), file);
+    ok(file + ' sends no send_to_self (the door never read it)', !/send_to_selfs*:/.test(src), file);
   }
 
   /* 5 · part (b) is untouched: the CTP inbound reader still ignores a field it does not know */

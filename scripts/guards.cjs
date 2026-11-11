@@ -62,6 +62,7 @@ const GUARDS = [
   'vault-patch.test.cjs',
   'keys-kinds.test.cjs', // SET-WALK1 W15: the key kind 'testing' is offered to and minted by the platform role only (GET /keys scopes · POST 403 NOT_PLATFORM)       // ⭐ SET-WALK1 W25: the vault PUT is a merge-patch (RFC 7386 over the keyed view) with a version — 409 VAULT_CHANGED in words, never a blind replace
   'policy-one-writer.test.cjs', // ⭐⭐ T2-POLICY: policy_flags written only by policy.patchKey (22 → 0); the shop's tax number/address only by profile's one writer (3 → 0)
+  'cat124-reference-store-lists.test.cjs', // ⭐ CAT-124 C1+C2: the Product Lab's six cards come from the six reference stores (fallback to the constant where unloaded)
   'vertical-resolver.test.cjs', // ⭐ VERT-1/VERT-8: ONE answer to the shop's trade (govresolve.verticalOf); the five readers ask it; the Price Lab opens on the trade's list
   'trade-srv1.test.cjs', // ⭐ TRADE-SRV1: AU/AE lanes (b538), origin/sector stated or ASKED (never IN/paint), ?abroad=1, papers by deal, the day's rate, may/why on trade writes
   'profile-write-gate.test.cjs', // ⭐ SEC-71: PUT /profile, PUT /profile/vault, PATCH /entities/profile sit behind lib/access.writeGate — a viewer/commenter is refused with the rail's sentence, owner and editor pass
@@ -92,7 +93,7 @@ const GUARDS = [
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
   'ctp-tolerant-reader.test.cjs', // RAIL-126 b: CTP inbound is a tolerant reader — a higher minor of our major is read, unknown fields ignored, another major refused CTP_VERSION_UNSUPPORTED
-  'rail126-send-strict.test.cjs', // RAIL-126 (a): POST /send is a CLOSED schema - an unknown key is 400 naming it, every real caller's key still goes; part (b) untouched
+  'rail126-send-typed.test.cjs', // RAIL-126 (a), S33-T: POST /send types every key it names; an unknown key is ignored, a junk value in a known key is a 400, every real caller's key still goes; part (b) untouched
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   'network-door.test.cjs', // PLT-45/RAIL-97: the pass at CTP's door — a member/master accepts a chit only with a certificate signed by the PINNED key (lapsed, revoked, wrong key, copy: refused in words); the master's questions; standalone unchanged
   'network-cert.test.cjs', // PLT-45: the second key slot (CB_NETWORK_ROOT_KEY), the certificate (seal, bind, in date, 10-minute lapse), the cb<scope><nn>-root handles, the network wants
@@ -151,6 +152,7 @@ const GUARDS = [
   'network-validate.test.cjs', // P2: the dry-run validate of a designed network — names what would break, posts nothing
   'sim-load.test.cjs', // ⭐⭐⭐ Y1b: the simulator's loader refuses every non-local database; one plan for Y1 and Y1b; the chit carries the shop clock
   'round-trips-till.test.cjs', // ⭐⭐ the counter's snapshot has a trip budget: its own five tables in ONE transaction, 50 → 38 (M36, 2026-09-29)
+  'cost-margin-basis.test.cjs', // ACC-206 C1: the owner's chit margin is on the taxable value, one case per matrix column (tests/lib/bill-total-fixtures.cjs)
   'till-network-source-cost.test.cjs', // CTR-171: a source shop's cost keys never reach the till (adopted lines through the one strip)
   'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
   'screen-snapshot.test.cjs', // ⭐⭐⭐ SNAP-SCREEN · CFD-03: a TV key's snapshot + bell carry no customer/supplier/staff/cost — an allow-list; a counter unchanged
@@ -355,7 +357,9 @@ const GUARDS = [
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
   'testing-strict-input.test.cjs', // S33: the test board's closed write bodies refuse an unknown key by name and still take every key a handler reads or a caller sends (k13)
-  'till-strict-input.test.cjs', // S33: the counter's 15 live-only doors refuse an unknown key by name and still take every key the handler reads or the till sends; the 7 queueable doors stay open (api end-A, 11 Nov)
+  'till-strict-input.test.cjs', // S33: the counter's 13 live-only doors refuse an unknown key by name and still take every key the handler reads or the till sends; the 7 queueable doors stay open (S33-T moved quick-keys hide/unhide: shipped counters queued them, e5fe6136 till.html:3037,3075)
+  'till-strict-replay.test.cjs', // S33 (#1103): the two counter doors the till never sends (quick-keys state, screen-config) refuse an unknown key and replay unchanged; 5 checks
+  'cat124-adopt-refusal-atomic.test.cjs', // CAT-124 (#1097): a refused adopt leaves no category behind (one transaction, 8 checks)
   'platform-strict-input.test.cjs', // S33: channels platform doors and POST /api/keys refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'chits-b-strict-input.test.cjs', // S33: the rest of the chits write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'entities-strict-input.test.cjs', // S33: entities and relationships write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
@@ -476,6 +480,7 @@ const GUARDS = [
   'sec102-readiness-evidence.test.cjs', // SEC-102: a clearance's evidence chit counts only when the ownership check ran and found this shop's copy; a failed check stores NULL (declared), never documented
   'api-contract.test.cjs', // API-1 slice 1b: schemaValidate (ajv) and the contract cases generated from each route's schema
   'api-allowlist.test.cjs', // API-1 output allow-list (S34): the pruning rule, the res.json filter, the shape derivation from recorded answers (identity on every answer it saw, a key it never saw dropped and named)
+  'generated-files.test.cjs', // point 3 (11 Nov): a feature PR carries no derived file, the sign-offs and readability ratchet stay one entry per line and merge by union, the ratchet refuses a count going backwards
   'api-tools.test.cjs', // API-1 slice 1a: the ratchet rules, the register normaliser, the error-code table, as units
   'web-api-contract.test.cjs', // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
   'crm-leads.test.cjs', // L1: leads as parties, the memberships table's one writer (entity + group checks), 503 in words before b297, the b297 RLS lines
@@ -795,6 +800,9 @@ const GUARDS = [
   'api-8-strict-money.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS API-8 (S33): the money bodies are allow-lists, and each still names every key its handler reads.
   'api-43-pricing-tolerant.test.cjs', // API-43 (k78, enrolled with the merge): POST /api/pricing/price ignores unknown body keys again
   'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
+  'api-tolerant-till.test.cjs', // S33-T: the counter's queued doors (flags, stock, stock/bulk, reward, reward/claim, quick-keys hide/unhide) and POST /api/chits/send ignore zz_unknown, take the keys older counters sent, refuse a wrong kind 400 in the problem shape
+  'api-tolerant-doors.test.cjs', // S33-T (#1105-#1108): every tolerant door ignores an unknown key and refuses a known key of the wrong kind; the strict catalogue doors name the key they refuse (44 checks)
+  'till-queue-poison.test.cjs', // S33-T: the counter's own drain parks a refused queued row (400) with the server's words and sends the rows behind it; a refused bill is never deleted
   'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
   'set86-country-setup-merge.test.cjs', // SET-86 (P1): PUT /country-setup is a merge-patch; omitted tax unchanged (4.76 on 100.00 at 5% inclusive), confirmed de-registration, stray key refused
   'set80-currency-lock.test.cjs', // SET-80/81 (k80, enrolled with the batch): a traded shop's currency is locked on every door; unknown codes refused

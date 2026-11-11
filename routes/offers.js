@@ -17,7 +17,7 @@
 const express = require('express');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { SAID, faultOf, contract } = require('../lib/offers-contract'); // the contract (each route's operation) and the words of a refusal and of a fault
+const { SAID, faultOf, contract, ctxOf } = require('../lib/offers-contract'); // the contract (each route's operation) and the words of a refusal and of a fault
 const {
   round: roundMoney
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
@@ -80,7 +80,7 @@ const answer = (explain) =>
       if (!lines.length)
         return problem(req, res, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
       const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
-      const ctx = Object.assign({ now: new Date(), currency: null }, req.body.ctx || {}); /* T2-NATDEF: the caller's stated money, never INR by name */
+      const ctx = Object.assign({ now: new Date(), currency: null }, ctxOf(req.body.ctx)); /* T2-NATDEF: the caller's stated money, never INR by name */
       /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
       if (typeof ctx.money !== 'function') ctx.money = (n) => (ctx.currency ? String(ctx.currency) + ' ' : '') + roundMoney(Number(n) || 0).toFixed(2);
       const ev = eng.evaluate({ lines, offers, ctx });

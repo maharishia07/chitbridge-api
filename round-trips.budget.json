@@ -1795,8 +1795,8 @@
     },
     "GET /api/products/lists": {
       "file": "products.js",
-      "trips": 3,
-      "wire": 6,
+      "trips": 4,
+      "wire": 7,
       "fired": true,
       "status": 200,
       "extra": true
@@ -4795,10 +4795,35 @@
     },
     "POST /api/till/reward/claim": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 400,
+      "basis": "measured 2026-11-11 with the fixture below on the offline stub: idempotency claim, programme read, the claim transaction, idempotency complete = 4 trips; the claim writes sit inside its one transaction, so a fuller path adds none (the stub ends at the engine saying nothing to claim)",
+      "fixture_headers": {
+        "Idempotency-Key": "rt-claim-1"
+      },
+      "fixture_body": {
+        "from": {
+          "scheme": "phone",
+          "value": "9840012345"
+        },
+        "to": {
+          "scheme": "identity",
+          "value": "00000000-0000-4000-8000-000000000001"
+        },
+        "ref": "claim-rt-1"
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000002",
+        "name": "Points",
+        "rules": {},
+        "points": 10,
+        "total": "10",
+        "why": "earn",
+        "ref": "r1",
+        "at": "2026-11-01T00:00:00.000Z"
+      }
     },
     "POST /api/till/screens/rename": {
       "file": "till.js",

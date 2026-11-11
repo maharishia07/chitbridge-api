@@ -252,6 +252,8 @@ function checkCounts(baseRatchet, head, headRatchet, baseStage) {
   const problems = stage.problems.slice();
   if (actual > allowed) problems.push('routes not meeting the standard rose to ' + actual + ' (allowed ' + allowed + ' from the base ratchet of ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
   if (headRatchet.not_meeting < actual || headRatchet.total !== head.counts.routes) problems.push('docs/api-ratchet.json says ' + headRatchet.not_meeting + ' of ' + headRatchet.total + ' but the register says ' + actual + ' of ' + head.counts.routes + ': run node tools/api-ratchet.cjs --write');
+  /* STRICT (CB_GENERATED=strict: main and batch/*): the counts are written once, in the batch, so a committed count must EQUAL the code's: a stale-high count would let the next PR use the slack, and the check above only fails a count that is too low (critic, 11 Nov) */
+  if (process.env.CB_GENERATED === 'strict' && headRatchet.not_meeting !== actual) problems.push('docs/api-ratchet.json says ' + headRatchet.not_meeting + ' not meeting but the register says ' + actual + ' (strict: equal, not just not-lower): run node tools/api-ratchet.cjs --write');
   console.log('not meeting: ' + actual + ' of ' + head.counts.routes + ' (base ratchet ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
   return problems;
 }
@@ -264,6 +266,7 @@ function checkColumns(baseRatchet, head, headRatchet) {
     const actual = head.counts.columns[name].failing;
     const before = baseRatchet.columns_failing && baseRatchet.columns_failing[name];
     if (before !== undefined && actual > before + added) problems.push('routes failing ' + name + ' rose to ' + actual + ' (allowed ' + (before + added) + ')');
+    if (process.env.CB_GENERATED === 'strict' && headRatchet.columns_failing && headRatchet.columns_failing[name] > actual) problems.push('docs/api-ratchet.json columns_failing.' + name + ' is ' + headRatchet.columns_failing[name] + ' but the register says ' + actual + ' (strict: equal, not just not-lower): run node tools/api-ratchet.cjs --write');
     if (!headRatchet.columns_failing || headRatchet.columns_failing[name] < actual) problems.push('docs/api-ratchet.json columns_failing.' + name + ' is below the register: run node tools/api-ratchet.cjs --write');
   });
   console.log('failing per column: ' + Object.keys(head.counts.columns || {}).map((name) => name + ' ' + head.counts.columns[name].failing + '/' + head.counts.columns[name].applies).join(' · '));
@@ -301,14 +304,13 @@ function checkCodes(baseRatchet, headRatchet) {
   return problems;
 }
 
-/** API-43: the tolerant_outward list (docs/contracts/api-hardening-scope.json) may only get shorter; the first run with no base figure just records it. Adding a key needs a ratchet change on purpose (a cb-critic go) */
-function checkTolerant(baseRatchet, head, headRatchet) {
+/** S33-T (Athi 11 Nov): the tolerant_outward list may change only with its proofs (reason, caller class, test file: tools/api-register.cjs --check names each) and may not pass tolerant_outward_ceiling of the scope file. The meets count is still held by checkNotMeeting: a route moved to the list meets only when its column passes */
+function checkTolerant(baseRatchet, head) {
   const now = head.counts.tolerant_outward;
+  const ceiling = require('../docs/contracts/api-hardening-scope.json').tolerant_outward_ceiling;
   const problems = [];
-  const before = baseRatchet.tolerant_outward;
-  if (before !== undefined && now > before) problems.push('tolerant_outward rose to ' + now + ' (allowed ' + before + '): the list of API-43 doors may only go down');
-  if (headRatchet.tolerant_outward === undefined || headRatchet.tolerant_outward < now) problems.push('docs/api-ratchet.json tolerant_outward is ' + headRatchet.tolerant_outward + ' but the list has ' + now + ': run node tools/api-ratchet.cjs --write');
-  console.log('tolerant_outward: ' + now + ' (base ratchet ' + String(before) + ')');
+  if (typeof ceiling === 'number' && now > ceiling) problems.push('tolerant_outward has ' + now + ' doors, above its ceiling ' + ceiling + ': raise tolerant_outward_ceiling only with a cb-api sign-off');
+  console.log('tolerant_outward: ' + now + ' (ceiling ' + String(ceiling) + ')');
   return problems;
 }
 
@@ -337,11 +339,6 @@ function refuseRises(previous, now) {
   if (!flag('--seed') && now.notMeeting > previous.not_meeting + added) throw new Error('refusing to raise the count of routes not meeting the standard');
 }
 
-/** --write never records a longer tolerant_outward list than the committed one */
-function refuseTolerantRise(previous, now) {
-  if (previous && previous.tolerant_outward !== undefined && now > previous.tolerant_outward) throw new Error('refusing to raise the tolerant_outward list (' + now + ' against ' + previous.tolerant_outward + ')');
-}
-
 /** --write: rewrite docs/api-ratchet.json from the head register (never raises the count) */
 function writeRatchet(head) {
   const codes = require('./error-codes.cjs');
@@ -350,7 +347,6 @@ function writeRatchet(head) {
   const notMeeting = head.counts.routes - head.counts.meets;
   const columnsFailing = Object.fromEntries(Object.keys(head.counts.columns || {}).map((name) => [name, head.counts.columns[name].failing]));
   const rawNow = rawErrorWritesOf(ROOT).length;
-  refuseTolerantRise(previous, head.counts.tolerant_outward);
   refuseRises(previous, { notMeeting, rawNow, columnsFailing, routes: head.counts.routes });
   if (previous && previous.routes_without_does !== undefined && head.counts.no_does > previous.routes_without_does + Math.max(0, head.counts.routes - previous.total)) throw new Error('refusing to raise the count of routes with no @does');
   const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, routes_without_does: head.counts.no_does, tolerant_outward: head.counts.tolerant_outward, columns_failing: columnsFailing, reported_failing: Object.fromEntries(Object.keys(head.counts.reported || {}).map((name) => [name, head.counts.reported[name].failing])), debt: previous ? previous.debt : [] };

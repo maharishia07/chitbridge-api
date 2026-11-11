@@ -27,6 +27,7 @@ const catcols = require('../lib/catalogue-columns');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
 const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
+const refLists = require('../lib/reference-store-lists'); /* CAT-124: the Product Lab's lists come from their stores */
 const catSearch = require('../lib/catalogue-search'); /* CAT-313: the one search condition for GET / */
 /* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
 const defaults = require('../lib/defaults');
@@ -397,31 +398,6 @@ async function catalogueShape(entity_id) {
     required: required.length ? required : ['name'],
     template: csv.templateFor({ schema, orderInput: oi, observed }),
     orderInput: oi
-  };
-}
-
-/**
- * One starter list as the Product Lab shows it (GET /lists): its words, its shelves and units, the languages its rows carry, and every row with the unit it will be adopted under.
- * Above the first route on purpose: tools/api-allowlist.cjs reads a handler up to the next router line, and a map written inside the answer would hand every key it names to every level of it.
- */
-function listCard(blueprints, item) {
-  const bp = blueprints.blueprint(item);
-  return {
-    key: bp.key,
-    label: bp.label,
-    outcome: bp.outcome,
-    pin: blueprints.pin(bp),
-    categories: bp.categories,
-    units: bp.units,
-    languages: blueprints.languagesOf(item),
-    count: bp.starter.length,
-    rows: bp.starter.map((x) => ({
-      name: x.name,
-      unit: x.unit || bp.defaultUnit,
-      price: x.price,
-      category: x.category || null,
-      names: x.names || null
-    }))
   };
 }
 
@@ -2184,6 +2160,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
     }
 
     const trade = await require('../lib/govresolve').verticalOf(entity_id); /* one trip; an unreadable trade answers key null (logged) */
+    const stored = await refLists.readStoreLists({ query, withEntity }); /* CAT-124 C2: one card per reference store */
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
       have: mine.filter((x) => x.active).length,
@@ -2193,7 +2170,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
       vertical: trade.key,
       pick: BP.forVertical(trade.key),
-      lists: Object.keys(BP.BLUEPRINTS).map((item) => listCard(BP, item)),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(BP, item, stored.get(item))),
       /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
       language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
       mine
@@ -2236,7 +2213,6 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
   try {
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
-    const cats = require('../lib/categories');
     const b = req.body || {};
 
     const bp = BP.blueprint(b.list);
@@ -2342,26 +2318,10 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
       });
     }
 
-    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the
-       product. If this and routes/till.js ever differ, they are two opinions about one act. */
-    const wantCats = [...new Set(items.map((x) => x.categoryName).filter(Boolean))];
-    let catIds = new Map();
-    if (wantCats.length) {
-      try {
-        catIds = await cats.ensureCategories(entity_id, wantCats, { withEntity, by: (req.identity && req.identity.identity_id) || null });
-      } catch (e) {
-        return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(e)) });
-      }
-    }
-    items = items.map((x) => {
-      const out = Object.assign({}, x);
-      const id = x.categoryName ? catIds.get(x.categoryName) : null;
-      delete out.categoryName;
-      if (id) out.categories = [id];
-      return out;
-    });
-
-    const w = await catwrite.writeItems({ entity_id, items });
+    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the product — and both are written in ONE
+       transaction (catwrite.writeCitedItems), so a refused adopt leaves no category behind (CAT-124 F1). */
+    const w = await catwrite.writeCitedItems({ entity_id, items, by: (req.identity && req.identity.identity_id) || null });
+    if (w.categoriesFailed) return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(w.categoriesFailed)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
 
     shopChanged(entity_id, 'product list adopted');

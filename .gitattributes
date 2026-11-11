@@ -10,3 +10,6 @@
 *.yaml text eol=lf
 # DB-REBASE: the baseline carries function bodies and seed text byte for byte — CRLF would put \r inside every function on a Windows checkout
 migrations/000_baseline*.sql text eol=lf
+# Point 3 (11 Nov): the two line-per-entry files merge by union in the batch build (local git merge); tools/hand-file-fix.cjs --fix then repairs commas, sorts, and stops on one key with two different lines. GitHub's own merge ignores this, so everything lands through the batch.
+docs/api-signoffs.json merge=union
+readability.ratchet.json merge=union

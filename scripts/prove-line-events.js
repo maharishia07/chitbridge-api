@@ -1,7 +1,7 @@
 'use strict';
 // OWNS      the live proof that line events accumulate on a line spine, both directions (goods drawn down, service accumulated)
-// CALLED BY tests/rail126-send-strict.test.cjs (static: the body it sends is a key the closed POST /send accepts) · by hand against a running server: node scripts/prove-line-events.js
-// FLOW      running api → POST /api/chits/send (closed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CALLED BY tests/rail126-send-typed.test.cjs (static: the body it sends carries no key the send door never read (send_to_self)) · by hand against a running server: node scripts/prove-line-events.js
+// FLOW      running api → POST /api/chits/send (typed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
 // CARD 01-rail-core-the-chit/line-model
 /**
  * prove-line-events.js — ONE MECHANISM, BOTH DIRECTIONS (b152).

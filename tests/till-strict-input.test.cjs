@@ -2,9 +2,8 @@
 /**
  * till-strict-input.test.cjs — S33 strict input, the counter's LIVE doors: an unknown body key is refused by name, every key the handler reads or the till sends is declared.
  *
- * OWNS      the proof that closing the 15 live-only counter doors (lib/till-contract.js, additionalProperties false) refuses nothing the handler reads
- *           or the counter (web till.html, vendored) sends. The doors that can sit in the counter's offline queue (flags, stock, stock/bulk, reward, reward/claim,
- *           quick-keys/state, quick-keys/screen-config) stay OPEN on purpose: an older queued body must not wedge on a newer server (PM/ATHI-DECISIONS 2026-11-09, recommendation).
+ * OWNS      the proof that closing the 13 live-only counter doors (lib/till-contract.js, additionalProperties false) refuses nothing the handler reads
+ *           or the counter (web till.html, vendored) sends. The doors that can sit in the counter's offline queue (flags, stock, stock/bulk, reward, reward/claim, quick-keys/hide, quick-keys/unhide: the shipped counters queued them) stay OPEN on purpose: an older queued body must not wedge on a newer server (PM/ATHI-DECISIONS 2026-11-09, recommendation). quick-keys/state and screen-config were never sent by any till: closed, tests/till-strict-replay.test.cjs.
  * CALLED BY scripts/guards.cjs · CI. No database, no network.
  * FLOW      lib/till-contract.js ROUTES (closed rows) → schemaValidate of the route's own operation → unknown key 400 naming it; handler text in routes/till.js → keys read ⊆ declared
  * CARD      28-platform-and-operations/api-standard
@@ -23,8 +22,8 @@ const ok = (name, cond, why) => {
   if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); }
 };
 
-const LIVE = ['/alias', '/catalogue', '/close', '/diagnostic', '/enrol', '/listen', '/pair', '/pair/claim', '/quick-keys/hide', '/quick-keys/unhide', '/reconcile', '/screens/rename', '/screens/revoke', '/shop', '/state'];
-const QUEUED = ['/flags', '/stock', '/stock/bulk', '/reward', '/reward/claim', '/quick-keys/state', '/quick-keys/screen-config'];
+const LIVE = ['/alias', '/catalogue', '/close', '/diagnostic', '/enrol', '/listen', '/pair', '/pair/claim', '/reconcile', '/screens/rename', '/screens/revoke', '/shop', '/state'];
+const QUEUED = ['/flags', '/stock', '/stock/bulk', '/reward', '/reward/claim', '/quick-keys/hide', '/quick-keys/unhide'];
 /* what the counter sends today, call site by call site (web till.html at origin/main, 11 Nov 2026) */
 const SENT = {
   '/alias': ['item_id', 'by', 'text', 'unit', 'factor'], '/catalogue': ['blueprint'], '/close': ['last_no', 'bills', 'next', 'period'],
