@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 97,
-  "meets": 541,
+  "partial": 98,
+  "meets": 540,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -63243,7 +63243,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5285,
-   "hash": "b4028826f237799e",
+   "hash": "037060563fb813f2",
    "does": "",
    "errors": {
     "count": 0,
@@ -63314,10 +63314,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2 re-review c15cf4e8: all 13 columns true; every takeBackCancelled books branch recorded, prune() drops 0 keys on all 13 recorded 200s; replay unchanged (no route or lib change since 663/663)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "037060563fb813f2"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-assist.js",

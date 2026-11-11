@@ -533,6 +533,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
 | reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
 | status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
+| status_from_changed | 409 | Chit moved since you looked | This chit is not in the status you saw. It was not changed. | Look at it again, then choose again. | chits | 2026-11-11 |
+| status_use_unneeded | 400 | Use is said with the acceptance | What the goods are for is only said when you accept the bill. | Accept the bill, or leave it out. | chits | 2026-11-11 |
 | taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
