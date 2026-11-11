@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
-const GUARD = /^[ \t]*if \(takenBack\) return takenBack;\n/m;
+const GUARD = /\(await takenBackRefusal\(db, entity_id, chit_id, facts\)\) \|\| /; /* sideRefusal asks the taken-back guard first (RAIL-216 put the paid refusal beside it) */
 
 const source = fs.readFileSync(path.join(ROOT, 'lib', 'rail-status.js'), 'utf8');
 const broken = source.replace(GUARD, '');

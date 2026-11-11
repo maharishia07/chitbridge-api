@@ -643,6 +643,7 @@ const GUARDS = [
   'crm-viewer.test.cjs',
   'pay-fix-renumber.test.cjs',
   'pay-fix-void.test.cjs',
+  'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (also in NEEDS_ENGINES: runs over the books harness)
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */

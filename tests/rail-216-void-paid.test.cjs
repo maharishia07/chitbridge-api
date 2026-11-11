@@ -168,7 +168,7 @@ const IDEM = { n: 0 };
   t('a paid invoice cancelled by its sender through the status door → 409 why paid, nothing reversed', st.status === 409 && st.body.why === 'paid' && !reversalOf(inv.entry), st.status + ' ' + JSON.stringify(st.body).slice(0, 300));
 
   console.log('\n— 7 · the rule lives in the ONE gate, not in the route —');
-  const gateSrc = fs.readFileSync(path.join(H.API, 'lib', 'rail-status.js'), 'utf8'), routeSrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+  const gateSrc = fs.readFileSync(path.join(H.API, 'lib', 'rail-status.js'), 'utf8'), routeSrc = require('../tools/chits-files.cjs').read(H.API); /* the ONE list of chits files */
   const voidSrc = routeSrc.slice(routeSrc.indexOf("router.put('/:chit_id/void'"), routeSrc.indexOf('// POST /chits/assign-bulk'));
   t('statusGate asks paidRefusal; the void route only words the verdict (no paidFactsOf in the route, no second status path)', /paidRefusal\(db, entity_id, chit_id/.test(gateSrc) && !/paidFactsOf/.test(voidSrc) && !/SET current_status/.test(voidSrc));
 

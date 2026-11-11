@@ -913,6 +913,8 @@ const ENGINE_OTHER = [
   'chit-move.js', 'chit-crossing.js',
   /* RAIL-205 (2026-11-09) — chit-ceiling.js: the widest total, quantity and price a chit's own columns hold, read off their declared precision; send and amend refuse past it. CB's own plumbing over its own schema, no engine rule. */
   'chit-ceiling.js',
+  /* RAIL-216 (2026-11-09) — chit-paid.js: has money been applied to the invoice I sent (the seller's void asks it). A read over my own books, CB plumbing, no engine rule. */
+  'chit-paid.js',
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',
