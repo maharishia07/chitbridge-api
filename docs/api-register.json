@@ -5,8 +5,8 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 98,
-  "meets": 541,
+  "partial": 97,
+  "meets": 542,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -53582,13 +53582,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-11 PR#1087: new route read in the diff; strict body (ids/add/remove, additionalProperties false, 200 ids cap, both-ways and nothing-named refused) as the registered 400 PRODUCT_BAD_REQUEST, unknown category 400 declared inline with a scene; 403 cost-blind gate as the single attach; 500 via faultOf; a foreign or unknown product id answers per-line refused NOT_FOUND (no oracle); no money written; Idempotency-Key by the global middleware and the set operation is repeat-safe (unchanged); 200 allow-list from a recorded scene; 0 trips budgeted; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
