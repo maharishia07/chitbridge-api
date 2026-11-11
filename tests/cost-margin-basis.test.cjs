@@ -50,6 +50,6 @@ const HAND = {
     assert.ok(/counterBill\.taxableOf\(|taxableOf\(row\.summary_json\)/.test(till), 'till.js billMoney calls taxableOf');
     assert.ok(!/money\.taxable != null \? money\.taxable : money\.net/.test(till), 'till.js holds no second copy of the pick');
   } catch (e) { failed += 1; console.log('FAIL ' + e.message); }
-  console.log(failed ? failed + ' FAILED' : 'cost-margin-basis: all ' + FIXTURES.length + ' columns pass');
+  console.log(failed ? failed + ' FAILED' : 'cost-margin-basis: ' + (FIXTURES.length + 3) + ' checks, all ' + FIXTURES.length + ' columns pass');
   process.exit(failed ? 1 : 0);
 })();
