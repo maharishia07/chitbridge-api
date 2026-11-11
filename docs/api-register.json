@@ -1348,7 +1348,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 487,
+   "line": 488,
    "hash": "e89a80ebaeec0b45",
    "does": "",
    "errors": {
@@ -46773,7 +46773,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 548,
+   "line": 549,
    "hash": "0ecdb82b18aa5e62",
    "does": "",
    "errors": {
@@ -63721,7 +63721,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
    "line": 380,
-   "hash": "7b50ec74f900b445",
+   "hash": "a98dacd9acb4fa31",
    "does": "",
    "errors": {
     "count": 0,
@@ -63761,7 +63761,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
