@@ -55,6 +55,23 @@ const build = (rows) => { try { return T.gstr1({ rows }, ME, '102026'); } catch 
   eq('all seven places in one month: seven b2cl groups, each with its one bill (no group swallowed by another)', both.threw ? both : (both.b2cl || []).map((p) => [p.pos, p.inv.length]).sort(), WORDS.map((w) => [w, 1]).sort());
   ok('and the prototype is still clean', protoClean());
 
+  /* QA-140 (2026-11-12): the same words through GSTR-3B 3.2 (the sheet's own keyedMap_, lib/gst-returns.js newSheet_().unregistered). The part above goes
+     through gstr1; this is the second caller of the same fix. One inter-state B2C bill (taxable 1,50,000, IGST 27,000) per word, place of supply = the word. */
+  console.log('\n══ QA-140 · GSTR-3B 3.2 by place of supply, hostile place names ══\n');
+  const G = require(path.join(__dirname, '..', 'lib', 'gst-returns'));
+  const keysBefore = Object.keys(Object.prototype).join('|');
+  const doc = (no, word, price) => ({ kind: 'invoice', ref: no, date: '2026-10-03', inv: invoice({ Pos: word }, price, no) });
+  const run3b = (docs) => { try { return G.gstr3b({ gstin: ME.Gstin, month: '2026-10', documents: docs }); } catch (e) { return { threw: String(e && e.message) }; } };
+  for (const word of ['__proto__', 'constructor']) {
+    const r = run3b([doc('INV-31', word, 150000)]);
+    eq('3B place of supply "' + word + '": 3.2 holds one row for that place, taxable 1,50,000 and IGST 27,000', r.threw ? r : r.s3_2.unregistered, [{ pos: word, txval: 150000, igst: 27000 }]);
+    ok('3B "' + word + '": ({}).polluted, ({}).txval, ({}).igst are undefined', ({}).polluted === undefined && ({}).txval === undefined && ({}).igst === undefined);
+    ok('3B "' + word + '": Object.keys(Object.prototype) is unchanged', Object.keys(Object.prototype).join('|') === keysBefore && protoClean());
+  }
+  const two = run3b([doc('INV-32', '__proto__', 150000), doc('INV-33', 'constructor', 100000), doc('INV-34', '__proto__', 50000)]);
+  eq('3B both words and a repeat in one month: __proto__ sums two bills (2,00,000 / 36,000), constructor one (1,00,000 / 18,000)', two.threw ? two : two.s3_2.unregistered, [{ pos: '__proto__', txval: 200000, igst: 36000 }, { pos: 'constructor', txval: 100000, igst: 18000 }]);
+  ok('3B 3.1(a) still carries the whole 3,00,000 taxable, and the prototype is clean', !two.threw && two.s3_1.a.txval === 300000 && protoClean(), JSON.stringify(two.s3_1 && two.s3_1.a));
+
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })();
