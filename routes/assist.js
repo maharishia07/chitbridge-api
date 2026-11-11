@@ -743,13 +743,6 @@ router.get('/gaps', auth, ...contract.checked('GET /gaps'), async (req, res) => 
   }
 });
 
-// POST /api/assist/resolve — DEPRECATED under B1 RLS. It updated the HELP entity's catalogue from an outside caller
-// (a cross-entity write, now forbidden). Answering is done on the question's CHIT in GOV-01-Help's Task inbox, then
-// Published via POST /api/assist/publish (own catalogue). This endpoint writes nothing.
-router.post('/resolve', auth, ...contract.checked('POST /resolve'), async (req, res) => {
-  problem(req, res, { status: 410, ...words.reviewRetired() });
-});
-
 // GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
 // (generalises off the hardcoded 'GOV-01-Help' name). Never throws.
 router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res) => {

@@ -59,7 +59,6 @@ const WRITE_ALLOW = {
   'POST /api/privacy/me/requests': 'a buyer files THEIR OWN privacy request (customerAuth)',
   /* behind auth AND a path hat-gate lets a viewer through — each is the caller\'s own, or refuses inside */
   'PUT /api/actors/break': 'the caller\'s own break; naming someone else is owner-only (ownerWhenOther)',
-  'POST /api/assist/resolve': 'resolving a governed view — a read, writes nothing',
   'POST /api/chits/:chit_id/messages': 'internal messaging for a commenter; the handler refuses an EXTERNAL thread for a read-only login',
   'PATCH /api/entities/me/prefs/:kind': 'the caller\'s own appearance/locale preference, not a record',
   'PATCH /api/entities/me/locale': 'the caller\'s own locale, not a record',

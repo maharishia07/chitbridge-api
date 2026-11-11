@@ -1751,10 +1751,6 @@
   422,
   500
  ],
- "POST /api/assist/resolve": [
-  401,
-  410
- ],
  "POST /api/attachments": [
   400,
   401,

@@ -146,11 +146,6 @@
    "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"
   },
   {
-   "route": "POST /api/assist/resolve",
-   "status": 500,
-   "reason": "retired route that always answers 410 and reads nothing"
-  },
-  {
    "route": "POST /api/network-offers/:id/choice",
    "status": 404,
    "reason": "RAIL-207: the id is checked for its shape only (400 OFFER_UNKNOWN) and the choice is written to the caller's own flags; the route reads no offer row, so a well-formed unknown id answers 200 and never 404 (whether it should is cb-network's, foreign_id_404 stays open)"

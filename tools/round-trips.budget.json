@@ -172,7 +172,6 @@
  "GET   /api/assist/catalogue-source/:key  assist.js": 0,
  "POST  /api/assist/gap  assist.js": 0,
  "GET   /api/assist/gaps  assist.js": 0,
- "POST  /api/assist/resolve  assist.js": 0,
  "GET   /:id  attachments.js": 0,
  "POST  /api/capture/simulate  capture.js": 0,
  "GET   /api/capture/pending  capture.js": 0,

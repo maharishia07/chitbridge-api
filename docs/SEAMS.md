@@ -19,7 +19,7 @@ of file each thing is; this says what already does the job.
 | 96 | `money` | `bill-privacy.js` |  |
 | 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 77 | `next` | `dayopen.js` | the next thing to do — |
+| 78 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 70 | `list` | `cap-settings.js` |  |
@@ -56,7 +56,7 @@ of file each thing is; this says what already does the job.
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 43 | `rules` | `docnumber.js` | the rule set for a country — |
-| 43 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 44 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
@@ -92,7 +92,7 @@ of file each thing is; this says what already does the job.
 | 32 | `note` | `dbwatch.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
-| 30 | `hold` | `orders.js` |  |
+| 31 | `hold` | `orders.js` |  |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `sheet` | `cap-employees.js` |  |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
