@@ -131,7 +131,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -377,7 +377,7 @@
      "order",
      "Order from Mayur Traders — 01 Oct 2026",
      "Brake pads",
-     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.84.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
+     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.86.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
      "{\"invoice\":{\"DocDtls\":{\"Typ\":\"INV\",\"No\":null,\"Dt\":\"TS\"},\"currency\":\"INR\",\"TranDtls\":{\"TaxSch\":\"GST\",\"SupTyp\":\"B2B\",\"RegRev\":\"N\",\"IgstOnIntra\":\"N\"},\"SellerDtls\":{\"Gstin\":\"29BBBBB0000B1Z5\",\"LglNm\":\"Chola Auto Care\",\"State\":\"29\"},\"BuyerDtls\":{\"Gstin\":\"33AAAAA0000A1Z5\",\"LglNm\":\"Mayur Traders\",\"State\":\"33\",\"Pos\":\"33\"},\"ItemList\":[{\"SlNo\":\"1\",\"PrdDesc\":\"Brake pad\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":2,\"Unit\":\"piece\",\"UnitPrice\":59,\"TotAmt\":118,\"Discount\":0,\"AssAmt\":118,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":118,\"_line_id\":\"UUID#2\"},{\"SlNo\":\"2\",\"PrdDesc\":\"Oil\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":1,\"Unit\":\"\",\"UnitPrice\":500,\"TotAmt\":500,\"Discount\":50,\"AssAmt\":450,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":450,\"_line_id\":\"UUID#3\"}],\"ValDtls\":{\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"StCesVal\":0,\"Discount\":50,\"RndOffAmt\":0,\"TotInvVal\":568,\"TaxVal\":0},\"_cb\":{\"scheme\":\"GST\",\"supply\":\"inter\",\"place_of_supply\":\"33\",\"seller_state\":\"29\",\"slabs\":[{\"GstRt\":0,\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0}],\"amount_payable\":568,\"reverse_charge\":false,\"price_includes_tax\":true,\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]},\"notes\":[\"Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.\",\"Your prices include tax, so the taxable value was worked back out of each price.\"]}},\"page\":\"chit.base.detail@1.0\"}",
      3,
      "SCHEMA-1",
@@ -451,7 +451,7 @@
      "order",
      "Order from Mayur Traders — 01 Oct 2026",
      "Brake pads",
-     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.84.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
+     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.86.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
      "{\"invoice\":{\"DocDtls\":{\"Typ\":\"INV\",\"No\":null,\"Dt\":\"TS\"},\"currency\":\"INR\",\"TranDtls\":{\"TaxSch\":\"GST\",\"SupTyp\":\"B2B\",\"RegRev\":\"N\",\"IgstOnIntra\":\"N\"},\"SellerDtls\":{\"Gstin\":\"29BBBBB0000B1Z5\",\"LglNm\":\"Chola Auto Care\",\"State\":\"29\"},\"BuyerDtls\":{\"Gstin\":\"33AAAAA0000A1Z5\",\"LglNm\":\"Mayur Traders\",\"State\":\"33\",\"Pos\":\"33\"},\"ItemList\":[{\"SlNo\":\"1\",\"PrdDesc\":\"Brake pad\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":2,\"Unit\":\"piece\",\"UnitPrice\":59,\"TotAmt\":118,\"Discount\":0,\"AssAmt\":118,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":118,\"_line_id\":\"UUID#2\"},{\"SlNo\":\"2\",\"PrdDesc\":\"Oil\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":1,\"Unit\":\"\",\"UnitPrice\":500,\"TotAmt\":500,\"Discount\":50,\"AssAmt\":450,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":450,\"_line_id\":\"UUID#3\"}],\"ValDtls\":{\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"StCesVal\":0,\"Discount\":50,\"RndOffAmt\":0,\"TotInvVal\":568,\"TaxVal\":0},\"_cb\":{\"scheme\":\"GST\",\"supply\":\"inter\",\"place_of_supply\":\"33\",\"seller_state\":\"29\",\"slabs\":[{\"GstRt\":0,\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0}],\"amount_payable\":568,\"reverse_charge\":false,\"price_includes_tax\":true,\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]},\"notes\":[\"Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.\",\"Your prices include tax, so the taxable value was worked back out of each price.\"]}},\"page\":\"chit.base.detail@1.0\"}",
      3,
      "SCHEMA-1",
@@ -946,7 +946,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -1180,7 +1180,7 @@
      "order",
      "Order from Mayur Traders — 01 Oct 2026",
      "Brake pads",
-     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.84.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
+     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.86.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
      "{\"invoice\":{\"DocDtls\":{\"Typ\":\"INV\",\"No\":null,\"Dt\":\"TS\"},\"currency\":\"INR\",\"TranDtls\":{\"TaxSch\":\"GST\",\"SupTyp\":\"B2B\",\"RegRev\":\"N\",\"IgstOnIntra\":\"N\"},\"SellerDtls\":{\"Gstin\":\"29BBBBB0000B1Z5\",\"LglNm\":\"Chola Auto Care\",\"State\":\"29\"},\"BuyerDtls\":{\"Gstin\":\"33AAAAA0000A1Z5\",\"LglNm\":\"Mayur Traders\",\"State\":\"33\",\"Pos\":\"33\"},\"ItemList\":[{\"SlNo\":\"1\",\"PrdDesc\":\"Brake pad\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":2,\"Unit\":\"piece\",\"UnitPrice\":59,\"TotAmt\":118,\"Discount\":0,\"AssAmt\":118,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":118,\"_line_id\":\"UUID#1\"},{\"SlNo\":\"2\",\"PrdDesc\":\"Oil\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":1,\"Unit\":\"\",\"UnitPrice\":500,\"TotAmt\":500,\"Discount\":50,\"AssAmt\":450,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":450,\"_line_id\":\"UUID#2\"}],\"ValDtls\":{\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"StCesVal\":0,\"Discount\":50,\"RndOffAmt\":0,\"TotInvVal\":568,\"TaxVal\":0},\"_cb\":{\"scheme\":\"GST\",\"supply\":\"inter\",\"place_of_supply\":\"33\",\"seller_state\":\"29\",\"slabs\":[{\"GstRt\":0,\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0}],\"amount_payable\":568,\"reverse_charge\":false,\"price_includes_tax\":true,\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]},\"notes\":[\"Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.\",\"Your prices include tax, so the taxable value was worked back out of each price.\"]}},\"page\":\"chit.base.detail@1.0\"}",
      3,
      "SCHEMA-1",
@@ -1246,7 +1246,7 @@
      "order",
      "Order from Mayur Traders — 01 Oct 2026",
      "Brake pads",
-     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.84.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
+     "{\"line_item_count\":2,\"total_value\":568,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":618,\"savings\":50,\"net\":568,\"taxable\":568,\"tax\":0,\"total\":568,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true,\"offers\":[],\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]}},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.86.0\",\"where\":\"send\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
      "{\"invoice\":{\"DocDtls\":{\"Typ\":\"INV\",\"No\":null,\"Dt\":\"TS\"},\"currency\":\"INR\",\"TranDtls\":{\"TaxSch\":\"GST\",\"SupTyp\":\"B2B\",\"RegRev\":\"N\",\"IgstOnIntra\":\"N\"},\"SellerDtls\":{\"Gstin\":\"29BBBBB0000B1Z5\",\"LglNm\":\"Chola Auto Care\",\"State\":\"29\"},\"BuyerDtls\":{\"Gstin\":\"33AAAAA0000A1Z5\",\"LglNm\":\"Mayur Traders\",\"State\":\"33\",\"Pos\":\"33\"},\"ItemList\":[{\"SlNo\":\"1\",\"PrdDesc\":\"Brake pad\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":2,\"Unit\":\"piece\",\"UnitPrice\":59,\"TotAmt\":118,\"Discount\":0,\"AssAmt\":118,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":118,\"_line_id\":\"UUID#1\"},{\"SlNo\":\"2\",\"PrdDesc\":\"Oil\",\"IsServc\":\"N\",\"HsnCd\":\"\",\"Qty\":1,\"Unit\":\"\",\"UnitPrice\":500,\"TotAmt\":500,\"Discount\":50,\"AssAmt\":450,\"GstRt\":0,\"IgstAmt\":0,\"CgstAmt\":0,\"SgstAmt\":0,\"TaxAmt\":0,\"CesRt\":0,\"CesAmt\":0,\"TotItemVal\":450,\"_line_id\":\"UUID#2\"}],\"ValDtls\":{\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"StCesVal\":0,\"Discount\":50,\"RndOffAmt\":0,\"TotInvVal\":568,\"TaxVal\":0},\"_cb\":{\"scheme\":\"GST\",\"supply\":\"inter\",\"place_of_supply\":\"33\",\"seller_state\":\"29\",\"slabs\":[{\"GstRt\":0,\"AssVal\":568,\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0}],\"amount_payable\":568,\"reverse_charge\":false,\"price_includes_tax\":true,\"bridge\":{\"ok\":true,\"decimals\":2,\"steps\":[{\"name\":\"gross\",\"amount\":618,\"amount_minor\":61800},{\"name\":\"discount\",\"amount\":50,\"amount_minor\":5000},{\"name\":\"net\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"taxable\",\"amount\":568,\"amount_minor\":56800},{\"name\":\"tax\",\"amount\":0,\"amount_minor\":0},{\"name\":\"round_off\",\"amount\":0,\"amount_minor\":0},{\"name\":\"total\",\"amount\":568,\"amount_minor\":56800}],\"lines\":[{\"line\":0,\"gross_minor\":11800,\"net_minor\":11800,\"taxable_minor\":11800,\"tax_minor\":0,\"total_minor\":11800},{\"line\":1,\"gross_minor\":50000,\"net_minor\":45000,\"taxable_minor\":45000,\"tax_minor\":0,\"total_minor\":45000}],\"heads\":[{\"level\":\"total\",\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}},{\"level\":\"slab\",\"rate\":0,\"base_minor\":56800,\"currency\":\"INR\",\"minor\":{\"CgstVal\":0,\"SgstVal\":0,\"IgstVal\":0,\"CesVal\":0,\"TaxVal\":0}}]},\"notes\":[\"Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.\",\"Your prices include tax, so the taxable value was worked back out of each price.\"]}},\"page\":\"chit.base.detail@1.0\"}",
      3,
      "SCHEMA-1",
@@ -1646,7 +1646,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "counter",
       "at": "TS"
      },
@@ -1834,7 +1834,7 @@
      "order",
      "Order from Mayur Traders — 01 Oct 2026",
      "Brake pads",
-     "{\"line_item_count\":2,\"total_value\":1180,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"copy_policy\":{\"scope\":\"sender\",\"kept\":[\"received\"],\"suppressed\":[\"sent\"],\"reason\":\"One copy for the sender — C1/26-27/0041 is a numbered document, and a number may appear once in a shop's books (b263).\",\"source\":\"numbered-document\"},\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":0,\"savings\":0,\"net\":0,\"taxable\":1000,\"tax\":180,\"total\":1180,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.84.0\",\"where\":\"counter\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
+     "{\"line_item_count\":2,\"total_value\":1180,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"order\",\"is_promotion\":false,\"forwarded_from\":null,\"copy_policy\":{\"scope\":\"sender\",\"kept\":[\"received\"],\"suppressed\":[\"sent\"],\"reason\":\"One copy for the sender — C1/26-27/0041 is a numbered document, and a number may appear once in a shop's books (b263).\",\"source\":\"numbered-document\"},\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":0,\"savings\":0,\"net\":0,\"taxable\":1000,\"tax\":180,\"total\":1180,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.86.0\",\"where\":\"counter\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}}}",
      "{\"till\":{\"id\":\"C1\"},\"bill_no\":\"C1/26-27/0041\",\"billed_at\":\"TS\",\"customer\":{\"entity_id\":\"CUST\",\"name\":\"Chola Auto Care\"},\"payment\":{\"parts\":[{\"mode\":\"cash\",\"amount\":1180}]},\"series\":{\"prefix\":\"C1\",\"period\":\"26-27\",\"seq\":41},\"invoice\":{\"ValDtls\":{\"AssVal\":1000,\"CgstVal\":90,\"SgstVal\":90,\"IgstVal\":0,\"TotInvVal\":1180,\"RndOffAmt\":0},\"ItemList\":[],\"DocDtls\":{\"No\":\"C1/26-27/0041\"}},\"client_ref\":\"C1/26-27/0041\",\"tax_check\":{\"at\":\"TS\",\"differences\":[{\"what\":\"place_of_supply\",\"issued\":null,\"server\":\"33\"},{\"what\":\"supply\",\"issued\":null,\"server\":\"intra\"},{\"what\":\"taxable\",\"issued\":1000,\"server\":568},{\"what\":\"cgst\",\"issued\":90,\"server\":0},{\"what\":\"sgst\",\"issued\":90,\"server\":0},{\"what\":\"total\",\"issued\":1180,\"server\":568},{\"what\":\"taxable at 0%\",\"issued\":0,\"server\":568}],\"kept\":\"issued\"},\"page\":\"chit.base.detail@1.0\"}",
      3,
      "SCHEMA-1",
@@ -1901,7 +1901,7 @@
      "invoice",
      "Order from Mayur Traders — 01 Oct 2026",
      "Bill C1/26-27/0041 from Mayur Traders",
-     "{\"line_item_count\":2,\"total_value\":1180,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"invoice\",\"is_promotion\":false,\"forwarded_from\":null,\"copy_policy\":{\"scope\":\"sender\",\"kept\":[\"received\"],\"suppressed\":[\"sent\"],\"reason\":\"One copy for the sender — C1/26-27/0041 is a numbered document, and a number may appear once in a shop's books (b263).\",\"source\":\"numbered-document\"},\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":0,\"savings\":0,\"net\":0,\"taxable\":1000,\"tax\":180,\"total\":1180,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.84.0\",\"where\":\"counter\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}},\"bill_received\":{\"from\":\"Mayur Traders\",\"no\":\"C1/26-27/0041\",\"total\":1180}}",
+     "{\"line_item_count\":2,\"total_value\":1180,\"currency_code\":\"INR\",\"priority_external\":\"normal\",\"purpose\":\"invoice\",\"is_promotion\":false,\"forwarded_from\":null,\"copy_policy\":{\"scope\":\"sender\",\"kept\":[\"received\"],\"suppressed\":[\"sent\"],\"reason\":\"One copy for the sender — C1/26-27/0041 is a numbered document, and a number may appear once in a shop's books (b263).\",\"source\":\"numbered-document\"},\"governed\":{\"pattern\":\"send-chit@code\",\"capability\":null,\"constitution\":\"base@v1\",\"standard\":\"iso-9001@v1\",\"standards\":{\"quality\":\"iso-9001@v1\"},\"boilerplate\":null},\"money\":{\"gross\":0,\"savings\":0,\"net\":0,\"taxable\":1000,\"tax\":180,\"total\":1180,\"round_off\":0,\"currency_code\":\"INR\",\"provisional\":false,\"issued\":true},\"stamps\":{\"money\":{\"by\":\"chits send\",\"engine\":\"tax@1.86.0\",\"where\":\"counter\",\"at\":\"TS\"},\"total_value\":{\"by\":\"chits send\",\"from\":\"money.total\",\"at\":\"TS\"}},\"bill_received\":{\"from\":\"Mayur Traders\",\"no\":\"C1/26-27/0041\",\"total\":1180}}",
      "{\"till\":{\"id\":\"C1\"},\"bill_no\":\"C1/26-27/0041\",\"billed_at\":\"TS\",\"customer\":{\"entity_id\":\"CUST\",\"name\":\"Chola Auto Care\"},\"payment\":{\"parts\":[{\"mode\":\"cash\",\"amount\":1180}]},\"series\":{\"prefix\":\"C1\",\"period\":\"26-27\",\"seq\":41},\"invoice\":{\"ValDtls\":{\"AssVal\":1000,\"CgstVal\":90,\"SgstVal\":90,\"IgstVal\":0,\"TotInvVal\":1180,\"RndOffAmt\":0},\"ItemList\":[],\"DocDtls\":{\"No\":\"C1/26-27/0041\"}},\"tax_check\":{\"at\":\"TS\",\"differences\":[{\"what\":\"place_of_supply\",\"issued\":null,\"server\":\"33\"},{\"what\":\"supply\",\"issued\":null,\"server\":\"intra\"},{\"what\":\"taxable\",\"issued\":1000,\"server\":568},{\"what\":\"cgst\",\"issued\":90,\"server\":0},{\"what\":\"sgst\",\"issued\":90,\"server\":0},{\"what\":\"total\",\"issued\":1180,\"server\":568},{\"what\":\"taxable at 0%\",\"issued\":0,\"server\":568}],\"kept\":\"issued\"},\"page\":\"chit.base.detail@1.0\",\"counter_bill\":true}",
      3,
      "SCHEMA-1",
@@ -2293,7 +2293,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -2620,7 +2620,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -3006,7 +3006,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -3678,7 +3678,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -4027,7 +4027,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -4416,7 +4416,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -4804,7 +4804,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -5493,7 +5493,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -5786,7 +5786,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -6172,7 +6172,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -6836,7 +6836,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -7132,7 +7132,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -8709,7 +8709,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "counter",
       "at": "TS"
      },
@@ -8949,7 +8949,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -9154,7 +9154,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -9562,7 +9562,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "counter",
       "at": "TS"
      },
@@ -9770,7 +9770,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -10281,7 +10281,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "counter",
       "at": "TS"
      },
@@ -10495,7 +10495,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -10888,7 +10888,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "counter",
       "at": "TS"
      },
@@ -11115,7 +11115,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -11516,7 +11516,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "counter",
       "at": "TS"
      },
@@ -11746,7 +11746,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -11935,7 +11935,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -12447,7 +12447,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -12790,7 +12790,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -13182,7 +13182,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -14515,7 +14515,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -14877,7 +14877,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -15286,7 +15286,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -16229,7 +16229,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -16559,7 +16559,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -16945,7 +16945,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -17640,7 +17640,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -17986,7 +17986,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -18372,7 +18372,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -19117,7 +19117,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "counter",
           "at": "TS"
          },
@@ -19590,7 +19590,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -19976,7 +19976,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -20366,7 +20366,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -20693,7 +20693,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -21084,7 +21084,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -21786,7 +21786,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -22123,7 +22123,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -22553,7 +22553,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -23245,7 +23245,7 @@
     "stamps": {
      "money": {
       "by": "chits send",
-      "engine": "tax@1.84.0",
+      "engine": "tax@1.86.0",
       "where": "send",
       "at": "TS"
      },
@@ -23574,7 +23574,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },
@@ -23960,7 +23960,7 @@
         "stamps": {
          "money": {
           "by": "chits send",
-          "engine": "tax@1.84.0",
+          "engine": "tax@1.86.0",
           "where": "send",
           "at": "TS"
          },

@@ -1,5 +1,7 @@
 /* ctry-139-number-at.test.cjs — CTRY-139: a bill pinned at its priced moment takes the number of THAT moment's period. Priced 23:59 IST on 31 Oct (monthly reset, India FY dating), saved after midnight: the number is the 31 Oct run's, not 1 Nov's. Real takeNumber lifted as in ctr-177. */
 'use strict';
+/* the till counts a day in the till PC's own zone (India here); pin it so the proof reads the same on a UTC runner (CI 11 Nov: the unpinned number stayed in October at 18:30Z) */
+process.env.TZ = 'Asia/Kolkata';
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');

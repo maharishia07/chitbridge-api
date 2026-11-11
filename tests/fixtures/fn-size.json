@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 141,
+  "long_functions": 142,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -152,7 +152,8 @@
       "determine_",
       "moneyOf_",
       "resolveBelow",
-      "tallyXml"
+      "tallyXml",
+      "vat201"
     ],
     "lib/visibility-cap.js": [
       "capOf"

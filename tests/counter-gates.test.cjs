@@ -373,7 +373,7 @@ it('the browser files a payment received in its own list — never the bills sto
   const at = PAGE.indexOf('\n  async payment(p){');
   assert.ok(at > 0, 'CloudHost.payment is gone — this guard is measuring nothing');
   const p = { text: PAGE.slice(at, PAGE.indexOf('\n  },\n', at)) };   /* a method ends at its own "  }," */
-  assert.ok(/nextNumber\('R'\)/.test(p.text), 'payments are not numbered in their own R series');
+  assert.ok(/nextNumber\('R'[,)]/.test(p.text), 'payments are not numbered in their own R series');
   assert.ok(/DB\.put\('queue'/.test(p.text), 'a payment is not queued');
   assert.ok(!/DB\.put\('bills'/.test(p.text), 'a payment was written into the bills store — the day would count it as a sale');
 });
