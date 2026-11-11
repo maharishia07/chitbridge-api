@@ -37,14 +37,7 @@ const CANARY = { zz_unknown: 'zz_unknown_canary_value' };
 /** one entry per listed door: its mount and route file, the url, a good body, and one junk value in a known key */
 const DOORS = [
   { route: 'PATCH /api/products/:id', mount: '/api/products', file: 'routes/products.js', url: '/api/products/33333333-3333-4333-8333-333333333333', rows: (sql) => (/catalogue_items/.test(sql) ? { rows: [{ item_id: '33333333-3333-4333-8333-333333333333', entity_id: SHOP, item_data: { name: 'Tea' }, is_active: true, updated_at: '2026-11-01T00:00:00Z' }], rowCount: 1 } : null), good: { item_data: { name: 'Tea 250g' }, merge: true }, junk: { merge: 'maybe' } },
-  { route: 'POST /api/products/availability/bulk', mount: '/api/products', file: 'routes/products.js', url: '/api/products/availability/bulk', good: { items: [{ code: 'A1', qty: 3 }] }, junk: { items: 'not-a-list' } }
-];
-
-/** the catalogue doors decided STRICT (S33-T): only our web page and the till call them, so an unknown top-level key is refused by name (400, problem shape) */
-const STRICT_DOORS = [
-  { route: 'POST /api/products/bulk', url: '/api/products/bulk', body: { items: [{}] } },
-  { route: 'POST /api/products/import/preflight', url: '/api/products/import/preflight', body: { csv: 'name,price' } },
-  { route: 'POST /api/products/import', url: '/api/products/import', body: { csv: 'name,price', decisions: [], confirm: true } },
+  { route: 'POST /api/products/availability/bulk', mount: '/api/products', file: 'routes/products.js', url: '/api/products/availability/bulk', good: { items: [{ code: 'A1', qty: 3 }] }, junk: { items: 'not-a-list' } },
   { route: 'POST /api/integrations/heartbeat', junkMore: [{ counters: { products_ok: 'many' } }, { counters: Object.fromEntries(Array.from({ length: 25 }, (unused, index) => ['counter_' + String.fromCharCode(97 + index), index])) }, { counters: { 'Bad Name': 1 } }, { counters: [1, 2] }], mount: '/api/integrations', file: 'routes/integrations.js', url: '/api/integrations/heartbeat', good: { id: 'kit-1', name: 'tally', host: 'PC1', streams: ['sales'] }, junk: { streams: 'sales' } },
   { route: 'POST /api/integrations/profile', mount: '/api/integrations', file: 'routes/integrations.js', url: '/api/integrations/profile', good: { source: 'tally', fields: { legal_name: 'Tea Shop' } }, junk: { fields: 'not-an-object' } },
   { route: 'POST /api/events/ticket', mount: '/api/events', file: 'routes/events.js', url: '/api/events/ticket', good: {}, junk: null },
@@ -52,6 +45,13 @@ const STRICT_DOORS = [
   { route: 'POST /api/capture/webhook/email', mount: '/api/capture', file: 'routes/capture.js', url: '/api/capture/webhook/email', raw: signedBy(MAIL_SECRET, 'x-inbound-signature', ''), good: { to: 'shop@in.example.com', from: 'a@example.com', subject: 'Order', text: 'ten kg rice' }, junk: { subject: { a: 1 } } },
   { route: 'POST /api/ctp/deliver', mount: '/api/ctp', file: 'routes/ctp.js', url: '/api/ctp/deliver', accept: ANY_ANSWER, refused: refusedAsPeer, good: { ctp: '1', to: { bridge_id: 'CBBBBBBBBB' }, from: { installation_key: 'peer-1' } }, junk: { to: 'CBBBBBBBBB' } },
   { route: 'POST /api/ctp/query', mount: '/api/ctp', file: 'routes/ctp.js', url: '/api/ctp/query', accept: ANY_ANSWER, refused: refusedAsPeer, good: { ctp: '1', kind: 'query', from: { installation_key: 'peer-1' }, ask: { want: 'resolve' } }, junk: { ask: 'resolve' } }
+];
+
+/** the catalogue doors decided STRICT (S33-T): only our web page and the till call them, so an unknown top-level key is refused by name (400, problem shape) */
+const STRICT_DOORS = [
+  { route: 'POST /api/products/bulk', url: '/api/products/bulk', body: { items: [{}] } },
+  { route: 'POST /api/products/import/preflight', url: '/api/products/import/preflight', body: { csv: 'name,price' } },
+  { route: 'POST /api/products/import', url: '/api/products/import', body: { csv: 'name,price', decisions: [], confirm: true } }
 ];
 
 const lab = harness({ here: HERE, mounts: [...new Set(DOORS.map((door) => door.mount))], routeFiles: Object.fromEntries(DOORS.map((door) => [door.mount, door.file])), legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json') });
