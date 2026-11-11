@@ -182,7 +182,7 @@
   }
  ],
  "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
- "tolerant_outward_ceiling": 22,
+ "tolerant_outward_ceiling": 26,
  "tolerant_outward": {
   "POST /api/pricing/price": {
    "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
@@ -293,6 +293,26 @@
    "reason": "S33-T: the counter bill queue door (the sale itself); its five known keys are typed, any other key is read by name or ignored; a refused bill is parked and shown, never dropped",
    "caller_class": "queued_till",
    "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "reason": "S33-T: the body IS the CMDB record (lib/cmdb.js shape); a key beyond system, title and source travels inside the record, is never acted on, and the record is capped at 64 KB; the three named keys are typed, a junk value is refused 400",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/testing/results": {
+   "reason": "S33-T: the Testing screen and the CI key post a result or a run of them; an unknown key is ignored and never stored, every named key is text or null, a junk value is refused 400 in the board's two keys",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/testing/results/junit": {
+   "reason": "S33-T: the JUnit report travels as the text of xml beside run options; the CI key and the toolset post it from older and newer scripts, so an unknown key is ignored; xml and every option are text, a junk value is refused 400",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/governance/conformance": {
+   "reason": "S33-T: the handler takes the whole body as the thing to check when data is absent, so the body is the record; scope is text and data an object, a junk value is refused 422, the key itself is never stored",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
   }
  }
 }
