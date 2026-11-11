@@ -108,7 +108,7 @@ const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
   'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',
   /* round T1 (2026-10-10): the slip's head is one function for the bill and the credit note (M45), its time is shop time (M43) */
-  'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
+  'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function shopDayOf(', 'function bandWordsOf(', 'function pinBillMoment(', 'function rateNoteOf(', 'function slipRateOf(', 'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
   /* CX0 (2026-10-13): the pack's words on the paper — tax-id label, scheme, credit-note title — read from CBRegulation when the page has it */
   'function docCountry(', 'function shopPack(', 'function taxIdLabel(', 'function schemeWord(', 'function creditNoteTitle(',
   /* CX1 (2026-10-13): what the shop's law asks of the bill (pack.taxInvoice — none in India's pack, so nothing here changes) */
