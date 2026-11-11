@@ -4847,7 +4847,7 @@
   "GET /api/facts/:card": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 404"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/work/list": {

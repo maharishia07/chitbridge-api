@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 11
+    "failing": 9
    },
    "foreign_id_404": {
     "applies": 202,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 3,
-  "output_allowlist_from_recordings": 141
+  "output_allowlist_from_recordings": 143
  },
  "machine_columns": [
   "schema_in",
@@ -1668,8 +1668,8 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 167,
-   "hash": "037a59863cd4f43e",
+   "line": 173,
+   "hash": "8e332cc92b68afef",
    "does": "",
    "errors": {
     "count": 2,
@@ -1746,8 +1746,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#330",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8e332cc92b68afef"
    },
    "status": "partial",
    "callers": [
@@ -15464,7 +15465,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 45,
-   "hash": "bbabdc627fec2b0f",
+   "hash": "737919d35ffe12ae",
    "does": "",
    "errors": {
     "count": 0,
@@ -15534,8 +15535,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "737919d35ffe12ae"
    },
    "status": "partial",
    "callers": [],
@@ -15560,7 +15562,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 36,
-   "hash": "05d5f33a3f03c039",
+   "hash": "3a66511732cf316b",
    "does": "",
    "errors": {
     "count": 0,
@@ -15589,7 +15591,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15612,6 +15614,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -15626,8 +15629,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3a66511732cf316b"
    },
    "status": "partial",
    "callers": [
@@ -20101,7 +20105,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 124,
+   "line": 130,
    "hash": "5d347d3eb8faeb49",
    "does": "",
    "errors": {
@@ -50072,8 +50076,8 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 151,
-   "hash": "f608bc9d17d38dbe",
+   "line": 157,
+   "hash": "3e1a66a887f89d1a",
    "does": "",
    "errors": {
     "count": 3,
@@ -50111,7 +50115,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -50135,6 +50139,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -50151,7 +50156,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f608bc9d17d38dbe"
+    "stale_since": "3e1a66a887f89d1a"
    },
    "status": "partial",
    "callers": [
