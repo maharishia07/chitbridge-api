@@ -222,13 +222,77 @@
   }
  ],
  "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
- "tolerant_outward_ceiling": 8,
+ "tolerant_outward_ceiling": 14,
  "tolerant_outward": {
-  "POST /api/pricing/price": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-43-pricing-tolerant.test.cjs" },
-  "POST /api/offers/evaluate": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
-  "POST /api/offers/explain": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
-  "POST /api/integrations/ask/:handle/stock": { "reason": "S33-T: a public stock ask from a store's connector or a partner page; it reads only codes and emits it; an unknown key is ignored", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
-  "POST /api/integrations/heartbeat": { "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older versions; the handler picks named keys only", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
-  "POST /api/integrations/profile": { "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" }
+  "POST /api/pricing/price": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-43-pricing-tolerant.test.cjs"
+  },
+  "POST /api/offers/evaluate": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/offers/explain": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/integrations/ask/:handle/stock": {
+   "reason": "S33-T: a public stock ask from a store's connector or a partner page; it reads only codes and emits it; an unknown key is ignored",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/integrations/heartbeat": {
+   "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older versions; the handler picks named keys only",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/integrations/profile": {
+   "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/till/flags": {
+   "reason": "S33-T: a shop-screen or offer flag the counter queues offline; an older queued body replays on a newer server, so an unknown key is ignored and only a wrong KIND of value is refused (400, parked by the drain)",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/stock": {
+   "reason": "S33-T: an available/unavailable mark the counter queues offline; unknown keys ignored, null for none accepted, a wrong kind refused 400 (the drain parks that row and sends the rest)",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/stock/bulk": {
+   "reason": "S33-T: the bulk stock mark rides the same offline queue as stock; unknown keys ignored, item_ids must be a list or null, a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/reward": {
+   "reason": "S33-T: points for one bill, queued behind the bill; the desktop agent (tools/tally-connector/till.js) still sends net, gross, count and lines, which stay accepted and unread; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/reward/claim": {
+   "reason": "S33-T: a walk-in balance claim, sent through the counter queue; unknown keys ignored, from and to must be objects, a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/quick-keys/hide": {
+   "reason": "S33-T: the first counter versions queued sold-out marks (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "reason": "S33-T: the first counter versions queued the put-back (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/chits/send": {
+   "reason": "S33-T: the counter bill queue door (the sale itself); its five known keys are typed, any other key is read by name or ignored; a refused bill is parked and shown, never dropped",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  }
  }
 }
