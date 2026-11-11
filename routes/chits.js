@@ -118,8 +118,11 @@ const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') }
 const notHere = (message) => said404({ error: 'Not found', message });
 const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
 const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
-const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
-const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
+/* S35: a chit this login holds no copy of (unknown, junk or another shop's) is the one 404 every chit route gives (critic 6 Nov); the LEVEL 403 stays first where a route has one */
+const noCopy = notHere('Chit not found or you do not have access');
+const registerSays = (label, message, status = 404) => (req) => faultOf(Object.assign(new Error(message), { status }), req, label, { words: true }); /* lib/raida's own refusal, the sentence it always gave: S35 a register, entry or issue this shop holds none of is a 404 (a missing dispute id stays the 400) */
+/** the rail action a message post asks for: an external one needs more than an internal note (the route's own test) */
+const messageActOf = (req) => (req.body && req.body.thread_type === 'external' ? 'message_external' : 'message_internal');
 const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
 const CHIT_GONE = {
   'GET /:chit_id': notHere('Chit not found or you do not have access'),
@@ -140,8 +143,8 @@ const CHIT_GONE = {
   'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
   'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
   'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
-  'POST /:chit_id/messages': noParty({ error: 'Forbidden', message: 'Not a participant on this chit', why: 'not_participant' }),
-  'POST /:chit_id/disputes': noParty({ error: 'Not a participant' }),
+  'POST /:chit_id/messages': (req) => railSaid(railActions.ownCopyRefusalOf(railActions.can({ held: false }, railActions.meOf(req), messageActOf(req)))), /* the level first, then "I hold no copy": as the route asks */
+  'POST /:chit_id/disputes': noCopy,
   'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
   'POST /:chit_id/archive': notHere('Chit not found or already archived'),
   'POST /:chit_id/unarchive': notHere('Chit not found or not archived'),
@@ -156,7 +159,7 @@ const RAIDA_GONE = {
   'POST /register/entries/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
   'POST /register/entries/:raida_id/revise': registerSays('Failed to revise it', 'No such entry.'),
   'POST /:chit_id/raida/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
-  'POST /:chit_id/raida/:raida_id/dispute': (req) => registerSays('Failed to link the dispute', req.body && req.body.dispute_id ? 'No issue with that id.' : 'A dispute id is required.')(req)
+  'POST /:chit_id/raida/:raida_id/dispute': (req) => (req.body && req.body.dispute_id ? registerSays('Failed to link the dispute', 'No issue with that id.') : registerSays('Failed to link the dispute', 'A dispute id is required.', 400))(req)
 };
 const SUBJECT_GONE = {
   'POST /register/subjects/:subject_id/close': registerSays('Cannot close yet', 'No such register.')
@@ -5471,7 +5474,7 @@ router.post(
     /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js): the level first, before any read (as this route always did), then the copy.
        The words below are the ones this route always said; the engine's refusal word rides along as `why`. */
     const _me = railActions.meOf(req);
-    const _act = thread_type === 'external' ? 'message_external' : 'message_internal';
+    const _act = messageActOf(req);
     const _lvl = railActions.can({ held: true }, _me, _act); // the copy is not read yet — this verdict is the level's alone
     if (!_lvl.ok) {
       return problem(req, res, railSaid(railActions.refusalOf(_lvl, 403, {
@@ -5491,7 +5494,7 @@ router.post(
       );
       const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
       if (!_v.ok) {
-        return problem(req, res, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
+        return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_v)));
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
@@ -5608,7 +5611,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
       }
       return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
     });
-    if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (result === null) return problem(req, res, noCopy());
 
     const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
@@ -5838,7 +5841,7 @@ router.post(
       const access = await withEntity(entity_id, (db) =>
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
-      if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
+      if (access.rows.length === 0) return problem(req, res, noCopy());
       await ctpReturn.ensureShadows(entity_id, chit_id); // RAIL-106: a party on another installation is a participant here (its shadow row), so the roster below can hold it
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
@@ -6021,7 +6024,7 @@ router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), asy
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
-    if (!own) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!own) return problem(req, res, noCopy());
     const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
@@ -6065,7 +6068,7 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
       const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       return { hdr: nestedHdr, det: nestedDet };
     });
-    if (!rls) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!rls) return problem(req, res, noCopy());
     const { hdr, det } = rls;
     let itemLabel = null;
     try {
