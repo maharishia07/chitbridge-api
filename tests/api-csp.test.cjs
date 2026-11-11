@@ -145,6 +145,18 @@ const STRICT = /default-src 'none'/;
       const r = await ask(port, 'POST', '/api/csp-report', body, 'application/reports+json');
       assert.strictEqual(r.status, 204);
     });
+    await it('S33: every key the specs give a report is taken (Reporting API: type age url user_agent body; report-uri: csp-report with a member this door never heard of)', async () => {
+      const item = { type: 'csp-violation', age: 12, url: 'https://web.example/crm.html', user_agent: 'x', destination: 'default', attempts: 1, id: 'r1', body: { documentURL: 'https://web.example/crm.html', somethingNewBrowsersAdd: 1 } };
+      assert.strictEqual((await ask(port, 'POST', '/api/csp-report', [item], 'application/reports+json')).status, 204);
+      assert.strictEqual((await ask(port, 'POST', '/api/csp-report', { 'csp-report': { 'blocked-uri': 'inline', 'a-member-from-a-newer-browser': 'y' } }, 'application/csp-report')).status, 204);
+    });
+    await it('S33: a key no spec gives a report is refused by name, at the top of the object and in a list item', async () => {
+      const top = await ask(port, 'POST', '/api/csp-report', { 'csp-report': { 'blocked-uri': 'inline' }, zz_unknown_field: 1 }, 'application/csp-report');
+      assert.strictEqual(top.status, 422);
+      assert.ok(/zz_unknown_field/.test(JSON.stringify(top.body || top.text || '')), 'the key is not named: ' + JSON.stringify(top.body));
+      const item = await ask(port, 'POST', '/api/csp-report', [{ type: 'csp-violation', body: {}, zz_unknown_field: 1 }], 'application/reports+json');
+      assert.strictEqual(item.status, 422);
+    });
     await it('anonymous on purpose: no credential is asked (401 never answered), a Bearer is never read', async () => {
       const body = { 'csp-report': { 'effective-directive': 'img-src', 'blocked-uri': 'https://img.example/a.png' } };
       const r = await ask(port, 'POST', '/api/csp-report', body, 'application/csp-report');
