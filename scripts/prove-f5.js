@@ -3,6 +3,7 @@
 //   (1) resolves a NEW skill that exists ONLY as a table row — added by DATA, ZERO code change (the F5 test);
 //   (2) treats the table as authoritative; (3) a dropped/orphaned skill is gone; (4) self-heals to the in-code SEED
 //   when the table is missing. No model call, no network — pure resolution logic.
+const path = require('path');
 const dbPath = require.resolve('../db');
 let ROWS = [],
   FAIL = false;

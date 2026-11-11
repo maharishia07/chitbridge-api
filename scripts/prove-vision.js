@@ -22,7 +22,7 @@
    (exit 2), never as a failed check (exit 1) — conflating those turned a Railway 502 into an overnight open defect
    on 2026-08-09. This file was skipped by the bulk migration (it had no require to anchor to) and is done by hand
    rather than left as the one script that still lies when the platform blinks. */
-const { j, signIn } = require('./_proof');
+const { API, j, signIn } = require('./_proof');
 
 let pass = 0,
   fail = 0;
