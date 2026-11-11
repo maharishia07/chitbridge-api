@@ -202,7 +202,7 @@ async function holdsCopy(token, chit_id) {
   check('Alpha (target) sees the dispute', has(aDisp.json, dispute_id || 'quality'));
   if (gammaOk) {
     const gDisp = await api('GET', '/api/chits/' + chit_id + '/disputes', { token: G.token });
-    check('Gamma CANNOT see the dispute', !has(gDisp.json, dispute_id || '') && (gDisp.status === 403 || gDisp.status === 200), 'status ' + gDisp.status);
+    check('Gamma CANNOT see the dispute', !has(gDisp.json, dispute_id || '') && (gDisp.status === 404 || gDisp.status === 403 || gDisp.status === 200), 'status ' + gDisp.status);
   }
   if (dispute_id) {
     const res9 = await api('PUT', '/api/chits/' + chit_id + '/disputes/' + dispute_id + '/resolve', {
