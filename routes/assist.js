@@ -18,7 +18,6 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a pa
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed, FAULTS, words, PUBLISH_NO } = contract;

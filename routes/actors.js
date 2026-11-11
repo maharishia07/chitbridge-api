@@ -84,9 +84,9 @@ async function loginIdFor(actor_key, req) {
    sign-in itself (M06); nothing in this file splits a login any more. */
 const mintuserid = require('../lib/mintuserid'); /* the ONE builder for an employee id */
 
-const { body, param, query } = require('express-validator');
+const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { query: db, withTransaction, withEntity } = require('../db');
+const { query: db, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer

@@ -55,7 +55,7 @@ function rowsFor(sql, p) {
   /* the chit read */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return HDR ? [HDR] : [];
   if (/FROM chit_detail WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return [{ detail_type: 'invoice', line_items: [{ line_id: 'l1', particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }] }];
-  if (/FROM state_log WHERE chit_id = \$1 AND entity_id = \$2 AND action != 'read'/.test(s)) return LOG.filter((l) => l.chit_id === p[0]).map((l) => ({ action: l.action, action_by_identity_id: l.who_id, action_by_display_name: l.who_name, detail: l.detail || null, created_at: l.at }));
+  if (/FROM state_log WHERE chit_id = \$1 AND entity_id = \$2 AND action (!= 'read'|NOT IN \('read', 'payment_marked'\))/.test(s)) return LOG.filter((l) => l.chit_id === p[0] && l.action !== 'payment_marked').map((l) => ({ action: l.action, action_by_identity_id: l.who_id, action_by_display_name: l.who_name, detail: l.detail || null, created_at: l.at }));
   if (/AS participants/.test(s) && /AS deliveries/.test(s)) return [{ participants: PARTS, amendments: [], lines: [{ line_id: 'l1', seq: 1, particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }], assignments: [], deliveries: DELIV }];
   /* the read's own delivery query (the redaction) — filtered only when it asks for my claims alone */
   if (/d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at/.test(s)) return /AND \(d.delivery_id IS NULL OR d.recorded_by_entity_id = \$1\)/.test(s) ? DELIV.filter((d) => !d.delivery_id || d.recorded_by_entity_id === p[0]) : DELIV;

@@ -35,7 +35,7 @@ function ownerGate(req, res, next) {
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
-const { planFor, checkCount, checkRate, checkCapability } = require('../governance/entitlements');
+const { planFor, checkCount, checkRate } = require('../governance/entitlements');
 
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const genBridge = require('../lib/bridgeid').generateBridgeId;

@@ -59,7 +59,7 @@ it('a browser counter sends them with its claim, from engine/versions.json', () 
 
 it('vendor-till writes versions.json from the engines\' own lines, and the service worker keeps it offline', () => {
   const v = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
-  assert.ok(/path\.join\(WEB, 'engine', 'versions\.json'\), VERSIONS\(\)/.test(v), 'vendor-till no longer writes versions.json');
+  assert.ok(/path\.join\(WEB, 'engine', 'versions\.json'\), VERSIONS(?:\(\))?\]/.test(v), 'vendor-till no longer writes versions.json');
   assert.ok(/'\/engine\/versions\.json'/.test(v), 'the service worker does not keep versions.json');
   const j = JSON.parse(fs.readFileSync(path.join(WEB, 'engine', 'versions.json'), 'utf8'));
   const money = fs.readFileSync(path.join(WEB, 'engine', 'money.js'), 'utf8').slice(0, 320).match(/v(\d+\.\d+\.\d+)/)[1];

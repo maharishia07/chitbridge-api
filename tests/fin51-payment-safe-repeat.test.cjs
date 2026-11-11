@@ -54,6 +54,7 @@ function idempotencyTable(X) {
   X.db.query = async (text, v) => {
     const sql = String(text);
     if (/UPDATE chit_header SET business_json/.test(sql)) return { rows: [{ chit_id: v[1] }] };
+    if (/SELECT sender_entity_id FROM chit_header/.test(sql)) return { rows: [] }; /* RAIL-216 tellPaid: no sender row in memory, so no notice to write (that path is tests/rail-216-void-paid.test.cjs) */
     if (!/idempotency_key/.test(sql)) return realQuery(text, v);
     const slot = v[0] + '\n' + (/^\s*INSERT/.test(sql) ? v[1] : /idem_key = \$3/.test(sql) ? v[2] : v[1]);
     if (/^\s*SELECT/.test(sql)) return { rows: rows.has(slot) ? [Object.assign({ expired: false }, rows.get(slot))] : [] };

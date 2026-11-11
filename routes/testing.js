@@ -99,7 +99,7 @@ const noRequirement = () => ({ status: 404, ...notFound({ error: 'Not found', me
 const noIncident = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
 /* ⚠️ `query` as well as withEntity: the operator copy reads identities, which has no RLS, so it must
    NOT be wrapped in withEntity — that would pin the read to one entity for no reason. */
-const { withEntity, query } = require('../db');
+const { withEntity } = require('../db');
 /**
  * ⭐⭐⭐ ONE BOARD FOR THE PRODUCT. Every route below reads and writes the entity testboard.entityFor() names
  * — the shared board when TEST_BOARD_ENTITY is set, and the caller's own entity when it is not.
@@ -3728,9 +3728,6 @@ router.get('/reliability', auth, boardReadGate, ...checked('GET /reliability'), 
  * cites file paths, and file paths describe the product's internals. tests/board-kinds.test.cjs asserts both.
  */
 
-/* ⭐ THE SAME FOUR-STATE SHAPE the requirements use, so one vocabulary covers the board. */
-const CHANGE_STATES = ['proposed', 'reviewed', 'shipped', 'abandoned'];
-const CHANGE_SHELF = { proposed: 'draft', reviewed: 'draft', shipped: 'live', abandoned: 'retired' };
 
 /**
  * ⭐ THREE RISK CLASSES AND ONLY THREE — borrowed from ITIL because it is the standard everyone already knows,

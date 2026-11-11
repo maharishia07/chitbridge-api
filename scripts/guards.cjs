@@ -643,6 +643,7 @@ const GUARDS = [
   'crm-viewer.test.cjs',
   'pay-fix-renumber.test.cjs',
   'pay-fix-void.test.cjs',
+  'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (also in NEEDS_ENGINES: runs over the books harness)
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
@@ -909,6 +910,7 @@ const NEEDS_ENGINES = [
   'books-voucher-series.test.cjs',
   'two-sided-books.test.cjs',
   'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
+  'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (B2B, counter bill, named bill), over the books harness
   'change-pin-lock.test.cjs', // PPL-30: change-pin counts a wrong current PIN and honours the lock like sign-in (verifyCredential, 5 tries, ASVS V2.2.1)
   'change-pin-lock-mutation.test.cjs', // PPL-30: with the count-and-lock removed the test above goes red
   'itemmatch-corpus.test.cjs', // CAT-75: the itemmatch tolerance per product family on a hand-computed corpus; CAT-261: numbers, units, sizes, grades exact, a near-miss ASKS

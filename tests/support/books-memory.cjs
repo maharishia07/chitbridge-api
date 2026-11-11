@@ -239,6 +239,7 @@ function create() {
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
+    async billParties(db, e, ref) { return [...new Set(T.items.filter((i) => i.entity_id === e && i.ref === i.against_ref && i.ref === String(ref)).map((i) => i.party_id))]; },
     async itemOwners(db, e, account, refs) { const seen = new Set(), out = []; T.items.filter((i) => i.entity_id === e && i.account_id === account && i.ref === i.against_ref && (refs || []).indexOf(i.ref) >= 0)
       .forEach((i) => { const k = i.ref + '|' + i.party_id; if (!seen.has(k)) { seen.add(k); out.push({ ref: i.ref, party_id: i.party_id }); } }); return out; },
     async itemTotals(db, e, account) { const m = {}; T.items.filter((i) => i.entity_id === e && i.account_id === account).forEach((i) => { m[i.party_id] = (m[i.party_id] || 0) + i.amount_minor; }); return Object.keys(m).map((k) => ({ party_id: k, total_minor: m[k] })); },

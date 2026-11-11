@@ -35,6 +35,7 @@ const FEED_PAGE = 30,
  */
 /** how far back the feed and the badge look — an integer, so it is safe inside the SQL text below */
 const FEED_DAYS = Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90);
+/* RAIL-216: the buyer's `payment_marked` row has a NULL actor ON PURPOSE — `sl.action_by_identity_id <> $2` is then NULL (not true), so the bell and the badge never count it; do not rewrite that test as IS DISTINCT FROM (tests/rail-216-void-paid.test.cjs section 10) */
 const FEED_FROM = `FROM state_log sl
          JOIN chit_status cs
            ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL

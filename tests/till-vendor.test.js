@@ -28,7 +28,9 @@ const say = (line) => JOBS.push([null, () => console.log(line)]);
 say('— the counter —');
 
 it('every copy of the screen is current (the master is the kit\'s till.html)', () => {
-  try { execFileSync(process.execPath, [path.join(API, 'scripts', 'vendor-till.cjs'), '--check'], { encoding: 'utf8' }); }
+  /* THE CHECK SPLIT (11 Nov): this repo judges its own half (--kit-only); the web's copies are judged by web CI at a pinned api sha. CB_WEB_DIR set = a laptop or the release step: the full check. */
+  const mode = process.env.CB_WEB_DIR ? [] : ['--kit-only'];
+  try { execFileSync(process.execPath, [path.join(API, 'scripts', 'vendor-till.cjs'), '--check'].concat(mode), { encoding: 'utf8' }); }
   catch (e) { throw new Error((e.stdout || '').trim() || 'scripts/vendor-till.cjs --check failed'); }
 });
 
