@@ -379,7 +379,7 @@ function knownKeysTyped(operation) {
   const schema = operation && require('../middleware/validate').bodySchemaOf(operation);
   if (schema && schema.$ref) return true; /* a body published as a named schema (offers EvaluateBody) is typed where it is defined; the enforced row is typed in its contract (lib/offers-contract.js) */
   const props = (schema && schema.properties) || {};
-  const typed = (one) => !!one && typeof one === 'object' && ['type', 'enum', 'const', 'pattern', '$ref', 'oneOf', 'anyOf'].some((word) => one[word] !== undefined);
+  const typed = (property) => !!property && typeof property === 'object' && ['type', 'enum', 'const', 'pattern', '$ref', 'oneOf', 'anyOf'].some((word) => property[word] !== undefined);
   return Object.keys(props).length > 0 && Object.values(props).every(typed);
 }
 
