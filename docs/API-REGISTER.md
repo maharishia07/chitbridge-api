@@ -447,13 +447,13 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/combo-templates | combo-templates | routes/combo-templates.js:80 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/combo-templates/:id/push | combo-templates | routes/combo-templates.js:214 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/connections/request | connections | routes/connections.js:26 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/connectors | connectors | routes/connectors.js:191 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/connectors | connectors | routes/connectors.js:192 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/connectors/:actorId/connections | connectors | routes/connectors.js:921 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/connectors/:actorId/erp-test | connectors | routes/connectors.js:742 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/connectors/:actorId/ping | connectors | routes/connectors.js:906 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/connectors/:actorId/regenerate-key | connectors | routes/connectors.js:859 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/connectors/erp-ingest | connectors | routes/connectors.js:676 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | no | yes | yes | partial | yes | no | yes |
-| POST | /api/connectors/ingest | connectors | routes/connectors.js:535 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | no | yes | yes | partial | yes | no | yes |
+| POST | /api/connectors/erp-ingest | connectors | routes/connectors.js:674 | yes | yes | yes | yes | yes | yes | no | exempt | yes | yes | yes | yes | yes | partial | yes | no | yes |
+| POST | /api/connectors/ingest | connectors | routes/connectors.js:533 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | no | yes | yes | partial | yes | no | yes |
 | POST | /api/connectors/reissue-code | connectors | routes/connectors.js:834 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/counters | counters | routes/counters.js:77 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/counters/:id/assign | counters | routes/counters.js:133 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -2197,8 +2197,8 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/connectors/erp-ingest** · connectors · cb-connect · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money y (derived)
-- effect: offline online-only · round trips 0 (wire 0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 422, 500, 503 · money y (derived)
+- effect: offline idempotent · round trips 0 (wire 0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): customer_list, identities, supplier_list · writes (derived): identities · callers: - · actions: -
 
 **POST /api/connectors/ingest** · connectors · cb-connect · partial

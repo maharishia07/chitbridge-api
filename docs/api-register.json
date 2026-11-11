@@ -22,7 +22,7 @@
    },
    "idempotent_money_write": {
     "applies": 11,
-    "failing": 2
+    "failing": 1
    },
    "inbound_validated": {
     "applies": 6,
@@ -43733,7 +43733,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 191,
+   "line": 192,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -44255,8 +44255,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 676,
-   "hash": "58330e43316e8657",
+   "line": 674,
+   "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
     "count": 0,
@@ -44265,7 +44265,9 @@
      401,
      403,
      409,
-     500
+     422,
+     500,
+     503
     ],
     "codes": []
    },
@@ -44291,11 +44293,11 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -44312,7 +44314,9 @@
     401,
     403,
     409,
-    500
+    422,
+    500,
+    503
    ],
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
@@ -44340,7 +44344,7 @@
    },
    "status": "partial",
    "callers": [],
-   "offline": "online-only",
+   "offline": "idempotent",
    "round_trips": {
     "trips": 0,
     "wire": 0,
@@ -44360,7 +44364,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 535,
+   "line": 533,
    "hash": "73701939f1a71a0e",
    "does": "",
    "errors": {

@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 161 | `list` | `amend.js` |  |
 | 131 | `rows` | `crm.js` | still in them: |
 | 123 | `words` | `variant.browser.js` |  |
+| 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
-| 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
@@ -48,8 +48,8 @@ of file each thing is; this says what already does the job.
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
 | 50 | `count` | `money-check.js` | the count /health reads |
-| 49 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
+| 48 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 46 | `read` | `cap-print.js` |  |
 | 45 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
@@ -149,6 +149,7 @@ of file each thing is; this says what already does the job.
 | 19 | `panel` | `sides.js` |  |
 | 19 | `later` | `signin-ui.js` |  |
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
+| 19 | `connectors` | `home-facts.js` | declare (said in words — |
 | 19 | `move` | `rail.js` | Order = the order the server refused in: |
 | 18 | `step` | `cart.js` |  |
 | 18 | `today` | `kural.js` |  |
@@ -157,7 +158,6 @@ of file each thing is; this says what already does the job.
 | 18 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 18 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 18 | `notMigrated` | `crm-followups.js` |  |
-| 18 | `connectors` | `home-facts.js` | declare (said in words — |
 | 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
