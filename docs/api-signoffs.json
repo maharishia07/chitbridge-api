@@ -2899,11 +2899,11 @@
    "lifecycle": "stable"
   },
   "POST /api/entities/register": {
-   "hash": "0684924c4d8ce659",
+   "hash": "074b9e21d7b86242",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#917",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; answer closed to message, email, need, dev_otp, handle, operator_issued, as the route already answered; no new key, held and free address still the same words",
    "lifecycle": "stable"
   },
   "POST /api/entities/verify": {
@@ -3059,11 +3059,11 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/:actor_id/approve": {
-   "hash": "b0e5048704af15e9",
+   "hash": "5e57a81aaf5d59cc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; 200 closed to ok and enrol, proved by the area test; answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/integrations/ask/:handle/stock": {
@@ -4800,6 +4800,54 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: cancel is scoped by entity_id from the token, so another shop sid answers byte for byte as an unknown one (200 cancelled:false, the same weaker reading the signed GET sibling holds, with a registered cannot_answer for 404/400); no existence oracle; 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "hash": "82ed2a6878097cdb",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403 CHIT_NOT_PERMITTED); web callers read the server words, none branches on this 403",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/messages": {
+   "hash": "e47df5423efd75e7",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404, a rail verdict on a held copy stays its own 403 (refuseUnlessHeld); web composer shows the server words",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "hash": "db87c3b5029337bc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403); web sheet shows its read-failed sentence, not blank",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/disputes": {
+   "hash": "dac6f3853a1f6aa9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404 (was 403); web raise toast shows the failure, none branches on 403",
+   "lifecycle": "stable"
+  },
+  "GET /api/attachments/:id": {
+   "hash": "2e53c392e8f73a83",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; bytes route, noKeys is the right allow-list (no keys to list); answers unchanged",
+   "lifecycle": "stable"
+  },
+  "GET /api/events/stream": {
+   "hash": "f81c8bff83bce25a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; event stream, noKeys is the right allow-list; answers unchanged",
    "lifecycle": "stable"
   }
  }

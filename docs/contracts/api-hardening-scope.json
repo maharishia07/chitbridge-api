@@ -181,26 +181,6 @@
    "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
   },
   {
-   "route": "GET /api/chits/:chit_id/disputes",
-   "status": 404,
-   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "GET /api/chits/:chit_id/messages",
-   "status": 404,
-   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/:chit_id/disputes",
-   "status": 404,
-   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/:chit_id/messages",
-   "status": 404,
-   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
    "route": "POST /api/chits/:chit_id/raida/:raida_id/close",
    "status": 404,
    "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
