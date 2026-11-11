@@ -21,6 +21,7 @@ process.env.NODE_ENV = 'test';
 const API = path.join(__dirname, '..');
 const contract = require(path.join(API, 'lib', 'chits-contract'));
 const ceiling = require(path.join(API, 'lib', 'chit-ceiling'));
+const cost = require(path.join(API, 'lib', 'cost'));
 
 let pass = 0,
   fail = 0;
@@ -112,6 +113,30 @@ const refusedWhere = (answer) => answer.status === 422 && answer.body.code === '
   }
   const both = await post('[{"kind":"fare","amount":50,"currency":"inr","note":"auto"},{"kind":"labour","minutes":80,"rate_per_hour":150}]');
   ok('the two-row list the api tests send reaches the handler', both.status === 200 && both.body.reached === true, JSON.stringify(both));
+  /* null list items were dropped by lib/cost.js (filter Boolean) and stay accepted; rows: null was a 400 from the handler and is now a 422 (not a row) */
+  const nullItem = await post('[null,{"kind":"fare","amount":5}]');
+  ok('a null item in a list body still reaches the handler (the library drops it)', nullItem.status === 200 && nullItem.body.reached === true, JSON.stringify(nullItem));
+  const nullInRows = await post('{"rows":[null,{"kind":"fare","amount":5}]}');
+  ok('a null item inside rows still reaches the handler', nullInRows.status === 200 && nullInRows.body.reached === true, JSON.stringify(nullInRows));
+  const rowsNull = await post('{"rows":null}');
+  ok('rows: null is 422 (it was a 400 from the handler: not a row)', refusedWhere(rowsNull), JSON.stringify(rowsNull));
+  const hostileNull = await post('[null,{"kind":"fare","amount":1e308}]');
+  ok('a null item does not hide a bad figure next to it', refusedWhere(hostileNull), JSON.stringify(hostileNull));
+
+  /* the DERIVED amount: minutes x rate has no field of its own, so the library asks the same bound (bounds.COST_AMOUNT). Hand case: 2147483647 min x 9999999999999 per hour = 3.58e20 > 1e13 → 422 naming both fields;
+     80 min x 150 = 200 is taken; 60 min x 9999999999999 = 9999999999999 is the largest hour a cost may carry (below 10^13). */
+  const derived = async (minutes, rate) => { try { return { out: await cost.record('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', [{ kind: 'labour', minutes, rate_per_hour: rate }], {}) }; } catch (e) { return { err: e }; } };
+  const over = await derived(2147483647, 9999999999999);
+  ok('derived overflow 2147483647 min x 9999999999999/h is refused 422 naming minutes and rate_per_hour', over.err && over.err.status === 422 && /minutes/.test(over.err.message) && /rate_per_hour/.test(over.err.message), String(over.err && over.err.message));
+  const faulted = contract.faultOf(over.err, { id: 'x', path: '/costs' }, 'Failed to record cost', { words: true });
+  ok('the route answers that as status 422 with the sentence (faultOf)', faulted.status === 422 && /minutes/.test(faulted.detail), JSON.stringify(faulted));
+  const negative = await derived(-2147483648, 9999999999999);
+  ok('a derived negative past the cap is refused too', negative.err && negative.err.status === 422, String(negative.err && negative.err.message));
+  const edge = await derived(60, 10000000000000);
+  ok('60 min x 10^13 per hour = 10^13 is past the cap (the rate itself is refused by the schema; the library refuses the product)', edge.err && edge.err.status === 422, String(edge.err && edge.err.message));
+  const fine = await derived(80, 150);
+  ok('80 min x 150 per hour = 200 is not refused for size (it goes on to the database, which is not here)', !(fine.err && fine.err.status === 422), String(fine.err && fine.err.message));
+
   const unknown = await post('{"kind":"other","amount":5,"surprise":1}');
   ok('an unknown key is still refused as before (additionalProperties false)', unknown.status === 422, JSON.stringify(unknown));
 
