@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 97,
-  "meets": 541,
+  "partial": 94,
+  "meets": 544,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -15629,11 +15629,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3a66511732cf316b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-chits.js",
     "cap-tasks.js"
@@ -50154,11 +50153,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3e1a66a887f89d1a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -63803,13 +63801,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-categories.js",
