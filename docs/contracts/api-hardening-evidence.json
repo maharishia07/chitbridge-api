@@ -370,6 +370,7 @@
    "output_allowlist": true
   },
   "POST /api/integrations/ask/:handle/stock": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/integrations/stock/:handle": {

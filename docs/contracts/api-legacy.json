@@ -58815,14 +58815,14 @@
       "details": [
        {
         "field": "value",
-        "message": "value must be string or number or boolean or null."
+        "message": "value must be null or string or number or boolean."
        }
       ],
       "type": "https://chitbridge.com/problems/invalid_input",
       "title": "Input not valid",
       "status": 400,
       "code": "INVALID_INPUT",
-      "detail": "value must be string or number or boolean or null.",
+      "detail": "value must be null or string or number or boolean.",
       "hint": "Fix the fields listed and send it again.",
       "request_id": "req-test",
       "field": "value",
@@ -58830,7 +58830,7 @@
        {
         "field": "value",
         "code": "WRONG_VALUE",
-        "detail": "value must be string or number or boolean or null."
+        "detail": "value must be null or string or number or boolean."
        }
       ]
      },
@@ -58839,14 +58839,14 @@
       "details": [
        {
         "field": "value",
-        "message": "value must be string or number or boolean or null."
+        "message": "value must be null or string or number or boolean."
        }
       ],
       "type": "https://chitbridge.com/problems/invalid_input",
       "title": "Input not valid",
       "status": 400,
       "code": "INVALID_INPUT",
-      "detail": "value must be string or number or boolean or null.",
+      "detail": "value must be null or string or number or boolean.",
       "hint": "Fix the fields listed and send it again.",
       "request_id": "req-test",
       "field": "value",
@@ -58854,7 +58854,7 @@
        {
         "field": "value",
         "code": "WRONG_VALUE",
-        "detail": "value must be string or number or boolean or null."
+        "detail": "value must be null or string or number or boolean."
        }
       ]
      }
