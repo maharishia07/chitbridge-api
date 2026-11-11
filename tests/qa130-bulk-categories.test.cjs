@@ -39,7 +39,7 @@ const call = (port, body) => new Promise((ok) => {
 });
 
 (async () => {
-  let WHO = OWNER, UPDATES = 0, CAN_SEE = {};
+  let WHO = OWNER, UPDATES = 0, CAN_SEE = {}, DB_DOWN = false;
   const STORE = new Map([
     [A, { name: 'Apple', price: 10, cost: 4 }],
     [B, { name: 'Banana', price: 5, categories: [FRUIT], category_names: ['Fruit'] }],
@@ -49,6 +49,7 @@ const call = (port, body) => new Promise((ok) => {
   const MASTER = [{ definition_id: FRUIT, name: 'Fruit', status: 'live' }, { definition_id: VEG, name: 'Vegetables', status: 'live' }];
   const db = {
     query: async (sql, params) => {
+      if (DB_DOWN) throw new Error('simulated database failure');
       if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: !!CAN_SEE[params[0]] }] };
       if (/FROM definition/.test(sql)) return { rows: MASTER };
       if (/FOR UPDATE/.test(sql)) return { rows: params[1].filter((id) => STORE.has(id)).map((id) => ({ item_id: id, item_data: ROW(STORE.get(id)) })) };
@@ -123,6 +124,26 @@ const call = (port, body) => new Promise((ok) => {
   t('a co-assist who may see costs passes', (await call(port, { ids: [A], add: [VEG] })).status, 200);
   WHO = OWNER;
   t('the owner passes', (await call(port, { ids: [A], remove: [VEG] })).status, 200);
+
+  console.log('\n-- the module itself: lib/product-categories.js (unit per rule, refusal path, fail closed) --');
+  const unit = require(path.join(API, 'lib', 'product-categories.js'));
+  const NAMES = new Map([[FRUIT, 'Fruit'], [VEG, 'Vegetables']]);
+  const tea = { name: 'Tea', categories: [FRUIT], category_names: ['Fruit'] };
+  const copy = JSON.stringify(tea);
+  t('unit · add keeps the order and appends only the new id', unit.applyChange(tea, { add: [FRUIT, VEG] }, NAMES).item_data.categories, [FRUIT, VEG]);
+  t('unit · the name comes from the master, positional to the ids', unit.applyChange(tea, { add: [VEG] }, NAMES).item_data.category_names, ['Fruit', 'Vegetables']);
+  t('unit · a name the master cannot resolve keeps the word the product carried', unit.applyChange(tea, { add: [VEG], remove: [] }, new Map()).item_data.category_names, ['Fruit', VEG]);
+  t('unit · the argument is never touched', JSON.stringify(tea), copy);
+  t('unit · idsOf reads categories, else the legacy single, else nothing', [unit.idsOf({ categories: [FRUIT] }), unit.idsOf({ category: VEG }), unit.idsOf({})], [[FRUIT], [VEG], []]);
+  t('unit · removing an absent id or adding a present one is unchanged', [unit.applyChange(tea, { remove: [VEG] }, NAMES).changed, unit.applyChange(tea, { add: [FRUIT] }, NAMES).changed], [false, false]);
+  const refusedWrites = [];
+  const refusal = await unit.changeCategories({ query: async (sql) => (/FROM definition/.test(sql) ? { rows: [] } : (refusedWrites.push(sql), { rows: [] })) }, 'e1', { ids: [A], add: [FRUIT], remove: [] });
+  t('refusal path · an added category the master lacks is named and nothing is read or written after it', [refusal.unknown, refusedWrites.length], [[FRUIT], 0]);
+  DB_DOWN = true;
+  UPDATES = 0;
+  const down = await call(port, { ids: [A], add: [VEG] });
+  t('fail closed · a database failure answers 500 and writes nothing', [down.status, UPDATES], [500, 0]);
+  DB_DOWN = false;
 
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
