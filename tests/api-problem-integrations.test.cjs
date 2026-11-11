@@ -30,6 +30,10 @@ process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: this sweep runs the allow-list for real; production defaults to report */
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
+const ALLOW = require('./lib/allowlist-world.cjs');
+const APPROVE_ROUTE = 'POST /api/integrations/:actor_id/approve'; /* the one writer whose 200 the generator's stand-in database cannot reach: proved here, in the route file's own world */
+const isApprove = (route) => route === APPROVE_ROUTE;
 const MINE = (route) => / \/api\/integrations\//.test(route);
 const argv = process.argv.slice(2);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
@@ -368,7 +372,9 @@ function checkAllowList(recording) {
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
     check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its schema lists', held, { answers: answers.length, errors: fits.errors });
   });
+  const proved = ALLOW.checkAllowList(recording, { [APPROVE_ROUTE]: contract.APPROVE_OPERATION }, check); /* S34: the approve answer ({ ok, enrol }) is closed and every recorded 200 fits it */
   check('the filter dropped no key of any answer these scenes gave', droppedCount() === 0, droppedCount());
+  return proved;
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
@@ -391,7 +397,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
-  checkAllowList(recording);
+  const closedHeld = checkAllowList(recording);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -399,7 +405,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/integrations.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    ALLOW.writeEvidence(EVIDENCE_FILE, isApprove, closedHeld);
+  } else {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/integrations.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for the approve route exactly when its 200 held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, isApprove), closedHeld), closedHeld);
+  }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();

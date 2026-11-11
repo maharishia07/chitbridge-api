@@ -2997,7 +2997,7 @@
        clickable area and still opens the real dropdown (with real, visible option text — see the option
        colour override in CSS) — nothing about the control's function changed, only what is drawn where. -->
   <div class="modeselwrap">
-    <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
+    <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?" aria-label="What are you doing?">
       <option value="sell">🛍️ Sell</option>
       <option value="receive">📥 Receive</option>
       <option value="despatch">📦 Despatch</option>
@@ -3338,7 +3338,7 @@
      painted over the GST note at the bottom of the screen. -->
    <div id="pane_sell" class="sellpane">
     <div class="cust">
-      <input id="cname" placeholder="Customer" title="optional" autocomplete="off" list="custlist" oninput="rwTyped()">
+      <input id="cname" placeholder="Customer" title="optional" aria-label="Customer (optional)" autocomplete="off" list="custlist" oninput="rwTyped()">
       <!-- ⭐ A NAME IS HARDER TO TYPE THAN A NUMBER, NOT EASIER. Athi, 2026-09-09: *"customer name can listen."* The phone box had
            a microphone and the name box did not, which is backwards: a phone is ten digits on a keypad, while "Kalaiselvi" typed
            with one hand at a counter is slow and usually wrong. Same seam, same chooser — nothing new to configure. -->
@@ -14144,7 +14144,7 @@ function paintQuick(){
     + '<span>Photos</span></label>'
     /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —
        one setting, two places to reach it, never two opinions about it (tillOptSet writes both). */
-    + '<select class="qopt" data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
+    + '<select class="qopt" data-testid="till-quick-src" title="where these keys come from" aria-label="Where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
     + QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '"' + (o.quickSource === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>'; }).join('')
     + '</select>'
     + (usesGroups
