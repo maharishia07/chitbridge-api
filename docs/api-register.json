@@ -2,19 +2,19 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 639,
-  "no_does": 629,
+  "routes": 638,
+  "no_does": 628,
   "not_started": 0,
-  "partial": 41,
+  "partial": 40,
   "meets": 598,
   "columns": {
    "strict_input": {
-    "applies": 325,
-    "failing": 1
+    "applies": 324,
+    "failing": 0
    },
    "output_allowlist": {
-    "applies": 639,
-    "failing": 3
+    "applies": 638,
+    "failing": 2
    },
    "foreign_id_404": {
     "applies": 202,
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 639,
+    "applies": 638,
     "failing": 8
    }
   },
@@ -43,7 +43,7 @@
     "failing": 39
    },
    "rate_limited": {
-    "applies": 639,
+    "applies": 638,
     "failing": 479
    }
   },
@@ -4137,7 +4137,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 755,
+   "line": 748,
    "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
@@ -33106,104 +33106,6 @@
      "app.html 0/155",
      "cap-admin.js 0/106",
      "cap-assist.js 0/2",
-     "core.js 0/57"
-    ]
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "POST /api/assist/resolve",
-   "method": "POST",
-   "path": "/api/assist/resolve",
-   "owner_area": "assist",
-   "owner_agent": "cb-ai",
-   "file": "routes/assist.js",
-   "line": 749,
-   "hash": "9f02935797a24cbc",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     401,
-     410,
-     422,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    401,
-    410,
-    422,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": false,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial",
-   "callers": [
-    "core.js"
-   ],
-   "offline": "queueable",
-   "round_trips": {
-    "trips": 0,
-    "wire": 0,
-    "screens": [
      "core.js 0/57"
     ]
    },
