@@ -126,6 +126,7 @@ async function checkCataloguePublicReadOnly(client) {
     check("catalogue_items: shop B cannot UPDATE shop A's public item (0 rows)", (await run(shopB, 'UPDATE catalogue_items SET is_active = false WHERE item_id = $1', [itemA])) === 0);
     check("catalogue_items: shop B cannot DELETE shop A's public item (0 rows)", (await run(shopB, 'DELETE FROM catalogue_items WHERE item_id = $1', [itemA])) === 0);
     check("catalogue_items: shop A's item is still there after both attempts", (await run(shopA, 'SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active', [itemA])) === 1);
+    check("catalogue_items: shop B cannot INSERT an item for shop A (WITH CHECK)", await asApp(client, shopB, async () => { try { await client.query('INSERT INTO catalogue_items (item_id, entity_id) VALUES ($1, $2)', [crypto.randomUUID(), shopA]); return false; } catch (e) { return /row-level security/i.test(e.message); } }));
     check('catalogue_items: shop A can UPDATE its own item', (await run(shopA, 'UPDATE catalogue_items SET is_active = false WHERE item_id = $1', [itemA])) === 1);
     check('catalogue_items: shop A can DELETE its own item', (await run(shopA, 'DELETE FROM catalogue_items WHERE item_id = $1', [itemA])) === 1);
   } finally {
