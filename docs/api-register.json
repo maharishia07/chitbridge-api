@@ -5,8 +5,8 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 90,
-  "meets": 549,
+  "partial": 89,
+  "meets": 550,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -41376,11 +41376,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e47df5423efd75e7"
+    "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404, a rail verdict on a held copy stays its own 403 (refuseUnlessHeld); web composer shows the server words",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "rail-thread.js"
    ],
