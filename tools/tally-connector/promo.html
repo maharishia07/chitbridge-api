@@ -35,6 +35,7 @@
 <style>
   :root{
     --tv-ink:#0E1117; --tv-dim:#7A8796; --tv-line:#242C38; --tv-card:#151A22; --tv-paper:#FFF8EE;   /* the TV's own palette (SHELL-ONE: --tv-* so a chosen theme never inverts the screen) */
+    --tv-note-bg:#FFF4D6; --tv-note-ink:#5A3E00;
     --hot:#CC2F16; --fresh:#1F7A4C; --gold:#C77B0E; --cool:#1B5E8C; --plum:#6B2D5B;
     --fs:15px;
   }
@@ -46,6 +47,8 @@
 
   /* ── the bar. It disappears entirely in show mode: a television with a toolbar on it is a computer, not a sign. ── */
   /* SHELL-ONE: the frame's bar reads the TV's palette through the frame's names, scoped to the bar */
+  .nomoney{margin:8px 12px;padding:10px 14px;border-radius:8px;background:var(--tv-note-bg);color:var(--tv-note-ink);font:600 15px system-ui,sans-serif}
+  .nomoney a{color:inherit}
   #shell{--page:var(--tv-ink);--paper:var(--tv-ink);--card:var(--tv-card);--panel:var(--tv-card);--line:var(--tv-line);--ink:var(--tv-paper);--muted:var(--tv-dim);--grey:var(--tv-dim);--hover:var(--tv-line);flex:0 0 auto}
   .tools{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--tv-line);
          background:var(--tv-card);flex-wrap:wrap;flex:0 0 auto}
@@ -146,7 +149,7 @@
 </div>
 
 <main>
-  <div id="nomoney" role="status" data-testid="promo-no-country" style="margin:8px 12px;padding:10px 14px;border-radius:8px;background:#FFF4D6;color:#5A3E00;font:600 15px system-ui,sans-serif" hidden></div>
+  <div id="nomoney" class="nomoney" role="status" data-testid="promo-no-country" hidden></div>
   <!--
     ⭐⭐⭐ PAIRING, FROM THE TELEVISION'S SIDE. Athi, 2026-09-09: *"please add pairing so we can test 1 to many devices."*
     A TV remote is a D-pad and an on-screen keyboard. Six characters is about the most anyone will type on one, and it is the
@@ -469,7 +472,7 @@ function paintNoMoney(){
   var box = document.getElementById('nomoney'), words = noMoneyWords();
   if (!box) return;
   box.hidden = !words;
-  if (words) box.innerHTML = esc(words) + ' <a href="/settings.html#/country" data-testid="promo-country-link" style="color:inherit">Country setup</a>';
+  if (words) box.innerHTML = esc(words) + ' <a href="/settings.html#/country" data-testid="promo-country-link">Country setup</a>';
 }
 function live(){ if (noMoneyWords()) return []; return ((S && S.items) || []).filter(function(i){ return i.avail !== 'unavailable' && Number(i.price) > 0; }); }
 
