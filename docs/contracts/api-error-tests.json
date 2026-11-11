@@ -510,12 +510,12 @@
  ],
  "GET /api/chits/:chit_id/disputes": [
   401,
-  403,
+  404,
   500
  ],
  "GET /api/chits/:chit_id/messages": [
   401,
-  403,
+  404,
   422,
   500
  ],
@@ -2279,13 +2279,14 @@
  "POST /api/chits/:chit_id/disputes": [
   400,
   401,
-  403,
+  404,
   500
  ],
  "POST /api/chits/:chit_id/messages": [
   400,
   401,
   403,
+  404,
   500
  ],
  "POST /api/chits/:chit_id/payment": [
@@ -3107,6 +3108,12 @@
   500
  ],
  "POST /api/products/bulk-update": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/products/categories/bulk": [
   400,
   401,
   403,

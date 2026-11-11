@@ -117,6 +117,8 @@ const holdsCopy = async (entity_id, chit_id) =>
 const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
 const notHere = (message) => said404({ error: 'Not found', message });
 const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
+/** S35: a chit this login holds no copy of, unknown or another shop's, is the one 404; a verdict of the rail on a copy it does hold stays its own refusal */
+const refuseUnlessHeld = (req, res, held, refusal) => problem(req, res, held ? refusal : { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
 const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
 const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
 const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
@@ -124,8 +126,8 @@ const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
 const CHIT_GONE = {
   'GET /:chit_id': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/use': notHere('Chit not found'),
-  'GET /:chit_id/messages': noCopy,
-  'GET /:chit_id/disputes': noCopy,
+  'GET /:chit_id/messages': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/disputes': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/diagnosis': noCopy,
   'PUT /:chit_id/use': said404({ error: 'Not saved', message: 'Chit not found' }),
   'PUT /:chit_id/status': said404({ error: 'Not found', message: 'Chit not found', why: 'not_received' }),
@@ -140,8 +142,8 @@ const CHIT_GONE = {
   'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
   'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
   'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
-  'POST /:chit_id/messages': noParty({ error: 'Forbidden', message: 'Not a participant on this chit', why: 'not_participant' }),
-  'POST /:chit_id/disputes': noParty({ error: 'Not a participant' }),
+  'POST /:chit_id/messages': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/disputes': notHere('Chit not found or you do not have access'),
   'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
   'POST /:chit_id/archive': notHere('Chit not found or already archived'),
   'POST /:chit_id/unarchive': notHere('Chit not found or not archived'),
@@ -5286,7 +5288,7 @@ router.put(
   '/:chit_id/status',
   auth,
   ...checked('PUT /:chit_id/status'),
-  trimmedBody(['status', 'note']),
+  trimmedBody(['status', 'note', 'from']),
   async (req, res) => {
     try {
       const chit_id = req.params.chit_id;
@@ -5345,7 +5347,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req));
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use }); /* QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
       /**
@@ -5491,7 +5493,7 @@ router.post(
       );
       const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
       if (!_v.ok) {
-        return problem(req, res, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
+        return refuseUnlessHeld(req, res, held.rows.length > 0, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
@@ -5608,7 +5610,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
       }
       return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
     });
-    if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (result === null) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: a chit this login holds no copy of, unknown or another shop's, is the one 404 */
 
     const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
@@ -5838,7 +5840,7 @@ router.post(
       const access = await withEntity(entity_id, (db) =>
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
-      if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
+      if (access.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: no copy here, unknown or another shop's: the one 404 */
       await ctpReturn.ensureShadows(entity_id, chit_id); // RAIL-106: a party on another installation is a participant here (its shadow row), so the roster below can hold it
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
@@ -6021,7 +6023,7 @@ router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), asy
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
-    if (!own) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!own) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35 */
     const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);

@@ -28,13 +28,16 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const MOUNT = '/api/products';
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+/** QA-130: a route born after the sweep froze the old answers: nothing was frozen for any of its scenarios (a plain Problem, no legacy keys to keep) */
+const BORN_AFTER = (route) => route === 'POST ' + MOUNT + '/categories/bulk';
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: 'routes/products.js' },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
   inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
-  notFrozen: (one, scenario) => one.status === 401 && scenario === 'signed-out'
+  added: (route) => BORN_AFTER(route),
+  notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || BORN_AFTER(one.route)
 });
 const { check } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');

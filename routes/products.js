@@ -26,6 +26,7 @@ const csv = require('../lib/csv'); // catalogue export — a merchant can leave 
 const catcols = require('../lib/catalogue-columns');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
+const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
 const catSearch = require('../lib/catalogue-search'); /* CAT-313: the one search condition for GET / */
 /* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
 const defaults = require('../lib/defaults');
@@ -574,6 +575,46 @@ router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, r
   } catch (e) {
     if (e.status) return problem(req, res, badStatus(e, statusSafeMessage(e)));
     problem(req, res, faultOf(e, req, 'Bulk status failed'));
+  }
+});
+
+/**
+ * QA-130: ADD OR REMOVE A CATEGORY, PER PRODUCT — { ids, add?, remove? }. A category is a classification, many per product, mostly set once, so the
+ * request names the category and the products, never the whole record (POST /bulk-update's replace). Adding one already there or removing one that is
+ * absent answers 'unchanged' and writes nothing: safe to repeat, so a half-finished run is resumed by sending it again, and no other key of a product
+ * is written, so a newer edit of its price is never overwritten. The gate is the single attach's: the editor hat (auth) and, for a co-assist, the cost
+ * gate over the keys written (a cost-blind caller may touch status only). The rate door is not entered: no item rate key is written (lib/product-categories).
+ */
+const CATEGORY_KEYS = ['categories', 'category_names'];
+const isIdList = (list) => Array.isArray(list) && list.every((id) => typeof id === 'string' && id);
+/** the request read into { ids, add, remove } (each once, order kept), or the refusal that names what is wrong */
+function categoryChangeOf(body) {
+  const once = (list) => Array.from(new Set(list || []));
+  const lists = [body.ids, body.add || [], body.remove || []];
+  if (!lists.every(isIdList)) return { refusal: words.notStrings() };
+  const change = { ids: once(body.ids), add: once(body.add), remove: once(body.remove) };
+  if (change.ids.length > BULK_MAX) return { refusal: words.tooMany(BULK_MAX) };
+  if (!change.add.length && !change.remove.length) return { refusal: words.noCategoryChange() };
+  if (change.add.some((id) => change.remove.indexOf(id) >= 0)) return { refusal: words.categoryBothWays() };
+  return { change };
+}
+/** the count of results with this word */
+const countOf = (results, word) => results.filter((line) => line.result === word).length;
+router.post('/categories/bulk', auth, ...checked('POST /categories/bulk'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const read = categoryChangeOf(req.body);
+    if (read.refusal) return problem(req, res, { status: 400, ...read.refusal });
+    const blocked = await cost.writeRefusal(req, entity_id, CATEGORY_KEYS);
+    if (blocked) return problem(req, res, { status: 403, ...words.costBlind(blocked) });
+    const out = await withEntity(entity_id, (db) => productCategories.changeCategories(db, entity_id, read.change));
+    if (out.unknown) return problem(req, res, { status: 400, ...words.unknownCategories(out.unknown) });
+    const { results } = out;
+    const done = countOf(results, productCategories.RESULT.DONE);
+    if (done) shopChanged(entity_id, 'product categories');
+    res.json({ message: done + ' updated', done, unchanged: countOf(results, productCategories.RESULT.UNCHANGED), refused: countOf(results, productCategories.RESULT.REFUSED), results });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Bulk categories failed'));
   }
 });
 

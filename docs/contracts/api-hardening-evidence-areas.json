@@ -1297,6 +1297,9 @@
   "POST /api/entities/populations": {
    "output_allowlist": true
   },
+  "POST /api/entities/register": {
+   "output_allowlist": true
+  },
   "POST /api/entities/verify": {
    "output_allowlist": true
   },
@@ -1372,6 +1375,9 @@
   "POST /api/identity/documents/:scheme/verify": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/integrations/:actor_id/approve": {
+   "output_allowlist": true
   },
   "POST /api/invoice/build": {
    "output_allowlist": true,
@@ -1500,6 +1506,9 @@
    "output_allowlist": true
   },
   "POST /api/products/bulk-update": {
+   "output_allowlist": true
+  },
+  "POST /api/products/categories/bulk": {
    "output_allowlist": true
   },
   "POST /api/products/import": {

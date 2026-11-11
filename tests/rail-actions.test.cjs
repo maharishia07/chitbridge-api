@@ -233,7 +233,9 @@ const tally = {};
          said the safe sentence. ONLY that: same status, same keys, the old message must be the safe sentence and the new one a sentence of its own. */
       const saidNow = (old, now) => o.status === 400 && /\/(deliver-lines|assign-lines|amend)$/.test(x.sub) && old && now && old.message === 'Something went wrong — please try again.' && typeof now.message === 'string' && now.message !== old.message
         ? Object.assign({}, now, { message: old.message }) : now;
-      const ok = o.status === x.after.status && strip(o.body) === strip(saidNow(o.body, x.after.body), o.body);
+      /* S35 (deliberate, batch 2026-11-11): a login that holds NO copy of the chit is told the one 404 on dispute and message, where the route said 403 (same word for unknown, another shop's and not yours). ONLY that: stranger, those three actions, 403 → 404 with the one sentence. */
+      const s35 = /^stranger/.test(x.name) && /^(dispute|message_external|message_internal)$/.test(x.a) && o.status === 403 && x.after.status === 404 && x.after.body.message === 'Chit not found or you do not have access';
+      const ok = s35 || o.status === x.after.status && strip(o.body) === strip(saidNow(o.body, x.after.body), o.body);
       if (ok) same++;
       t(x.name + ' · ' + x.a + ': before ' + o.status + ' = after ' + x.after.status + ', same body but `why`', ok,
         'before ' + o.status + ' ' + strip(o.body).slice(0, 160) + '\n       after  ' + x.after.status + ' ' + strip(x.after.body).slice(0, 160));
