@@ -418,12 +418,6 @@
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
   },
-  "POST /api/till/quick-keys/hide": {
-   "strict_input": true
-  },
-  "POST /api/till/quick-keys/unhide": {
-   "strict_input": true
-  },
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
   },

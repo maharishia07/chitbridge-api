@@ -251,10 +251,6 @@
    }
   },
   "POST /api/chits/send": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 409"
@@ -1042,19 +1038,11 @@
    }
   },
   "POST /api/till/stock": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
   },
   "POST /api/till/stock/bulk": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
@@ -1086,10 +1074,6 @@
    }
   },
   "POST /api/till/flags": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
@@ -1126,18 +1110,12 @@
    }
   },
   "POST /api/till/quick-keys/hide": {
-   "strict_input": {
-    "pass": true
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
    }
   },
   "POST /api/till/quick-keys/unhide": {
-   "strict_input": {
-    "pass": true
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
@@ -1203,10 +1181,6 @@
    }
   },
   "POST /api/till/reward": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    },
@@ -1215,10 +1189,6 @@
    }
   },
   "POST /api/till/reward/claim": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    },

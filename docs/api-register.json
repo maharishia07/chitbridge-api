@@ -5,12 +5,12 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 46,
-  "meets": 593,
+  "partial": 40,
+  "meets": 599,
   "columns": {
    "strict_input": {
-    "applies": 337,
-    "failing": 11
+    "applies": 329,
+    "failing": 5
    },
    "output_allowlist": {
     "applies": 639,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 639,
-    "failing": 16
+    "failing": 15
    }
   },
   "reported": {
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "tolerant_outward": 14,
+  "tolerant_outward": 22,
   "output_allowlist_from_recordings": 145
  },
  "machine_columns": [
@@ -590,7 +590,7 @@
     "screens": [
      "app.html 1/155",
      "core.js 1/57",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -1869,7 +1869,7 @@
      "catalogue-lines.js 1/90",
      "combo-mode.js 1/15",
      "core.js 1/57",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -9359,7 +9359,7 @@
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
      "tasks.html 1/2",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -11386,7 +11386,7 @@
     "wire": 5,
     "screens": [
      "app.html 1/155",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -11515,7 +11515,7 @@
      "cap-repeat.js 1/7",
      "rail-advice.js 1/3",
      "screen-id.js 1/5",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -14249,7 +14249,7 @@
      "cap-shop.js 6/17",
      "cap-workforce.js 6/19",
      "catalogue.html 6/6",
-     "till.html 6/225"
+     "till.html 6/179"
     ]
    },
    "measured": {
@@ -15340,7 +15340,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -15441,7 +15441,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -23033,7 +23033,7 @@
     "wire": 13,
     "screens": [
      "catalogue-lines.js 6/90",
-     "till.html 6/225"
+     "till.html 6/179"
     ]
    },
    "measured": {
@@ -26999,7 +26999,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -27095,7 +27095,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -27191,7 +27191,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -27289,7 +27289,7 @@
     "trips": 0,
     "wire": null,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -27390,7 +27390,7 @@
     "wire": 11,
     "screens": [
      "cap-match.js 3/3",
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -27490,7 +27490,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -27588,7 +27588,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -27686,7 +27686,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -27786,7 +27786,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/225"
+     "till.html 4/179"
     ]
    },
    "measured": {
@@ -27887,7 +27887,7 @@
     "trips": 1,
     "wire": null,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -27985,7 +27985,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -28096,7 +28096,7 @@
     "wire": 46,
     "screens": [
      "promo.html 17/67",
-     "till.html 17/225"
+     "till.html 17/179"
     ]
    },
    "measured": {
@@ -28196,7 +28196,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -28296,7 +28296,7 @@
     "wire": 4,
     "screens": [
      "cap-mis-trend.js 1/1",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -28392,7 +28392,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "till.html 2/225"
+     "till.html 2/179"
     ]
    },
    "measured": {
@@ -28492,7 +28492,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -28590,7 +28590,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -30757,7 +30757,7 @@
      "catalogue-lines.js 0/90",
      "combo-mode.js 0/15",
      "core.js 0/57",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -41169,7 +41169,7 @@
      "cap-chit2.js 1/15",
      "cap-tasks.js 1/7",
      "cap-worklist.js 1/12",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -43450,7 +43450,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -43458,7 +43458,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -43475,6 +43475,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the counter bill queue door (the sale itself); its five known keys are typed, any other key is read by name or ignored; a refused bill is parked and shown, never dropped"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -43489,11 +43492,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d43294ebda426ddd"
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-readiness.js",
@@ -43512,7 +43514,7 @@
      "cap-tasks.js 0/7",
      "intake.html 0/5",
      "rail-advice.js 0/3",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -47287,7 +47289,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -53728,7 +53730,7 @@
     "screens": [
      "cap-catalogue.js 0/13",
      "catalogue-lines.js 0/90",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -53832,7 +53834,7 @@
     "screens": [
      "cap-catalogue.js 0/13",
      "catalogue-lines.js 0/90",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -56847,7 +56849,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -59163,7 +59165,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -59267,7 +59269,7 @@
     "trips": 7,
     "wire": 19,
     "screens": [
-     "till.html 7/225"
+     "till.html 7/179"
     ]
    },
    "measured": {
@@ -59369,7 +59371,7 @@
     "trips": 7,
     "wire": null,
     "screens": [
-     "till.html 7/225"
+     "till.html 7/179"
     ]
    },
    "measured": {
@@ -59469,7 +59471,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/225"
+     "till.html 6/179"
     ]
    },
    "measured": {
@@ -59569,7 +59571,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/225"
+     "till.html 6/179"
     ]
    },
    "measured": {
@@ -59587,7 +59589,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1723,
-   "hash": "cfd441c55258aa17",
+   "hash": "7aa0353c6b3693da",
    "does": "",
    "errors": {
     "count": 0,
@@ -59621,7 +59623,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59629,7 +59631,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -59647,6 +59649,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: a shop-screen or offer flag the counter queues offline; an older queued body replays on a newer server, so an unknown key is ignored and only a wrong KIND of value is refused (400, parked by the drain)"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -59661,11 +59666,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cfd441c55258aa17"
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59674,7 +59678,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -59775,7 +59779,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -59881,7 +59885,7 @@
     "trips": 1,
     "wire": 6,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -59983,7 +59987,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/155",
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -60087,7 +60091,7 @@
     "wire": null,
     "screens": [
      "promo.html 50/67",
-     "till.html 50/225"
+     "till.html 50/179"
     ]
    },
    "measured": {
@@ -60196,7 +60200,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -60214,7 +60218,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1877,
-   "hash": "44dca3831063363e",
+   "hash": "64b7939017124705",
    "does": "",
    "errors": {
     "count": 0,
@@ -60253,7 +60257,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -60270,6 +60274,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the first counter versions queued sold-out marks (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -60284,7 +60291,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -60296,7 +60303,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/225"
+     "till.html 6/179"
     ]
    },
    "measured": {
@@ -60396,7 +60403,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/225"
+     "till.html 4/179"
     ]
    },
    "measured": {
@@ -60496,7 +60503,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/225"
+     "till.html 4/179"
     ]
    },
    "measured": {
@@ -60514,7 +60521,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1894,
-   "hash": "177096623508ee58",
+   "hash": "a1963fe17d788f40",
    "does": "",
    "errors": {
     "count": 0,
@@ -60555,7 +60562,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -60572,6 +60579,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the first counter versions queued the put-back (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -60586,7 +60596,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -60598,7 +60608,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/225"
+     "till.html 4/179"
     ]
    },
    "measured": {
@@ -60707,7 +60717,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -60908,7 +60918,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -60926,7 +60936,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2499,
-   "hash": "7196a974ea9a5407",
+   "hash": "0a6e72f6afb69950",
    "does": "",
    "errors": {
     "count": 0,
@@ -60961,7 +60971,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60969,7 +60979,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -60987,6 +60997,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: points for one bill, queued behind the bill; the desktop agent (tools/tally-connector/till.js) still sends net, gross, count and lines, which stay accepted and unread; a wrong kind refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -61001,11 +61014,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7196a974ea9a5407"
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61014,7 +61026,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
@@ -61032,7 +61044,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2571,
-   "hash": "ff484e15d9eaba2b",
+   "hash": "a51c77c0c4211825",
    "does": "",
    "errors": {
     "count": 0,
@@ -61065,15 +61077,15 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -61091,6 +61103,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: a walk-in balance claim, sent through the counter queue; unknown keys ignored, from and to must be objects, a wrong kind refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -61105,20 +61120,19 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ff484e15d9eaba2b"
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
    "offline": "idempotent",
    "round_trips": {
-    "trips": 50,
+    "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 50/225"
+     "till.html 4/179"
     ]
    },
    "measured": {
@@ -61222,7 +61236,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -61326,7 +61340,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -61430,7 +61444,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "till.html 2/225"
+     "till.html 2/179"
     ]
    },
    "measured": {
@@ -61530,7 +61544,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/225"
+     "till.html 1/179"
     ]
    },
    "measured": {
@@ -61548,7 +61562,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1427,
-   "hash": "1a63be59250ac195",
+   "hash": "19ae9474f5b0153b",
    "does": "",
    "errors": {
     "count": 0,
@@ -61580,7 +61594,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61588,7 +61602,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -61606,6 +61620,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: an available/unavailable mark the counter queues offline; unknown keys ignored, null for none accepted, a wrong kind refused 400 (the drain parks that row and sends the rest)"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -61620,11 +61637,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1a63be59250ac195"
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61633,7 +61649,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -61651,7 +61667,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1485,
-   "hash": "e34ab5fcd8e26898",
+   "hash": "206c3d8648cf8b35",
    "does": "",
    "errors": {
     "count": 0,
@@ -61682,7 +61698,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61690,7 +61706,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -61707,6 +61723,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the bulk stock mark rides the same offline queue as stock; unknown keys ignored, item_ids must be a list or null, a wrong kind refused 400"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -61721,11 +61740,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e34ab5fcd8e26898"
+    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61734,7 +61752,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/225"
+     "till.html 3/179"
     ]
    },
    "measured": {
@@ -63477,7 +63495,7 @@
      "core.js 0/57",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
-     "till.html 0/225"
+     "till.html 0/179"
     ]
    },
    "measured": {
