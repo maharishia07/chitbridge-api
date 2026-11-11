@@ -45,7 +45,7 @@ function page(o) {
     ask: async (msg) => { ctx.asked.push(msg); return o.why == null ? null : o.why; }
   };
   vm.createContext(ctx);
-  vm.runInContext(['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote', 'taxIncluded', 'moneyStop', 'moneyStopAsk', 'billWarnHTML', 'billWarnLine', 'slipCheckedHTML'].map(grab).join('\n')
+  vm.runInContext(['billMoney', 'billWhen', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry', 'bandWordsOf', 'moneyOf', 'noCountryMoney', 'walkInNote', 'taxIncluded', 'moneyStop', 'moneyStopAsk', 'billWarnHTML', 'billWarnLine', 'slipCheckedHTML'].map(grab).join('\n')
     + '\nthis.__f = { billMoney: billMoney, moneyStopAsk: typeof moneyStopAsk === "function" ? moneyStopAsk : null, billWarnHTML: typeof billWarnHTML === "function" ? billWarnHTML : null, slipCheckedHTML: typeof slipCheckedHTML === "function" ? slipCheckedHTML : null };', ctx);
   return ctx;
 }

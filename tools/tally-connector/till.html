@@ -6156,7 +6156,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-08.acc191c';
+var TILL_BUILD = '2026-11-11.ctry139';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -18161,6 +18161,7 @@ function price(){
   });
   /* ⭐ THE SET OF NETS DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
      A line added or removed → the container, because the rows themselves are different rows now. */
+  stampBands();   /* CTRY-139: each line's band words, read off the engine's invoice, before the rows are drawn */
   var rows = document.querySelectorAll('#cart .row').length;
   var inPlace = (rows === CART.length && CART.length > 0);
   if (inPlace) { for (var n = 0; n < CART.length && inPlace; n++) inPlace = paintCartRow(n); }
@@ -18295,7 +18296,7 @@ function cartLineNote(c){
    * (Athi, 2026-09-16: *"on the header, #, item, offer can be brought in"*), because an offer crammed under the
    * product name is the one thing on the row with no heading telling you what it is.
    */
-  var bits = (c.unit ? 'per ' + esc(c.unit) : '') + (c.gst_rate ? ' · ' + schemeWord() + ' ' + c.gst_rate + '%' : '')   /* CX1: the pack's word */ + tierWords;
+  var bits = (c.unit ? 'per ' + esc(c.unit) : '') + rateNoteOf(c)   /* CX1: the pack's word; CTRY-139: the law's band words when it set the rate */ + tierWords;
   if (bits.indexOf(' · ') === 0) bits = bits.slice(3);
   CART_OFFER_CELL = offs + pending;                 /* handed to the Offer column, built in the same pass */
   /**
@@ -19234,7 +19235,7 @@ function billMoney(){
      UAE shop billed tax-free. The goods are handed over at the counter, inside the shop's country: the same rule placeOfSupply
      already applies to the state (IGST Act s.10(1)(a)), now applied to the country. The engine is right to refuse the guess; the
      counter knows the shop. The server's seam is lib/tax-lines walkIn (the same rule, the same note). */
-  var shopCountry = String(sh.country || '').trim().toUpperCase();  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
+  var shopCountry = String(sh.country || '').trim().toUpperCase(), when = billWhen();  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
@@ -19244,15 +19245,16 @@ function billMoney(){
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0, list_price: c.price,
       gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
-    priceIncludesTax: taxed && inclusive, zeroRated: !taxed
+    priceIncludesTax: taxed && inclusive, zeroRated: !taxed,
+    asOf: when.day   /* CTRY-139: the shop's day of this bill reads the law's dated price band; the same moment is billed_at (pinBillMoment) */
   }) : null;
   /* ⭐ BUY1: when the BORDER decided (supply 'domestic' — never a state pack's intra/inter), the frozen invoice SAYS the buyer was
      taxed as inside the shop's country; the note travels on the chit (business_json.invoice) like every engine note */
   walkInNote(inv, shopCountry);
   var m = moneyOf(inv);
   /* ⭐ each cart line shows its own figures — READ off its ItemList entry, the same row the invoice carries */
-  CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; });
-  m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv; m.stop = moneyStop(inv);   /* ACC-206 H: the engine's own verdict, read as data */
+  CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; c.band = taxed ? bandWordsOf(inv, n) : ''; });   /* a shop that charges no GST names no rate (the engine still words the band) */
+  m.when = when; m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv; m.stop = moneyStop(inv);   /* ACC-206 H: the engine's own verdict, read as data */
   return m;
 }
 /**
@@ -19264,6 +19266,15 @@ function billMoney(){
  *   row on the slip) · heads, supply, pos_state and each line's figures as the engine names them
  * ⚠️ No engine (or no invoice) → zeros and no lines, never a figure of its own; finish() then refuses the sale.
  */
+/** ⭐ CTRY-139: the moment a bill is priced at and its shop day — the day the engine reads the law's dated price band by (asOf), and the day billed_at must read */
+function stampBands(){ try { billMoney(); } catch (e) { cbQuiet('stampBands:1', e); } }
+function billWhen(){ var now = new Date(); return { at: now.toISOString(), day: shopDayOf(now) }; }
+/** ⭐ CTRY-139: the words the ENGINE wrote for a line the law re-rated by price band (ItemList[n]._band, e.g. "18% · price above Rs 2,500 per piece") — read, never composed here; '' = no band */
+function bandWordsOf(invoice, n){ var item = invoice && invoice.ItemList && invoice.ItemList[n]; return (item && item._band) || ''; }
+/** the rate part of a line's note: the band's own words when the law set the rate, else the pack's word and the line's rate */
+function rateNoteOf(c){ return c.band ? ' · ' + schemeWord() + ' ' + esc(c.band) : (c.gst_rate ? ' · ' + schemeWord() + ' ' + c.gst_rate + '%' : ''); }
+/** ⭐ CTRY-139: a bill whose shop day moved on between pricing and saving (a slow payment across midnight) keeps the moment the engine priced it at, so billed_at and the band read the SAME day */
+function pinBillMoment(body, m){ if (m.when && shopDayOf(Date.now()) !== m.when.day) body.at = m.when.at; }
 /** BUY1: a border-decided invoice (supply 'domestic') says the walk-in was taxed as inside the shop's country; the note rides the chit */
 function walkInNote(invoice, country){
   if (!invoice || !invoice._cb || invoice._cb.supply !== 'domestic') return;
@@ -20328,6 +20339,11 @@ function shopTz(){
   return undefined;
 }
 function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
+/** ⭐ CTRY-139: the shop's calendar day (YYYY-MM-DD) of a moment, in the shop's zone — never a UTC slice (00:10 IST on 22 Sep is the 22nd). The till's twin of the api's books-hooks.dayOf; a zone the device refuses falls back to the device's own day. */
+function shopDayOf(at){
+  var t = new Date(at == null ? Date.now() : at); if (isNaN(t)) return '';
+  try { return t.toLocaleDateString('en-CA', tzOpt({})); } catch (e) { cbQuiet('shopDayOf:1', e); return t.toLocaleDateString('en-CA'); }
+}
 /** 24-hour hh:mm in shop time — what the bar, the lock and the logs print */
 function hhmm(d){
   try { var t = (d == null) ? new Date() : new Date(d); if (isNaN(t)) return '';
@@ -20338,7 +20354,7 @@ function hhmm(d){
 function sinceWord(d){
   try {
     var t = new Date(d); if (isNaN(t)) return '';
-    var day = function(x){ return x.toLocaleDateString('en-CA', tzOpt({})); };
+    var day = shopDayOf;   /* CTRY-139: the one shop-day reader */
     var today = day(new Date()), then = day(t);
     if (then === today) return hhmm(t);
     if (then === day(new Date(Date.now() - 86400000))) return 'yesterday ' + hhmm(t);
@@ -22087,7 +22103,7 @@ async function finish(){
          : (kotOn() || purposeHas('open_orders')) ? { type: orderKind(), table: orderTable() || null,
                        kots: CART.map(function(c){ return c.kot || 0; }).filter(Boolean) } : null,
   };
-  var r = null;
+  var r = null; pinBillMoment(body, m);
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
   if (!r || !r.ok){ saleStop('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return { ok: false }; }
   LAST = r.bill; LASTNO = r.bill && r.bill.no; if (r.today) STATE.today = r.today;
@@ -23713,6 +23729,12 @@ function slipCashRoundHTML(bill, row){
   var rounded = Number(bill.cash_round) || 0;
   return rounded ? '<div data-testid="till-slip-cashround">' + row('Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)) + '</div>' : '';
 }
+/** the rate printed on a tax-invoice line: the engine's band words when the law set it (from the bill's own invoice, so a duplicate says the same), else the line's rate */
+function slipRateOf(bill, l, n){
+  if (bill.kind !== 'tax') return '';
+  var band = bandWordsOf(bill.invoice, n);
+  return band ? '  ' + schemeWord() + ' ' + esc(band) : (l.gst_rate ? '  ' + schemeWord() + ' ' + l.gst_rate + '%' : '');
+}
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var unrated = unratedOnBill(bill);
@@ -23750,7 +23772,7 @@ function slipHTML(bill, m){
      * ⚠️ The offer rows come from what was STORED on the bill, not from a re-evaluation. A reprint next year must
      * show what was charged then — offers change, and a slip that re-derived them would quietly rewrite history.
      */
-    + (bill.lines||[]).map(function(l){
+    + (bill.lines||[]).map(function(l, n){
         var offs = (l.offers && l.offers.length)
           ? l.offers
           : (l.off ? [{ label: l.off_label || 'Offer', off: l.save }] : []);   /* bills saved before offers[] existed */
@@ -23771,7 +23793,7 @@ function slipHTML(bill, m){
              + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
              + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
-             + (bill.kind === 'tax' && l.gst_rate ? '  ' + schemeWord() + ' ' + l.gst_rate + '%' : '') + '</div>'
+             + slipRateOf(bill, l, n) + '</div>'
              /* ⚠️ only when something came off — on a line with no offer, "Gross ₹9.00" over "₹9.00" is a row
                 that says nothing twice, and rows that say nothing are how a bill becomes unreadable. */
              + (offs.length || Number(l.save_unnamed) > 0.004 ? sub('Gross', money(l.gross)) : '')

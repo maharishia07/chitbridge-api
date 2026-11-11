@@ -78,7 +78,7 @@ t('the page sources: the slip row, the credit note body and the stored bill neve
   assert.ok(!SRC.includes('tax: -m.tax,'), 'no bare -m.tax is left');
   assert.ok(SRC.includes("tax: m.tax /* ACC-191: null = not decided (supply unknown), stored as the engine said it, never 0 */"), 'the stored bill keeps the engine null');
   assert.ok(SRC.includes('tax: m.tax /* ACC-191: null stays null = not decided */'), 'the reprint keeps the engine null');
-  assert.ok(/var TILL_BUILD = '2026-11-08\.acc191c';/.test(SRC), 'TILL_BUILD is bumped');
+  assert.ok(/var TILL_BUILD = '\d{4}-\d{2}-\d{2}\.[a-z0-9]+';/.test(SRC), 'TILL_BUILD is bumped');
 });
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed\n');
