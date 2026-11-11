@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 347,
-    "failing": 44
+    "failing": 22
    },
    "output_allowlist": {
     "applies": 638,
@@ -58967,7 +58967,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 4014,
-   "hash": "48bf07faa83414fb",
+   "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
     "count": 0,
@@ -59000,7 +59000,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59041,7 +59041,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "48bf07faa83414fb"
+    "stale_since": "8e1f08ad996388b1"
    },
    "status": "partial",
    "callers": [
@@ -59070,7 +59070,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3314,
-   "hash": "502a3548b902ab91",
+   "hash": "3dd65abc975c9a01",
    "does": "",
    "errors": {
     "count": 0,
@@ -59107,7 +59107,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59150,7 +59150,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "502a3548b902ab91"
+    "stale_since": "3dd65abc975c9a01"
    },
    "status": "partial",
    "callers": [
@@ -59179,7 +59179,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1628,
-   "hash": "bbf59d5ac7b12389",
+   "hash": "1106ed553e2a249e",
    "does": "",
    "errors": {
     "count": 0,
@@ -59211,7 +59211,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59253,7 +59253,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bbf59d5ac7b12389"
+    "stale_since": "1106ed553e2a249e"
    },
    "status": "partial",
    "callers": [
@@ -59282,7 +59282,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1558,
-   "hash": "4600d328835a649e",
+   "hash": "fe2b534fc88c7bbf",
    "does": "",
    "errors": {
     "count": 0,
@@ -59312,7 +59312,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59354,7 +59354,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4600d328835a649e"
+    "stale_since": "fe2b534fc88c7bbf"
    },
    "status": "partial",
    "callers": [
@@ -59383,7 +59383,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2705,
-   "hash": "9242863f3369467c",
+   "hash": "b5d1d38fbdf85c1f",
    "does": "",
    "errors": {
     "count": 0,
@@ -59414,7 +59414,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59455,7 +59455,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9242863f3369467c"
+    "stale_since": "b5d1d38fbdf85c1f"
    },
    "status": "partial",
    "callers": [
@@ -59484,7 +59484,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1723,
-   "hash": "cfd441c55258aa17",
+   "hash": "e7fff9d229eadda1",
    "does": "",
    "errors": {
     "count": 0,
@@ -59518,7 +59518,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59560,7 +59560,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cfd441c55258aa17"
+    "stale_since": "e7fff9d229eadda1"
    },
    "status": "partial",
    "callers": [
@@ -59589,7 +59589,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 4075,
-   "hash": "8978b6a9067b56ef",
+   "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
     "count": 0,
@@ -59622,7 +59622,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59796,7 +59796,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2638,
-   "hash": "d76bb418bb672a62",
+   "hash": "fb7ee244234d4a45",
    "does": "",
    "errors": {
     "count": 0,
@@ -59827,7 +59827,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59868,7 +59868,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d76bb418bb672a62"
+    "stale_since": "fb7ee244234d4a45"
    },
    "status": "partial",
    "callers": [
@@ -59899,7 +59899,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2747,
-   "hash": "ff9b7d89fcff7688",
+   "hash": "d548871784442c21",
    "does": "",
    "errors": {
     "count": 0,
@@ -59932,7 +59932,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59972,7 +59972,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ff9b7d89fcff7688"
+    "stale_since": "d548871784442c21"
    },
    "status": "partial",
    "callers": [
@@ -60112,7 +60112,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1877,
-   "hash": "34064662721f1383",
+   "hash": "44dca3831063363e",
    "does": "",
    "errors": {
     "count": 0,
@@ -60143,7 +60143,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60184,7 +60184,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "34064662721f1383"
+    "stale_since": "44dca3831063363e"
    },
    "status": "partial",
    "callers": [
@@ -60213,7 +60213,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1919,
-   "hash": "f0ac99570fb42ce8",
+   "hash": "45ed4c4ba28822dd",
    "does": "",
    "errors": {
     "count": 0,
@@ -60244,7 +60244,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60285,7 +60285,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f0ac99570fb42ce8"
+    "stale_since": "45ed4c4ba28822dd"
    },
    "status": "partial",
    "callers": [
@@ -60314,7 +60314,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1845,
-   "hash": "9a446ad0d889e1ce",
+   "hash": "7cc9a8b4f101a389",
    "does": "",
    "errors": {
     "count": 0,
@@ -60345,7 +60345,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60386,7 +60386,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9a446ad0d889e1ce"
+    "stale_since": "7cc9a8b4f101a389"
    },
    "status": "partial",
    "callers": [
@@ -60415,7 +60415,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1894,
-   "hash": "ca798a7ef2ec7587",
+   "hash": "177096623508ee58",
    "does": "",
    "errors": {
     "count": 0,
@@ -60448,7 +60448,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60489,7 +60489,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ca798a7ef2ec7587"
+    "stale_since": "177096623508ee58"
    },
    "status": "partial",
    "callers": [
@@ -60728,7 +60728,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2933,
-   "hash": "f5e45027c5926f0b",
+   "hash": "bce8298f80a6601e",
    "does": "",
    "errors": {
     "count": 0,
@@ -60759,7 +60759,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60800,7 +60800,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f5e45027c5926f0b"
+    "stale_since": "bce8298f80a6601e"
    },
    "status": "partial",
    "callers": [
@@ -60829,7 +60829,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2499,
-   "hash": "7196a974ea9a5407",
+   "hash": "6e2d331858e78210",
    "does": "",
    "errors": {
     "count": 0,
@@ -60864,7 +60864,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -60906,7 +60906,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7196a974ea9a5407"
+    "stale_since": "6e2d331858e78210"
    },
    "status": "partial",
    "callers": [
@@ -60935,7 +60935,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2571,
-   "hash": "ff484e15d9eaba2b",
+   "hash": "91bc6a3dc8e4efc3",
    "does": "",
    "errors": {
     "count": 0,
@@ -60968,7 +60968,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61010,7 +61010,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ff484e15d9eaba2b"
+    "stale_since": "91bc6a3dc8e4efc3"
    },
    "status": "partial",
    "callers": [
@@ -61039,7 +61039,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2877,
-   "hash": "62336062684c7182",
+   "hash": "e8dec48d423da49f",
    "does": "",
    "errors": {
     "count": 0,
@@ -61073,7 +61073,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61115,7 +61115,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "62336062684c7182"
+    "stale_since": "e8dec48d423da49f"
    },
    "status": "partial",
    "callers": [
@@ -61144,7 +61144,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2857,
-   "hash": "16aae6edbabde12f",
+   "hash": "5ff14e252baed951",
    "does": "",
    "errors": {
     "count": 0,
@@ -61178,7 +61178,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61220,7 +61220,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "16aae6edbabde12f"
+    "stale_since": "5ff14e252baed951"
    },
    "status": "partial",
    "callers": [
@@ -61249,7 +61249,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3083,
-   "hash": "19e732f3c16c5ec5",
+   "hash": "cb54f167d22e1630",
    "does": "",
    "errors": {
     "count": 0,
@@ -61284,7 +61284,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61325,7 +61325,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "19e732f3c16c5ec5"
+    "stale_since": "cb54f167d22e1630"
    },
    "status": "partial",
    "callers": [
@@ -61354,7 +61354,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1694,
-   "hash": "783af1003d29a9e0",
+   "hash": "45a5375daea12e4d",
    "does": "",
    "errors": {
     "count": 0,
@@ -61385,7 +61385,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61426,7 +61426,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "783af1003d29a9e0"
+    "stale_since": "45a5375daea12e4d"
    },
    "status": "partial",
    "callers": [
@@ -61455,7 +61455,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1427,
-   "hash": "1a63be59250ac195",
+   "hash": "8e4b1cc5a3b0e908",
    "does": "",
    "errors": {
     "count": 0,
@@ -61487,7 +61487,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61529,7 +61529,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1a63be59250ac195"
+    "stale_since": "8e4b1cc5a3b0e908"
    },
    "status": "partial",
    "callers": [
@@ -61558,7 +61558,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1485,
-   "hash": "e34ab5fcd8e26898",
+   "hash": "032fa8d192996ba0",
    "does": "",
    "errors": {
     "count": 0,
@@ -61589,7 +61589,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -61630,7 +61630,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e34ab5fcd8e26898"
+    "stale_since": "032fa8d192996ba0"
    },
    "status": "partial",
    "callers": [
