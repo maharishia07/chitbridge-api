@@ -109,6 +109,7 @@ async function load() {
       const out = Object.assign({}, item);
       const cid = item.categoryName ? ids.get(item.categoryName) : null;
       delete out.categoryName;
+      delete out.image; /* server-owned (SEC-FIX2 C4): writeItems refuses it, so the store holds no picture URL; parity ignores image */
       if (cid) out.categories = [cid];
       return out;
     });

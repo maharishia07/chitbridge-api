@@ -83,6 +83,14 @@ const ALL = Object.keys(BP.BLUEPRINTS);
     const again = fakeDb(ALL); await R.readStoreLists(again.io);
     assert.strictEqual(again.calls.lookups, 1);
   });
+  await okA('R7 parity ignores image (server-owned): a store loaded without pictures is identical, all six; load strips image', () => {
+    for (const key of ALL) {
+      const rows = BP.storeRows(key).map((row) => { const copy = Object.assign({}, row); delete copy.image; copy.category = copy.categoryName; return copy; });
+      const result = BP.parity(key, BP.fromStore(key, rows, () => null));
+      assert.ok(result.ok, key + ' ' + JSON.stringify(result.changed.slice(0, 2)));
+    }
+    assert.ok(/delete out.image/.test(fs.readFileSync(path.join(API, 'scripts', 'reference-stores.cjs'), 'utf8')));
+  });
   await okA('R6 GET /lists reads the stores through the one reader', () => {
     const route = fs.readFileSync(path.join(API, 'routes', 'products.js'), 'utf8');
     const body = route.slice(route.indexOf("router.get('/lists'"), route.indexOf("router.get('/lists/adopt'") > 0 ? undefined : route.indexOf("router.get('/lists'") + 7000);
