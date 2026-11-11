@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 15,
-  "meets": 623,
+  "partial": 14,
+  "meets": 624,
   "columns": {
    "strict_input": {
     "applies": 324,
@@ -22617,11 +22617,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "90e163f95d15ad4a"
+    "signed_off_by_date": "cb-api (independent re-sign) 2026-11-11 CTRY-72: handler+contract read; money_why added as a new key only (null when the shop has a currency, so unchanged; {code:NO_MONEY, why:MONEY_UNSTATED} only for a shop with no country, same shape as till snapshot shop.money_why); NO_MONEY registered in error-codes.json; schema_out lists it required; currency, auth, errors unchanged; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
