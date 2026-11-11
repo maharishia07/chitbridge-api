@@ -221,10 +221,14 @@
    "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault of the route is never a 500 (a preview never red-boxes a form); KNOWN GAP, not closed: lib/raiseticket.js resolveDesk (line 150) turns a database fault into why with the raw code and message, and the route returns it in that 200, so the route stays partial until the raise-a-ticket owner gives that why one plain sentence"
   }
  ],
- "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",
+ "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
+ "tolerant_outward_ceiling": 8,
  "tolerant_outward": {
-  "POST /api/pricing/price": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
-  "POST /api/offers/evaluate": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
-  "POST /api/offers/explain": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+  "POST /api/pricing/price": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-43-pricing-tolerant.test.cjs" },
+  "POST /api/offers/evaluate": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
+  "POST /api/offers/explain": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
+  "POST /api/integrations/ask/:handle/stock": { "reason": "S33-T: a public stock ask from a store's connector or a partner page; it reads only codes and emits it; an unknown key is ignored", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
+  "POST /api/integrations/heartbeat": { "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older versions; the handler picks named keys only", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
+  "POST /api/integrations/profile": { "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" }
  }
 }
