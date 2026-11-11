@@ -70,6 +70,11 @@ const RECORDS = (name, value) => async () => {
 };
 const NETWORK_WRITES = { mergeFlag: RECORDS('mergeFlag', {}), setReleased: RECORDS('setReleased', {}), pushToNetwork: RECORDS('pushToNetwork', { stores: 0, clients: 0 }) };
 const CATALOGUE_WRITES = { publish: RECORDS('publish', {}), cancel: RECORDS('cancel', {}), answer: RECORDS('answer', {}) };
+const mine = (offers, choices) => async () => ({ own: { myFlags: { network_choices: choices || {} } }, networks: [{ offers }] });
+const SEES_OFFER = { storeSide: mine([{ id: OFFER, live: true, until: null }]) };
+const SEES_NOTHING = { storeSide: mine([]) };
+const SEES_OFFER_ENDED = { storeSide: mine([{ id: OFFER, live: true, until: '2000-01-01T00:00:00.000Z' }]) };
+const CHOICE_WRITES = { setIn: RECORDS('setIn', {}) };
 const STAFF_REFUSED = [
   X('staff-policy', 'PUT /api/network-offers/policy', 403, { after: true, setup: { who: STAFF }, body: { policy: 'opt_out' }, patch: { net: NETWORK_WRITES } }),
   X('staff-release', 'POST /api/network-offers/:id/release', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
@@ -94,14 +99,17 @@ const EXTRAS = [
   X('release-breaks', 'POST /api/network-offers/:id/release', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
   X('never-released', 'POST /api/network-offers/:id/withdraw', 409, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: {} }) } } }),
   X('withdraw-breaks', 'POST /api/network-offers/:id/withdraw', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
-  X('choice-write-breaks', 'POST /api/network-offers/:id/choice', 500, { body: { choice: 'in' }, patch: { net: { setIn: throwsLater } } })
+  X('choice-write-breaks', 'POST /api/network-offers/:id/choice', 500, { body: { choice: 'in' }, patch: { net: { setIn: throwsLater }, reads: SEES_OFFER } }),
+  /* NET-98: an id the shop cannot see (not in GET's list, or ended) is a 404 and nothing is written; an existing record is still cleared */
+  X('choice-unknown-offer', 'POST /api/network-offers/:id/choice', 404, { after: true, body: { choice: 'in' }, patch: { net: CHOICE_WRITES, reads: SEES_NOTHING } }),
+  X('choice-ended-offer', 'POST /api/network-offers/:id/choice', 404, { after: true, body: { choice: 'out' }, patch: { net: CHOICE_WRITES, reads: SEES_OFFER_ENDED } })
 ];
 /** API-7: the success answer of each write the generic worlds cannot reach (the stand-in database has no brand): the recorded 2xx is what the allow-list shape and the output_allowlist evidence are made from */
 const PUSHED = async () => ({ stores: 2, clients: 3 });
 const WINDOW = { version: 1, at: '2026-11-09T04:00:00.000Z', until: null, released_at: '2026-11-08T00:00:00.000Z', released_by: 'Owner', prev: null };
 const SUCCESS = [
-  /* RAIL-207: a well-formed id the store has no offer row for is accepted and written to the caller's own flags (200), never a 404: the proof behind the cannot_answer entry of api-hardening-scope.json */
-  X('choice-saved-for-any-wellformed-id', 'POST /api/network-offers/:id/choice', 200, { body: { choice: 'in' }, patch: { net: { setIn: async () => ({}) } } }),
+  X('choice-saved', 'POST /api/network-offers/:id/choice', 200, { body: { choice: 'in' }, patch: { net: { setIn: async () => ({}) }, reads: SEES_OFFER } }),
+  X('choice-cleared-stale', 'POST /api/network-offers/:id/choice', 200, { body: { choice: null }, patch: { net: { setIn: async () => ({}) }, reads: { storeSide: mine([], { [OFFER]: 'in' }) } } }),
   X('policy-saved', 'PUT /api/network-offers/policy', 200, { body: { policy: 'opt_in' }, patch: { net: { mergeFlag: async () => ({}), pushToNetwork: PUSHED } } }),
   X('catalogue-published', 'POST /api/network-offers/catalogue/publish', 200, { body: { source_key: 's' }, patch: { ncat: { publish: async () => ({ rec: { id: 'p1', source_key: 's', at: WINDOW.at, published_at: WINDOW.released_at, published_by: 'Owner', changes: [] }, applied: false, followed: 2 }) } } }),
   X('catalogue-cancelled', 'POST /api/network-offers/catalogue/cancel', 200, { body: { source_key: 's' }, patch: { ncat: { cancel: async () => ({ ok: true, id: 'p1' }) } } }),
@@ -147,7 +155,7 @@ function checkCodesRegistered(recording) {
   const allowedBy = Object.assign({}, ...MOUNTS.map((one) => Object.fromEntries(Object.keys(contractOf(one).OPERATIONS).map((key) => [key, contractOf(one).allowedStatuses()(key)]))));
   const allowed = capturing ? () => [] : (route) => allowedBy[route] || [];
   const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS.concat(SUCCESS, STAFF_REFUSED), { id: OFFER });
-  const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ net: require(path.join(HERE, 'lib', 'network-offers')), ncat: require(path.join(HERE, 'lib', 'network-catalogue')) }));
+  const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ net: require(path.join(HERE, 'lib', 'network-offers')), ncat: require(path.join(HERE, 'lib', 'network-catalogue')), reads: require(path.join(HERE, 'routes', 'network-offers')).reads }));
   server.close();
   if (capturing) {
     fs.writeFileSync(capturing, JSON.stringify(recording, null, 1));

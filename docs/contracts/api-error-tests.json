@@ -2921,7 +2921,9 @@
   400,
   401,
   403,
-  500
+  404,
+  500,
+  503
  ],
  "POST /api/network-offers/:id/release": [
   400,

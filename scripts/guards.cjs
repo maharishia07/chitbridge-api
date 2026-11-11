@@ -147,7 +147,8 @@ const GUARDS = [
   'live-trips-tool.test.cjs', // SPD-39: the live-trips harness restores sit-in when a run throws (fake client, offline)
   'read-batch-entity.test.cjs', // EFF-TRIPS: readBatch carries a statement per entity in ONE trip (the brands' released offers)
   'network-offers-shape.test.cjs', // EFF-TRIPS: GET /api/network-offers answers the pre-change shape row for row, in ≤ 4 trips (golden)
-  'network-offers-visibility.test.cjs', // SEC-134: GET /api/network-offers tells each caller only its offers and carries no unnamed column (two networks, member, outsider, brand)
+  'network-offers-visibility.test.cjs',
+  'network-offers-choice.test.cjs', // NET-98: POST /:id/choice answers 404 for an offer the shop cannot see (unknown, another network, withdrawn) and writes nothing; a stale record is still cleared // SEC-134: GET /api/network-offers tells each caller only its offers and carries no unnamed column (two networks, member, outsider, brand)
   'people.test.cjs', // ⭐ P1: GET /api/people — one statement, the caller's shop only, may/why per action, owner-only greyed with its sentence
   'network-validate.test.cjs', // P2: the dry-run validate of a designed network — names what would break, posts nothing
   'sim-load.test.cjs', // ⭐⭐⭐ Y1b: the simulator's loader refuses every non-local database; one plan for Y1 and Y1b; the chit carries the shop clock

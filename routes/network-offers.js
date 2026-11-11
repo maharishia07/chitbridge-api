@@ -6,7 +6,7 @@
  *   PUT  /api/network-offers/policy           { policy: 'opt_in' | 'opt_out' }              (brand)
  *   POST /api/network-offers/:id/release      { at?: iso | 'now', until?: iso }             (brand)
  *   POST /api/network-offers/:id/withdraw     { at?: iso | 'now' }                          (brand)
- *   POST /api/network-offers/:id/choice       { choice: 'in' | 'out' | null }               (store)
+ *   POST /api/network-offers/:id/choice       { choice: 'in' | 'out' | null }               (store; 404 unless the offer is one GET lists as open to this shop, a clear of an existing record excepted)
  *   POST /api/network-offers/catalogue/publish { source_key, at?: iso | 'now', add?: [item ids], withdraw?: [names], withdraw_at?/restore_at?: { name: [store ids] } } (brand)
  *   POST /api/network-offers/catalogue/cancel  { source_key }                               (brand)
  *   POST /api/network-offers/catalogue/price   { source_key, name, key, choice: use|keep|ok } (store)
@@ -215,6 +215,22 @@ function networkRow(me, brand_id, st, nestedWho, rows, choices) {
   };
 }
 
+/** the store half of the screen in its three trips: what this store holds, the people it touches, and its networks with the offers each hands it — the ONE reading of "the offers a store may see" (GET / and POST /:id/choice) */
+async function readStoreSide(batch, me) {
+  const own = await readOwn(batch, me);
+  const people = await readPeople(batch, me, own.brandIds, own.memberIds);
+  const offerRows = await readReleased(batch, own.brandIds, people.standing, people.of);
+  const choices = own.myFlags.network_choices || {};
+  const networks = own.brandIds.map((item) =>
+    networkRow(me, item, people.standing[item] || { state: 'none', via: null, edge_id: null, asked_by: null }, people.of(item), offerRows[item] || [], choices)
+  );
+  return { own, people, offerRows, networks };
+}
+
+/** the store half's reader, by name, so a sweep over a stand-in database can hand a route its answer */
+const reads = { storeSide: readStoreSide };
+router.reads = reads;
+
 /** GET / — the three trips of the note above readOwn (readOwn · readPeople · readReleased), then the brand's and the store's halves of the screen */
 router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res) => {
   try {
@@ -224,15 +240,10 @@ router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res
       readBatch(me, actor, stmts).catch((e) => {
         throw membership.readFailed(e, what);
       });
-    const own = await readOwn(batch, me);
-    const { of, standing, inNetwork } = await readPeople(batch, me, own.brandIds, own.memberIds);
+    const { own, people, networks } = await reads.storeSide(batch, me);
+    const { of, inNetwork } = people;
     const names = new Map(own.memberIds.filter((id) => of(id).name).map((id) => [id, of(id).name]));
     const brand = await net.brandView(me, { flags: own.myFlags, offers: own.ownOffers, own: own.ownPlace, roster: own.roster, names });
-    const offerRows = await readReleased(batch, own.brandIds, standing, of);
-    const choices = own.myFlags.network_choices || {};
-    const networks = own.brandIds.map((item) =>
-      networkRow(me, item, standing[item] || { state: 'none', via: null, edge_id: null, asked_by: null }, of(item), offerRows[item] || [], choices)
-    );
     /* ⭐ the catalogue half: what the brand would publish, and the prices its stores are being asked about */
     const brandsPre = {};
     own.brandIds.forEach((item) => {
@@ -407,6 +418,20 @@ router.post('/:id/choice', auth, sessionOnly, ...contract.checked('POST /:id/cho
     const c = (req.body || {}).choice;
     const choice = c === 'in' || c === 'out' ? c : null;
     if (!OFFER_ID_SHAPE.test(id)) return refuse(req, res, { status: 400, code: 'OFFER_UNKNOWN', error: 'validation', message: 'Unknown offer.' });
+    const actor = require('../lib/reqctx').currentActor();
+    const { own, networks } = await reads.storeSide(
+      (what, stmts) =>
+        readBatch(me, actor, stmts).catch((e) => {
+          throw membership.readFailed(e, what);
+        }),
+      me
+    );
+    /* ⭐ an id the caller cannot see is a 404 and nothing is written: the offers GET / lists for this shop, live and not ended. Clearing a stale record of an offer since withdrawn stays allowed (marketplace and discount practice). */
+    const seen = networks.flatMap((n) => n.offers).find((o) => o.id === id);
+    const open = seen && seen.live && !(seen.until && new Date(seen.until) <= new Date());
+    const holds = Object.prototype.hasOwnProperty.call(own.myFlags.network_choices || {}, id);
+    if (!open && !(choice === null && holds))
+      return refuse(req, res, { status: 404, code: 'NOT_FOUND', error: 'Not found', message: 'That is not an offer open to your shop.' });
     await net.setIn(me, 'network_choices', id, choice);
     /* ⭐ the store's own counters re-read at once */
     require('../lib/shopchanged').shopChanged(me, 'network offer choice');
