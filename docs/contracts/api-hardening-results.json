@@ -2621,6 +2621,15 @@
     "pass": true
    }
   },
+  "POST /api/products/categories/bulk": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
+   }
+  },
   "POST /api/products/bulk-update": {
    "strict_input": {
     "pass": true

@@ -3112,6 +3112,12 @@
   403,
   500
  ],
+ "POST /api/products/categories/bulk": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/products/import": [
   400,
   401,

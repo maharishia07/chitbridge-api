@@ -4136,6 +4136,13 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/products/categories/bulk": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
     "POST /api/products/import": {
       "file": "products.js",
       "trips": 0,

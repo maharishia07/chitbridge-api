@@ -856,6 +856,9 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/products/categories/bulk": {
+   "strict_input": true
+  },
   "POST /api/products/bulk-update": {
    "strict_input": true
   },
