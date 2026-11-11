@@ -43,4 +43,12 @@ it('footwear and a non-band code: 6403 at 2,500.01 is 18% on a day; 9983 keeps i
   assert.strictEqual(figures(2500.01, 5, '2026-01-05', '6403')[0], 18);
   assert.strictEqual(figures(2500.01, 12, '2026-01-05', '9983')[0], 12);
 });
+it('no bill day is SAID on the line (engine 1.86.0 re-review): _band "not checked: no bill date", the stated rate kept', () => {
+  const det = T.invoiceFor({ lines: [{ line_id: 'a', quantity: 1, price: 5000, gst_rate: 5, hsn: '6109' }], seller, buyer, currency: 'INR' }).invoice;
+  assert.deepStrictEqual([det.ItemList[0].GstRt, det.ItemList[0]._band], [5, 'not checked: no bill date']);
+});
+it('a tax-inclusive price is tested on its TAXABLE value (CBIC FAQ 33): 2,625.00 inclusive is 5% (tax 125.00), 2,625.01 is 18%', () => {
+  const at = (price) => T.invoiceFor({ lines: [{ line_id: 'a', quantity: 1, price, gst_rate: 18, hsn: '6109' }], seller, buyer, currency: 'INR', priceIncludesTax: true, bill_day: '2026-01-05' }).invoice;
+  assert.deepStrictEqual([at(2625).ItemList[0].GstRt, at(2625).ValDtls.CgstVal + at(2625).ValDtls.SgstVal, at(2625.01).ItemList[0].GstRt], [5, 125, 18]);
+});
 console.log(pass + ' checks');
