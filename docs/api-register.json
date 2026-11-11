@@ -35276,7 +35276,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "e0e55c0fbac21845",
+   "hash": "22808b3f1c7ff104",
    "does": "",
    "errors": {
     "count": 2,
@@ -35353,7 +35353,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1134 stage2 (ACC-336, head db5d0836): handler and contract re-read after the answer grew; new keys owed_before_payments_minor/_total_minor, still_to_pay_minor/_total_minor, paid_note are declared in api-output-shapes gst/close (closed, payable_minor and pay_total_minor kept as aliases, no key dropped), no new refusal code (PERIOD_NOT_ENDED, RCM_NETTING_NOT_BUILT, NOT_FOR_COUNTRY unchanged, advance refusal is a fixed sentence with BOOKS_REFUSED), tax_close replay answers stored figures in the same shape; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
