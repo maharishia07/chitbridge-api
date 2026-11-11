@@ -527,6 +527,8 @@ const GUARDS = [
   'ord-fix.test.cjs', // ORD-FIX O1–O7: closed orders unlisted · amended lines billed · CAS status write · rejected bill reverses its posting · one-shot shopper code · bill-based delivery
   'rail-status.test.cjs', // ⭐⭐ T1-RAIL: every status change goes through lib/rail-status statusGate (the one write); void of a completed chit 409s; no SQL writes current_status elsewhere
   'qa-131-status-bulk.test.cjs', // QA-131: a bulk status step names its from (a moved copy is refused, never moved back), folds the use choice into the one call, and a replayed key answers once
+  'qa-142-cost-figures.test.cjs', // QA-142: the cost door refuses 1e308, 2^53, a boolean, a text and minutes past an integer (422, field named); takes real figures
+  'sec-140-prototype-keys.test.cjs', // SEC-140: a place of supply / GSTIN / HSN that is an object word (__proto__, constructor) is an ordinary key in the GSTR-1 maps
   'housekeeping-guards.test.cjs', // ⭐⭐ W2-RAIL R2: delete/archive/purge fail CLOSED (co_held_record · dispute_open · disputes_unknown), reprice asks the rail, ONE status table (no second spelling), a cap says so
   'claim-series.test.cjs', // M11: ONE series allocator for a counter PC (key) and a phone (device); label by PHONE number (D9); no prefix ever on two holders; a pre-M11 key claims the prefix it has today; a phone's till.by/device_id = the session
   'signin-routes.test.cjs', // M06: every old sign-in path answers as before the move (golden) and IS the new door's handler; one signin_events row per attempt; b282 missing never blocks

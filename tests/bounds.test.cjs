@@ -29,6 +29,13 @@ check('minor: 0 and 12345 pass', passes(m, 0) && passes(m, 12345));
 check('minor: -1, 100.5, 1e15, 1e300, true refused', [-1, 100.5, 1e15, 1e300, true].every((v) => refuses(m, v)));
 check('minor signed: -50 passes, 1e15 still refused', passes(B.minor({ column: 'total', signed: true }), -50) && refuses(B.minor({ column: 'total', signed: true }), 1e15));
 
+const am = B.amount({ column: 'total', signed: true });
+check('amount signed: 0.01, -50 and 9999999999999.99 pass', passes(am, 0.01) && passes(am, -50) && passes(am, 9999999999999.99));
+check('amount: 1e13, 2^53, 1e308, true, "50", null refused', [1e13, 9007199254740992, 1e308, -1e13, true, '50', null].every((v) => refuses(am, v)));
+check('amount unsigned refuses -1; its ceiling is the column ceiling (one number)', refuses(B.amount({ column: 'total' }), -1) && am.exclusiveMaximum === ceiling.ceilingOf('total'));
+check('holds: the cost cap agrees with the schema (inside passes; 1e13, -1e13, NaN, Infinity, a text refused)', B.holds(B.COST_AMOUNT, 9999999999999.99) && B.holds(B.COST_AMOUNT, -50) && [1e13, -1e13, NaN, Infinity, '5'].every((v) => !B.holds(B.COST_AMOUNT, v)));
+check('int32: 0 and 2147483647 pass; 2147483648, 1.5, 1e308, true refused; signed takes -5', passes(B.int32(), 2147483647) && [2147483648, 1.5, 1e308, true, -1].every((v) => refuses(B.int32(), v)) && passes(B.int32({ signed: true }), -5));
+
 const d = B.day();
 check('day: 2026-11-09 passes', passes(d, '2026-11-09'));
 check('day: 2026-02-30, 2026-13-01, 0001-01-01, 9999-12-31, "abc", 20261109, a date-time refused', ['2026-02-30', '2026-13-01', '0001-01-01', '9999-12-31', 'abc', 20261109, '2026-11-09T10:00:00Z'].every((v) => refuses(d, v)));
