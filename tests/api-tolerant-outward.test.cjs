@@ -26,7 +26,7 @@ test('a listed route: strict_input does not apply; an unlisted one still does', 
 
 test('the real scope file lists the API-43 doors and the S33-T doors, each sound', () => {
   const found = register.hardeningScope().tolerantOutward;
-  assert.deepStrictEqual(Object.keys(found).sort(), ['PATCH /api/products/:id', 'POST /api/capture/webhook/email', 'POST /api/capture/webhook/whatsapp', 'POST /api/connectors/erp-ingest', 'POST /api/connectors/ingest', 'POST /api/ctp/deliver', 'POST /api/ctp/query', 'POST /api/events/ticket', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY, 'POST /api/products/availability/bulk']);
+  assert.deepStrictEqual(Object.keys(found).sort(), ['PATCH /api/products/:id', 'POST /api/capture/webhook/email', 'POST /api/capture/webhook/whatsapp', 'POST /api/chits/send', 'POST /api/connectors/erp-ingest', 'POST /api/connectors/ingest', 'POST /api/ctp/deliver', 'POST /api/ctp/query', 'POST /api/events/ticket', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY, 'POST /api/products/availability/bulk', 'POST /api/till/flags', 'POST /api/till/quick-keys/hide', 'POST /api/till/quick-keys/unhide', 'POST /api/till/reward', 'POST /api/till/reward/claim', 'POST /api/till/stock', 'POST /api/till/stock/bulk']);
 });
 
 const rows = [{ key: KEY, declared: [], columns: { schema_in: true } }, { key: 'POST /api/x', declared: [], columns: { schema_in: false } }];
