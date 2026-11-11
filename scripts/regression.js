@@ -1,3 +1,6 @@
+// scripts/regression.js — the live criss-cross harness: drives the core mailing flows on the LIVE api and asserts logic + isolation between entities
+// OWNS the Alpha / Beta / Gamma regression run (send, TO + CC, status, thread, dispute) and its RESULT line · CALLED BY hand: node scripts/regression.js (CB_API names the api) and tests/regression-harness.test.cjs (offline) · FLOW  login by email → ids from the token → each check() → done()
+// CARD 29-qa-test-tooling-ux-locale-and-design-system/test-board
 // Cross-entity REGRESSION harness — drives the core mailing flows on the LIVE API and asserts logic + criss-cross
 // isolation. Finds issues the way the IoT harness did. Run: node regression.js
 const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
