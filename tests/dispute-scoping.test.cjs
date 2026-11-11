@@ -264,7 +264,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const self = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked', target_entity_id: A });
     ok('not-self: A cannot raise a dispute against itself (400), and nothing is written', self.status === 400 && /yourself/.test(self.body.message || '') && DISPUTES.length === 0, JSON.stringify(self));
     const xr = await as(X, 'POST', U + '/disputes', { category: 'quality', reason: 'I am not on this chit at all', target_entity_id: B });
-    ok('a non-participant of the chit cannot raise one (404: the chit is not theirs to see, S35)', xr.status === 404 && DISPUTES.length === 0, JSON.stringify(xr));
+    ok('a non-participant of the chit cannot raise one (404, the same answer as an unknown chit)', xr.status === 404 && DISPUTES.length === 0, JSON.stringify(xr));
 
     const r1 = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked, 4 of 10', target_entity_id: B });
     const D1 = r1.body.dispute_id;
@@ -296,7 +296,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const gd = await as(D, 'GET', U + '/disputes');
     ok('…and D, also on the chit and also unnamed, sees none', gd.body.disputes.length === 0);
     const gx = await as(X, 'GET', U + '/disputes');
-    ok('X (not on the chit): GET /disputes → 404 (S35)', gx.status === 404);
+    ok('X (not on the chit): GET /disputes → 404 (the same answer as an unknown chit)', gx.status === 404);
     const dg = await as(C, 'GET', U + '/diagnosis');
     ok('C: GET /diagnosis has no card', dg.status === 200 && dg.body.count === 0, JSON.stringify(dg.body));
     const q = await as(C, 'GET', '/api/chits/disputes/queue');

@@ -41,7 +41,7 @@ async function helperBite() {
 }
 
 /* the chits routes the generator's real world holds (foreign_id_404), and the ones among them held by another check than the store read (none today); both numbers are pinned on purpose */
-const HELD_CHITS_ROUTES = 27; /* RAIL-207: GET /:id/children answers 404 for a parent this login holds no copy of; S35 (contract pass 11 Nov): the 11 routes that answered 403 or 400 for a chit or entry not held (messages, disputes, diagnosis, the register doors) answer 404 too: 27 held */
+const HELD_CHITS_ROUTES = 29; /* RAIL-207: GET /:id/children is the 24th held route; S35 contract pass 11 Nov: the register and raida doors and GET diagnosis answer a thing not held 404 too (29); S35 (batch 2026-11-11): POST /:chit_id/messages and POST /:chit_id/disputes now answer a chit this login holds no copy of with the one 404 (was 403), so both are held: 26 */
 const HELD_ELSEWHERE = [];
 
 async function chitsBite() {

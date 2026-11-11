@@ -613,8 +613,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/messages": {
@@ -623,8 +622,7 @@
     "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "POST /api/chits/:chit_id/disputes": {
@@ -636,8 +634,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/disputes": {
@@ -646,8 +643,7 @@
     "why": "not reached: answered 500"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/diagnosis": {
@@ -1094,8 +1090,7 @@
   },
   "POST /api/till/diagnostic": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1104,8 +1099,7 @@
   },
   "POST /api/till/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1114,8 +1108,7 @@
   },
   "POST /api/till/state": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1164,8 +1157,7 @@
   },
   "POST /api/till/quick-keys/hide": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1174,8 +1166,7 @@
   },
   "POST /api/till/quick-keys/unhide": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1268,8 +1259,7 @@
   },
   "POST /api/till/pair": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1277,8 +1267,7 @@
   },
   "POST /api/till/enrol": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1287,8 +1276,7 @@
   },
   "POST /api/till/pair/claim": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1302,8 +1290,7 @@
   },
   "POST /api/till/screens/revoke": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1312,8 +1299,7 @@
   },
   "POST /api/till/screens/rename": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1322,8 +1308,7 @@
   },
   "POST /api/till/reconcile": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1336,8 +1321,7 @@
   },
   "POST /api/till/shop": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1350,8 +1334,7 @@
   },
   "POST /api/till/catalogue": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1385,8 +1368,7 @@
   },
   "POST /api/till/alias": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1394,8 +1376,7 @@
   },
   "POST /api/till/listen": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -4856,7 +4837,7 @@
   "GET /api/facts/:card": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 404"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/work/list": {

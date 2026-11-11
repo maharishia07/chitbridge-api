@@ -24679,7 +24679,6 @@
      "body_keys": {
       "error": "Not found",
       "message": "Chit not found or you do not have access",
-      "why": "not_participant",
       "type": "https://chitbridge.com/problems/not_found",
       "title": "Not found",
       "status": 404,
@@ -24691,7 +24690,6 @@
      "fixture": {
       "error": "Not found",
       "message": "Chit not found or you do not have access",
-      "why": "not_participant",
       "type": "https://chitbridge.com/problems/not_found",
       "title": "Not found",
       "status": 404,
@@ -24783,7 +24781,6 @@
      "body_keys": {
       "error": "Not found",
       "message": "Chit not found or you do not have access",
-      "why": "not_participant",
       "type": "https://chitbridge.com/problems/not_found",
       "title": "Not found",
       "status": 404,
@@ -24795,7 +24792,6 @@
      "fixture": {
       "error": "Not found",
       "message": "Chit not found or you do not have access",
-      "why": "not_participant",
       "type": "https://chitbridge.com/problems/not_found",
       "title": "Not found",
       "status": 404,
