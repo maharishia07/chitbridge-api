@@ -403,6 +403,9 @@
   "GET /api/till/counters": {
    "output_allowlist": true
   },
+  "POST /api/till/quick-keys/state": {
+   "strict_input": true
+  },
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
   },
@@ -414,6 +417,9 @@
   },
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
+  },
+  "POST /api/till/quick-keys/screen-config": {
+   "strict_input": true
   },
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
@@ -1794,6 +1800,7 @@
    "foreign_id_404": true
   },
   "POST /api/csp-report": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/privacy/facts": {

@@ -1795,8 +1795,8 @@
     },
     "GET /api/products/lists": {
       "file": "products.js",
-      "trips": 3,
-      "wire": 6,
+      "trips": 4,
+      "wire": 7,
       "fired": true,
       "status": 200,
       "extra": true
