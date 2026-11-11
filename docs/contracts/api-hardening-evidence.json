@@ -374,25 +374,47 @@
    "output_allowlist": true
   },
   "POST /api/till/stock": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/stock/bulk": {
+   "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/till/diagnostic": {
+   "strict_input": true
+  },
+  "POST /api/till/close": {
+   "strict_input": true
+  },
   "POST /api/till/state": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/flags": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/till/counters": {
    "output_allowlist": true
   },
+  "POST /api/till/quick-keys/state": {
+   "strict_input": true
+  },
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
   },
+  "POST /api/till/quick-keys/hide": {
+   "strict_input": true
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "strict_input": true
+  },
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
+  },
+  "POST /api/till/quick-keys/screen-config": {
+   "strict_input": true
   },
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
@@ -414,30 +436,50 @@
    "output_allowlist": true
   },
   "POST /api/till/reward": {
+   "strict_input": true,
    "output_allowlist": true,
    "idempotent_money_write": true
   },
   "POST /api/till/reward/claim": {
+   "strict_input": true,
    "output_allowlist": true,
    "idempotent_money_write": true
   },
   "POST /api/till/pair": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/till/enrol": {
+   "strict_input": true
+  },
+  "POST /api/till/pair/claim": {
+   "strict_input": true
   },
   "GET /api/till/screens": {
    "output_allowlist": true
   },
+  "POST /api/till/screens/revoke": {
+   "strict_input": true
+  },
+  "POST /api/till/screens/rename": {
+   "strict_input": true
+  },
   "POST /api/till/reconcile": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/till/verify": {
    "output_allowlist": true
   },
   "POST /api/till/shop": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/till/stock": {
    "output_allowlist": true
+  },
+  "POST /api/till/catalogue": {
+   "strict_input": true
   },
   "GET /api/till/catalogue/blueprints": {
    "output_allowlist": true
@@ -455,9 +497,11 @@
    "output_allowlist": true
   },
   "POST /api/till/alias": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/listen": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/openapi.json": {
