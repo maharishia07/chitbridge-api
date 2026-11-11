@@ -380,7 +380,7 @@ function knownKeysTyped(operation) {
   if (schema && schema.$ref) return true; /* a body published as a named schema (offers EvaluateBody) is typed where it is defined; the enforced row is typed in its contract (lib/offers-contract.js) */
   const props = (schema && schema.properties) || {};
   const typed = (property) => !!property && typeof property === 'object' && ['type', 'enum', 'const', 'pattern', '$ref', 'oneOf', 'anyOf'].some((word) => property[word] !== undefined);
-  return Object.keys(props).length > 0 && Object.values(props).every(typed);
+  return !!schema && Object.values(props).every(typed); /* a door that reads no body key has nothing untyped: its schema is still required (a door with no schema check is not tolerant, it is unchecked) */
 }
 
 /** the thirteen machine columns of one route, each true or false */
@@ -660,4 +660,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

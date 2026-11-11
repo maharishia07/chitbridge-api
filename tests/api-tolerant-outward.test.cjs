@@ -26,7 +26,7 @@ test('a listed route: strict_input does not apply; an unlisted one still does', 
 
 test('the real scope file lists the API-43 doors and the S33-T doors, each sound', () => {
   const found = register.hardeningScope().tolerantOutward;
-  assert.deepStrictEqual(Object.keys(found).sort(), ['POST /api/integrations/ask/:handle/stock', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY]);
+  assert.deepStrictEqual(Object.keys(found).sort(), ['POST /api/capture/webhook/email', 'POST /api/capture/webhook/whatsapp', 'POST /api/connectors/erp-ingest', 'POST /api/connectors/ingest', 'POST /api/ctp/deliver', 'POST /api/ctp/query', 'POST /api/events/ticket', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY]);
 });
 
 const rows = [{ key: KEY, declared: [], columns: { schema_in: true } }, { key: 'POST /api/x', declared: [], columns: { schema_in: false } }];
@@ -63,5 +63,6 @@ test('a tolerant door meets only when every known key is typed (knownKeysTyped)'
   const op = (properties) => ({ requestBody: { content: { 'application/json': { schema: { type: 'object', properties } } } } });
   assert.strictEqual(register.knownKeysTyped(op({ a: { type: 'string' }, b: { enum: [1] } })), true);
   assert.strictEqual(register.knownKeysTyped(op({ a: {} })), false);
-  assert.strictEqual(register.knownKeysTyped(op({})), false);
+  assert.strictEqual(register.knownKeysTyped(op({})), true, 'a door that reads no body key has nothing untyped');
+  assert.strictEqual(register.knownKeysTyped(null), false, 'a door with no schema check is unchecked, not tolerant');
 });
