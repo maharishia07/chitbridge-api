@@ -6624,6 +6624,17 @@ async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
   return told;
 }
 
+/** the problem a refused withdrawal says: RAIL-216 money is on the invoice (409 CHIT_CONFLICT, why paid — a credit note, not a withdrawal) · a level the rail refused (403) · a status that cannot be withdrawn (409, what happened · what it means · what to do; `why` is the code a screen branches on, never this sentence) */
+function withdrawRefusalSpec(g) {
+  if (g.why === 'paid') return { status: 409, ...said({ ...railStatus.paidSaid(), from: g.from }, 'CHIT_CONFLICT') };
+  if (g.why !== 'wrong_step') return railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] }));
+  return railSaid(railActions.refusalOf(g, 409, {
+    error: 'Cannot withdraw',
+    message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
+    from: g.from,
+    allowed_transitions: g.allowed
+  }));
+}
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
 //
 // ⚠️⚠️ THIS HEADER SAID THE OPPOSITE OF WHAT THE CODE DOES, and said it in the one line anybody skims. It read
@@ -6696,19 +6707,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
     });
     if (gate.refused) {
-      const g = gate.refused;
-      /* RAIL-216: money is on it — a credit note reverses it, the sale is not withdrawn (409, the problem shape; the sale and the books stay as they were) */
-      if (g.why === 'paid') return problem(req, res, { status: 409, ...said({ ...railStatus.paidSaid(), from: g.from }, 'CHIT_CONFLICT') });
-      if (g.why !== 'wrong_step') {
-        return problem(req, res, railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] })));
-      }
-      /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
-      return problem(req, res, railSaid(railActions.refusalOf(g, 409, {
-        error: 'Cannot withdraw',
-        message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
-        from: g.from,
-        allowed_transitions: g.allowed
-      })));
+      return problem(req, res, withdrawRefusalSpec(gate.refused));
     }
     const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)

@@ -184,6 +184,16 @@ const IDEM = { n: 0 };
   t('the marker carries no actor (action_by_identity_id NULL), so the bell feed and badge never count it', LOG.some((x) => x.action === 'payment_marked') && LOG.filter((x) => x.action === 'payment_marked').every((x) => x.actor === null));
   t('the seller\'s detail timeline leaves the marker out', /action NOT IN \('read', 'payment_marked'\)/.test(routeSrc));
 
+  console.log('\n— 9 · lib/chit-paid, unit: one rule per fact, the refusal path, fail-closed —');
+  const chitPaid = require(path.join(H.API, 'lib', 'chit-paid'));
+  const dead = { query: async () => { throw new Error('database down'); } };
+  let failedClosed = false; try { await chitPaid.paidFactsOf(dead, SHOP, id(1)); } catch (e) { failedClosed = /database down/.test(e.message); }
+  t('fail-closed: a read that fails THROWS (the void then answers an error, it never reads "unpaid" and reverses the sale)', failedClosed);
+  let noticeThrows = false; try { await chitPaid.tellPaid(dead, BUYER, id(1)); } catch (e) { noticeThrows = true; }
+  t('fail-closed: a notice that cannot be delivered throws, so the buyer\'s mark is not saved without it', noticeThrows);
+  t('unit per rule: an order, a credit note and a chit I did not send are not asked (false)', (await chitPaid.paidFactsOf(tx, SHOP, id(5))) === false && (await chitPaid.paidFactsOf(tx, SHOP, id(6))) === false && (await chitPaid.paidFactsOf(tx, BUYER, id(1))) === false);
+  t('unit per rule: the refusal words name the credit note and carry why "paid"', chitPaid.PAID_SAID.why === 'paid' && /credit note/.test(chitPaid.PAID_SAID.message) && chitPaid.NOTICE.marked === 'payment_marked');
+
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
