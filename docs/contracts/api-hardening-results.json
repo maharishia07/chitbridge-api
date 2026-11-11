@@ -1076,7 +1076,8 @@
   },
   "POST /api/till/stock": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1084,7 +1085,8 @@
   },
   "POST /api/till/stock/bulk": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1092,7 +1094,8 @@
   },
   "POST /api/till/diagnostic": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1101,7 +1104,8 @@
   },
   "POST /api/till/close": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1110,7 +1114,8 @@
   },
   "POST /api/till/state": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1118,7 +1123,8 @@
   },
   "POST /api/till/flags": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1143,7 +1149,8 @@
   },
   "POST /api/till/quick-keys/state": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1157,7 +1164,8 @@
   },
   "POST /api/till/quick-keys/hide": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1166,7 +1174,8 @@
   },
   "POST /api/till/quick-keys/unhide": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1180,7 +1189,8 @@
   },
   "POST /api/till/quick-keys/screen-config": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1234,7 +1244,8 @@
   },
   "POST /api/till/reward": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1245,7 +1256,8 @@
   },
   "POST /api/till/reward/claim": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1256,7 +1268,8 @@
   },
   "POST /api/till/pair": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1264,7 +1277,8 @@
   },
   "POST /api/till/enrol": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1273,7 +1287,8 @@
   },
   "POST /api/till/pair/claim": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1287,7 +1302,8 @@
   },
   "POST /api/till/screens/revoke": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1296,7 +1312,8 @@
   },
   "POST /api/till/screens/rename": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1305,7 +1322,8 @@
   },
   "POST /api/till/reconcile": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1318,7 +1336,8 @@
   },
   "POST /api/till/shop": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1331,7 +1350,8 @@
   },
   "POST /api/till/catalogue": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1365,7 +1385,8 @@
   },
   "POST /api/till/alias": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1373,7 +1394,8 @@
   },
   "POST /api/till/listen": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
