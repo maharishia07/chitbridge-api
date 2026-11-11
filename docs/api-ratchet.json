@@ -1,7 +1,7 @@
 {
  "version": 1,
  "stage": "2b",
- "updated": "2026-11-09",
+ "updated": "2026-11-11",
  "total": 638,
  "not_meeting": 97,
  "codes_total": 582,
@@ -10,7 +10,7 @@
  "routes_without_does": 628,
  "tolerant_outward": 3,
  "columns_failing": {
-  "strict_input": 44,
+  "strict_input": 22,
   "output_allowlist": 11,
   "foreign_id_404": 13,
   "idempotent_money_write": 2,
