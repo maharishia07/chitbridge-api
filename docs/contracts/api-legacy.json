@@ -47666,11 +47666,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -47678,11 +47678,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "Cannot read properties of undefined (reading 'schema_id')"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "Cannot read properties of undefined (reading 'schema_id')"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -47690,11 +47690,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "the bootstrap said no"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "the bootstrap said no"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -47702,11 +47702,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "no schema"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "no schema"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -52839,11 +52839,11 @@
      "scenario": "list-db-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -52876,11 +52876,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -52888,23 +52888,23 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
      "scenario": "thrown-409-with-unregistered-code",
      "status": 409,
      "body_keys": {
-      "error": "SOMETHING_ELSE",
-      "message": "A relayed sentence."
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "SOMETHING_ELSE",
-      "message": "A relayed sentence."
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -53091,11 +53091,11 @@
      "scenario": "code-read-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "42501",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -53128,11 +53128,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53140,11 +53140,11 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53409,11 +53409,11 @@
      "scenario": "verify-stamp-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "40001",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "40001",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -53434,11 +53434,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53446,11 +53446,11 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53725,11 +53725,11 @@
      "scenario": "put-db-throws-code",
      "status": 500,
      "body_keys": {
-      "error": "23514",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      },
      "fixture": {
-      "error": "23514",
+      "error": "Server error",
       "message": "Something went wrong — please try again."
      }
     },
@@ -53774,11 +53774,11 @@
      "status": 502,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53786,11 +53786,11 @@
      "status": 503,
      "body_keys": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Server error",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -53798,11 +53798,11 @@
      "status": 503,
      "body_keys": {
       "error": "VAULT_ENC_UNCONFIGURED",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "VAULT_ENC_UNCONFIGURED",
-      "message": "A relayed sentence."
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -59008,6 +59008,50 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "erp-ingest-outcome-chit-failed",
+     "status": 503,
+     "body_keys": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     },
+     "fixture": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     }
+    },
+    {
+     "scenario": "erp-ingest-key-reused",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "code": "IDEMPOTENCY_CONFLICT",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "code": "IDEMPOTENCY_CONFLICT",
+      "message": "This Idempotency-Key was already used with a different request."
+     }
+    },
+    {
+     "scenario": "erp-ingest-first-try-still-running",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "fixture": {
+      "error": "In progress",
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "message": "A request with this Idempotency-Key is still being processed."
+     }
     }
    ]
   },
@@ -63869,6 +63913,54 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
+    },
+    {
+     "scenario": "choice-unknown-offer",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     }
+    },
+    {
+     "scenario": "choice-ended-offer",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not an offer open to your shop."
      }
     }
    ]

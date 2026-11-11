@@ -47,7 +47,8 @@ const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4): this file writes the folders routes' output_allowlist rows */
-const FOLDERS_MINE = (route) => route.includes(' /api/folders/') || route.endsWith(' /api/folders');
+const FACTS_CARD = 'GET /api/facts/:card'; /* the one facts route whose 200 is proved here (the card builder is patched in the card-answers scene); GET /rail/chits keeps the generator's evidence */
+const FOLDERS_MINE = (route) => route.includes(' /api/folders/') || route.endsWith(' /api/folders') || route === FACTS_CARD;
 const MOUNTS = ['/api/folders', '/api/facts', '/api/pricing'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/folders': 'routes/folders.js', '/api/facts': 'routes/facts.js', '/api/pricing': 'routes/pricing.js' };
@@ -420,6 +421,9 @@ const EXTRAS = [
   X('card-builder-fails', 'GET /api/facts/:card', 500, { patch: { home: { BUILD: { till: async () => { throw new Error(SECRET_SQL); } } } } }),
   X('rail-builder-fails', 'GET /api/facts/rail/chits', 500, { patch: { home: { railChits: async () => { throw new Error(SECRET_SQL); } } } }),
   X('card-answers', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [] }) } } } }),
+  /* the card answers lib/home-facts.js gives: { lines, figures?, state } (withState fills state), and the rail card's own keys (suppliers, customers, may_sample, in, out, tasks, stuck, state) - every root key of every card, so the closed shape names them all */
+  X('card-answers-lines-figures-state', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [{ text: '3 bills today', value: 3, tone: 'dn', at: '2026-11-11T09:00:00Z', money: { amount: 100, currency: 'INR' } }], figures: { bills: 3 }, state: 'needs_you' }) } } } }),
+  X('rail-card-answers', 'GET /api/facts/:card', 200, { url: '/api/facts/rail', patch: { home: { BUILD: { rail: async () => ({ suppliers: 2, customers: 5, may_sample: { ok: true }, in: 1, out: 2, tasks: 0, stuck: 0, state: 'in_use' }) } } } }),
   /* pricing */
   X('no-lines', 'POST /api/pricing/price', 400, { setup: { who: OWNER }, body: {} }),
   X('lines-not-a-list', 'POST /api/pricing/price', 422, { body: { lines: 'tea' } }),
@@ -673,12 +677,12 @@ function checkPricingAllowList(recording) {
 /**
  * API-8 output allow-list (S34), second pass: every folders route whose success schema is CLOSED (additionalProperties false, derived in docs/contracts/api-output-shapes.json from these
  * answers and the handler's own keys) has every recorded 200 fit that schema with nothing pruned: a key the schema does not list would be cut, so a drop is an answer that moved.
- * → { route: { output_allowlist: true } }, written to docs/contracts/api-hardening-evidence-areas.json for the folders routes only (facts and pricing keep the generator's evidence).
+ * → { route: { output_allowlist: true } }, written to docs/contracts/api-hardening-evidence-areas.json for the folders routes and GET /api/facts/:card (the rail chit list and pricing keep the generator's evidence).
  */
 function checkFoldersAllowList(recording) {
   console.log('\n-- the closed success shapes of the folders routes hold every recorded 200 --');
   const proved = {};
-  const operations = require(path.join(HERE, 'lib', 'folders-contract.js')).OPERATIONS;
+  const operations = Object.assign({ [FACTS_CARD]: require(path.join(HERE, 'lib', 'facts-contract.js')).OPERATIONS[FACTS_CARD] }, require(path.join(HERE, 'lib', 'folders-contract.js')).OPERATIONS);
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   Object.keys(operations).sort().forEach((route) => {

@@ -5,8 +5,8 @@
  *
  * OWNS      the proof that each refusal of the seven routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), that a 2xx is never a Problem, that no answer of ANY status (a 200 and a
- *           4xx included) carries the text of a thrown error, the one place where one still does (POST /create-default relays its bootstrap's error text: listed here, frozen, a finding
- *           for cb-catalogue and cb-security, NOT fixed by the sweep), the frozen 5xx bodies replayed, this file's rows of docs/contracts/api-error-tests.json, the "signed in as another
+ *           4xx included) carries the text of a thrown error (POST /create-default used to relay its bootstrap's error text; since the 11 Nov 2026 closeout it answers the one safe sentence and
+ *           the text goes to the log), the frozen 5xx bodies replayed, this file's rows of docs/contracts/api-error-tests.json, the "signed in as another
  *           shop" world on the two routes addressed by a column key (recorded in docs/contracts/api-hardening-evidence-areas.json), the old express-validator chains run beside the schemas
  *           that replaced them, and the Q18 rule (an unknown key in a body is refused by name; every key the web sends is accepted).
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file and the real libraries over the stand-in db and sign-in (tests/lib/problem-world.cjs, scenes in tests/lib/schemas-scenes.cjs).
@@ -82,7 +82,7 @@ const ALLOW = require('./lib/allowlist-world.cjs');
 const chainsModule = () => require('./lib/schemas-chains.cjs');
 const legacyRoutes = () => JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
 /** the one scenario the real bootstrap answers with the database's own sentence: replayed, never judged as an ordinary 5xx */
-const isKnownLeak = (scenario) => scenario.route === CREATE && scenario.id === 'db-fails';
+
 
 /** lib/schemas-contract.js as a unit: the words of every refusal and of a fault, as these routes always said them */
 function checkWords() {
@@ -101,9 +101,9 @@ function checkWords() {
   check('a missing column and a missing definition answer NOT_FOUND in their own sentences', words.noSuchColumn().code === 'NOT_FOUND' && words.noSuchColumn().legacy.message === 'Your catalogue has no such column.' && words.noDefinition().legacy.message === 'Your catalogue has no definition.' && words.noActiveCatalogue().legacy.message === 'No active catalogue to update');
   const broken = fault(new Error(SECRET_SQL), req, 'Failed to get fields');
   check('a fault: a 500 INTERNAL that says nothing of its cause, the screen\'s label kept', broken.status === 500 && broken.code === 'INTERNAL' && sameValue(broken.legacy, { error: 'Failed to get fields', message: SAFE }) && !JSON.stringify(broken).includes('vault'), broken);
-  const relayed = createRefused(req, { error: 'the bootstrap said no' });
-  check('POST /create-default\'s refusal relays the bootstrap\'s own text (listed as a finding, frozen as it answered)', relayed.status === 500 && relayed.legacy.message === 'the bootstrap said no' && relayed.legacy.error === 'Failed to create schema', relayed);
-  check('and says "no schema" when the bootstrap gave no reason', createRefused(req, {}).legacy.message === 'no schema');
+  const refused = createRefused(req, { error: 'the bootstrap said no' });
+  check('POST /create-default does NOT relay the bootstrap text: the label and the safe sentence, a 500 INTERNAL', refused.status === 500 && refused.code === 'INTERNAL' && sameValue(refused.legacy, { error: 'Failed to create schema', message: SAFE }) && !JSON.stringify(refused).includes('bootstrap'), refused);
+  check('and the same when the bootstrap gave no reason', createRefused(req, {}).legacy.message === SAFE && createRefused(req, {}).status === 500);
 }
 
 /** every code the words answer under is a row of docs/ERROR-CODES.md with its sentence written */
@@ -175,10 +175,10 @@ function checkNoLeakAnywhere(recording) {
   check('a 2xx answer is never a Problem (' + successes.length + ' answers)', successes.every((key) => !/problem/.test(recording[key].type) && !(recording[key].body && recording[key].body.type && recording[key].body.request_id !== undefined && recording[key].body.code)), successes.filter((key) => /problem/.test(recording[key].type)));
   const leaking = keys.filter((key) => LEAK.test(JSON.stringify(recording[key].body || {})) || /relation "/.test(recording[key].text || ''));
   check('no answer of any status, a 200 and a 4xx included, carries the database text (' + keys.length + ' answers scanned)', leaking.length === 0, leaking);
-  const relays = keys.filter((key) => key.startsWith(CREATE + '|') && recording[key].status >= 500 && recording[key].body && recording[key].body.message !== SAFE).map((key) => key.split('|')[1]).sort();
-  const faults = keys.filter((key) => recording[key].status >= 500 && !relays.includes(key.split('|')[1]));
+
+  const faults = keys.filter((key) => recording[key].status >= 500);
   check('every other fault says only the generic sentence (' + faults.length + ' answers)', faults.every((key) => recording[key].body && recording[key].body.message === SAFE), faults.filter((key) => !recording[key].body || recording[key].body.message !== SAFE));
-  check('the only fault that does not is POST /create-default\'s own refusal when its bootstrap gave a reason: ' + relays.join(', '), sameValue(relays, ['create-bootstrap-refuses', 'create-no-schema-id', 'nothing-found']), relays);
+
   check('a caller who is not signed in is refused with 401 on every route', keys.filter((key) => key.endsWith('|signed-out')).length === ROUTE_COUNT && keys.filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
 }
 
@@ -198,17 +198,15 @@ async function askAlone(port, scenario) {
 }
 
 /**
- * THE ONE LEAK (a finding, NOT fixed here): lib/schema-bootstrap.js returns { error: e.message } and POST /create-default sends it as `message` of its 500 (routes/schemas.js, the base :49).
- * The sweep keeps the answer byte for byte (behaviour is the owner's), words it as a Problem, and this check shows exactly what it holds, so the leak cannot grow or move unseen.
+ * POST /create-default used to send lib/schema-bootstrap.js's { error: e.message } as the `message` of its 500 (the one leak of this file). Closed 11 Nov 2026: a failing database answers the
+ * label and the one safe sentence, and the Problem's detail says nothing of the cause either.
  */
-async function checkKnownLeak(port, scenario) {
-  console.log('\n-- POST /create-default: the bootstrap\'s error text in a 500 (finding for cb-catalogue and cb-security) --');
+async function checkNoRelay(port, scenario) {
+  console.log('\n-- POST /create-default: the bootstrap text no longer reaches the caller --');
   const answer = await askAlone(port, scenario);
-  const frozen = (legacyRoutes()[CREATE] || { answers: [] }).answers.find((one) => one.scenario === scenario.id);
   check('a failing database answers 500 as a Problem under INTERNAL', answer.status === 500 && answer.json && /problem\+json/.test(answer.type) && answer.json.code === 'INTERNAL', [answer.status, answer.type]);
-  check('the old keys are kept, in order: error, then the bootstrap\'s text as message (the frozen answer)', !!frozen && sameValue(Object.keys(frozen.fixture), ['error', 'message']) && answer.json.error === frozen.fixture.error && answer.json.message === frozen.fixture.message, frozen);
-  check('the Problem\'s own detail says nothing of the cause: the text rides only in the frozen `message`', answer.json && !LEAK.test(answer.json.detail || '') && !LEAK.test(answer.json.hint || '') && !LEAK.test(JSON.stringify(answer.json.errors || [])), answer.json);
-  check('the text is the bootstrap\'s own (that is the finding: it is a database sentence)', answer.json && LEAK.test(answer.json.message), answer.json && answer.json.message);
+  check('the old keys are kept, in order: error, then the safe sentence as message', answer.json && answer.json.error === 'Failed to create schema' && answer.json.message === SAFE, answer.json);
+  check('no part of the answer holds a database word', answer.json && !LEAK.test(JSON.stringify(answer.json)), answer.json);
 }
 
 /** a scene whose refusal the sweep ADDS: the answer, its Problem and the keys the old chain-less route did not have */
@@ -279,8 +277,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');
   const contract = contractModule();
   const allowed = capturing ? () => [] : contract ? contract.allowedStatuses() : () => [];
-  const all = lab.scenariosOf(routes, WORLDS, S.extras(), {}).map((one) => (isKnownLeak(one) ? Object.assign({}, one, { synthetic: true }) : one));
-  const leaks = all.filter(isKnownLeak);
+  const all = lab.scenariosOf(routes, WORLDS, S.extras(), {});
+  const leaks = all.filter((one) => one.route === CREATE && one.id === 'db-fails');
   const added = all.filter((one) => one.after);
   const ordinary = capturing ? all : all.filter((one) => !one.synthetic && !one.after);
   const tested = await lab.checkRoutes(port, ordinary, recording, allowed, sources);
@@ -301,7 +299,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   await checkChainsAgree();
   checkFrozen5xx(recording);
   checkNoLeakAnywhere(recording);
-  for (const leak of leaks) await checkKnownLeak(port, leak);
+  for (const leak of leaks) await checkNoRelay(port, leak);
   check('the refusals the sweep adds are the six listed (an unknown key on four routes, a list for a body on two)', added.length === 6, added.map((one) => one.id));
   if (contract) await checkAdded(port, added, contract);
   check('premise: the scenarios ran (' + all.length + ' scenarios over ' + Object.keys(routes).length + ' routes)', all.length > MIN_SCENARIOS && Object.keys(routes).length === ROUTE_COUNT, all.length);

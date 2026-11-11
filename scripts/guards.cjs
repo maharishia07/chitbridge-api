@@ -147,7 +147,8 @@ const GUARDS = [
   'live-trips-tool.test.cjs', // SPD-39: the live-trips harness restores sit-in when a run throws (fake client, offline)
   'read-batch-entity.test.cjs', // EFF-TRIPS: readBatch carries a statement per entity in ONE trip (the brands' released offers)
   'network-offers-shape.test.cjs', // EFF-TRIPS: GET /api/network-offers answers the pre-change shape row for row, in ≤ 4 trips (golden)
-  'network-offers-visibility.test.cjs', // SEC-134: GET /api/network-offers tells each caller only its offers and carries no unnamed column (two networks, member, outsider, brand)
+  'network-offers-visibility.test.cjs',
+  'network-offers-choice.test.cjs', // NET-98: POST /:id/choice answers 404 for an offer the shop cannot see (unknown, another network, withdrawn) and writes nothing; a stale record is still cleared // SEC-134: GET /api/network-offers tells each caller only its offers and carries no unnamed column (two networks, member, outsider, brand)
   'people.test.cjs', // ⭐ P1: GET /api/people — one statement, the caller's shop only, may/why per action, owner-only greyed with its sentence
   'network-validate.test.cjs', // P2: the dry-run validate of a designed network — names what would break, posts nothing
   'sim-load.test.cjs', // ⭐⭐⭐ Y1b: the simulator's loader refuses every non-local database; one plan for Y1 and Y1b; the chit carries the shop clock
@@ -351,6 +352,7 @@ const GUARDS = [
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
   'ingest-iot-offline.test.cjs', // ⭐ TEST-INGEST-IOT: key none/unknown/inactive → 401; malformed body → 400 never 200; ERP replay → ONE chit, 'duplicate'; stats counts
   'sec3-device-keys.test.cjs', // ⭐ SEC3: a device key addresses only its shop + its parties; the connector switch holds it; /events/stats is the operator's; a failed chit is not a 200; the shop's money; Zoho tax list holds the order; the simulator is local by default
+  'erp-ingest-idempotency.test.cjs', // ⭐ CON-ERP-IDEM: erp-ingest keys on the Idempotency-Key, else doc_ref, else the hash; a failed outcome chit is a 503 and its retry makes the chit; a stale pending receipt is claimed again; the same key with another body is 422 (the proof of machine_keyed in api-hardening-scope.json)
   'country-setup.test.cjs', // ⭐ CS1: register → Country setup → India pack on; a pack-less country refused with ITS sentence on every books route; existing Indian shops untouched; owner-only; 503 before b299
   'neutral-core.test.cjs', // ⭐ N0-N4 (NEUTRAL-CORE, 17 Oct): no country or money → no document (NO_COUNTRY/NO_MONEY); the readers say null + a reason, never INR / Asia/Kolkata; ratchet on new India literals; an India shop unchanged
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order

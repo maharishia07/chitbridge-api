@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 14,
-  "meets": 624,
+  "partial": 4,
+  "meets": 634,
   "columns": {
    "strict_input": {
     "applies": 324,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 2
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 202,
@@ -22,7 +22,7 @@
    },
    "idempotent_money_write": {
     "applies": 11,
-    "failing": 2
+    "failing": 1
    },
    "inbound_validated": {
     "applies": 6,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 145
+  "output_allowlist_from_recordings": 146
  },
  "machine_columns": [
   "schema_in",
@@ -482,7 +482,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -1759,7 +1759,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -2592,7 +2592,7 @@
     "wire": 2,
     "screens": [
      "app.html 2/108",
-     "cap-admin.js 2/106",
+     "cap-admin.js 2/109",
      "cap-chit2.js 2/15",
      "cap-workforce.js 2/19",
      "cap-worklist.js 2/12",
@@ -2978,7 +2978,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -3842,7 +3842,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/108",
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-assist.js 1/2"
     ]
    },
@@ -7246,7 +7246,7 @@
     "trips": 1,
     "wire": 6,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -9109,7 +9109,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -9341,7 +9341,7 @@
     "screens": [
      "app.html 1/108",
      "authority-forms.html 1/30",
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-books.js 1/43",
      "cap-chit2.js 1/15",
      "cap-crm-chits.js 1/3",
@@ -10487,7 +10487,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "cap-admin.js 2/106",
+     "cap-admin.js 2/109",
      "cap-dispute.js 2/5"
     ]
    },
@@ -10591,7 +10591,7 @@
     "wire": 7,
     "screens": [
      "app.html 3/108",
-     "cap-admin.js 3/106"
+     "cap-admin.js 3/109"
     ]
    },
    "measured": {
@@ -10698,7 +10698,7 @@
     "screens": [
      "app.html 2/108",
      "authority-forms.html 2/30",
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -11504,7 +11504,7 @@
     "screens": [
      "app.html 1/108",
      "authority-forms.html 1/30",
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-bank.js 1/8",
      "cap-connector.js 1/11",
      "cap-crm-groups.js 1/13",
@@ -12712,7 +12712,7 @@
     "wire": 3,
     "screens": [
      "app.html 1/108",
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21",
      "screen-id.js 1/5",
      "settings.html 1/1"
@@ -14240,7 +14240,7 @@
     "screens": [
      "app.html 6/108",
      "avatar.js 6/6",
-     "cap-admin.js 6/106",
+     "cap-admin.js 6/109",
      "cap-country.js 6/12",
      "cap-finance-returns.js 6/6",
      "cap-print.js 6/16",
@@ -14548,7 +14548,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-catsetup.js 1/14",
      "cap-country.js 1/12",
      "cap-crm-groups.js 1/13",
@@ -14752,7 +14752,7 @@
     "trips": 2,
     "wire": 8,
     "screens": [
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -15232,7 +15232,7 @@
     "trips": 1,
     "wire": 6,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -15457,7 +15457,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 45,
-   "hash": "737919d35ffe12ae",
+   "hash": "887fd1bbb9f82d15",
    "does": "",
    "errors": {
     "count": 0,
@@ -15488,7 +15488,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15513,6 +15513,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -15527,11 +15528,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "737919d35ffe12ae"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; every card builder in lib/home-facts.js returns only lines/figures/state (rail: its own six keys), all in the closed shape; unknown card 404, api key 403, fault the generic sentence; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -16330,7 +16330,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-messages.js 1/4"
     ]
    },
@@ -16430,7 +16430,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/106",
+     "cap-admin.js 2/109",
      "cap-mis.js 2/3"
     ]
    },
@@ -18433,7 +18433,7 @@
     "trips": 10,
     "wire": 20,
     "screens": [
-     "cap-admin.js 10/106",
+     "cap-admin.js 10/109",
      "cap-definitions.js 10/17",
      "cap-readiness.js 10/25"
     ]
@@ -19115,7 +19115,7 @@
     "trips": 1,
     "wire": 0,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -19594,7 +19594,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -19692,7 +19692,7 @@
     "trips": 3,
     "wire": 6,
     "screens": [
-     "cap-admin.js 3/106"
+     "cap-admin.js 3/109"
     ]
    },
    "measured": {
@@ -19789,7 +19789,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -19980,7 +19980,7 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -20182,7 +20182,7 @@
     "trips": 1,
     "wire": null,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -20671,7 +20671,7 @@
     "wire": 4,
     "screens": [
      "cap-network.js 1/3",
-     "network-app.js 1/8"
+     "network-app.js 1/11"
     ]
    },
    "measured": {
@@ -20880,7 +20880,7 @@
     "wire": 1,
     "screens": [
      "cap-network-member.js 2/2",
-     "network-app.js 2/8"
+     "network-app.js 2/11"
     ]
    },
    "measured": {
@@ -20897,8 +20897,8 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 219,
-   "hash": "86729110d085f141",
+   "line": 242,
+   "hash": "68e625302a030f40",
    "does": "",
    "errors": {
     "count": 1,
@@ -20911,14 +20911,7 @@
      "SESSION_ONLY"
     ]
    },
-   "reads": [
-    "catalogue_adoption",
-    "catalogue_source",
-    "cb_edge",
-    "cb_entity",
-    "definition",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -20974,10 +20967,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "68e625302a030f40"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -20987,8 +20981,8 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106",
-     "network-app.js 1/8"
+     "cap-admin.js 1/109",
+     "network-app.js 1/11"
     ]
    },
    "measured": {
@@ -23819,7 +23813,7 @@
     "wire": 10,
     "screens": [
      "app.html 4/108",
-     "cap-admin.js 4/106",
+     "cap-admin.js 4/109",
      "cap-chit2.js 4/15",
      "cap-suppliers.js 4/5"
     ]
@@ -25009,7 +25003,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/106",
+     "cap-admin.js 2/109",
      "helpers.js 2/2"
     ]
    },
@@ -25111,7 +25105,7 @@
     "trips": 2,
     "wire": null,
     "screens": [
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -25212,7 +25206,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/106"
+     "cap-admin.js 2/109"
     ]
    },
    "measured": {
@@ -25331,7 +25325,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1694,
-   "hash": "caff22a54386dc4d",
+   "hash": "a062ac96f871111b",
    "does": "",
    "errors": {
     "count": 0,
@@ -25368,7 +25362,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -25406,11 +25400,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "caff22a54386dc4d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; a .feature text answer, noKeys by design (S34), reader-gated; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -30011,7 +30004,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -30311,7 +30304,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-catsetup.js 1/14",
      "cap-country.js 1/12",
      "cap-crm-groups.js 1/13",
@@ -30426,7 +30419,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/108",
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-country.js 1/12",
      "cap-network.js 1/3",
      "cap-shop.js 1/17",
@@ -33102,7 +33095,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
-     "cap-admin.js 0/106",
+     "cap-admin.js 0/109",
      "cap-assist.js 0/2",
      "core.js 0/57"
     ]
@@ -39829,7 +39822,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -39916,13 +39909,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key (403 before any lookup, 503 when the key is unset); the only error words that can reach an answer are the fixed sentences lib/channels.js throws (traced in docs/critique/API-4-channels.md), a database error answers the generic sentence; api-problem-channels 926 checks green; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40030,7 +40023,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -40216,13 +40209,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; same fixed-sentence trace as approve; api-problem-channels 926 checks green; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40330,7 +40323,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -40419,13 +40412,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; relay only below 500 and only lib/channels.js fixed sentences; api-problem-channels 926 checks green; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40860,7 +40853,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/108",
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -43740,7 +43733,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 191,
+   "line": 192,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -44262,8 +44255,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 676,
-   "hash": "58330e43316e8657",
+   "line": 674,
+   "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
     "count": 0,
@@ -44272,7 +44265,9 @@
      401,
      403,
      409,
-     500
+     422,
+     500,
+     503
     ],
     "codes": []
    },
@@ -44298,11 +44293,11 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -44319,7 +44314,9 @@
     401,
     403,
     409,
-    500
+    422,
+    500,
+    503
    ],
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
@@ -44347,7 +44344,7 @@
    },
    "status": "partial",
    "callers": [],
-   "offline": "online-only",
+   "offline": "idempotent",
    "round_trips": {
     "trips": 0,
     "wire": 0,
@@ -44367,7 +44364,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 535,
+   "line": 533,
    "hash": "73701939f1a71a0e",
    "does": "",
    "errors": {
@@ -44666,7 +44663,7 @@
     "trips": 1,
     "wire": 8,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -44875,7 +44872,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21",
      "screens.js 1/6"
     ]
@@ -44981,7 +44978,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -49125,13 +49122,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + faultOf read; same relay closure; library refusals keep their registered codes; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-iddocs.js"
    ],
@@ -49240,13 +49237,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + faultOf read; same relay closure; OTP refusals keep their registered codes and statuses; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-iddocs.js"
    ],
@@ -49366,7 +49363,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106",
+     "cap-admin.js 1/109",
      "cap-settings.js 1/21"
     ]
    },
@@ -49667,7 +49664,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -50085,7 +50082,7 @@
     "wire": null,
     "screens": [
      "app.html 3/108",
-     "cap-admin.js 3/106",
+     "cap-admin.js 3/109",
      "cap-settings.js 3/21"
     ]
    },
@@ -50609,7 +50606,7 @@
     "trips": 3,
     "wire": 6,
     "screens": [
-     "network-app.js 3/8"
+     "network-app.js 3/11"
     ]
    },
    "measured": {
@@ -50626,11 +50623,11 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 403,
-   "hash": "9b205221f9671f4f",
+   "line": 438,
+   "hash": "a4401816d7a77a5a",
    "does": "",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -50640,6 +50637,7 @@
      500
     ],
     "codes": [
+     "NOT_FOUND",
      "OFFER_UNKNOWN",
      "SESSION_ONLY"
     ]
@@ -50712,11 +50710,11 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 1,
-    "wire": 1,
+    "trips": 4,
+    "wire": 14,
     "screens": [
-     "cap-admin.js 1/106",
-     "network-app.js 1/8"
+     "cap-admin.js 4/109",
+     "network-app.js 4/11"
     ]
    },
    "measured": {
@@ -50733,7 +50731,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 363,
+   "line": 381,
    "hash": "9989f2ed55f8ee35",
    "does": "",
    "errors": {
@@ -50829,7 +50827,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -50846,7 +50844,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 385,
+   "line": 403,
    "hash": "bfdcb3d04502a11d",
    "does": "",
    "errors": {
@@ -50941,7 +50939,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -50958,7 +50956,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 314,
+   "line": 332,
    "hash": "cf6a90fd7197dad6",
    "does": "",
    "errors": {
@@ -51046,7 +51044,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -51063,7 +51061,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 324,
+   "line": 342,
    "hash": "a15d2437c4075e3a",
    "does": "",
    "errors": {
@@ -51149,7 +51147,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -51166,7 +51164,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 296,
+   "line": 314,
    "hash": "49a8a895baf9860e",
    "does": "",
    "errors": {
@@ -51257,7 +51255,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -51356,7 +51354,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 3/106"
+     "cap-admin.js 3/109"
     ]
    },
    "measured": {
@@ -51458,7 +51456,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 3/106",
+     "cap-admin.js 3/109",
      "core.js 3/57"
     ]
    },
@@ -51561,7 +51559,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 3/106",
+     "cap-admin.js 3/109",
      "core.js 3/57"
     ]
    },
@@ -51664,7 +51662,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 3/106",
+     "cap-admin.js 3/109",
      "core.js 3/57"
     ]
    },
@@ -51767,7 +51765,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 3/106",
+     "cap-admin.js 3/109",
      "core.js 3/57"
     ]
    },
@@ -51870,7 +51868,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 3/106",
+     "cap-admin.js 3/109",
      "core.js 3/57"
     ]
    },
@@ -55803,13 +55801,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; bootstrap text goes to the log only, caller gets label + the one safe sentence under INTERNAL; mutation-proved (relay put back, 23 checks red); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -57554,7 +57552,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -57657,7 +57655,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "cap-admin.js 6/106"
+     "cap-admin.js 6/109"
     ]
    },
    "measured": {
@@ -57854,11 +57852,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fd3f809f9bb31d7e"
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: re-signed after the stale hash (fd3f809f): whole handler and contract read at the new hash; no exception text in any answer (faultOf says only the label and the safe sentence; problems[] are parser words about the caller's own file); board writer gate kept; api-problem-testing 1839 checks green; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -58256,11 +58253,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6d22cf4f5179ca5c"
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: re-signed after the stale hash (6d22cf4f): whole handler and contract read at the new hash; every shipped record is checked before anything is written, refusals name the file, faults say the safe sentence; api-problem-testing 1839 checks green; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -62081,7 +62077,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
-     "cap-admin.js 0/106",
+     "cap-admin.js 0/109",
      "cap-tasks.js 0/7",
      "core.js 0/57",
      "workflow.js 0/1"
@@ -62293,7 +62289,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -62397,7 +62393,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/106",
+     "cap-admin.js 2/109",
      "core.js 2/57"
     ]
    },
@@ -64044,7 +64040,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {
@@ -64564,13 +64560,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + faultOf read; words travel only for a refusal of ours (status <500 + registered code: IDOC_SUBJECT_FORBIDDEN 403), `error` never a SQLSTATE; mutation-proved both ways; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-iddocs.js",
     "cap-workforce.js"
@@ -64687,7 +64683,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/106"
+     "cap-admin.js 1/109"
     ]
    },
    "measured": {
@@ -64809,7 +64805,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 277,
+   "line": 295,
    "hash": "a63f82874ea89e8f",
    "does": "",
    "errors": {
@@ -64896,7 +64892,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/106"
+     "cap-admin.js 0/109"
     ]
    },
    "measured": {

@@ -582,8 +582,7 @@
    "foreign_id_404": true
   },
   "POST /api/network-offers/:id/choice": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "POST /api/signin/renew": {
    "strict_input": true

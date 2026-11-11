@@ -104,5 +104,19 @@ t('scope: a one-character reason FAILS in each of the three lists', scopeOf({ pu
 t('scope: a route the register lacks FAILS', scopeOf({ platform_only: { 'GET /nope/:id': longWhy } }).length === 1 && scopeOf({ public_ids: { 'GET /nope/:id': longWhy } }).length === 1);
 t('scope: a cannot_answer status the route does not declare FAILS, and a repeat FAILS', scopeOf({ cannot_answer: [{ route: 'GET /a/:id', status: 500, reason: longWhy }] }).length === 1 && scopeOf({ cannot_answer: [{ route: 'GET /a/:id', status: 404, reason: longWhy }, { route: 'GET /a/:id', status: 404, reason: longWhy }] }).length === 1);
 t('scope: the committed scope file passes against the committed register', register.scopeProblems(require(path.join(API, 'docs', 'contracts', 'api-hardening-scope.json')), require(path.join(API, 'docs', 'api-register.json')).routes).length === 0);
+/* machine_keyed (CON-ERP-IDEM): S36 passes a keyed machine door ONLY while its test file proves the six cases; a listed route without that proof fails --check */
+const keyedRoute = 'POST /a/ingest';
+const keyedRows = new Map([[keyedRoute, { key: keyedRoute }]]);
+const keyedEntry = (more) => Object.assign({ route: keyedRoute, key_order: ['Idempotency-Key header', 'doc_ref', 'payload hash'], reason: longWhy, test: 'tests/erp-ingest-idempotency.test.cjs' }, more);
+const keyedHere = (more) => register.machineKeyedProblems([keyedEntry(more)], keyedRows);
+const realKeyedRoute = 'POST /api/connectors/erp-ingest';
+t('machine_keyed: the column passes a listed route, and a money write that is not listed (and sends no header) still fails', register.idempotentMoneyColumn(true, {}, { fns: [] }, undefined, true) && !register.idempotentMoneyColumn(true, {}, { fns: [] }, undefined, false) && register.idempotentMoneyColumn(false, {}, { fns: [] }, undefined, false));
+t('machine_keyed: an entry whose test file proves the cases passes (the real test file of the route, which names the route)', register.machineKeyedProblems([keyedEntry({ route: realKeyedRoute })], new Map([[realKeyedRoute, { key: realKeyedRoute }]])).length === 0);
+t('machine_keyed: a listed route whose test file does not exist FAILS', keyedHere({ test: 'tests/no-such-file.test.cjs' }).length === 1 && /does not exist/.test(keyedHere({ test: 'tests/no-such-file.test.cjs' })[0]));
+t('machine_keyed: a test file that does not carry the cases FAILS and names them (package.json stands in for any file that proves nothing)', /does not prove/.test(keyedHere({ test: 'package.json' })[0] || '') && /K1/.test(keyedHere({ test: 'package.json' })[0] || ''));
+t('machine_keyed: a test file that carries the cases but not this route FAILS', /does not prove/.test(keyedHere({ route: keyedRoute })[0] || ''));
+t('machine_keyed: no key order, a one-character reason, or a route the register lacks are each refused', keyedHere({ key_order: [] }).length === 1 && keyedHere({ reason: 'x' }).length === 1 && register.machineKeyedProblems([keyedEntry()], new Map()).length === 1);
+t('machine_keyed: only a sound entry reaches the register column (machineKeyedOf)', register.machineKeyedOf([keyedEntry({ route: realKeyedRoute })]).has(realKeyedRoute) && register.machineKeyedOf([keyedEntry({ route: realKeyedRoute, test: 'tests/no-such-file.test.cjs' })]).size === 0 && register.machineKeyedOf(undefined).size === 0);
+t('machine_keyed: the committed scope file lists the ERP door and the register passes it', register.machineKeyedOf(require(path.join(API, 'docs', 'contracts', 'api-hardening-scope.json')).machine_keyed).has(realKeyedRoute));
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
