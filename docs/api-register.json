@@ -5,8 +5,8 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 97,
-  "meets": 542,
+  "partial": 98,
+  "meets": 541,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1832,
+   "line": 1808,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1865,7 +1865,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "catalogue-lines.js 1/89",
+     "catalogue-lines.js 1/90",
      "combo-mode.js 1/15",
      "core.js 1/57",
      "till.html 1/225"
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1982,
+   "line": 1958,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1972,7 +1972,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "catalogue-lines.js 1/89"
+     "catalogue-lines.js 1/90"
     ]
    },
    "measured": {
@@ -1989,7 +1989,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1713,
+   "line": 1689,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -2072,7 +2072,7 @@
     "wire": 5,
     "screens": [
      "app.html 2/155",
-     "catalogue-lines.js 2/89"
+     "catalogue-lines.js 2/90"
     ]
    },
    "measured": {
@@ -22139,7 +22139,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 740,
+   "line": 716,
    "hash": "c58e08fca2facb60",
    "does": "",
    "errors": {
@@ -22249,7 +22249,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1659,
+   "line": 1635,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22330,7 +22330,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "catalogue-lines.js 1/89"
+     "catalogue-lines.js 1/90"
     ]
    },
    "measured": {
@@ -22347,7 +22347,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2018,
+   "line": 1994,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22436,7 +22436,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "catalogue-lines.js 1/89"
+     "catalogue-lines.js 1/90"
     ]
    },
    "measured": {
@@ -22453,7 +22453,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1099,
+   "line": 1075,
    "hash": "699e33f654a66cd9",
    "does": "",
    "errors": {
@@ -22536,7 +22536,7 @@
     "wire": 9,
     "screens": [
      "app.html 5/155",
-     "catalogue-lines.js 5/89"
+     "catalogue-lines.js 5/90"
     ]
    },
    "measured": {
@@ -22553,8 +22553,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2133,
-   "hash": "53042587c8e14b98",
+   "line": 2109,
+   "hash": "b43ae7cffcf356bd",
    "does": "",
    "errors": {
     "count": 0,
@@ -22621,19 +22621,20 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b43ae7cffcf356bd"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "catalogue-lines.js"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 3,
-    "wire": 6,
+    "trips": 4,
+    "wire": 7,
     "screens": [
-     "catalogue-lines.js 3/89"
+     "catalogue-lines.js 4/90"
     ]
    },
    "measured": {
@@ -22650,7 +22651,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1877,
+   "line": 1853,
    "hash": "6552c50215b46546",
    "does": "",
    "errors": {
@@ -22736,7 +22737,7 @@
     "wire": null,
     "screens": [
      "app.html 50/155",
-     "catalogue-lines.js 50/89"
+     "catalogue-lines.js 50/90"
     ]
    },
    "measured": {
@@ -22753,7 +22754,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1430,
+   "line": 1406,
    "hash": "40bea3f52459651d",
    "does": "",
    "errors": {
@@ -22836,7 +22837,7 @@
     "screens": [
      "app.html 0/155",
      "cap-catsetup.js 0/14",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -22853,7 +22854,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1128,
+   "line": 1104,
    "hash": "450991b1787aac03",
    "does": "",
    "errors": {
@@ -22936,7 +22937,7 @@
     "wire": 13,
     "screens": [
      "cap-catalogue.js 5/13",
-     "catalogue-lines.js 5/89"
+     "catalogue-lines.js 5/90"
     ]
    },
    "measured": {
@@ -22953,7 +22954,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1028,
+   "line": 1004,
    "hash": "36bec6618ba3d688",
    "does": "",
    "errors": {
@@ -23035,7 +23036,7 @@
     "trips": 6,
     "wire": 13,
     "screens": [
-     "catalogue-lines.js 6/89",
+     "catalogue-lines.js 6/90",
      "till.html 6/225"
     ]
    },
@@ -30655,7 +30656,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1600,
+   "line": 1576,
    "hash": "6a5797d12ad93b40",
    "does": "",
    "errors": {
@@ -30756,7 +30757,7 @@
      "app.html 0/155",
      "cap-catalogue.js 0/13",
      "cap-categories.js 0/6",
-     "catalogue-lines.js 0/89",
+     "catalogue-lines.js 0/90",
      "combo-mode.js 0/15",
      "core.js 0/57",
      "till.html 0/225"
@@ -52881,7 +52882,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 429,
+   "line": 405,
    "hash": "1bddfcabcbea24c6",
    "does": "",
    "errors": {
@@ -52985,7 +52986,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1917,
+   "line": 1893,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53075,7 +53076,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -53092,7 +53093,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1679,
+   "line": 1655,
    "hash": "185af50f007a0f0f",
    "does": "",
    "errors": {
@@ -53186,7 +53187,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -53203,7 +53204,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1727,
+   "line": 1703,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53287,7 +53288,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "catalogue-lines.js 3/89"
+     "catalogue-lines.js 3/90"
     ]
    },
    "measured": {
@@ -53304,7 +53305,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 494,
+   "line": 470,
    "hash": "90be73d405856299",
    "does": "",
    "errors": {
@@ -53389,7 +53390,7 @@
     "trips": 8,
     "wire": null,
     "screens": [
-     "catalogue-lines.js 8/89"
+     "catalogue-lines.js 8/90"
     ]
    },
    "measured": {
@@ -53406,7 +53407,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 687,
+   "line": 663,
    "hash": "a685f08236988712",
    "does": "",
    "errors": {
@@ -53495,7 +53496,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -53512,7 +53513,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 603,
+   "line": 579,
    "hash": "2dd38dbe13afdf0c",
    "does": "",
    "errors": {
@@ -53610,7 +53611,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1225,
+   "line": 1201,
    "hash": "31d7f428eac73403",
    "does": "",
    "errors": {
@@ -53707,7 +53708,7 @@
     "wire": 0,
     "screens": [
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/89",
+     "catalogue-lines.js 0/90",
      "till.html 0/225"
     ]
    },
@@ -53725,7 +53726,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1152,
+   "line": 1128,
    "hash": "39622ebf11654c79",
    "does": "",
    "errors": {
@@ -53812,7 +53813,7 @@
     "wire": 0,
     "screens": [
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/89",
+     "catalogue-lines.js 0/90",
      "till.html 0/225"
     ]
    },
@@ -53830,7 +53831,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2235,
+   "line": 2212,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -53917,7 +53918,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "catalogue-lines.js 3/89"
+     "catalogue-lines.js 3/90"
     ]
    },
    "measured": {
@@ -53934,7 +53935,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1441,
+   "line": 1417,
    "hash": "2eaff1d170a6af28",
    "does": "",
    "errors": {
@@ -54020,7 +54021,7 @@
     "screens": [
      "app.html 0/155",
      "cap-catsetup.js 0/14",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -54037,7 +54038,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 545,
+   "line": 521,
    "hash": "b194b999878fae7b",
    "does": "",
    "errors": {
@@ -54120,7 +54121,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -65000,7 +65001,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1772,
+   "line": 1748,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -65085,7 +65086,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {
@@ -65102,7 +65103,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1802,
+   "line": 1778,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {
@@ -65189,7 +65190,7 @@
     "screens": [
      "app.html 0/155",
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/89"
+     "catalogue-lines.js 0/90"
     ]
    },
    "measured": {

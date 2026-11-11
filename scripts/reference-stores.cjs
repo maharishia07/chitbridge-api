@@ -1,6 +1,10 @@
 'use strict';
 /**
  * scripts/reference-stores.cjs — A REFERENCE LIST LIVES IN A STORE (2026-09-27)
+ * OWNS     registering, loading, checking and marking internal the six reference stores (by hand, on a box).
+ * CALLED BY by hand (railway run / the sit box); the Product Lab reads the stores through lib/reference-store-lists.js.
+ * FLOW     register (HTTP) → load (storeRows, through ensureCategories + writeItems) → check (fromStore, parity) → internal.
+ * CARD     06-catalogue-pim/README
  *
  * Athi: *"we have to create store and load the table, that is all. only thing is while we adopt, we can only
  * adopt the product details, not currency"* · *"use chitbridge.com for the store emails"* · user IDs
@@ -8,8 +12,8 @@
  *
  * The decided shape (BACKLOG "A REFERENCE CATALOGUE IS A STORE"): one ordinary entity per list, linked under
  * cbincroot by registration like every entity, `entity_visibility = 'internal'` so it never inflates a count,
- * catalogue private. ⚠️ SHADOW ONLY: Product Lab and the counter keep reading BLUEPRINTS until `check` has
- * stayed clean long enough to trust.
+ * catalogue private. Since 11 Nov 2026 (CAT-124 C1+C2, Athi: "switch to the six reference stores") the Product Lab reads
+ * each list FROM its store (lib/reference-store-lists.js); the constant is the fallback where a store is not loaded.
  *
  *   node scripts/reference-stores.cjs register                        sign up the six (HTTP, dev OTP) — idempotent
  *   railway run --service chitbridge-api -- node scripts/reference-stores.cjs load    fill each EMPTY store
@@ -28,15 +32,7 @@
 const BP = require('../lib/catalogue-blueprint');
 const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 
-const LABEL = { veg: 'Vegetables & fruit', fish: 'Fish & seafood', chicken: 'Chicken', meat: 'Meat', egg: 'Eggs', hotel: 'Hotel' };
-const STORES = Object.keys(BP.BLUEPRINTS).map((item) => ({
-  /* ⚠️ 'cbrefhotel' is refused: cb + exactly 8 characters is reserved as bridge-id shaped (lib/handle.js
-     LOOKS_LIKE_BRIDGE). Athi chose 'cbrefhotels' (2026-09-27). The other five are other lengths, so they pass. */
-  key: item,
-  user_id: item === 'hotel' ? 'cbrefhotels' : 'cbref' + item,
-  email: 'ref-' + item + '@chitbridge.com',
-  display_name: 'Reference · ' + (LABEL[item] || BP.blueprint(item).label)
-}));
+const { STORES } = require('../lib/reference-store-lists'); /* one table of stores, shared with GET /lists (CAT-124 C1) */
 
 async function call(method, path, body, token) {
   const h = { 'Content-Type': 'application/json' };
