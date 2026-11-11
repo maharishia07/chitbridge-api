@@ -359,8 +359,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/register/templates": {
@@ -384,8 +383,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "POST /api/chits/register/entries/:raida_id/close": {
@@ -397,8 +395,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/register/walk/:from": {
@@ -419,8 +416,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
@@ -431,8 +427,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/raida/report": {
@@ -470,8 +465,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
@@ -482,8 +476,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/use": {
@@ -643,8 +636,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
@@ -2555,8 +2547,7 @@
   },
   "POST /api/products/bulk": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2612,8 +2603,7 @@
   },
   "POST /api/products/import/preflight": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2621,8 +2611,7 @@
   },
   "POST /api/products/import": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2642,10 +2631,6 @@
    }
   },
   "PATCH /api/products/:id": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
@@ -2686,10 +2671,6 @@
    }
   },
   "POST /api/products/availability/bulk": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }

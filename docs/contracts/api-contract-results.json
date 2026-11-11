@@ -1691,7 +1691,7 @@
    ]
   },
   "PATCH /api/products/:id": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3451,7 +3451,7 @@
    ]
   },
   "POST /api/products/import": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

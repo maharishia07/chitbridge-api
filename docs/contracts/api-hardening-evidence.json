@@ -122,7 +122,8 @@
    "output_allowlist": true
   },
   "POST /api/chits/register/subjects/:subject_id/close": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "GET /api/chits/register/templates": {
    "output_allowlist": true
@@ -133,20 +134,24 @@
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/chits/register/entries/:raida_id/close": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "GET /api/chits/register/walk/:from": {
    "output_allowlist": true
   },
   "POST /api/chits/register/entries/:raida_id/revise": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/chits/raida/report": {
    "output_allowlist": true
@@ -159,11 +164,13 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/raida/:raida_id/close": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/use": {
    "foreign_id_404": true
@@ -222,7 +229,8 @@
    "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/diagnosis": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "strict_input": true,
@@ -900,6 +908,9 @@
   "POST /api/products": {
    "strict_input": true
   },
+  "POST /api/products/bulk": {
+   "strict_input": true
+  },
   "POST /api/products/status/bulk": {
    "strict_input": true,
    "output_allowlist": true
@@ -920,9 +931,11 @@
    "output_allowlist": true
   },
   "POST /api/products/import/preflight": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/products/import": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/products/starter-columns": {

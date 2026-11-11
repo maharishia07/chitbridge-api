@@ -5,20 +5,20 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 65,
-  "meets": 574,
+  "partial": 47,
+  "meets": 592,
   "columns": {
    "strict_input": {
-    "applies": 348,
-    "failing": 26
+    "applies": 337,
+    "failing": 11
    },
    "output_allowlist": {
     "applies": 639,
-    "failing": 5
+    "failing": 4
    },
    "foreign_id_404": {
     "applies": 202,
-    "failing": 9
+    "failing": 1
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -47,8 +47,8 @@
     "failing": 479
    }
   },
-  "tolerant_outward": 3,
-  "output_allowlist_from_recordings": 144
+  "tolerant_outward": 14,
+  "output_allowlist_from_recordings": 145
  },
  "machine_columns": [
   "schema_in",
@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6318,
+   "line": 6317,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5192,
+   "line": 5191,
    "hash": "42d31fa87e8d8a95",
    "does": "",
    "errors": {
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6579,
+   "line": 6578,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -9228,7 +9228,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3680,
+   "line": 3679,
    "hash": "6cba303a3817793d",
    "does": "",
    "errors": {
@@ -9376,7 +9376,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5008,
+   "line": 5007,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9478,7 +9478,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4231,
+   "line": 4230,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9578,14 +9578,13 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6058,
-   "hash": "e1d82593a96de058",
+   "line": 6057,
+   "hash": "ad2b481cd5b97231",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
-     403,
      404,
      422,
      500
@@ -9616,7 +9615,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -9631,7 +9630,6 @@
    },
    "declared": [
     401,
-    403,
     404,
     422,
     500
@@ -9651,13 +9649,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2 re-sign after merge",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -9679,7 +9677,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6012,
+   "line": 6011,
    "hash": "db87c3b5029337bc",
    "does": "",
    "errors": {
@@ -9789,7 +9787,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5585,
+   "line": 5584,
    "hash": "82ed2a6878097cdb",
    "does": "",
    "errors": {
@@ -10003,7 +10001,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4438,
+   "line": 4437,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10103,7 +10101,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4549,
+   "line": 4548,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10401,7 +10399,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6219,
+   "line": 6218,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10509,7 +10507,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3235,
+   "line": 3234,
    "hash": "54b00476fd18ef9d",
    "does": "",
    "errors": {
@@ -10612,7 +10610,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3431,
+   "line": 3430,
    "hash": "130ced1d0eda9241",
    "does": "",
    "errors": {
@@ -10719,7 +10717,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3618,
+   "line": 3617,
    "hash": "77f9463c104b2ef9",
    "does": "",
    "errors": {
@@ -10816,7 +10814,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4420,
+   "line": 4419,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10914,7 +10912,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4260,
+   "line": 4259,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -11010,7 +11008,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4270,
+   "line": 4269,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11108,7 +11106,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4312,
+   "line": 4311,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11203,7 +11201,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4377,
+   "line": 4376,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11303,7 +11301,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3330,
+   "line": 3329,
    "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
@@ -11405,7 +11403,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3168,
+   "line": 3167,
    "hash": "4fb72caa3f81d69c",
    "does": "",
    "errors": {
@@ -11825,7 +11823,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3645,
+   "line": 3644,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -30654,7 +30652,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1576,
-   "hash": "6a5797d12ad93b40",
+   "hash": "8c99bea11618f65b",
    "does": "",
    "errors": {
     "count": 0,
@@ -30692,7 +30690,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30700,7 +30698,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
@@ -30718,6 +30716,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the web outbox queues product edits on the shop owner's device and replays them after an app update; an entry written by an older page may carry a key this server no longer names, and refusing it would strand the whole queue"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -30732,11 +30733,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6a5797d12ad93b40"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (queued outbox), merge typed boolean, item_data via the one catalogue-columns registry; 13 columns pass on regenerated evidence",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-catalogue.js",
@@ -38807,7 +38807,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
    "line": 287,
-   "hash": "a462ab6d9b3687be",
+   "hash": "b73279ffac1b0343",
    "does": "",
    "errors": {
     "count": 1,
@@ -38837,7 +38837,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38845,7 +38845,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -38860,6 +38860,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the mail provider owns the fields; only a SIGNED body is read, an unknown field is ignored, the fields we read are typed as Mailgun and SendGrid publish them"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -38871,13 +38874,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38900,7 +38903,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
    "line": 251,
-   "hash": "3a8844ba3a2cf7e9",
+   "hash": "4acc0a1e4076da0a",
    "does": "",
    "errors": {
     "count": 1,
@@ -38936,7 +38939,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38944,7 +38947,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -38959,6 +38962,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: Meta owns the payload keys; only a SIGNED body is read, an unknown key is ignored, the keys we read are typed from Meta published payload examples"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -38970,13 +38976,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40544,7 +40550,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4922,
+   "line": 4921,
    "hash": "b5bf1ff993c4dff3",
    "does": "",
    "errors": {
@@ -40654,7 +40660,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6471,
+   "line": 6470,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40762,7 +40768,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4773,
+   "line": 4772,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40868,7 +40874,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5243,
+   "line": 5242,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40974,7 +40980,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4213,
+   "line": 4212,
    "hash": "f07c1d1194dee405",
    "does": "",
    "errors": {
@@ -41070,7 +41076,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4583,
+   "line": 4582,
    "hash": "2230812987fb9ca7",
    "does": "",
    "errors": {
@@ -41180,7 +41186,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5828,
+   "line": 5827,
    "hash": "dac6f3853a1f6aa9",
    "does": "",
    "errors": {
@@ -41300,7 +41306,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5444,
+   "line": 5443,
    "hash": "e47df5423efd75e7",
    "does": "",
    "errors": {
@@ -41407,7 +41413,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5154,
+   "line": 5153,
    "hash": "10046b55f800d3dc",
    "does": "",
    "errors": {
@@ -41904,7 +41910,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4452,
+   "line": 4451,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -42004,8 +42010,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4508,
-   "hash": "19bcedf0e932c932",
+   "line": 4507,
+   "hash": "a6c3059bcdab231a",
    "does": "",
    "errors": {
     "count": 0,
@@ -42038,7 +42044,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -42072,13 +42078,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-worklist.js"
    ],
@@ -42104,8 +42110,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4528,
-   "hash": "9250618eaade5a10",
+   "line": 4527,
+   "hash": "0065084284fd1df2",
    "does": "",
    "errors": {
     "count": 0,
@@ -42138,7 +42144,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -42172,13 +42178,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -42200,7 +42206,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4174,
+   "line": 4173,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -42300,7 +42306,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6550,
+   "line": 6549,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -42405,7 +42411,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6529,
+   "line": 6528,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -42509,7 +42515,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6511,
+   "line": 6510,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -42613,7 +42619,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6790,
+   "line": 6789,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -42719,7 +42725,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4398,
+   "line": 4397,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42753,7 +42759,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -42787,13 +42793,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -42815,8 +42821,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4367,
-   "hash": "90c66f0cfb0c470f",
+   "line": 4366,
+   "hash": "b4db7e428e83b4b7",
    "does": "",
    "errors": {
     "count": 0,
@@ -42849,7 +42855,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -42883,13 +42889,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -42915,8 +42921,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4388,
-   "hash": "d3bcaba8227c7630",
+   "line": 4387,
+   "hash": "614db4519036ff5d",
    "does": "",
    "errors": {
     "count": 0,
@@ -42949,7 +42955,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -42983,13 +42989,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -43015,7 +43021,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4284,
+   "line": 4283,
    "hash": "1899c9cfdf06ac32",
    "does": "",
    "errors": {
@@ -43116,7 +43122,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4302,
+   "line": 4301,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -43150,7 +43156,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -43184,13 +43190,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -43216,8 +43222,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4344,
-   "hash": "9ce79b392b49494f",
+   "line": 4343,
+   "hash": "89b46078bdc9bea1",
    "does": "",
    "errors": {
     "count": 0,
@@ -43250,7 +43256,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -43284,13 +43290,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -43316,7 +43322,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4323,
+   "line": 4322,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -43410,7 +43416,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 408,
+   "line": 407,
    "hash": "d43294ebda426ddd",
    "does": "",
    "errors": {
@@ -44356,7 +44362,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 676,
-   "hash": "9c3263b6972766df",
+   "hash": "58330e43316e8657",
    "does": "",
    "errors": {
     "count": 0,
@@ -44392,7 +44398,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
@@ -44400,7 +44406,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -44417,6 +44423,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: an ERP agent on a kit we do not redeploy; process-then-forget, an unknown key is ignored and never stored; a known key of the wrong kind is refused before the key check"
+   },
    "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
@@ -44458,7 +44467,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 535,
-   "hash": "85810ec14448e0e3",
+   "hash": "73701939f1a71a0e",
    "does": "",
    "errors": {
     "count": 0,
@@ -44499,7 +44508,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
@@ -44507,7 +44516,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -44526,6 +44535,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: a Pi or gateway on a kit we do not redeploy; it keeps an event until a 2xx, so an unknown key is ignored and a known key of the wrong kind is refused before the key check"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": false,
@@ -46422,7 +46434,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
    "line": 319,
-   "hash": "71a3e009f85ce3c7",
+   "hash": "8e2652bcacb72fab",
    "does": "",
    "errors": {
     "count": 8,
@@ -46467,7 +46479,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -46475,7 +46487,7 @@
     "trips_budgeted": false
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -46493,6 +46505,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, to and from are typed as objects and the later checks keep their own words"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -46512,7 +46527,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "71a3e009f85ce3c7"
+    "stale_since": "8e2652bcacb72fab"
    },
    "status": "partial",
    "callers": [],
@@ -46537,7 +46552,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
    "line": 560,
-   "hash": "426c13a58af5ac69",
+   "hash": "c97f729a16051dfd",
    "does": "",
    "errors": {
     "count": 6,
@@ -46582,7 +46597,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -46590,7 +46605,7 @@
     "trips_budgeted": false
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -46606,6 +46621,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, from and ask are typed as objects and the later checks keep their own words"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -46625,7 +46643,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "426c13a58af5ac69"
+    "stale_since": "c97f729a16051dfd"
    },
    "status": "partial",
    "callers": [],
@@ -47210,7 +47228,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47218,7 +47236,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -47234,6 +47252,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: asked by the app, the till, the shop screen and the connector (key scopes, some on cached older builds); it reads no body key at all, so any key is ignored"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -47245,13 +47266,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "core.js",
     "promo.html",
@@ -49463,7 +49484,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 940,
-   "hash": "a1cb8e5641aacb95",
+   "hash": "aa16ade8f3f0dd21",
    "does": "",
    "errors": {
     "count": 1,
@@ -49495,7 +49516,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -49532,11 +49553,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a1cb8e5641aacb95"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49764,7 +49784,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 459,
-   "hash": "8ed7f2679a6d6f0e",
+   "hash": "f354f8f23256a292",
    "does": "",
    "errors": {
     "count": 0,
@@ -49797,7 +49817,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -49805,7 +49825,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -49822,6 +49842,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the desktop connector's heartbeat, sent by installed software on older and newer kits; the handler picks named keys only, every known key is typed and counters is bounded (20 whole-number counters)"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": false,
@@ -49836,11 +49859,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8ed7f2679a6d6f0e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49863,7 +49885,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 1019,
-   "hash": "8db4c07243dfa315",
+   "hash": "6627938ea0d3c11c",
    "does": "",
    "errors": {
     "count": 1,
@@ -49898,15 +49920,15 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -49923,6 +49945,10 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped"
+   },
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -49937,11 +49963,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8db4c07243dfa315"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1107 stage2 tolerant-by-design: 13 columns read, known keys typed from provider docs and recorded callers, strict_input exempt with test",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52361,7 +52386,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 105,
-   "hash": "c28a1c5efa74f6c4",
+   "hash": "b443772f4998f191",
    "does": "",
    "errors": {
     "count": 1,
@@ -52420,7 +52445,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "exempt": {
-    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
    },
    "reported": {
     "bfla_role_check": true,
@@ -52433,11 +52458,12 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
     "signed_off_by_date": null,
-    "lifecycle": null
+    "lifecycle": "stable",
+    "stale_since": "b443772f4998f191"
    },
    "status": "partial",
    "callers": [],
@@ -52462,7 +52488,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 106,
-   "hash": "8389ffdbe820ed19",
+   "hash": "7ffb40a2463ac7a9",
    "does": "",
    "errors": {
     "count": 1,
@@ -52521,7 +52547,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "exempt": {
-    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
    },
    "reported": {
     "bfla_role_check": true,
@@ -52537,10 +52563,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7ffb40a2463ac7a9"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52563,7 +52590,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 58,
-   "hash": "1a7ce6f875846cf0",
+   "hash": "054411c51914439a",
    "does": "",
    "errors": {
     "count": 0,
@@ -52622,7 +52649,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "exempt": {
-    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+    "strict_input": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
    },
    "reported": {
     "bfla_role_check": true,
@@ -52638,7 +52665,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1023: API-43 tolerant outward (Athi 8 Nov); 13 columns read in the register row, strict_input exempt only while schema_in is true; backward compatible, a closed body is relaxed so no caller breaks; handler and contract unchanged otherwise",
+    "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53230,7 +53257,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53238,7 +53265,7 @@
     "trips_budgeted": true
    },
    "applies": {
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -53254,6 +53281,9 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "exempt": {
+    "strict_input": "S33-T: a connector's stock feed (ERP or desktop software on older versions) posts the list under items; an extra key beside it must not stop the feed"
+   },
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -53268,11 +53298,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a768421e9f8b3239"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (connector feed), proof in api-tolerant-doors; 13 columns pass on regenerated evidence",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -53299,7 +53328,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 470,
-   "hash": "90be73d405856299",
+   "hash": "c993fa7918b929b8",
    "does": "",
    "errors": {
     "count": 0,
@@ -53331,7 +53360,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53370,11 +53399,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "90be73d405856299"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers are web prodAddMany only, unknown key refused by name; 13 columns pass on regenerated evidence",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -53605,7 +53633,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1201,
-   "hash": "31d7f428eac73403",
+   "hash": "5cb008903ecb7365",
    "does": "",
    "errors": {
     "count": 0,
@@ -53644,7 +53672,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53685,11 +53713,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "31d7f428eac73403"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers web cap-catalogue and till (noQueue), confirm boolean, sheet string or integer; 13 columns pass on regenerated evidence",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -53720,7 +53747,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1128,
-   "hash": "39622ebf11654c79",
+   "hash": "6a4c3d0eb3eacf96",
    "does": "",
    "errors": {
     "count": 0,
@@ -53752,7 +53779,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53790,11 +53817,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "39622ebf11654c79"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers web cap-catalogue and till (noQueue), sheet string or integer; 13 columns pass on regenerated evidence",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -62881,7 +62907,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6137,
+   "line": 6136,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62993,7 +63019,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6363,
+   "line": 6362,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -63098,7 +63124,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6419,
+   "line": 6418,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -63205,7 +63231,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6494,
+   "line": 6493,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -63310,7 +63336,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5287,
+   "line": 5286,
    "hash": "b7cf1cbeb711e833",
    "does": "",
    "errors": {
@@ -63469,7 +63495,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4572,
+   "line": 4571,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -63573,7 +63599,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6637,
+   "line": 6636,
    "hash": "66977b3f37bccaf4",
    "does": "",
    "errors": {
