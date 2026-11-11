@@ -1,0 +1,24 @@
+'use strict';
+/**
+ * tests/lib/bill-total-fixtures.cjs — ONE SET OF STORED BILLS, one row per RULE-MATRIX column (ACC-206 C1; C2 and D1 reuse it).
+ *
+ * owns       the stored shapes a chit's money can have had (summary_json + business_json + the detail column), with the figures a hand
+ *            works out BESIDE them: `taxable` (what the owner earned from, tax is not income) and `total` (what the buyer paid).
+ * called by  tests/cost-margin-basis.test.cjs; later tests/bill-total-sql.test.cjs (C2) and the web byte copy (D1).
+ * ⚠️ The expected figures are HAND figures from the audit (PM/ACC-206-READER-AUDIT-2026-11-11.md), never read from an engine here.
+ *    `total` is null where the chit carries no engine figure to compare; `taxable` is null where the owner's margin is unknown.
+ */
+const stamped = { stamps: { total_value: { from: 'money.total' } } };
+
+const FIXTURES = [
+  { id: 'counter-bill', column: 'counter bill 1,000 + 180 tax', detail_total: 1180, summary: Object.assign({ total_value: 1180, money: { taxable: 1000, tax: 180, total: 1180 } }, stamped), taxable: 1000, total: 1180 },
+  { id: 'b2b-new', column: 'B2B invoice since 2 Nov (180 + 9)', detail_total: 189, summary: Object.assign({ total_value: 189, money: { taxable: 180, tax: 9, total: 189 } }, stamped), taxable: 180, total: 189 },
+  { id: 'b2b-pre-2-nov', column: 'B2B invoice before 2 Nov (total_value is the route net)', detail_total: 180, summary: { total_value: 180, money: { taxable: 180, tax: 9, total: 189 } }, taxable: 180, total: 189 },
+  { id: 'money-net-only', column: 'money block with net, no taxable', detail_total: 189, summary: { total_value: 189, money: { net: 180, total: 189 } }, taxable: 180, total: 189 },
+  { id: 'pre-7-sep', column: 'before 7 Sep: total_value only, no money block', detail_total: 180, summary: { total_value: 180 }, taxable: null, total: 180, placed: 180 },
+  { id: 'withheld', column: 'TR-6 operator copy (oversight)', detail_total: 189, summary: { oversight: true, total_value: 189, money: { taxable: 180, tax: 9, total: 189 } }, taxable: null, total: null, withheld: true },
+  { id: 'no-money', column: 'a note: no money at all', detail_total: null, summary: {}, taxable: null, total: null },
+  { id: 'credit-note', column: 'counter credit note (ACC-255: money null, negative sign)', detail_total: -1180, summary: { total_value: -1180, money: null }, taxable: null, total: -1180, placed: -1180 }
+];
+
+module.exports = { FIXTURES };
