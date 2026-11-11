@@ -666,6 +666,7 @@ const GUARDS = [
   'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
   'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
+  'regression-harness.test.cjs', // MNT (11 Nov): scripts/regression.js never claims a pass it did not see (HARNESS ERROR, PASS 0; non-party checks accept only 403/404); offline, no server
   'incidents.test.js', // CMP-29: an incident is refused without an account of what happened, in words, before anything is written
   'line-complete.test.cjs', // 1 line model (wave 3): a line that asked for nothing is not done; the roll-up counts only genuinely finished lines
   'work-rows.test.cjs', // 1 line model (wave 3): GET /api/work list / row / sheet through the real router: folders, stage words, per-line delivery, truncation, RLS, one batch not a query per row
