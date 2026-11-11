@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 129 | `rows` | `crm.js` | still in them: |
 | 118 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
-| 113 | `read` | `books-cashflow.js` | Trips: |
+| 114 | `read` | `books-cashflow.js` | Trips: |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 102 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
@@ -70,7 +70,7 @@ of file each thing is; this says what already does the job.
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
-| 37 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 38 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 36 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 36 | `page` | `cap-catalogue.js` |  |
 | 35 | `closeModal` | `app.html` |  |
