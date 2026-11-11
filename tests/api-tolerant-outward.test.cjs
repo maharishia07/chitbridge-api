@@ -26,7 +26,7 @@ test('a listed route: strict_input does not apply; an unlisted one still does', 
 
 test('the real scope file lists the API-43 doors and the S33-T doors, each sound', () => {
   const found = register.hardeningScope().tolerantOutward;
-  assert.deepStrictEqual(Object.keys(found).sort(), ['POST /api/integrations/ask/:handle/stock', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY]);
+  assert.deepStrictEqual(Object.keys(found).sort(), ['PATCH /api/products/:id', 'POST /api/integrations/ask/:handle/stock', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY, 'POST /api/products/availability/bulk']);
 });
 
 const rows = [{ key: KEY, declared: [], columns: { schema_in: true } }, { key: 'POST /api/x', declared: [], columns: { schema_in: false } }];

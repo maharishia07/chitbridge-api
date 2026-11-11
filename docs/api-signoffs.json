@@ -2545,11 +2545,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/products/:id": {
-   "hash": "52a641631fb0088a",
+   "hash": "8c99bea11618f65b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (queued outbox), merge typed boolean, item_data via the one catalogue-columns registry; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "PATCH /api/quick-keys/groups/:id": {
@@ -3825,19 +3825,19 @@
    "lifecycle": "stable"
   },
   "POST /api/offers/evaluate": {
-   "hash": "2b5310f255e50b8e",
+   "hash": "b443772f4998f191",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; ctx closed typed key list = the six keys the engine reads, junk refused, unlisted ignored; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "POST /api/offers/explain": {
-   "hash": "7fb05f0f93b0c170",
+   "hash": "7ffb40a2463ac7a9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; ctx closed typed key list = the six keys the engine reads, junk refused, unlisted ignored; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "POST /api/pricing/price": {
@@ -3873,19 +3873,19 @@
    "lifecycle": "stable"
   },
   "POST /api/products/availability/bulk": {
-   "hash": "e22e7ba9374b3ef4",
+   "hash": "a768421e9f8b3239",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (connector feed), proof in api-tolerant-doors; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "POST /api/products/bulk": {
-   "hash": "8cc9e1bb30927555",
+   "hash": "c993fa7918b929b8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers are web prodAddMany only, unknown key refused by name; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "POST /api/products/bulk-update": {
@@ -3905,19 +3905,19 @@
    "lifecycle": "stable"
   },
   "POST /api/products/import": {
-   "hash": "668511f633758dd5",
+   "hash": "5cb008903ecb7365",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers web cap-catalogue and till (noQueue), confirm boolean, sheet string or integer; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "POST /api/products/import/preflight": {
-   "hash": "4345c2ea3bad5916",
+   "hash": "6a4c3d0eb3eacf96",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers web cap-catalogue and till (noQueue), sheet string or integer; 13 columns pass on regenerated evidence",
    "lifecycle": "stable"
   },
   "POST /api/products/lists/adopt": {
