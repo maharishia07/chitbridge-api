@@ -562,6 +562,30 @@
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
    "lifecycle": "stable"
   },
+  "GET /api/chits/:chit_id/messages": {
+   "hash": "e7405c1b8ed96b8a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "hash": "7d6648d7dd037fba",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/diagnosis": {
+   "hash": "c399dc60b819e648",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
   "GET /api/chits/:id/trace": {
    "hash": "bddc64e2800083d8",
    "names_clear": true,
@@ -2594,6 +2618,38 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
+  "POST /api/chits/:chit_id/messages": {
+   "hash": "e14a6bbe5c28d0a0",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/disputes": {
+   "hash": "3c143966d6c6214e",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/close": {
+   "hash": "a6c3059bcdab231a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "hash": "0065084284fd1df2",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
   "POST /api/chits/:chit_id/reprice": {
    "hash": "e85b09ed8ef50acb",
    "names_clear": true,
@@ -2640,6 +2696,46 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/register/entries/:raida_id/accept": {
+   "hash": "51520b6d4514f37c",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/register/entries/:raida_id/close": {
+   "hash": "b4db7e428e83b4b7",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/register/entries/:raida_id/revise": {
+   "hash": "614db4519036ff5d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/register/subjects/:subject_id/close": {
+   "hash": "f7a13c995a2cd802",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/register/subjects/:subject_id/entries": {
+   "hash": "89b46078bdc9bea1",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
    "lifecycle": "stable"
   },
   "POST /api/chits/register/templates": {
