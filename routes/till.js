@@ -3629,7 +3629,7 @@ function billMoney(row) {
   const money = (row.summary_json || {}).money || {};
   return {
     saved: money.savings != null ? money.savings : null,
-    taxable: money.taxable != null ? money.taxable : money.net != null ? money.net : null,
+    taxable: counterBill.taxableOf(row.summary_json),
     tax: money.tax != null ? money.tax : null
   };
 }
