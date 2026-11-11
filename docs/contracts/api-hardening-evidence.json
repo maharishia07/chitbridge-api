@@ -374,11 +374,9 @@
    "output_allowlist": true
   },
   "POST /api/till/stock": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/stock/bulk": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/diagnostic": {
@@ -392,14 +390,10 @@
    "output_allowlist": true
   },
   "POST /api/till/flags": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/till/counters": {
    "output_allowlist": true
-  },
-  "POST /api/till/quick-keys/state": {
-   "strict_input": true
   },
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
@@ -412,9 +406,6 @@
   },
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
-  },
-  "POST /api/till/quick-keys/screen-config": {
-   "strict_input": true
   },
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
@@ -436,12 +427,10 @@
    "output_allowlist": true
   },
   "POST /api/till/reward": {
-   "strict_input": true,
    "output_allowlist": true,
    "idempotent_money_write": true
   },
   "POST /api/till/reward/claim": {
-   "strict_input": true,
    "output_allowlist": true,
    "idempotent_money_write": true
   },
