@@ -243,6 +243,48 @@ async function paidCase(label, amount, date, want) {
     eq('NAMES · the old keys equal the before-payments meaning', [(c.payable_minor || {}).cgst_minor, c.pay_total_minor], [6000, 6000]);
   });
 
+  /* ═══ the second critic's MUSTs (plan section 4.7) and the dated-surplus SHOULD ═══ */
+  const TODO = require(path.join(H.API, 'lib', 'books-todo'));
+  const gstRow = async (W) => (await TODO.todo(SHOP, W.setting, '2026-11-12')).find((row) => row.kind === 'gst_due') || null;
+
+  await section('R1 · a CLOSED month answers stored still_to_pay less the payments named for it since (paid_since_close): close (still 6000), then pay 6000 → the replay and the Todo owe 0', async () => {
+    const W = await world(true);
+    const first = await W.close();
+    eq('R1 · close: still_to_pay_total_minor 6000', first.still_to_pay_total_minor, 6000);
+    const row = await gstRow(W);
+    eq('R1 · the Todo before paying names October with 6000 owed', row && row.items[0].owed_minor, 6000);
+    const p = await W.pay('CH-R1', 6000, '2026-11-09');
+    ok('R1 · the 6000 payment posts', p.ok === true, JSON.stringify(p));
+    const again = await W.close();
+    ok('R1 · the replay is the same entry', again.duplicate === true && again.entry_no === first.entry_no, JSON.stringify([again.duplicate, again.entry_no, first.entry_no]));
+    eq('R1 · the replay: still_to_pay_total 0 · paid_since_close 6000 · the stored paid stays {}', [again.still_to_pay_total_minor, (again.paid_since_close_minor || {}).cgst_minor, Object.keys(again.paid_before_close_minor || { x: 1 }).length], [0, 6000, 0]);
+    eq('R1 · the Todo after paying has no GST row (it never re-asks for money)', await gstRow(W), null);
+  });
+
+  await section('R2 · an UNCLOSED month reads the payments it NAMES, not their dates: a challan dated 9 Nov (after October ended) for October is counted by the Todo before the close: owes 0 (output 10000 − credit 4000 − paid 6000)', async () => {
+    const W = await world(true);
+    await W.pay('CH-R2', 6000, '2026-11-09');
+    eq('R2 · the Todo has no GST row', await gstRow(W), null);
+    const W2 = await world(true);
+    eq('R2b · with nothing paid the Todo owes 6000, the set-off already applied (credit first), not the gross 10000', (await gstRow(W2) || { items: [{}] }).items[0].owed_minor, 6000);
+  });
+
+  await section('R3 · K2 ledger AS AT 31 Oct: the surplus is dated the later of span.end and the last named payment (20 Oct → 31 Oct), so on 31 Oct output CGST is 0 and the advance holds 4000; K1 (paid 9 Nov) is dated 9 Nov', async () => {
+    const asAt = (W, role, day) => {
+      const acc = W.X.T.accounts.find((a) => a.entity_id === SHOP && a.role === role);
+      return W.X.T.lines.filter((l) => l.account_id === acc.account_id && String(W.X.T.entries.find((h) => h.entry_id === l.entry_id).posting_date).slice(0, 10) <= day).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
+    };
+    const W = await world(true);
+    await W.pay('CH-R3', 10000, '2026-10-20');
+    await W.close();
+    eq('R3 · K2 as at 31 Oct: output · input · advance', [asAt(W, 'output_cgst', '2026-10-31'), asAt(W, 'input_cgst', '2026-10-31'), asAt(W, 'tax_advance_cgst', '2026-10-31')], [0, 0, 4000]);
+    const V = await world(true);
+    await V.pay('CH-R3b', 10000, '2026-11-09');
+    await V.close();
+    eq('R3 · K1 as at 31 Oct: output credit 6000 (the payment is not yet made), advance 0', [asAt(V, 'output_cgst', '2026-10-31'), asAt(V, 'tax_advance_cgst', '2026-10-31')], [-6000, 0]);
+    eq('R3 · K1 as at 9 Nov: output 0, advance 4000', [asAt(V, 'output_cgst', '2026-11-09'), asAt(V, 'tax_advance_cgst', '2026-11-09')], [0, 4000]);
+  });
+
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
   process.exit(fail ? 1 : 0);
 })();
