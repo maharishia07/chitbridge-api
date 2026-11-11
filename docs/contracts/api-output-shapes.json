@@ -6210,17 +6210,72 @@
       "status": "200",
       "schema": {
         "type": "object",
-        "required": [
-          "lines"
-        ],
         "properties": {
-          "lines": {}
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "text"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "value": {},
+                "tone": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "money": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "figures": {
+            "type": "object"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "needs_you",
+              "in_use",
+              "not_started"
+            ]
+          },
+          "suppliers": {
+            "type": "number"
+          },
+          "customers": {
+            "type": "number"
+          },
+          "may_sample": {
+            "type": "object"
+          },
+          "in": {
+            "type": "number"
+          },
+          "out": {
+            "type": "number"
+          },
+          "tasks": {
+            "type": "number"
+          },
+          "stuck": {
+            "type": "number"
+          }
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
       },
-      "observed": 1,
-      "open": [],
+      "observed": 3,
+      "open": [
+        "lines[].money",
+        "figures"
+      ],
       "closed_by": "recordings",
       "example": {
         "url": "/api/facts/till"
