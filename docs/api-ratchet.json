@@ -3,7 +3,7 @@
  "stage": "2b",
  "updated": "2026-11-11",
  "total": 638,
- "not_meeting": 14,
+ "not_meeting": 4,
  "codes_total": 585,
  "codes_pending": 0,
  "raw_error_writes": 1,
@@ -11,9 +11,9 @@
  "tolerant_outward": 26,
  "columns_failing": {
   "strict_input": 0,
-  "output_allowlist": 2,
+  "output_allowlist": 0,
   "foreign_id_404": 1,
-  "idempotent_money_write": 2,
+  "idempotent_money_write": 1,
   "inbound_validated": 0,
   "trips_budgeted": 0
  },
