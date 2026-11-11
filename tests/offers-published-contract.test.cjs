@@ -13,14 +13,14 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const assert = require('assert');
 const router = require('../routes/offers');
-const { contract } = require('../lib/offers-contract');
+const { contract, CTX_SCHEMA } = require('../lib/offers-contract');
 
 let passed = 0;
 const check = (name, fn) => {
   fn();
   passed++;
 };
-const LOOSE = { content: { 'application/json': { schema: { type: 'object', properties: { lines: {}, offers: {}, ctx: {} } } } } };
+const LOOSE = { content: { 'application/json': { schema: { type: 'object', properties: { lines: { type: 'array' }, offers: { type: ['array', 'null'] }, ctx: CTX_SCHEMA } } } } }; /* S33-T: ctx names the keys the engine reads, typed */
 const published = (route) => router.openapi.paths['/api/offers/' + route].post;
 const enforced = (route) => {
   const layer = router.stack.find((item) => item.route && item.route.path === '/' + route && item.route.methods.post);

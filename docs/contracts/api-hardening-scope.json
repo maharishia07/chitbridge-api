@@ -229,6 +229,8 @@
   "POST /api/offers/explain": { "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md", "caller_class": "keyed_outward", "test": "tests/api-problem-offers.test.cjs" },
   "POST /api/integrations/ask/:handle/stock": { "reason": "S33-T: a public stock ask from a store's connector or a partner page; it reads only codes and emits it; an unknown key is ignored", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
   "POST /api/integrations/heartbeat": { "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older versions; the handler picks named keys only", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
-  "POST /api/integrations/profile": { "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" }
+  "POST /api/integrations/profile": { "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" },
+  "PATCH /api/products/:id": { "reason": "S33-T: the web outbox queues product edits on the shop owner's device and replays them after an app update; an entry written by an older page may carry a key this server no longer names, and refusing it would strand the whole queue", "caller_class": "queued_web_outbox", "test": "tests/api-tolerant-doors.test.cjs" },
+  "POST /api/products/availability/bulk": { "reason": "S33-T: a connector's stock feed (ERP or desktop software on older versions) posts the list under items; an extra key beside it must not stop the feed", "caller_class": "desktop_connector", "test": "tests/api-tolerant-doors.test.cjs" }
  }
 }

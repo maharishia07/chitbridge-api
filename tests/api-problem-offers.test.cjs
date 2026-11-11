@@ -129,6 +129,11 @@ async function unknownKeyIgnored() {
     const plain = await ask(route, { lines: LINES, offers, ctx: CTX });
     const extra = await ask(route, { lines: LINES, offers, ctx: CTX, zz_unknown_field: 1 });
     check(route + ': an unknown key answers 200 and the same body as without it', plain.status === 200 && extra.status === 200 && JSON.stringify(plain.json) === JSON.stringify(extra.json), [plain.status, extra.status, extra.json]);
+    /* S33-T: ctx has a closed key list (lib/offers-contract CTX_PROPS): a key outside it is ignored (here one that would swap the money words), a junk value in a listed key is refused */
+    const shaped = await ask(route, { lines: LINES, offers, ctx: Object.assign({ money: 'x', eligibleSubtotal: 1, zz_unknown: 1 }, CTX) });
+    check(route + ': an unlisted ctx key (zz_unknown, money, eligibleSubtotal) does not shape the answer', shaped.status === 200 && JSON.stringify(shaped.json) === JSON.stringify(plain.json), [shaped.status, shaped.json]);
+    const junk = await ask(route, { lines: LINES, offers, ctx: { currency: ['AUD'] } });
+    check(route + ': a junk value in a listed ctx key is refused in the problem shape', junk.status >= 400 && junk.status < 500 && junk.json && junk.json.code && junk.json.status === junk.status, [junk.status, junk.json]);
   }
 }
 
