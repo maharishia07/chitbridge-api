@@ -252,6 +252,8 @@ function checkCounts(baseRatchet, head, headRatchet, baseStage) {
   const problems = stage.problems.slice();
   if (actual > allowed) problems.push('routes not meeting the standard rose to ' + actual + ' (allowed ' + allowed + ' from the base ratchet of ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
   if (headRatchet.not_meeting < actual || headRatchet.total !== head.counts.routes) problems.push('docs/api-ratchet.json says ' + headRatchet.not_meeting + ' of ' + headRatchet.total + ' but the register says ' + actual + ' of ' + head.counts.routes + ': run node tools/api-ratchet.cjs --write');
+  /* STRICT (CB_GENERATED=strict: main and batch/*): the counts are written once, in the batch, so a committed count must EQUAL the code's: a stale-high count would let the next PR use the slack, and the check above only fails a count that is too low (critic, 11 Nov) */
+  if (process.env.CB_GENERATED === 'strict' && headRatchet.not_meeting !== actual) problems.push('docs/api-ratchet.json says ' + headRatchet.not_meeting + ' not meeting but the register says ' + actual + ' (strict: equal, not just not-lower): run node tools/api-ratchet.cjs --write');
   console.log('not meeting: ' + actual + ' of ' + head.counts.routes + ' (base ratchet ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
   return problems;
 }
@@ -264,6 +266,7 @@ function checkColumns(baseRatchet, head, headRatchet) {
     const actual = head.counts.columns[name].failing;
     const before = baseRatchet.columns_failing && baseRatchet.columns_failing[name];
     if (before !== undefined && actual > before + added) problems.push('routes failing ' + name + ' rose to ' + actual + ' (allowed ' + (before + added) + ')');
+    if (process.env.CB_GENERATED === 'strict' && headRatchet.columns_failing && headRatchet.columns_failing[name] > actual) problems.push('docs/api-ratchet.json columns_failing.' + name + ' is ' + headRatchet.columns_failing[name] + ' but the register says ' + actual + ' (strict: equal, not just not-lower): run node tools/api-ratchet.cjs --write');
     if (!headRatchet.columns_failing || headRatchet.columns_failing[name] < actual) problems.push('docs/api-ratchet.json columns_failing.' + name + ' is below the register: run node tools/api-ratchet.cjs --write');
   });
   console.log('failing per column: ' + Object.keys(head.counts.columns || {}).map((name) => name + ' ' + head.counts.columns[name].failing + '/' + head.counts.columns[name].applies).join(' · '));

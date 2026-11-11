@@ -222,7 +222,7 @@
   }
  ],
  "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
- "tolerant_outward_ceiling": 14,
+ "tolerant_outward_ceiling": 13,
  "tolerant_outward": {
   "POST /api/pricing/price": {
    "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
@@ -238,11 +238,6 @@
    "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
    "caller_class": "keyed_outward",
    "test": "tests/api-problem-offers.test.cjs"
-  },
-  "POST /api/integrations/ask/:handle/stock": {
-   "reason": "S33-T: a public stock ask from a store's connector or a partner page; it reads only codes and emits it; an unknown key is ignored",
-   "caller_class": "desktop_connector",
-   "test": "tests/api-tolerant-doors.test.cjs"
   },
   "POST /api/integrations/heartbeat": {
    "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older versions; the handler picks named keys only",

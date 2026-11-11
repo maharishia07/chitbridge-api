@@ -25,7 +25,6 @@ const CANARY = { zz_unknown: 'zz_unknown_canary_value' };
 
 /** one entry per listed door: its mount and route file, the url, a good body, and one junk value in a known key */
 const DOORS = [
-  { route: 'POST /api/integrations/ask/:handle/stock', mount: '/api/integrations', file: 'routes/integrations.js', url: '/api/integrations/ask/tea-shop/stock', rows: (sql) => (/FROM identities WHERE .user_id/.test(sql) ? { rows: [{ identity_id: SHOP }], rowCount: 1 } : /catalogue_visibility/.test(sql) ? { rows: [{ catalogue_visibility: 'public', plan: 'free', bridge_id: 'tea-shop', business_status: 'active' }], rowCount: 1 } : null), good: { codes: ['A1', 'B2'] }, junk: { codes: 'not-a-list' } },
   { route: 'POST /api/integrations/heartbeat', mount: '/api/integrations', file: 'routes/integrations.js', url: '/api/integrations/heartbeat', good: { id: 'kit-1', name: 'tally', host: 'PC1', streams: ['sales'] }, junk: { streams: 'sales' } },
   { route: 'POST /api/integrations/profile', mount: '/api/integrations', file: 'routes/integrations.js', url: '/api/integrations/profile', good: { source: 'tally', fields: { legal_name: 'Tea Shop' } }, junk: { fields: 'not-an-object' } }
 ];
