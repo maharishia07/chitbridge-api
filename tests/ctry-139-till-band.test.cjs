@@ -15,7 +15,7 @@ function grab(n) {
   return h.slice(at, i + 1);
 }
 const FNS = ['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop', 'billWhen', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry',
-  'bandWordsOf', 'rateNoteOf', 'slipRateOf', 'pinBillMoment', 'slipOfRow', 'stampBands'];
+  'bandWordsOf', 'rateNoteOf', 'slipRateOf', 'pinBillMoment', 'engineReadyFor', 'slipOfRow', 'stampBands'];
 const SHOP = { name: 'Kolkata Garments', gstin: '19AABCK1234F1Z6', state_code: '19', country: 'IN', reg_type: 'regular' };
 
 /** the page with a clock stopped at `now` (an ISO instant); `taxed` false = a shop that charges no GST */
@@ -92,12 +92,24 @@ ok('the bill slip and the duplicate print the same band words, read off the invo
   assert.strictEqual(p.slipRateOf({ kind: 'cash', invoice: m.invoice }, { gst_rate: 12 }, 0), '', 'a cash memo names no rate');
   assert.strictEqual(p.slipRateOf({ kind: 'tax', lines: [] }, { gst_rate: 12 }, 0), '  GST 12%', 'an old bill without an invoice keeps its line rate');
 });
-ok('billed_at and the band read the SAME day: a bill priced at 23:59 IST and saved after midnight keeps the priced moment', () => {
+ok('billed_at and the band read the SAME day: the bill is saved AT the priced moment, always (not a later clock read after a dialog or the number)', () => {
   const p = page('2025-09-22T18:29:00.000Z', [line('6109', 2500, 12)]), m = p.billMoney();   /* 23:59 IST on the 22nd */
   assert.strictEqual(m.when.day, '2025-09-22');
-  const same = {}; p.pinBillMoment(same, m); assert.ok(!('at' in same), 'same day: nothing to pin, billed_at is the moment it is saved');
-  const later = page('2025-09-22T18:31:00.000Z', []);   /* 00:01 IST on the 23rd */
-  const body = {}; later.pinBillMoment(body, m); assert.strictEqual(body.at, m.when.at);
+  const body = {}; page('2025-09-22T18:31:00.000Z', []).pinBillMoment(body, m);   /* the clock has since passed midnight IST */
+  assert.strictEqual(body.at, m.when.at); assert.strictEqual(p.shopDayOf(body.at), '2025-09-22');
+  assert.ok(grab('finish').includes('pinBillMoment(body, m)'), 'finish() pins the body before HOST.bill');
+  assert.ok(grab('finish').indexOf('pinBillMoment') < grab('finish').indexOf('HOST.bill('), 'and before the number is taken');
+});
+ok('a zone the device refuses gives no day, so NO invoice and the sale stops - never an unbanded bill at the catalogue rate', () => {
+  const p = page(RANG, [line('6109', 2500, 12)]); vm.runInContext("function shopTz(){ return 'Nowhere/Land'; }", p);
+  assert.strictEqual(p.shopDayOf(), ''); assert.strictEqual(p.billMoney().invoice, null);
+});
+ok('a credit note keys its rate-wise foot by the rate the ORIGINAL invoice charged (the band), not the catalogue rate stored on the line', () => {
+  const p = page(RANG, [line('6109', 2500.01, 12)]); vm.runInContext(grab('retRateOf'), p);
+  const inv = p.billMoney().invoice, stored = { gst_rate: 12 };
+  assert.strictEqual(p.retRateOf({ invoice: inv }, 0, stored), 18);
+  assert.strictEqual(p.retRateOf({}, 0, stored), 12, 'an old bill without an invoice keeps its stored rate');
+  assert.ok(grab('retMoney').includes('retRateOf(RET_FOR, n, l)'));
 });
 ok('a credit note is never re-rated: CBTax.determine is called once in the page, in billMoney (retMoney prorates the stored figures)', () => {
   const calls = h.match(/CBTax\.determine\(\{/g) || [];

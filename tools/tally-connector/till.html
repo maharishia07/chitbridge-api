@@ -19234,7 +19234,7 @@ function billMoney(){
      UAE shop billed tax-free. The goods are handed over at the counter, inside the shop's country: the same rule placeOfSupply
      already applies to the state (IGST Act s.10(1)(a)), now applied to the country. The engine is right to refuse the guess; the
      counter knows the shop. The server's seam is lib/tax-lines walkIn (the same rule, the same note). */
-  var shopCountry = String(sh.country || '').trim().toUpperCase(), when = billWhen();  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
+  var shopCountry = String(sh.country || '').trim().toUpperCase(), when = billWhen();  var inv = engineReadyFor(when) ? CBTax.determine({
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
@@ -19266,13 +19266,15 @@ function billMoney(){
  */
 /** ⭐ CTRY-139: the moment a bill is priced at and its shop day — the day the engine reads the law's dated price band by (asOf), and the day billed_at must read */
 function stampBands(){ try { billMoney(); } catch (e) { cbQuiet('stampBands:1', e); } }
+/** the engine is loaded AND the bill has a shop day to read the dated price band by: no day = no invoice, so the sale stops rather than bill unbanded */
+function engineReadyFor(when){ return !!(window.CBTax && CBTax.determine && when.day); }
 function billWhen(){ var now = new Date(); return { at: now.toISOString(), day: shopDayOf(now) }; }
 /** ⭐ CTRY-139: the words the ENGINE wrote for a line the law re-rated by price band (ItemList[n]._band, e.g. "18% · price above Rs 2,500 per piece") — read, never composed here; '' = no band */
 function bandWordsOf(invoice, index){ var item = invoice && invoice.ItemList && invoice.ItemList[index]; return (item && item._band) || ''; }
 /** the rate part of a line's note: the band's own words when the law set the rate, else the pack's word and the line's rate */
 function rateNoteOf(row){ return row.band ? ' · ' + schemeWord() + ' ' + esc(row.band) : (row.gst_rate ? ' · ' + schemeWord() + ' ' + row.gst_rate + '%' : ''); }
-/** ⭐ CTRY-139: a bill whose shop day moved on between pricing and saving (a slow payment across midnight) keeps the moment the engine priced it at, so billed_at and the band read the SAME day */
-function pinBillMoment(body, priced){ if (priced.when && shopDayOf(Date.now()) !== priced.when.day) body.at = priced.when.at; }
+/** ⭐ CTRY-139: a bill is saved AT the moment the engine priced it (always; never a later clock read after a payment dialog or the number), so billed_at and the band read the SAME shop day */
+function pinBillMoment(body, priced){ if (priced.when) body.at = priced.when.at; }
 /** BUY1: a border-decided invoice (supply 'domestic') says the walk-in was taxed as inside the shop's country; the note rides the chit */
 function walkInNote(invoice, country){
   if (!invoice || !invoice._cb || invoice._cb.supply !== 'domestic') return;
@@ -20337,10 +20339,13 @@ function shopTz(){
   return undefined;
 }
 function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
-/** ⭐ CTRY-139: the shop's calendar day (YYYY-MM-DD) of a moment, in the shop's zone — never a UTC slice (00:10 IST on 22 Sep is the 22nd). The till's twin of the api's books-hooks.dayOf; a zone the device refuses falls back to the device's own day. */
+/** ⭐ CTRY-139: the shop's calendar day (YYYY-MM-DD) of a moment, in the shop's zone — never a UTC slice (00:10 IST on 22 Sep is the 22nd). Built from Intl parts so no locale format can change it. The till's twin of the api's books-hooks.dayOf; a zone the device refuses answers '' (never a guess). */
 function shopDayOf(at){
   var moment = new Date(at == null ? Date.now() : at); if (isNaN(moment)) return '';
-  try { return moment.toLocaleDateString('en-CA', tzOpt({})); } catch (e) { cbQuiet('shopDayOf:1', e); return moment.toLocaleDateString('en-CA'); }
+  var parts = {}, zone = tzOpt({ year: 'numeric', month: '2-digit', day: '2-digit' });
+  try { new Intl.DateTimeFormat('en-US', zone).formatToParts(moment).forEach(function(part){ parts[part.type] = part.value; }); }
+  catch (e) { cbQuiet('shopDayOf:1', e); return ''; }   /* '' = no day: never a guess */
+  return parts.year + '-' + parts.month + '-' + parts.day;
 }
 /** 24-hour hh:mm in shop time — what the bar, the lock and the logs print */
 function hhmm(d){
@@ -25813,6 +25818,8 @@ function retHowOptions(ways, owed){
   return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
     + Object.keys(ways).map(function(tender){ return '<option value="' + esc(tender) + '"' + pick(tender) + '>' + esc(tender) + '</option>'; }).join('');
 }
+/** the rate a returned line was billed at: the original invoice's own line rate (a price band may have set it), else the line's stored rate */
+function retRateOf(bill, index, line){ var item = bill && bill.invoice && bill.invoice.ItemList && bill.invoice.ItemList[index]; return Number(item && item.GstRt != null ? item.GstRt : line.gst_rate) || 0; }
 /**
  * ⭐ WHAT THE SHOP OWES BACK. Every figure is the ORIGINAL line's own, scaled by the share coming back — so a
  * line that was sold at an offer is refunded at what was actually charged for it, not at today's price.
@@ -25847,13 +25854,13 @@ function retMoney(){
      * unreturnable. A shop could have refunded the same goods twice. Found before it shipped, by asking what
      * "already returned" means when two lines are returned separately.
      */
-    out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net,
+    var rt = retRateOf(RET_FOR, n, l);   /* CTRY-139: the rate the original invoice charged (a price band may have set it), not the catalogue's stored one */
+    out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net, gst_rate: rt || l.gst_rate,
                                           gross: -part('gross'),
                                           taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }));
     out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
     out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
     out.count = r2(out.count + q);
-    var rt = Number(l.gst_rate) || 0;
     if (rt) {
       out.byRate[rt] = out.byRate[rt] || { taxable: 0, tax: 0 };
       out.byRate[rt].taxable = r2(out.byRate[rt].taxable + taxable);

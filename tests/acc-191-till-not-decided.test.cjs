@@ -23,7 +23,7 @@ function grab(name) {
 }
 const NOT_DECIDED_LINE = SRC.split('\n').find((line) => line.startsWith('var NOT_DECIDED ='));
 assert.ok(NOT_DECIDED_LINE, 'the page has one word for an undecided tax');
-const BODY = [NOT_DECIDED_LINE, grab('taxFigure'), grab('domesticFootHTML'), grab('perRateFootHTML'), grab('retMoney')].join('\n')
+const BODY = [NOT_DECIDED_LINE, grab('taxFigure'), grab('domesticFootHTML'), grab('perRateFootHTML'), grab('retRateOf'), grab('retMoney')].join('\n')
   + '\nreturn { taxFigure, domesticFootHTML, perRateFootHTML, retMoney, setReturn: function(bill, qty){ RET_FOR = bill; RET_QTY = qty; } };';
 const make = new Function('money', 'r2', 'schemeWord', 'invoiceRule', 'taxHeadWord', 'reducedNoteHTML', 'esc', 'retBack', 'retLeft',
   'var RET_FOR = null; var RET_QTY = {};\n' + BODY);
