@@ -5606,7 +5606,7 @@ var CloudHost = {
     } catch (e) { cbQuiet('verify:2', e); return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' }; }
   },
   async doc(d){
-    var no = await nextNumber(docTagOf(d.kind));
+    var no = await nextNumber(docTagOf(d.kind), false, d.at);
     var doc = Object.assign({}, d, { no: no, at: d.at || new Date().toISOString(), catalogue_version: S && S.version });
     await DB.put('bills', Object.assign({}, doc, { doc: true }));
     await DB.put('queue', { no: no, at: doc.at, chitBody: chitOfDoc(doc) });
@@ -5658,7 +5658,7 @@ var CloudHost = {
    */
   async payment(p){
     LAST_SERIES = null;
-    var no = await nextNumber('R');
+    var no = await nextNumber('R', false, p.at);
     var doc = Object.assign({ at: new Date().toISOString(), till: tillId() }, p, { kind: 'payment', no: no });
     doc.chitBody = chitOfPayment(doc);
     var key = 'payments-' + doc.at.slice(0, 10);
@@ -20352,8 +20352,7 @@ function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
 /** ⭐ CTRY-139: the shop's calendar day (YYYY-MM-DD) of a moment, in the shop's zone — never a UTC slice (00:10 IST on 22 Sep is the 22nd). Built from Intl parts so no locale format can change it. The till's twin of the api's books-hooks.dayOf; a zone the device refuses answers '' (never a guess). */
 function shopDayOf(at){
   var moment = new Date(at == null ? Date.now() : at); if (isNaN(moment)) return '';
-  var pack = shopPack(), packZone = pack && Array.isArray(pack.timeZones) ? pack.timeZones[0] : null;
-  return dayInZone(moment, shopTz()) || (packZone ? dayInZone(moment, packZone) : '');   /* a zone the device refuses falls back to the pack's own; '' = no day, never a guess */
+  return dayInZone(moment, shopTz());   /* a one-zone country is its pack's zone (shopTz); a zone the device refuses = '' = no day, never a guess */
 }
 /** the YYYY-MM-DD of a moment in one zone (none named = the device's), from Intl parts; '' when the zone is refused */
 function dayInZone(moment, zone){
@@ -24221,7 +24220,7 @@ async function renumberBill(bill, why, drainRows){   /* `drainRows` (optional): 
   var from = bill.no, to = bill.renumber_to || null;
   if (!to) {
     LAST_SERIES = null;
-    try { to = await nextNumber(); } catch (_) { return null; }
+    try { to = await nextNumber(undefined, false, bill.at); } catch (_) { return null; }   /* CTRY-139: the number of the bill's own moment */
     if (!to || to === from) return null;
     await rememberRenumber(bill, to);
   }

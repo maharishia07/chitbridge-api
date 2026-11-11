@@ -100,12 +100,12 @@ ok('billed_at and the band read the SAME day: the bill is saved AT the priced mo
   assert.ok(grab('finish').includes('pinBillMoment(body, m)'), 'finish() pins the body before HOST.bill');
   assert.ok(grab('finish').indexOf('pinBillMoment') < grab('finish').indexOf('HOST.bill('), 'and before the number is taken');
 });
-ok('a zone the device refuses falls back to the pack zone (the same shop day)', () => {
-  const p = page(RANG, [line('6109', 2500, 12)]); vm.runInContext("function shopTz(){ return 'Nowhere/Land'; }", p);
-  assert.strictEqual(p.shopDayOf(), '2025-09-22'); assert.strictEqual(p.billMoney().net, 2625);
+ok('a one-zone country reads its pack zone (Asia/Kolkata) whatever the device says', () => {
+  const p = page(RANG, [line('6109', 2500, 12)]);
+  assert.strictEqual(p.shopTz(), 'Asia/Kolkata'); assert.strictEqual(p.shopDayOf(), '2025-09-22');
 });
-ok('no readable shop day at all (zone refused, no pack zone): NO invoice, the cart row says why BEFORE Pay, and finish() stops with those words, not "press refresh"', () => {
-  const p = page(RANG, [line('6109', 2500, 12)]); vm.runInContext("function shopTz(){ return 'Nowhere/Land'; } function shopPack(){ return null; }", p);
+ok('no readable shop day at all (the zone is refused; no guess from another zone): NO invoice, the cart row says why BEFORE Pay, and finish() stops with those words, not "press refresh"', () => {
+  const p = page(RANG, [line('6109', 2500, 12)]); vm.runInContext("function shopTz(){ return 'Nowhere/Land'; }", p);
   assert.strictEqual(p.shopDayOf(), '');
   const m = p.billMoney();
   assert.strictEqual(m.invoice, null); assert.ok(!m.noCountry); assert.ok(/cannot read the shop/.test(m.why) && /time zone/.test(m.why), m.why);
