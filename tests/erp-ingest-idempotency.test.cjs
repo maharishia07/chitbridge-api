@@ -36,7 +36,8 @@ function receiptRows(s, p) {
   if (/^SELECT receipt_id, outcome, chit_id, payload_hash, received_at FROM connector_receipt/.test(s)) return hideHeld ? [] : receipts.filter((r) => sameKey(r, p[0], column, p[1])).map((r) => ({ ...r }));
   if (/^UPDATE connector_receipt SET outcome = 'pending'/.test(s)) {
     reclaimSql = s; /* the stand-in applies the rule itself, so K4b reads the statement's own words */
-    const hit = receipts.filter((r) => sameKey(r, p[0], column, p[1]) && (r.outcome === 'failed' || (r.outcome === 'pending' && r.received_at < p[3])));
+    const takesFailed = s.includes("outcome = 'failed'"), takesStale = s.includes('received_at < $4'); /* the stand-in applies only the conditions the statement WRITES, so a condition removed from lib/erp-receipt.js is removed here too */
+    const hit = receipts.filter((r) => sameKey(r, p[0], column, p[1]) && ((takesFailed && r.outcome === 'failed') || (takesStale && r.outcome === 'pending' && r.received_at < p[3])));
     hit.forEach((r) => { r.outcome = 'pending'; r.received_at = p[2]; });
     return hit.map((r) => ({ receipt_id: r.receipt_id }));
   }
@@ -63,8 +64,8 @@ schema.hasTable = async () => true; schema.hasColumn = async (table, column) => 
 const workPattern = require.resolve(path.join(API, 'lib', 'workpattern'));
 require.cache[workPattern] = { id: workPattern, filename: workPattern, loaded: true, exports: { resolveWorkPattern: async () => ({}) } };
 const mint = require(path.join(API, 'lib', 'mint'));
-let chits = [], deliverFails = null;
-mint.deliver = async (sender, chitId) => { if (deliverFails) throw deliverFails; chits.push(chitId); };
+let chits = [], deliverFails = null, deliverMs = 0;
+mint.deliver = async (sender, chitId) => { if (deliverMs) await new Promise((done) => setTimeout(done, deliverMs)); if (deliverFails) throw deliverFails; chits.push(chitId); };
 
 const express = require('express');
 const app = express(); app.use(express.json());
@@ -123,8 +124,11 @@ const hashOf = (payload) => crypto.createHash('sha256').update(require(path.join
     ok('K6b the same doc_ref with a different body → 422 as well', refOther.status === 422 && refOther.body.code === 'IDEMPOTENCY_CONFLICT' && chits.length === 1, refOther);
 
     fresh(); deliverFails = new Error('down'); await send(server, doc(100)); deliverFails = null;
+    deliverMs = 60; /* the winner is still emitting while the other retry arrives */
     const [raceA, raceB] = await Promise.all([send(server, doc(100)), send(server, doc(100))]);
-    ok('K4c two retries of a failed document at once: ONE chit is made, the other retry is told to keep it (409) or finds the done receipt, never a second chit', chits.length === 1 && [raceA, raceB].some((r) => r.status === 200 && r.body.outcome === 'processed') && [raceA, raceB].every((r) => r.status === 200 || r.status === 409) && [raceA, raceB].every((r) => !(r.status === 200 && r.body.outcome === 'duplicate' && !r.body.chit_id)), { raceA, raceB, chits });
+    deliverMs = 0;
+    const raced = [raceA, raceB], claimedBy = raced.filter((r) => r.status === 200 && r.body.outcome === 'processed'), others = raced.filter((r) => !claimedBy.includes(r));
+    ok('K4c two retries of a failed document at once: exactly ONE claims it (200 processed, one chit) and the other is told to keep the document (409), never a duplicate of nothing', chits.length === 1 && claimedBy.length === 1 && others.length === 1 && others[0].status === 409 && others[0].body.code === 'IDEMPOTENCY_IN_PROGRESS', { raceA, raceB, chits });
     fresh(); receipts.push({ receipt_id: 'x', entity_id: SHOP, actor_id: ACTOR, doc_type: 'invoice', doc_ref: null, payload_hash: hashOf(doc(100).payload), outcome: 'processed', chit_id: 'c', received_at: new Date(), idem_key: 'p:' + hashOf(doc(100).payload) }); hideHeld = true;
     const unreadable = await send(server, doc(100));
     ok('K7 the receipt that blocked the claim cannot be read back: 503 (retryable), never a 200 duplicate of nothing; no chit', unreadable.status === 503 && unreadable.body.code === 'CHIT_NOT_DELIVERED' && chits.length === 0, unreadable);

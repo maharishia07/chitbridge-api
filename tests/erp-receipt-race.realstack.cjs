@@ -8,6 +8,7 @@
  * CARD      28-platform-and-operations/connectors-routes
  * Cases     R1 a failed receipt, 8 concurrent claimers → exactly 1 claimed, 7 in_progress · R2 a pending receipt older than the stale limit, 8 concurrent claimers → exactly 1 claimed
  *           R3 a fresh pending receipt → nobody claims it (all in_progress) · R4 a done receipt → all duplicate · R5 the same header key with another body → all conflict
+ * NEEDS    a SIT-ONLY superuser (or table-owner) role in CB_RACE_DB: RLS is FORCED on connector_receipt, so the app role cannot seed rows directly. Never point it at production.
  * Exit 0 all hold · 1 a case failed · 3 refused (no CB_RACE_DB, or the column idem_key is missing: run b852 first).
  */
 const crypto = require('crypto');
