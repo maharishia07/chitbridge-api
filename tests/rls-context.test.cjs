@@ -107,11 +107,11 @@ const EXPECTED = {
   /* @stage poc — no route reaches it, and a retention sweep is platform-wide by definition. If it is ever wired
      to a route, it needs a context or it will sweep only what it can see, which is nothing. */
   'lib/retention.js:chit_status': 'platform-wide retention sweep, @stage poc, unreached by any route',
-  /* ⭐ VERIFIED 2026-09-15, not assumed: catalogue_items' policy is
-       USING (entity_id = current_setting(app.current_entity) OR EXISTS (… visibility = 'public'))
-     so a public item IS readable with no context — 11,572 rows are visible to cb_app right now. This is the
-     storefront fallback for "the viewer does not own this item", and it works precisely because the policy
-     says it may. */
+  /* ⭐ VERIFIED 2026-09-15, re-stated for DB-102 (migrations/b851): catalogue_items has TWO policies. rls_entity
+     (FOR ALL) lets only the owning shop read and write; catalogue_items_public_read (FOR SELECT only) lets a
+     public item through with no context, which is the storefront fallback for "the viewer does not own this
+     item". It works precisely because that policy says it may, and it cannot reach UPDATE or DELETE.
+     Before b851 runs, the older single policy still covers all commands. */
   'routes/catalogue.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
   'routes/products.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
   /* ⭐ VERIFIED against migrations/archive/b265_signup_context_rls.sql: the ONLY policy on signup_context is

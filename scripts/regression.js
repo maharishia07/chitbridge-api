@@ -1,3 +1,6 @@
+// scripts/regression.js — the live criss-cross harness: drives the core mailing flows on the LIVE api and asserts logic + isolation between entities
+// OWNS the Alpha / Beta / Gamma regression run (send, TO + CC, status, thread, dispute) and its RESULT line · CALLED BY hand: node scripts/regression.js (CB_API names the api) and tests/regression-harness.test.cjs (offline) · FLOW  login by email → ids from the token → each check() → done()
+// CARD 29-qa-test-tooling-ux-locale-and-design-system/test-board
 // Cross-entity REGRESSION harness — drives the core mailing flows on the LIVE API and asserts logic + criss-cross
 // isolation. Finds issues the way the IoT harness did. Run: node regression.js
 const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
@@ -202,7 +205,7 @@ async function holdsCopy(token, chit_id) {
   check('Alpha (target) sees the dispute', has(aDisp.json, dispute_id || 'quality'));
   if (gammaOk) {
     const gDisp = await api('GET', '/api/chits/' + chit_id + '/disputes', { token: G.token });
-    check('Gamma CANNOT see the dispute', !has(gDisp.json, dispute_id || '') && (gDisp.status === 403 || gDisp.status === 200), 'status ' + gDisp.status);
+    check('Gamma CANNOT see the dispute', !has(gDisp.json, dispute_id || '') && (gDisp.status === 404 || gDisp.status === 403 || gDisp.status === 200), 'status ' + gDisp.status);
   }
   if (dispute_id) {
     const res9 = await api('PUT', '/api/chits/' + chit_id + '/disputes/' + dispute_id + '/resolve', {
