@@ -5,8 +5,8 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 47,
-  "meets": 592,
+  "partial": 46,
+  "meets": 593,
   "columns": {
    "strict_input": {
     "applies": 337,
@@ -52563,11 +52563,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7ffb40a2463ac7a9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 merged contract2: ctx cut to the closed typed key list (ctxOf), answer unchanged, no leak path; all 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
