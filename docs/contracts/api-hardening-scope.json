@@ -176,55 +176,123 @@
    "reason": "a microphone must never be the reason a sale stops: every fault of the route answers 200 ok:false (the counter falls back to the browser recogniser) and is logged with the request id, so there is no 500 to answer; KNOWN GAP, not closed: lib/speech.js why can carry up to 200 characters of the speech provider own error text (lines 103 and 115), so the route stays partial until cb-ai gives that why one plain sentence"
   },
   {
-   "route": "GET /api/chits/:chit_id/diagnosis",
-   "status": 404,
-   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/:chit_id/raida/:raida_id/close",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/:chit_id/raida/:raida_id/dispute",
-   "status": 404,
-   "reason": "lib/raida linkDispute answers an issue the shop does not hold with 400 CHIT_BAD_REQUEST (\"No issue with that id.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/entries/:raida_id/accept",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/entries/:raida_id/close",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/entries/:raida_id/revise",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/subjects/:subject_id/close",
-   "status": 404,
-   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/subjects/:subject_id/entries",
-   "status": 404,
-   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
    "route": "GET /api/entities/routing/preview",
    "status": 500,
    "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault of the route is never a 500 (a preview never red-boxes a form); KNOWN GAP, not closed: lib/raiseticket.js resolveDesk (line 150) turns a database fault into why with the raw code and message, and the route returns it in that 200, so the route stays partial until the raise-a-ticket owner gives that why one plain sentence"
   }
  ],
- "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",
+ "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
+ "tolerant_outward_ceiling": 22,
  "tolerant_outward": {
-  "POST /api/pricing/price": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
-  "POST /api/offers/evaluate": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
-  "POST /api/offers/explain": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+  "POST /api/pricing/price": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-43-pricing-tolerant.test.cjs"
+  },
+  "POST /api/offers/evaluate": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/offers/explain": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/integrations/heartbeat": {
+   "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older and newer kits; the handler picks named keys only, every known key is typed and counters is bounded (20 whole-number counters)",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/integrations/profile": {
+   "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "PATCH /api/products/:id": {
+   "reason": "S33-T: the web outbox queues product edits on the shop owner's device and replays them after an app update; an entry written by an older page may carry a key this server no longer names, and refusing it would strand the whole queue",
+   "caller_class": "queued_web_outbox",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/products/availability/bulk": {
+   "reason": "S33-T: a connector's stock feed (ERP or desktop software on older versions) posts the list under items; an extra key beside it must not stop the feed",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/connectors/ingest": {
+   "reason": "S33-T: a Pi or gateway on a kit we do not redeploy; it keeps an event until a 2xx, so an unknown key is ignored and a known key of the wrong kind is refused before the key check",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-problem-connectors.test.cjs"
+  },
+  "POST /api/connectors/erp-ingest": {
+   "reason": "S33-T: an ERP agent on a kit we do not redeploy; process-then-forget, an unknown key is ignored and never stored; a known key of the wrong kind is refused before the key check",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-problem-connectors.test.cjs"
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "reason": "S33-T: Meta owns the payload keys; only a SIGNED body is read, an unknown key is ignored, the keys we read are typed from Meta published payload examples",
+   "caller_class": "provider_webhook",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/capture/webhook/email": {
+   "reason": "S33-T: the mail provider owns the fields; only a SIGNED body is read, an unknown field is ignored, the fields we read are typed as Mailgun and SendGrid publish them",
+   "caller_class": "provider_webhook",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/events/ticket": {
+   "reason": "S33-T: asked by the app, the till, the shop screen and the connector (key scopes, some on cached older builds); it reads no body key at all, so any key is ignored",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/ctp/deliver": {
+   "reason": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, to and from are typed as objects and the later checks keep their own words",
+   "caller_class": "ctp_delivery",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/ctp/query": {
+   "reason": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, from and ask are typed as objects and the later checks keep their own words",
+   "caller_class": "ctp_delivery",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/till/flags": {
+   "reason": "S33-T: a shop-screen or offer flag the counter queues offline; an older queued body replays on a newer server, so an unknown key is ignored and only a wrong KIND of value is refused (400, parked by the drain)",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/stock": {
+   "reason": "S33-T: an available/unavailable mark the counter queues offline; unknown keys ignored, null for none accepted, a wrong kind refused 400 (the drain parks that row and sends the rest)",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/stock/bulk": {
+   "reason": "S33-T: the bulk stock mark rides the same offline queue as stock; unknown keys ignored, item_ids must be a list or null, a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/reward": {
+   "reason": "S33-T: points for one bill, queued behind the bill; the desktop agent (tools/tally-connector/till.js) still sends net, gross, count and lines, which stay accepted and unread; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/reward/claim": {
+   "reason": "S33-T: a walk-in balance claim, sent through the counter queue; unknown keys ignored, from and to must be objects, a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/quick-keys/hide": {
+   "reason": "S33-T: the first counter versions queued sold-out marks (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "reason": "S33-T: the first counter versions queued the put-back (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/chits/send": {
+   "reason": "S33-T: the counter bill queue door (the sale itself); its five known keys are typed, any other key is read by name or ignored; a refused bill is parked and shown, never dropped",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  }
  }
 }

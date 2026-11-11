@@ -302,8 +302,13 @@ function cannotAnswerOf(list) {
   return found;
 }
 
-/** tolerant_outward (scope file): { 'METHOD /path': reason } API-43 (Athi 6 Nov, restated 8 Nov): a door whose sender is outside us ignores an unknown body key until a /v2 path with notice. A reason shorter than MIN_REASON counts for nothing */
-const tolerantOutwardOf = (list) => Object.fromEntries(Object.entries(list || {}).filter(([, reason]) => hasReason(reason)));
+/**
+ * tolerant_outward (scope file): { 'METHOD /path': { reason, caller_class, test } } — "tolerant by design" (Athi 11 Nov 2026, S33-T). A door whose caller is outside us or queued ignores an unknown body key.
+ * An entry counts ONLY with all three: a reason of MIN_REASON characters, a caller class from TOLERANT_CLASSES, and a test file that proves it (checked in tolerantProblems). Anything else counts for nothing (the route stays strict).
+ */
+const TOLERANT_CLASSES = ['queued_till', 'queued_web_outbox', 'provider_webhook', 'ctp_delivery', 'record_as_body', 'desktop_connector', 'keyed_outward'];
+const soundTolerantEntry = (entry) => !!entry && typeof entry === 'object' && hasReason(entry.reason) && TOLERANT_CLASSES.includes(entry.caller_class) && typeof entry.test === 'string' && entry.test.length > 0;
+const tolerantOutwardOf = (list) => Object.fromEntries(Object.entries(list || {}).filter(([, entry]) => soundTolerantEntry(entry)).map(([key, entry]) => [key, entry.reason]));
 
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
@@ -317,8 +322,26 @@ function tolerantRouteProblem(key, byKey) {
   return byKey.get(key).columns.schema_in ? '' : 'tolerant_outward: "' + key + '" must still check the fields it reads (schema_in)';
 }
 
-/** the sentences for the tolerant_outward list: each key a sound route, with a reason of MIN_REASON characters */
-const tolerantProblems = (list, byKey) => Object.entries(list || {}).flatMap(([key, reason]) => [tolerantRouteProblem(key, byKey), hasReason(reason) ? '' : 'tolerant_outward: "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters'].filter(Boolean));
+/** the proof a tolerant door owes: its test file exists, names the route, sends an unknown key (zz_unknown) and expects the problem shape; a hand-written file that ignores all of this cannot pass */
+function tolerantProofProblem(key, entry) {
+  const file = path.join(ROOT, String(entry.test));
+  if (!fs.existsSync(file)) return 'tolerant_outward: "' + key + '" test file ' + entry.test + ' does not exist';
+  const text = fs.readFileSync(file, 'utf8');
+  const word = key.split(' ')[1].split('/').filter((part) => part && !part.startsWith(':')).pop(); /* the route's own last word, for a file that names the route by it (ask('explain', ...)) */
+  const missing = [text.includes(key) ? key : word, 'zz_unknown', 'problem'].filter((needle) => !text.includes(needle));
+  return missing.length ? 'tolerant_outward: "' + key + '" test file ' + entry.test + ' does not mention ' + missing.map((word) => '"' + word + '"').join(', ') : '';
+}
+
+/** the sentences for the tolerant_outward list: each key a sound route with a reason, a caller class from the closed list and a proving test file; the list may not pass its ceiling (S33-T) */
+function tolerantProblems(list, byKey, ceiling) {
+  const entries = Object.entries(list || {});
+  const found = entries.flatMap(([key, entry]) => {
+    if (!entry || typeof entry !== 'object') return ['tolerant_outward: "' + key + '" must be { reason, caller_class, test }'];
+    return [tolerantRouteProblem(key, byKey), hasReason(entry.reason) ? '' : 'tolerant_outward: "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters', TOLERANT_CLASSES.includes(entry.caller_class) ? '' : 'tolerant_outward: "' + key + '" caller_class must be one of ' + TOLERANT_CLASSES.join(', '), entry.test ? tolerantProofProblem(key, entry) : 'tolerant_outward: "' + key + '" needs a test file'].filter(Boolean);
+  });
+  if (typeof ceiling === 'number' && entries.length > ceiling) found.push('tolerant_outward has ' + entries.length + ' doors, above its ceiling ' + ceiling + ' (raise tolerant_outward_ceiling only with a cb-api sign-off)');
+  return found;
+}
 
 /**
  * scopeProblems(file, rows) — the exemptions of api-hardening-scope.json (public_ids, platform_only, cannot_answer) held to one rule each, for --check: a reason of MIN_REASON characters or more,
@@ -331,7 +354,7 @@ function scopeProblems(file, rows) {
     if (!byKey.has(key)) found.push(list + ': "' + key + '" is not a route of the app');
     if (!hasReason(reason)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
   }));
-  found.push(...tolerantProblems(file.tolerant_outward, byKey));
+  found.push(...tolerantProblems(file.tolerant_outward, byKey, file.tolerant_outward_ceiling));
   const seen = new Set();
   (file.cannot_answer || []).forEach((entry) => {
     const name = 'cannot_answer: "' + entry.route + ' ' + entry.status + '"';
@@ -349,7 +372,16 @@ const MONEY_WORDS = /(^|[/-])(pay|payment|payments|receipt|receipts|refund|refun
 const unclassifiedMoney = (rows, scope) => rows.filter((row) => row.method !== 'GET' && MONEY_WORDS.test(row.path) && !scope.money.has(row.key) && !scope.notMoney.has(row.key)).map((row) => row.key);
 
 /** strict_input, or for an API-43 listed door (tolerant_outward) that it still checks the fields it reads (schema_in) */
-const strictOrTolerant = (scope, key, operation, leaf, facts, evidence) => (scope.tolerantOutward[key] ? schemaInColumn(operation, leaf, facts) : strictInputColumn(operation, leaf, facts, evidence));
+const strictOrTolerant = (scope, key, operation, leaf, facts, evidence) => (scope.tolerantOutward[key] ? schemaInColumn(operation, leaf, facts) && knownKeysTyped(operation) : strictInputColumn(operation, leaf, facts, evidence));
+
+/** S33-T proof 2, mechanical: every known key of a tolerant door's body schema says what it holds (a type, enum, const, pattern or $ref); a bare name is not validation */
+function knownKeysTyped(operation) {
+  const schema = operation && require('../middleware/validate').bodySchemaOf(operation);
+  if (schema && schema.$ref) return true; /* a body published as a named schema (offers EvaluateBody) is typed where it is defined; the enforced row is typed in its contract (lib/offers-contract.js) */
+  const props = (schema && schema.properties) || {};
+  const typed = (property) => !!property && typeof property === 'object' && ['type', 'enum', 'const', 'pattern', '$ref', 'oneOf', 'anyOf'].some((word) => property[word] !== undefined);
+  return !!schema && Object.values(props).every(typed); /* a door that reads no body key has nothing untyped: its schema is still required (a door with no schema check is not tolerant, it is unchecked) */
+}
 
 /** the thirteen machine columns of one route, each true or false */
 function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
@@ -569,7 +601,7 @@ function renderMarkdown(register) {
   ].concat(counts.output_allowlist_from_recordings ? ['**Output allow-list closed from recordings only: ' + counts.output_allowlist_from_recordings + ' routes** (`output_allowlist_basis: recordings` in `docs/api-register.json`; their keys are the recorded answers, so a new key is reported and kept, never dropped, until the handler names its keys).', ''] : []).concat([
     'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs are kept by hand in `docs/api-signoffs.json` (each with the hash it was signed against; a moved hash makes the sign-off stale) and shown here and in `docs/api-register.json`, which are derived and never carry the source.',
     '',
-    '**tolerant_outward: ' + counts.tolerant_outward + '** routes read strict_input as exempt, never as yes (API-43: an unknown body key is ignored until /v2; the route still checks the fields it reads; the list is docs/contracts/api-hardening-scope.json tolerant_outward and its length may only go down).',
+    '**tolerant_outward: ' + counts.tolerant_outward + '** routes read strict_input as exempt, never as yes (S33-T, tolerant by design: an unknown body key is ignored; every known key is typed; a test file proves a junk value is refused and an unknown key ignored; the list is docs/contracts/api-hardening-scope.json tolerant_outward, bounded by tolerant_outward_ceiling).',
     '',
     'Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
     '',
@@ -628,4 +660,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

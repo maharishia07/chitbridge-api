@@ -1016,7 +1016,7 @@ async function sendsOtherTaxId(req) {
   const current = await require('../lib/profile').profileValues(auth.entityOf(req));
   return taxIdDoor.taxIdDiffers(current.gstin && current.gstin.value, sent);
 }
-router.post('/profile', auth, auth.requireScope('connector'), schemaValidate(PROFILE_OPERATION, KIT_REFUSAL(PROFILE_FIELDS_SAID())), taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the tax number is the owner's; a connector key is not a person */, async (req, res) => {
+router.post('/profile', auth, auth.requireScope('connector'), schemaValidate(PROFILE_OPERATION, KIT_REFUSAL(PROFILE_FIELDS_SAID())), ...filterFor('/profile', 'POST'), taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the tax number is the owner's; a connector key is not a person */, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
