@@ -5286,7 +5286,7 @@ router.put(
   '/:chit_id/status',
   auth,
   ...checked('PUT /:chit_id/status'),
-  trimmedBody(['status', 'note']),
+  trimmedBody(['status', 'note', 'from']),
   async (req, res) => {
     try {
       const chit_id = req.params.chit_id;
@@ -5345,7 +5345,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req));
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use }); /* QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
       /**

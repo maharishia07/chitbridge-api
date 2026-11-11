@@ -5240,6 +5240,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "status_from_changed",
+   "status": "409",
+   "title": "Chit moved since you looked",
+   "shopkeeper": "This chit is not in the status you saw. It was not changed.",
+   "hint": "Look at it again, then choose again.",
+   "owner_area": "chits",
+   "since": "2026-11-11"
+  },
+  {
+   "code": "status_use_unneeded",
+   "status": "400",
+   "title": "Use is said with the acceptance",
+   "shopkeeper": "What the goods are for is only said when you accept the bill.",
+   "hint": "Accept the bill, or leave it out.",
+   "owner_area": "chits",
+   "since": "2026-11-11"
+  },
+  {
    "code": "taken_back",
    "status": "409",
    "title": "Bill was taken back",
@@ -5247,6 +5265,15 @@
    "hint": "Ask the sender to send it again as a new bill.",
    "owner_area": "chits",
    "since": "2026-11-07"
+  },
+  {
+   "code": "use_refused",
+   "status": "409",
+   "title": "What the goods are for was not saved",
+   "shopkeeper": "What the goods are for could not be saved, so the bill was not accepted.",
+   "hint": "Look at the bill, then try again.",
+   "owner_area": "chits",
+   "since": "2026-11-11"
   }
  ]
 }
