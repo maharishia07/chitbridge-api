@@ -101,6 +101,7 @@ const refusedWhere = (answer) => answer.status === 422 && answer.body.code === '
     ['0.01', '{"kind":"other","amount":0.01}'],
     ['80 minutes at 150 an hour (no amount: it is derived)', '{"kind":"labour","minutes":80,"rate_per_hour":150}'],
     ['a fare with its note, currency and line', '{"kind":"transport","amount":50,"currency":"inr","note":"auto","line_id":"11111111-2222-4333-8444-555555555555"}'],
+    ['explicit nulls for minutes and rate_per_hour on a fare (the library reads null as absent)', '{"kind":"fare","amount":5,"minutes":null,"rate_per_hour":null}'],
     ['minutes 2147483647', '{"kind":"labour","minutes":2147483647,"rate_per_hour":150}']
   ];
   for (const [what, row] of TAKEN) {
