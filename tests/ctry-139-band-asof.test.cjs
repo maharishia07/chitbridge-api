@@ -25,6 +25,7 @@ it('billDayOf: a credit or debit note reads the invoice it is against; without t
   const against = { against: { invoice_date: '2025-09-21T10:00:00Z' }, billed_at: '2026-01-05T10:00:00Z' };
   assert.strictEqual(T.billDayOf(against, 'credit_note', null, { Country: 'IN' }), '2025-09-21');
   assert.strictEqual(T.billDayOf(against, 'debit_note', null, { Country: 'IN' }), '2025-09-21');
+  assert.strictEqual(T.billDayOf({ against: { bill_no: 'C2/26-27/0010', billed_at: '2025-09-21T18:40:00Z' }, billed_at: '2026-01-05T10:00:00Z' }, 'credit_note', null, { Country: 'IN' }), '2025-09-22', 'a counter credit note names billed_at');
   assert.strictEqual(T.billDayOf({ against: 'C2/26-27/0010', billed_at: '2026-01-05T10:00:00Z' }, 'credit_note', null, { Country: 'IN' }), null);
   assert.strictEqual(T.billDayOf({ billed_at: '2026-01-05T10:00:00Z' }, 'credit_note', null, { Country: 'IN' }), null);
 });
