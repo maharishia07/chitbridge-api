@@ -27,6 +27,14 @@ it('billDayOf: a credit or debit NOTE is never banded (null), whatever it is aga
   const delta = T.invoiceFor({ lines: [{ line_id: 'a', quantity: 1, price: 500, gst_rate: 18, hsn: '6109' }], seller, buyer, currency: 'INR', bill_day: T.billDayOf(against, 'credit_note', null, { Country: 'IN' }) }).invoice;
   assert.deepStrictEqual([delta.ItemList[0].GstRt, delta.ValDtls.CgstVal + delta.ValDtls.SgstVal], [18, 90]);
 });
+it('a NOTE keeps the ORIGINAL bill rate through the one rule (purpose -> engine rateFromOriginal): a 500 difference at 18% on hsn 6109 with a bill day stays 18% (tax 90.00) and carries NO _band mark, dated or not; the same line as an invoice is re-banded to 5%', () => {
+  const run = (purpose, day) => T.invoiceFor({ lines: [{ line_id: 'a', quantity: 1, price: 500, gst_rate: 18, hsn: '6109' }], seller, buyer, currency: 'INR', bill_day: day, purpose }).invoice;
+  ['credit_note', 'debit_note'].forEach((purpose) => [undefined, '2026-01-05'].forEach((day) => {
+    const inv = run(purpose, day);
+    assert.deepStrictEqual([inv.ItemList[0].GstRt, inv.ValDtls.CgstVal + inv.ValDtls.SgstVal, inv.ItemList[0]._band], [18, 90, undefined], purpose + ' ' + day);
+  }));
+  assert.deepStrictEqual([run('invoice', '2026-01-05').ItemList[0].GstRt, T.isNoteOf('debit_note'), T.isNoteOf('invoice')], [5, true, false]);
+});
 it('invoiceFor hands bill_day to the engine: 2,500.01 stated 5% is 18% on 2025-09-22 (225.00 + 225.00, 2,950.01); 2,000.00 is 5% (100.00) from the 22nd and 12% (240.00) on the 21st', () => {
   assert.deepStrictEqual(figures(2500.01, 5, '2025-09-22'), [18, 225, 225, 2950.01, 1]);
   assert.deepStrictEqual(figures(2000, 18, '2025-09-22').slice(0, 4), [5, 50, 50, 2100]);

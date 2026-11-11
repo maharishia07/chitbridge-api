@@ -135,6 +135,10 @@ const { ok, eq, done } = counter();
   ok('with tax (5 %, same state): the input tax comes back — Dr supplier ₹105 · Cr Purchase returns ₹100 · Cr CGST ₹2.50 · Cr SGST ₹2.50', dnTax.status === 200 && dnt && JSON.stringify(linesOf(dnt)) === JSON.stringify([['2100', 10500, 0], ['5090', 0, 10000], ['2210', 0, 250], ['2211', 0, 250]]), JSON.stringify(dnt ? linesOf(dnt) : dnTax.body));
   const dnNoGst = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn3', lines: [{ name: 'x', qty: 1, unit_price: 10, gst_rate: 18 }] }) });
   ok('a taxed difference with no supplier tax number is asked for it (400), never posted with the tax guessed', dnNoGst.status === 400 && /number is needed/.test(dnNoGst.body.message) && !entryOf('ev:debit_note:dn3'), JSON.stringify(dnNoGst.body));
+  /* ── CTRY-139 · a DEBIT NOTE is never price-banded: a 500 rate difference on an apparel line (hsn 6109) at 18% keeps the ORIGINAL bill's 18% (the band would read the delta's own value, 5%): Dr supplier 590.00 · Cr Purchase returns 500.00 · Cr CGST 45.00 · Cr SGST 45.00 (hand-worked) ── */
+  const dnApparel = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn4', supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 1, unit_price: 500, gst_rate: 18, hsn: '6109' }] }) });
+  const dnApp = entryOf('ev:debit_note:dn4');
+  eq('a 500 rate-difference debit note at 18% on an apparel HSN stays 18% (never re-banded to 5%)', dnApp ? linesOf(dnApp) : dnApparel.body, [['2100', 59000, 0], ['5090', 0, 50000], ['2210', 0, 4500], ['2211', 0, 4500]]);
 
   /* ── GET /events: the grid, so the screen holds no rules ── */
   const g = await q('GET', '/events');
