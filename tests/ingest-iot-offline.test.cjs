@@ -37,8 +37,8 @@ function rowsFor(sql, p) {
   if (/SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = \$1 AND status = 'active'/.test(s))
     return [{ identity_id: p[0], bridge_id: 'CBX', display_name: 'X' }];
   if (/FROM connector_connection WHERE actor_id/.test(s)) return S.conn ? [S.conn] : [];
-  if (/INSERT INTO connector_receipt/.test(s)) { if (S.receipts[p[5]]) return []; S.receipts[p[5]] = { receipt_id: p[0], outcome: 'pending', chit_id: null }; return [{ receipt_id: p[0] }]; }
-  if (/SELECT receipt_id, outcome, chit_id FROM connector_receipt/.test(s)) return S.receipts[p[1]] ? [S.receipts[p[1]]] : [];
+  if (/INSERT INTO connector_receipt/.test(s)) { if (S.receipts[p[6] || p[5]]) return []; S.receipts[p[6] || p[5]] = { receipt_id: p[0], outcome: 'pending', chit_id: null, payload_hash: p[5], received_at: new Date() }; return [{ receipt_id: p[0] }]; }
+  if (/SELECT receipt_id, outcome, chit_id, payload_hash, received_at FROM connector_receipt/.test(s)) return S.receipts[p[1]] ? [S.receipts[p[1]]] : [];
   if (/UPDATE connector_receipt SET outcome/.test(s)) { const r = Object.values(S.receipts).find((x) => x.receipt_id === p[2]); if (r) { r.outcome = p[0]; r.chit_id = p[1]; } return []; }
   return [];
 }
@@ -143,7 +143,9 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
       && again.body.receipt_id === first.body.receipt_id && again.body.chit_id === first.body.chit_id, again);
     ok('D3 ONE chit delivered for two pushes', DELIVERED.length === 1, DELIVERED.length);
     const other = await call(server, 'POST', '/api/connectors/erp-ingest', { payload: Object.assign({}, doc, { amount: 251 }), to: SHOP }, KEY);
-    ok('D4 a changed document is a new receipt', other.body.message === 'received' && other.body.receipt_id !== first.body.receipt_id, other);
+    ok('D4 a changed document under the SAME doc_ref is refused 422 (CON-ERP-IDEM: the document own reference is its key), no new receipt', other.status === 422 && other.body.code === 'IDEMPOTENCY_CONFLICT', other);
+    const revised = await call(server, 'POST', '/api/connectors/erp-ingest', { payload: Object.assign({}, doc, { doc_ref: 'INV-10', amount: 251 }), to: SHOP }, KEY);
+    ok('D4b a document with its own new doc_ref is a new receipt', revised.body.message === 'received' && revised.body.receipt_id !== first.body.receipt_id, revised);
 
     console.log('— E · stats answers counts —');
     WHO = { identity_id: ROOT, identity_type: 'entity' };

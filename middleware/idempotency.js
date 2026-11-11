@@ -52,6 +52,9 @@ const notSettled = (status) => status >= 500 || status === 401 || status === 403
 /** idem3 (7 Nov): a 4xx that says "not YET" is no outcome: the till queues the points behind their bill and sends the SAME key again once the bill has landed, so the first 409 must not become the key's answer. Add a code here only if its route says it is waiting for something, never refusing. */
 const WAITING_CODES = new Set(['BILL_NOT_RECORDED']);
 const waitsFor = (body) => !!(body && WAITING_CODES.has(body.code));
+/** the two words of a held key, shared with the doors that keep their own receipts (lib/connectors-contract.js, erp-ingest): one sentence each */
+const KEY_CONFLICT = { error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' };
+const KEY_IN_PROGRESS = { error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' };
 const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
 
 /**
@@ -201,15 +204,13 @@ function answerAfterAuth(req, res, next, held, claim, isVerified) {
 function answerExisting(req, res, held, hash, isVerified) {
   if (!isVerified) res.setHeader('X-Idempotency', 'unverified');
   if (held.req_hash && hash && held.req_hash !== hash) {
-    const legacy = { error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' };
-    return problem(req, res, { status: 422, code: 'IDEMPOTENCY_CONFLICT', detail: legacy.message, legacy });
+    return problem(req, res, { status: 422, code: 'IDEMPOTENCY_CONFLICT', detail: KEY_CONFLICT.message, legacy: KEY_CONFLICT });
   }
   if (held.state === 'done') {
     res.setHeader('X-Idempotent-Replay', 'true');
     return res.status(held.status || 200).json(held.response);
   }
-  const legacy = { error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' };
-  return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: legacy.message, legacy });
+  return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: KEY_IN_PROGRESS.message, legacy: KEY_IN_PROGRESS });
 }
 
 /**
@@ -349,6 +350,8 @@ module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;
 module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
+module.exports.KEY_CONFLICT = KEY_CONFLICT;
+module.exports.KEY_IN_PROGRESS = KEY_IN_PROGRESS;
 module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
 module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;
 module.exports._carriesCode = carriesCode;

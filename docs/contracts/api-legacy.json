@@ -59008,6 +59008,50 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "erp-ingest-outcome-chit-failed",
+     "status": 503,
+     "body_keys": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     },
+     "fixture": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     }
+    },
+    {
+     "scenario": "erp-ingest-key-reused",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "code": "IDEMPOTENCY_CONFLICT",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "code": "IDEMPOTENCY_CONFLICT",
+      "message": "This Idempotency-Key was already used with a different request."
+     }
+    },
+    {
+     "scenario": "erp-ingest-first-try-still-running",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "fixture": {
+      "error": "In progress",
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "message": "A request with this Idempotency-Key is still being processed."
+     }
     }
    ]
   },
