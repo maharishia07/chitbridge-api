@@ -109,7 +109,7 @@ function checkContractShape(routes) {
   const feature = contract.OPERATIONS['GET /api/testing/cases/gherkin'].responses['200'].content;
   check('the feature file is declared as text, not JSON', Object.keys(feature)[0] === 'text/plain', Object.keys(feature));
   const junit = contract.OPERATIONS['POST /api/testing/results/junit'].requestBody.content['application/json'].schema;
-  check('the JUnit report is declared as the XML text it is, in a body that stays JSON { xml }', junit.properties.xml.contentMediaType === 'application/xml' && !('type' in junit.properties.xml), junit.properties.xml);
+  check('the JUnit report is declared as the XML text it is (a string of its media type, S33-T), in a body that stays JSON { xml }', junit.properties.xml.contentMediaType === 'application/xml' && junit.properties.xml.type === 'string', junit.properties.xml);
   check('a body keeps its named fields and requires none (the handlers answer a missing one in their own words)', Object.values(contract.OPERATIONS).filter((one) => one.requestBody).every((one) => !(one.requestBody.content['application/json'].schema.required || []).length));
 }
 
