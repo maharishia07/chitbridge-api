@@ -110,6 +110,30 @@ async function checkClosedTable(client, table, spec) {
   } finally { await client.query(`DELETE FROM ${table} WHERE ${spec.key} IN ($1,$2)`, [shopA, shopB]); }
 }
 
+/** DB-102 (b851): a shop's PUBLIC catalogue is readable by another shop, but only the owner may change or delete it. The owner plants a public default schema and
+ *  one item per shop (FK checks off for the probe); cb_app then reads, updates and deletes under each binding. A write the policy hides touches 0 rows. */
+async function checkCataloguePublicReadOnly(client) {
+  const shopA = crypto.randomUUID(), shopB = crypto.randomUUID();
+  const itemA = crypto.randomUUID(), itemB = crypto.randomUUID();
+  await client.query('BEGIN');
+  await client.query("SET LOCAL session_replication_role = 'replica'");
+  await client.query(`INSERT INTO entity_schemas (entity_id, visibility) VALUES ($1, 'public')`, [shopA]);
+  await client.query(`INSERT INTO catalogue_items (item_id, entity_id) VALUES ($1, $2), ($3, $4)`, [itemA, shopA, itemB, shopB]);
+  await client.query('COMMIT');
+  const run = (entity, sql, args) => asApp(client, entity, async () => (await client.query(sql, args)).rowCount);
+  try {
+    check("catalogue_items: shop B can still SELECT shop A's public item (reads unchanged)", (await run(shopB, 'SELECT 1 FROM catalogue_items WHERE item_id = $1', [itemA])) === 1);
+    check("catalogue_items: shop B cannot UPDATE shop A's public item (0 rows)", (await run(shopB, 'UPDATE catalogue_items SET is_active = false WHERE item_id = $1', [itemA])) === 0);
+    check("catalogue_items: shop B cannot DELETE shop A's public item (0 rows)", (await run(shopB, 'DELETE FROM catalogue_items WHERE item_id = $1', [itemA])) === 0);
+    check("catalogue_items: shop A's item is still there after both attempts", (await run(shopA, 'SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active', [itemA])) === 1);
+    check('catalogue_items: shop A can UPDATE its own item', (await run(shopA, 'UPDATE catalogue_items SET is_active = false WHERE item_id = $1', [itemA])) === 1);
+    check('catalogue_items: shop A can DELETE its own item', (await run(shopA, 'DELETE FROM catalogue_items WHERE item_id = $1', [itemA])) === 1);
+  } finally {
+    await client.query('DELETE FROM catalogue_items WHERE item_id = ANY($1::uuid[])', [[itemA, itemB]]);
+    await client.query('DELETE FROM entity_schemas WHERE entity_id = $1', [shopA]);
+  }
+}
+
 /** every table the baseline marks with a `fix` is forced here, has a policy, and passes the two-shop probe */
 async function checkClosedTables(client, census) {
   for (const table of Object.keys(baseline).filter((n) => baseline[n].fix)) {
@@ -129,6 +153,7 @@ async function checkClosedTables(client, census) {
     checkCensus(census);
     await checkClosedTables(client, census);
     await checkIsolation(client);
+    await checkCataloguePublicReadOnly(client);
   } finally { client.release(); await pool.end(); }
   console.log('\n  ' + checks + ' checks');
   process.exit(failed ? 1 : 0);
