@@ -83,23 +83,24 @@ of file each thing is; this says what already does the job.
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 32 | `lines` | `cart.js` |  |
+| 32 | `sentence` | `one-person.js` |  |
 | 32 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 32 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 31 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
-| 31 | `sentence` | `one-person.js` |  |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 31 | `note` | `dbwatch.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
+| 30 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 30 | `hold` | `orders.js` |  |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
+| 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `owner` | `books.js` |  |
 | 29 | `mine` | `crm.js` | `opt.removedOk`: |
-| 28 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 28 | `money` | `cart.js` |  |
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 14 | `fault` | `speech.js` | const SPEECH_FAULT = 'Speech could not be read just now — |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
-| 13 | `save` | `app.html` |  |
