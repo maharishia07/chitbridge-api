@@ -3322,16 +3322,12 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
 
     const plan = catalogueStartPlan(text, await nestedCatwrite.codesInUse(entity_id));
     if (plan.refusal) return problem(req, res, { status: 400, ...plan.refusal });
-    let items = plan.items;
-    try {
-      items = citeCategories(items, await ensureCategoriesFor(entity_id, items, req));
-    } catch (e) {
-      /* ⚠⚠ SAID, NOT SWALLOWED. Without ids the products would be written uncategorised, and a shop would
-         find a flat wall of goods with nothing to say why. */
-      return problem(req, res, categoriesFailed(e, req));
-    }
-
-    const written = await nestedCatwrite.writeItems({ entity_id, items: items });
+    const items = plan.items;
+    /* categories and products in ONE transaction: a refused write leaves no category behind (CAT-124 F1) */
+    const written = await nestedCatwrite.writeCitedItems({ entity_id, items, by: (req.identity && req.identity.identity_id) || null });
+    /* ⚠⚠ SAID, NOT SWALLOWED. Without ids the products would be written uncategorised, and a shop would
+       find a flat wall of goods with nothing to say why. */
+    if (written.categoriesFailed) return problem(req, res, categoriesFailed(written.categoriesFailed, req));
     if (!written.ok)
       return problem(req, res, { status: written.status || 400, ...said('TILL_BAD_REQUEST', written.error, written.message, { invalid: written.invalid }) });
 
@@ -3385,35 +3381,6 @@ function catalogueStartPlan(text, existing) {
     return { refusal: said('TILL_BAD_REQUEST', 'nothing to mint', words, { choices: Object.keys(blueprints.BLUEPRINTS) }) };
   }
   return { items: blueprints.mint(blueprint.key, existing), from: 'blueprint:' + blueprints.pin(blueprint), refused: [] };
-}
-
-/**
- * ⭐⭐⭐ NAMES BECOME CITATIONS ([TILL-114]). The blueprint and the upload both hand over a category NAME;
- * the shop's own master turns it into an id, creating the ones it does not have. So a product written here
- * cites `categories: [id]` like every properly-authored product, instead of the legacy `category` key that
- * [TILL-107] was writing.
- * ⚠️ MATCHED CASE-INSENSITIVELY by lib/categories, so a shop that already has "Vegetables" does not
- * acquire "vegetables" beside it — which is the free-text pollution a master exists to prevent.
- * ⚠️ THE SAME `created_by` routes/definitions.js writes — `req.identity.identity_id`. My first cut
- * called `auth.userOf`, which does not exist, behind a guard that would have written null for ever.
- * A counter authenticated by a KEY genuinely has no identity, so null here is honest, not a bug.
- * → Map(category name → id); it throws when the categories cannot be set up (the caller answers in words)
- */
-async function ensureCategoriesFor(entity_id, items, req) {
-  const wanted = [...new Set(items.map((item) => item.categoryName).filter(Boolean))];
-  if (!wanted.length) return new Map();
-  return categories.ensureCategories(entity_id, wanted, { withEntity, by: (req.identity && req.identity.identity_id) || null });
-}
-
-/** the items with their category cited by id (`category_names` is NOT written: catalogue-columns reserves it as *"a positional copy … for counterparties who cannot resolve our ids"*, and we can resolve our own) */
-function citeCategories(items, catIds) {
-  return items.map((item) => {
-    const out = Object.assign({}, item);
-    const id = item.categoryName ? catIds.get(item.categoryName) : null;
-    delete out.categoryName;
-    if (id) out.categories = [id];
-    return out;
-  });
 }
 
 /**
