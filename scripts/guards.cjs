@@ -474,6 +474,7 @@ const GUARDS = [
   'sec102-readiness-evidence.test.cjs', // SEC-102: a clearance's evidence chit counts only when the ownership check ran and found this shop's copy; a failed check stores NULL (declared), never documented
   'api-contract.test.cjs', // API-1 slice 1b: schemaValidate (ajv) and the contract cases generated from each route's schema
   'api-allowlist.test.cjs', // API-1 output allow-list (S34): the pruning rule, the res.json filter, the shape derivation from recorded answers (identity on every answer it saw, a key it never saw dropped and named)
+  'generated-files.test.cjs', // point 3 (11 Nov): a feature PR carries no derived file, the sign-offs and readability ratchet stay one entry per line and merge by union, the ratchet refuses a count going backwards
   'api-tools.test.cjs', // API-1 slice 1a: the ratchet rules, the register normaliser, the error-code table, as units
   'web-api-contract.test.cjs', // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
   'crm-leads.test.cjs', // L1: leads as parties, the memberships table's one writer (entity + group checks), 503 in words before b297, the b297 RLS lines
