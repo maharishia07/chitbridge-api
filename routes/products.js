@@ -2165,6 +2165,8 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
       have: mine.filter((x) => x.active).length,
       currency,
+      /* CTRY-72: a shop nobody gave money (no country) is told so in the ONE sentence (country-setup.MONEY_UNSTATED, code NO_MONEY - the till snapshot's shop.money_why shape); the lab shows it where the price would be and never the rupee figures of its starter lists */
+      money_why: currency ? null : { code: 'NO_MONEY', why: require('../lib/country-setup').MONEY_UNSTATED },
       /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
          ticks, so it needs every row's name, unit, price, category and local names to render at all. */
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */

@@ -1,11 +1,23 @@
+/**
+ * OWNS      the ARCHIVED cb_catalogue_item / cb_catalogue_category queries (the third catalogue model; src/routes/catalogue.js says why nothing calls them now)
+ * CALLED BY nothing (left in place, unreferenced)
+ * FLOW      a caller's body -> needMoney (CTRY-72: the shop's money or a 422 NO_MONEY, never the rupee) -> one insert
+ * CARD      06-catalogue-pim/catalogue-read
+ */
 const { pool } = require('../db');
 const err = (s, m, c) => Object.assign(new Error(m), { status: s, code: c });
+/** CTRY-72: a row carries the shop's money or is refused (NO_MONEY, registered, 422) - never the rupee by default */
+function needMoney(entityId, currencyCode) {
+  if (!entityId) throw err(400, 'entityId required', 'ENTITY_REQUIRED');
+  if (!currencyCode) throw err(422, require('../../lib/country-setup').MONEY_UNSTATED, 'NO_MONEY');
+}
 async function listCategories(entityId) {
   const { rows } = await pool.query(`select * from cb_catalogue_category where entity_id=$1 order by sort_by, name`, [entityId]);
   return rows;
 }
-async function createCategory({ entityId, name, image = null, currencyCode = 'INR', sortBy = 0 }) {
+async function createCategory({ entityId, name, image = null, currencyCode = null, sortBy = 0 }) {
   if (!name) throw err(400, 'name required', 'NAME_REQUIRED');
+  needMoney(entityId, currencyCode);
   const { rows } = await pool.query(
     `insert into cb_catalogue_category(entity_id,name,image,currency_code,sort_by)
      values ($1,$2,$3,$4,$5) returning *`,
@@ -25,7 +37,7 @@ async function listItems({ entityId, tier = null }) {
   return rows;
 }
 async function createItem(b) {
-  if (!b.entityId) throw err(400, 'entityId required', 'ENTITY_REQUIRED');
+  needMoney(b.entityId, b.currencyCode);
   const { rows } = await pool.query(
     `insert into cb_catalogue_item
        (entity_id,name,price,currency_code,price_type,available_stock,section,category,
@@ -36,7 +48,7 @@ async function createItem(b) {
       b.entityId,
       b.name || '',
       b.price || 0,
-      b.currencyCode || 'INR',
+      b.currencyCode,
       b.priceType || 'Business',
       b.availableStock || '',
       b.section || '',

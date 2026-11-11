@@ -22548,15 +22548,17 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2109,
-   "hash": "b43ae7cffcf356bd",
+   "hash": "90e163f95d15ad4a",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      401,
      500
     ],
-    "codes": []
+    "codes": [
+     "NO_MONEY"
+    ]
    },
    "reads": [
     "catalogue_items",
@@ -22615,7 +22617,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign) 2026-11-11 PR#1099 stage2: handler read; store_id/store_name only added to the open lists[] card, read-only, auth and errors unchanged, store failures logged never relayed, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign) 2026-11-11 CTRY-72: handler+contract read; money_why added as a new key only (null when the shop has a currency, so unchanged; {code:NO_MONEY, why:MONEY_UNSTATED} only for a shop with no country, same shape as till snapshot shop.money_why); NO_MONEY registered in error-codes.json; schema_out lists it required; currency, auth, errors unchanged; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53747,7 +53749,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2212,
+   "line": 2214,
    "hash": "2b6ce9414d7f54fc",
    "does": "",
    "errors": {

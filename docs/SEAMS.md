@@ -10,10 +10,10 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 160 | `list` | `amend.js` |  |
-| 130 | `rows` | `crm.js` | still in them: |
-| 120 | `words` | `variant.browser.js` |  |
+| 131 | `rows` | `crm.js` | still in them: |
+| 122 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
-| 114 | `read` | `books-cashflow.js` | Trips: |
+| 115 | `read` | `books-cashflow.js` | Trips: |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
@@ -42,7 +42,7 @@ of file each thing is; this says what already does the job.
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 52 | `rows` | `cap-settings.js` |  |
 | 52 | `write` | `junitresults.js` | control characters are not legal XML at all — |
-| 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 53 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 51 | `toast` | `accounts-shell.js` |  |
 | 52 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `again` | `signin-ui.js` |  |
@@ -54,7 +54,7 @@ of file each thing is; this says what already does the job.
 | 45 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 44 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
-| 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 43 | `rules` | `docnumber.js` | the rule set for a country — |
 | 44 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -66,7 +66,7 @@ of file each thing is; this says what already does the job.
 | 39 | `host` | `chit-sheet.js` |  |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 38 | `facts` | `bill-steps.js` | MY state_log — |
+| 40 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
@@ -89,9 +89,9 @@ of file each thing is; this says what already does the job.
 | 31 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `sentence` | `one-person.js` |  |
-| 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 32 | `note` | `dbwatch.js` |  |
-| 30 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
+| 32 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
+| 33 | `note` | `dbwatch.js` |  |
+| 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 31 | `hold` | `orders.js` |  |
@@ -195,6 +195,7 @@ of file each thing is; this says what already does the job.
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
+| 14 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 14 | `payment` | `books-store.js` |  |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `group` | `cart.js` | A heading's control adds ONE of each — |

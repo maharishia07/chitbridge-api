@@ -519,7 +519,7 @@
   "src/lib/bridgeId.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "src/routes/catalogue.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "src/routes/network.js": {"score":11,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":1,"noHeader":0},
-  "src/services/catalogue.js": {"score":9,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
+  "src/services/catalogue.js": {"score":7,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "src/services/chit.js": {"score":18,"long40":2,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "src/services/network.js": {"score":22,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":5,"emptyCatch":0,"noHeader":0},
   "tools/api-allowlist.cjs": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
@@ -585,7 +585,7 @@
   "tools/tally-connector/setup.js": {"score":30,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":27,"noWhatLine":0,"emptyCatch":2,"noHeader":1},
   "tools/tally-connector/signin-ui.js": {"score":87,"long40":3,"long80":2,"complex10":8,"complex15":3,"deep3":0,"deep4":0,"cryptic":56,"noWhatLine":0,"emptyCatch":15,"noHeader":0},
   "tools/tally-connector/their-bill.js": {"score":16,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "tools/tally-connector/till.html": {"score":3595,"long40":98,"long80":34,"complex10":234,"complex15":120,"deep3":8,"deep4":1,"cryptic":2759,"noWhatLine":196,"emptyCatch":145,"noHeader":0},
+  "tools/tally-connector/till.html": {"score":3595,"long40":98,"long80":34,"complex10":235,"complex15":120,"deep3":8,"deep4":1,"cryptic":2758,"noWhatLine":196,"emptyCatch":145,"noHeader":0},
   "tools/tally-connector/till.js": {"score":223,"long40":5,"long80":2,"complex10":10,"complex15":8,"deep3":3,"deep4":2,"cryptic":155,"noWhatLine":6,"emptyCatch":32,"noHeader":0},
   "tools/tally-connector/try2.cjs": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "tools/touched-routes.cjs": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0}

@@ -28,7 +28,7 @@ function grab(name, optional) {
 }
 const PAGE_FNS = ['esc', 'r2', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule',
   'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'shopTax'];
-const NEW_FNS = ['SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
+const NEW_FNS = ['bandWordsOf', 'slipRateOf', 'SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
   'packCollectsWithoutId', 'cashRule', 'payWayId', 'cashDue', 'cashRoundWords', 'slipCashRoundHTML', 'restBeforeLast', 'changeOf', 'cashRoundOf'];
 
 /** a till page for one shop: the real packs and money engine, the page's own slip functions, plain stand-ins for the rest */

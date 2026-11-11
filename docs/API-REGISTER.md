@@ -543,7 +543,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/products/categories/bulk | products | routes/products.js:579 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/products/import | products | routes/products.js:1201 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/products/import/preflight | products | routes/products.js:1128 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/products/lists/adopt | products | routes/products.js:2212 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/products/lists/adopt | products | routes/products.js:2214 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/products/starter-columns | products | routes/products.js:1417 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/products/status/bulk | products | routes/products.js:521 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:61 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -3551,7 +3551,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/products/lists** · products · cb-catalogue · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 500 · money y (derived)
+- errors: 1 code(s) [NO_MONEY] · statuses 401, 500 · money y (derived)
 - effect: offline online-only · round trips 4 (wire 7; share catalogue-lines.js 4/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, identities · writes (derived): - · callers: catalogue-lines.js · actions: -
 
