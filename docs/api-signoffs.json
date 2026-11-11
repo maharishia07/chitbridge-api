@@ -571,27 +571,27 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/:chit_id/messages": {
-   "hash": "e7405c1b8ed96b8a",
+   "hash": "82ed2a6878097cdb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403 CHIT_NOT_PERMITTED); web callers read the server words, none branches on this 403",
    "lifecycle": "stable"
   },
   "GET /api/chits/:chit_id/disputes": {
-   "hash": "7d6648d7dd037fba",
+   "hash": "db87c3b5029337bc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403); web sheet shows its read-failed sentence, not blank",
    "lifecycle": "stable"
   },
   "GET /api/chits/:chit_id/diagnosis": {
-   "hash": "c399dc60b819e648",
+   "hash": "ad2b481cd5b97231",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2 re-sign after merge",
    "lifecycle": "stable"
   },
   "GET /api/chits/:id/trace": {
@@ -2627,19 +2627,19 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/messages": {
-   "hash": "e14a6bbe5c28d0a0",
+   "hash": "e47df5423efd75e7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404, a rail verdict on a held copy stays its own 403 (refuseUnlessHeld); web composer shows the server words",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/disputes": {
-   "hash": "3c143966d6c6214e",
+   "hash": "dac6f3853a1f6aa9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404 (was 403); web raise toast shows the failure, none branches on 403",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida/:raida_id/close": {
@@ -4896,38 +4896,6 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: cancel is scoped by entity_id from the token, so another shop sid answers byte for byte as an unknown one (200 cancelled:false, the same weaker reading the signed GET sibling holds, with a registered cannot_answer for 404/400); no existence oracle; 13 columns pass",
-   "lifecycle": "stable"
-  },
-  "GET /api/chits/:chit_id/messages": {
-   "hash": "82ed2a6878097cdb",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403 CHIT_NOT_PERMITTED); web callers read the server words, none branches on this 403",
-   "lifecycle": "stable"
-  },
-  "POST /api/chits/:chit_id/messages": {
-   "hash": "e47df5423efd75e7",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404, a rail verdict on a held copy stays its own 403 (refuseUnlessHeld); web composer shows the server words",
-   "lifecycle": "stable"
-  },
-  "GET /api/chits/:chit_id/disputes": {
-   "hash": "db87c3b5029337bc",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403); web sheet shows its read-failed sentence, not blank",
-   "lifecycle": "stable"
-  },
-  "POST /api/chits/:chit_id/disputes": {
-   "hash": "dac6f3853a1f6aa9",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404 (was 403); web raise toast shows the failure, none branches on 403",
    "lifecycle": "stable"
   },
   "GET /api/attachments/:id": {
