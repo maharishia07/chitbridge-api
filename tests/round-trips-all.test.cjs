@@ -202,6 +202,8 @@ async function fire(port, route) {
   fixtureIdentity = (budget.routes[route] && budget.routes[route].fixture_identity) || null;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);
+  const env = (budget.routes[route] && budget.routes[route].fixture_env) || {}; /* fixture_env: a setting the route's own door reads (a platform door is shut without its key), set for this one request and put back after */
+  const was = {}; Object.keys(env).forEach((k) => { was[k] = process.env[k]; process.env[k] = env[k]; });
   try {
     const opts = { method, signal: ac.signal, headers: Object.assign({ 'content-type': 'application/json' }, (budget.routes[route] && budget.routes[route].fixture_headers) || {}) }; /* fixture_headers: a header the route needs to reach its own work (renew: the device a legacy token names) */
     if (budget.routes[route] && budget.routes[route].fixture_customer) opts.headers.authorization = 'Bearer ' + require('jsonwebtoken').sign({ identity_id: ID, identity_type: 'customer', parent_entity_id: ID, bridge_id: 'shopper' }, process.env.JWT_SECRET, { expiresIn: '5m' }); /* fixture_customer: the route is the storefront shopper's own (customer-auth), so the stub signs one in */
@@ -211,7 +213,7 @@ async function fire(port, route) {
     const h = r.headers.get('x-db-trips');
     return { status: r.status, trips: h === null ? null : Number(h), wire };
   } catch (e) { return { error: e.name === 'AbortError' ? 'timed out' : String(e.message).slice(0, 50), wire }; }
-  finally { clearTimeout(timer); }
+  finally { clearTimeout(timer); Object.keys(was).forEach((k) => { if (was[k] === undefined) delete process.env[k]; else process.env[k] = was[k]; }); }
 }
 
 const srv = app.listen(0, '127.0.0.1', async () => {
