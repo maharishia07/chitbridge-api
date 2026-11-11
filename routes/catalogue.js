@@ -12,7 +12,6 @@ const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); 
 const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
 const { oldBody } = storefront; // { error, message }: the old body shop.html reads
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
-const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape (K-1: the enquiry thread read)
 const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
@@ -31,7 +30,7 @@ const customerAuth = require('../middleware/customer-auth'); // T2.4 — the sto
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's whole-list reads */
-const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
+const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode, decoyAttempt } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify'); // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build'); // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container'); // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
@@ -102,6 +101,14 @@ const _422 = (m) => {
   e.status = 422;
   return e;
 };
+/**
+ * CAT-318: a line is orderable only at a price that is a number, zero or more. A missing price is "not set"; a negative one (a bad stored value, a change that landed before
+ * the doors judged) is "not valid" — refused in words (ORDER_REJECTED, 422), never clamped to 0 and never carried as a negative line total.
+ */
+function throwIfUnpriced(rec) {
+  if (!Number.isFinite(rec.price)) throw _422(`Price for "${rec.name}" is not set — order cannot be placed`);
+  if (rec.price < 0) throw _422(`The price of "${rec.name}" is not valid, so it cannot be ordered right now — the shop needs to correct it.`);
+}
 // ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
 // A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
@@ -215,9 +222,14 @@ async function applyLiveOffers(entity, items, total, viewer) {
   return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity, viewer: viewer || null });
 }
 
-async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
+/** the line list an order may carry: a non-empty list of at most 200 items; anything else is the buyer's mistake, refused in words (422) before any read or write (ORD-96: a null line used to fail as a 500 on `.kind` of null) */
+function checkOrderLines(rawItems) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order'); // F6: bound the line count
+  if (rawItems.some((line) => line === null || typeof line !== 'object' || Array.isArray(line))) throw _422('Each line must be an item to order');
+}
+async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
+  checkOrderLines(rawItems);
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
   // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
   const cat = await withEntity(null, (db) =>
@@ -395,7 +407,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
           fref = nb ? nb.rec : null;
         }
         if (!fref) throw _422(`"${fname || 'item ' + (idx + 1)}" is not an available finish in this shop`);
-        if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
+        throwIfUnpriced(fref);
         // T2.5 · `combination` used to be stored RAW: when the resolved item declared no combinations the guard was
         // skipped entirely, so an arbitrary nested object of any size rode onto BOTH chit copies — flatly contradicting
         // "an undeclared field is rejected, never carried", which holds on the payload path but did not here.
@@ -460,7 +472,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         ref = byName.get(k);
       }
       if (!ref) throw _422(`"${name || 'item ' + (idx + 1)}" is not available in this shop's catalogue`);
-      if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
+      throwIfUnpriced(ref);
       const qty = Number(li.quantity ?? li.qty);
       if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
       /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
@@ -801,14 +813,7 @@ const networkOrdersOn = () =>
 /** shopperOf(req) → the storefront customer the Bearer token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null —
  *  the same claims test as customerOf (SEC4) / middleware/customer-auth, without naming the shop up front (the network decides) */
 function shopperOf(req) {
-  const claims = claimsOf(req);
-  if (!claims || !claims.identity_id || claims.identity_type !== 'customer') return null;
-  return {
-    identity_id: claims.identity_id,
-    bridge_id: claims.bridge_id || null,
-    shop_entity_id: claims.parent_entity_id || null,
-    display_name: claims.display_name || null
-  };
+  return customerAuth.soft(req);
 }
 router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:networkId/order'), async (req, res) => {
   try {
@@ -990,30 +995,23 @@ router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (r
  * owner is not a stranger: with a valid session for THIS entity, the read bypasses the visibility gate and answers
  * with `preview: true`. Nothing changes for anyone else — a bad or foreign token is simply anonymous.
  */
-/** the bearer's verified claims, or null — a missing, bad or expired token is simply anonymous on a public read */
-function claimsOf(req) {
-  try {
-    const text = req.headers.authorization || '';
-    if (!text.startsWith('Bearer ')) return null;
-    return require('../lib/jwt-verify').verifyJwt(text.slice(7)).claims || null; // E10 — the ONE verifier
-  } catch (e) {
-    logger.fellBack('catalogue claimsOf: the token did not verify — read as a stranger', e, 'debug');
-    return null;
-  }
-}
-function ownerOf(req, entity) {
-  const d = claimsOf(req);
-  if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
-  const mine = d.parent_entity_id || d.identity_id;
-  return String(mine) === String(entity.identity_id);
+/**
+ * ownerOf(req, entity) → the live identity of THIS shop's owner or staff, or null (a stranger) — SEC-149. A signature-valid token is not
+ * enough: middleware/auth.softIdentity runs the same decision auth runs (session listing/jti, key listing, co-assist status), so a
+ * signed-out, switched-off or removed person is a stranger here too. The identity carries can_see_costs (the database's, not the token's).
+ */
+async function ownerOf(req, entity) {
+  const caller = await auth.softIdentity(req);
+  if (!caller || String(caller.parent_entity_id || caller.identity_id) !== String(entity.identity_id)) return null;
+  return caller;
 }
 /**
  * ⭐ SEC4 · A CUSTOMER SIGNED IN TO THIS SHOP — the token /login/verify (or /order/confirm) issued: identity_type 'customer' and
  * parent_entity_id = THIS shop (storefront identities are per shop, crHandle). The same test middleware/customer-auth.js applies.
  */
 function customerOf(req, entity) {
-  const d = claimsOf(req);
-  return !!(d && d.identity_id && d.identity_type === 'customer' && String(d.parent_entity_id || '') === String(entity.identity_id));
+  const shopper = customerAuth.soft(req);
+  return !!(shopper && String(shopper.shop_entity_id || '') === String(entity.identity_id));
 }
 /**
  * ⭐⭐ SEC4 · A SIGN-IN-FIRST SHOP ANSWERS A STRANGER WITH ITS CARD ONLY. Before SEC4 `storefront_access: 'login'` was only SENT, and
@@ -1151,12 +1149,15 @@ router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
-    const asOwner = req.query.preview === '1' && ownerOf(req, entity);
+    const owner = await ownerOf(req, entity);
+    const asOwner = req.query.preview === '1' && !!owner;
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
-    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || ownerOf(req, entity) });
+    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || !!owner });
     if (!view.available) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
-    res.json(publicResponseFor(view, asOwner));
+    const body = publicResponseFor(view, asOwner);
+    /* SEC-149: a cost-blind co-assist previews the shop without the buying side — the same strip every cost-blind answer uses (lib/cost.js) */
+    res.json(asOwner && owner.can_see_costs === false ? require('../lib/cost').dropCostKeys(structuredClone(body)) : body);
   } catch (err) {
     return fromError(req, res, err, storefront.FAILED.CATALOGUE);
   }
@@ -1882,8 +1883,9 @@ router.post(
  * lib/otp verifyOtp, untouched.
  */
 async function codeHolds(row, typed, names) {
-  if (!row) return false;
-  return (await verifyOtp(query, row, typed, { names })).ok; // SEC1: the typed contact, for TESTER_NAMES
+  const verdict = row ? await verifyOtp(query, row, typed, { names }) : { ok: false }; // SEC1: the typed contact, for TESTER_NAMES
+  if (!verdict.ok && !verdict.counted) await decoyAttempt(query); /* SEC-139: an unknown contact, a locked row and an expired code spend the round trip a wrong code does, and write no row */
+  return verdict.ok;
 }
 router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {

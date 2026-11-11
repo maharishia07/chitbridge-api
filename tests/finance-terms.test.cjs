@@ -100,7 +100,8 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   hooks.isOn = async () => null; LIMIT = 100000;
   ok('ledger off → no check', (await T.creditSaleCheck('E1', bill('On credit', 1500))).over === false);
   const chits = CF.read(path.join(__dirname, '..'));
-  ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /ov\.by && \(req\.till \|\| isOwner\(req\)\)/.test(chits));
+  const financeTermsSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'finance-terms.js'), 'utf8');
+  ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /overrideBy\(req, business_json\.credit_override\)/.test(chits) && /if \(!allowedBy\)\s*\n?\s*return problem\(req, res, \{ status: 409/.test(chits) && (/isOwner\(req\)/.test(financeTermsSrc) && /holder\.kind === 'key' && holder\.counter/.test(financeTermsSrc))); /* the who-may-override rule moved into lib/finance-terms overrideBy (SEC-FIX3 S3): the owner's login or a counter key, never a bare req.till */
 
   /* ── the routes before b298 has run ── */
   console.log('\n── routes before b298 ──');
@@ -133,12 +134,12 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
 
   /* ── b298: the SQL file ── */
   console.log('\n── b298_finance_terms.sql ──');
-  const dir = path.join(__dirname, '..', 'migrations'), sql = fs.readFileSync(path.join(dir, 'b298_finance_terms.sql'), 'utf8');
+  const dir = path.join(__dirname, '..', 'migrations'), sql = fs.readFileSync(path.join(dir, 'archive', 'b298_finance_terms.sql'), 'utf8'); /* b298 was folded into the 21 Oct baseline; its file is archived */
   ok('no new table', !/CREATE TABLE/i.test(sql));
   ok('adds exactly the three terms columns, idempotently', (sql.match(/ADD COLUMN IF NOT EXISTS terms jsonb/g) || []).length === 3);
   ok('RLS is stated (WITHOUT a new policy — the tables already carry theirs)', /RLS: WITHOUT/.test(sql));
-  const earlier = fs.readdirSync(dir).filter((f) => f < 'b298').map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
-  ok('the three tables carry RLS in earlier migrations', ['books_setting', 'customer_list', 'supplier_list'].every((t) => new RegExp('ALTER TABLE ' + t + '\\s+(ENABLE|FORCE) ROW LEVEL SECURITY', 'i').test(earlier)));
+  const earlier = fs.readFileSync(path.join(dir, '000_baseline_2026-10-21.sql'), 'utf8'); /* the baseline holds what the earlier migrations created */
+  ok('the three tables carry RLS in earlier migrations', ['books_setting', 'customer_list', 'supplier_list'].every((t) => new RegExp('ALTER TABLE (?:public\\.)?' + t + '\\s+(ENABLE|FORCE) ROW LEVEL SECURITY', 'i').test(earlier)));
 
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n'); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log(e && e.stack || e); process.exit(1); });

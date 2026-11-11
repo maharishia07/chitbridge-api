@@ -92,6 +92,8 @@ function extras(tools) {
     X('buy-a-line-of-nothing', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 0, cost: 40 }), setup: { sqlRows: expensed } }),
     X('buy-an-id-in-the-body-is-not-read', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', supply_item_id: UNKNOWN_ITEM, qty: 1, cost: 40 }), setup: { sqlRows: expensed } }),
     X('buy-unit-differs-from-the-balance', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'carton' }), setup: { sqlRows: firstOf(manyRows(KEPT), stock()) } }),
+    /* OPS-72: the bill number was recorded before with other lines: 409, nothing written (the held movement is another item and another amount) */
+    X('buy-bill-number-reused-with-other-lines', 'POST ' + at('/purchase'), 409, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }), setup: { sqlRows: firstOf(manyRows(KEPT), answering(/FROM stock_movement WHERE entity_id = \$1 AND ref = \$2/, [{ item_id: '99999999-9999-4999-8999-999999999990', line_ref: '1', qty: '9' }])) } }),
     X('buy-not-ready', 'POST ' + at('/purchase'), 503, { body: lines({ name: 'Floor cleaner', qty: 1 }), setup: { sqlRows: raising(/INSERT INTO supply_item/, '42P01') } }),
     X('buy-fails', 'POST ' + at('/purchase'), 500, { body: lines({ name: 'Floor cleaner', qty: 1 }), setup: { sqlRows: raising(/INSERT INTO supply_item/, '23505') } }),
     X('buy-fails-leaks-nothing', 'POST ' + at('/purchase'), 500, { body: lines({ name: 'Floor cleaner', qty: 1 }), setup: { sqlRows: () => { throw new Error(SECRET_SQL); } } }),
@@ -113,7 +115,7 @@ function extras(tools) {
   const issues = [
     X('issue-recorded', 'POST ' + at('/:id/issue'), 200, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE-1' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) } }),
     X('issue-recorded-without-a-ref', 'POST ' + at('/:id/issue'), 200, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: firstOf(looked(KEPT), stock()) } }),
-    X('issue-no-such-supply', 'POST ' + at('/:id/issue'), 400, { url: at('/' + UNKNOWN_ITEM + '/issue'), body: { qty: 2 } }),
+    X('issue-no-such-supply', 'POST ' + at('/:id/issue'), 404, { url: at('/' + UNKNOWN_ITEM + '/issue'), body: { qty: 2 } }),
     X('issue-expensed-supply', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: looked(EXPENSED) } }),
     X('issue-nothing', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: {}, setup: { sqlRows: looked(KEPT) } }),
     X('issue-not-a-number', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 'lots' }, setup: { sqlRows: looked(KEPT) } }),

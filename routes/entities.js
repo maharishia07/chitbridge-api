@@ -13,7 +13,7 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { problem, uuidParam, textParam } = require('../lib/problem');
+const { problem, uuidParam, textParam, softFault } = require('../lib/problem');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
@@ -32,7 +32,7 @@ router.param('code', textParam((req) => ({ status: 404, ...contract.words.noSuch
 /** the schema check of one route, to spread after its gates (lib/entities-contract.js): a body that is not an object is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
 const checked = (route) => {
   const operation = contract.entities.operationFor(route);
-  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.optionsFor(route))] : [];
 };
 /** the platform doors as gates in front of a handler (they answer a Problem themselves and say which statuses they add): the root of the deployment, and the platform role */
 const rootGate = Object.assign((req, res, next) => (require('../lib/platformroot').refuseUnlessRoot(req, res) ? next() : undefined), { addsStatuses: [403, 404] });
@@ -86,6 +86,38 @@ function userIdVerdict(wanted, display_name) {
 }
 
 /**
+ * ⭐ SEC-130 (A) · mailAlreadyOnFile(email): the held address gets ONE mail through the same mailer, awaited like a new address's code, so the two paths do the same
+ * work and take the same time (a faster refusal would be the timing signal). It carries no code and no shop name: it says the address is already on file, how to sign
+ * in, and where to get help. Both paths sit behind the same app-level per-IP authLimiter (signin.askChecks is field validation, not a limit; no per-address cap yet, SEC-148). Best effort: sendEmail never throws.
+ */
+function mailAlreadyOnFile(email) {
+  const html =
+    '<div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;"><h2 style="color: #0D47A1;">Chit and Bridge</h2>' +
+    '<p>Someone asked to register with this e-mail address, which is already on file with us.</p>' +
+    '<p>If that was you, go to the sign-in page and sign in with this address; we send a code there. No new account was made.</p>' +
+    '<p>If you need help, use Help in the app or reply to this e-mail. If this was not you, ignore it.</p></div>';
+  return require('../lib/notify').sendEmail(email, 'Chit and Bridge: this e-mail is already on file', html);
+}
+
+/**
+ * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args) → true when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
+ * minted: sign-in cannot find it, but identities.email is one global unique). The caller then answers with the words a NEW address gets, sends no code and
+ * makes nothing, so a stranger cannot tell a held address from a free one (OWASP: account enumeration). Any other error is thrown as before.
+ */
+async function emailHeldByNoAccount(sql, args) {
+  try {
+    await query(sql, args);
+    return false;
+  } catch (e) {
+    if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) {
+      await mailAlreadyOnFile(args[3]);
+      return true;
+    }
+    throw e;
+  }
+}
+
+/**
  * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
  *
  * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19: *"through the registration page, only the
@@ -130,14 +162,14 @@ async function registerNew(req, res) {
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
     if (guess && guess.timezone && (await schema.hasColumn('identities', 'timezone'))) more.push(['timezone', guess.timezone]);
-    await query(
+    const sql =
       `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country` +
-        more.map(([c]) => ', ' + c).join('') +
-        `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
-        more.map((_, index) => ', $' + (index + 8)).join('') +
-        ')',
-      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
-    );
+      more.map(([c]) => ', ' + c).join('') +
+      `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
+      more.map((_, index) => ', $' + (index + 8)).join('') +
+      ')';
+    const args = [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, guess?.country || null].concat(more.map(([, v]) => v));
+    if (await emailHeldByNoAccount(sql, args)) return res.json({ message: 'Verification code sent to your email', email });
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
       try {
@@ -344,7 +376,7 @@ const prefSetRoute = (fixedKind) =>
     }
   };
 
-router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+router.post('/register', signin.door('register'), ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
 router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
@@ -356,21 +388,25 @@ router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REF
 // and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
 // Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
 router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) => {
-  const CS = require('../lib/country-setup');
-  const at = await CS.atSignup();
-  const spin = {
-    installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
-    allowed_countries: at.allowed,
-    countries: CS.offered(at, req.query && req.query.tz)
-  };
   try {
-    const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
-      FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
-    res.json(Object.assign({ constitutions: r.rows }, spin));
-  } catch (e) {
-    /* STD2: never silent — the person sees no vertical chooser (the default setup applies); the countries still paint */
-    require('../lib/logger').warn('entities.constitutions: catalogue unread — the vertical chooser is hidden', { why: String(e && e.message) });
-    res.json(Object.assign({ constitutions: [] }, spin));
+    const CS = require('../lib/country-setup');
+    const at = await CS.atSignup();
+    const spin = {
+      installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
+      allowed_countries: at.allowed,
+      countries: CS.offered(at, req.query && req.query.tz)
+    };
+    try {
+      const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
+        FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
+      res.json(Object.assign({ constitutions: r.rows }, spin));
+    } catch (e) {
+      /* STD2: never silent — the catalogue is unread, so the person sees no vertical chooser (the default setup applies); the countries still paint. Logged with the request id, nothing of the cause is answered */
+      softFault(req, e);
+      res.json(Object.assign({ constitutions: [] }, spin));
+    }
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Sign-up choices failed')); /* the installation or the country packs could not be read: before, no answer at all */
   }
 });
 
@@ -437,8 +473,8 @@ router.get('/policy', auth, async (req, res) => {
   /* AU-WORDS: the schema is worded by the shop's COUNTRY PACK (policy.schemaFor — the registration kinds it offers, the tax's name, the records
      floor); the country comes in the same read as the flags (policy.read), still 1 trip. No country → neutral words, never India's. */
   try {
-    const { flags, country } = await policy.read(policyEntity(req));
-    res.json({ flags, country, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
+    const { flags, country, asked } = await policy.read(policyEntity(req));
+    res.json({ flags, country, asked: asked || {}, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Policy read failed'));
   }
@@ -862,6 +898,48 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
 router.patch('/me/locale', auth, ...checked('PATCH /me/locale'), prefSetRoute('locale'));
 
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
+/**
+ * writeProfileRow({ shop, body, userId, handler, currency, idSql }) → null once written, or the lock's refusal (SET-80). The ONE UPDATE of the shop's
+ * profile columns. A currency sent is asked of THE ONE LOCK (country-setup.currencyLockRefusal) inside the write's own transaction, so a product added
+ * between the read and the UPDATE cannot slip through; the same currency re-sent is no change. No currency sent: no lock, no extra trip.
+ */
+async function writeProfileRow({ shop, body, userId, handler, currency, idSql }) {
+  /* the one statement, run by whoever holds the connection: the pool, or the lock's own transaction */
+  const write = (runner) =>
+    runner(
+      `UPDATE identities SET display_name=COALESCE($7,display_name), logo_url=COALESCE($1,logo_url)${idSql.sql ? ', ' + idSql.sql : ''},
+                business_status=COALESCE($2,business_status),
+                user_id=COALESCE(user_id,$3),
+                self_copy_pref=COALESCE($4,self_copy_pref),
+                dispute_handler_actor_id=COALESCE($5,dispute_handler_actor_id),
+                currency_code=COALESCE($8,currency_code),
+                supplies=COALESCE($9,supplies)
+         WHERE identity_id=$6`,
+      [
+        body.logo_url || null,
+        body.business_status || null,
+        userId,
+        body.self_copy_pref || null,
+        handler,
+        shop,
+        /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
+        body.display_name ? sanitise(body.display_name) : null,
+        /* $8 — validated against the constitution above; null leaves it alone. */
+        currency,
+        body.supplies || null
+      ].concat(idSql.params)
+    );
+  if (!currency) {
+    await write(query);
+    return null;
+  }
+  return withEntity(shop, async (handle) => {
+    const refused = await require('../lib/country-setup').currencyLockRefusal(handle, shop, currency);
+    if (!refused) await write((sql, params) => handle.query(sql, params));
+    return refused;
+  });
+}
+
 
 /**
  * The cap on THIS entity's catalogue visibility — the operator who provisioned it, then the plan.
@@ -1075,29 +1153,8 @@ router.patch(
       }
       if (req.body.address) idFields.address = req.body.address;
       const idSql = P.shopIdentitySql(idFields, 10);
-      await query(
-        `UPDATE identities SET display_name=COALESCE($7,display_name), logo_url=COALESCE($1,logo_url)${idSql.sql ? ', ' + idSql.sql : ''},
-                business_status=COALESCE($2,business_status),
-                user_id=COALESCE(user_id,$3),
-                self_copy_pref=COALESCE($4,self_copy_pref),
-                dispute_handler_actor_id=COALESCE($5,dispute_handler_actor_id),
-                currency_code=COALESCE($8,currency_code),
-                supplies=COALESCE($9,supplies)
-         WHERE identity_id=$6`,
-        [
-          req.body.logo_url || null,
-          req.body.business_status || null,
-          userId,
-          req.body.self_copy_pref || null,
-          handler,
-          id,
-          /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
-          req.body.display_name ? sanitise(req.body.display_name) : null,
-          /* $8 — validated against the constitution above; null leaves it alone. */
-          _cur,
-          req.body.supplies || null
-        ].concat(idSql.params)
-      );
+      const locked = await writeProfileRow({ shop: id, body: req.body, userId, handler, currency: _cur, idSql });
+      if (locked) return problem(req, res, { status: locked.status, ...contract.words.currencyLocked(locked) });
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) {
         try {
@@ -1432,9 +1489,9 @@ const ROUTABLE = [
  * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
  */
 router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (req, res) => {
-  const me = auth.entityOf(req);
-  const q = req.query || {};
   try {
+    const me = auth.entityOf(req);
+    const q = req.query || {};
     const r = await query('SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
     const row = r.rows[0] || {};
     const out = await require('../lib/raiseticket').preview(
@@ -1443,7 +1500,7 @@ router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (
     );
     res.json(out);
   } catch (e) {
-    res.json({ ok: false, why: safeErr(e) }); /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
+    res.json({ ok: false, why: softFault(req, e) }); /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
   }
 });
 

@@ -163,6 +163,23 @@
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/purge"
       }
     },
+    "DELETE /api/combo-templates/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": []
+    },
     "DELETE /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -270,6 +287,30 @@
       "example": {
         "url": "/api/folders/rules/22222222-2222-4222-8222-222222222222",
         "body": {}
+      }
+    },
+    "DELETE /api/keys/:jti": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "jti"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/keys/a1b2c3"
       }
     },
     "DELETE /api/products/:id": {
@@ -2340,6 +2381,142 @@
         "url": "/api/books/compare"
       }
     },
+    "GET /api/books/compare/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "snapshot",
+          "parts",
+          "counts",
+          "effort"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "snapshot": {
+            "type": "object",
+            "required": [
+              "snapshot_id",
+              "label",
+              "source",
+              "source_word",
+              "period_from",
+              "period_to",
+              "parts"
+            ],
+            "properties": {
+              "snapshot_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "source_word": {
+                "type": "string"
+              },
+              "period_from": {
+                "type": "string"
+              },
+              "period_to": {
+                "type": "string"
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "parts": {
+            "type": "object"
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "equal",
+              "different",
+              "gap",
+              "only_ours"
+            ],
+            "properties": {
+              "equal": {
+                "type": "number"
+              },
+              "different": {
+                "type": "number"
+              },
+              "gap": {
+                "type": "number"
+              },
+              "only_ours": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "effort": {
+            "type": "object",
+            "required": [
+              "from",
+              "to",
+              "entries",
+              "structured",
+              "keyed",
+              "by_kind"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "entries": {
+                "type": "number"
+              },
+              "structured": {
+                "type": "number"
+              },
+              "keyed": {
+                "type": "number"
+              },
+              "by_kind": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "parts",
+          "reason": "a map keyed by part name"
+        },
+        {
+          "path": "effort.by_kind",
+          "reason": "a map keyed by data"
+        }
+      ],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/compare/22222222-2222-4222-8222-222222222222"
+      }
+    },
     "GET /api/books/daybook": {
       "status": "200",
       "schema": {
@@ -3057,6 +3234,48 @@
       ],
       "example": {
         "url": "/api/books/terms"
+      }
+    },
+    "GET /api/books/todo": {
+      "status": "200",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "kind",
+            "count",
+            "words",
+            "action"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "count": {
+              "type": "number"
+            },
+            "words": {
+              "type": "string"
+            },
+            "action": {
+              "type": "object"
+            },
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "observed": 3,
+      "open": [
+        "action",
+        "items"
+      ],
+      "example": {
+        "url": "/api/books/todo"
       }
     },
     "GET /api/books/trial-balance": {
@@ -5987,6 +6206,54 @@
         "url": "/api/crm/segments"
       }
     },
+    "GET /api/facts/:card": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "lines"
+        ],
+        "properties": {
+          "lines": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/facts/till"
+      }
+    },
+    "GET /api/facts/rail/chits": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "overdue_days",
+          "truncated",
+          "items"
+        ],
+        "properties": {
+          "overdue_days": {
+            "type": "number"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "items": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/facts/rail/chits"
+      }
+    },
     "GET /api/invoice/:chit_id": {
       "status": "200",
       "schema": {
@@ -6310,7 +6577,13 @@
             },
             "depth": {
               "type": "number"
-            }
+            },
+            "purpose": {},
+            "sort_order": {},
+            "city": {},
+            "lat": {},
+            "lng": {},
+            "service_km": {}
           },
           "additionalProperties": false,
           "x-closed-by": "recordings"
@@ -6572,18 +6845,516 @@
         "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
+    "GET /api/signin/devices": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "devices"
+        ],
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "device_id",
+                "label",
+                "kind",
+                "by",
+                "first_seen",
+                "seen",
+                "revoked_at",
+                "till_prefix",
+                "sessions"
+              ],
+              "properties": {
+                "device_id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "first_seen": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "seen": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "revoked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "till_prefix": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sessions": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/devices"
+      }
+    },
+    "GET /api/signin/sessions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "sessions",
+          "legacy",
+          "may"
+        ],
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "jti",
+                "device_id",
+                "surface",
+                "iat",
+                "exp",
+                "current",
+                "device"
+              ],
+              "properties": {
+                "jti": {
+                  "type": "string"
+                },
+                "device_id": {
+                  "type": "string"
+                },
+                "surface": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "iat": {
+                  "type": "number"
+                },
+                "exp": {
+                  "type": "number"
+                },
+                "current": {
+                  "type": "boolean"
+                },
+                "device": {
+                  "type": "object",
+                  "required": [
+                    "label",
+                    "kind",
+                    "seen"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "kind": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "seen": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "legacy": {
+            "type": "boolean"
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "devices"
+            ],
+            "properties": {
+              "devices": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "code": {},
+                  "why": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/sessions"
+      }
+    },
     "GET /api/tax/gstr": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "gstin",
+          "_cb"
+        ],
+        "properties": {
+          "gstin": {
+            "type": "string"
+          },
+          "fp": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "b2b": {},
+          "b2cl": {},
+          "b2cs": {},
+          "cdnr": {},
+          "cdnur": {},
+          "nil": {
+            "type": "object",
+            "required": [
+              "inv"
+            ],
+            "properties": {
+              "inv": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "hsn": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "doc_issue": {
+            "type": "object",
+            "required": [
+              "doc_det"
+            ],
+            "properties": {
+              "doc_det": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "_cb": {
+            "type": "object",
+            "required": [
+              "prior_period",
+              "reversed",
+              "not_in_books",
+              "expense_no_tax"
+            ],
+            "properties": {
+              "b2cl_limit": {
+                "type": "number"
+              },
+              "warnings": {},
+              "summary": {
+                "type": "object",
+                "required": [
+                  "invoices",
+                  "notes",
+                  "taxable",
+                  "tax"
+                ],
+                "properties": {
+                  "invoices": {
+                    "type": "number"
+                  },
+                  "notes": {
+                    "type": "number"
+                  },
+                  "taxable": {
+                    "type": "number"
+                  },
+                  "tax": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "prior_period": {},
+              "reversed": {},
+              "not_in_books": {},
+              "expense_no_tax": {},
+              "net": {
+                "type": "object",
+                "required": [
+                  "cgst",
+                  "sgst",
+                  "igst",
+                  "cess",
+                  "total"
+                ],
+                "properties": {
+                  "cgst": {
+                    "type": "number"
+                  },
+                  "sgst": {
+                    "type": "number"
+                  },
+                  "igst": {
+                    "type": "number"
+                  },
+                  "cess": {
+                    "type": "number"
+                  },
+                  "total": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "provisional": {
+                "type": "boolean"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "ret_period": {
+            "type": "string"
+          },
+          "sup_details": {
+            "type": "object",
+            "required": [
+              "osup_det",
+              "osup_zero",
+              "osup_nil_exmp",
+              "osup_nongst"
+            ],
+            "properties": {
+              "osup_det": {
+                "type": "object",
+                "required": [
+                  "txval",
+                  "iamt",
+                  "camt",
+                  "samt",
+                  "csamt"
+                ],
+                "properties": {
+                  "txval": {
+                    "type": "number"
+                  },
+                  "iamt": {
+                    "type": "number"
+                  },
+                  "camt": {
+                    "type": "number"
+                  },
+                  "samt": {
+                    "type": "number"
+                  },
+                  "csamt": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "osup_zero": {
+                "type": "object",
+                "required": [
+                  "txval",
+                  "iamt",
+                  "csamt"
+                ],
+                "properties": {
+                  "txval": {
+                    "type": "number"
+                  },
+                  "iamt": {
+                    "type": "number"
+                  },
+                  "csamt": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "osup_nil_exmp": {
+                "type": "object",
+                "required": [
+                  "txval"
+                ],
+                "properties": {
+                  "txval": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "osup_nongst": {
+                "type": "object",
+                "required": [
+                  "txval"
+                ],
+                "properties": {
+                  "txval": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "itc_elg": {
+            "type": "object",
+            "required": [
+              "itc_avl",
+              "itc_net"
+            ],
+            "properties": {
+              "itc_avl": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ty",
+                    "iamt",
+                    "camt",
+                    "samt",
+                    "csamt"
+                  ],
+                  "properties": {
+                    "ty": {
+                      "type": "string"
+                    },
+                    "iamt": {
+                      "type": "number"
+                    },
+                    "camt": {
+                      "type": "number"
+                    },
+                    "samt": {
+                      "type": "number"
+                    },
+                    "csamt": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "itc_net": {
+                "type": "object",
+                "required": [
+                  "iamt",
+                  "camt",
+                  "samt",
+                  "csamt"
+                ],
+                "properties": {
+                  "iamt": {
+                    "type": "number"
+                  },
+                  "camt": {
+                    "type": "number"
+                  },
+                  "samt": {
+                    "type": "number"
+                  },
+                  "csamt": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 2,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/tax/gstr?month=2026-10&form=gstr1"
       }
@@ -6754,7 +7525,11 @@
           "provisional",
           "dropped",
           "rows",
-          "note"
+          "note",
+          "prior_period",
+          "not_in_books",
+          "reversed",
+          "expense_no_tax"
         ],
         "properties": {
           "month": {
@@ -6796,6 +7571,150 @@
           "rows": {},
           "note": {
             "type": "string"
+          },
+          "prior_period": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "cause",
+                "invoice_day",
+                "invoice_month",
+                "booked_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "cause": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "booked_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "reversed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "invoice_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "reversed_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "not_in_books": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "invoice_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "reversed_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "expense_no_tax": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "amount",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -6818,6 +7737,52 @@
       "example": {
         "url": "/api/tax/ledger"
       }
+    },
+    "PATCH /api/combo-templates/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "template"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "template": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "definition",
+              "product_item_id",
+              "created_at",
+              "updated_at"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "array",
+                "items": {}
+              },
+              "price": {},
+              "product_item_id": {},
+              "created_at": {},
+              "updated_at": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": []
     },
     "PATCH /api/counters/:id": {
       "status": "200",
@@ -6878,6 +7843,718 @@
         }
       }
     },
+    "PATCH /api/entities/me/locale": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "prefs": {
+            "type": "object"
+          },
+          "locale_prefs": {
+            "type": "object"
+          },
+          "ui_prefs": {
+            "type": "object"
+          },
+          "pending": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "prefs",
+          "reason": "the preference sets stored on the caller own row: keys named by the PREF_SETS lists, merged with what the column already holds"
+        }
+      ],
+      "example": {
+        "url": "/api/entities/me/locale",
+        "body": {
+          "lang": "ta"
+        }
+      },
+      "basis": "hand: the handler literal is { ok, kind, prefs, [set.column] } with the column locale_prefs or ui_prefs (routes/entities.js PREF_SETS), and { ok:false, pending:true } before the column exists; the recorded values are user data, left open"
+    },
+    "PATCH /api/entities/me/prefs/:kind": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "prefs": {
+            "type": "object"
+          },
+          "locale_prefs": {
+            "type": "object"
+          },
+          "ui_prefs": {
+            "type": "object"
+          },
+          "pending": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "prefs",
+          "reason": "the preference sets stored on the caller own row: keys named by the PREF_SETS lists, merged with what the column already holds"
+        }
+      ],
+      "example": {
+        "url": "/api/entities/me/prefs/ui",
+        "body": {
+          "theme": ""
+        }
+      },
+      "basis": "hand: the handler literal is { ok, kind, prefs, [set.column] } with the column locale_prefs or ui_prefs (routes/entities.js PREF_SETS), and { ok:false, pending:true } before the column exists; the recorded values are user data, left open"
+    },
+    "POST /api/books/check": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "at",
+          "ok",
+          "problems",
+          "posted",
+          "engines",
+          "items_vs_control",
+          "controls",
+          "waiting"
+        ],
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "problems": {},
+          "posted": {
+            "type": "object",
+            "required": [
+              "retried",
+              "days",
+              "swept",
+              "recurring",
+              "parties_numbered"
+            ],
+            "properties": {
+              "retried": {
+                "type": "object",
+                "required": [
+                  "tried",
+                  "posted",
+                  "still"
+                ],
+                "properties": {
+                  "tried": {
+                    "type": "number"
+                  },
+                  "posted": {
+                    "type": "number"
+                  },
+                  "still": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "days": {},
+              "swept": {
+                "type": "object",
+                "required": [
+                  "found",
+                  "posted",
+                  "queued",
+                  "waiting",
+                  "nothing"
+                ],
+                "properties": {
+                  "found": {
+                    "type": "number"
+                  },
+                  "posted": {
+                    "type": "number"
+                  },
+                  "queued": {
+                    "type": "number"
+                  },
+                  "waiting": {
+                    "type": "number"
+                  },
+                  "nothing": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "recurring": {
+                "type": "object",
+                "required": [
+                  "proposed",
+                  "proposed_reversals",
+                  "posted",
+                  "reversed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "number"
+                  },
+                  "proposed_reversals": {
+                    "type": "number"
+                  },
+                  "posted": {
+                    "type": "number"
+                  },
+                  "reversed": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "parties_numbered": {
+                "type": "object",
+                "required": [
+                  "rows",
+                  "rowCount"
+                ],
+                "properties": {
+                  "rows": {},
+                  "rowCount": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "engines": {
+            "type": "object",
+            "required": [
+              "posting",
+              "packs",
+              "receivables",
+              "ledger",
+              "bookpack",
+              "period"
+            ],
+            "properties": {
+              "posting": {
+                "type": "string"
+              },
+              "packs": {
+                "type": "string"
+              },
+              "receivables": {
+                "type": "string"
+              },
+              "ledger": {
+                "type": "string"
+              },
+              "bookpack": {
+                "type": "string"
+              },
+              "period": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "items_vs_control": {},
+          "controls": {
+            "type": "object",
+            "required": [
+              "ok",
+              "checked"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "checked": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "waiting": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/check",
+        "body": {}
+      }
+    },
+    "POST /api/books/move-in/import": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "side",
+          "as_at",
+          "kind",
+          "source",
+          "added",
+          "merged",
+          "skipped",
+          "held",
+          "rows",
+          "notes",
+          "source_code_written",
+          "proof",
+          "proof_stored",
+          "import_id"
+        ],
+        "properties": {
+          "side": {},
+          "as_at": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "added": {
+            "type": "number"
+          },
+          "merged": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "number"
+          },
+          "held": {
+            "type": "number"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "line",
+                "what",
+                "why"
+              ],
+              "properties": {
+                "line": {
+                  "type": "number"
+                },
+                "what": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_code_written": {
+            "type": "boolean"
+          },
+          "proof": {
+            "type": "object",
+            "required": [
+              "source",
+              "source_country",
+              "country_how",
+              "shop_country",
+              "company_id",
+              "kind",
+              "side",
+              "as_at",
+              "currency",
+              "counts",
+              "landed",
+              "held",
+              "documents",
+              "parties",
+              "accounts",
+              "tax_codes",
+              "contacts",
+              "differences"
+            ],
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "source_country": {
+                "type": "string"
+              },
+              "country_how": {
+                "type": "string"
+              },
+              "shop_country": {
+                "type": "string"
+              },
+              "company_id": {},
+              "kind": {
+                "type": "string"
+              },
+              "side": {},
+              "as_at": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "counts": {
+                "type": "object",
+                "required": [
+                  "add",
+                  "merge",
+                  "skip",
+                  "hold"
+                ],
+                "properties": {
+                  "add": {
+                    "type": "number"
+                  },
+                  "merge": {
+                    "type": "number"
+                  },
+                  "skip": {
+                    "type": "number"
+                  },
+                  "hold": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "landed": {
+                "type": "object",
+                "required": [
+                  "added",
+                  "merged",
+                  "skipped",
+                  "held"
+                ],
+                "properties": {
+                  "added": {
+                    "type": "number"
+                  },
+                  "merged": {
+                    "type": "number"
+                  },
+                  "skipped": {
+                    "type": "number"
+                  },
+                  "held": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "held": {},
+              "documents": {},
+              "parties": {},
+              "accounts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "what",
+                    "action",
+                    "our_code",
+                    "their_code",
+                    "dr_minor",
+                    "cr_minor"
+                  ],
+                  "properties": {
+                    "line": {
+                      "type": "number"
+                    },
+                    "what": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    },
+                    "our_code": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "their_code": {
+                      "type": "string"
+                    },
+                    "dr_minor": {},
+                    "cr_minor": {}
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "tax_codes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "verdict",
+                    "kind",
+                    "rate"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "verdict": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "rate": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "contacts": {},
+              "differences": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "proof_stored": {
+            "type": "boolean"
+          },
+          "import_id": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/move-in/preview": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "kind",
+          "source",
+          "side",
+          "as_at",
+          "counts",
+          "refusal",
+          "notes",
+          "country",
+          "company_id",
+          "rows",
+          "tax_codes"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "side": {},
+          "as_at": {
+            "type": "string"
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "add",
+              "merge",
+              "skip",
+              "hold"
+            ],
+            "properties": {
+              "add": {
+                "type": "number"
+              },
+              "merge": {
+                "type": "number"
+              },
+              "skip": {
+                "type": "number"
+              },
+              "hold": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "refusal": {},
+          "notes": {},
+          "country": {
+            "type": "object",
+            "required": [
+              "shop",
+              "source",
+              "how"
+            ],
+            "properties": {
+              "shop": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "how": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "company_id": {},
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "line",
+                "what",
+                "action",
+                "why",
+                "data"
+              ],
+              "properties": {
+                "line": {
+                  "type": "number"
+                },
+                "what": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "code": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "tax_codes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "verdict",
+                "kind",
+                "rate"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "verdict": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rate": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "rows[].data",
+          "reason": "keys vary by kind (lib/move-in.js 1022, 1210, 1275)"
+        }
+      ],
+      "closed_by": "recordings"
+    },
     "POST /api/catalogue/enquiry/:item_id": {
       "status": "201",
       "schema": {
@@ -6936,6 +8613,108 @@
           ]
         }
       }
+    },
+    "POST /api/combo-templates": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "template"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "template": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "definition",
+              "product_item_id",
+              "created_at",
+              "updated_at"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "array",
+                "items": {}
+              },
+              "price": {},
+              "product_item_id": {},
+              "created_at": {},
+              "updated_at": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": []
+    },
+    "POST /api/combo-templates/:id/push": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "verb",
+          "item",
+          "template"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "verb": {
+            "type": "string"
+          },
+          "item": {
+            "type": "object"
+          },
+          "template": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "definition",
+              "product_item_id",
+              "created_at",
+              "updated_at"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "array",
+                "items": {}
+              },
+              "price": {},
+              "product_item_id": {},
+              "created_at": {},
+              "updated_at": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        "item"
+      ]
     },
     "POST /api/connections/request": {
       "status": "200",
@@ -8374,7 +10153,8 @@
           "schema",
           "bound",
           "bound_schema",
-          "may"
+          "may",
+          "asked"
         ],
         "properties": {
           "flags": {
@@ -8396,6 +10176,9 @@
             "type": "object"
           },
           "may": {
+            "type": "object"
+          },
+          "asked": {
             "type": "object"
           }
         },
@@ -13653,6 +15436,7 @@
             "type": "number"
           },
           "bills": {},
+          "withdrawn": {},
           "total": {
             "type": "number"
           },
@@ -16814,6 +18598,9 @@
           },
           "off": {
             "type": "boolean"
+          },
+          "replayed": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,
@@ -18454,6 +20241,1264 @@
         }
       }
     },
+    "POST /api/integrations/:actor_id/approve": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "enrol"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "enrol": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "enrol",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/integrations/44444444-4444-4444-8444-444444444444/approve",
+        "body": {}
+      }
+    },
+    "POST /api/integrations/profile": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "written",
+          "kept",
+          "rows",
+          "fields",
+          "order",
+          "issues",
+          "filled",
+          "total",
+          "rungs",
+          "state_name"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "written": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kept": {},
+          "rows": {
+            "type": "number"
+          },
+          "fields": {
+            "type": "object",
+            "required": [
+              "legal_name",
+              "trade_name",
+              "gstin",
+              "pan",
+              "reg_type",
+              "state",
+              "address",
+              "city",
+              "pincode",
+              "country",
+              "phone",
+              "email",
+              "currency",
+              "upi_id",
+              "bank_account",
+              "ifsc"
+            ],
+            "properties": {
+              "legal_name": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "trade_name": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "gstin": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "pan": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "reg_type": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "state": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "address": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "city": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "pincode": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "country": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "phone": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "email": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "currency": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "upi_id": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "bank_account": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "ifsc": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "issue"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "issue": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "filled": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "rungs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state_name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/integrations/profile",
+        "body": {
+          "source": "tally",
+          "fields": {
+            "legal_name": "Acme Pvt Ltd",
+            "state": "Delhi"
+          }
+        }
+      }
+    },
     "POST /api/invoice/build": {
       "status": "200",
       "schema": {
@@ -18691,6 +21736,65 @@
         }
       }
     },
+    "POST /api/keys": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "note",
+          "key",
+          "jti",
+          "name",
+          "scopes",
+          "created_at",
+          "expires_at",
+          "last4"
+        ],
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "last4": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/keys",
+        "body": {
+          "name": "Tally connector",
+          "scopes": [
+            "connector"
+          ]
+        }
+      }
+    },
     "POST /api/network-offers/:id/choice": {
       "status": "200",
       "schema": {
@@ -18716,6 +21820,258 @@
       "example": {
         "url": "/api/network-offers/33333333-3333-4333-8333-333333333333/choice",
         "body": {}
+      }
+    },
+    "POST /api/network-offers/:id/release": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "id",
+          "name",
+          "release",
+          "pushed"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "release": {
+            "type": "object",
+            "required": [
+              "version",
+              "at",
+              "until",
+              "released_at",
+              "released_by",
+              "prev"
+            ],
+            "properties": {
+              "version": {
+                "type": "number"
+              },
+              "at": {
+                "type": "string"
+              },
+              "until": {},
+              "released_at": {
+                "type": "string"
+              },
+              "released_by": {
+                "type": "string"
+              },
+              "prev": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "pushed": {
+            "type": "object",
+            "required": [
+              "stores",
+              "clients"
+            ],
+            "properties": {
+              "stores": {
+                "type": "number"
+              },
+              "clients": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-offers/33333333-3333-4333-8333-333333333333/release"
+      }
+    },
+    "POST /api/network-offers/:id/withdraw": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "id",
+          "until",
+          "pushed"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "until": {
+            "type": "string"
+          },
+          "pushed": {
+            "type": "object",
+            "required": [
+              "stores",
+              "clients"
+            ],
+            "properties": {
+              "stores": {
+                "type": "number"
+              },
+              "clients": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-offers/33333333-3333-4333-8333-333333333333/withdraw"
+      }
+    },
+    "POST /api/network-offers/catalogue/cancel": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "id"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-offers/catalogue/cancel",
+        "body": {
+          "source_key": "s"
+        }
+      }
+    },
+    "POST /api/network-offers/catalogue/price": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "choice"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "choice": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-offers/catalogue/price",
+        "body": {
+          "source_key": "s",
+          "name": "n",
+          "choice": "use"
+        }
+      }
+    },
+    "POST /api/network-offers/catalogue/publish": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "rec",
+          "applied",
+          "followed"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "rec": {
+            "type": "object",
+            "required": [
+              "id",
+              "source_key",
+              "at",
+              "published_at",
+              "published_by",
+              "changes"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "source_key": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "published_at": {
+                "type": "string"
+              },
+              "published_by": {
+                "type": "string"
+              },
+              "changes": {
+                "type": "array",
+                "items": {}
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "applied": {
+            "type": "boolean"
+          },
+          "followed": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-offers/catalogue/publish",
+        "body": {
+          "source_key": "s"
+        }
       }
     },
     "POST /api/network/connections": {
@@ -19110,6 +22466,208 @@
         "body": {}
       }
     },
+    "POST /api/offers/evaluate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "subtotal",
+          "total",
+          "adjustments",
+          "notes",
+          "skipped",
+          "perLine",
+          "offers_considered",
+          "engine",
+          "version"
+        ],
+        "properties": {
+          "subtotal": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "adjustments": {
+            "type": "array",
+            "items": {}
+          },
+          "notes": {
+            "type": "array",
+            "items": {}
+          },
+          "skipped": {
+            "type": "array",
+            "items": {}
+          },
+          "perLine": {
+            "type": "object"
+          },
+          "offers_considered": {
+            "type": "number"
+          },
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        "adjustments",
+        "notes",
+        "skipped",
+        "perLine"
+      ]
+    },
+    "POST /api/offers/explain": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "subtotal",
+          "total",
+          "adjustments",
+          "notes",
+          "skipped",
+          "perLine",
+          "offers_considered",
+          "engine",
+          "version",
+          "explain"
+        ],
+        "properties": {
+          "subtotal": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "adjustments": {
+            "type": "array",
+            "items": {}
+          },
+          "notes": {
+            "type": "array",
+            "items": {}
+          },
+          "skipped": {
+            "type": "array",
+            "items": {}
+          },
+          "perLine": {
+            "type": "object"
+          },
+          "offers_considered": {
+            "type": "number"
+          },
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "explain": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "label",
+                "why",
+                "amount",
+                "scope",
+                "target"
+              ],
+              "properties": {
+                "label": {},
+                "why": {},
+                "amount": {},
+                "scope": {},
+                "target": {}
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        "adjustments",
+        "notes",
+        "skipped",
+        "perLine"
+      ]
+    },
+    "POST /api/products/categories/bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "done",
+          "unchanged",
+          "refused",
+          "results"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "done": {
+            "type": "number"
+          },
+          "unchanged": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "result"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/products/categories/bulk",
+        "body": {
+          "ids": [
+            "22222222-2222-4222-8222-222222222222",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "add": [
+            "22222222-2222-4222-8222-222222222222"
+          ]
+        }
+      }
+    },
     "POST /api/quick-keys/groups": {
       "status": "201",
       "schema": {
@@ -19227,6 +22785,260 @@
         "body": {
           "resolution_code": "fixed",
           "note": "done"
+        }
+      }
+    },
+    "POST /api/signin/ask": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "need"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "need": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/ask",
+        "body": {
+          "email": "gh\u0000ost@x.com"
+        }
+      }
+    },
+    "POST /api/signin/logout": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "removed"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "removed": {
+            "type": "boolean"
+          },
+          "legacy": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/logout",
+        "body": {}
+      }
+    },
+    "POST /api/signin/pin": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/pin",
+        "body": {
+          "pin": "1234",
+          "confirm_pin": "1234"
+        }
+      }
+    },
+    "POST /api/signin/renew": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "token",
+          "jti",
+          "exp",
+          "device_id",
+          "surface"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "exp": {
+            "type": "number"
+          },
+          "device_id": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/signin/renew",
+        "body": {}
+      }
+    },
+    "POST /api/signin/sessions/revoke": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "revoked": {
+            "type": "string"
+          },
+          "removed": {
+            "type": "boolean"
+          },
+          "device_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/sessions/revoke",
+        "body": {
+          "device_id": "device-aaaa-1111"
+        }
+      }
+    },
+    "POST /api/signin/verify": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "token",
+          "entity",
+          "identity",
+          "constitution"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "bridge_id",
+              "display_name",
+              "email"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "identity": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "bridge_id",
+              "display_name",
+              "email",
+              "user_id",
+              "identity_type",
+              "entity_id",
+              "access_level"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "user_id": {},
+              "identity_type": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "access_level": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "constitution": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/verify",
+        "body": {
+          "email": "a@x.com",
+          "otp": "482915"
         }
       }
     },
@@ -20992,6 +24804,121 @@
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/star"
       }
     },
+    "PUT /api/chits/:chit_id/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "previous_status": {
+            "type": "string"
+          },
+          "new_status": {
+            "type": "string"
+          },
+          "ctp": {
+            "type": "object",
+            "required": [
+              "queued"
+            ],
+            "properties": {
+              "queued": {
+                "type": "number"
+              },
+              "seq": {
+                "type": "number"
+              },
+              "why": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "books": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "entry_id": {
+                "type": "string"
+              },
+              "entry_no": {
+                "type": "string"
+              },
+              "posting_date": {
+                "type": "string"
+              },
+              "moved": {
+                "type": "boolean"
+              },
+              "reverses": {
+                "type": "string"
+              },
+              "reverses_entry_id": {
+                "type": "string"
+              },
+              "words": {
+                "type": "string"
+              },
+              "reversed": {
+                "type": "number"
+              },
+              "already": {
+                "type": "boolean"
+              },
+              "duplicate": {
+                "type": "boolean"
+              },
+              "off": {
+                "type": "boolean"
+              },
+              "refused": {
+                "type": "string"
+              },
+              "none": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "status": {
+            "type": "string"
+          },
+          "noop": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 13,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/status",
+        "body": {
+          "status": "accepted"
+        }
+      }
+    },
     "PUT /api/chits/:chit_id/use": {
       "status": "200",
       "schema": {
@@ -21145,6 +25072,85 @@
         "url": "/api/folders/inventory/RT-4090",
         "body": {
           "msg": "none"
+        }
+      }
+    },
+    "PUT /api/integrations/streams": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "owner"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "owner": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "owner",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/integrations/streams",
+        "body": {
+          "order": "kit@pc",
+          "stock": null
+        }
+      }
+    },
+    "PUT /api/network-offers/policy": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "policy",
+          "pushed"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "pushed": {
+            "type": "object",
+            "required": [
+              "stores",
+              "clients"
+            ],
+            "properties": {
+              "stores": {
+                "type": "number"
+              },
+              "clients": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-offers/policy",
+        "body": {
+          "policy": "opt_in"
         }
       }
     },
@@ -27656,7 +31662,37 @@
           "limit"
         ],
         "properties": {
-          "templates": {},
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "definition",
+                "product_item_id",
+                "created_at",
+                "updated_at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "definition": {
+                  "type": "array",
+                  "items": {}
+                },
+                "price": {},
+                "product_item_id": {},
+                "created_at": {},
+                "updated_at": {}
+              },
+              "additionalProperties": false
+            }
+          },
           "total": {
             "type": "number"
           },
@@ -27666,7 +31702,12 @@
           "limit": {
             "type": "number"
           },
-          "PAGE_DEFAULT": {}
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       },
@@ -27890,15 +31931,27 @@
     "GET /api/offers/openapi.json": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "servers",
+          "tags",
+          "components",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {},
+          "info": {},
+          "servers": {},
+          "tags": {},
+          "components": {},
+          "paths": {}
+        },
+        "additionalProperties": false
       },
       "observed": 6,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ]
+      "open": []
     },
     "GET /api/books/ledger/:account": {
       "status": "200",
@@ -40720,6 +44773,18 @@
           },
           "total": {
             "type": "number"
+          },
+          "total_partial": {
+            "type": "boolean"
+          },
+          "unpriced_lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total_words": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -41967,7 +46032,6 @@
     "DELETE /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/channels/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/chits/:chit_id/payment": "open at books — a value passed through (a name: its keys are not written in the handler)",
-    "DELETE /api/combo-templates/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "DELETE /api/definitions/:id": "open at moved — a value passed through (a name: its keys are not written in the handler)",
     "DELETE /api/products/:id/media/:mid": "open at media[] — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/quick-keys/groups/:id": "open at group — a value passed through (a name: its keys are not written in the handler)",
@@ -41983,11 +46047,13 @@
     "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/attachments/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/books/cashflow": "open at opening[] — a value passed through (an expression: its keys are not written in the handler); lowest — a value passed through (an expression: its keys are not written in the handler); uncounted — a value passed through (an expression: its keys are not written in the handler); gst — a value passed through (an expression: its keys are not written in the handler); series[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/books/compare/:id/csv": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/books/events": "open at events[] — a value passed through (an expression: its keys are not written in the handler); picks — a value passed through (an expression: its keys are not written in the handler); pending[] — a value passed through (an expression: its keys are not written in the handler); golden — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/fx-rates": "open at may.add — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/health": "open at country — a value passed through (an expression: its keys are not written in the handler); engines — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/ledger/:account": "open at account — a value passed through (an expression: its keys are not written in the handler); lines[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/packs/:id": "open at manifest — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/books/packs/:id/file": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/books/payments/:id/advice": "open at party — a value passed through (an expression: its keys are not written in the handler); advice — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler); body — a value passed through (an expression: its keys are not written in the handler); share — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/returns": "open at asked — a value passed through (an expression: its keys are not written in the handler); period — a value passed through (an expression: its keys are not written in the handler); staggers — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
@@ -42081,7 +46147,6 @@
     "GET /api/kyb/yourself": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/network-design": "open at draft - the saved drawing, stored verbatim from the owner body (PUT /: any object up to 2 MB, the design tool owns its keys); a closed shape would cut a key it does not list",
     "GET /api/notifications": "open at notifications[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/offers/openapi.json": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/privacy/facts": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/privacy/me": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
@@ -42098,7 +46163,6 @@
     "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/tax/gstr": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/tax/ledger": "open at output — a value passed through (an expression: its keys are not written in the handler); itc — a value passed through (an expression: its keys are not written in the handler); net — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cases": "open at cases[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/testing/changes": "open at changes[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (an expression: its keys are not written in the handler)",
@@ -42120,12 +46184,9 @@
     "GET /api/work/list": "open at counts — a value passed through (an expression: its keys are not written in the handler); rows[] — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/books/payments/:id": "open at advice — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
-    "PATCH /api/combo-templates/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "PATCH /api/connectors/:actorId/connections/:connId": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/crm/followups/:id": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/entities/me/exposure": "open at exposure — a value passed through (an expression: its keys are not written in the handler)",
-    "PATCH /api/entities/me/locale": "open at (answer) — never seen and not written in the handler",
-    "PATCH /api/entities/me/prefs/:kind": "open at (answer) — never seen and not written in the handler",
     "PATCH /api/entities/policy": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/folders/rules/:rule_id": "open at when — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/products/:id": "open at item — a value passed through (an expression: its keys are not written in the handler)",
@@ -42175,8 +46236,6 @@
     "POST /api/chits/:chit_id/reprice": "open at will_price[] — a value passed through (an expression: its keys are not written in the handler); needs_price[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/assign-bulk": "open at skipped[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/send": "open at summary — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/combo-templates": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/combo-templates/:id/push": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "POST /api/connectors": "open at connector.connector_config — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/connectors/:actorId/erp-test": "open at (answer) — a spread (...x) adds keys the text does not name",
@@ -42201,16 +46260,10 @@
     "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/code": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/verify": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/integrations/:actor_id/approve": "open at enrol — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/invoice/build": "open at invoice — a value passed through (a name: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/network-offers/:id/release": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/network-offers/:id/withdraw": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/network-offers/catalogue/cancel": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/network-offers/catalogue/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/network-offers/catalogue/publish": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/offers/evaluate": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "POST /api/offers/explain": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "POST /api/pricing/price": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/privacy/me/consent": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/privacy/me/requests": "open at request — a value passed through (an expression: its keys are not written in the handler)",
@@ -42237,7 +46290,7 @@
     "PUT /api/folders/inventory/:code": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/network-offers/policy": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+    "PUT /api/integrations/streams": "open at owner — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)"

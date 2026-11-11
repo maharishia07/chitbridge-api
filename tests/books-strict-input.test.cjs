@@ -174,5 +174,24 @@ for (const [key, op] of Object.entries(C.OPERATIONS)) {
 }
 ok('the closed books bodies were all checked (44 on 1 Nov 2026; fewer means a row lost its closing rule)', checked >= 44, 'checked ' + checked);
 
+/* ── 3 · the ＋ Entry door (POST /events · /preview, closed in pass 2): the body is the entry kind's own fields, so the builders in lib/books-manual.js are read, not the route ── */
+{
+  const manual = libText('books-manual.js');
+  const read = new Set();
+  for (const m of manual.matchAll(/(?<![\w.$])(?:b|body|bill)\.([a-z_]+)\b/g)) read.add(m[1]);
+  for (const m of manual.matchAll(/(?:modeOf|dateOf|amountOf)\((?:b|body),\s*'([a-z_]+)'/g)) { read.add(m[1]); if (m[0].startsWith('amountOf')) read.add(m[1] + '_minor'); }
+  for (const m of manual.matchAll(/key: '([a-z_]+)'/g)) read.add(m[1]); /* the fields the grid asks for */
+  read.add('client_ref'); /* refOf */
+  const contra = functionIn(libText('books-period.js'), 'contraEvent');
+  for (const m of (contra ? contra.text : '').matchAll(/body\.([a-z_]+)/g)) read.add(m[1]);
+  ok('the entry builders were found and read', read.size >= 20 && !!contra, 'read ' + read.size);
+  for (const route of ['POST /api/books/events', 'POST /api/books/preview']) {
+    const decl = declaredOf(C.OPERATIONS[route]);
+    ok(route + ': the body is closed', !!(decl && decl.closed));
+    const missing = [...read].filter((k) => !NOT_A_FIELD.has(k) && !decl.keys.has(k));
+    ok(route + ': every key the entry builders read is declared (' + read.size + ' read)', missing.length === 0, 'read but not declared: ' + missing.join(', '));
+  }
+}
+
 console.log('\n  ' + (fail ? '✗ ' + fail + ' failed' : '✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks');
 process.exit(fail ? 1 : 0);

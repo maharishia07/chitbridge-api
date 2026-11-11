@@ -195,6 +195,9 @@ const COLUMN_KINDS = [
 
 /** one column's value: the owner for a shop column, the answer schema's sample for a declared field, else a value of the kind its name says */
 function columnValue(name, schema, owner) {
+  /* CTRY-94: no India default, so the stand-in shop NAMES its country (an unknown one is refused 422 NO_COUNTRY_PACK / ends 500, and the generated cases never reached their answer) */
+  if (name === 'country') return 'IN';
+  if (name === 'currency') return 'INR';
   const kind = COLUMN_KINDS.find(([pattern]) => pattern.test(name));
   if (kind && kind[0] === COLUMN_KINDS[0][0]) return owner;
   if (schema) return fittingValue(schema);
@@ -320,6 +323,10 @@ function sendCase(port, { method, url, body, headers }) {
 /** the shop's token every case carries (an entity token, signed with the walk's secret) */
 const shopToken = () => require('jsonwebtoken').sign({ identity_id: CALLER_SHOP, identity_type: 'entity', bridge_id: 'CB-CASE', display_name: 'Case shop' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 
+/** the Idempotency-Key header a money write that REQUIRES one needs for a case that is about something else (an id, a canary): a fresh key per call, so no case replays another's answer. {} for any other route (FIN-51) */
+let keyCounter = 0;
+const keyHeaderFor = (target) => (target.leaf.fns.some((fn) => typeof fn === 'function' && fn.name === 'requireIdempotencyKey') ? { headers: { 'idempotency-key': 'case-other-' + (++keyCounter) } } : undefined);
+
 /** play one request in a world: { status, headers, body } */
 async function playIn(mode, target, extra) {
   Object.assign(world, { mode, fields: target.fields });
@@ -346,18 +353,18 @@ function strictInputCase(check) {
 
 /** output_allowlist: a 2xx answer, from a row that holds the canary column, does not hold the canary */
 async function outputAllowlistCase(target) {
-  const answer = await playIn('own', target);
+  const answer = await playIn('own', target, keyHeaderFor(target));
   if (answer.status < 200 || answer.status > 299) return 'not reached: answered ' + answer.status;
   return holdsKey(answer.body, CANARY) ? 'the answer holds ' + CANARY + ', a column the answer schema does not list' : null;
 }
 
 /** foreign_id_404: another shop's id is answered exactly as an unknown id, and that is a 404 (while the caller's own id is found, so the 404 is about whose id it is) */
 async function foreignIdCase(target) {
-  const ownAnswer = await playIn('own', target);
+  const ownAnswer = await playIn('own', target, keyHeaderFor(target));
   if (ownAnswer.status === 404) return "not reached: the caller's own id answered 404 too";
-  const missing = await playIn('missing', target);
+  const missing = await playIn('missing', target, keyHeaderFor(target));
   if (missing.status !== 404) return 'an unknown id answered ' + missing.status + ', not 404';
-  const foreign = await playIn('foreign', target);
+  const foreign = await playIn('foreign', target, keyHeaderFor(target));
   return comparable(foreign) === comparable(missing) ? null : "another shop's id answered " + foreign.status + ', not the unknown id\'s 404';
 }
 
@@ -509,4 +516,4 @@ async function main(argv) {
 }
 
 if (require.main === module) main(process.argv.slice(2)).then(() => process.exit(process.exitCode || 0));
-module.exports = { casesFor, judge, runCheck, runAll, sampleOf, placesOf, schemaRoutes, textOf, RESULTS_FILE, hardeningCases, runHardening, servedFor, appForCases, hardeningTextOf, evidenceTextOf, world, CANARY, CALLER_SHOP, HARDENING_FILE, EVIDENCE_FILE };
+module.exports = { keyTableAnswer, casesFor, judge, runCheck, runAll, sampleOf, placesOf, schemaRoutes, textOf, RESULTS_FILE, hardeningCases, runHardening, servedFor, appForCases, hardeningTextOf, evidenceTextOf, world, CANARY, CALLER_SHOP, HARDENING_FILE, EVIDENCE_FILE };

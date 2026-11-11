@@ -19,7 +19,7 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
@@ -60,19 +60,10 @@ const CONTEXT_HINTS = {
 // Optional auth: if a valid Bearer token is present, attach a minimal identity so the real model can ground on
 // the caller's own (tenant-scoped) context. Absent/invalid token → anonymous (the assistant is available
 // pre-auth on welcome/login/register), grounded on the public KB only. Never throws.
-function softIdentity(req) {
-  try {
-    const text = req.headers.authorization;
-    if (!text || !text.startsWith('Bearer ')) return null;
-    const d = require('../lib/jwt-verify').verifyJwt(text.split(' ')[1]).claims; // E10 — the ONE verifier
-    // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
-    // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
-    if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
-    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null, identity_type: d.identity_type, access_level: d.access_level }; // the level rides the token (identity-auth FX-L2C), so a draft that costs money can ask lib/access
-  } catch (e) {
-    log.fellBack('assist softIdentity: the helper failed — answered with nothing', e);
-    return null;
-  }
+async function softIdentity(req) {
+  const caller = await auth.softIdentity(req); // SEC-149: the SAME decision auth runs (session listing, status, current level) — a valid signature alone is a stranger
+  if (!caller) return null;
+  return { identity_id: caller.identity_id, parent_entity_id: caller.parent_entity_id, identity_type: caller.identity_type, access_level: caller.access_level }; // a draft that costs money asks lib/access with the CURRENT level
 }
 
 /** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */
@@ -85,7 +76,7 @@ router.post('/', ...contract.checked('POST /'), async (req, res) => {
     if (!q) return problem(req, res, { status: 422, ...words.askNothing() });
     if (q.length > 500) return problem(req, res, { status: 422, ...words.askTooLong() });
 
-    const identity = softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
+    const identity = await softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
 
     // ── The model call. It MUST:
     //    1) run under the `assist-ask` skill (the no-oversell guardrail, lib/ai.js) through invokeSkill;
@@ -144,7 +135,7 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
     if (!tpl) return problem(req, res, { status: 404, ...words.unknownStandard(compliance.listTemplates()) });
 
     const verdict = compliance.evaluate(tpl, payload); // ← deterministic floor; ALWAYS the source of truth
-    const identity = softIdentity(req);
+    const identity = await softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
 
     // The Crux-2 deputy stamp. delegator = the invoking human (invoked mode); grant per-act; NOT confirmed here
@@ -189,10 +180,22 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
 });
 
 // GET /api/assist/standards — the conform-check standards available to check against (drives the UI picker).
-router.get('/standards', (req, res) => res.json({ ok: true, data: compliance.listTemplates() }));
+router.get('/standards', (req, res) => {
+  try {
+    res.json({ ok: true, data: compliance.listTemplates() });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
+});
 
 // GET /api/assist/catalogue-sources — the catalogue sources the handler can structure (drives the UI picker).
-router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: await catalogueBuild.listSources() }));
+router.get('/catalogue-sources', async (req, res) => {
+  try {
+    res.json({ ok: true, data: await catalogueBuild.listSources() });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
+});
 
 // POST /api/assist/catalogue-structure — the `ai:catalogue-structure@v1` slot. Body: { source }. Returns the
 // DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
@@ -204,7 +207,7 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource(await catalogueBuild.listSources()) });
 
-    const identity = softIdentity(req);
+    const identity = await softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
     const acted_by = {
       deputy: 'ai:catalogue-structure@v1',
@@ -734,7 +737,11 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
 // as CHITS in GOV-01-Help's Task inbox (not as catalogue drafts), so there are no catalogue "gaps" to list. Returns
 // empty and reads nothing (the cross-read of the help catalogue is no longer needed).
 router.get('/gaps', auth, ...contract.checked('GET /gaps'), async (req, res) => {
-  res.json({ ok: true, data: [], deprecated: true });
+  try {
+    res.json({ ok: true, data: [], deprecated: true });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
 });
 
 // POST /api/assist/resolve — DEPRECATED under B1 RLS. It updated the HELP entity's catalogue from an outside caller
@@ -754,7 +761,7 @@ router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res)
     /* T3-DISPUTES-ASSIST: may I publish an answer — the SAME test POST /publish refuses with (403 below), as a code the CB Assist screen greys on */
     res.json({ ok: true, is_helpdesk: hd, actions: { publish: hd ? { ok: true } : { ok: false, why: 'not_helpdesk', say: PUBLISH_NO } } });
   } catch (err) {
-    log.warn('assist/whoami could not read the help-desk schema — answered as not a help desk', { id: req.id, err: err.message });
+    softFault(req, err); /* the read failed: logged with the request id; the answer below is 200 'not a help desk' by design (never 500) */
     res.json({ ok: true, is_helpdesk: false, actions: { publish: { ok: false, why: 'not_read', say: 'Could not check who may publish. Try again.' } } });
   }
 });

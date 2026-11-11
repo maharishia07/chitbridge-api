@@ -117,7 +117,7 @@ function ask(port, token, [, method, url, body]) {
   /* the token is the caller's: a shop's, or a shopper's for the routes only a shopper may call */
   const text = JSON.stringify(body);
   return new Promise((resolve) => {
-    const sent = require('http').request({ host: '127.0.0.1', port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer ' + token } }, (answer) => {
+    const sent = require('http').request({ host: '127.0.0.1', port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer ' + token, ...(url === '/api/supplies/purchase' ? { 'idempotency-key': 'strict-' + Date.now() } : {}) } }, (answer) => {
       let raw = '';
       answer.on('data', (part) => (raw += part));
       answer.on('end', () => resolve({ status: answer.statusCode, body: raw ? JSON.parse(raw) : null }));
@@ -128,6 +128,8 @@ function ask(port, token, [, method, url, body]) {
 
 (async () => {
   const app = cases.appForCases(path.join(__dirname, '..'));
+  /* the register is a per-shop capability (RAIL-90): a shop that already holds register rows has it on, so the case shop is one of those; without it the register routes answer 403 CAPABILITY_OFF before the body is read. Required AFTER appForCases: the gate must meet the stand-in database, not the real one */
+  require('../lib/register-gate').KNOWN_USERS.add(cases.CALLER_SHOP);
   const token = jwt.sign({ identity_id: cases.CALLER_SHOP, identity_type: 'entity', bridge_id: 'CB-CASE', display_name: 'Case shop' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
   const shopper = jwt.sign({ identity_id: cases.CALLER_SHOP, identity_type: 'customer', bridge_id: 'CB-CASE', parent_entity_id: cases.CALLER_SHOP, display_name: 'Case shopper' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
   await cases.servedFor(app, async (port) => {

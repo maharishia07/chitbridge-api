@@ -51,7 +51,7 @@ function attRows(world, sqlError) {
       const held = (world.headers || []).find((one) => one.chit === params[0] && one.entity === params[1]);
       return { rows: held ? [{ all_recipients: held.roster }] : [], rowCount: held ? 1 : 0 };
     }
-    if (/SELECT visibility_entity_id FROM chit_messages/.test(text)) {
+    if (/SELECT visibility_entity_id(, is_dispute, dispute_id)? FROM chit_messages/.test(text)) {
       if (!UUID_SHAPE.test(String(params[0]))) throw sqlError('22P02'); /* message_id is a uuid column */
       const held = (world.messages || []).find((one) => one.id === params[0] && one.entity === world.caller);
       return { rows: held ? [{ visibility_entity_id: held.visibility }] : [], rowCount: held ? 1 : 0 };
@@ -116,8 +116,7 @@ function extras(tools) {
     up('up-exactly-6mb', 200, withBody({ data_base64: Buffer.alloc(SIX_MB).toString('base64') })),
     up('up-roster-empty-is-the-caller-alone', 200, good, { headers: [headerFor(SHOP_ID, [])] }),
     up('up-roster-null-is-the-caller-alone', 200, good, { headers: [headerFor(SHOP_ID, null)] }),
-    up('up-roster-skips-entries-without-an-entity', 200, good, { headers: [headerFor(SHOP_ID, [{ entity_id: PEER_ID }, {}, { entity_id: null }, { entity_id: PEER_ID }])] }),
-    up('up-keys-that-widen-are-ignored', 200, withBody({ participants: [STRANGER_ID], audience: 'all', entity_id: STRANGER_ID, uploaded_by: STRANGER_ID, size: 1, id: STRANGER_ID }))
+    up('up-roster-skips-entries-without-an-entity', 200, good, { headers: [headerFor(SHOP_ID, [{ entity_id: PEER_ID }, {}, { entity_id: null }, { entity_id: PEER_ID }])] })
   ];
 
   const echoes = [

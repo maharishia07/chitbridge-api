@@ -131,12 +131,13 @@ async function attachmentCases(A) {
     expect(asB.status === 404 || asB.status === 403, 'B read A\'s copy by id (shared read): HTTP ' + asB.status + ' — B must open ITS OWN copy');
     expect((await read(B)).some((a) => a.name === 'truth.txt'), 'B\'s own chit read does not list its copy');
   }, 'getBlob relies on RLS alone and the local api runs as postgres, which bypasses it (RAIL-80); the query has no entity_id predicate of its own');
-  await kase('RL-50b', 'no widening move: an outsider cannot attach to the chit, and an audience named in the body is ignored', async () => {
+  await kase('RL-50b', 'no widening move: an outsider cannot attach to the chit, and an audience named in the body is refused (closed body, API-30 round 2: no real caller sends one)', async () => {
     const asC = await j('/api/attachments', { method: 'POST', token: C.token, body: { chit_id: chit, name: 'intruder.txt', mime: 'text/plain', data_base64: b64 } });
     expect(asC.status === 403, 'outsider upload answered HTTP ' + asC.status);
-    ok(await j('/api/attachments', { method: 'POST', token: A.token, body: { chit_id: chit, name: 'widen.txt', mime: 'text/plain', data_base64: b64, participants: [C.entity], audience: [C.entity], entity_ids: [C.entity] } }), 'upload with audience');
+    const widen = await j('/api/attachments', { method: 'POST', token: A.token, body: { chit_id: chit, name: 'widen.txt', mime: 'text/plain', data_base64: b64, participants: [C.entity], audience: [C.entity], entity_ids: [C.entity] } });
+    expect(widen.status === 422, 'upload naming an audience answered HTTP ' + widen.status);
     const rows = (await pg.query(`SELECT entity_id FROM cb_attachment WHERE chit_id = $1 AND name = 'widen.txt'`, [chit])).rows.map((r) => r.entity_id);
-    expect(!rows.includes(C.entity) && rows.length === 2, 'copies for widen.txt held by ' + JSON.stringify(rows));
+    expect(!rows.includes(C.entity) && rows.length === 0, 'copies for widen.txt held by ' + JSON.stringify(rows));
   });
   await kase('RL-50c', 'an empty file and an oversize file are refused by the door', async () => {
     const empty = await j('/api/attachments', { method: 'POST', token: A.token, body: { chit_id: chit, name: 'empty.txt', mime: 'text/plain', data_base64: '' } });

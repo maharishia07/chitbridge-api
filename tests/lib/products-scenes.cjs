@@ -54,6 +54,8 @@ function extras(tools) {
   const markedOut = (rows) => answering(/^s*UPDATE catalogue_items/, rows.map((row) => Object.assign({ item_data: ITEM({ status: 'unavailable' }).item_data }, row)));
   const withMedia = (media) => firstOf(answering(/^s*UPDATE catalogue_items/, [{ item_data: ITEM({ media }).item_data }]), shelf);
   const costHidden = { cost: { canReadSafe: async () => false } };
+  const CATEGORY = '22222222-2222-4222-8222-222222222222';
+  const categoriesBulkRows = firstOf(answering(/FROM definition/, [{ definition_id: CATEGORY, name: 'Fruit', status: 'live' }]), answering(/FOR UPDATE/, [{ item_id: PARTY, item_data: ITEM().item_data }]), shelf);
   const importBody = (more) => Object.assign({ csv: CSV, decisions: DECIDED, confirm: true }, more);
   return [
     /* POST / */
@@ -93,6 +95,14 @@ function extras(tools) {
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
     X('edits-written', 'POST ' + P + '/bulk-update', 200, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: withRows(shelf) }),
     X('edits-db-fails', 'POST ' + P + '/bulk-update', 500, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: failing }),
+    /* POST /categories/bulk (QA-130, born after the sweep: N) */
+    N('categories-bulk-nothing-named', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY] } }),
+    N('categories-bulk-both-ways', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY], add: [CATEGORY], remove: [CATEGORY] } }),
+    N('categories-bulk-too-many', 'POST ' + P + '/categories/bulk', 400, { body: { ids: manyOf(201, PARTY).map((id, at) => id + at), add: [CATEGORY] } }),
+    N('categories-bulk-unknown-category', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY], add: [CATEGORY] } }),
+    N('categories-bulk-cost-blind', 'POST ' + P + '/categories/bulk', 403, { body: { ids: [PARTY], add: [CATEGORY] }, setup: costBlind }),
+    N('categories-bulk-done', 'POST ' + P + '/categories/bulk', 200, { body: { ids: [PARTY, '33333333-3333-4333-8333-333333333333'], add: [CATEGORY] }, setup: withRows(categoriesBulkRows) }),
+    N('categories-bulk-db-fails', 'POST ' + P + '/categories/bulk', 500, { body: { ids: [PARTY], add: [CATEGORY] }, setup: failing }),
     /* GET / */
     X('list-answers', 'GET ' + P, 200, { setup: withRows(listRows) }),
     X('list-by-text', 'GET ' + P, 200, { url: P + '?q=tea&limit=10&offset=0', setup: withRows(listRows) }),
@@ -155,6 +165,10 @@ function extras(tools) {
     /* CAT-234: a parked change the owner made carries a cost; a cost-blind co-assist reads the list without it */
     X('schedule-read-cost-blind', 'GET ' + P + '/:id/schedule', 200, { setup: costBlind, patch: { schema: scheduleOn.schema, schedule: { pending: async () => [{ schedule_id: PARTY, item_id: PARTY, effective_at: SOMEDAY, patch: { status: 'unavailable', cost: 3 }, created_at: SOMEDAY }] }, cost: costHidden.cost } }),
     X('schedule-read-fails', 'GET ' + P + '/:id/schedule', 500, { patch: { schedule: { pending: boom } } }),
+    /* K-1: a parked change that was cancelled answers true; one nobody holds (not a uuid, another shop's, already applied) answers false, both 200 */
+    X('schedule-cancel', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: { schedule: { cancel: async () => true } } }),
+    X('schedule-cancel-none-held', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: { schedule: { cancel: async () => false } } }),
+    X('schedule-cancel-fails', 'DELETE ' + P + '/:id/schedule/:sid', 500, { patch: { schedule: { cancel: boom } } }),
     X('schedule-needs-both', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY } }),
     X('schedule-cost-blind', 'POST ' + P + '/:id/schedule', 403, { body: { effective_at: SOMEDAY, item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
     X('schedule-server-owned-key', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY, item_data: { image: 'x' } } }),

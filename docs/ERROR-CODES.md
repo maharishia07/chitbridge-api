@@ -37,11 +37,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | AUTO_TOKEN | varies | Auto token | This sign-in is no longer valid. | Sign in again. | auth | 2026-10-22 |
 | A_INVARIANT | 422 | Rule would be loosened | That would loosen a rule the platform has set. | Only tighten the setting, never loosen it. | governance | 2026-10-23 |
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
+| BAD_FORM | 400 | Return form not offered | That return is not one we build. Ask for GSTR-1 or GSTR-3B. | Pick GSTR-1 or GSTR-3B and try again. | tax | 2026-11-09 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
-| BAD_PRICE | 400 | Price below zero | A line has a price below 0. | Send a price of 0 or more. | tax | 2026-10-23 |
-| BAD_QTY | 400 | Quantity not above zero | A line needs a quantity above 0. | Send a quantity above 0 on every line. | tax | 2026-10-23 |
-| BAD_RATE | 400 | Tax rate out of range | A line has a tax rate outside 0 to 100 percent. | Send a rate from 0 to 100. | tax | 2026-10-23 |
+| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number. | Send a price of 0 or more, as a number. | tax | 2026-10-23 |
+| BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote or on a chit being sent, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
+| BAD_RATE | 400 | Tax rate out of range or not a number | A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too). | Send a rate from 0 to 100 (cess 0 or more), as a number. | tax | 2026-10-23 |
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
@@ -59,6 +60,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CATALOGUE_STORE_MISSING | 503 | Saved catalogues not ready | Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is. | Try again after the next update. | assist | 2026-11-07 |
 | CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
 | CHILD_NOT_FOUND | 404 | Business not found | We could not find that business. | Check its handle and try again. | network | 2026-10-23 |
+| CHIT_AMOUNT_TOO_LARGE | 400 | Amount too large | A total, quantity or price is larger than a chit can hold, so nothing was saved. | Lower the amount or split it into smaller chits; the sentence names the most a chit can hold. | chits | 2026-11-09 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | The reading arrived but its chit could not be delivered. | The device keeps the event and sends it again. | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | That contact is on more than one account. | Choose the account you want. | signin | 2026-10-22 |
@@ -91,6 +93,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTER_HELD | varies | Counter held | That counter is open on another PC. | Close it there first, or take it over when asked. | counters | 2026-10-22 |
 | COUNTER_NOT_MIGRATED | 503 | Counter update pending | Counters cannot be changed yet: a database update is still to arrive. | Try again after the next update. | counters | 2026-10-23 |
 | COUNTER_SESSION_ONLY | 403 | Counters need a person | Counters are managed by a signed-in person, not by a key. | Sign in as the owner to change a counter. | counters | 2026-10-23 |
+| COUNTRY_CHANGE_IS_NEW_ENTITY | 409 | Country and money are fixed | This business has already traded, so its country and currency cannot change. | Register a new business for the other country or currency. | country-setup | 2026-11-08 |
 | COUNTRY_SETUP_BAD | 400 | Country setup answer not accepted | That answer cannot be saved: the country, money, year start, tax number or tax scheme is missing or not one we offer. | Fix the field named in the message and save again. | country-setup | 2026-11-06 |
 | COUNTRY_SETUP_NOT_MIGRATED | 503 | Country setup not ready | Country setup arrives after the next update. Selling and the rail work meanwhile. | Carry on selling; come back after the update. | governance | 2026-10-23 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
@@ -99,6 +102,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
+| CURRENCY_MISMATCH | 409 | Wrong currency | One amount on this bill or entry is in a different money from the shop’s, so nothing was saved. | Use the shop’s own money, or leave the currency out; an amount is never converted. | chits | 2026-11-09 |
 | LOGIN_FAILED | 400 | Sign-in failed | That sign-in code could not be used. | Ask your admin for a new code and try again. | signin | 2026-11-07 |
 | LOGIN_FORMAT_INVALID | 400 | Sign-in name not in the right form | Type your sign-in as yourname@business. | Type your key, an @ sign and your business, then try again. | signin | 2026-11-07 |
 | MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |
@@ -107,6 +111,17 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PROPOSAL_BAD | 400 | Proposal not usable | That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take. | Read the sentence shown, fix it and try again. | rail | 2026-10-25 |
 | PROPOSAL_CLOSED | 409 | Proposal already decided | That proposal is already decided, so it cannot be decided again. | Look at the newest round. | rail | 2026-10-25 |
 | PROPOSAL_DOMESTIC | 409 | Not an RFQ | Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote. | Change this chit directly, or ask for a quote when you compose it. | rail | 2026-10-25 |
+| INVOICE_MONEY_LOCKED | 409 | Already invoiced | This bill is already invoiced. A change in price needs a credit or debit note. Propose the change; the note is issued when the other side accepts. | Ask for a credit or debit note instead of changing the bill. | accounting | 2026-11-07 |
+| INVOICE_INCREASE_REFUSED | 409 | Nothing to change | Nothing in this change moves the bill, so there is no note to issue. | Change a price or a quantity. | accounting | 2026-11-08 |
+| INVOICE_MIXED_ROUND | 409 | One direction only | This change raises one line and lowers another. A note goes one way only, so make two changes: one that lowers, one that raises. | Send the lowering and the raising as two changes. | accounting | 2026-11-08 |
+| INVOICE_LINE_ADDED | 409 | New line | A line that is not on the invoice is a new sale, not a change to this one. Raise a new invoice for it. | Raise a new invoice for the new line. | accounting | 2026-11-08 |
+| INVOICE_NOTE_NO_RULE | 409 | No note for this country | This country has no ruling here for a raised price on an issued bill, so no note was issued. Raise a new invoice for the extra amount. | Raise a new invoice for the extra amount. | accounting | 2026-11-08 |
+| CREDIT_NOTE_NOT_ISSUED | 409 | Credit note not issued | The note could not be issued, so the change was not applied on either side. | Try again; if it repeats, tell us. | accounting | 2026-11-08 |
+| CREDIT_NOTE_NOT_CHECKED | 503 | Credit note not checked | This credit note could not be checked against its bill, so it was not saved. | Send it again; if it repeats, tell us. | chits | 2026-11-08 |
+| CREDIT_NOTE_NOT_JUDGED | 200 | Credit note not checked against a bill | This credit note was not checked against a bill. | Check that the credit is not more than the bill. | chits | 2026-11-08 |
+| CREDIT_NOTE_OVER_BILL | 409 | Credit note too large | This credit note would credit more than the bill was for. | Credit no more than is left on the bill (the message says how much), or check the bill number. | chits | 2026-11-08 |
+| DEBIT_NOTE_NEEDS_ACCEPT | 409 | A debit note is issued on acceptance | A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then. | Propose the new price on the bill. | accounting | 2026-11-08 |
+| NOTE_NUMBER_INVALID | 409 | Note number not allowed | The note number would not fit this country’s rule for a document number, so no note was issued. Tell us; the note prefix needs a change. | Tell us; we change the note prefix. | accounting | 2026-11-08 |
 | PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |
 | PROPOSAL_NOT_FOUND | 404 | No such proposal | There is no such proposal on this chit. | Open the chit again and pick one of its rounds. | rail | 2026-10-25 |
 | PROPOSAL_NOT_SETUP | 503 | Proposals not set up | Proposals are not set up on this installation yet. | Ask the operator to apply the update. | rail | 2026-10-25 |
@@ -165,6 +180,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
+| DB_CONNECTION_LOST | 503 | Database unavailable | The connection to the database was lost while this was being done. Nothing was saved. | Try again in a moment. | platform | 2026-11-07 |
+| DATE_INVALID | 400 | Date not valid | That date is not a real day. | Use the day as YYYY-MM-DD, for example 2026-10-03. | books | 2026-11-08 |
 | DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Definitions arrive after the next update. Nothing was saved. | Try again after the next update. | definitions | 2026-11-07 |
 | DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
@@ -269,9 +286,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MIGRATION | 409 | Not switched on yet | Unit and source arrive after the next update. Type, label and required still work. | Type, label and required still work; try again after the next update. | schemas | 2026-11-07 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
-| MONEY_INPUT_UNREADABLE | 422 | A line could not be read | A line has a price or quantity that is not a number, so the money could not be worked out. | Fix that line and send again. | chits | 2026-10-30 |
+| MONEY_INPUT_UNREADABLE | 422 | Retired: a line could not be read | Retired 2026-11-07 (ACC-271): a chit line with a figure that is not a number is now answered BAD_QTY, BAD_PRICE or BAD_RATE (400). | Fix that line and send again. | chits | 2026-10-30 |
 | MONEY_NOT_COMPUTED | 503 | The money could not be worked out | The money could not be worked out. | Try again; if it repeats, tell us. | chits | 2026-10-30 |
-| MONEY_UNBALANCED | 409 | The money does not add up | The bill does not add up, so it was not sent. | Check the bill, or the owner can let it through and say why. | chits | 2026-10-30 |
+| MONEY_UNBALANCED | 409 | The money does not add up | The bill does not add up, so it was not sent. | If the bill total, taxable amount or round-off does not agree with the invoice, the bill was refused and cannot be let through; we have been told, so make the bill again and tell us if it repeats. If a step of the bill does not add up, check the bill, or the owner can let it through and say why. | chits | 2026-10-30 |
 | R132 (re-walk) | Counter › F7 › Asha Devi, 16:50 | Picking a name asks that person's PIN | HALF: once Asha has a counter PIN, re-picking her opens "Counter PIN" and 2468 signs her in ✅. Still open: (1) her mobile 9000000004 is still refused ("That sign-in didn't work"); (2) a first pick asks to TYPE the user ID although her name was just picked; (3) first sign-in asks for a PIN twice ("Choose a PIN", then "Counter PIN"); (4) the signed-in box also says "Sign in to connect this counter to a shop", contradicting itself. | w741-w746 | P1 (1,2) · P2 (3) · P3 (4) | cb-counter (api kit till master) |
 | R85✅ / CAT-210 (re-walk) | Catalogue › Veg Meals (CTG001), 17:15, on web #405 + api #429 | Category chips on the item form; the rate set in one place, by owner/manager | PASS for the chips: Edit shows Categories Drinks · Meals · Packed · Tiffin; the sheet reads "GST 5% on this item · Change" for the owner. NEW (CAT-212): the same form ALSO shows a raw column "gst_rate 5" under More about this product (sheet: "GST_RATE 5"), a free text box that is a second door to the rate with no confirm and no role check (the declared column from catalogue-blueprint.js:96, which is how a slab travels on import). One home for the rate: hide gst_rate from the item form (import keeps it) or show it read-only as the chip. Not saved; form cancelled. Folded into CAT-211 (l2). | w747, w748 | P1 | cb-catalogue |
 
@@ -289,6 +306,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_OWNER_ONLY | 403 | Owner only | Only the business owner can do this. | Sign in as the business itself. | network | 2026-10-23 |
 | NETWORK_PRICE_MISSING | 409 | No brand price | The brand has no price for that product. | Ask the brand to suggest a price. | network-offers | 2026-10-23 |
 | NETWORK_REFUSED | 409 | Network step refused | The network cannot take that step as it stands. | Read the sentence shown and fix it. | network-offers | 2026-10-23 |
+| NETWORK_REMOTE_NOT_YET | 409 | Business on another installation | That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved. | Add them as a supplier for now; connecting across installations is coming. | network | 2026-11-07 |
 | NETWORK_REQUEST_INVALID | 400 | Network request not valid | That request is not valid: the sentence says what to change. | Fix what the sentence says and send again. | network-offers | 2026-10-23 |
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
@@ -398,7 +416,13 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SCHEMA_UNKNOWN_TYPE | 400 | Unknown column type | A column is text, number, choice or date. | Pick one of those. | schemas | 2026-10-23 |
 | SELF | 400 | Cannot connect to itself | A business cannot connect to itself. | Choose another business. | network | 2026-10-23 |
 | SENDING | varies | Sending | Not an error. Bills are on their way to the shop. | Wait a few seconds. | verdict | 2026-10-22 |
+| SERVER_BUSY | 503 | Server busy | ChitBridge is very busy right now. Nothing was saved. | Wait a couple of seconds, then send it again. | limits | 2026-11-08 |
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
+| SERVICE_ALREADY_PAUSED | 409 | Already paused | This request is already paused by you. End that pause before starting another. | End the open pause first. | service | 2026-11-08 |
+| SERVICE_NOT_MIGRATED | 503 | Service clock not migrated | The service clock arrives after the next update. Nothing was started. | Try again after the next update. | service | 2026-11-08 |
+| SERVICE_NOT_TRACKED | 404 | Not tracked yet | This request has no service clock yet. Start the clock first. | Start the service clock, then try again. | service | 2026-11-08 |
+| SERVICE_OWN_CLAIM | 409 | Your own claim | You raised this pause. The other party is the one who accepts or rejects it. | Wait for the other party to answer. | service | 2026-11-08 |
+| SERVICE_PAUSE_ENDED | 409 | Pause already ended | That pause is already ended and its end time cannot be moved. | Start a new pause if the clock must stop again. | service | 2026-11-08 |
 | SESSION_EXPIRED | 401 | Session expired | Your sign-in has ended. | Sign in again. | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | We could not sign you in just now. | Try again in a minute. | identity-auth | 2026-10-22 |
 | SESSION_ONLY | 403 | Sign in as a person | Network offers are managed by a signed-in person. | Sign in as a person, not with a key. | network-offers | 2026-10-23 |
@@ -424,6 +448,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TARGET_ACTOR_NOT_ACTIVE | 400 | Colleague cannot take tasks | That colleague cannot take tasks right now. | Pick someone who is active. | actors | 2026-10-23 |
 | TARGET_ACTOR_REQUIRED | 400 | Colleague needed | Say which colleague gets the tasks. | Pick a colleague. | actors | 2026-10-23 |
 | TASKS_TO_ROUTE | 400 | Tasks to route | This person still has open tasks. | Send them to the pool or to a colleague first. | actors | 2026-10-22 |
+| TAX_DEREGISTER_UNCONFIRMED | 409 | Taking the shop off its tax needs a confirm | This takes the shop off its tax: from now on every invoice carries no tax, and an open till keeps the old answer until it next refreshes. | Confirm it in Settings → Country setup, or leave the tax answer as it is. | country-setup | 2026-11-09 |
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax number not accepted | That tax number is not accepted for your country. | Check the number and try again. | profile | 2026-10-22 |
 | TAX_REGISTRATION_UNKNOWN | 409 | Registration not said yet | Nobody has said whether this business is registered for its tax, so this waits. | Answer it in Settings → Country setup: yes with the number, or no. | till | 2026-11-05 |
@@ -438,6 +463,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
 | TILL_NO_TAX_SCHEME | 409 | Shop charges no tax | This shop charges no tax, so no rate is needed. | If that is wrong, check the registration in Country setup. | till | 2026-10-24 |
 | TILL_RATE_OWNER_ONLY | 403 | Owner or manager sets the rate | Only the owner or a manager can set a tax rate. | Ask them to set it once; the sale goes on. | till | 2026-10-24 |
+| TILL_RECHECK_UNAVAILABLE | 503 | Prices could not be checked | The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen. | Finish the bill, or check again in a moment. | till | 2026-11-08 |
 | TILL_REFUSED | varies | Counter request refused | ChitBridge could not do that. | Read the sentence beside it, then try again. | till | 2026-10-23 |
 | TILL_SCREEN_ONLY | 403 | Shop screens only | Only a shop screen can be changed from the counter. | Pick one of the paired screens. | till | 2026-10-23 |
 | TILL_SEND_REFUSED | 403 | Counter bill not sent | That counter bill could not be sent as it is. | The counter keeps it; send the rest. | chits | 2026-10-23 |
@@ -507,6 +533,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
 | reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
 | status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
+| status_from_changed | 409 | Chit moved since you looked | This chit is not in the status you saw. It was not changed. | Look at it again, then choose again. | chits | 2026-11-11 |
+| use_refused | 409 | What the goods are for was not saved | What the goods are for could not be saved, so the bill was not accepted. | Look at the bill, then try again. | chits | 2026-11-11 |
+| status_use_unneeded | 400 | Use is said with the acceptance | What the goods are for is only said when you accept the bill. | Accept the bill, or leave it out. | chits | 2026-11-11 |
+| taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |
@@ -564,5 +594,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
 | REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
 | BUYER_TAX_ID_BAD | 400 | Buyer tax number not accepted | The buyer's tax number on this bill does not check out for your country. | Check the buyer's number and send the bill again. | chits | 2026-10-30 |
+| CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |
 <!-- codes:end -->

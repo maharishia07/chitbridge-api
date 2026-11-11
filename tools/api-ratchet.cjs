@@ -223,7 +223,7 @@ function checkRoutes(base, head, ratchet, hotfix) {
 }
 
 /* the stages in order; a stage only moves forward */
-const STAGES = ['1a', '1b', '2', 'all'];
+const STAGES = ['1a', '1b', '2', '2b', 'all'];
 
 /** the STAGE constant in a checkout's own tools/api-register.cjs (the base register is built by the HEAD's tool, so its .stage is the head's) */
 function stageOfCode(checkout) {
@@ -301,6 +301,17 @@ function checkCodes(baseRatchet, headRatchet) {
   return problems;
 }
 
+/** API-43: the tolerant_outward list (docs/contracts/api-hardening-scope.json) may only get shorter; the first run with no base figure just records it. Adding a key needs a ratchet change on purpose (a cb-critic go) */
+function checkTolerant(baseRatchet, head, headRatchet) {
+  const now = head.counts.tolerant_outward;
+  const problems = [];
+  const before = baseRatchet.tolerant_outward;
+  if (before !== undefined && now > before) problems.push('tolerant_outward rose to ' + now + ' (allowed ' + before + '): the list of API-43 doors may only go down');
+  if (headRatchet.tolerant_outward === undefined || headRatchet.tolerant_outward < now) problems.push('docs/api-ratchet.json tolerant_outward is ' + headRatchet.tolerant_outward + ' but the list has ' + now + ': run node tools/api-ratchet.cjs --write');
+  console.log('tolerant_outward: ' + now + ' (base ratchet ' + String(before) + ')');
+  return problems;
+}
+
 /** API-12: the count of routes with no `@does` line may only go down. ADVISORY for now (HARD_FAIL_DOES false): it prints, it never fails CI; flip the constant once the areas are filled */
 const HARD_FAIL_DOES = false;
 function checkDoes(baseRatchet, head, headRatchet) {
@@ -326,6 +337,11 @@ function refuseRises(previous, now) {
   if (!flag('--seed') && now.notMeeting > previous.not_meeting + added) throw new Error('refusing to raise the count of routes not meeting the standard');
 }
 
+/** --write never records a longer tolerant_outward list than the committed one */
+function refuseTolerantRise(previous, now) {
+  if (previous && previous.tolerant_outward !== undefined && now > previous.tolerant_outward) throw new Error('refusing to raise the tolerant_outward list (' + now + ' against ' + previous.tolerant_outward + ')');
+}
+
 /** --write: rewrite docs/api-ratchet.json from the head register (never raises the count) */
 function writeRatchet(head) {
   const codes = require('./error-codes.cjs');
@@ -334,9 +350,10 @@ function writeRatchet(head) {
   const notMeeting = head.counts.routes - head.counts.meets;
   const columnsFailing = Object.fromEntries(Object.keys(head.counts.columns || {}).map((name) => [name, head.counts.columns[name].failing]));
   const rawNow = rawErrorWritesOf(ROOT).length;
+  refuseTolerantRise(previous, head.counts.tolerant_outward);
   refuseRises(previous, { notMeeting, rawNow, columnsFailing, routes: head.counts.routes });
   if (previous && previous.routes_without_does !== undefined && head.counts.no_does > previous.routes_without_does + Math.max(0, head.counts.routes - previous.total)) throw new Error('refusing to raise the count of routes with no @does');
-  const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, routes_without_does: head.counts.no_does, columns_failing: columnsFailing, reported_failing: Object.fromEntries(Object.keys(head.counts.reported || {}).map((name) => [name, head.counts.reported[name].failing])), debt: previous ? previous.debt : [] };
+  const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, routes_without_does: head.counts.no_does, tolerant_outward: head.counts.tolerant_outward, columns_failing: columnsFailing, reported_failing: Object.fromEntries(Object.keys(head.counts.reported || {}).map((name) => [name, head.counts.reported[name].failing])), debt: previous ? previous.debt : [] };
   fs.writeFileSync(RATCHET_FILE, JSON.stringify(next, null, 1) + '\n');
   console.log('wrote docs/api-ratchet.json: ' + next.not_meeting + ' of ' + next.total + ' not meeting; ' + next.codes_pending + ' of ' + next.codes_total + ' codes waiting for a sentence; ' + next.raw_error_writes + ' response writes carry raw error text');
 }
@@ -353,7 +370,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet), checkTolerant(baseRatchet, head, headRatchet));
   } finally {
     base.remove();
   }
@@ -371,4 +388,4 @@ if (require.main === module) {
   }
   process.exit(process.exitCode || 0);
 }
-module.exports = { checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
+module.exports = { checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };

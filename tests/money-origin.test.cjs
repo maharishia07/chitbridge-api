@@ -42,6 +42,11 @@ ok('ONE rule on every path (Athi 2026-11-02, "refuse both"): a change order the 
   assert.ok(/'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: '/.test(money), 'the send refuses the same way');
   assert.ok(!/not_decided|Tax not decided/.test(proposal), 'no "Tax not decided" round is left in the change order');
 });
+ok('ACC-191: the header copies the engine tax whole - an undecided tax stays null, no || 0, no Number(), no sum', () => {
+  const header = fnBody(chits, 'function moneyOfInvoice(');
+  assert.ok(header.includes('tax: money.tax,'), 'moneyOfInvoice must pick money.tax as it is');
+  assert.ok(!header.includes('money.tax ||') && !header.includes('money.tax ??') && !header.includes('Number(money.tax') && !header.includes('+ money.cgst'), 'no default 0 over a null tax');
+});
 ok('EVERY carried invoice is mapped the same way (not only a counter bill\'s)', () => {
   const cond = issued.slice(issued.indexOf('if ('), issued.indexOf('moneyOfInvoice('));
   assert.ok(!/counterBill/.test(cond), 'the mapping must not depend on counterBill');

@@ -15,5 +15,6 @@ module.exports = {
   cb_entity_supplier: { key: 'entity_id', cols: {} },
   cb_contact: { key: 'owner_id', cols: { contact_id: 'gen_random_uuid()' } },
   cb_entity_employee: { key: 'owner_id', cols: { employee_id: 'gen_random_uuid()' } },
+  entity_actor_settings: { key: 'entity_id', cols: {} },
   cb_consumer_traction: { key: 'business_id', cols: {} },
 };

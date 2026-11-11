@@ -67,7 +67,8 @@ async function createPool() {
     try {
       await tryConnect(a.config);
       console.log(`DB connected via ${a.label}: ${a.where}`);
-      return armPool(new Pool({ ...a.config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
+      const { intFromEnv, poolMax } = require('../lib/limits');   /* PLT-85: the pool's size and its wait are settings, defaults unchanged (10 connections, 10 s) */
+      return armPool(new Pool({ ...a.config, max: poolMax(), idleTimeoutMillis: 30000, connectionTimeoutMillis: intFromEnv('DB_POOL_WAIT_MS', 10000) }));
     } catch (e) {
       why.push(`${a.label} ${a.where}: ${e.message}`);
       console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
@@ -189,7 +190,8 @@ function rlsGuardCheck(text) {
 }
 
 const query = async (text, params) => {
-  if (!pool) await ensurePool();          // cold start: wait for the pool instead of failing the request
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: a GET/HEAD whose client has gone takes no pool connection */          // cold start: wait for the pool instead of failing the request
   try { require('../lib/trips').tick('query'); } catch (_) {}   /* counts only when CB_TRIPS=1 — lib/trips.js */
   rlsGuardCheck(text);
   const start = Date.now();
@@ -223,7 +225,13 @@ const withTransaction = async (fn) => {
   if (!pool) await ensurePool();
   /* a transaction is four trips of its own — BEGIN, the set_config, the work, COMMIT — which is the whole reason this is counted */
   try { require('../lib/trips').tick('tx'); } catch (_) {}
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: same door for a read inside a transaction (GET/HEAD only; a mutating request is never refused) */
   const client = await pool.connect();
+  /* PLT-86: while a client is checked out pg-pool has no listener on it; a connection that dies now (database restart, killed backend) emits 'error' on the
+     CLIENT and, unhandled, kills the process. Log it once and release the client WITH the error so the pool destroys it; the running query rejects on its own. */
+  let clientDied = null;
+  const onClientError = (err) => { clientDied = err; require('../lib/logger').error('database client error: a connection died inside a transaction, it is discarded', { err: err.message, code: err.code || null }); };
+  client.on('error', onClientError);
   try {
     await client.query(beginSql());   /* E01: the statement deadline rides on BEGIN's own trip */
     const result = await fn(client);
@@ -233,7 +241,8 @@ const withTransaction = async (fn) => {
     try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     throw err;
   } finally {
-    client.release();   // always return the connection to the pool
+    client.removeListener('error', onClientError);
+    client.release(clientDied || undefined);   // always return the connection to the pool; a dead one is destroyed, not reused (PLT-86)
   }
 };
 

@@ -58,7 +58,7 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "books_entry" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null, sqlLog: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null, sqlLog: null, registration: 'unregistered' };
 const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
 const OTHER = '77777777-7777-4777-8777-777777777777'; /* another shop: the owner of the row in the foreign-id world */
@@ -78,6 +78,8 @@ function rowsFor(sql, params) {
     if (given) return given;
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
+  /* CTRY-94: the engines no longer read India for a party with no country, so the generic world's shop says it is in India (a shop that never said is a 422 on every tax read) */
+  if (/FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: SHOP, gstn: null, display_name: null, policy_flags: {}, country: 'IN' }], rowCount: 1 };
   return { rows: [], rowCount: 0 };
 }
 const mock = (relative, exported) => {
@@ -99,7 +101,8 @@ function installStubs() {
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
-  mock('lib/country-setup', { currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
+  /* ACC-272: tax/compute and invoice/build ask the shop's registration (registrationOfShop; a world says it: 'unknown' = never said) */
+  mock('lib/country-setup', { COUNTRY_FIRST: 'Set the shop’s country first (Country setup) — the books are kept by its law.' /* CTRY-94: the one sentence, as lib/country-setup holds it */, registrationOfShop: async () => world.registration, registrationWord: (answer, scheme) => (answer && answer !== 'regular' ? answer : String(scheme || 'regular')), registrationAsk: () => ({ code: 'TAX_REGISTRATION_UNKNOWN', question: 'Is this business registered for GST?' }), currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
   console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
 }
 
@@ -224,6 +227,13 @@ const WRITES_READY = [
   X('account-added-source-code', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_id: ENTRY, source_code: '200' }, patch: { books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees', source_code: '200', source_code_written: true }) } } }),
   X('account-added-source-code-unwritten', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_id: ENTRY, source_code: '200' }, patch: { books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees', source_code: null, source_code_written: false }) } } }), /* addAccount :1678: before b302 the code is not written, null */
   X('enable-switched-on', 'POST /api/books/enable', 200, { body: { walkin_grain: 'day' }, patch: { books: { enable: async () => ENABLED } } }),
+/* ACC-274: a GIVEN date that is not a real day is a 400 DATE_INVALID naming the field, on a write and on a read (it was today, with a 200) */
+  X('date-given-slashes-write', 'POST /api/books/entries', 400, { body: { narration: 'x', date: '03/10/2026', lines: [] } }),  X('date-given-not-a-day-write', 'POST /api/books/entries', 400, { body: { narration: 'x', date: '2026-02-30', lines: [] } }),  X('date-given-slashes-read', 'GET /api/books/trial-balance', 400, { url: MOUNT + '/trial-balance?asOf=03%2F10%2F2026' }),
+  X('date-given-pl-both-bad', 'GET /api/books/pl', 400, { url: MOUNT + '/pl?from=03%2F10%2F2026&to=03%2F10%2F2026' }),
+  X('date-given-bs-read', 'GET /api/books/bs', 400, { url: MOUNT + '/bs?asOf=tomorrow' }),
+  X('date-given-dues-read', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=2026-02-30' }),
+  X('date-given-dues-year-out-of-range', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=9999-12-31' }), /* FIN-103: a day outside the books' years (1900-2100) is a 400, it was a RangeError 500 */
+  X('date-given-ledger-read', 'GET /api/books/ledger/:account', 400, { url: MOUNT + '/ledger/1300?from=31-12-2026', patch: LEDGER_PATCH }),
   X('outbox-retried', 'POST /api/books/outbox/retry', 200, { patch: { hooks: { retryOutbox: async () => RETRIED } } }),
   X('payment-preview-advance', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000 }, patch: { books: { proposeFor: async () => PROPOSAL, duplicateWarnings: async () => [] } } }),
   X('payment-preview-settles', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000, allocate: 'oldest_first' }, patch: { books: { proposeFor: async () => PROPOSAL_SETTLES, duplicateWarnings: async () => [{ code: 'W1', words: 'The same money within 24 hours.', entry_no: 'R/1' }] } } }),
@@ -252,6 +262,8 @@ const WRITES_READY = [
   X('entry-posted-moved', 'POST /api/books/entries', 200, { body: { narration: 'Rent', date: '2026-09-28', lines: [] }, patch: { books: { postEntry: async () => JOURNAL_MOVED } } }),
   X('entry-replayed', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [], client_ref: 'c1' }, patch: { books: { postEntry: async () => DUPLICATE } } }),
   X('entry-ledger-off', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [] }, patch: { books: { postEntry: async () => OFF } } }),
+  /* CUR-1 · ACC-332: a journal line that names another currency than the shop's is refused 409 CURRENCY_MISMATCH, nothing posted */
+  X('entry-line-other-currency', 'POST /api/books/entries', 409, { body: { narration: 'Rent', lines: [{ account: '5100', dr_minor: 10000, currency: 'USD' }, { account: '1000', cr_minor: 10000 }] } }),
   X('entry-reversed', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL } } }),
   X('entry-reversed-reopens', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL_REOPENS } } }),
   X('write-off-posted', 'POST /api/books/write-off', 200, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => JOURNAL } } }),
@@ -327,6 +339,8 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('key-required', 'PATCH /api/books/payments/:id', 422, { body: { advice_shared_at: true }, noKey: true }),
   X('key-required', 'POST /api/books/payments/:id/confirm', 422, { body: { allocations: [] }, noKey: true }),
   X('key-required', 'POST /api/books/gst/pay', 422, { body: { fy: '2026-27', period: 6, amounts: { cgst_minor: 1 }, bank: 'bank', challan_no: 'CPIN1' }, noKey: true }),
+  /* ACC-275: a challan number already recorded for another amount or head is a conflict (409 BOOKS_CONFLICT), never a replay that echoes the typed figures */
+  X('challan-reused-other-amount', 'POST /api/books/gst/pay', 409, { body: { fy: '2026-27', period: 6, amounts: { cgst_minor: 9000 }, bank: 'bank', challan_no: 'CPIN1' }, patch: { period: { gstPay: async () => { throw Object.assign(new Error('Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment.'), { code: 'BOOKS_CONFLICT', status: 409 }); } } } }),
   X('window-too-long', 'GET /api/books/bank/rail', 400, { url: MOUNT + '/bank/rail?from=2020-01-01&to=2026-01-01' }),
   X('nothing-to-change', 'PATCH /api/books/payments/:id', 400, { body: {} }),
   X('which-advice-chit', 'PATCH /api/books/payments/:id', 400, { body: { advice_chit_id: 'not-an-id' } }),
@@ -334,6 +348,8 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('cheque-step-unnamed', 'POST /api/books/cheques/:id/status', 400, { body: {} }),
   X('dispute-bill-unnamed', 'POST /api/books/parties/:id/dispute', 400, { body: {} }),
   X('write-off-customer-unnamed', 'POST /api/books/write-off', 400, { body: {} }),
+  /* FIN-78: a write-off above what is still owed (the ledger refuses it before any row) is a 409 in one sentence naming the amount still owed and the currency */
+  X('write-off-above-due', 'POST /api/books/write-off', 409, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => { throw Object.assign(new Error('Only ₹0 INR is still owed, so ₹5 INR cannot be written off.'), { code: 'BOOKS_CONFLICT', status: 409 }); } } } }),
   X('opening-no-rows', 'POST /api/books/opening', 400, { body: {} }),
   X('import-not-confirmed', 'POST /api/books/move-in/import', 400, { body: {} }),
   X('dues-staff-collections', 'GET /api/books/dues', 403, { setup: { who: STAFF }, url: MOUNT + '/dues?finance=1' }),
@@ -363,13 +379,23 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('gstr1-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr1' }),
   X('gstr3b-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr3b' }),
   X('ledger-of-a-registered-shop', 'GET /api/tax/ledger', 200, { setup: IN_SHOP, url: '/api/tax/ledger?month=2026-10' }),
+  /* ACC-333 / ACC-334: a month or form the caller GIVES and the books cannot read is a 400 naming the field (month 2026-13 · 0001-01 · 9999-12 were 500; abc · 2026-02-30 and form gstr9 were a 200 with a default) */
+  X('gstr-month-not-a-month', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-13&form=gstr1' }),
+  X('gstr-month-year-out-of-range', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=9999-12' }),
+  X('gstr-month-words', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=abc' }),
+  X('gstr-form-unknown', 'GET /api/tax/gstr', 400, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr9' }),
+  X('ledger-month-not-a-month', 'GET /api/tax/ledger', 400, { setup: IN_SHOP, url: '/api/tax/ledger?month=0001-01' }),
   X('rated-lines-no-hsn', 'POST /api/tax/rate', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1 }] } }),
   X('computed-unregistered-seller', 'POST /api/tax/compute', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
   X('computed-non-india-seller', 'POST /api/tax/compute', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 10 }] } }),
   X('built-unregistered-seller', 'POST /api/invoice/build', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
+  /* ACC-272: the shop has no tax number and never said whether it is registered: the question, 409, never priced at no tax */
+  X('computed-registration-never-said', 'POST /api/tax/compute', 409, { setup: Object.assign({}, NO_GSTIN_SHOP, { registration: 'unknown' }), body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
+  X('built-registration-never-said', 'POST /api/invoice/build', 409, { setup: Object.assign({}, NO_GSTIN_SHOP, { registration: 'unknown' }), body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
   X('built-non-india-seller', 'POST /api/invoice/build', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10, gst_rate: 10 }] } }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
+  X('todo-things-to-do', 'GET /api/books/todo', 200, { patch: { todo: { todo: async () => [{ kind: 'bills_to_accept', count: 1, words: 'One bill to accept', action: { label: 'Accept', screen: 'bills', call: null }, items: [{ chit_id: PARTY }] }, { kind: 'months_unlocked', count: 2, words: 'Two months not locked', action: { label: 'Lock', screen: 'periods', call: null } }] } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
   X('pack-no-file-to-confirm', 'POST /api/books/packs/:id/ack', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
   X('snapshot-part-twice', 'POST /api/books/compare/snapshots', 409, { body: { snapshot_id: PARTY, part: 'tb', source: 'tally' }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'x', source: 'tally' }] } }, who: 'auditor' }),
@@ -424,7 +450,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost') };
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -493,6 +519,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (recordingOnly()) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
+    if (scenario.expect) check(label + ': answers the status the row expects', answer.status === scenario.expect, [answer.status, scenario.expect]); /* ACC-274: a 200 where a refusal was expected used to pass silently (the status was only checked for 4xx answers) */
     if (answer.status < 400) continue;
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (inherited(scenario, answer)) continue;
@@ -542,6 +569,7 @@ function checkRefusals() {
  * docs/contracts/api-output-shapes.json) and whose recorded success answers fit that schema, with no key pruned, is proved here — the generator's proxy world cannot seat the
  * ledger, so it never reaches these answers. → { route: { output_allowlist: true } } for the routes that held
  */
+const { refusesUnknownKeys } = require(path.join(HERE, 'tools', 'api-register.cjs')); /* the register's own rule for a closed answer: one definition */
 function checkAllowList(recording) {
   const proved = {};
   const fixture = require('./support/books-capture.cjs').answersOf(ANSWERS_FILE); /* the period-end answers the sweep cannot reach, recorded by the tests that do (docs/contracts/books-answers.json) */
@@ -552,7 +580,7 @@ function checkAllowList(recording) {
   Object.keys(words.OPERATIONS).sort().forEach((route) => {
     const status = Number(Object.keys(words.OPERATIONS[route].responses).find((code) => /^2\d\d$/.test(code)) || 200);
     const schema = (((words.OPERATIONS[route].responses[status] || {}).content || {})['application/json'] || {}).schema;
-    if (!schema || schema.additionalProperties !== false) return;
+    if (!refusesUnknownKeys(schema)) return; /* an object that lists its keys, or a list whose rows do (GET /todo) */
     const answers = Object.values(recorded).filter((one) => one.route === route && one.status === status && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);

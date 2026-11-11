@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "POST /api/entities/register": {
+   "strict_input": true
+  },
   "POST /api/entities/verify": {
    "strict_input": true
   },
@@ -23,12 +26,17 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/policy": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/entities/header": {
    "output_allowlist": true
   },
   "GET /api/entities/sides": {
+   "output_allowlist": true
+  },
+  "PATCH /api/entities/me/prefs/:kind": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/entities/me/exposure": {
@@ -39,6 +47,7 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/me/locale": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/entities/profile": {
@@ -71,9 +80,6 @@
    "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
-  },
-  "POST /api/chits/send": {
-   "strict_input": true
   },
   "GET /api/chits/sent": {
    "output_allowlist": true
@@ -183,11 +189,13 @@
   },
   "POST /api/chits/:chit_id/payment": {
    "strict_input": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "idempotent_money_write": true
   },
   "DELETE /api/chits/:chit_id/payment": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "idempotent_money_write": true
   },
   "POST /api/chits/:chit_id/books-request": {
    "strict_input": true,
@@ -200,10 +208,18 @@
   },
   "POST /api/chits/:chit_id/messages": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/disputes": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/diagnosis": {
    "output_allowlist": true
@@ -262,6 +278,9 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "GET /api/chits/:id/children": {
+   "foreign_id_404": true
+  },
   "GET /api/chits/:id/trace": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -309,6 +328,7 @@
    "output_allowlist": true
   },
   "POST /api/invoice/build": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/invoice/:chit_id": {
@@ -329,12 +349,17 @@
    "foreign_id_404": true
   },
   "POST /api/integrations/books": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/integrations/status": {
    "output_allowlist": true
   },
   "GET /api/integrations/streams": {
+   "output_allowlist": true
+  },
+  "PUT /api/integrations/streams": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/integrations/books/skip": {
@@ -362,7 +387,14 @@
   "POST /api/till/stock/bulk": {
    "output_allowlist": true
   },
+  "POST /api/till/diagnostic": {
+   "strict_input": true
+  },
+  "POST /api/till/close": {
+   "strict_input": true
+  },
   "POST /api/till/state": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/flags": {
@@ -374,14 +406,27 @@
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
   },
+  "POST /api/till/quick-keys/hide": {
+   "strict_input": true
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "strict_input": true
+  },
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
   },
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
   },
+  "POST /api/till/offer-item": {
+   "strict_input": true
+  },
   "POST /api/till/price": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/till/recheck": {
+   "strict_input": true
   },
   "POST /api/till/rate": {
    "strict_input": true
@@ -390,28 +435,48 @@
    "output_allowlist": true
   },
   "POST /api/till/reward": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "idempotent_money_write": true
   },
   "POST /api/till/reward/claim": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "idempotent_money_write": true
   },
   "POST /api/till/pair": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/till/enrol": {
+   "strict_input": true
+  },
+  "POST /api/till/pair/claim": {
+   "strict_input": true
   },
   "GET /api/till/screens": {
    "output_allowlist": true
   },
+  "POST /api/till/screens/revoke": {
+   "strict_input": true
+  },
+  "POST /api/till/screens/rename": {
+   "strict_input": true
+  },
   "POST /api/till/reconcile": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/till/verify": {
    "output_allowlist": true
   },
   "POST /api/till/shop": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/till/stock": {
    "output_allowlist": true
+  },
+  "POST /api/till/catalogue": {
+   "strict_input": true
   },
   "GET /api/till/catalogue/blueprints": {
    "output_allowlist": true
@@ -429,9 +494,11 @@
    "output_allowlist": true
   },
   "POST /api/till/alias": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/till/listen": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/openapi.json": {
@@ -481,8 +548,12 @@
   "PUT /api/quick-keys/screen-config/default": {
    "strict_input": true
   },
+  "GET /api/network-offers": {
+   "output_allowlist": true
+  },
   "PUT /api/network-offers/policy": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/network-offers/catalogue/publish": {
    "strict_input": true
@@ -505,7 +576,11 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/signin/renew": {
+   "strict_input": true
+  },
   "POST /api/signin/logout": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/signin/sessions": {
@@ -513,6 +588,18 @@
   },
   "GET /api/signin/devices": {
    "output_allowlist": true
+  },
+  "POST /api/signin/sessions/revoke": {
+   "strict_input": true
+  },
+  "POST /api/signin/ask": {
+   "strict_input": true
+  },
+  "POST /api/signin/verify": {
+   "strict_input": true
+  },
+  "POST /api/signin/pin": {
+   "strict_input": true
   },
   "GET /api/keys": {
    "output_allowlist": true
@@ -810,6 +897,9 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/products/categories/bulk": {
+   "strict_input": true
+  },
   "POST /api/products/bulk-update": {
    "strict_input": true
   },
@@ -959,6 +1049,9 @@
   "GET /api/governance/supplier-acceptance/:handle": {
    "output_allowlist": true
   },
+  "POST /api/attachments": {
+   "strict_input": true
+  },
   "GET /api/attachments/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -1012,32 +1105,51 @@
   "POST /api/network/entities": {
    "strict_input": true
   },
+  "GET /api/network/entities/lookup": {
+   "output_allowlist": true
+  },
   "POST /api/network/entities/:id/claim": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "foreign_id_404": true
+  },
+  "GET /api/network/entities/:id/connections": {
+   "foreign_id_404": true
   },
   "POST /api/network/connections": {
    "strict_input": true
   },
   "POST /api/network/connections/:id/approve": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/decline": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/suspend": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/resume": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/disconnect": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "POST /api/simulator/lead": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/simulator/feedback": {
-   "output_allowlist": true
+   "strict_input": true
   },
   "POST /api/notifications/seen": {
    "strict_input": true,
@@ -1363,7 +1475,11 @@
   "GET /api/definitions/:id": {
    "foreign_id_404": true
   },
+  "POST /api/definitions": {
+   "strict_input": true
+  },
   "PUT /api/definitions/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/definitions/:id": {
@@ -1371,6 +1487,7 @@
    "foreign_id_404": true
   },
   "POST /api/definitions/freeze": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1381,16 +1498,19 @@
    "output_allowlist": true
   },
   "POST /api/tax/rate": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/tax/compute": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/books/status": {
    "output_allowlist": true
   },
   "POST /api/books/enable": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/books/setting": {
    "strict_input": true
@@ -1429,6 +1549,12 @@
    "strict_input": true
   },
   "POST /api/books/parties/:id/dispute": {
+   "strict_input": true
+  },
+  "POST /api/books/preview": {
+   "strict_input": true
+  },
+  "POST /api/books/events": {
    "strict_input": true
   },
   "POST /api/books/entries": {
@@ -1692,11 +1818,13 @@
   },
   "POST /api/supplies/purchase": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "idempotent_money_write": true
   },
   "POST /api/supplies/:id/issue": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/adopt/:chit_id": {
    "output_allowlist": true,

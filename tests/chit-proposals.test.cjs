@@ -58,6 +58,15 @@ function rowsFor(sql, p) {
   const s = one(sql);
   p = p || [];
   if (/^SELECT sender_entity_id, purpose, business_json, summary_json, all_recipients FROM chit_header/.test(s)) return w.header[p[1]] ? [clone(w.header[p[1]])] : [];
+  /* ACC-192 (lib/invoice-issued): is the copy's invoice issued? w.posted = the entity ids whose books hold chit:<id> */
+  if (/AS has_invoice/.test(s)) {
+    const h = w.header[p[0]];
+    if (!h) return [];
+    const inv = (h.business_json || {}).invoice;
+    return [{ has_invoice: !!inv, frozen_at: (inv && inv.frozen_at) || null, document: ((h.business_json || {}).jurisdiction || {}).document || null, posted: (w.posted || []).includes(p[0]) }];
+  }
+  if (/^SELECT line_items FROM chit_detail WHERE entity_id = \$1 AND chit_id = \$2 LIMIT 1/.test(s)) return w.detail[p[0]] ? [{ line_items: clone(w.detail[p[0]].line_items) }] : [];
+  if (/^SELECT amendment_id, line_index, line_id, seq, line, reason_code, reason, actor_name, created_at FROM chit_line_amendment/.test(s)) return clone(w.amend.filter((a) => a.entity_id === p[0] && a.chit_id === p[1]));
   if (/^SELECT line_items, currency_code FROM chit_detail/.test(s)) return w.detail[p[1]] ? [clone(w.detail[p[1]])] : [];
   if (/^SELECT line_index, line_id, seq, line FROM chit_line_amendment WHERE entity_id = \$1 AND chit_id = \$2/.test(s)) return clone(w.amend.filter((a) => a.entity_id === p[0] && a.chit_id === p[1]));
   if (/^SELECT line_id FROM chit_line WHERE entity_id = \$1/.test(s)) return (w.lineIds[p[0]] || []).map((line_id) => ({ line_id }));
@@ -142,6 +151,18 @@ function rowsFor(sql, p) {
     else w.inw.push({ chit_id: p[0], remote: p[1], entity: p[2], last_seq: p[3] });
     return [{ last_seq: p[3] }];
   }
+  /* ACC-192 1b (lib/credit-note): the notes the stand-in sender minted on this world, keyed 'chit_id:issuer' */
+  if (/^SELECT chit_id FROM chit_header WHERE entity_id = \$1 AND purpose IN \('credit_note', 'debit_note', 'invoice'\)/.test(s)) return Object.entries(w.header).filter(([k, h]) => k.endsWith(':' + p[0]) && h.business_json.against.chit_id === p[1] && h.business_json.against.proposal_id === p[2]).map(([k]) => ({ chit_id: k.split(':')[0] }));
+  /* ACC-192 §10: the server's invoice counter row (books-store nextNo / giveBackNo), one per world */
+  if (/books_counter/.test(s)) {
+    w.counter = w.counter || { next: 1 };
+    if (/^UPDATE/.test(s)) {
+      if (w.counter.next === p[3] + 1) w.counter.next = p[3];
+      return [];
+    }
+    return [{ n: w.counter.next++ }];
+  }
+  if (/^SELECT coalesce\(max\(substring/.test(s)) return [{ next: Object.entries(w.header).filter(([k, h]) => k.endsWith(':' + p[0]) && h.purpose === p[1] && String(h.business_json.printed_as).startsWith(p[2].replace('%', ''))).length + 1 }];
   if (/^SELECT entity_id FROM chit_participants/.test(s)) return Object.keys(w.header).map((entity_id) => ({ entity_id }));
   return [];
 }
@@ -663,6 +684,269 @@ const call = (method, url, id, body) =>
     assert.ok(/already countered/.test(stale.body.message || stale.body.detail), JSON.stringify(stale.body));
     const missing = await call('POST', '/api/chits/' + CH + '/proposals/f0000000-0000-4000-8000-0000000000f0/reject', BUY, {});
     assert.strictEqual(missing.status, 404);
+  });
+
+  console.log('\n== I · ACC-192: an issued invoice is never rewritten by an amendment ==\n');
+  const WORDS = 'This bill is already invoiced. A change in price needs a credit or debit note. Propose the change; the note is issued when the other side accepts.';
+  const sealed = (w) => JSON.stringify([w.header, w.detail, w.amend]);
+  /* ── ACC-192 1b: a stand-in for the ONE send path (lib/autoraise.sendAs). It records the body and mints the note on the issuer's copy; a buyer on another installation gets the SAME JSON over the wire ── */
+  const creditNote = require(root('lib/price-note'));
+  const priceNote = creditNote;
+  const NOTES = [];
+  let SEND_FAILS = false;
+  creditNote.useSender(async (issuer, body) => {
+    if (SEND_FAILS) return { ok: false, status: 409, body: { message: 'the send refused' } };
+    const w = CUR;
+    const chit_id = 'c0000000-0000-4000-8000-00000000d' + String(NOTES.length + 1).padStart(3, '0');
+    const wire = JSON.stringify(body);
+    NOTES.push({ world: w.name, issuer, chit_id, wire });
+    w.header[chit_id + ':' + issuer] = { purpose: body.purpose, business_json: JSON.parse(wire).business_json, line_items: JSON.parse(wire).line_items };
+    return { ok: true, status: 200, body: { chit_id } };
+  });
+  const notesRows = (w) => Object.entries(w.header).filter(([k]) => k.includes(':')).map(([, v]) => v);
+  const sealedMoney = (w, e) => JSON.stringify([w.header[e].business_json.invoice, w.header[e].summary_json, w.detail[e].total_value]);
+  const issueInvoice = (w) => {
+    for (const e of [BUY, SELL].filter((id) => w.header[id])) w.header[e].business_json = Object.assign({}, w.header[e].business_json, { invoice: { stamped_by: 'Sydney Spice', ValDtls: { AssVal: 1100, TotInvVal: 1298 } }, bill_no: 'INV-7' });
+    w.posted = [BUY, SELL].filter((id) => w.header[id]);
+  };
+  await t('RED→GREEN: a priced DECREASE on an issued invoice is accepted as ONE credit note: the invoice and its money are untouched on both copies, the lines move, the note carries the delta and `against`', async () => {
+    const w = oneInstallation();
+    issueInvoice(w);
+    const before = [sealedMoney(w, BUY), sealedMoney(w, SELL)];
+    const r = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    assert.strictEqual(r.money.gross, 100, 'the note is priced over the CHANGED line only: 10 pc × (100 − 90)');
+    const done = await as(w, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    assert.strictEqual(done.status, 'accepted');
+    assert.deepStrictEqual([sealedMoney(w, BUY), sealedMoney(w, SELL)], before, 'the original invoice, money and total are exactly as issued');
+    assert.strictEqual(NOTES.filter((n) => n.world === 'one').length, 1, 'ONE note');
+    const note = JSON.parse(NOTES[NOTES.length - 1].wire);
+    assert.strictEqual(note.purpose, 'credit_note');
+    assert.deepStrictEqual([note.business_json.against.chit_id, note.business_json.against.invoice_no, note.business_json.against.issuer], [CH, 'INV-7', B_SELL]);
+    assert.ok(/^CN\/\d{2}-\d{2}\/\d{4}$/.test(note.business_json.printed_as), note.business_json.printed_as);
+    assert.deepStrictEqual(note.line_items.map((l) => [l.quantity, l.price]), [[10, 10]]);
+    assert.strictEqual(rowsOf(w, BUY).find((x) => x.proposal_id === r.proposal_id).status, 'accepted');
+    assert.deepStrictEqual(w.amend.filter((x) => x.entity_id === BUY).map((x) => x.line.price), [90], 'the live lines moved');
+  });
+  await t('ACC-192 slice 2 · a RAISE on an issued invoice is accepted by the PAYER as ONE debit note over the changed line (10 pc × (110 − 100)), numbered DN/<FY>/0001; the invoice and its money are untouched', async () => {
+    const w = oneInstallation();
+    issueInvoice(w);
+    const before = [sealedMoney(w, BUY), sealedMoney(w, SELL)];
+    const sent = NOTES.length;
+    const r = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 110 }]), SELLER));
+    assert.strictEqual(r.money.gross, 100, 'priced over the CHANGED line only: 10 pc × (110 − 100)');
+    const done = await as(w, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    assert.strictEqual(done.status, 'accepted');
+    assert.deepStrictEqual([sealedMoney(w, BUY), sealedMoney(w, SELL)], before, 'the original invoice, money and total are exactly as issued');
+    const note = JSON.parse(NOTES[NOTES.length - 1].wire);
+    assert.strictEqual(NOTES.length, sent + 1, 'ONE note');
+    assert.strictEqual(note.purpose, 'debit_note');
+    assert.ok(/^DN\/\d{2}-\d{2}\/0001$/.test(note.business_json.printed_as), note.business_json.printed_as);
+    assert.deepStrictEqual(note.line_items.map((l) => [l.quantity, l.price]), [[10, 10]]);
+    assert.deepStrictEqual([note.business_json.against.chit_id, note.business_json.against.invoice_no], [CH, 'INV-7']);
+    assert.deepStrictEqual(w.amend.filter((x) => x.entity_id === BUY).map((x) => x.line.price), [110], 'the live lines moved');
+  });
+  await t('ACC-192 slice 2 · the document is chosen COUNTRY-FIRST from the seller’s pack: IN and AU a debit note, AE a further tax invoice (purpose invoice, numbered in the invoice series: 0001), no pack or no ruling is refused in words, never defaulted', async () => {
+    for (const [country, purpose, number] of [['AU', 'debit_note', /^DN\/0001$/], ['AE', 'invoice', /^0001$/]]) {
+      const w = oneInstallation(country);
+      issueInvoice(w);
+      const r = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, quantity: 12 }]), SELLER));
+      await as(w, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+      const note = JSON.parse(NOTES[NOTES.length - 1].wire);
+      assert.strictEqual(note.purpose, purpose, country);
+      assert.ok(number.test(note.business_json.printed_as), country + ' ' + note.business_json.printed_as);
+      assert.deepStrictEqual(note.line_items.map((l) => [l.quantity, l.price]), [[2, 100]], country + ': 2 more pieces at the issued price');
+    }
+    for (const country of [null, 'US']) {
+      const w = oneInstallation(country);
+      issueInvoice(w);
+      const sent = NOTES.length;
+      await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 110 }]), SELLER)), (e) => e.status === 409 && e.code === 'INVOICE_NOTE_NO_RULE', String(country));
+      assert.deepStrictEqual([w.props.length, NOTES.length], [0, sent]);
+    }
+  });
+  await t('ACC-192 slice 2 · a MIXED round (one line up, one down) and an ADDED line are refused in words: no row, no note; a round that changes nothing says so', async () => {
+    const w = oneInstallation();
+    issueInvoice(w);
+    const sent = NOTES.length;
+    await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 110 }, { line_id: L2, price: 10 }]), SELLER)), (e) => e.status === 409 && e.code === 'INVOICE_MIXED_ROUND');
+    await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, quantity: 12, price: 90 }]), SELLER)), (e) => e.code === 'INVOICE_MIXED_ROUND', 'one line more pieces at a lower price is also two directions');
+    await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: 'e0000000-0000-4000-8000-0000000000ff', price: 5, quantity: 1 }]), SELLER)), (e) => e.status === 409 && e.code === 'INVOICE_LINE_ADDED');
+    await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_index: 9, price: 5, quantity: 1 }]), SELLER)), (e) => e.code === 'INVOICE_LINE_ADDED');
+    await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 100 }]), SELLER)), (e) => e.code === 'INVOICE_INCREASE_REFUSED');
+    assert.deepStrictEqual([w.props.length, NOTES.length], [0, sent]);
+  });
+  await t('ACC-192 slice 2 · only the PAYER accepts a raise: the seller cannot accept their own round or a buyer’s request to pay more; the guard names the rule', async () => {
+    const w = oneInstallation();
+    issueInvoice(w);
+    const r = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 110 }]), SELLER));
+    await assert.rejects(as(w, () => proposals.decide(SELL, CH, r.proposal_id, 'accept', SELLER)), (e) => e.status === 403 && e.code === 'PROPOSAL_NOT_YOURS');
+    assert.throws(() => priceNote.refuseNotPayer('debit', BUY, SELL), (e) => e.status === 403 && /one who pays/.test(e.message));
+    assert.doesNotThrow(() => priceNote.refuseNotPayer('debit', BUY, BUY));
+    assert.doesNotThrow(() => priceNote.refuseNotPayer('credit', BUY, SELL), 'a lowering is the seller’s to agree to as ever');
+    const asked = await as(w, () => proposals.propose(BUY, CH, { lines: [{ line_id: L1, quantity: 20 }] }, BUYER));
+    await assert.rejects(as(w, () => proposals.decide(SELL, CH, asked.proposal_id, 'accept', SELLER)), (e) => e.code === 'PROPOSAL_BAD');
+  });
+  await t('ACC-192 slice 2 · TWO notes issued in parallel for one issuer take DN/…/0001 and DN/…/0002 (no gap, no duplicate) under the (purpose, issuer) series lock', async () => {
+    const w = oneInstallation();
+    issueInvoice(w);
+    const copy = await as(w, () => proposals.readCopy(SELL, CH));
+    const db = require(root('db'));
+    const held = new Set();
+    const waiting = [];
+    const realPool = Object.getOwnPropertyDescriptor(db, 'pool');
+    const mutex = { connect: async () => ({ query: async (sql, args) => {
+      const key = args && args[0];
+      if (/pg_advisory_lock/.test(sql)) { while (held.has(key)) await new Promise((resolve) => waiting.push(resolve)); held.add(key); }
+      if (/pg_advisory_unlock/.test(sql)) { held.delete(key); waiting.splice(0).forEach((resolve) => resolve()); }
+      return { rows: [] };
+    }, release: () => {} }) };
+    Object.defineProperty(db, 'pool', { get: () => mutex, configurable: true });
+    const sentBefore = NOTES.length;
+    try {
+      const issueOne = (proposal_id) => as(w, () => priceNote.issue({ issuer: SELL, buyer: BUY, chit_id: CH, copy, original: copy.header.business_json || {}, issuerBridge: B_SELL, country: 'IN', row: { proposal_id, edits: [{ line_index: 0, line_id: L1, line: { particulars: 'Pump seal', quantity: 10, unit: 'pc', price: 110 } }], invoice: { stamped_by: 'x' }, currency_code: 'INR' } }));
+      const both = await Promise.all([issueOne('f0000000-0000-4000-8000-0000000000a1'), issueOne('f0000000-0000-4000-8000-0000000000a2')]);
+      assert.ok(both.every((x) => x.duplicate === false));
+    } finally {
+      Object.defineProperty(db, 'pool', realPool);
+    }
+    const numbers = NOTES.slice(sentBefore).map((n) => JSON.parse(n.wire).business_json.printed_as.split('/').pop()).sort();
+    assert.deepStrictEqual(numbers, ['0001', '0002']);
+  });
+  await t('quantity down, a removed line, and price+quantity both down: the changed lines only (price+quantity = two delta lines that sum exactly)', async () => {
+    const w = oneInstallation();
+    issueInvoice(w);
+    const copy = await as(w, () => proposals.readCopy(SELL, CH));
+    const delta = (line) => creditNote.deltaLines(copy, [{ line_index: 0, line_id: L1, line }]).map((l) => [l.quantity, l.price, l.total]);
+    assert.deepStrictEqual(delta({ quantity: 7, price: 100 }), [[3, 100, 300]]);
+    assert.deepStrictEqual(delta(null), [[10, 100, 1000]]);
+    assert.deepStrictEqual(delta({ quantity: 8, price: 95 }), [[2, 100, 200], [8, 5, 40]]);
+    assert.throws(() => delta({ quantity: 8, price: 105 }), (e) => e.code === 'INVOICE_MIXED_ROUND', 'fewer pieces at a higher price is two directions');
+    assert.deepStrictEqual(delta({ quantity: 12, price: 110 }), [[2, 110, 220], [10, 10, 100]], 'more pieces AND a higher price: the extra pieces at the new price, the rise on the pieces that stay — they sum to 1320 − 1000');
+  });
+  await t('a replayed decision issues no second note: the key (issuer, original chit, proposal) finds the first', async () => {
+    const { A, B } = twoInstallations();
+    issueInvoice(A);
+    issueInvoice(B);
+    const r = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    const before = NOTES.length;
+    await ship(A, B);
+    assert.strictEqual(NOTES.length, before + 1, 'one note at B on the first decision');
+    const row = rowsOf(B, SELL).find((x) => x.proposal_id === r.proposal_id);
+    row.status = 'proposed'; /* the replay arrives while the seller's row is still open (a crash between issue and close) */
+    CUR = B;
+    const again = await proposals.receiveDecision(SELL, { identity_id: BUY_STUB, bridge_id: B_BUY, display_name: 'Chennai Stores' }, CH, { proposal_id: r.proposal_id, decision: 'accept', by_name: 'Chennai Stores' });
+    assert.ok(again.applied);
+    assert.strictEqual(NOTES.length, before + 1, 'still ONE note');
+  });
+  await t('TWO installations: seller B, buyer A accepts → A applies NOTHING until B confirms; B issues; A applies from the confirmation; the note JSON is byte for byte; A ran no tax engine', async () => {
+    const { A, B } = twoInstallations();
+    issueInvoice(A);
+    issueInvoice(B);
+    const r = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    await ship(B, A);
+    const taxA = A.taxCalls.length;
+    const notesBefore = NOTES.length;
+    const soldBefore = sealedMoney(A, BUY);
+    const done = await as(A, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    assert.strictEqual(done.status, 'awaiting_seller', 'the buyer’s acceptance does not stand alone');
+    assert.strictEqual(rowsOf(A, BUY).find((x) => x.proposal_id === r.proposal_id).status, 'proposed', 'A applied nothing yet');
+    assert.strictEqual(A.amend.length, 0);
+    const toB = await ship(A, B);
+    assert.ok(toB[0].ok && toB[0].applied, JSON.stringify(toB));
+    const noteAtB = NOTES.slice(notesBefore);
+    assert.strictEqual(noteAtB.length, 1, 'B (the seller) issued the note');
+    assert.strictEqual(rowsOf(B, SELL).find((x) => x.proposal_id === r.proposal_id).status, 'accepted');
+    const echo = B.out.filter((x) => x.kind === 'proposal_decide' && x.status === 'pending');
+    assert.strictEqual(echo.length, 1, 'B confirms back with the same decision');
+    const back = await ship(B, A);
+    assert.ok(back[0].ok && back[0].applied, JSON.stringify(back));
+    assert.strictEqual(rowsOf(A, BUY).find((x) => x.proposal_id === r.proposal_id).status, 'accepted');
+    assert.strictEqual(sealedMoney(A, BUY), soldBefore, 'the buyer’s invoice is untouched');
+    assert.strictEqual(A.taxCalls.length, taxA, 'the tax engine made ZERO calls at the buyer');
+    /* the note crosses as an ordinary chit: the buyer's copy is the same bytes the seller issued, and the buyer's books read it as a purchase return */
+    const wire = noteAtB[0].wire;
+    A.header['note:' + BUY] = { purpose: 'credit_note', business_json: JSON.parse(wire).business_json };
+    assert.strictEqual(JSON.stringify(A.header['note:' + BUY].business_json), JSON.stringify(JSON.parse(wire).business_json), 'byte-identical JSON');
+    const verdict = require(root('lib/books-hooks')).classify({
+      chit: { chit_id: noteAtB[0].chit_id, created_at: '2026-11-08T05:00:00Z', purpose: 'credit_note', business_json: JSON.parse(wire).business_json },
+      entry: { sells: false, seller: { entity_id: SELL_STUB }, invoice: JSON.parse(wire).business_json.invoice },
+      setting: { enabled: true, country: 'IN', functional_currency: 'INR' }
+    });
+    assert.deepStrictEqual([verdict.kind, verdict.event && verdict.event.type, verdict.event && verdict.event.party], ['post', 'purchase_return', SELL_STUB]);
+    assert.strictEqual(A.taxCalls.length, taxA, 'posting it ran no tax engine either');
+  });
+  await t('REVIEW: the seller applied but its confirmation was never queued → the buyer’s replayed decision makes the seller say it again (once per replay), applies nothing twice, and the buyer applies on it', async () => {
+    const { A, B } = twoInstallations();
+    issueInvoice(A);
+    issueInvoice(B);
+    const r = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    await ship(A, B);
+    const queued = B.out.filter((x) => x.kind === 'proposal_decide').length; /* the first confirmation is still unsent here, standing for one that never reached the buyer */
+    const notes = NOTES.length;
+    const replay = await as(B, () => proposals.receiveDecision(SELL, { identity_id: BUY_STUB, bridge_id: B_BUY, display_name: 'Chennai Stores' }, CH, { proposal_id: r.proposal_id, decision: 'accept', by_name: 'Chennai Stores' }));
+    assert.strictEqual(replay.applied, false, 'nothing is applied twice');
+    assert.strictEqual(NOTES.length, notes, 'and no second note');
+    assert.strictEqual(B.out.filter((x) => x.kind === 'proposal_decide').length, queued + 1, 'the seller confirms again');
+    const back = await ship(B, A);
+    assert.ok(back.length === 2 && back.every((x) => x.ok), JSON.stringify(back));
+    assert.strictEqual(A.amend.length, 1, 'the line moved ONCE at the buyer although the confirmation arrived twice');
+    assert.strictEqual(rowsOf(A, BUY).find((x) => x.proposal_id === r.proposal_id).status, 'accepted');
+    const again = await as(A, () => proposals.receiveDecision(BUY, { identity_id: SELL_STUB, bridge_id: 'x', display_name: 'Seller' }, CH, { proposal_id: r.proposal_id, decision: 'accept', by_name: 'Seller' }));
+    assert.strictEqual(again.applied, false, 'a repeated confirmation at the buyer is a no-op');
+    assert.strictEqual(A.out.filter((x) => x.kind === 'proposal_decide').length, 1, 'and the buyer never echoes (no loop)');
+  });
+  await t('DIVERGENCE: the seller cannot issue the note → the decision is refused at the seller in words, the seller applies nothing, the buyer applied nothing (one truth)', async () => {
+    const { A, B } = twoInstallations();
+    issueInvoice(A);
+    issueInvoice(B);
+    const r = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    SEND_FAILS = true;
+    const toB = await ship(A, B);
+    SEND_FAILS = false;
+    assert.ok(toB.some((x) => !x.ok), 'the refusal answers back: ' + JSON.stringify(toB));
+    assert.strictEqual(rowsOf(B, SELL).find((x) => x.proposal_id === r.proposal_id).status, 'proposed');
+    assert.strictEqual(rowsOf(A, BUY).find((x) => x.proposal_id === r.proposal_id).status, 'proposed');
+    assert.strictEqual(B.amend.length + A.amend.length, 0, 'no line moved on either copy');
+    assert.strictEqual(B.out.filter((x) => x.kind === 'proposal_decide').length, 0, 'and no confirmation was sent');
+  });
+  await t('a QUOTATION and a pro-forma still re-price: an accepted pro-forma with no books is re-issued by a change round, as before', async () => {
+    const w = oneInstallation();
+    const r2 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await as(w, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    assert.strictEqual(w.header[BUY].business_json.jurisdiction.document, 'pro_forma');
+    const first = clone(w.header[BUY].business_json.invoice);
+    const r3 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    assert.strictEqual(r3.kind, 'change');
+    await as(w, () => proposals.decide(BUY, CH, r3.proposal_id, 'accept', BUYER));
+    assert.notDeepStrictEqual(w.header[BUY].business_json.invoice, first, 'the pro-forma was re-issued at the new price');
+    assert.deepStrictEqual(w.header[BUY].business_json.invoice, w.header[SELL].business_json.invoice);
+  });
+  await t('POST /amend (a default domestic chit) on an issued invoice: a price or quantity change or a removal is 409 INVOICE_MONEY_LOCKED, nothing recorded; a comment fix still passes; with no invoice a price change passes', async () => {
+    const w = oneInstallation(undefined, { domestic: true });
+    w.header[SELL].business_json = Object.assign({}, w.header[SELL].business_json, { invoice: { ValDtls: { TotInvVal: 1298 } } });
+    const edit = (line_index, line) => ({ edits: [{ line_index, line_id: line_index ? L2 : L1, line, reason_code: 'rate_agreed' }] });
+    const pump = (more) => Object.assign({ particulars: 'Pump seal', quantity: 10, unit: 'pc', price: 100 }, more);
+    for (const body of [edit(0, pump({ price: 96 })), edit(0, pump({ quantity: 9 })), edit(0, pump({ price: 110 })), edit(0, pump({ quantity: 12 })), edit(1, null)]) {
+      const r = await call('POST', '/api/chits/' + CH + '/amend', SELL, body);
+      assert.strictEqual(r.status, 409, JSON.stringify(r.body));
+      assert.strictEqual(r.body.code, 'INVOICE_MONEY_LOCKED');
+      assert.ok(JSON.stringify(r.body).includes(WORDS), JSON.stringify(r.body));
+    }
+    assert.strictEqual(w.amend.length, 0, 'nothing was recorded');
+    for (const body of [edit(0, pump({ comment: 'deliver after 4pm' })), edit(0, pump({ particulars: 'Pump seal (steel)' }))]) {
+      const r = await call('POST', '/api/chits/' + CH + '/amend', SELL, body);
+      assert.strictEqual(r.status, 200, 'a non-money amendment still works: ' + JSON.stringify(r.body));
+    }
+    assert.strictEqual(w.amend.length, 2);
+    oneInstallation(undefined, { domestic: true }); /* no invoice at all: a quote / draft, amended as always */
+    const ok = await call('POST', '/api/chits/' + CH + '/amend', SELL, edit(0, pump({ price: 96 })));
+    assert.strictEqual(ok.status, 200, JSON.stringify(ok.body));
   });
 
   console.log('\n== E · the bell ==\n');

@@ -181,16 +181,17 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     /* the shape that makes it so: one handle from the route, and recordPayment settles on that same handle */
     const bsrc = fs.readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
     const recP = bsrc.slice(bsrc.indexOf('async function recordPayment('), bsrc.indexOf('/** the payment\'s journal event'));
+    const duplicateRule = bsrc.slice(bsrc.indexOf('async function askDuplicateRule('), bsrc.indexOf('/** record a payment and its entry')); /* FIN-77: the duplicate question moved out of recordPayment, asked under the party lock */
     ok('recordPayment settles the bills on the handle it was given (settleBills(h, …)); it opens no transaction of its own', /settleBills\(h, entity, row, pay\.payment_id\)/.test(recP) && !/withEntity/.test(recP));
     const rsrc = fs.readFileSync(path.join(H.API, 'routes', 'books.js'), 'utf8');
     const route = rsrc.slice(routeAt(rsrc, 'post', '/payments'), routeAt(rsrc, 'post', '/payments/:id/propose'));
     const tx = route.slice(route.indexOf('await withEntity(e, async (h) => {'), route.indexOf('return rec;'));
     ok('the route records (warn: the duplicate rule, asked inside recordPayment AFTER its gates) and reads the outcome inside ONE withEntity',
       /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /B\.paymentOutcome\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
-      && recP.indexOf('S.partyOn(h, entity') < recP.search(/duplicateWarnings\(\s*h,\s*entity/) && recP.search(/duplicateWarnings\(\s*h,\s*entity/) < recP.indexOf('S.insertPayment(h, entity'));
+      && recP.indexOf('S.partyOn(h, entity') < recP.indexOf('askDuplicateRule(h, entity, p)') && recP.indexOf('askDuplicateRule(h, entity, p)') < recP.indexOf('S.insertPayment(h, entity') && /duplicateWarnings\(\s*handle,\s*entity/.test(duplicateRule) && duplicateRule.indexOf('S.lockParty') < duplicateRule.indexOf('proposeFor(handle'));
     ok('proposeFor is ONE function: preview, record (oldest_first) and /propose all call it; the old proposal body is gone from the route',
       (rsrc.match(/B\.proposeFor\(h, e,/g) || []).length === 2 && !/R\.proposeItems|R\.propose\(/.test(rsrc) && (bsrc.match(/async function proposeFor\(/g) || []).length === 1
-      && /proposeFor\(h, entity,/.test(recP) && /proposeFor\(h, entity,/.test(bsrc.slice(bsrc.indexOf('async function settleBills('), bsrc.indexOf('async function firstPayment('))) && (bsrc.match(/R\.propose(Items)?\(/g) || []).length === 2);
+      && /proposeFor\(handle, entity,/.test(duplicateRule) && /proposeFor\(h, entity,/.test(bsrc.slice(bsrc.indexOf('async function settleBills('), bsrc.indexOf('async function firstPayment('))) && (bsrc.match(/R\.propose(Items)?\(/g) || []).length === 2);
   });
 
   /* ═══ 4 · client_ref ═══ */

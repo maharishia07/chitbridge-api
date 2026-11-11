@@ -60,7 +60,7 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: STAFF_ID, parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', display_name: 'Test staff', bridge_id: 'TESTSHOP' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "chit_header" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false, till: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false, till: null, moved: null };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
@@ -115,6 +115,8 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
+  const chitMove = require(path.join(HERE, 'lib', 'chit-move.js'));
+  mock('lib/chit-move', Object.assign({}, chitMove, { moveStatus: (...asked) => (world.moved ? world.moved(...asked) : chitMove.moveStatus(...asked)) })); /* the ONE status writer is real unless a scene hands the answer it built (movedAnswer, refusalOf: its own functions) */
   console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
   const say = console.log;
   console.log = (...parts) => (typeof parts[0] === 'string' && parts[0].startsWith('{"t":') ? undefined : say(...parts)); /* the structured log lines (lib/logger) are not this test's output */
@@ -281,7 +283,23 @@ const ENTRY_ROW = { chit_id: PARTY, line_id: null, subject_id: PARTY, kind: 'ris
 /** a copy of a bill I received, as lib/tax-copy copyOf gives it: the buyer's choice rides in business_json.use */
 const BILL_COPY = (use) => ({ current_status: 'pending', line_items: [{ line_id: PARTY, particulars: 'Rice' }, { line_id: OTHER, particulars: 'Pallet' }], business_json: { use } });
 
+/** PUT /:chit_id/status answers what the ONE status writer built (lib/chit-move): the scenes below hand it the bodies its own movedAnswer and refusalOf make, one per branch, so the allow-list is closed from what it really answers */
+const MOVED = (done) => async () => require(path.join(HERE, 'lib', 'chit-move.js')).movedAnswer(Object.assign({ chit_id: PARTY, previous_status: 'pending', new_status: 'accepted', disputeWarning: null, booksOnCancel: null, crossed: null }, done));
+const NOOP = async () => require(path.join(HERE, 'lib', 'chit-move.js')).refusalOf({ stop: 'noop' }, PARTY, 'accepted');
 const EXTRAS = [
+  X('status-moved', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({}) } }),
+  X('status-moved-over-a-dispute', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'completed' }, setup: { moved: MOVED({ new_status: 'completed', previous_status: 'accepted', disputeWarning: 'Chit closed with an OPEN dispute — by Test shop.' }) } }),
+  X('status-moved-and-told-elsewhere', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({ crossed: { queued: 1, seq: 4 } }) } }),
+  X('status-moved-not-told-elsewhere', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({ crossed: { queued: 0, why: 'The other installation could not be reached yet — it tries again.' } }) } }),
+  X('status-cancelled-reversal-posted', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Reversed SI-7 by JV-9.' } }) } }),
+  X('status-cancelled-reversed-by-the-hook', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Reversed SI-7 by JV-9.', reversed: 1 } }) } }),
+  X('status-cancelled-already-reversed', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, already: true, duplicate: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Already reversed SI-7 — by JV-9.' } }) } }),
+  X('status-cancelled-duplicate', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { duplicate: true } }) } }),
+  X('status-cancelled-books-off', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { off: true } }) } }),
+  X('status-cancelled-books-refused', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { refused: 'The period is closed.' } }) } }),
+  X('overlay-catalogue-read-fails', 'GET ' + C + '/:chit_id/catalogue-overlay', 500, { patch: { itemmatch: { loadCatalogue: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('status-cancelled-nothing-posted', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { none: true } }) } }),
+  X('status-already', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: NOOP } }),
   /* ── the lists and the read ── */
   X('a-chit-is-listed', 'GET ' + C + '/sent', 200, { setup: { sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [CHIT_ROW]) } }),
   X('a-chit-is-in-the-inbox', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?status=pending&q=tea&folder_id=' + PARTY, setup: { sqlRows: answering(/SELECT ch.chit_id/, [CHIT_ROW]) } }),
@@ -394,6 +412,8 @@ const EXTRAS = [
   X('status-step-not-allowed', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'completed' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'wrong_step', from: 'pending', allowed: ['accepted'] }) } } }),
   X('status-level-refused', 'PUT ' + C + '/:chit_id/status', 403, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'read_only', from: 'pending' }) } } }),
   X('status-moved-under-you', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => { throw Object.assign(new Error('Someone else just changed this.'), { code: 'status_conflict' }); } }) } } }),
+  /* RAIL-173: a bill the books already took back (cancelled / rejected after it posted) is not moved on — the sender sends it again */
+  X('status-taken-back', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'taken_back', from: 'cancelled', write: async () => undefined }) } } }),
   X('status-reject-needs-a-reason', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'rejected' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'folder-inventory': { docOf: () => 'bill_received' } } }),
   /* ── payment ── */
   X('payment-chit-not-found', 'POST ' + C + '/:chit_id/payment', 404, { body: { method: 'cash', amount: '12.50', ref: ' R1 ' } }),
@@ -415,12 +435,12 @@ const EXTRAS = [
   X('books-request-fails', 'POST ' + C + '/:chit_id/books-request', 500, { setup: { db: 'fail' } }),
   /* ── messages and disputes ── */
   X('message-by-a-viewer', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external' }, setup: { who: VIEWER } }),
-  X('message-by-a-non-participant', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external' } }),
+  X('message-by-a-non-participant', 'POST ' + C + '/:chit_id/messages', 404, { body: { message_text: 'hi', thread_type: 'external' } }),
   X('message-fails', 'POST ' + C + '/:chit_id/messages', 500, { body: { message_text: 'hi', thread_type: 'external' }, setup: { db: 'fail' } }),
   X('message-on-a-dispute-not-mine', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external', is_dispute: 'true', dispute_id: OTHER }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
   X('message-fields-wrong', 'POST ' + C + '/:chit_id/messages', 400, { body: { message_text: '   ', thread_type: 'loud', is_dispute: 'maybe', dispute_id: 'x', line_id: 5 } }),
   X('message-posted', 'POST ' + C + '/:chit_id/messages', 200, { body: { message_text: '  hello  ', thread_type: 'internal', line_id: null }, setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/chit_message_deliver/, [{ created_at: AT }]]]) } }),
-  X('dispute-by-a-non-participant', 'POST ' + C + '/:chit_id/disputes', 403, { body: { category: 'quality', reason: ' The goods were short by two boxes ' } }),
+  X('dispute-by-a-non-participant', 'POST ' + C + '/:chit_id/disputes', 404, { body: { category: 'quality', reason: ' The goods were short by two boxes ' } }),
   X('dispute-fails', 'POST ' + C + '/:chit_id/disputes', 500, { body: { category: 'quality', reason: 'The goods were short by two boxes' }, setup: { db: 'fail' } }),
   X('dispute-fields-wrong', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'x', reason: 'short', target_entity_id: 'x', participant_entity_ids: 'a', chit_wide: 'maybe', via: 'post' } }),
   X('dispute-against-myself', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'quality', reason: 'The goods were short by two boxes', target_entity_id: SHOP }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'pending' }]) } }),
@@ -482,6 +502,10 @@ const EXTRAS = [
   X('delivery-by-a-viewer', 'POST ' + C + '/:chit_id/deliver-lines', 403, { body: [], setup: { who: VIEWER } }),
   X('delivery-fails', 'POST ' + C + '/:chit_id/deliver-lines', 500, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw new Error(SECRET_SQL); } }, 'tax-copy': HELD_COPY } }),
   X('delivery-refused-by-the-recorder', 'POST ' + C + '/:chit_id/deliver-lines', 400, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw Object.assign(new Error('Nothing to record'), { status: 400 }); } }, 'tax-copy': HELD_COPY } }),
+  /* RAIL-191/192/193: the three refusals lib/deliverline throws as data (refused, status, body), answered as that body with its registered code */
+  X('delivery-past-the-column', 'POST ' + C + '/:chit_id/deliver-lines', 400, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw Object.assign(new Error('A line quantity on line 1 is too large'), { refused: true, status: 400, code: 'CHIT_AMOUNT_TOO_LARGE', body: { error: 'Amount too large', code: 'CHIT_AMOUNT_TOO_LARGE', message: 'A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.', field: 'quantity', line: 1, max: '999999999999999.999', currency_code: null } }); } }, 'tax-copy': HELD_COPY } }),
+  X('delivery-correction-too-large', 'POST ' + C + '/:chit_id/deliver-lines', 409, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw Object.assign(new Error('Line 1 has only 1 kg delivered'), { refused: true, status: 409, body: { error: 'Correction too large', message: 'Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.', line: 1, delivered: 1 } }); } }, 'tax-copy': HELD_COPY } }),
+  X('delivery-on-a-rejected-copy', 'POST ' + C + '/:chit_id/deliver-lines', 409, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw Object.assign(new Error('This order is rejected'), { refused: true, status: 409, body: { error: 'Order closed', message: 'This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.', why: 'wrong_step', from: 'rejected' } }); } }, 'tax-copy': HELD_COPY } }),
   X('assign-by-a-viewer', 'POST ' + C + '/:chit_id/assign-lines', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
   X('assign-fails', 'POST ' + C + '/:chit_id/assign-lines', 500, { body: [], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { assign: { assign: async () => { throw new Error(SECRET_SQL); } } } }),
   X('amend-a-delivered-line', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('That line has been delivered.'), { code: 'LINE_DELIVERED' }); } } } }),
@@ -523,6 +547,7 @@ const EXTRAS = [
   X('batch-chain-ready', 'GET ' + C + '/trace/by-batch', 200, { url: C + '/trace/by-batch?q=L7', setup: { sqlRows: answering(/l\.removed = false/, BATCH_ROWS) } }),
   X('networks-none', 'GET ' + C + '/trace/networks', 200, {}),
   /* ── S34 (API-8 output_allowlist, part 1): the READY answer of each write and chit-scoped read over the real libraries ── */
+  X('pulse-fails-and-says-it-cannot-tell', 'GET ' + C + '/pulse', 200, { setup: { db: 'fail' } }),
   X('pulse-with-rows', 'GET ' + C + '/pulse', 200, { setup: { sqlRows: answering(/MAX\(created_at\)/, [{ h: AT, s: null, c: AT, n: '3' }]) } }),
   X('reprice-previewed', 'POST ' + C + '/:chit_id/reprice', 200, { body: { preview: true, line_ids: [PARTY] }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) } }),
   X('reprice-applied', 'POST ' + C + '/:chit_id/reprice', 200, { body: { only_unpriced: true }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) }, patch: { amend: { record: async () => ({ amendments: [{ amendment_id: PARTY }] }) } } }),
@@ -597,10 +622,13 @@ const EXTRAS = [
   X('trace-a-value-asked-twice', 'GET ' + C + '/:id/trace', 422, { url: C + '/' + PARTY + '/trace?dir=a&dir=b' })
 ];
 
+/** FIN-51: Mark paid is a money write and REQUIRES an Idempotency-Key; every scenario that reaches it carries a fresh one (a shared key would replay the first answer) */
+let keySeed = 0;
+const keyOf = (method, urlPath) => ((method === 'POST' || method === 'DELETE') && /\/payment$/.test(urlPath.split('?')[0]) ? { 'idempotency-key': 'scenario-' + (++keySeed) } : {});
 function send(port, method, urlPath, body) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const options = { port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} };
+    const options = { port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, keyOf(method, urlPath)) };
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));
@@ -815,6 +843,7 @@ const ALLOWLIST_BY_AREA_TEST = [
   'POST /api/chits/send',
   'PUT /api/chits/:chit_id/disputes/:dispute_id/resolve',
   'PUT /api/chits/:chit_id/priority-flag',
+  'PUT /api/chits/:chit_id/status',
   'PUT /api/chits/:chit_id/use',
   'PUT /api/chits/:chit_id/void'
 ];
@@ -831,6 +860,34 @@ function checkAllowList(recording) {
     if (held) proved[route] = { output_allowlist: true };
   });
   return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
+}
+/* ── the foreign-id world (API-STANDARD S35): shop B asks for shop A's chit by its id ──
+   Three chit reads answer under the caller's OWN rows and never 404 (an unknown or another shop's chit id reads nothing, so the answer is the empty one). For them the
+   proof is the weaker reading the products schedule route has (tests/lib/foreign-id-world.cjs sameAsUnknownCase): another shop's id answers byte for byte as an unknown id,
+   and the owner sees the planted rows. The routes that answer 403 or 400 for a chit that is not the caller's are NOT proved here: a 404 there is a behaviour change (cb-rail). */
+const STRANGER = { identity_id: OTHER, identity_type: 'entity', display_name: 'Another shop', bridge_id: 'OTHERSHOP' };
+const SAME_AS_UNKNOWN = [
+  { route: 'GET ' + C + '/:chit_id/costs', url: C + '/' + PARTY + '/costs', setup: { sqlRows: answeringAll([[/FROM chit_line_cost WHERE/, [COST_ROW]], [/FROM chit_detail WHERE/, [{ total_value: '360.00', currency_code: 'INR' }]]]) } },
+  { route: 'GET ' + C + '/:chit_id/raida', url: C + '/' + PARTY + '/raida', setup: { migrated: true, sqlRows: answering(/FROM register_entry a/, RAIDA_ROWS) } },
+  { route: 'GET ' + C + '/register/walk/:from', url: C + '/register/walk/' + PARTY + '?depth=3&backwards=0', setup: { migrated: true, sqlRows: answering(/to_id IS NOT NULL/, EDGE_ROWS) } }
+];
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a chit read answers a foreign id as an unknown one (S35, the reading for a read under the caller\'s own rows) --');
+  const proved = {};
+  for (const item of SAME_AS_UNKNOWN) {
+    const play = async (who, planted) => {
+      const rows = item.setup.sqlRows;
+      Object.assign(world, FRESH, item.setup, { who: who === 'owner' ? OWNER : STRANGER, sqlRows: planted && who === 'owner' ? rows : null }); /* the stand-in db answers a planted row to its owner only, as RLS and WHERE entity_id = $1 do */
+      require(path.join(HERE, 'lib', 'schema'))._reset();
+      return send(port, 'GET', item.url);
+    };
+    const sentence = await FOREIGN.sameAsUnknownCase(play);
+    check(item.route + ': another shop\'s id answers byte for byte as an unknown id, and the owner sees the planted rows', sentence === null, sentence);
+    const bite = await FOREIGN.biteCase(play, FOREIGN.sameAsUnknownCase);
+    check(item.route + ': the case can FAIL (a store that ignores the owner is caught)', bite === null, bite);
+    if (sentence === null && bite === null) proved[item.route] = { foreign_id_404: true };
+  }
+  return proved;
 }
 /** the chit routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
@@ -1046,6 +1103,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const held = replaying ? null : heldRoutes();
   const mine = replaying ? routes : Object.fromEntries(Object.keys(routes).filter((route) => held.has(route)).map((route) => [route, routes[route]]));
   const tested = await checkRoutes(server.address().port, scenariosOf(mine), recording, held);
+  const foreignProved = replaying ? {} : await checkForeignIds(server.address().port);
   server.close();
   if (flagValue('--capture')) {
     fs.writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
@@ -1067,6 +1125,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
   const allowed = checkAllowList(recording);
+  const { prune, shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist'));
+  const statusAnswers = Object.values(recording).filter((one) => one.route === 'PUT ' + C + '/:chit_id/status' && one.status === 200 && one.body);
+  check('PUT status: prune() drops no key from any of the ' + statusAnswers.length + ' recorded answers (every books branch: reversed, already, duplicate, off, refused, none)', statusAnswers.length >= 13 && statusAnswers.every((one) => prune(shapeOf(one.route).schema, one.body).dropped.length === 0), statusAnswers.map((one) => prune(shapeOf(one.route).schema, one.body).dropped));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const rows = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -1075,10 +1136,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     writeAllowList(allowed);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, foreignProved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/chits.js', sameValue(rows, coverage), { onDisk: Object.keys(rows).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the chit routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
   }
+  if (!argv.includes('--write')) check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the chit reads that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), foreignProved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(foreignProved).length });
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();

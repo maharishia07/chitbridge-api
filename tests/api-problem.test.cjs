@@ -68,7 +68,7 @@ function installStubs() {
   const db = { query: async (sql, params) => rows(params), withTransaction: async (run) => (rows(), run(client)), withEntity: async (id, run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   mock('db', db);
   mock('db/index', db);
-  mock('lib/policy', { patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
+  mock('lib/policy', { FLAGS: {}, BOUND: {}, patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
   mock('lib/platformroot', { isPlatform: () => world.platform, isRoot: () => false });
 }
 
@@ -87,12 +87,15 @@ const SCENARIOS = [
   { id: 'get-key-asks', route: 'GET /api/keys', status: 403, setup: { asKey: true } },
   { id: 'get-no-token', route: 'GET /api/keys', status: 401, setup: { realAuth: true }, inherited: true },
   { id: 'get-db-fails', route: 'GET /api/keys', status: 500, setup: { dbFails: true } },
+  { id: 'post-key-made', route: 'POST /api/keys', status: 201, ok: true, setup: {}, body: { name: 'Tally connector', scopes: ['connector'] } },
+  { id: 'post-key-made-by-days', route: 'POST /api/keys', status: 201, ok: true, setup: { keys: [KEY_A] }, body: { scopes: ['offers', 'till'], days: 30 } },
   { id: 'post-key-asks', route: 'POST /api/keys', status: 403, setup: { asKey: true }, body: { scopes: ['offers'] } },
   { id: 'post-not-owner', route: 'POST /api/keys', status: 403, setup: { who: CO_ASSIST }, body: { scopes: ['offers'] } },
   { id: 'post-platform-kind', route: 'POST /api/keys', status: 403, setup: {}, body: { scopes: ['testing'] } },
   { id: 'post-bad-scope', route: 'POST /api/keys', status: 400, setup: {}, body: { scopes: ['nonsense'] } },
   { id: 'post-no-token', route: 'POST /api/keys', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'post-db-fails', route: 'POST /api/keys', status: 500, setup: { dbFails: true }, body: { scopes: ['offers'] } },
+  { id: 'delete-key-revoked', route: 'DELETE /api/keys/:jti', status: 200, ok: true, setup: { keys: [KEY_A, KEY_B] }, url: '/api/keys/a1b2c3' },
   { id: 'delete-key-asks', route: 'DELETE /api/keys/:jti', status: 403, setup: { asKey: true }, url: '/api/keys/abc' },
   { id: 'delete-not-owner', route: 'DELETE /api/keys/:jti', status: 403, setup: { who: CO_ASSIST }, url: '/api/keys/abc' },
   { id: 'delete-no-such-key', route: 'DELETE /api/keys/:jti', status: 404, setup: {}, url: '/api/keys/abc' },

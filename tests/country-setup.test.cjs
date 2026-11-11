@@ -52,9 +52,9 @@ const GOV_H = { query: async (sql, params) => {
   if (/FROM books_setting/.test(t)) throw Object.assign(new Error('relation "books_setting" does not exist'), { code: '42P01' });
   if (/FROM identities/.test(t)) return { rows: ID ? [ID] : [], rowCount: ID ? 1 : 0 };
   if (/FROM entity_governance/.test(t)) return { rows: GOV ? [GOV] : [], rowCount: GOV ? 1 : 0 };
-  if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); ID.timezone = params[5] || ID.timezone; } return { rows: [], rowCount: ID ? 1 : 0 }; }
-  if (/^UPDATE entity_governance/.test(t.trim())) { WRITES.push('entity_governance'); if (GOV) { GOV.fy_start_month = params[1]; GOV.tax_registration = JSON.parse(params[2]); GOV.setup_source = JSON.parse(params[3]); GOV.country_setup_at = new Date(); } return { rows: [], rowCount: GOV ? 1 : 0 }; }
-  if (/^INSERT INTO entity_governance/.test(t.trim())) { WRITES.push('insert'); GOV = { fy_start_month: params[1], tax_registration: JSON.parse(params[2]), setup_source: JSON.parse(params[3]), country_setup_at: new Date() }; return { rows: [], rowCount: 1 }; }
+  if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; if (/gstn = /.test(t)) { ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); } ID.timezone = params[params.length - 1] || ID.timezone; /* SET-86: the tax part is in the statement only when the body carried a tax answer; the zone is always the last parameter */ } return { rows: [], rowCount: ID ? 1 : 0 }; }
+  if (/^UPDATE entity_governance/.test(t.trim())) { WRITES.push('entity_governance'); if (GOV) { GOV.fy_start_month = params[1]; if (/tax_registration = /.test(t)) GOV.tax_registration = params[3] == null ? null : JSON.parse(params[3]); GOV.setup_source = JSON.parse(params[2]); GOV.country_setup_at = new Date(); } return { rows: [], rowCount: GOV ? 1 : 0 }; }
+  if (/^INSERT INTO entity_governance/.test(t.trim())) { WRITES.push('insert'); GOV = { fy_start_month: params[1], tax_registration: params[3] == null ? null : JSON.parse(params[3]), setup_source: JSON.parse(params[2]), country_setup_at: new Date() }; return { rows: [], rowCount: 1 }; }
   throw new Error('country-setup test ran unexpected SQL: ' + t.slice(0, 80));
 } };
 const call = (port, method, p, body) => new Promise((done) => {
@@ -69,7 +69,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   /* ── the words come from the engine, once ── */
   const R = require(path.join(API, 'lib', 'regulation'));
   ok('engines v1.36.0 adopted: regulation.status is there and says the BR sentence', typeof R.status === 'function' && R.status('BR', { name: 'Brazil' }).why === SENTENCE_BR);
-  ok('lookup() still falls back to India for READING old chits, and says so', R.lookup('BR').fallback === true && R.lookup('BR').id === 'IN');
+  ok('lookup() no longer falls back to India (CTRY-94): a country with no pack is the UNKNOWN answer, `unknown` and `fallback` true, no id', R.lookup('BR').fallback === true && R.lookup('BR').unknown === true && R.lookup('BR').id === null);
   ok('AU1 came with it: Australia has its pack — books open, AUD, the year starts in July', R.status('AU').books === true && R.packFor('AU').currency === 'AUD' && R.packFor('AU').fiscalYear.startMonth === 7);
   /* AE1 (engines v1.37.0): the UAE pack — books open, AED, the calendar year, one `vat` head; verified: false until a UAE accountant reads it */
   ok('AE1 (v1.37.0): the UAE has its pack — books open, AED, the calendar year, the vat head, not yet verified', R.status('AE').books === true && R.packFor('AE').currency === 'AED' && R.packFor('AE').fiscalYear.label === 'single' && R.packFor('AE').taxHeads.join() === 'vat' && R.packFor('AE').verified === false);
@@ -164,8 +164,17 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('PUT with a zone Intl does not know → 400 in words (it must never reach identities.timezone, where it would blank every date)', r.status === 400 && /time zone/.test(r.body.message), JSON.stringify(r.body));
   r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: true, number: '51 824 753 556' }, timezone: 'Australia/Perth', source: { timezone: 'picked' } });
   ok('PUT AU with Australia/Perth → 200: the zone the owner picked is written to identities.timezone and said back with its source', r.status === 200 && ID.timezone === 'Australia/Perth' && r.body.timezone === 'Australia/Perth' && r.body.source.timezone === 'picked' && r.body.pack.id === 'AU', JSON.stringify(r.body));
-  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false } });
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false }, confirm_deregister: true });
   ok('a later re-save of the same country without a zone keeps the one chosen (never asks twice)', r.status === 200 && ID.timezone === 'Australia/Perth', JSON.stringify(r.body));
+  /* SET-86: the contract is CLOSED, so an unknown top-level key is refused by name; a registered shop is not de-registered without the confirm; an omitted tax block changes nothing */
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: true, number: '51 824 753 556' } });
+  const heldTax = JSON.stringify([ID.gstn, GOV.tax_registration]);
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax_rate: 0 });
+  ok('SET-86: an unknown top-level key (tax_rate) is refused by name (the CLOSED contract: 422 INVALID_INPUT, field tax_rate), nothing written', r.status === 422 && r.body.field === 'tax_rate' && /tax_rate/.test(JSON.stringify(r.body)) && JSON.stringify([ID.gstn, GOV.tax_registration]) === heldTax, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7 });
+  ok('SET-86: the tax block omitted → 200 and the registration (number, answer) is exactly as it was', r.status === 200 && JSON.stringify([ID.gstn, GOV.tax_registration]) === heldTax, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false } });
+  ok('SET-86: registered false on a registered shop without the confirm → 409 TAX_DEREGISTER_UNCONFIRMED, nothing written', r.status === 409 && r.body.code === 'TAX_DEREGISTER_UNCONFIRMED' && JSON.stringify([ID.gstn, GOV.tax_registration]) === heldTax, JSON.stringify(r.body));
   /* the chart the switch will seed: from the PACK, through accounts-packs (the engines' facade, v1.42.0) — never a second chart table */
   const E = require(path.join(API, 'lib', 'books-engines'));
   const au = E.chartRows(E.packs().packFor('AU')), ae = E.chartRows(E.packs().packFor('AE')), ind = E.chartRows(E.packs().packFor('IN'));
@@ -173,6 +182,12 @@ const call = (port, method, p, body) => new Promise((done) => {
     au.some((x) => x.role === 'gst_collected' && x.code === '2200' && x.sch3_line === 'GST and other statutory liabilities') && !au.some((x) => x.role === 'output_cgst')
     && ae.some((x) => x.role === 'output_vat') && ind.some((x) => x.role === 'output_cgst' && x.sch3_line === 'Other current liabilities') && au.filter((x) => x.is_group).every((x) => x.sch3_line),
     JSON.stringify(au.find((x) => x.role === 'gst_collected')));
+  /* ACC-336 slice 0 (engines v1.85.0): an India shop's chart gains the four tax-paid-in-advance assets, codes equal to b850; AU and AE gain none */
+  const adv = [['tax_advance_cgst', '1830'], ['tax_advance_sgst', '1831'], ['tax_advance_igst', '1832'], ['tax_advance_cess', '1833']];
+  ok('ACC-336 chart: chartRows(IN) carries the four advance rows 1830-1833 (the codes b850 backfills); AU and AE carry none',
+    adv.every(([role, code]) => ind.filter((x) => x.role === role && x.code === code).length === 1) && ind.filter((x) => /^tax_advance_/.test(x.role)).length === 4
+    && !au.some((x) => /^tax_advance_/.test(x.role)) && !ae.some((x) => /^tax_advance_/.test(x.role)),
+    JSON.stringify(ind.filter((x) => /^tax_advance_/.test(x.role))));
   ok('CS2 chart: the legacy year twin is filled by the ONE door (fy_start_month 7 for AU, 1 for AE) so the v1.20.0 core reads the pack\'s year; India unchanged', E.packs().packFor('AU').fy_start_month === 7 && E.packs().packFor('AE').fy_start_month === 1 && E.packs().packFor('IN').fy_start_month === 4 && E.packs().fiscalYearOf('2026-08-01', E.packs().packFor('AU')) === '2026-27' && E.packs().fiscalYearOf('2026-08-01', E.packs().packFor('AE')) === '2026');
 
   /* ── B · the BOOKS routes refuse a pack-less entity with the sentence (through the real router, the in-memory rig) ── */

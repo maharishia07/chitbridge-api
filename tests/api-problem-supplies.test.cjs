@@ -148,19 +148,17 @@ async function checkForeignIds(port) {
   console.log('\n-- signed in as another shop: a foreign id answers exactly as an unknown id (S35) --');
   const recording = FOREIGN.recorder();
   const items = FOREIGN_ROUTES();
-  const edit = items[0];
-  const failures = await FOREIGN.runCases([{ route: edit.route, play: playFor(port, edit) }], recording.record);
-  console.log('  foreign id: ' + (1 - failures.length) + ' of 1 routes held the 404 proof');
+  /* OPS-114: the issue answers an unknown id 404 like the edit does, so both routes carry the 404 proof (before: 400 "no such supply", listed here as not passing) */
+  const failures = await FOREIGN.runCases(items.map((item) => ({ route: item.route, play: playFor(port, item) })), recording.record);
+  console.log('  foreign id: ' + (items.length - failures.length) + ' of ' + items.length + ' routes held the 404 proof');
   failures.forEach((sentence) => console.log('  FINDING ' + sentence));
-  /* the issue answers an unknown id 400 ("no such supply"), not 404: it cannot pass the 404 proof, and it is NOT a leak when another shop's id answers exactly the same (request id aside) */
   const issue = items[1];
   const play = playFor(port, issue);
   const unknown = await play('stranger', false);
   const foreign = await play('stranger', true);
   const own = await play('owner', true);
-  const verdict = await FOREIGN.foreignIdCase(playFor(port, issue));
   check('issue: another shop\'s id answers byte for byte as an unknown id (status, type and body, request id masked)', FOREIGN.comparable(foreign) === FOREIGN.comparable(unknown), [foreign.text, unknown.text]);
-  check('issue: the unknown id answers 400, not 404, so foreign_id_404 stays false and is listed (API-4c), never a 403 or the record', unknown.status === 400 && foreign.status === 400 && /answered 400, not 404/.test(String(verdict)), [unknown.status, foreign.status, verdict]);
+  check('issue: an unknown id answers 404 NOT_FOUND, never the 400 "no such supply" it answered before (OPS-114)', unknown.status === 404 && foreign.status === 404 && unknown.json && unknown.json.code === 'NOT_FOUND', [unknown.status, foreign.status, unknown.text]);
   check('issue: the owner\'s own id is not refused (it answers 200)', own.status === 200, [own.status, own.text]);
   return { proved: recording.proved(), failures, asked: items.length };
 }
@@ -173,7 +171,7 @@ async function checkIdsInTheBody(port) {
   const ask = async (method, url, body) => {
     seen.length = 0;
     Object.assign(world, { realAuth: false, who: OWNER, asKey: false, db: 'ok', sqlRows: firstOf(recorded, scenes.extras({ OWNER, STAFF, SECRET_SQL, raising, answering, firstOf }).find((one) => one.id === 'buy-an-id-in-the-body-is-not-read').setup.sqlRows), jsonThrows: false, noCustomer: false });
-    return lab.send(port, method, url, body);
+    return lab.send(port, method, url, body, null, url.endsWith('/purchase') ? { 'idempotency-key': 'ids-' + Date.now() } : undefined);
   };
   await ask('POST', MOUNT + '/purchase', { ref: 'BILL-1', lines: [{ name: 'Floor cleaner', supply_item_id: scenes.UNKNOWN_ITEM, item_id: scenes.UNKNOWN_ITEM, qty: 1, cost: 40 }] });
   check('purchase: an id named in a line is handed to no statement (the line is found by its name, under the shop)', seen.length > 0 && seen.every((one) => !JSON.stringify(one.params || []).includes(scenes.UNKNOWN_ITEM)), seen.filter((one) => JSON.stringify(one.params || []).includes(scenes.UNKNOWN_ITEM)));
@@ -182,6 +180,24 @@ async function checkIdsInTheBody(port) {
   check('edit: the UPDATE is bounded by the shop and the id (WHERE entity_id = $1 AND supply_item_id = $2)', seen.some((one) => /UPDATE supply_item[\s\S]*WHERE entity_id = \$1 AND supply_item_id = \$2/.test(one.sql) && one.params[0] === SHOP && one.params[1] === scenes.UNKNOWN_ITEM), seen.map((one) => one.sql.slice(0, 40)));
   await ask('POST', MOUNT + '/' + scenes.UNKNOWN_ITEM + '/issue', { qty: 1 });
   check('issue: the supply is looked up under the shop first, and an unknown one writes no stock statement', seen.length === 1 && /SELECT name, keep_stock, unit FROM supply_item WHERE entity_id = \$1 AND supply_item_id = \$2/.test(seen[0].sql) && !seen.some((one) => /stock_/.test(one.sql)), seen.map((one) => one.sql.slice(0, 50)));
+}
+
+/** OPS-114 (S36): the purchase is keyed — no key is 422 IDEMPOTENCY_KEY_REQUIRED; the same key with another bill is 422 IDEMPOTENCY_CONFLICT and nothing is recorded twice; the same key with the same bill is answered again, not run again */
+async function checkPurchaseKey(port) {
+  console.log('\n-- the purchase requires an Idempotency-Key (OPS-114, S36) --');
+  /* the key table (b109) held in memory by the generator's own stand-in (tools/api-contract-tests.cjs keyTableAnswer), so a held key is remembered between two requests */
+  const generator = require(path.join(HERE, 'tools', 'api-contract-tests.cjs'));
+  generator.world.keys.clear();
+  Object.assign(world, { realAuth: false, who: OWNER, asKey: false, db: 'ok', sqlRows: (sql, params) => (/idempotency_key/i.test(sql) ? generator.keyTableAnswer(sql, params) : undefined), jsonThrows: false, noCustomer: false });
+  const bill = (ref, qty) => ({ ref, from: 'Corner Hardware', lines: [{ name: 'Tape', qty, cost: 10, keep_stock: true }] });
+  const none = await lab.send(port, 'POST', MOUNT + '/purchase', bill('KEY-1', 1));
+  check('purchase: no key is refused 422 IDEMPOTENCY_KEY_REQUIRED, in words', none.status === 422 && none.json && none.json.code === 'IDEMPOTENCY_KEY_REQUIRED' && /Idempotency-Key/.test(none.json.detail), [none.status, none.text]);
+  const key = { 'idempotency-key': 'ops114-' + Date.now() };
+  const first = await lab.send(port, 'POST', MOUNT + '/purchase', bill('KEY-2', 1), null, key);
+  const other = await lab.send(port, 'POST', MOUNT + '/purchase', bill('KEY-2', 5), null, key);
+  const again = await lab.send(port, 'POST', MOUNT + '/purchase', bill('KEY-2', 1), null, key);
+  check('purchase: the same key with the same bill is answered again, the first answer, and the bill is not recorded twice', again.status === 200 && again.text === first.text, [again.status, again.text]);
+  check('purchase: the same key with another bill is refused 422 IDEMPOTENCY_CONFLICT', first.status === 200 && other.status === 422 && other.json && other.json.code === 'IDEMPOTENCY_CONFLICT', [first.status, other.status, other.text]);
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
@@ -194,7 +210,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');
   const declared = capturing ? () => [] : contractModule().allowedStatuses();
-  const scenarios = lab.scenariosOf(routes, WORLDS, extrasList());
+  /* OPS-114 (S36): a purchase REQUIRES an Idempotency-Key, so every scene of it is its own attempt, bar the one that leaves the key off */
+  let attempts = 0;
+  const scenarios = lab.scenariosOf(routes, WORLDS, extrasList()).map((one) => (one.route === 'POST ' + MOUNT + '/purchase' && !one.noKey ? Object.assign({}, one, { headers: Object.assign({ 'idempotency-key': 'attempt-' + ++attempts }, one.headers) }) : one));
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, declared, sources);
   if (lab.flagValue('--capture')) {
     server.close();
@@ -207,6 +225,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   const foreign = await checkForeignIds(server.address().port);
+  await checkPurchaseKey(server.address().port);
   await checkIdsInTheBody(server.address().port);
   server.close();
   checkWords();

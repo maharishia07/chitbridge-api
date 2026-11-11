@@ -81,7 +81,8 @@ it('⚠️⚠️ a deaf bell is closed and rebuilt, not waited on', () => {
 });
 
 it('and the watcher rides the tick that already existed', () => {
-  assert.ok(/setInterval\(function\(\)\{ bellWatch\(\); bellUp\(\); \}, 30000\)/.test(PAGE),
+  /* the same ONE 30 s tick, which now also flushes held bills (shopHeldFlush): the watcher and the rebuild stay in it, and no other timer calls bellWatch */
+  assert.ok(/setInterval\(function\(\)\{ bellWatch\(\); bellUp\(\);[^}]*\}, 30000\)/.test(PAGE) && (PAGE.match(/setInterval\([^\n]*bellWatch/g) || []).length === 1,
     'the watcher is not on the bell tick — a second timer is a second path');
 });
 

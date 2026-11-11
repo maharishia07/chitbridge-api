@@ -16,6 +16,8 @@
  *   3  per-party resolve: A clears B → B resolved, D still open, A still open; then A clears D → closed for all
  *   4  the doors that read the same rows: the ledger's buyer gate (lib/books-store openDisputes, read by lib/books-hooks
  *      buyerGate) and the RAIDA escalation link (POST /:chit_id/raida/:raida_id/dispute → lib/raida linkDispute)
+ *   8  RAIL-187: a FILE on a dispute message goes to exactly the parties that message goes to (the roster; the whole chit only when chit-wide), here and in the
+ *      copy told to other installations (ctpReturn.onAttachment)
  *   5  the two doors that used to break I2 (were KNOWN BREAKS, fixed and promoted): a dispute reply's timeline line + bell go
  *      to the roster only; a resolve naming a non-party target is refused 400 DISPUTE_TARGET_NOT_PARTY. KNOWN() stays for the
  *      next break found: assert it AS BROKEN, and promote it to ok() the day it is fixed.
@@ -119,7 +121,7 @@ function run(sql, p, ctx) {
   if (/chit_participant_parity\(/.test(s)) return STATUS.filter((r) => r.chit_id === p[0] && r.entity_id === p[1]).map((r) => ({ deleted_at: r.deleted_at }));
   if (/FROM chit_header ch JOIN chit_status cs/.test(s)) return [{ auto_subject: 'Order 7 — brake pads', summary_json: {}, my_status: 'pending' }];
   if (/FROM chit_header WHERE chit_id=\$1 AND entity_id=\$2/.test(s)) return [{ auto_subject: 'Order 7 — brake pads', schema_version: 1 }];
-  if (/FROM chit_header/.test(s)) return [{ sender_entity_id: A, all_recipients: [{ entity_id: B }, { entity_id: C }, { entity_id: D }] }];
+  if (/FROM chit_header/.test(s)) return [{ sender_entity_id: A, all_recipients: [{ entity_id: A }, { entity_id: B }, { entity_id: C }, { entity_id: D }] }];
   if (/FROM chit_detail/.test(s)) return [];
   /* ── the definers ── */
   if (/SELECT chit_dispute_deliver\(/.test(s)) {
@@ -184,6 +186,8 @@ function run(sql, p, ctx) {
     return [{ n: mine(DISPUTES, ctx).filter((d) => d.entity_id === p[0] && d.chit_id === p[1] && d.status === 'open').length }];
   if (/FROM chit_disputes WHERE chit_id ?= ?\$1( AND entity_id ?= ?\$2)?/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.chit_id === p[0]);           // GET + diagnosis
   /* ── messages ── */
+  if (/^SELECT visibility_entity_id, is_dispute, dispute_id FROM chit_messages WHERE message_id = \$1 AND chit_id = \$2/.test(s))   // routes/attachments audienceFor: my copy of the message
+    return mine(MSGS, ctx).filter((m) => m.message_id === p[0] && m.chit_id === p[1]).slice(0, 1).map((m) => ({ visibility_entity_id: m.thread_type === 'internal' ? m.entity_id : null, is_dispute: m.is_dispute, dispute_id: m.dispute_id }));
   if (/^SELECT \* FROM chit_messages WHERE chit_id = \$1/.test(s))
     return mine(MSGS, ctx).filter((m) => m.chit_id === p[0] && (!/is_dispute = true/.test(s) || m.is_dispute));
   /* ── RAIDA: the register is per-entity too ── */
@@ -219,6 +223,11 @@ const events = require(path.join(API, 'lib', 'events'));
 events.notifyAfter = (res, ids, evt) => { BELL.push({ ids: (ids || []).map(String), evt }); };
 events.emit = (ids, evt) => { BELL.push({ ids: (ids || []).map(String), evt }); };
 
+/* RAIL-187 — the file door: the copies it would write and the installations it would tell are recorded, not performed */
+let FILED = [], TOLD = [];
+require(path.join(API, 'lib', 'storage')).putForParticipants = async (f) => { FILED.push({ message_id: f.message_id, participants: f.participants.slice().sort() }); return 'f' + FILED.length; };
+require(path.join(API, 'lib', 'ctpreturn')).onAttachment = async (e, file, toIds) => { TOLD.push({ toIds }); return { queued: 0 }; };
+
 /* lib/raida — the escalation door; its table shape is resolved at runtime, so answer as phase 0 (b182) */
 const raida = require(path.join(API, 'lib', 'raida'));
 const booksStore = require(path.join(API, 'lib', 'books-store'));
@@ -226,6 +235,7 @@ const booksStore = require(path.join(API, 'lib', 'books-store'));
 const express = require('express');
 const app = express(); app.use(express.json());
 app.use('/api/chits', require(path.join(API, 'routes', 'chits')));
+app.use('/api/attachments', require(path.join(API, 'routes', 'attachments')));
 app.use('/api/notifications', require(path.join(API, 'routes', 'notifications')));
 
 let pass = 0, fail = 0, known = 0;
@@ -254,7 +264,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const self = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked', target_entity_id: A });
     ok('not-self: A cannot raise a dispute against itself (400), and nothing is written', self.status === 400 && /yourself/.test(self.body.message || '') && DISPUTES.length === 0, JSON.stringify(self));
     const xr = await as(X, 'POST', U + '/disputes', { category: 'quality', reason: 'I am not on this chit at all', target_entity_id: B });
-    ok('a non-participant of the chit cannot raise one (403)', xr.status === 403 && DISPUTES.length === 0, JSON.stringify(xr));
+    ok('a non-participant of the chit cannot raise one (404, the same answer as an unknown chit)', xr.status === 404 && DISPUTES.length === 0, JSON.stringify(xr));
 
     const r1 = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked, 4 of 10', target_entity_id: B });
     const D1 = r1.body.dispute_id;
@@ -286,7 +296,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const gd = await as(D, 'GET', U + '/disputes');
     ok('…and D, also on the chit and also unnamed, sees none', gd.body.disputes.length === 0);
     const gx = await as(X, 'GET', U + '/disputes');
-    ok('X (not on the chit): GET /disputes → 403', gx.status === 403);
+    ok('X (not on the chit): GET /disputes → 404 (the same answer as an unknown chit)', gx.status === 404);
     const dg = await as(C, 'GET', U + '/diagnosis');
     ok('C: GET /diagnosis has no card', dg.status === 200 && dg.body.count === 0, JSON.stringify(dg.body));
     const q = await as(C, 'GET', '/api/chits/disputes/queue');
@@ -453,6 +463,25 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const sw = await as(A, 'POST', U + '/disputes', { category: 'quantity', reason: 'The sender disputes on its own order', chit_wide: true });
     const sl = await as(C, 'GET', U + '/disputes');
     ok('RAIL-162: the sender raising on its own order is held by the recipients too', sw.status === 200 && (sl.body.disputes || []).some((d) => d.dispute_id === sw.body.dispute_id), JSON.stringify(sl.body).slice(0, 200));
+    console.log('\n══ 8 · RAIL-187 — a FILE on a dispute message reaches only the parties that message reaches ══\n');
+    const file = (mid) => ({ chit_id: CH, message_id: mid, name: 'crack.jpg', mime: 'image/jpeg', data_base64: Buffer.from('photo').toString('base64') });
+    reset(); FILED = []; TOLD = [];
+    const fd = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked', target_entity_id: B });
+    const fm = await as(A, 'POST', U + '/messages', { message_text: 'Photo of the cracks', thread_type: 'external', is_dispute: true, dispute_id: fd.body.dispute_id });
+    const fu = await as(A, 'POST', '/api/attachments', file(fm.body.message_id));
+    ok('RAIL-187: the raiser attaches a photo to a dispute message: copies for A and B only, not C or D', fu.status === 200 && FILED.length === 1 && FILED[0].participants.join() === [A, B].sort().join(), JSON.stringify([fu.status, fm.body, FILED]));
+    ok('RAIL-187: the copy told to other installations names the same two (toIds)', TOLD.length === 1 && TOLD[0].toIds && TOLD[0].toIds.slice().sort().join() === [A, B].sort().join(), JSON.stringify(TOLD));
+    FILED = []; TOLD = [];
+    const fr = await as(B, 'POST', '/api/attachments', file(fm.body.message_id));
+    ok('RAIL-187: the other party attaching to that message gets the same audience (A and B)', fr.status === 200 && FILED.length === 1 && FILED[0].participants.join() === [A, B].sort().join(), JSON.stringify([fr.status, FILED]));
+    FILED = []; TOLD = [];
+    await as(C, 'POST', '/api/attachments', file(fm.body.message_id));
+    ok('RAIL-187: C (on the chit, not in the dispute) cannot make a copy reach A or B', !FILED.some((f) => f.participants.includes(A) || f.participants.includes(B)), JSON.stringify(FILED));
+    reset(); FILED = []; TOLD = [];
+    const wd = await as(B, 'POST', U + '/disputes', { category: 'payment', reason: 'Whole order', chit_wide: true });
+    const wmsg = await as(B, 'POST', U + '/messages', { message_text: 'See attached', thread_type: 'external', is_dispute: true, dispute_id: wd.body.dispute_id });
+    await as(B, 'POST', '/api/attachments', file(wmsg.body.message_id));
+    ok('RAIL-187: a CHIT-WIDE dispute message keeps the whole chit as its file audience (A B C D)', FILED.length === 1 && FILED[0].participants.join() === [A, B, C, D].sort().join(), JSON.stringify(FILED));
   } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack)); }
   console.log('\n' + pass + ' passed, ' + fail + ' failed' + (known ? ' (' + known + ' of the passes are KNOWN BREAKS — see section 5)' : '') + ' · ' + (pass + fail) + ' checks\n');
   srv.close(); process.exit(fail ? 1 : 0);

@@ -73,15 +73,34 @@ function create() {
     },
     async insertPeriod(db, e, p) { if (!T.periods.some((x) => x.entity_id === e && x.fiscal_year === p.fiscal_year && x.period === p.period)) T.periods.push(Object.assign({ entity_id: e, status: 'open' }, p)); },
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
+    async giveBackNo(db, e, series, fy, n) { const k = e + '|' + series + '|' + (fy || '-'); if (T.counters.get(k) === n + 1) T.counters.set(k, n); },
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
+    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':'))); },
     async entryBySource(db, e, ref) { const h = T.entries.find((x) => x.entity_id === e && x.source_ref === ref); return h ? clone(h) : null; },
     async taxEntryLines(db, e, from, to, types) {
       return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
     },
+    /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
+    async receiptBillsAgainst(db, e, ids) {
+      const live = (r) => T.entries.find((x) => x.entity_id === e && x.source_ref === 'chit:' + r.chit_id && !x.reverses_entry_id && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
+      return (T.receiptBills || []).filter((r) => (ids || []).indexOf(r.on) >= 0 && live(r)).map((r) => ({ chit_id: r.chit_id, no: r.no, total: r.total, entry_id: live(r).entry_id, entry_no: live(r).entry_no }));
+    },
     async unreversedForChit(db, e, chit_id) {
       const mine = T.entries.filter((x) => x.entity_id === e && x.source_ref && x.source_ref.indexOf('chit:' + chit_id) === 0 && !x.reverses_entry_id);
       return mine.filter((x) => !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id)).map((x) => x.entry_id);
+    },
+    async inputTaxOfChits(db, e, chitIds, roles, from, to) {
+      const out = {}, day = (x) => String(x.posting_date).slice(0, 10);
+      const chitOf = (x) => { const m = /^chit:([0-9a-f-]{36})/.exec(x.source_ref || ''); return m ? m[1] : null; };
+      const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id && day(r) < to);
+      for (const x of T.entries.filter((y) => y.entity_id === e && chitIds.map(String).indexOf(chitOf(y)) >= 0 && day(y) >= from && day(y) < to && live(y))) {
+        for (const l of T.lines.filter((z) => z.entry_id === x.entry_id)) {
+          const a = T.accounts.find((acc) => acc.account_id === l.account_id);
+          if (a && roles.indexOf(a.role) >= 0) { const m = (out[chitOf(x)] = out[chitOf(x)] || {}); m[a.role] = (m[a.role] || 0) + Number(l.dr_minor || 0) - Number(l.cr_minor || 0); }
+        }
+      }
+      return out;
     },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
@@ -232,6 +251,12 @@ function create() {
     async paymentsSince(db, e, party, direction, since) { return clone(T.payments.filter((p) => p.entity_id === e && p.party_id === party && p.direction === direction && String(p.created_at || '') >= String(since)).reverse()); },
     /* C3: the advisory lock has no memory shape — a test that needs the race stands in its own (tests/pay-fix twoClients) */
     async lockParty() {},
+    async lockTaxHeads() {} /* ACC-275: the same — the race is proved on real Postgres (tests/acc-275-gst-replay-truth.realstack.cjs) */,
+    async entryDebitsByRole(db, e, entryId) {
+      const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};
+      rows.forEach((l) => { const role = (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; by[role] = by[role] || { role, dr_minor: 0, currency: l.currency }; by[role].dr_minor += l.dr_minor; });
+      return Object.values(by);
+    },
     async paymentsOfChit(db, e, chit) { const key = 'chitpay:' + chit; return T.payments.filter((x) => x.entity_id === e && (x.client_ref === key || String(x.client_ref || '').indexOf(key + ':') === 0)).map((p) => ({ payment_id: p.payment_id, amount_minor: p.amount_minor, currency: p.currency, client_ref: p.client_ref })); },
     async paymentByRef(db, e, ref) { const p = T.payments.find((x) => x.entity_id === e && x.client_ref === String(ref)); return p ? { payment_id: p.payment_id, mode: p.mode } : null; },
     async cheques(db, e, all, limit) {
@@ -266,9 +291,13 @@ function create() {
     async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
+    async lockTrail(db, e, fy) { return clone(T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && c.field === 'status' && (!fy || String(c.row_id).startsWith(fy + '/')))).map((c) => { const i = T.identities.find((x) => x.identity_id === c.by); return Object.assign({}, c, { by_name: i ? i.display_name || null : null }); }); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
-    async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
+    async partyOn(db, e, party) { if (require('../../lib/upi-waiting').isWaitingParty(e, party)) return { customer: true, supplier: false, ledgered: true, system: 'upi_waiting' }; const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
+    /* FIN-58: the flip reads my bill's parts and stamps one of them */
+    async chitForFlip(db, e, id) { const c = T.chits.find((x) => x.chit_id === id && x.entity_id === e); return c ? clone({ business_json: c.business_json, currency_code: c.currency_code }) : null; },
+    async stampConfirmed(db, e, id, index, at) { const c = T.chits.find((x) => x.chit_id === id && x.entity_id === e), part = c && c.business_json && c.business_json.payment && c.business_json.payment.parts[index]; if (part) { part.confirmed = true; part.confirmed_at = at; } },
     /* RAIL-146: partyOn for many ids at once, as lib/books-store partiesOn answers it (Map id → { customer, supplier }; an unknown id → both false) */
     async partiesOn(db, e, ids) { const out = new Map(); for (const id of ids || []) out.set(String(id), await this.partyOn(db, e, id)); return out; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },

@@ -62,6 +62,22 @@ const OFFER_ROW = (status) => (sql) =>
     ? { rows: [{ definition_id: OFFER, name: 'Spring offer', status, current_version: 1 }], rowCount: 1 }
     : undefined;
 /** the extras: a refusal inside a handler the generic worlds cannot reach (they send an empty body, which is itself the handler's own 400/404) */
+/* NET-91: a staff login (an editor of the brand) is refused 403 OWNER_ONLY on the three writes that push to every store, and NOTHING is written or pushed: each stand-in records a call */
+const STAFF_WROTE = [];
+const RECORDS = (name, value) => async () => {
+  STAFF_WROTE.push(name);
+  return value;
+};
+const NETWORK_WRITES = { mergeFlag: RECORDS('mergeFlag', {}), setReleased: RECORDS('setReleased', {}), pushToNetwork: RECORDS('pushToNetwork', { stores: 0, clients: 0 }) };
+const CATALOGUE_WRITES = { publish: RECORDS('publish', {}), cancel: RECORDS('cancel', {}), answer: RECORDS('answer', {}) };
+const STAFF_REFUSED = [
+  X('staff-policy', 'PUT /api/network-offers/policy', 403, { after: true, setup: { who: STAFF }, body: { policy: 'opt_out' }, patch: { net: NETWORK_WRITES } }),
+  X('staff-release', 'POST /api/network-offers/:id/release', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
+  X('staff-withdraw', 'POST /api/network-offers/:id/withdraw', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
+  X('staff-publish', 'POST /api/network-offers/catalogue/publish', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's' }, patch: { ncat: CATALOGUE_WRITES } }),
+  X('staff-cancel', 'POST /api/network-offers/catalogue/cancel', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's' }, patch: { ncat: CATALOGUE_WRITES } }),
+  X('staff-price', 'POST /api/network-offers/catalogue/price', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: CATALOGUE_WRITES } })
+];
 const EXTRAS = [
   X('network-read-breaks', 'GET /api/network-offers', 500, { patch: { net: { brandView: throwsLater } } }),
   X('members-not-read', 'GET /api/network-offers', 503, { patch: { net: { brandView: NOT_READ } } }),
@@ -69,10 +85,29 @@ const EXTRAS = [
   X('price-answer-breaks', 'POST /api/network-offers/catalogue/price', 500, { body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: { answer: throwsLater } } }),
   X('offer-not-live', 'POST /api/network-offers/:id/release', 409, { setup: { sqlRows: OFFER_ROW('draft') } }),
   X('ends-before-start', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { at: 'now', until: '2000-01-01T00:00:00Z' } }),
+  /* NET-94 / NET-87: a GIVEN time that is not a date is a 400 DATE_INVALID, never the next opening */
+  X('release-until-not-a-date', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { until: 'abc' } }),
+  X('release-at-empty', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { at: '' } }),
+  X('release-at-not-a-date', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { at: '2026-13-45' } }),
+  X('publish-at-not-a-date', 'POST /api/network-offers/catalogue/publish', 400, { body: { source_key: 's', at: 'abc' }, patch: { ncat: { publish: async () => { throw Object.assign(new Error('"at" must be a date and time like 2026-12-31T00:00:00Z, or "now".'), { status: 400, code: 'DATE_INVALID', field: 'at' }); } } } }),
+  X('withdraw-at-not-a-date', 'POST /api/network-offers/:id/withdraw', 400, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: { network_offers: { released: { [OFFER]: { version: 1, at: '2026-11-09T04:00:00.000Z' } } } } }) } }, body: { at: 'abc' } }),
   X('release-breaks', 'POST /api/network-offers/:id/release', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
   X('never-released', 'POST /api/network-offers/:id/withdraw', 409, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: {} }) } } }),
   X('withdraw-breaks', 'POST /api/network-offers/:id/withdraw', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
   X('choice-write-breaks', 'POST /api/network-offers/:id/choice', 500, { body: { choice: 'in' }, patch: { net: { setIn: throwsLater } } })
+];
+/** API-7: the success answer of each write the generic worlds cannot reach (the stand-in database has no brand): the recorded 2xx is what the allow-list shape and the output_allowlist evidence are made from */
+const PUSHED = async () => ({ stores: 2, clients: 3 });
+const WINDOW = { version: 1, at: '2026-11-09T04:00:00.000Z', until: null, released_at: '2026-11-08T00:00:00.000Z', released_by: 'Owner', prev: null };
+const SUCCESS = [
+  /* RAIL-207: a well-formed id the store has no offer row for is accepted and written to the caller's own flags (200), never a 404: the proof behind the cannot_answer entry of api-hardening-scope.json */
+  X('choice-saved-for-any-wellformed-id', 'POST /api/network-offers/:id/choice', 200, { body: { choice: 'in' }, patch: { net: { setIn: async () => ({}) } } }),
+  X('policy-saved', 'PUT /api/network-offers/policy', 200, { body: { policy: 'opt_in' }, patch: { net: { mergeFlag: async () => ({}), pushToNetwork: PUSHED } } }),
+  X('catalogue-published', 'POST /api/network-offers/catalogue/publish', 200, { body: { source_key: 's' }, patch: { ncat: { publish: async () => ({ rec: { id: 'p1', source_key: 's', at: WINDOW.at, published_at: WINDOW.released_at, published_by: 'Owner', changes: [] }, applied: false, followed: 2 }) } } }),
+  X('catalogue-cancelled', 'POST /api/network-offers/catalogue/cancel', 200, { body: { source_key: 's' }, patch: { ncat: { cancel: async () => ({ ok: true, id: 'p1' }) } } }),
+  X('price-answered', 'POST /api/network-offers/catalogue/price', 200, { body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: { answer: async () => ({ ok: true, choice: 'use' }) } } }),
+  X('offer-released', 'POST /api/network-offers/:id/release', 200, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: {} }), nextOpeningFor: async () => WINDOW.at, setReleased: async () => ({}), pushToNetwork: PUSHED } } }),
+  X('offer-withdrawn', 'POST /api/network-offers/:id/withdraw', 200, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: { network_offers: { released: { [OFFER]: WINDOW } } } }), nextOpeningFor: async () => WINDOW.at, setReleased: async () => ({}), pushToNetwork: PUSHED } } })
 ];
 const contractOf = (one) => require(path.join(HERE, one.contract)).contract;
 
@@ -111,7 +146,7 @@ function checkCodesRegistered(recording) {
   const capturing = lab.flagValue('--capture');
   const allowedBy = Object.assign({}, ...MOUNTS.map((one) => Object.fromEntries(Object.keys(contractOf(one).OPERATIONS).map((key) => [key, contractOf(one).allowedStatuses()(key)]))));
   const allowed = capturing ? () => [] : (route) => allowedBy[route] || [];
-  const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS, { id: OFFER });
+  const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS.concat(SUCCESS, STAFF_REFUSED), { id: OFFER });
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ net: require(path.join(HERE, 'lib', 'network-offers')), ncat: require(path.join(HERE, 'lib', 'network-catalogue')) }));
   server.close();
   if (capturing) {
@@ -120,6 +155,8 @@ function checkCodesRegistered(recording) {
     process.exit(0);
   }
   checkContracts(routes);
+  const staffAnswers = ['PUT /api/network-offers/policy|staff-policy', 'POST /api/network-offers/:id/release|staff-release', 'POST /api/network-offers/:id/withdraw|staff-withdraw', 'POST /api/network-offers/catalogue/publish|staff-publish', 'POST /api/network-offers/catalogue/cancel|staff-cancel', 'POST /api/network-offers/catalogue/price|staff-price'].map((key) => recording[key]);
+  check('a staff login is refused 403 OWNER_ONLY on policy, release, withdraw and the three catalogue writes, and nothing was written or pushed', staffAnswers.every((one) => one && one.status === 403 && one.body.code === 'OWNER_ONLY' && one.body.may === false) && STAFF_WROTE.length === 0, { staffAnswers, STAFF_WROTE });
   checkCodesRegistered(recording);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   const allowHeld = ALLOW.checkAllowList(recording, Object.assign({}, ...MOUNTS.map((one) => contractOf(one).OPERATIONS)), check);

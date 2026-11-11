@@ -15,6 +15,7 @@ const { waiting } = require('../lib/not-migrated');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const { moveStatus, stampCancelRequested, stampCancelConfirmed, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
 const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
@@ -58,13 +59,15 @@ async function countryOfEntity(entity_id) {
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { sanitise } = require('../middleware/validate'); // S9: a request is checked against the route's own schema, by routeChecks (lib/chits-contract)
-const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, routeChecks: checked } = require('../lib/chits-contract');
 const { PRIORITIES, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
-const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
+const amend = require('../lib/amend');
+const chitCeiling = require('../lib/chit-ceiling'); /* RAIL-205: the largest total, quantity and price a chit's columns hold; the send and amend doors refuse past it */
+const invoiceIssued = require('../lib/invoice-issued'); // ACC-192 — an issued invoice's money is refused an amendment // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
 const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
@@ -78,10 +81,13 @@ const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
+const services = require('../lib/services'); // ACC-271: rateOrNull, the one reading of a blank rate
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
+const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
+const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
@@ -111,6 +117,8 @@ const holdsCopy = async (entity_id, chit_id) =>
 const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
 const notHere = (message) => said404({ error: 'Not found', message });
 const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
+/** S35: a chit this login holds no copy of, unknown or another shop's, is the one 404; a verdict of the rail on a copy it does hold stays its own refusal */
+const refuseUnlessHeld = (req, res, held, refusal) => problem(req, res, held ? refusal : { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
 const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
 const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
 const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
@@ -118,8 +126,8 @@ const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
 const CHIT_GONE = {
   'GET /:chit_id': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/use': notHere('Chit not found'),
-  'GET /:chit_id/messages': noCopy,
-  'GET /:chit_id/disputes': noCopy,
+  'GET /:chit_id/messages': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/disputes': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/diagnosis': noCopy,
   'PUT /:chit_id/use': said404({ error: 'Not saved', message: 'Chit not found' }),
   'PUT /:chit_id/status': said404({ error: 'Not found', message: 'Chit not found', why: 'not_received' }),
@@ -134,8 +142,8 @@ const CHIT_GONE = {
   'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
   'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
   'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
-  'POST /:chit_id/messages': noParty({ error: 'Forbidden', message: 'Not a participant on this chit', why: 'not_participant' }),
-  'POST /:chit_id/disputes': noParty({ error: 'Not a participant' }),
+  'POST /:chit_id/messages': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/disputes': notHere('Chit not found or you do not have access'),
   'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
   'POST /:chit_id/archive': notHere('Chit not found or already archived'),
   'POST /:chit_id/unarchive': notHere('Chit not found or not archived'),
@@ -474,9 +482,34 @@ router.post(
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
+/**
+ * ⭐ ACC-192: A DEBIT NOTE IS NEVER SENT BY HAND. It is a raise of an issued invoice and exists only when the payer accepts the proposed change (lib/price-note.issue sends it over the shop's own
+ * loopback token, kind auto). Any other caller naming purpose debit_note is refused in words (409 DEBIT_NOTE_NEEDS_ACCEPT): nothing here can raise a bill the payer never confirmed.
+ */
+async function sendDebitNoteGate(sendState, req, res) {
+  if (String((req.body && req.body.purpose) || '') !== 'debit_note') return;
+  if (require('../lib/price-note').isShopOwnSend(req)) return;
+  res.locals.code = 'DEBIT_NOTE_NEEDS_ACCEPT';
+  return problem(req, res, { status: 409, ...said({ code: 'DEBIT_NOTE_NEEDS_ACCEPT', error: 'A debit note is issued on acceptance', message: 'A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.' }, 'CHIT_CONFLICT') });
+}
+
+/**
+ * ⭐ RAIL-205 · RAIL-191: a total or a line past the width of the column it is written to is refused HERE, with its sentence, before the write transaction opens. chit_deliver's INSERT
+ * into chit_detail.total_value numeric(15,2) / chit_line.quantity numeric(18,3) / chit_line.price numeric(18,2) overflowed (22003) after the whole send had been built and answered 500.
+ * The ceiling is read off the columns (lib/chit-ceiling), on the total the engine just computed (moneyBlock.total) and on the lines as sent; the refusal carries the currency beside the maximum.
+ */
+async function sendCeiling(sendState, req, res) {
+  const { moneyBlock, line_items, currency_code } = sendState;
+  const over = chitCeiling.overOf({ total: moneyBlock && moneyBlock.total, lines: line_items });
+  if (!over) return;
+  res.locals.code = 'CHIT_AMOUNT_TOO_LARGE';
+  return problem(req, res, { status: 400, ...said(chitCeiling.bodyFor(over, currency_code), codeOfStatus(400)) });
+}
+
 const SEND_STEPS = [
   sendSender,
   sendMoneyStated,
+  sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
   sendTillClaim,
@@ -495,8 +528,11 @@ const SEND_STEPS = [
   sendSeller,
   sendOffers,
   sendMoney,
+  sendCeiling,
+  sendPartCurrency,
   sendIssued,
   sendPaper,
+  sendCashStep,
   sendBridge,
   sendCopyPolicy,
   sendPromote,
@@ -663,7 +699,8 @@ function refOf(req) {
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
  * reading the counter's screen, slip and reprint use — window.CBTax.moneyOf), never worked out again (Athi, 2026-10-02).
  * The header keeps its own names, which are moneyOf's: gross · savings · net · taxable · tax · total · round_off. Picked,
- * not added up. `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
+ * not added up. ⭐ ACC-191: `tax` is null when the supply is undecided (supply unknown, a rate above 0, no head figure): "not decided", copied as it is, never turned into 0; the total stays the price.
+ * `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
  * makes for other chits.
  */
 function moneyOfInvoice(invoice, currency_code) {
@@ -796,6 +833,8 @@ async function sendReplay(sendState, req, res) {
   if (!client_ref) return;
   try {
     const seen = await sameRefLook(sender_id, client_ref);
+    /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
+    if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
     if (seen) return answerReplay(req, res, seen, client_ref);
   } catch (e) {
     cbLog.fellBack(
@@ -1353,6 +1392,23 @@ async function sellerMoney(sellerId) {
  * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
  */
 /**
+ * ⭐ ACC-271: a BLANK tax rate is no rate (null, services.rateOrNull), so the shelf may answer — decorate asks it only of undefined / null, and a blank would reach invoiceFor as 0%.
+ * → { lines, at } : the lines with each blank rate / cess made null, and the indexes that sent a blank gst_rate or rate. A blank-rated line the shelf does not rate stays refused (BAD_RATE, in sendMoney).
+ */
+function blankRatesToNone(lines) {
+  const at = [];
+  const keys = ['gst_rate', 'rate', 'cess_rate'];
+  const out = lines.map((item, index) => {
+    const blank = (key) => !!item && typeof item === 'object' && typeof item[key] === 'string' && item[key].trim() === '';
+    if (!keys.some(blank)) return item;
+    if (blank('gst_rate') || blank('rate')) at.push(index);
+    const next = { ...item };
+    for (const key of keys) if (blank(key)) next[key] = services.rateOrNull(item[key]);
+    return next;
+  });
+  return { lines: out, at };
+}
+/**
  * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
  * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
  * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
@@ -1376,6 +1432,8 @@ async function sendSeller(sendState, req, res) {
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
   if (sellerId !== sender_id) sendState.currency_code = (await sellerMoney(sellerId)) || sendState.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
+  const blankRated = blankRatesToNone(line_items);
+  line_items = blankRated.lines;
   try {
     const shelf = await taxShelf.readShelf(
       sellerId,
@@ -1392,7 +1450,8 @@ async function sendSeller(sendState, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
   }
-  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId });
+  const unratedBlank = blankRated.at.filter((at) => line_items[at] && line_items[at].gst_rate == null && line_items[at].rate == null);
+  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId, unratedBlank });
 }
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
@@ -1479,12 +1538,12 @@ async function sendMoney(sendState, req, res) {
   sendState.sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
   const scope = sendMoneyScope.scopeOf(sendState);
   sendState.moneyScope = scope;
+  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items, sendState.unratedBlank); /* ahead of the scope split (ACC-271): whatever the chit is, a text figure is refused, not saved */
+  if (unreadable) {
+    return problem(req, res, { status: 400, ...said({ code: unreadable.code, error: 'A line could not be read', message: unreadable.message, line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') }); /* ACC-271: the quote routes' codes (BAD_QTY · BAD_PRICE · BAD_RATE) */
+  }
   if (scope.kind === 'quotation') return sendQuotation(sendState, sellerPlace, req, res);
   if (scope.kind !== 'engine') return;
-  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items);
-  if (unreadable) {
-    return problem(req, res, { status: 422, ...said({ code: 'MONEY_INPUT_UNREADABLE', error: 'A line could not be read', message: 'Line ' + (unreadable.line + 1) + ' has a ' + unreadable.field + ' that is not a number, so the money could not be worked out. Fix that line and send again.', line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') });
-  }
   let invoice;
   try {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);
@@ -1494,6 +1553,22 @@ async function sendMoney(sendState, req, res) {
   }
   const block = moneyOfInvoice(invoice, sendState.currency_code);
   Object.assign(sendState, { originInvoice: invoice, moneyBlock: sendState.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });
+}
+
+/**
+ * ⭐ CUR-1 · ACC-331 — EVERY MONEY CELL OF THE BILL IS IN THE BILL'S MONEY. The bill-level currency was refused already; a payment, a payment part, a refund part or a line
+ * naming another currency was booked as the shop's. One check (lib/currency-cells), over the cells the chit carries, BEFORE anything is written: 409 CURRENCY_MISMATCH naming the field.
+ * A cell that names no currency is the bill's own (the till sends none). Runs on the final currency (sendSeller / sendMoney have spoken), a draft included: a wrong cell is wrong.
+ */
+async function sendPartCurrency(sendState, req, res) {
+  const cells = require('../lib/currency-cells');
+  try {
+    cells.assertSame(cells.billCellsOf(sendState.business_json, sendState.line_items), sendState.currency_code);
+  } catch (e) {
+    if (e.code !== 'CURRENCY_MISMATCH') throw e;
+    res.locals.code = 'CURRENCY_MISMATCH';
+    return problem(req, res, { status: 409, ...said({ code: 'CURRENCY_MISMATCH', error: 'Wrong currency', message: e.message, field: e.field, claimed: e.claimed, governed: e.governed }, 'CHIT_CONFLICT') });
+  }
 }
 
 /**
@@ -1611,6 +1686,8 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), engine: sendMoneyScope.engineStampOf(business_json, sendState.moneyScope), bill: business_json.bill_no });
+  if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
   if (!stop || is_draft) {
@@ -1627,6 +1704,29 @@ async function sendBridge(sendState, req, res) {
   }
   business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
   cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
+}
+
+/**
+ * CTR-211 — the carried invoice says one engine figure two ways (a bridge step and its ValDtls figure): a FAULT, so refused before anything is stored, with
+ * NO override, and ONE service ticket (lib/money-check.raisePair). Both values are read, never worked out.
+ */
+async function sendPairRefusal(sendState, pair, req, res) {
+  const { sender_id, business_json } = sendState;
+  const filed = await require('../lib/money-check').raisePair(sender_id, pair, { bill: business_json.bill_no, client_ref: sendState.client_ref, engine: 'tax@' + sendMoneyScope.engineVersion() });
+  const words = pairWords(pair, filed);
+  res.locals.code = 'MONEY_UNBALANCED';
+  return problem(req, res, {
+    status: 409,
+    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
+  });
+}
+
+/** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
+function pairWords(pair, filed) {
+  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || (/^(total|slab|heads)[:]?/.test(pair.pair) ? 'tax amount' : 'amount');
+  const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
+  return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
 }
 
 /**
@@ -1653,6 +1753,31 @@ async function sendPaper(sendState, req, res) {
     if (!business_json.not_invoice) business_json.not_invoice = paper.held.reason;
     sendState.paper = { code: 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
   }
+}
+
+/**
+ * ⭐ CTRY-77 (AU-02b; Athi 5 Nov: REFUSE) — a CASH part the shop's pack says no coin can make is refused by name: 400 CASH_ROUNDING_STEP with the
+ * pack's cite (lib/cash-step: pack.cashRounding step_minor, AU 5c). The till rounds before it sends (TILL-B2); this is the door for a caller that
+ * did not. Card, UPI and every other tender are exact; a shop whose pack has no cashRounding (India, UAE) is untouched. A draft or a chit without
+ * a counter tender: nothing. A bill struck more than 15 minutes before it arrives is an OFFLINE REPLAY of a printed sale: accepted and said (cash_step on
+ * the answer), so a queued bill is never wedged. Its own step, outside any try, because a refusal must reach the counter.
+ */
+async function sendCashStep(sendState, req, res) {
+  const { sender_id, business_json, currency_code, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.payment) return;
+  const refusal = cashStep.verdictOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code }, Date.now());
+  if (!refusal) return;
+  /* an OFFLINE REPLAY of a bill already printed is accepted, said on the answer (cash_step) - never a wedged queue; the books take the gap as round-off */
+  if (refusal.accepted) {
+    sendState.cashStep = { code: refusal.code, accepted: refusal.accepted, why: refusal.why, cite: refusal.cite };
+    business_json.cash_step = sendState.cashStep; /* recorded ON the chit, not only on the answer: the books and a later reader see why the cash is off the step */
+    return;
+  }
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 400,
+    ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
 }
 
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
@@ -2166,7 +2291,7 @@ async function sendSummary(sendState, req, res) {
     total_value: summary.total_value,
     money: moneyBlock,
     /* ACC-206: the figures name their writer (who computed, who copied, when) — what a later disagreement is reported from */
-    stamps: moneyBlock ? sendMoneyScope.stampsOf(now.toISOString(), sendState.moneyScope && sendState.moneyScope.kind === 'carried' ? 'counter' : 'send') : undefined,
+    stamps: moneyBlock ? sendMoneyScope.stampsOf(now.toISOString(), sendMoneyScope.whereOf(sendState.moneyScope)) : undefined,
     offers: offersApplied,
     currency_code,
     priority_external: ext_priority,
@@ -2394,6 +2519,7 @@ async function sendWrite(sendState, req, res) {
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
     const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (entityClient) => {
+      await creditCap.holdUnderLock(entityClient, sendState); /* ACC-286: under the bill's lock, in this transaction, before anything is written */
       if (sendState.sourceCarry) await costWrite.verifySourceCarry(entityClient, sender_id, sendState.sourceId, sendState.sourceCarry, sendState.sourceOptions); /* RAIL-149: the draft's money is still what was carried, read under the lock */
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: entityClient });
       if (namedParty && !isRecipient) await trySavepoint(entityClient, () => require('../lib/crm').traded(entityClient, sender_id, namedParty, now), null);
@@ -2407,6 +2533,7 @@ async function sendWrite(sendState, req, res) {
 async function sendLegacyWrite(sendState) {
   const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = sendState;
   await withTransaction(async (client) => {
+    await creditCap.holdUnderLock(client, sendState); /* ACC-286 */
     if (promote_draft_id) {
       // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
       await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
@@ -2749,9 +2876,8 @@ async function sendMeter(sendState, req, res) {
  *
  * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
  * is the hottest path in the product and a sale that has already happened must not fail because a stock
- * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
- * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
- * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
+ * row could not be written. The trade is real and worth naming: a failure here is posted again by lib/stock-sweep
+ * (CTR-178: derived from the chit at any time, with the same ref and the same idempotency — retried, healed by the shop's next sale or the till's replay, SAID if it still fails) — and because the balance is a cache that
  * rebuild() can check against the log.
  *
  * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
@@ -2765,6 +2891,9 @@ async function sendStock(sendState, req, res) {
           actor_id: req.identity && req.identity.identity_id
         })
         .then((reply) => {
+          /* CTR-178: a line that failed is posted again (lib/stock-sweep: derived from the chit, idempotent) and any older gap of this shop heals with it */
+          if (reply && reply.failed.length) require('../lib/stock-sweep').retryLater(sender_id, withEntity);
+          require('../lib/stock-sweep').healSoon(sender_id, withEntity);
           if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
@@ -2833,7 +2962,11 @@ async function sendAnswer(sendState, req, res) {
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
     one_sided: oneSided || undefined,
     /* ⭐ CTRY-76: present only when this bill went out as NOT a tax invoice because the buyer is not named (sendPaper) — the counter asks for the buyer */
-    not_invoice: sendState.paper || undefined
+    not_invoice: sendState.paper || undefined,
+    /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
+    cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
+    /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
+    credit_cap: sendState.creditCap
   }));
 
   /**
@@ -3154,7 +3287,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
-                WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
+                WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count
            ${joinFrom}
           WHERE ${where}
           ORDER BY ch.chit_id, (ch.direction = 'sent') DESC
@@ -3412,9 +3545,9 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
          (SELECT COUNT(*) FROM chit_disputes cd
           WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
-          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
+          WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
-          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
+          WHERE cm2.chit_id = ch.chit_id AND cm2.entity_id = ch.entity_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
          (SELECT sl.action_by_display_name FROM state_log sl
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_name,
@@ -3504,7 +3637,7 @@ router.get('/pulse', auth, async (req, res) => {
      * watermark and, depending on how it reads that, either refreshing forever or never again. `null` is an
      * explicit "cannot tell" — the client falls back to refreshing, which is exactly today's behaviour.
      */
-    console.error('pulse:', e.message);
+    softFault(req, e); /* logged with the request id; the answer is still the 200 below */
     res.json({ w: null });
   }
 });
@@ -4732,10 +4865,60 @@ function knownAmendSpec(err) {
   if (['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
     return { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') };
   }
+  if (err.code === 'INVOICE_MONEY_LOCKED') return { status: 409, ...said({ error: 'Already invoiced', message: err.message, code: err.code }, 'CHIT_CONFLICT') }; /* ACC-192: an issued invoice's money is changed by a credit or debit note */
   if (err.status === 400 && /^AMEND_/.test(String(err.code))) return { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) };
   return null;
 }
 
+/**
+ * logAmended(req, entity_id, chit_id, out) — the amendment's line in the chit's own history (state_log), beside every other action. Best-effort by design: a missing log must not lose a
+ * correction that already committed; the failure is logged. (Moved out of the amend handler unchanged, ACC-192, to keep the handler inside the readability limit.)
+ */
+async function logAmended(req, entity_id, chit_id, out) {
+  /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
+     every other action. Best-effort: a missing log must not lose a correction that already committed. */
+  try {
+    const detail = out.amendments
+      .map((item) =>
+        item.line === null
+          ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
+          : 'line ' +
+            (item.line_index + 1) +
+            ' → ' +
+            [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
+            ' (' +
+            item.reason_code +
+            ')'
+      )
+      .join('; ');
+    await withEntity(entity_id, (db) =>
+      db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+       VALUES ($1,$2,'amended',$3,$4,$5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+      )
+    );
+  } catch (e) {
+    console.error('amend state_log skipped:', e.message);
+  }
+}
+
+/** amendSpecOf(err, req) → the spec of a refusal the amend door knows by name (knownAmendSpec, then the too-large one), or null */
+async function amendSpecOf(err, req) {
+  return knownAmendSpec(err) || (await amountTooLargeSpec(err, req));
+}
+/** amountTooLargeSpec(refusal, req) → the 400 spec with this chit's currency (chit_detail.currency_code) beside the maximum, or null for any other error; the read is made only now because amend.prepare is pure and shared (change orders), and a failed read is logged and answers without a currency */
+async function amountTooLargeSpec(refusal, req) {
+  if (!refusal || refusal.code !== 'CHIT_AMOUNT_TOO_LARGE') return null;
+  let currency = null;
+  try {
+    const row = await withEntity(entityId(req), (db) => db.query('SELECT currency_code FROM chit_detail WHERE chit_id = $1 AND entity_id = $2 LIMIT 1', [req.params.chit_id, entityId(req)]));
+    currency = (row.rows[0] && row.rows[0].currency_code) || null;
+  } catch (err) {
+    cbLog.warn('chits/amend: the chit currency was not read for the too-large refusal; it answers without one', { id: req.id, err: err.message });
+  }
+  return faultOf(chitCeiling.inCurrency(refusal, currency), req, 'Failed to amend', { words: true });
+}
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4751,37 +4934,13 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
 
     const edits = editsOf(req.body);
     if (await answeredAsProposal(req, res, { entity_id, chit_id, edits })) return;
+    await invoiceIssued.refuseMoneyAmend(entity_id, chit_id, edits); /* ACC-192: an issued invoice's money is never amended; a credit or debit note is the way */
     const out = await costWrite.recordAmend(req, entity_id, chit_id, edits, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
 
-    /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
-       every other action. Best-effort: a missing log must not lose a correction that already committed. */
-    try {
-      const detail = out.amendments
-        .map((item) =>
-          item.line === null
-            ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
-            : 'line ' +
-              (item.line_index + 1) +
-              ' → ' +
-              [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
-              ' (' +
-              item.reason_code +
-              ')'
-        )
-        .join('; ');
-      await withEntity(entity_id, (db) =>
-        db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1,$2,'amended',$3,$4,$5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
-        )
-      );
-    } catch (e) {
-      console.error('amend state_log skipped:', e.message);
-    }
+    await logAmended(req, entity_id, chit_id, out);
 
     /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
        exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
@@ -4813,7 +4972,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    const known = knownAmendSpec(err);
+    const known = await amendSpecOf(err, req);
     if (known) return problem(req, res, known);
     if (err && err.code === '23514') {
       cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
@@ -4983,9 +5142,19 @@ function payFailure(req, res, err) {
   if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return booksRoutes.fail(res, err);
   return problem(req, res, failed(err, req, 'Payment failed'));
 }
+/**
+ * ⭐ FIN-51 (7 Nov): "MARK PAID" TAKES ONE KEY PER ATTEMPT, the same gate as the books' money doors (FIN-63, routes/books.js onceOnly).
+ * client_ref stops a second press of the sheet, but a retry that lost its answer and carried no client_ref booked the payment again.
+ * Now no Idempotency-Key → 422 IDEMPOTENCY_KEY_REQUIRED; the same key and body → the first answer (X-Idempotent-Replay), recorded once;
+ * the same key and another body → 422 IDEMPOTENCY_CONFLICT; two at once → one runs (the other 409 IDEMPOTENCY_IN_PROGRESS).
+ * The web already sends it (app.html EP chitPay idem:'attempt').
+ */
+/* idem3 (7 Nov): "Mark unpaid" (DELETE below) rides the same gate — a retry answers the first clear and never names the books entries twice; the web sends idem:'attempt' (EP chitUnpay) */
+const payOnce = require('../middleware/idempotency').requireKey();
 router.post(
   '/:chit_id/payment',
   auth,
+  payOnce,
   ...checked('POST /:chit_id/payment'),
   trimmedBody(['ref', 'note', 'client_ref']),
   async (req, res) => {
@@ -5020,7 +5189,7 @@ router.post(
     }
   }
 );
-router.delete('/:chit_id/payment', auth, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
+router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (db) =>
@@ -5119,7 +5288,7 @@ router.put(
   '/:chit_id/status',
   auth,
   ...checked('PUT /:chit_id/status'),
-  trimmedBody(['status', 'note']),
+  trimmedBody(['status', 'note', 'from']),
   async (req, res) => {
     try {
       const chit_id = req.params.chit_id;
@@ -5178,7 +5347,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req));
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use }); /* QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
       /**
@@ -5324,7 +5493,7 @@ router.post(
       );
       const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
       if (!_v.ok) {
-        return problem(req, res, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
+        return refuseUnlessHeld(req, res, held.rows.length > 0, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
@@ -5339,22 +5508,11 @@ router.post(
          chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
       let disputeRoster = null;
       if (isDispute && disputeId) {
-        const party = await withEntity(entity_id, (db) =>
-          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3 LIMIT 1`, [disputeId, chit_id, entity_id])
-        );
-        if (party.rows.length === 0) {
+        const audience = await disputeAudience.audienceOf(entity_id, chit_id, disputeId); /* RAIL-187: the one reading of the audience, shared with the file route */
+        if (!audience) {
           return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
         }
-        if ((party.rows[0].scope || 'targeted') !== 'chit_wide') {
-          // fail closed: a roster that cannot be read means the poster's own timeline only, and no bell
-          disputeRoster = [entity_id];
-          try {
-            const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
-            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((item) => String(item.entity_id))))];
-          } catch (e) {
-            cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */
-          }
-        }
+        disputeRoster = audience.ids; /* null for a chit-wide dispute */
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
       let senderName = display_name;
@@ -5442,7 +5600,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
       if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
       /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
          raises 42703 and would take the whole message panel down before the migration runs. */
-      const params = [chit_id];
+      const params = [chit_id, entity_id]; /* SEC-127c: $2 = my shop, named in the SQL below (not row security alone) */
       /* ⚠️ THE PLACEHOLDER IS "$" + THE INDEX. Written through a shell the dollar was eaten, leaving
          `= 2` — a uuid compared against the integer two, which matches nothing and returns an empty thread
          rather than an error. A filter that silently finds nothing looks exactly like "there are no notes". */
@@ -5450,9 +5608,9 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
         params.push(req.query.line_id);
         cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length;
       }
-      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
     });
-    if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (result === null) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: a chit this login holds no copy of, unknown or another shop's, is the one 404 */
 
     const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
@@ -5682,7 +5840,7 @@ router.post(
       const access = await withEntity(entity_id, (db) =>
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
-      if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
+      if (access.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: no copy here, unknown or another shop's: the one 404 */
       await ctpReturn.ensureShadows(entity_id, chit_id); // RAIL-106: a party on another installation is a participant here (its shadow row), so the roster below can hold it
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
@@ -5865,7 +6023,7 @@ router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), asy
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
-    if (!own) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!own) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35 */
     const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
@@ -6734,4 +6892,7 @@ router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
+module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
+module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
+module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

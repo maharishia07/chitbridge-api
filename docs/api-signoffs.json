@@ -19,11 +19,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
-   "hash": "cb4788656770100d",
+   "hash": "a60976f3208018cd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped delete, non-uuid and foreign id both 404 in one sentence; no handler change in the PR",
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id": {
@@ -35,11 +35,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id/payment": {
-   "hash": "f1e5c5ac7a0e6422",
+   "hash": "42d31fa87e8d8a95",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (reviewer, non-builder) 2026-11-07 PR#954",
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id/purge": {
@@ -48,6 +48,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+   "lifecycle": "stable"
+  },
+  "DELETE /api/combo-templates/:id": {
+   "hash": "86df410a8511ad98",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "DELETE /api/crm/followups/:id": {
@@ -155,11 +163,11 @@
    "lifecycle": "stable"
   },
   "GET /api/actors/settings": {
-   "hash": "67ab400b5c2716dc",
+   "hash": "640e90743374e79a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: read and default-row insert now under withEntity; same answer shape); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/adopt/:chit_id": {
@@ -176,6 +184,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/container/:id": {
+   "hash": "4800ee1d9af92ecc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "GET /api/assist/erp-handoffs": {
@@ -251,11 +267,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/cheques": {
-   "hash": "2c69506810995f71",
+   "hash": "29ab15b5384fcbde",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
    "lifecycle": "stable"
   },
   "GET /api/books/compare": {
@@ -267,19 +283,19 @@
    "lifecycle": "stable"
   },
   "GET /api/books/compare/:id": {
-   "hash": "d9ff2645f0a73015",
+   "hash": "012408655020a240",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2 (after the open-key fixes, head 1e85e8a4): handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/compare/:id/csv": {
-   "hash": "4c3448af6a2b5ce3",
+   "hash": "7ca455cbd821c7a8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/daybook": {
@@ -291,11 +307,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/dues": {
-   "hash": "17d02ebb850fc623",
+   "hash": "315608c54cc7f650",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#754 FIN-72",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/events": {
@@ -331,11 +347,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/ledger/:account": {
-   "hash": "c6c82739115a7f21",
+   "hash": "66409c311c5aabfc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
    "lifecycle": "stable"
   },
   "GET /api/books/move-in/imports": {
@@ -363,19 +379,19 @@
    "lifecycle": "stable"
   },
   "GET /api/books/packs/:id/file": {
-   "hash": "eab6f7f4c79c78d9",
+   "hash": "5ae00d5c8173ec3d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/party/:id/statement": {
-   "hash": "75a103e8fbb110ad",
+   "hash": "3562c34153943e3a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
    "lifecycle": "stable"
   },
   "GET /api/books/payments/:id/advice": {
@@ -387,11 +403,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/periods": {
-   "hash": "a025e197a54c16cc",
+   "hash": "f996cd645019e1ca",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib; periods[].return additive and optional, form/period/label/closed read against books.periodAdvice and the contract) 2026-10-30 PR#599",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#910",
    "lifecycle": "stable"
   },
   "GET /api/books/pl": {
@@ -435,11 +451,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/todo": {
-   "hash": "084f040c2a23476b",
+   "hash": "3cffdda5474f29a9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/trial-balance": {
@@ -466,6 +482,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
    "lifecycle": "stable"
   },
+  "GET /api/capture/webhook/whatsapp": {
+   "hash": "0a50596c571c6882",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+   "lifecycle": "stable"
+  },
   "GET /api/catalogue-face": {
    "hash": "ee712191c3c054d0",
    "names_clear": true,
@@ -475,27 +499,35 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id": {
-   "hash": "57086e1ed0d15b39",
+   "hash": "09d3c11dea78f26b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#706 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: owner preview via auth.softIdentity, cost keys stripped for a cost-blind co-assist; schema unchanged, foreign id still 404); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
-   "hash": "d607d6f62eb7d0de",
+   "hash": "9ff18aab5c5a8c64",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, unknown shop 404 in words; no handler change in the PR",
+   "lifecycle": "stable"
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "hash": "fd244df69e65d2b2",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped list, paged, one 401/404 sentence; no handler change in the PR",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/support/preview": {
-   "hash": "e92723610f98cd45",
+   "hash": "de2a306c4f9ddd23",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/enquiry": {
@@ -507,11 +539,11 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network-store/:networkId": {
-   "hash": "985e2513117c90be",
+   "hash": "f7ae322fc1cc3543",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, no node attribution, 404/503 in words; no handler change in the PR",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network/:bridge_id": {
@@ -531,11 +563,11 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/:chit_id/use": {
-   "hash": "be91d2bc805731af",
+   "hash": "48686d79860a87fc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
    "lifecycle": "stable"
   },
   "GET /api/chits/:id/trace": {
@@ -555,19 +587,19 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/folder": {
-   "hash": "55d4d0593ffb2a8c",
+   "hash": "54b00476fd18ef9d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
    "lifecycle": "stable"
   },
   "GET /api/chits/inbox": {
-   "hash": "b29d0408daaea305",
+   "hash": "130ced1d0eda9241",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
    "lifecycle": "stable"
   },
   "GET /api/chits/raida/report": {
@@ -650,6 +682,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
    "lifecycle": "stable"
   },
+  "GET /api/combo-templates": {
+   "hash": "d066c4975f3d38a9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
   "GET /api/connections/list": {
    "hash": "4780f03abda19cbb",
    "names_clear": true,
@@ -711,15 +751,15 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "GET /api/crm/parties/:id/timeline": {
-   "hash": "620e6978a139f9e5",
+   "hash": "1d3706ef33c106b7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: whole handler re-read after RAIL-146h (cost-blind reader gets null money, same keys); caller-scoped 404 for a foreign party; 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/crm/privacy-requests": {
@@ -787,11 +827,11 @@
    "lifecycle": "stable"
   },
   "GET /api/entities/policy": {
-   "hash": "b266e6cd0e2948a9",
+   "hash": "0485b6f18b7c36fc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: the builder had typed a cb-api line on this row; re-read by cb-api: additive optional asked map {flag: bool}, closed in api-output-shapes, 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/entities/populations": {
@@ -808,6 +848,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+   "lifecycle": "stable"
+  },
+  "GET /api/entities/routing/preview": {
+   "hash": "daf7f3e6e7033f84",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1047: handler and lib/raiseticket.js re-read; 200 allow-list holds, every fault path in why is the one fixed sentence DESK_FAULT (raw text to log via safeErr), kept b247 sentence carries only test/production, 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/entities/search": {
@@ -843,11 +891,11 @@
    "lifecycle": "stable"
   },
   "GET /api/facts/rail/chits": {
-   "hash": "05d5f33a3f03c039",
+   "hash": "3a66511732cf316b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
    "lifecycle": "stable"
   },
   "GET /api/folders": {
@@ -1003,11 +1051,11 @@
    "lifecycle": "stable"
   },
   "GET /api/governance/country-setup": {
-   "hash": "334f5920ce6e77df",
+   "hash": "434d4f6db9e00d4a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
    "lifecycle": "stable"
   },
   "GET /api/governance/entities/:id": {
@@ -1115,19 +1163,19 @@
    "lifecycle": "stable"
   },
   "GET /api/integrations/docs/:id": {
-   "hash": "597a2e449ca230ab",
+   "hash": "4c1714a8b02753ad",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/download/:id": {
-   "hash": "966e1a6d5ef10766",
+   "hash": "af7c9d3016789066",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/kit": {
@@ -1139,11 +1187,11 @@
    "lifecycle": "stable"
   },
   "GET /api/integrations/kit/*": {
-   "hash": "9f494cd2f4297967",
+   "hash": "348b9c92a4977ecb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/profile-map": {
@@ -1251,11 +1299,11 @@
    "lifecycle": "stable"
   },
   "GET /api/network/entities/:id/subtree": {
-   "hash": "c48427150f65026b",
+   "hash": "26ec7c352ead04da",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
    "lifecycle": "stable"
   },
   "GET /api/network/entities/lookup": {
@@ -1282,6 +1330,14 @@
    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
    "lifecycle": "stable"
   },
+  "GET /api/offers/openapi.json": {
+   "hash": "0fea4ab2374ff23d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
   "GET /api/people": {
    "hash": "fab2df1560045606",
    "names_clear": true,
@@ -1299,11 +1355,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products": {
-   "hash": "a85c20451df4101f",
+   "hash": "c58e08fca2facb60",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#1038: whole handler, contract and lib/catalogue-search.js re-read after its hash moved; response shape, error shapes, status codes and sentences unchanged, caller-scoped (entity_id=$1), only change is the narrower search (named top-level scalar fields, cost keys excluded, LIKE-escaped; stated in PR); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/products/:id/versions": {
@@ -1315,11 +1371,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products/export.csv": {
-   "hash": "e6c365a0051bb1fc",
+   "hash": "699e33f654a66cd9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys is honest: text/csv, no JSON keys), failures through problem(); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/products/lists": {
@@ -1355,11 +1411,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products/workbook.xlsx": {
-   "hash": "f926495a5d767afd",
+   "hash": "36bec6618ba3d688",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys honest: xlsx, no JSON keys), failures through problem(); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/relationships/customers/groups": {
@@ -1410,12 +1466,36 @@
    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
    "lifecycle": "stable"
   },
-  "GET /api/tax/gstr": {
-   "hash": "dbe67c282f6983e0",
+  "GET /api/service/:chit_id": {
+   "hash": "52a1290b0254fe61",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/signin/devices": {
+   "hash": "edb76b75208461bd",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/signin/sessions": {
+   "hash": "c6f20bf2d163747a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/tax/gstr": {
+   "hash": "7d620eeddb9eb249",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month or form GIVEN and unreadable is 400 DATE_INVALID / BAD_FORM (BAD_FORM registered by the reviewer), absent keeps this month and gstr1; 4 scenes in api-legacy, 400 in error tests; web sends only YYYY-MM and gstr1|gstr3b; 13 columns true",
    "lifecycle": "stable"
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1427,11 +1507,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/ledger": {
-   "hash": "8c9251a891a20a4a",
+   "hash": "b0fb95da2f4e8a1c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
    "lifecycle": "stable"
   },
   "GET /api/testing/cases": {
@@ -1467,11 +1547,11 @@
    "lifecycle": "stable"
   },
   "GET /api/testing/cmdb/:ci": {
-   "hash": "50f8b61c79dfa702",
+   "hash": "cb27ce34e66cddf0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "GET /api/testing/coverage": {
@@ -1571,15 +1651,15 @@
    "lifecycle": "stable"
   },
   "GET /api/till/bills": {
-   "hash": "65e21f5bc15efa97",
+   "hash": "e394ff0b0e21e9d3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07",
    "lifecycle": "stable"
   },
   "GET /api/till/catalogue/blueprints": {
-   "hash": "580dd67ae75db296",
+   "hash": "13e313233f2183a5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1587,7 +1667,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/counters": {
-   "hash": "73bccfc6825b5345",
+   "hash": "065ab1b31029b6be",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1595,15 +1675,15 @@
    "lifecycle": "stable"
   },
   "GET /api/till/engine/:name": {
-   "hash": "4a422f34f38b13a0",
+   "hash": "6188ec56258d1181",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
    "lifecycle": "stable"
   },
   "GET /api/till/match": {
-   "hash": "af2833a77603a9f8",
+   "hash": "917b5f2623190141",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1611,7 +1691,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/groups": {
-   "hash": "0bff2e63e7484466",
+   "hash": "a93949be98bda80d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1619,7 +1699,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/hidden": {
-   "hash": "7740ad9694b51c90",
+   "hash": "a21ada102b689cf4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1627,7 +1707,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/screen-config": {
-   "hash": "48d6577e91db52fc",
+   "hash": "84d5f66acbc70ed4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1635,7 +1715,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/state": {
-   "hash": "33abfecde62a9004",
+   "hash": "7b700a57f90e53b5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1643,7 +1723,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/reward": {
-   "hash": "aa600c76b31c1ee2",
+   "hash": "b7945b493fc90536",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1651,7 +1731,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/screens": {
-   "hash": "e3553ae3b95bfdec",
+   "hash": "34ca27a7c7ac2723",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1659,7 +1739,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/snapshot": {
-   "hash": "c11004366487df50",
+   "hash": "8d7990b747431ba7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1667,7 +1747,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/stock": {
-   "hash": "3f644a8715faf625",
+   "hash": "f88e8f612e3e98a5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1675,7 +1755,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/summary": {
-   "hash": "fe841dc4231d7c51",
+   "hash": "7c470871e76779bc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1683,7 +1763,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/tasks": {
-   "hash": "148bb0dcf8de88b9",
+   "hash": "750f4ada473ad2b1",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1691,7 +1771,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/verify": {
-   "hash": "46d43e49b67a6e84",
+   "hash": "8822f90ab44821bf",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1699,7 +1779,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/worth-an-offer": {
-   "hash": "eb4695b2dc715bd6",
+   "hash": "18e4e4e233adf0d5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1770,6 +1850,14 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
    "lifecycle": "stable"
   },
+  "PATCH /api/combo-templates/:id": {
+   "hash": "4cd3bd5191856987",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
   "PATCH /api/connectors/:actorId/connections/:connId": {
    "hash": "ea0e27d69ed819ff",
    "names_clear": true,
@@ -1803,35 +1891,35 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/locale": {
-   "hash": "e55ea05cc2141a4a",
+   "hash": "8c7f8667671d7623",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/prefs/:kind": {
-   "hash": "3a7c9f99a608bfbf",
+   "hash": "667cb4fea86280f3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/policy": {
-   "hash": "e190a37baf2cd8ee",
+   "hash": "8eabcd83c4aa4b87",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: hash moved after merging main; handler and contract re-read, 13 columns pass; new flag recheck_prices (enum off|on) is taken by the existing flag path, a bad value is refused by the existing refusal; no key or status changed",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
-   "hash": "a452dc1b95bd6bba",
+   "hash": "ca5638cd28bcf812",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
    "lifecycle": "stable"
   },
   "PATCH /api/folders/:id": {
@@ -1947,11 +2035,11 @@
    "lifecycle": "stable"
   },
   "POST /api/assist": {
-   "hash": "4d3d32ed0f02786e",
+   "hash": "0fed4ed7dae69c10",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/assist/catalogue-adopt": {
@@ -1963,27 +2051,27 @@
    "lifecycle": "stable"
   },
   "POST /api/assist/catalogue-structure": {
-   "hash": "a2ab588036b775b4",
+   "hash": "2cf1be4ee2eeae1f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/assist/conform": {
-   "hash": "e4aa7fd270b2f08a",
+   "hash": "425efdd67b8c7b70",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/assist/gap": {
-   "hash": "9ae4e8a63a91587a",
+   "hash": "f35cc44639c74477",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "POST /api/assist/publish": {
@@ -1992,6 +2080,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "lifecycle": "stable"
+  },
+  "POST /api/attachments": {
+   "hash": "07ac7405642c8930",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
    "lifecycle": "stable"
   },
   "POST /api/books/accounts": {
@@ -2003,43 +2099,43 @@
    "lifecycle": "stable"
   },
   "POST /api/books/accruals": {
-   "hash": "e11dc56f2f6c00ee",
+   "hash": "8946badbc2fbfb0d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/accruals/:ref/reverse": {
-   "hash": "d60f521d80212da1",
+   "hash": "c5804bdfe29a5772",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/assets": {
-   "hash": "fa69bd94b52e0c7d",
+   "hash": "85ee4d9880bd3f5d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/assets/:id/dispose": {
-   "hash": "07f4da6c18005556",
+   "hash": "dd20f8b7ff039130",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/check": {
-   "hash": "b732844b32a0b4c8",
+   "hash": "aabf384ec7ec5ff7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/books/cheques/:id/status": {
@@ -2051,11 +2147,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/closing-stock": {
-   "hash": "81c7a68b6596fef6",
+   "hash": "f7e474aa3f126a6f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/compare/preflight": {
@@ -2075,19 +2171,19 @@
    "lifecycle": "stable"
   },
   "POST /api/books/contra": {
-   "hash": "b7de4792f46dba1f",
+   "hash": "4791a685ccbf85d4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/depreciation/run": {
-   "hash": "e6107dd2f522b2cd",
+   "hash": "7f566abeda51311f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/enable": {
@@ -2099,11 +2195,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/entries": {
-   "hash": "7f802d11b091f732",
+   "hash": "642ac0ba6bec7bb8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#731 stage2",
+   "signed_off_by_date": "cb-api-reviewer 2026-11-09 PR#1060 stage2",
    "lifecycle": "stable"
   },
   "POST /api/books/entries/:id/reverse": {
@@ -2115,11 +2211,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/events": {
-   "hash": "494300b4ee1d7346",
+   "hash": "7d637baaefe37588",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
    "lifecycle": "stable"
   },
   "POST /api/books/fx-rates": {
@@ -2147,43 +2243,43 @@
    "lifecycle": "stable"
   },
   "POST /api/books/gst/close": {
-   "hash": "3c7634f00c4bd826",
+   "hash": "e0e55c0fbac21845",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/gst/pay": {
-   "hash": "22f60cd274a23d49",
+   "hash": "73f2e0872e725f03",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1076 stage2b: replay answers the stored entry (replayed:true, nothing recomputed), reused challan with another amount, head or currency is 409 BOOKS_CONFLICT (contract inline [409], scene, api-legacy, error-tests row), lock gst|<head> sorted in one call by pay and close, realstack 6/6 on real Postgres; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/loans": {
-   "hash": "b4badb092ebd3991",
+   "hash": "1c90f5d4dea66b3f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/loans/:ref/emi": {
-   "hash": "10480c2322762cd4",
+   "hash": "0f3772ca67a39e28",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/move-in/import": {
-   "hash": "56d6afde4e313771",
+   "hash": "e312a8dc229e0276",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2 (after the open-key fixes, head 1e85e8a4): handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/books/move-in/preflight": {
@@ -2195,11 +2291,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/move-in/preview": {
-   "hash": "5512554f5ed56bc5",
+   "hash": "2a118fb7e3c1cec9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2 (after the open-key fixes, head 1e85e8a4): handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/books/opening": {
@@ -2283,11 +2379,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/preview": {
-   "hash": "5642f28d53e53ef9",
+   "hash": "36eb5b5b5a062279",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
    "lifecycle": "stable"
   },
   "POST /api/books/recurring": {
@@ -2299,19 +2395,19 @@
    "lifecycle": "stable"
   },
   "POST /api/books/recurring/:id/post": {
-   "hash": "e86f80702fc4ce0e",
+   "hash": "a9a8fedb79f55b44",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/recurring/:id/skip": {
-   "hash": "592300a405e4e0eb",
+   "hash": "c51214ebf2d96a82",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/setting": {
@@ -2331,11 +2427,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/write-off": {
-   "hash": "0eba96facf73332e",
+   "hash": "2e07e6f1853975a0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1072 stage 2b FIN-78: refusal 409 BOOKS_CONFLICT read from the carried party balance under the party lock in the writing transaction, replay (client_ref) answers before it, sentence names amount and currency and leaks nothing, four contract places present; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/year/:fy/close": {
@@ -2351,7 +2447,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-security (independent re-sign at stage 2b, not the builder) 2026-11-09 PR#1064: handler and contract re-read; one 400 sentence for unknown contact, wrong, expired-lock; code spent on use; 5-miss lock + catalogue limiter; names_clear, sentence_plain, backward_compatible pass; residual: unknown contact skips the attempt UPDATE (ms timing, follow-up)",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/order/confirm": {
@@ -2367,7 +2463,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/support": {
@@ -2375,7 +2471,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/support/start": {
@@ -2383,7 +2479,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/enquiry/:item_id": {
@@ -2411,11 +2507,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/amend": {
-   "hash": "604864a3e8107a0d",
+   "hash": "b5bf1ff993c4dff3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after RAIL-205 (new 400 CHIT_AMOUNT_TOO_LARGE for a replacement line whose quantity or price is past its column, naming the maximum and the chit currency, never echoing the value); the 400 is in the contract inline list [400, 409], has an error scene (amend-price-not-a-number, realstack A-1) and its code is in docs/error-codes.json; backward_compatible: it was a 500 (22003) after the build, no caller read it; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/archive": {
@@ -2443,27 +2539,27 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/costs": {
-   "hash": "2b38b28b578677cd",
+   "hash": "f07c1d1194dee405",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/deliver-lines": {
-   "hash": "4896e7d335ee37ca",
+   "hash": "2230812987fb9ca7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1063 RAIL-191/192/193: new 400 CHIT_AMOUNT_TOO_LARGE (was 500) and two 409 CHIT_CONFLICT (correction under zero; rejected or cancelled copy, why wrong_step like withdraw) are additive, thrown inside lib/deliverline.record before any write so every caller is covered; replayed client_ref skipped; inline [409], 3 error scenes, 3 frozen answers, error-tests row; truth test runs in the T2 loop; 13 columns pass; deliveryOn in rail-actions is a stopgap until an engines deliver action",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/payment": {
-   "hash": "e01c8002cbcabc9c",
+   "hash": "10046b55f800d3dc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#886 re-sign, 13 columns checked",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals": {
@@ -2471,7 +2567,15 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "hash": "2c8e87092cf5f3aa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
@@ -2479,7 +2583,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
@@ -2487,7 +2591,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida": {
@@ -2547,19 +2651,35 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/register/templates": {
-   "hash": "7783fd2adbe4f1d4",
+   "hash": "5342aa1379665464",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/send": {
-   "hash": "f066453f5d1ddaf5",
+   "hash": "18ba0cc5c861981a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#893",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#893; hash refreshed at merge of main 2026-11-11, same change",
+   "lifecycle": "stable"
+  },
+  "POST /api/combo-templates": {
+   "hash": "3111294cdf4c538b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
+  "POST /api/combo-templates/:id/push": {
+   "hash": "b461b339dcb523ca",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/connections/request": {
@@ -2647,7 +2767,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/groups": {
@@ -2655,7 +2775,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/leads": {
@@ -2671,7 +2791,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/parties/:id/contact-prefs": {
@@ -2679,7 +2799,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/parties/:id/interactions": {
@@ -2687,7 +2807,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/parties/:id/outcome": {
@@ -2707,11 +2827,11 @@
    "lifecycle": "stable"
   },
   "POST /api/crm/privacy-requests": {
-   "hash": "21948004b6ff4f9d",
+   "hash": "afd2b3b81ec2c619",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/crm/privacy-requests/:id/answer": {
@@ -2754,6 +2874,22 @@
    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
    "lifecycle": "stable"
   },
+  "POST /api/definitions": {
+   "hash": "7cd7dd1fcd6963bc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+   "lifecycle": "stable"
+  },
+  "POST /api/definitions/freeze": {
+   "hash": "0ecdb82b18aa5e62",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+   "lifecycle": "stable"
+  },
   "POST /api/entities/populations": {
    "hash": "3c261678a79ac355",
    "names_clear": true,
@@ -2763,11 +2899,11 @@
    "lifecycle": "stable"
   },
   "POST /api/entities/register": {
-   "hash": "6f33e5526ce8ba8e",
+   "hash": "074b9e21d7b86242",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; answer closed to message, email, need, dev_otp, handle, operator_issued, as the route already answered; no new key, held and free address still the same words",
    "lifecycle": "stable"
   },
   "POST /api/entities/verify": {
@@ -2923,11 +3059,11 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/:actor_id/approve": {
-   "hash": "b0e5048704af15e9",
+   "hash": "5e57a81aaf5d59cc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; 200 closed to ok and enrol, proved by the area test; answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/integrations/ask/:handle/stock": {
@@ -2939,19 +3075,19 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/books": {
-   "hash": "afb388714ad3d9af",
+   "hash": "e2e8bbb2e50fede2",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/integrations/books/skip": {
-   "hash": "918358dc8a020ca7",
+   "hash": "d86df23c95c37d1d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/integrations/heartbeat": {
@@ -2971,19 +3107,19 @@
    "lifecycle": "stable"
   },
   "POST /api/invoice/build": {
-   "hash": "3538084d1c14fdc9",
+   "hash": "9f9dfe1002e8b7e5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#901",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/keys": {
-   "hash": "490457a79b48d9d6",
+   "hash": "3e1a66a887f89d1a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#330",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/kyb/credential": {
@@ -3019,51 +3155,51 @@
    "lifecycle": "stable"
   },
   "POST /api/network/connections": {
-   "hash": "a148db102e19064e",
+   "hash": "7543f5f939e71d88",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; write switch 503, 401 NO_ACTOR, 403 NOT_ALLOWED, 404/409 codes all declared and registered; a repeat request answers EXISTS 409, never a second edge",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#882: handler read at the hash; new 409 NETWORK_REMOTE_NOT_YET declared in the contract refusals and registered (ERROR-CODES.md + error-codes.json), answered in the one problem shape, in a plain sentence; local asks unchanged; other columns untouched. Behaviour findings (node insert before refusal, unresolved read passes) are in the PR comment, not the contract",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/approve": {
-   "hash": "da54cf18da4c9515",
+   "hash": "cf94b2f1ecb4b050",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/decline": {
-   "hash": "b3dac36a8d0d8fb9",
+   "hash": "0fc9c8e13510c1f5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/disconnect": {
-   "hash": "05be61164bd34bad",
+   "hash": "f2723d9cbe44782d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/resume": {
-   "hash": "825c330c3f45242c",
+   "hash": "3816956041ef4601",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/suspend": {
-   "hash": "4a7bc18da510e488",
+   "hash": "53cbc22c6326a455",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/network/entities": {
@@ -3082,20 +3218,28 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; id param 404 before the database; ALREADY_CLAIMED 409 declared and told only to the owner of the node; repeat claim is refused, not doubled",
    "lifecycle": "stable"
   },
-  "POST /api/pricing/price": {
-   "hash": "d3b57ed9daecd0aa",
+  "POST /api/offers/explain": {
+   "hash": "8389ffdbe820ed19",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+   "lifecycle": "stable"
+  },
+  "POST /api/pricing/price": {
+   "hash": "1a7ce6f875846cf0",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1023: API-43 tolerant outward (Athi 8 Nov); 13 columns read in the register row, strict_input exempt only while schema_in is true; backward compatible, a closed body is relaxed so no caller breaks; handler and contract unchanged otherwise",
    "lifecycle": "stable"
   },
   "POST /api/products": {
-   "hash": "914d6553a1cbbf4e",
+   "hash": "1bddfcabcbea24c6",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/317/318 (a changed status is stamped like PUT /:id/status; an unknown or unstampable status word and an over-large number are the existing 400 PRODUCT_BAD_REQUEST in the validator sentence); 400 declared inline, 400 scene present, code registered; backward_compatible: a legacy stored status word never blocks other edits, and a bad value that used to be written or 500 is now a 400; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/products/:id/media": {
@@ -3107,11 +3251,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/:id/schedule": {
-   "hash": "ec834b16142998da",
+   "hash": "185af50f007a0f0f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-317 (the parked change is judged by the PATCH validator when parked and again when due; refusals are the existing 400 in its words, a stamp refusal 400, a due change refused is cancelled and logged); 400, 409 declared inline, scenes present; backward_compatible: same statuses as before, a bad parked change is refused at the door instead of failing silently when due; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/products/availability/bulk": {
@@ -3131,11 +3275,19 @@
    "lifecycle": "stable"
   },
   "POST /api/products/bulk-update": {
-   "hash": "366d97c351174a18",
+   "hash": "a685f08236988712",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/323 (each item stamped like PUT /:id/status; the owner reads the stored rows so a status the row already holds is not a change; refusals are the existing 400 PRODUCT_BAD_REQUEST); 400 declared inline with a scene; backward_compatible: unchanged statuses, legacy words pass, only a bad new status word or number is refused; all 13 machine columns read yes",
+   "lifecycle": "stable"
+  },
+  "POST /api/products/categories/bulk": {
+   "hash": "2dd38dbe13afdf0c",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-11 PR#1087: new route read in the diff; strict body (ids/add/remove, additionalProperties false, 200 ids cap, both-ways and nothing-named refused) as the registered 400 PRODUCT_BAD_REQUEST, unknown category 400 declared inline with a scene; 403 cost-blind gate as the single attach; 500 via faultOf; a foreign or unknown product id answers per-line refused NOT_FOUND (no oracle); no money written; Idempotency-Key by the global middleware and the set operation is repeat-safe (unchanged); 200 allow-list from a recorded scene; 0 trips budgeted; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/products/import": {
@@ -3155,11 +3307,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/lists/adopt": {
-   "hash": "17aa750372131c9d",
+   "hash": "dba1915afac8678d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
    "lifecycle": "stable"
   },
   "POST /api/products/starter-columns": {
@@ -3203,11 +3355,11 @@
    "lifecycle": "stable"
   },
   "POST /api/relationships/customers/:id/groups": {
-   "hash": "2e173065a6d44af7",
+   "hash": "6bb989bdfab21b84",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+   "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
    "lifecycle": "stable"
   },
   "POST /api/relationships/suppliers": {
@@ -3314,36 +3466,116 @@
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
    "lifecycle": "stable"
   },
-  "POST /api/signin/ask": {
-   "hash": "08511a0cb859c596",
+  "POST /api/service/:chit_id/pause": {
+   "hash": "bf0d8392fdfe8dfd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "hash": "48dc47a6c9199cc6",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "hash": "5daa1bf9f9753153",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "hash": "e07f8ecdff81287f",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/respond": {
+   "hash": "f8dd6871dea9f5fb",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/ask": {
+   "hash": "662e39b351cedc07",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/logout": {
+   "hash": "ad13be02969e3299",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/pin": {
+   "hash": "0c5f298180a45c18",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/renew": {
+   "hash": "c5769b1ea95958a8",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/sessions/revoke": {
+   "hash": "885f42d5770569ce",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
    "lifecycle": "stable"
   },
   "POST /api/signin/verify": {
-   "hash": "8638009db812fb3e",
+   "hash": "1405487d7309082d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/supplies": {
+   "hash": "3b16aa55740768ab",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/tax/compute": {
-   "hash": "cf1ed74ea06db463",
+   "hash": "db720732b4da51d8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/tax/rate": {
-   "hash": "49a51c284f6fbf44",
+   "hash": "f06e00970724f9d6",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/testing/cases/close": {
@@ -3435,43 +3667,43 @@
    "lifecycle": "stable"
   },
   "POST /api/till/alias": {
-   "hash": "1b393f3ac10694ac",
+   "hash": "8e1f08ad996388b1",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/catalogue": {
-   "hash": "0b022d0054a67cb1",
+   "hash": "3dd65abc975c9a01",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/close": {
-   "hash": "220f807a69f0ef45",
+   "hash": "1106ed553e2a249e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/diagnostic": {
-   "hash": "b8af7e64143ede8b",
+   "hash": "fe2b534fc88c7bbf",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/enrol": {
-   "hash": "d3d29fb2332f13de",
+   "hash": "b5d1d38fbdf85c1f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/flags": {
@@ -3482,20 +3714,28 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
    "lifecycle": "stable"
   },
-  "POST /api/till/offer-item": {
-   "hash": "d6ad7fcb17c22003",
+  "POST /api/till/listen": {
+   "hash": "5752509fbd70958f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+   "lifecycle": "stable"
+  },
+  "POST /api/till/offer-item": {
+   "hash": "247f38ec08cf16aa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
    "lifecycle": "stable"
   },
   "POST /api/till/pair": {
-   "hash": "b8944df3397c8a0b",
+   "hash": "fb7ee244234d4a45",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/pair/claim": {
@@ -3507,19 +3747,19 @@
    "lifecycle": "stable"
   },
   "POST /api/till/price": {
-   "hash": "3a149ca9b4b713e5",
+   "hash": "8801009fddb9db3b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/hide": {
-   "hash": "c041346835b390b6",
+   "hash": "44dca3831063363e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/screen-config": {
@@ -3539,27 +3779,35 @@
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/unhide": {
-   "hash": "dbbc8c561f7c33d7",
+   "hash": "177096623508ee58",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/rate": {
-   "hash": "7c92d0283563bc5a",
+   "hash": "ce2b954bd9af8e16",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#741 stage2",
    "lifecycle": "stable"
   },
-  "POST /api/till/reconcile": {
-   "hash": "fe056ad1a25bb4e7",
+  "POST /api/till/recheck": {
+   "hash": "dbafba055729b52d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-08 PR#995 head 576282a6: new till door re-read, 13 columns pass; 503 TILL_RECHECK_UNAVAILABLE right (read failed, nothing changed; not 409/422), registered with a shopkeeper sentence, closed RECHECK_ITEM_KEYS, strict body, till key via KEY_ROUTES",
+   "lifecycle": "stable"
+  },
+  "POST /api/till/reconcile": {
+   "hash": "bce8298f80a6601e",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/reward": {
@@ -3579,35 +3827,35 @@
    "lifecycle": "stable"
   },
   "POST /api/till/screens/rename": {
-   "hash": "035453d24223f376",
+   "hash": "e8dec48d423da49f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/screens/revoke": {
-   "hash": "a282304c2a83381b",
+   "hash": "5ff14e252baed951",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/shop": {
-   "hash": "ccac90af562b2eeb",
+   "hash": "cb54f167d22e1630",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/state": {
-   "hash": "4f046894dfe93c93",
+   "hash": "45a5375daea12e4d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/stock": {
@@ -3635,11 +3883,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/status": {
-   "hash": "994de2d1f6d92849",
+   "hash": "d21dfa8eab8017d4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler re-read after PPL-45 (#1058): the dispute-handler clear runs inside the removal transaction, a failure rolls the removal back and answers the one fixed 500 sentence; owner-only, caller-scoped 404, task routing 400s, reactivate refusals (503/429) as registered; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/tasks/route": {
@@ -3651,11 +3899,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/assign/:chit_id": {
-   "hash": "f54854bfb3bb4ac1",
+   "hash": "f3511ebd94056129",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#903",
    "lifecycle": "stable"
   },
   "PUT /api/actors/break": {
@@ -3675,27 +3923,27 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/settings": {
-   "hash": "89e1e089d74a0296",
+   "hash": "a28cbf5d48a25637",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: upsert and read-back under withEntity; same body, 400 and answer); 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/assist/catalogue-source": {
-   "hash": "04b1fcb826d849fd",
+   "hash": "e8f1198436967af4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/assist/container": {
-   "hash": "37f873526d513655",
+   "hash": "0a70997c357d3b62",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/catalogue-face": {
@@ -3739,11 +3987,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/status": {
-   "hash": "dbf1814d4f83fa55",
+   "hash": "b7cf1cbeb711e833",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1086 QA-131 stage2 re-review c91b880b+: all 13 columns true; from/use optional and closed (strict body, use enum resale|use|asset), 200 answer unchanged without them (test C); 409 status_from_changed, 409 use_refused, 400 status_use_unneeded registered with shopkeeper sentences and sent as problem details keeping current_status/expected_from; 409 now declared inline in the contract (was answered but undeclared); replay is the global idempotency middleware (test D)",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/use": {
@@ -3768,6 +4016,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+   "lifecycle": "stable"
+  },
+  "PUT /api/definitions/:id": {
+   "hash": "a98dacd9acb4fa31",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
    "lifecycle": "stable"
   },
   "PUT /api/entities/populations/:code/desk": {
@@ -3795,11 +4051,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/governance/country-setup": {
-   "hash": "084ac684a6c0b7b2",
+   "hash": "dec2d5f5962bac59",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
    "lifecycle": "stable"
   },
   "PUT /api/governance/profile": {
@@ -3819,11 +4075,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/integrations/streams": {
-   "hash": "1d8791f0df7ece41",
+   "hash": "9f7a6d4d41aa7697",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "PUT /api/network-design": {
@@ -3939,11 +4195,11 @@
    "lifecycle": "stable"
   },
   "GET /api/relationships/customers": {
-   "hash": "acc4288324db9478",
+   "hash": "2c73efd115705c67",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 round 2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
    "lifecycle": "stable"
   },
   "DELETE /api/schemas/fields/:field_key": {
@@ -4314,6 +4570,46 @@
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
    "lifecycle": "stable"
   },
+  "POST /api/network-offers/:id/release": {
+   "hash": "9989f2ed55f8ee35",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "hash": "bfdcb3d04502a11d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "hash": "cf6a90fd7197dad6",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "hash": "a15d2437c4075e3a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "hash": "49a8a895baf9860e",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
+   "lifecycle": "stable"
+  },
   "POST /api/notifications/dismiss": {
    "hash": "e8e590e17a17c1da",
    "names_clear": true,
@@ -4338,12 +4634,220 @@
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
    "lifecycle": "stable"
   },
+  "PUT /api/network-offers/policy": {
+   "hash": "a63f82874ea89e8f",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+   "lifecycle": "stable"
+  },
   "PUT /api/quick-keys/screen-config/default": {
    "hash": "7ff641dccc3e9005",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:id/children": {
+   "hash": "e0208c65b6d7d905",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: stranger and unknown id answer 404 NOT_FOUND, held chit with no child keeps 200 count 0, one statement; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "POST /api/supplies/:id/issue": {
+   "hash": "062ce99b9f77f313",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: unknown or another shop id answers 404 NOT_FOUND like PATCH /:id; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "POST /api/supplies/purchase": {
+   "hash": "bd2e466d1f7552ff",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/costs": {
+   "hash": "f308778e43b196af",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/raida": {
+   "hash": "ed19d2977593cc08",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/register/walk/:from": {
+   "hash": "ac296de840414378",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/pulse": {
+   "hash": "77f9463c104b2ef9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "PUT /api/service/:chit_id": {
+   "hash": "4c3d96246619a71b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/catalogue-overlay": {
+   "hash": "8c5c87ac7afd70af",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2 re-review c15cf4e8: all 13 columns true; overlay 500 scene reaches the catch with no database text, no false cannot_answer left; replay unchanged (no route or lib change since 663/663)",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "hash": "ac97e40e210c820c",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/catalogue-sources": {
+   "hash": "23a86ac3e2eae4f4",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/gaps": {
+   "hash": "ce58ab833cb528f2",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/resolve": {
+   "hash": "c6cf6f259a29b007",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/standards": {
+   "hash": "37abe18e7e11e8b6",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/assist/whoami": {
+   "hash": "b094a46a4bad0c35",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "PUT /api/assist/region-override": {
+   "hash": "5899c1359da94cf9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "GET /api/entities/constitutions": {
+   "hash": "40fdcd90b8ecda55",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "PATCH /api/entities/:id/erase": {
+   "hash": "4ba9104804d71d4e",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "DELETE /api/products/:id/schedule/:sid": {
+   "hash": "287f08d2f52034c4",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: cancel is scoped by entity_id from the token, so another shop sid answers byte for byte as an unknown one (200 cancelled:false, the same weaker reading the signed GET sibling holds, with a registered cannot_answer for 404/400); no existence oracle; 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "hash": "82ed2a6878097cdb",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403 CHIT_NOT_PERMITTED); web callers read the server words, none branches on this 403",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/messages": {
+   "hash": "e47df5423efd75e7",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404, a rail verdict on a held copy stays its own 403 (refuseUnlessHeld); web composer shows the server words",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "hash": "db87c3b5029337bc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; foreign and unknown chit id both answer the one 404 NOT_FOUND (was 403); web sheet shows its read-failed sentence, not blank",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/disputes": {
+   "hash": "dac6f3853a1f6aa9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404 (was 403); web raise toast shows the failure, none branches on 403",
+   "lifecycle": "stable"
+  },
+  "GET /api/attachments/:id": {
+   "hash": "2e53c392e8f73a83",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; bytes route, noKeys is the right allow-list (no keys to list); answers unchanged",
+   "lifecycle": "stable"
+  },
+  "GET /api/events/stream": {
+   "hash": "f81c8bff83bce25a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; event stream, noKeys is the right allow-list; answers unchanged",
    "lifecycle": "stable"
   }
  }

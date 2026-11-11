@@ -56,4 +56,30 @@ it('ORD-65: not a refusal unless it says so: a books refusal with no status, a r
   assert.strictEqual(K.known(Object.assign(new Error('x'), { code: 'X', refused: true, status: 500 })), null);
   assert.strictEqual(K.known(Object.assign(new Error('x'), { code: 'X', status: 422 })), null);
 });
+it('PLT-86: a connection lost in flight (class 08, 57P01-03, socket codes) answers 503 DB_CONNECTION_LOST, not 500', () => {
+  for (const code of ['08000', '08003', '08006', '57P01', '57P02', '57P03', 'ECONNRESET', 'EPIPE', 'ETIMEDOUT']) {
+    const r = K.known(Object.assign(new Error('Connection terminated unexpectedly'), { code }));
+    assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', code + ' must answer 503 DB_CONNECTION_LOST');
+    assert.ok(!/terminated/.test(r.body.message), 'the driver words never go back');
+  }
+  assert.strictEqual(K.known(Object.assign(new Error('x'), { code: '23505' })), null);
+  assert.strictEqual(K.known(Object.assign(new Error('x'), { code: '57014' })).body.code, 'STATEMENT_TIMEOUT');
+});
+it('PLT-86: the driver\'s own "Connection terminated unexpectedly" (message only, no code, stack from pg) answers 503; the same words from elsewhere do not', () => {
+  const fromPg = new Error('Connection terminated unexpectedly');
+  fromPg.stack = 'Error: Connection terminated unexpectedly\n    at Connection.<anonymous> (C:\\app\\node_modules\\pg\\lib\\client.js:136:73)';
+  const r = K.known(fromPg);
+  assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', 'a killed pg socket must answer 503');
+  assert.strictEqual(K.known(new Error('Connection terminated unexpectedly')), null, 'not from pg: left alone');
+});
+it('PLT-86 follow-up: a query on a client whose socket already died ("not queryable", message only, stack from pg) answers 503, not 500', () => {
+  for (const words of ['Client has encountered a connection error and is not queryable', 'Client was closed and is not queryable']) {
+    const dead = new Error(words);
+    dead.stack = 'Error: ' + words + '\n    at Client.query (/app/node_modules/pg/lib/client.js:702:45)';
+    const r = K.known(dead);
+    assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', '"' + words + '" must answer 503 DB_CONNECTION_LOST');
+    assert.ok(!/queryable/.test(r.body.message), 'the driver words never go back');
+    assert.strictEqual(K.known(new Error(words)), null, 'not from pg: left alone');
+  }
+});
 console.log(pass + ' checks');

@@ -106,8 +106,9 @@ ok((src.match(/_raiser: ru\.raised_by_id \|\| row\.created_by \|\| null/g) || []
   'and both PATCH handlers fall back the same way, or the return leg on an older incident is owed to nobody');
 ok(/SELECT d\.definition_id, d\.name, d\.current_version/.test(src),
   'the PATCH handlers read d.name — a notification that names nothing cannot be acted on');
-ok(/delete out\._ref;\s*delete out\._raiser/.test(src),
-  'and the carrier fields are stripped before the reply: the client is answered about the incident');
+/* the carriers (_ref, _raiser, _screen) no longer get deleted off `out`: both PATCH handlers now build the reply from NAMED fields, so a carrier cannot reach the client; what is pinned is that no reply spreads or returns `out` whole */
+ok((src.match(/res\.json\(\{ ok: true, state: out\.state, (?:shelf|severity)/g) || []).length === 2 && !/res\.json\(\s*out\s*\)/.test(src) && !/res\.json\(\{[^}]*\.\.\.out\b/.test(src),
+  'and the carrier fields never reach the reply: both PATCH handlers answer with named fields, never `out` whole');
 
 console.log('\n' + (bad ? '✗ ' + bad + ' failure(s)' : '✓ the loop closes, on the right person') + '\n');
 process.exit(bad ? 1 : 0);

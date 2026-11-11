@@ -18,10 +18,14 @@
     },
     "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 401 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_customer": true,
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "DELETE /api/channels/:id": {
       "file": "channels.js",
@@ -212,7 +216,7 @@
     "GET /api/actors/settings": {
       "file": "actors.js",
       "trips": 2,
-      "wire": 2,
+      "wire": 5,
       "fired": true,
       "status": 200
     },
@@ -232,10 +236,12 @@
     },
     "GET /api/assist/catalogue-source/:key": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_path": "/api/assist/catalogue-source/beta-royale-play@v1"
     },
     "GET /api/assist/catalogue-sources": {
       "file": "assist.js",
@@ -246,10 +252,22 @@
     },
     "GET /api/assist/container/:id": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "container_id": "00000000-0000-4000-8000-000000000001",
+        "owner_entity_id": "e1",
+        "source_key": "k",
+        "name": "n",
+        "current_version": 1,
+        "version": 1,
+        "content": {},
+        "schema": {},
+        "schema_version": 1,
+        "minted_at": "2026-11-07"
+      }
     },
     "GET /api/assist/erp-handoffs": {
       "file": "assist.js",
@@ -292,10 +310,30 @@
     },
     "GET /api/assist/resolve": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_path": "/api/assist/resolve?container=a%2Fb&region=AU",
+      "fixture_row": {
+        "container_id": "a/b",
+        "owner_entity_id": "00000000-0000-4000-8000-000000000001",
+        "source_key": "s",
+        "name": "N",
+        "current_version": 1,
+        "version": 1,
+        "content": {},
+        "schema": {},
+        "schema_version": null,
+        "minted_at": "2026-10-01T00:00:00.000Z",
+        "overrides": {},
+        "region_code": "AU",
+        "currency": "AUD",
+        "units": "metric",
+        "language": "en",
+        "jurisdiction": {}
+      }
     },
     "GET /api/assist/standards": {
       "file": "assist.js",
@@ -618,17 +656,23 @@
     },
     "GET /api/catalogue/:bridge_id/capture-fields": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open"
+      }
     },
     "GET /api/catalogue/:bridge_id/my-documents": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 401 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_customer": true
     },
     "GET /api/catalogue/:bridge_id/my-orders": {
       "file": "catalogue.js",
@@ -639,10 +683,15 @@
     },
     "GET /api/catalogue/:bridge_id/support/preview": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open"
+      }
     },
     "GET /api/catalogue/enquiry": {
       "file": "catalogue.js",
@@ -661,10 +710,16 @@
     },
     "GET /api/catalogue/network-store/:networkId": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 26,
+      "wire": 56,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
     },
     "GET /api/catalogue/network/:bridge_id": {
       "file": "catalogue.js",
@@ -749,10 +804,22 @@
     },
     "GET /api/chits/:chit_id/use": {
       "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_row": {
+        "chit_id": "00000000-0000-4000-8000-000000000001",
+        "sender_entity_id": "00000000-0000-4000-8000-0000000000aa",
+        "purpose": "invoice",
+        "current_status": "pending",
+        "all_recipients": [],
+        "business_json": {},
+        "line_items": [],
+        "summary_json": {},
+        "entity_id": "00000000-0000-4000-8000-000000000002"
+      }
     },
     "GET /api/chits/:id/children": {
       "file": "chits.js",
@@ -958,10 +1025,10 @@
     "GET /api/crm/parties": {
       "file": "crm.js",
       "trips": 4,
-      "wire": 14,
+      "wire": 15,
       "fired": true,
       "status": 200,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-in 2026-11-06; wire +1 on 7 Nov 2026 (SEC-130 residual): the party_contact schema ask, cached after the first call"
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",
@@ -1455,10 +1522,11 @@
     },
     "GET /api/integrations/docs/:id": {
       "file": "integrations.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "fixture_path": "/api/integrations/docs/tally"
     },
     "GET /api/integrations/download/:id": {
       "file": "integrations.js",
@@ -1556,8 +1624,8 @@
     },
     "GET /api/kyb/yourself": {
       "file": "kyb.js",
-      "trips": 16,
-      "wire": 34,
+      "trips": 17,
+      "wire": 35,
       "fired": true,
       "status": 200,
       "basis": "live from sit-in 2026-11-06",
@@ -1961,10 +2029,18 @@
     },
     "GET /api/testing/cmdb/:ci": {
       "file": "testing.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_path": "/api/testing/cmdb/CAP-ADMIN",
+      "fixture_row": {
+        "name": "CAP-ADMIN",
+        "current_version": 1,
+        "version": 1,
+        "rules": {},
+        "created_at": "2026-11-07"
+      }
     },
     "GET /api/testing/coverage": {
       "file": "testing.js",
@@ -2289,10 +2365,21 @@
     },
     "PATCH /api/entities/:id/erase": {
       "file": "entities.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_identity": {
+        "identity_id": "e1",
+        "identity_type": "entity",
+        "entity_id": "e1",
+        "owner_scope": "platform"
+      },
+      "fixture_row": {
+        "sealed": false,
+        "identity_id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "PATCH /api/entities/me/exposure": {
       "file": "entities.js",
@@ -2509,10 +2596,13 @@
     },
     "POST /api/assist/gap": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "q": "how do I pay a bill"
+      }
     },
     "POST /api/assist/publish": {
       "file": "assist.js",
@@ -2523,10 +2613,11 @@
     },
     "POST /api/assist/resolve": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 410 (a floor); needs a live measure on sit-in"
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 410,
+      "floor_is_cost": "retired on purpose: it answers 410 ASSIST_REVIEW_RETIRED before any query (routes/assist.js, the handler is one problem() call), so the 410 the stub gets is the whole cost"
     },
     "POST /api/attachments": {
       "file": "attachments.js",
@@ -2698,10 +2789,11 @@
     },
     "POST /api/books/gst/pay": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-08"
     },
     "POST /api/books/loans": {
       "file": "books.js",
@@ -2794,10 +2886,11 @@
     },
     "POST /api/books/payments/:id/confirm": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 5,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-08"
     },
     "POST /api/books/payments/:id/propose": {
       "file": "books.js",
@@ -2956,24 +3049,58 @@
     },
     "POST /api/catalogue/:bridge_id/order/start": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "trips": 5,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com"
+      },
+      "fixture_headers": {
+        "idempotency-key": "rt-order-start-1"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
     },
     "POST /api/catalogue/:bridge_id/support": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 12,
+      "wire": 38,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com",
+        "otp": "123456",
+        "observed": "It would not open"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop",
+        "otp_code": "123456",
+        "otp_expires_at": "2999-01-01T00:00:00Z"
+      }
     },
     "POST /api/catalogue/:bridge_id/support/start": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
     },
     "POST /api/catalogue/enquiry/:item_id": {
       "file": "catalogue.js",
@@ -3160,10 +3287,22 @@
     },
     "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
       "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "dispute_id": "00000000-0000-4000-8000-000000000003"
+      },
+      "fixture_row": {
+        "capabilities": [
+          "register"
+        ],
+        "raida_id": "00000000-0000-4000-8000-000000000001",
+        "dispute_id": "00000000-0000-4000-8000-000000000003",
+        "chit_id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "POST /api/chits/:chit_id/reprice": {
       "file": "chits.js",
@@ -3997,6 +4136,13 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/products/categories/bulk": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
     "POST /api/products/import": {
       "file": "products.js",
       "trips": 0,
@@ -4015,10 +4161,21 @@
     },
     "POST /api/products/lists/adopt": {
       "file": "products.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "basis": "stub floor: the nothing-selected answer (200, no rows written); the full adoption reads and writes more; live measure on sit-in pending",
+      "fixture_body": {
+        "list": "veg",
+        "names": [
+          {
+            "name": "no such product",
+            "unit": "kg"
+          }
+        ]
+      }
     },
     "POST /api/products/starter-columns": {
       "file": "products.js",
@@ -4209,10 +4366,14 @@
     },
     "POST /api/signin/ask": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 7,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "id": "a@x.com"
+      }
     },
     "POST /api/signin/logout": {
       "file": "signin.js",
@@ -4224,17 +4385,37 @@
     },
     "POST /api/signin/pin": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "pin": "1234",
+        "confirm_pin": "1234"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "identity_type": "entity",
+        "email": "a@x.com",
+        "display_name": "Shop",
+        "bridge_id": "shop",
+        "pin_hash": "$2a$04$8CFT04WOcd2HCI4LRRgE7.THJArlYjwRAyZF4Jrim9VFvdPmSMtDS",
+        "status": "active",
+        "policy_flags": {}
+      }
     },
     "POST /api/signin/renew": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {},
+      "fixture_row": {
+        "policy_flags": {}
+      }
     },
     "POST /api/signin/sessions/revoke": {
       "file": "signin.js",
@@ -4245,24 +4426,57 @@
     },
     "POST /api/signin/verify": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 6,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "username": "till@shop",
+        "pin": "1234"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "identity_type": "actor",
+        "email": "a@x.com",
+        "display_name": "Shop",
+        "bridge_id": "shop",
+        "pin_hash": "$2a$04$8CFT04WOcd2HCI4LRRgE7.THJArlYjwRAyZF4Jrim9VFvdPmSMtDS",
+        "status": "active",
+        "policy_flags": {},
+        "actor_key": "till",
+        "break_status": null,
+        "pin_attempts": 0,
+        "pin_locked_at": null,
+        "parent_entity_id": "00000000-0000-4000-8000-000000000001",
+        "user_id": "shop",
+        "actor_role": "cashier"
+      }
     },
     "POST /api/simulator/feedback": {
       "file": "simulator.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "why": "stub answered 400 (a floor); needs a live measure on sit-in",
+      "status": 200,
+      "fixture_body": {
+        "message": "hello"
+      }
     },
     "POST /api/simulator/lead": {
       "file": "simulator.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "name": "Test Visitor",
+        "email": "v@example.com"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "POST /api/supplies": {
       "file": "supplies.js",
@@ -4405,10 +4619,27 @@
     },
     "POST /api/till/catalogue": {
       "file": "till.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 7,
+      "wire": 19,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "products": [
+          {
+            "name": "Tea",
+            "price": 10
+          }
+        ]
+      },
+      "fixture_row": {
+        "item_id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "item_data": {},
+        "category_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Tea",
+        "currency_code": "INR"
+      }
     },
     "POST /api/till/close": {
       "file": "till.js",
@@ -4452,10 +4683,28 @@
     },
     "POST /api/till/offer-item": {
       "file": "till.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "offer_id": "00000000-0000-4000-8000-000000000001",
+        "item_id": "00000000-0000-4000-8000-000000000001",
+        "on": true
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Offer",
+        "current_version": 1,
+        "status": "live",
+        "kind": "offer",
+        "rules": {
+          "applies_to": {
+            "item_ids": []
+          }
+        }
+      }
     },
     "POST /api/till/pair": {
       "file": "till.js",
@@ -4518,6 +4767,15 @@
       "fired": true,
       "status": 400,
       "extra": true
+    },
+    "POST /api/till/recheck": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true,
+      "basis": "CTR-212 S1: stub floor (answers 400 on an empty body). Real: the rows (1 transaction), the category master, the tax shelf, and the adoption read only when a network line is asked; live measure on sit-in pending"
     },
     "POST /api/till/reconcile": {
       "file": "till.js",
@@ -4640,7 +4898,7 @@
     "PUT /api/actors/settings": {
       "file": "actors.js",
       "trips": 2,
-      "wire": 2,
+      "wire": 5,
       "fired": true,
       "status": 200,
       "extra": true
@@ -4849,10 +5107,29 @@
     },
     "PUT /api/testing/cmdb/:ci": {
       "file": "testing.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "fixture_path": "/api/testing/cmdb/CAP-ADMIN",
+      "fixture_body": {
+        "ci": "CAP-ADMIN",
+        "title": "Admin",
+        "type": "Capability module",
+        "system": "ChitBridge web app",
+        "summary": "Loads on first open of MIS / Profile / Settings.",
+        "source": "generated",
+        "maturity": {
+          "now": 2,
+          "target": 3,
+          "set": "legend"
+        }
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {}
+      }
     }
   }
 }

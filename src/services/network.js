@@ -6,6 +6,7 @@
  */
 const { pool, withTx } = require('../db');
 const bridge = require('../lib/bridgeId');
+const ctpaddress = require('../../lib/ctpaddress'); // NET-77: the one reader of "is this business on another installation"
 const chit = require('./chit'); // NET-02 §F: real in-flight check
 const err = (status, message, code) => Object.assign(new Error(message), { status, code });
 /**
@@ -23,7 +24,8 @@ const err = (status, message, code) => Object.assign(new Error(message), { statu
  *   disconnect       the parent or the child
  *
  * ⭐ TWO KINDS OF EDGE. `governance` is the tree: one live parent, and approving it moves the child's subtree under the
- * parent. `commercial` is a brand's network of stores: a store may hold many (one per brand — b261), and it never moves
+ * parent (and disconnecting it moves the subtree back to its own root): the one consented door through the root-immutable trigger, NET-93 reRootGuard.
+ * `commercial` is a brand's network of stores: a store may hold many (one per brand — b261), and it never moves
  * the tree. Membership reads both (lib/network-membership.js).
  */
 const TREE = 'governance';
@@ -90,8 +92,8 @@ async function nodeOf(entity_id, { ensure = false } = {}, client = pool) {
   } = await client.query(`select * from cb_entity where bridge_id = $1`, [me.bridge_id]);
   return made || null;
 }
-/** a business named by its handle or bridge id → its node (made a root if it has none) */
-async function nodeOfHandle(ref, client = pool) {
+/** the identity a handle or bridge id names (a read, nothing written), or null */
+async function identityOfHandle(ref, client = pool) {
   const {
     rows: [i]
   } = await client.query(
@@ -99,7 +101,12 @@ async function nodeOfHandle(ref, client = pool) {
       where (lower(user_id) = lower($1) or upper(bridge_id) = upper($1)) and identity_type = 'entity' and status = 'active'`,
     [String(ref || '')]
   );
-  return i ? nodeOf(i.identity_id, { ensure: true }, client) : null;
+  return i ? i.identity_id : null;
+}
+/** a business named by its handle or bridge id → its node (made a root if it has none) */
+async function nodeOfHandle(ref, client = pool) {
+  const identityId = await identityOfHandle(ref, client);
+  return identityId ? nodeOf(identityId, { ensure: true }, client) : null;
 }
 async function hasLiveParent(childId, client = pool) {
   const { rows } = await client.query(`select 1 from cb_edge where child_id=$1 and type = $2 and state in ('active','suspended') limit 1`, [childId, TREE]);
@@ -144,27 +151,77 @@ const _checkEdge = (operation, edge, actor) => {
 
 // ---- LINK ----
 /**
+ * NET-77 · a business on ANOTHER installation is only a stub row here. An edge to it would live on this server alone (the far server answers
+ * EDGE_NOT_FOUND; this one would list it as asked forever, the RAIL-112 pattern). So the ask is refused in words and nothing is saved.
+ * ⚠️ TEMPORARY: NET-79 is the real fix (the ask travels as a CTP event and the far side holds its copy). When it lands, delete this refusal.
+ * The remote test is the one reader ctpaddress.resolve (the stamp, inactive installations included); a local business answers local.
+ */
+async function refuseRemote(identityIds) {
+  for (const identityId of identityIds) {
+    if (!identityId) throw err(409, 'We could not tell where that business is hosted, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+    const place = await ctpaddress.resolve(identityId);
+    if (place.local === false) throw err(409, 'That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+    /* the same rule as lib/mint.refuseUnresolved: a business whose installation could not be read may belong to a remote one, so it is not asked either */
+    if (place.resolved === false) throw err(409, 'We could not read where that business is hosted just now, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+  }
+}
+/** refuseRemoteNodes(nodes) — the same refusal for nodes already read: each node's identity is looked up by its bridge id (none found = refused, fail closed) */
+async function refuseRemoteNodes(nodes) {
+  const ids = [];
+  for (const node of nodes) {
+    const {
+      rows: [identityRow]
+    } = await pool.query(`select identity_id from identities where upper(bridge_id) = upper($1) and identity_type = 'entity'`, [node.bridge_id]);
+    ids.push(identityRow && identityRow.identity_id);
+  }
+  await refuseRemote(ids);
+}
+/** a business named by handle, refused if remote BEFORE any node is made for it (a refused ask writes nothing) → its node, or null */
+async function askableNodeOfHandle(handle) {
+  const identityId = await identityOfHandle(handle);
+  if (!identityId) return null;
+  await refuseRemote([identityId]);
+  return nodeOf(identityId, { ensure: true });
+}
+/** the network end of an ask: named by node id or handle, else the actor itself */
+async function _askedParent({ parentId, parentHandle }, actor) {
+  if (parentId) return getById(parentId);
+  return parentHandle ? askableNodeOfHandle(parentHandle) : actor;
+}
+/** the business end of an ask: named by node id, handle or bridge id, else the actor when the actor is not the parent */
+async function _askedChild({ childId, childHandle, childBridgeId }, parent, actor) {
+  if (childId) return getById(childId);
+  if (childHandle) return askableNodeOfHandle(childHandle);
+  if (childBridgeId) return _full(childBridgeId);
+  return String(parent.id) !== String(actor.id) ? actor : null;
+}
+/**
+ * NET-93 · the ONE tree-place check, read by the ask (fail early, nothing saved) and by approve (the safety): is the parent already inside the child's own tree
+ * (a business cannot become the child of its own member)? Throws 409 CYCLE in a plain sentence; answers { deep }: the child is itself inside another tree.
+ */
+async function refuseCycle(client, parent, child) {
+  const {
+    rows: [{ bad, deep }]
+  } = await client.query(`select (($1::ltree) <@ ($2::ltree)) as bad, nlevel($2::ltree) > 1 as deep`, [parent.path, child.path]);
+  if (bad) throw err(409, 'That would put a network under one of its own members, which loops. Nothing was saved.', 'CYCLE');
+  return { deep };
+}
+/**
  * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
  * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
  */
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
   if ([TREE, 'commercial'].indexOf(type) < 0) throw err(400, 'type must be governance or commercial', 'BAD_TYPE');
-  const parent = parentId ? await getById(parentId) : parentHandle ? await nodeOfHandle(parentHandle) : actor;
+  const parent = await _askedParent({ parentId, parentHandle }, actor);
   if (!parent) throw err(404, 'network not found', 'PARENT_NOT_FOUND');
-  const child = childId
-    ? await getById(childId)
-    : childHandle
-      ? await nodeOfHandle(childHandle)
-      : childBridgeId
-        ? await _full(childBridgeId)
-        : String(parent.id) !== String(actor.id)
-          ? actor
-          : null;
+  const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor);
   if (!child) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   if (child.id === parent.id) throw err(400, 'cannot connect to self', 'SELF');
   _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
+  await refuseRemoteNodes([parent, child]);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
+  if (type === TREE) await refuseCycle(pool, parent, child);
   const {
     rows: [open]
   } = await pool.query(`select * from cb_edge where parent_id=$1 and child_id=$2 and type=$3 and state in ('requested','active','suspended') limit 1`, [
@@ -180,6 +237,33 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
   );
   return rows[0];
 }
+/**
+ * NET-93 · the ONE door through b843's root-immutable trigger (opened by b848). Joining a network (approve a governance edge) and leaving it (disconnect)
+ * move a whole subtree to another root, which the trigger refuses unless this transaction names the business's OWN root (its label) in cb.net_reroot.
+ * Called only after the edge's rule (mayAct: the child consented, or a party disconnects); the setting lasts for this transaction alone.
+ * Before b843 and b848 are run the setting is simply never read, so this is safe on a database without the trigger.
+ */
+async function reRootGuard(dbClient, ownPath) {
+  await dbClient.query(`select set_config('cb.net_reroot', subpath($1::ltree, 0, 1)::text, true)`, [ownPath]);
+}
+/** approve, tree edge: the child (a claimed root with no live parent) and its subtree move under the parent; a cycle or a node already inside a tree is a 409 with its code */
+async function joinTree(dbClient, edge) {
+  const parent = await getById(edge.parent_id, dbClient);
+  const {
+    rows: [child]
+  } = await dbClient.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
+  if (!child.claimed) throw err(409, 'child is an unclaimed stub — cannot consent', 'UNCLAIMED');
+  if (await hasLiveParent(child.id, dbClient)) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
+  const { deep } = await refuseCycle(dbClient, parent, child);
+  // NET-93: only a business that is its own network can join one; a node already inside a tree (a stale edge) never walks out of it by this door
+  if (deep) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
+  await reRootGuard(dbClient, child.path);
+  await dbClient.query(
+    `update cb_entity set path = ($1::ltree) || subpath(path, nlevel($2::ltree)-1)
+     where path <@ ($2::ltree)`,
+    [parent.path, child.path]
+  );
+}
 async function approve({ edgeId }, actor) {
   return withTx(async (c) => {
     const {
@@ -188,24 +272,7 @@ async function approve({ edgeId }, actor) {
     if (!edge) throw _edgeGone();
     _checkEdge('approve', edge, actor);
     if (edge.state !== 'requested') throw err(409, `cannot approve from ${edge.state}`, 'BAD_STATE');
-    if (edge.type === TREE) {
-      const parent = await getById(edge.parent_id, c);
-      const {
-        rows: [child]
-      } = await c.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
-      if (!child.claimed) throw err(409, 'child is an unclaimed stub — cannot consent', 'UNCLAIMED');
-      if (await hasLiveParent(child.id, c)) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
-      const {
-        rows: [{ bad }]
-      } = await c.query(`select (($1::ltree) <@ ($2::ltree)) as bad`, [parent.path, child.path]);
-      if (bad) throw err(409, 'would create a cycle (parent under child)', 'CYCLE');
-      // reparent child subtree under parent (works whether child is a root or not)
-      await c.query(
-        `update cb_entity set path = ($1::ltree) || subpath(path, nlevel($2::ltree)-1)
-         where path <@ ($2::ltree)`,
-        [parent.path, child.path]
-      );
-    }
+    if (edge.type === TREE) await joinTree(c, edge);
     const {
       rows: [updated]
     } = await c.query(`update cb_edge set state='active', approved_by=$2, decided_at=now() where id=$1 returning *`, [edgeId, actor.id]);
@@ -220,6 +287,10 @@ async function approve({ edgeId }, actor) {
     return updated;
   });
 }
+/** NET-EDGE: the keys an edge answer names (docs/contracts/api-output-shapes.json, the five connections/:id routes) - a column added to cb_edge never reaches the answer unasked */
+const EDGE_KEYS = ['id', 'parent_id', 'child_id', 'type', 'state', 'requested_by', 'in_flight', 'created_at'];
+const EDGE_ASKED_KEYS = ['id', 'parent_id', 'child_id', 'type', 'state', 'requested_by'];
+const edgeView = (row, keys = EDGE_KEYS) => (row ? Object.fromEntries(keys.map((key) => [key, row[key]])) : row);
 async function _edge(edgeId) {
   const {
     rows: [edge]
@@ -280,6 +351,7 @@ async function disconnect({ edgeId, settle = false }, actor) {
         rows: [child]
       } = await c.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
       // detach: re-root the child subtree to its own root
+      await reRootGuard(c, child.path);
       await c.query(`update cb_entity set path = subpath(path, nlevel($1::ltree)-1) where path <@ ($1::ltree)`, [child.path]);
     }
     const {
@@ -373,6 +445,9 @@ async function claim(entityId, actorEntityId) {
   throw _nodeGone();
 }
 module.exports = {
+  EDGE_KEYS,
+  EDGE_ASKED_KEYS,
+  edgeView,
   register,
   lookup,
   getById,

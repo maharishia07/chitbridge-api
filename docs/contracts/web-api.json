@@ -1646,7 +1646,8 @@
       "reopen": {
        "may": false,
        "why": null
-      }
+      },
+      "lock_trail": []
      }
     ]
    },
@@ -3315,6 +3316,7 @@
        "returns": 0,
        "gross": 1100,
        "refunds": 0,
+       "reduced": 0,
        "expenseCount": 0,
        "expenses": 0,
        "total": 1100,
@@ -6499,6 +6501,7 @@
   },
   "POST /api/tax/compute": {
    "status": 200,
+   "note": "ACC-191: money.tax, cgst, sgst, igst, cess, vat (and lines[].tax, by_rate[].tax) are a number OR null. null = not decided (supply unknown, a rate above 0, no head figure); the total stays the price. A reader words null as not decided, never 0.00.",
    "example": {
     "engine": "chitbridge-tax",
     "version": 1,
@@ -6604,6 +6607,32 @@
         "amount_minor": 26600
        }
       ],
+      "heads": [
+       {
+        "level": "total",
+        "currency": "INR",
+        "minor": {
+         "CgstVal": 0,
+         "SgstVal": 0,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "TaxVal": 0
+        }
+       },
+       {
+        "level": "slab",
+        "rate": 0,
+        "base_minor": 0,
+        "currency": "INR",
+        "minor": {
+         "CgstVal": 0,
+         "SgstVal": 0,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "TaxVal": 0
+        }
+       }
+      ],
       "lines": [
        {
         "line": 0,
@@ -6693,6 +6722,32 @@
          "name": "gross",
          "amount": 266,
          "amount_minor": 26600
+        }
+       ],
+       "heads": [
+        {
+         "level": "total",
+         "currency": "INR",
+         "minor": {
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "TaxVal": 0
+         }
+        },
+        {
+         "level": "slab",
+         "rate": 0,
+         "base_minor": 0,
+         "currency": "INR",
+         "minor": {
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "TaxVal": 0
+         }
         }
        ],
        "lines": [

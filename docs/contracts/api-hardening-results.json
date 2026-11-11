@@ -59,8 +59,7 @@
   },
   "POST /api/entities/register": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -99,8 +98,7 @@
   },
   "PATCH /api/entities/policy": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -124,12 +122,10 @@
   },
   "PATCH /api/entities/me/prefs/:kind": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    }
   },
   "PATCH /api/entities/me/exposure": {
@@ -147,8 +143,7 @@
   },
   "PATCH /api/entities/me/locale": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -265,7 +260,8 @@
   },
   "POST /api/chits/send": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -558,10 +554,6 @@
   "GET /api/chits/:chit_id/catalogue-overlay": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
    }
   },
   "POST /api/chits/:chit_id/payment": {
@@ -576,8 +568,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -588,8 +579,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 200, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/chits/:chit_id/books-request": {
@@ -623,8 +613,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/messages": {
@@ -633,8 +622,7 @@
     "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "POST /api/chits/:chit_id/disputes": {
@@ -646,8 +634,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/disputes": {
@@ -656,8 +643,7 @@
     "why": "not reached: answered 500"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:chit_id/diagnosis": {
@@ -809,8 +795,7 @@
     "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:id/trace": {
@@ -921,20 +906,12 @@
    }
   },
   "POST /api/offers/evaluate": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
    }
   },
   "POST /api/offers/explain": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
@@ -951,18 +928,13 @@
    }
   },
   "POST /api/pricing/price": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
    "output_allowlist": {
     "pass": true
    }
   },
   "POST /api/invoice/build": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1027,8 +999,7 @@
   },
   "POST /api/integrations/books": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1046,12 +1017,10 @@
   },
   "PUT /api/integrations/streams": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/integrations/books/skip": {
@@ -1093,7 +1062,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/till/snapshot": {
@@ -1121,8 +1090,7 @@
   },
   "POST /api/till/diagnostic": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1131,8 +1099,7 @@
   },
   "POST /api/till/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1141,8 +1108,7 @@
   },
   "POST /api/till/state": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1191,8 +1157,7 @@
   },
   "POST /api/till/quick-keys/hide": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1201,8 +1166,7 @@
   },
   "POST /api/till/quick-keys/unhide": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1231,8 +1195,7 @@
   },
   "POST /api/till/offer-item": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1241,11 +1204,19 @@
   },
   "POST /api/till/price": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
+   }
+  },
+  "POST /api/till/recheck": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
    }
   },
   "POST /api/till/rate": {
@@ -1271,8 +1242,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 400, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/till/reward/claim": {
@@ -1284,14 +1254,12 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 400, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/till/pair": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1299,8 +1267,7 @@
   },
   "POST /api/till/enrol": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1309,8 +1276,7 @@
   },
   "POST /api/till/pair/claim": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1324,8 +1290,7 @@
   },
   "POST /api/till/screens/revoke": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1334,8 +1299,7 @@
   },
   "POST /api/till/screens/rename": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1344,8 +1308,7 @@
   },
   "POST /api/till/reconcile": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1358,8 +1321,7 @@
   },
   "POST /api/till/shop": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1372,8 +1334,7 @@
   },
   "POST /api/till/catalogue": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1407,8 +1368,7 @@
   },
   "POST /api/till/alias": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1416,8 +1376,7 @@
   },
   "POST /api/till/listen": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1588,8 +1547,7 @@
   },
   "GET /api/network-offers": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "PUT /api/network-offers/policy": {
@@ -1597,8 +1555,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/network-offers/catalogue/publish": {
@@ -1625,7 +1582,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    }
   },
   "POST /api/network-offers/:id/release": {
@@ -1666,8 +1623,7 @@
   },
   "POST /api/signin/renew": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1676,8 +1632,7 @@
   },
   "POST /api/signin/logout": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1695,18 +1650,16 @@
   },
   "POST /api/signin/sessions/revoke": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/signin/ask": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1715,8 +1668,7 @@
   },
   "POST /api/signin/verify": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1725,8 +1677,7 @@
   },
   "POST /api/signin/pin": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2001,7 +1952,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 503"
    }
   },
   "POST /api/identity/documents/:scheme/code": {
@@ -2563,7 +2514,7 @@
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -2649,6 +2600,15 @@
    },
    "output_allowlist": {
     "pass": true
+   }
+  },
+  "POST /api/products/categories/bulk": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
    }
   },
   "POST /api/products/bulk-update": {
@@ -2741,7 +2701,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "why": "not reached: answered 400"
    },
    "foreign_id_404": {
     "pass": true
@@ -3050,8 +3010,7 @@
   },
   "POST /api/attachments": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3180,13 +3139,12 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "GET /api/network/entities/lookup": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "POST /api/network/entities/:id/claim": {
@@ -3195,37 +3153,34 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "GET /api/network/place": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "GET /api/network/entities/:id/subtree": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "GET /api/network/entities/:id/connections": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections": {
@@ -3234,7 +3189,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 409"
    }
   },
   "POST /api/network/connections/:id/approve": {
@@ -3243,11 +3198,10 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 403"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/decline": {
@@ -3255,12 +3209,10 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/suspend": {
@@ -3268,12 +3220,10 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/resume": {
@@ -3281,12 +3231,10 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/disconnect": {
@@ -3295,11 +3243,10 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 409"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "GET /api/simulator/content": {
@@ -3310,8 +3257,7 @@
   },
   "POST /api/simulator/lead": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3319,11 +3265,11 @@
   },
   "POST /api/simulator/feedback": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 400"
    }
   },
   "GET /api/notifications": {
@@ -4112,8 +4058,7 @@
   },
   "POST /api/definitions": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4122,8 +4067,7 @@
   },
   "PUT /api/definitions/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4143,8 +4087,7 @@
   },
   "POST /api/definitions/freeze": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -4171,8 +4114,7 @@
   },
   "POST /api/tax/rate": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -4180,8 +4122,7 @@
   },
   "POST /api/tax/compute": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -4197,8 +4138,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "POST /api/books/setting": {
@@ -4213,7 +4153,7 @@
   "GET /api/books/terms": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/terms": {
@@ -4222,13 +4162,13 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/health": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 500"
    }
   },
   "POST /api/books/check": {
@@ -4237,7 +4177,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/outbox/retry": {
@@ -4246,13 +4186,13 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/accounts": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/accounts": {
@@ -4261,63 +4201,63 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/daybook": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/ledger/:account": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/dues": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/cashflow": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/trial-balance": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/pl": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/bs": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/payments/preview": {
@@ -4326,7 +4266,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/payments": {
@@ -4335,7 +4275,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "idempotent_money_write": {
     "pass": true
@@ -4344,17 +4284,17 @@
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/bank/rail": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "PATCH /api/books/payments/:id": {
@@ -4363,11 +4303,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    },
    "idempotent_money_write": {
     "pass": true
@@ -4379,11 +4319,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/payments/:id/confirm": {
@@ -4392,11 +4332,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    },
    "idempotent_money_write": {
     "pass": true
@@ -4405,7 +4345,7 @@
   "GET /api/books/cheques": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/cheques/:id/status": {
@@ -4414,11 +4354,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/parties/:id/dispute": {
@@ -4427,37 +4367,35 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/events": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/preview": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/events": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/entries": {
@@ -4466,7 +4404,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/entries/:id/reverse": {
@@ -4475,11 +4413,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/write-off": {
@@ -4488,7 +4426,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/opening": {
@@ -4497,7 +4435,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/move-in/preflight": {
@@ -4506,7 +4444,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/move-in/preview": {
@@ -4515,7 +4453,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/move-in/import": {
@@ -4524,19 +4462,19 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/move-in/imports": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/compare": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/compare/preflight": {
@@ -4545,7 +4483,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/compare/snapshots": {
@@ -4554,27 +4492,27 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/compare/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/compare/:id/csv": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/periods/:fy/:p/:act": {
@@ -4583,7 +4521,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/year/:fy/close": {
@@ -4592,25 +4530,25 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/year/:fy/status": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/periods": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/packs": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/packs": {
@@ -4619,27 +4557,27 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/packs/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/packs/:id/file": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/packs/:id/ack": {
@@ -4648,17 +4586,17 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/recurring": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/recurring": {
@@ -4667,7 +4605,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "PATCH /api/books/recurring/:id": {
@@ -4676,21 +4614,21 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "DELETE /api/books/recurring/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/recurring/:id/post": {
@@ -4699,11 +4637,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/recurring/:id/skip": {
@@ -4712,23 +4650,23 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/books/todo": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/assets": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/assets": {
@@ -4737,7 +4675,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/assets/:id/dispose": {
@@ -4746,11 +4684,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/books/depreciation/run": {
@@ -4759,7 +4697,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/closing-stock": {
@@ -4768,7 +4706,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/gst/close": {
@@ -4777,7 +4715,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/gst/pay": {
@@ -4786,7 +4724,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    },
    "idempotent_money_write": {
     "pass": true
@@ -4795,7 +4733,7 @@
   "GET /api/books/returns": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/loans": {
@@ -4804,7 +4742,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/loans/:ref/emi": {
@@ -4813,7 +4751,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/accruals": {
@@ -4822,7 +4760,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/accruals/:ref/reverse": {
@@ -4831,7 +4769,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/contra": {
@@ -4840,13 +4778,13 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/fx-rates": {
@@ -4855,7 +4793,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/fx-rates/import": {
@@ -4864,13 +4802,13 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/books/fx-revalue": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/fx-revalue": {
@@ -4879,7 +4817,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/books/money-check/resolve": {
@@ -4888,7 +4826,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/facts/rail/chits": {
@@ -4899,7 +4837,7 @@
   "GET /api/facts/:card": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 404"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/work/list": {
@@ -5363,8 +5301,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 400, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/supplies/:id/issue": {
@@ -5375,8 +5312,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/adopt/:chit_id": {

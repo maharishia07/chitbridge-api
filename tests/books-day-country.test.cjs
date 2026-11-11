@@ -25,8 +25,14 @@ const row = (ev) => (ev && ev.by_rate && ev.by_rate[0]) || {};
 const withPack = E.posting().daySummary([bill], opts, { pack: AU });
 ok('handed the AU pack (third argument), the day posts the A$10 GST on its ONE head', row(withPack).gst === 10 && row(withPack).taxable === 100, JSON.stringify(withPack.by_rate));
 ok('…and no India head rides an AU day', !('cgst' in row(withPack)) && !('sgst' in row(withPack)) && !('igst' in row(withPack)), JSON.stringify(withPack.by_rate));
-const inHead = E.posting().daySummary([bill], Object.assign({ pack: AU }, opts));
-ok('the pack inside the HEAD is the bug: the GST is gone (the proof that the call shape matters)', row(inHead).gst === undefined, JSON.stringify(inHead.by_rate));
+/* CTRY-94: the engine no longer reads India for a call with no pack — the wrong call shape is REFUSED (NO_COUNTRY), where it used to post silently as India */
+let inHeadCode = null;
+try {
+  E.posting().daySummary([bill], Object.assign({ pack: AU }, opts));
+} catch (e) {
+  inHeadCode = e && e.code;
+}
+ok('the pack inside the HEAD is the bug: the call is refused NO_COUNTRY, not posted as India (the proof that the call shape matters)', inHeadCode === 'NO_COUNTRY', String(inHeadCode));
 
 /* the AE twin (S9-11): AED 21.01 cash, 20.00 taxable, 1.01 VAT — one head, `vat` */
 const AE = R.packFor('AE');

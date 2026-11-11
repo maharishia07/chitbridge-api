@@ -1,5 +1,5 @@
 {
- "about": "The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs and tests/books-close-country.test.cjs (every answer branch of the period routes, the ledger-off writer included). PRODUCED, never typed, on 2026-11-01 with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json . Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). Both recording tests compare the keys they answer now with this file and fail until it is rebuilt.",
+ "about": "The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs, tests/books-close-country.test.cjs and tests/move-in-country-gate.test.cjs (every answer branch of the period routes, the ledger-off writer included, and the two move-in doors). PRODUCED, never typed, on 2026-11-09 with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/move-in-country-gate.test.cjs --capture movein.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json movein.json . Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). The three recording tests compare the keys they answer now with this file and fail until it is rebuilt.",
  "answers": {
   "GET /api/books/assets|period-004": {
    "route": "GET /api/books/assets",
@@ -85,6 +85,16 @@
      }
     ],
     "total_wdv_minor": 2520000
+   }
+  },
+  "GET /api/books/move-in/imports|movein-006": {
+   "route": "GET /api/books/move-in/imports",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ready": false,
+    "why": "The saved proof arrives after the next update. It is shown here but not kept; run the move-in again after the update to keep it.",
+    "imports": []
    }
   },
   "GET /api/books/returns|close-006": {
@@ -287,6 +297,7 @@
     "refund_minor": 0,
     "net_minor": 7000,
     "notes": [
+     "Basis: non-cash (accrual): GST in the period of the invoice or the payment, whichever comes first",
      "Simpler BAS: G1, 1A and 1B only (GST turnover under A$10 million)",
      "The period's own set-off and tax payment entries (1) are left out of the boxes: they settle the tax, they are not sales or purchases."
     ],
@@ -928,6 +939,17 @@
     "parties_numbered": null
    }
   },
+  "POST /api/books/enable|movein-001": {
+   "route": "POST /api/books/enable",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "accounts_added": 101,
+    "fiscal_year": "2026-27",
+    "parties_numbered": null
+   }
+  },
   "POST /api/books/enable|period-001": {
    "route": "POST /api/books/enable",
    "status": 200,
@@ -1388,6 +1410,7 @@
     },
     "ok": true,
     "duplicate": true,
+    "replayed": true,
     "entry_id": "00000000-0000-4000-8000-000000000105",
     "entry_no": "MJ/2026-27/000001",
     "posting_date": "2026-10-15"
@@ -1451,6 +1474,7 @@
     },
     "ok": true,
     "duplicate": true,
+    "replayed": true,
     "entry_id": "00000000-0000-4000-8000-000000000122",
     "entry_no": "MJ/2026-27/000002",
     "posting_date": "2026-10-02"
@@ -1542,6 +1566,763 @@
    "body": {
     "ok": false,
     "off": true
+   }
+  },
+  "POST /api/books/move-in/import|movein-005": {
+   "route": "POST /api/books/move-in/import",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "side": null,
+    "as_at": "2026-04-01",
+    "kind": "accounts",
+    "source": "xero",
+    "added": 6,
+    "merged": 8,
+    "skipped": 1,
+    "held": 0,
+    "rows": [
+     {
+      "line": 16,
+      "what": "Tracking Transfers",
+      "why": "No home for Xero type \"TRACKING\" — add it under Shop ledgers and pick its group."
+     }
+    ],
+    "notes": [
+     "The saved account codes arrive after the next update. A trial balance will match on names until then.",
+     "The saved proof arrives after the next update. It is shown here but not kept; run the move-in again after the update to keep it."
+    ],
+    "source_code_written": false,
+    "proof": {
+     "source": "xero",
+     "source_country": "AU",
+     "country_how": "stated",
+     "shop_country": "AU",
+     "company_id": null,
+     "kind": "accounts",
+     "side": null,
+     "as_at": "2026-04-01",
+     "currency": "INR",
+     "counts": {
+      "add": 6,
+      "merge": 8,
+      "skip": 1,
+      "hold": 0
+     },
+     "landed": {
+      "added": 6,
+      "merged": 8,
+      "skipped": 1,
+      "held": 0
+     },
+     "held": [],
+     "documents": [],
+     "parties": [],
+     "accounts": [
+      {
+       "line": 2,
+       "what": "Business Bank Account",
+       "action": "merge",
+       "our_code": "1500",
+       "their_code": "090",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 3,
+       "what": "Business Savings Account",
+       "action": "add",
+       "our_code": null,
+       "their_code": "091",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 4,
+       "what": "Sales",
+       "action": "merge",
+       "our_code": "4000",
+       "their_code": "200",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 5,
+       "what": "Other Revenue",
+       "action": "add",
+       "our_code": null,
+       "their_code": "260",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 6,
+       "what": "Cost of Goods Sold",
+       "action": "add",
+       "our_code": null,
+       "their_code": "300",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 7,
+       "what": "Advertising",
+       "action": "merge",
+       "our_code": "6110",
+       "their_code": "400",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 8,
+       "what": "Bank Fees",
+       "action": "add",
+       "our_code": null,
+       "their_code": "404",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 9,
+       "what": "Rent",
+       "action": "merge",
+       "our_code": "6010",
+       "their_code": "469",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 10,
+       "what": "Accounts Receivable",
+       "action": "merge",
+       "our_code": "1300",
+       "their_code": "610",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 11,
+       "what": "Inventory",
+       "action": "add",
+       "our_code": null,
+       "their_code": "630",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 12,
+       "what": "Accounts Payable",
+       "action": "merge",
+       "our_code": "2100",
+       "their_code": "800",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 13,
+       "what": "GST",
+       "action": "merge",
+       "our_code": "2200",
+       "their_code": "820",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 14,
+       "what": "Owner A Drawings",
+       "action": "add",
+       "our_code": null,
+       "their_code": "880",
+       "dr_minor": null,
+       "cr_minor": null
+      },
+      {
+       "line": 15,
+       "what": "Retained Earnings",
+       "action": "merge",
+       "our_code": "3900",
+       "their_code": "960",
+       "dr_minor": null,
+       "cr_minor": null
+      }
+     ],
+     "tax_codes": [
+      {
+       "code": "BAS Excluded",
+       "verdict": "no_tax",
+       "kind": null,
+       "rate": 0
+      },
+      {
+       "code": "GST on Income",
+       "verdict": "maps",
+       "kind": "Taxable supply",
+       "rate": 10
+      },
+      {
+       "code": "GST on Expenses",
+       "verdict": "maps",
+       "kind": "Taxable supply",
+       "rate": 10
+      },
+      {
+       "code": "GST Free Expenses",
+       "verdict": "maps",
+       "kind": "GST-free supply",
+       "rate": 0
+      }
+     ],
+     "contacts": [],
+     "differences": 1
+    },
+    "proof_stored": false,
+    "import_id": null
+   }
+  },
+  "POST /api/books/move-in/preview|movein-002": {
+   "route": "POST /api/books/move-in/preview",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "kind": "items",
+    "source": "qbo",
+    "side": null,
+    "as_at": "2026-07-01",
+    "counts": {
+     "add": 1,
+     "merge": 0,
+     "skip": 0,
+     "hold": 1
+    },
+    "refusal": null,
+    "notes": [],
+    "country": {
+     "shop": "AU",
+     "source": "AU",
+     "how": "stated"
+    },
+    "company_id": null,
+    "rows": [
+     {
+      "line": 2,
+      "what": "Flat white",
+      "action": "add",
+      "why": "A$4.50 · GST 10%.",
+      "data": {
+       "rec": {
+        "name": "Flat white",
+        "code": "FW",
+        "unit": "unit",
+        "price": 4.5,
+        "gst_rate": 10,
+        "cost": null,
+        "source_system": "qbo",
+        "source_ref": "FW",
+        "description": null
+       },
+       "notes": [
+        "GST = Taxable supply 10%"
+       ]
+      }
+     },
+     {
+      "line": 3,
+      "what": "Mystery",
+      "action": "hold",
+      "why": "Tax code \"Adjustment\" is not one of Australia's codes here — pick one of your own codes for it.",
+      "data": null,
+      "code": "tax_code"
+     }
+    ],
+    "tax_codes": [
+     {
+      "code": "GST",
+      "verdict": "maps",
+      "kind": "Taxable supply",
+      "rate": 10
+     },
+     {
+      "code": "Adjustment",
+      "verdict": "held",
+      "kind": null,
+      "rate": null
+     }
+    ]
+   }
+  },
+  "POST /api/books/move-in/preview|movein-003": {
+   "route": "POST /api/books/move-in/preview",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "kind": "items",
+    "source": "qbo",
+    "side": null,
+    "as_at": "2026-04-01",
+    "counts": {
+     "add": 1,
+     "merge": 0,
+     "skip": 0,
+     "hold": 1
+    },
+    "refusal": null,
+    "notes": [],
+    "country": {
+     "shop": "IN",
+     "source": "IN",
+     "how": "stated"
+    },
+    "company_id": null,
+    "rows": [
+     {
+      "line": 2,
+      "what": "Rice 5kg",
+      "action": "add",
+      "why": "₹320.00.",
+      "data": {
+       "rec": {
+        "name": "Rice 5kg",
+        "code": "R5",
+        "unit": "unit",
+        "price": 320,
+        "gst_rate": null,
+        "cost": null,
+        "source_system": "qbo",
+        "source_ref": "R5",
+        "description": null
+       },
+       "notes": []
+      }
+     },
+     {
+      "line": 3,
+      "what": "Coffee",
+      "action": "hold",
+      "why": "Moving books in is not ready for India yet — its tax codes have no map here. This item has tax on it, so it waits.",
+      "data": null,
+      "code": "tax_code"
+     }
+    ],
+    "tax_codes": []
+   }
+  },
+  "POST /api/books/move-in/preview|movein-004": {
+   "route": "POST /api/books/move-in/preview",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "kind": "accounts",
+    "source": "xero",
+    "side": null,
+    "as_at": "2026-04-01",
+    "counts": {
+     "add": 6,
+     "merge": 8,
+     "skip": 1,
+     "hold": 0
+    },
+    "refusal": null,
+    "notes": [],
+    "country": {
+     "shop": "AU",
+     "source": "AU",
+     "how": "stated"
+    },
+    "company_id": null,
+    "rows": [
+     {
+      "line": 2,
+      "what": "Business Bank Account",
+      "action": "merge",
+      "why": "A ledger named \"Business bank account\" exists (1500) — keeps Xero code 090.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000040",
+       "code": "1500",
+       "source_code": "090",
+       "note": "default tax BAS Excluded = no GST — not kept"
+      }
+     },
+     {
+      "line": 3,
+      "what": "Business Savings Account",
+      "action": "add",
+      "why": "Under Bank Accounts, keeping Xero code 091.",
+      "data": {
+       "name": "Business Savings Account",
+       "group_code": "G1500",
+       "group_id": "00000000-0000-4000-8000-000000000013",
+       "group_name": "Bank Accounts",
+       "source_code": "091",
+       "note": "default tax BAS Excluded = no GST — not kept",
+       "candidates": [
+        {
+         "code": "1400",
+         "name": "Cash on hand"
+        }
+       ],
+       "suggest": null
+      }
+     },
+     {
+      "line": 4,
+      "what": "Sales",
+      "action": "merge",
+      "why": "A ledger named \"Sales\" exists (4000) — keeps Xero code 200.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000061",
+       "code": "4000",
+       "source_code": "200",
+       "note": "default tax GST on Income = Taxable supply 10% — not kept (no slot for a per-account default)"
+      }
+     },
+     {
+      "line": 5,
+      "what": "Other Revenue",
+      "action": "add",
+      "why": "Under Sales, keeping Xero code 260.",
+      "data": {
+       "name": "Other Revenue",
+       "group_code": "G4000",
+       "group_id": "00000000-0000-4000-8000-000000000012",
+       "group_name": "Sales",
+       "source_code": "260",
+       "note": "default tax GST on Income = Taxable supply 10% — not kept (no slot for a per-account default)",
+       "candidates": [],
+       "suggest": null
+      }
+     },
+     {
+      "line": 6,
+      "what": "Cost of Goods Sold",
+      "action": "add",
+      "why": "Under Cost of Sales, keeping Xero code 300.",
+      "data": {
+       "name": "Cost of Goods Sold",
+       "group_code": "G5100",
+       "group_id": "00000000-0000-4000-8000-000000000008",
+       "group_name": "Cost of Sales",
+       "source_code": "300",
+       "note": "default tax GST on Expenses = Taxable supply 10% — not kept (no slot for a per-account default)",
+       "candidates": [
+        {
+         "code": "5100",
+         "name": "Wages"
+        },
+        {
+         "code": "5110",
+         "name": "Freight inwards"
+        },
+        {
+         "code": "5120",
+         "name": "Packaging"
+        },
+        {
+         "code": "6010",
+         "name": "Rent"
+        },
+        {
+         "code": "6020",
+         "name": "Salaries"
+        },
+        {
+         "code": "6025",
+         "name": "Superannuation (employer contributions)"
+        },
+        {
+         "code": "6030",
+         "name": "Electricity, gas and water"
+        },
+        {
+         "code": "6040",
+         "name": "Telephone and internet"
+        },
+        {
+         "code": "6050",
+         "name": "Freight and delivery"
+        },
+        {
+         "code": "6060",
+         "name": "Repairs and maintenance"
+        },
+        {
+         "code": "6070",
+         "name": "Printing and stationery"
+        },
+        {
+         "code": "6080",
+         "name": "Motor vehicle expenses"
+        },
+        {
+         "code": "6090",
+         "name": "Bank and merchant fees"
+        },
+        {
+         "code": "6100",
+         "name": "Commission paid"
+        },
+        {
+         "code": "6110",
+         "name": "Advertising"
+        },
+        {
+         "code": "6120",
+         "name": "Accounting and legal fees"
+        },
+        {
+         "code": "6130",
+         "name": "Staff amenities"
+        },
+        {
+         "code": "6140",
+         "name": "Insurance"
+        },
+        {
+         "code": "6150",
+         "name": "Interest paid"
+        },
+        {
+         "code": "6190",
+         "name": "Sundry expenses"
+        }
+       ],
+       "suggest": null
+      }
+     },
+     {
+      "line": 7,
+      "what": "Advertising",
+      "action": "merge",
+      "why": "A ledger named \"Advertising\" exists (6110) — keeps Xero code 400.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000091",
+       "code": "6110",
+       "source_code": "400",
+       "note": "default tax GST on Expenses = Taxable supply 10% — not kept (no slot for a per-account default)"
+      }
+     },
+     {
+      "line": 8,
+      "what": "Bank Fees",
+      "action": "add",
+      "why": "Under Operating Expenses, keeping Xero code 404. Looks like your 6090 Bank and merchant fees — confirm to use it, or it is added as its own ledger.",
+      "data": {
+       "name": "Bank Fees",
+       "group_code": "G6000",
+       "group_id": "00000000-0000-4000-8000-000000000010",
+       "group_name": "Operating Expenses",
+       "source_code": "404",
+       "note": "default tax GST Free Expenses = GST-free supply 0% — not kept (no slot for a per-account default)",
+       "candidates": [
+        {
+         "code": "5100",
+         "name": "Wages"
+        },
+        {
+         "code": "5110",
+         "name": "Freight inwards"
+        },
+        {
+         "code": "5120",
+         "name": "Packaging"
+        },
+        {
+         "code": "6010",
+         "name": "Rent"
+        },
+        {
+         "code": "6020",
+         "name": "Salaries"
+        },
+        {
+         "code": "6025",
+         "name": "Superannuation (employer contributions)"
+        },
+        {
+         "code": "6030",
+         "name": "Electricity, gas and water"
+        },
+        {
+         "code": "6040",
+         "name": "Telephone and internet"
+        },
+        {
+         "code": "6050",
+         "name": "Freight and delivery"
+        },
+        {
+         "code": "6060",
+         "name": "Repairs and maintenance"
+        },
+        {
+         "code": "6070",
+         "name": "Printing and stationery"
+        },
+        {
+         "code": "6080",
+         "name": "Motor vehicle expenses"
+        },
+        {
+         "code": "6090",
+         "name": "Bank and merchant fees"
+        },
+        {
+         "code": "6100",
+         "name": "Commission paid"
+        },
+        {
+         "code": "6110",
+         "name": "Advertising"
+        },
+        {
+         "code": "6120",
+         "name": "Accounting and legal fees"
+        },
+        {
+         "code": "6130",
+         "name": "Staff amenities"
+        },
+        {
+         "code": "6140",
+         "name": "Insurance"
+        },
+        {
+         "code": "6150",
+         "name": "Interest paid"
+        },
+        {
+         "code": "6190",
+         "name": "Sundry expenses"
+        }
+       ],
+       "suggest": "6090"
+      }
+     },
+     {
+      "line": 9,
+      "what": "Rent",
+      "action": "merge",
+      "why": "A ledger named \"Rent\" exists (6010) — keeps Xero code 469.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000080",
+       "code": "6010",
+       "source_code": "469",
+       "note": "default tax GST on Expenses = Taxable supply 10% — not kept (no slot for a per-account default)"
+      }
+     },
+     {
+      "line": 10,
+      "what": "Accounts Receivable",
+      "action": "merge",
+      "why": "Is your Customers (Trade debtors) ledger (1300) — keeps Xero code 610.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000038",
+       "code": "1300",
+       "source_code": "610",
+       "note": "default tax BAS Excluded = no GST — not kept"
+      }
+     },
+     {
+      "line": 11,
+      "what": "Inventory",
+      "action": "add",
+      "why": "Under Inventory, keeping Xero code 630.",
+      "data": {
+       "name": "Inventory",
+       "group_code": "G1200",
+       "group_id": "00000000-0000-4000-8000-000000000022",
+       "group_name": "Inventory",
+       "source_code": "630",
+       "note": "default tax BAS Excluded = no GST — not kept",
+       "candidates": [],
+       "suggest": null
+      }
+     },
+     {
+      "line": 12,
+      "what": "Accounts Payable",
+      "action": "merge",
+      "why": "Is your Suppliers (Trade creditors) ledger (2100) — keeps Xero code 800.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000045",
+       "code": "2100",
+       "source_code": "800",
+       "note": "default tax BAS Excluded = no GST — not kept"
+      }
+     },
+     {
+      "line": 13,
+      "what": "GST",
+      "action": "merge",
+      "why": "Is your GST collected ledger (2200) — keeps Xero code 820.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000049",
+       "code": "2200",
+       "source_code": "820",
+       "note": "default tax BAS Excluded = no GST — not kept"
+      }
+     },
+     {
+      "line": 14,
+      "what": "Owner A Drawings",
+      "action": "add",
+      "why": "Under Equity, keeping Xero code 880.",
+      "data": {
+       "name": "Owner A Drawings",
+       "group_code": "G3000",
+       "group_id": "00000000-0000-4000-8000-000000000001",
+       "group_name": "Equity",
+       "source_code": "880",
+       "note": "default tax BAS Excluded = no GST — not kept",
+       "candidates": [],
+       "suggest": null
+      }
+     },
+     {
+      "line": 15,
+      "what": "Retained Earnings",
+      "action": "merge",
+      "why": "A ledger named \"Retained earnings\" exists (3900) — keeps Xero code 960.",
+      "data": {
+       "account_id": "00000000-0000-4000-8000-000000000060",
+       "code": "3900",
+       "source_code": "960",
+       "note": "default tax BAS Excluded = no GST — not kept"
+      }
+     },
+     {
+      "line": 16,
+      "what": "Tracking Transfers",
+      "action": "skip",
+      "why": "No home for Xero type \"TRACKING\" — add it under Shop ledgers and pick its group.",
+      "data": null
+     }
+    ],
+    "tax_codes": [
+     {
+      "code": "BAS Excluded",
+      "verdict": "no_tax",
+      "kind": null,
+      "rate": 0
+     },
+     {
+      "code": "GST on Income",
+      "verdict": "maps",
+      "kind": "Taxable supply",
+      "rate": 10
+     },
+     {
+      "code": "GST on Expenses",
+      "verdict": "maps",
+      "kind": "Taxable supply",
+      "rate": 10
+     },
+     {
+      "code": "GST Free Expenses",
+      "verdict": "maps",
+      "kind": "GST-free supply",
+      "rate": 0
+     }
+    ]
    }
   },
   "POST /api/books/periods/:fy/:p/:act|period-005": {

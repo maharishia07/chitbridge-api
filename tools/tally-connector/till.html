@@ -2169,6 +2169,7 @@
   /* the heads are the detail under Taxable — indented so the eye reads them as its parts, not as more totals */
   .t.head{color:var(--dim);font-size:.92em;padding-inline-start:12px}
   .t.warnrow{color:var(--warn);font-size:.9em}
+  .t.warnrow.stoprow{color:var(--bad,#a3261f);font-weight:700}   /* CTR-191: the server stopped this bill's money (409 MONEY_UNBALANCED): red, not amber */
   .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
   .save{color:var(--ok)}
   /* ⭐ the stacked line note (2026-09-16): the unit price on its own line, each offer below as name / −value */
@@ -2996,7 +2997,7 @@
        clickable area and still opens the real dropdown (with real, visible option text — see the option
        colour override in CSS) — nothing about the control's function changed, only what is drawn where. -->
   <div class="modeselwrap">
-    <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
+    <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?" aria-label="What are you doing?">
       <option value="sell">🛍️ Sell</option>
       <option value="receive">📥 Receive</option>
       <option value="despatch">📦 Despatch</option>
@@ -3337,7 +3338,7 @@
      painted over the GST note at the bottom of the screen. -->
    <div id="pane_sell" class="sellpane">
     <div class="cust">
-      <input id="cname" placeholder="Customer" title="optional" autocomplete="off" list="custlist" oninput="rwTyped()">
+      <input id="cname" placeholder="Customer" title="optional" aria-label="Customer (optional)" autocomplete="off" list="custlist" oninput="rwTyped()">
       <!-- ⭐ A NAME IS HARDER TO TYPE THAN A NUMBER, NOT EASIER. Athi, 2026-09-09: *"customer name can listen."* The phone box had
            a microphone and the name box did not, which is backwards: a phone is ten digits on a keypad, while "Kalaiselvi" typed
            with one hand at a counter is slow and usually wrong. Same seam, same chooser — nothing new to configure. -->
@@ -3347,6 +3348,8 @@
       <button class="pill" id="micphone" data-testid="till-mic-phone" onclick="listen('cphone')" title="speak the number">🎤</button>
       <!-- ⭐ BOOKS v2 — money received from a KNOWN customer; hidden until exactly one customer matches (custKnown) -->
       <button class="pill" id="rcvpaybtn" data-testid="till-receive-pay" onclick="rcvPayOpen()" hidden>Received</button>
+      <!-- ⭐ CTR-186: where the goods go. Another state = IGST (s10(1)(a)); left alone, the bill is over the counter. Shown for a state-split pack only (paintDeliver). -->
+      <button class="pill" id="deliverbtn" data-testid="till-deliver-to" onclick="deliverPick()" title="goods sent to another state">Deliver to</button>
     </div>
     <!-- ⭐⭐ what this customer holds, and what this bill will add. Empty and invisible for a shop with no programme,
          which is most shops — nothing on the counter is spent on a feature nobody switched on. -->
@@ -5206,7 +5209,7 @@ var AgentHost = {
   /* W1-TILL: the program forwards the cloud's status · code · sentence (its /api/verify); a program that cannot be reached is said in words */
   verify: function(){ return fetch('/api/verify').then(function(r){ return r.json(); }).catch(function(e){ cbQuiet('AgentHost.verify:1', e); return { ok:false, why:'the counter program did not answer' }; }); },
   tillPost: function(path, body){ return fetch('/api/op', { method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ path: path, body: body }) }).then(function(r){ return r.json(); })
+      body: JSON.stringify({ path: path, body: body, idem: CloudHost.idemKey(path, body) }) }).then(function(r){ return r.json(); })
       .catch(function(e){ return { ok:false, why:e.message }; }); },
   /* the agent proxies a read the same way it proxies a write — the key never reaches this page */
   tillGet: function(path){ return fetch('/api/op?get=' + encodeURIComponent(path)).then(function(r){ return r.json(); })
@@ -5236,6 +5239,15 @@ var AgentHost = {
 /** ⭐ TILL-FIX2 (H5): the server's code for "no such bill here YET" (routes/till.js /reward · lib/reward-store) — the one 4xx tillPost queues */
 var WAITS_FOR_BILL = 'BILL_NOT_RECORDED';
 var CloudHost = {
+  /** ⭐ idem3 (7 Nov): the points writes take ONE Idempotency-Key per attempt (routes/till.js pointsOnce). The key is a pure function of the write, so the first try, the queue's replay
+   *  and a second press of the same sale all carry the SAME key and the server answers the first: a reward is keyed by its bill (the ref the server already dedupes on), a claim by its holders. */
+  idemKey: function(route, written){
+    var given = written || {};
+    if (route === '/api/till/reward' && given.ref) return 'till-reward:' + String(given.ref).slice(0, 120);
+    if (route === '/api/till/reward/claim' && given.ref) return 'till-claim:' + JSON.stringify([given.from, given.to, given.ref || '']).slice(0, 180);
+    return null;
+  },
+  idemHeaders: function(route, written, headers){ var idem = this.idemKey(route, written); if (idem) headers['Idempotency-Key'] = idem; return headers; },
   mode:'cloud',
   key: null, api: null,
   /** M08 — the person session this device keeps (personLoad at start-up; becomeShop is its only writer) */
@@ -5292,11 +5304,11 @@ var CloudHost = {
     var t = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(mine) : (function(){
       /* [till expenses] the identical fallback rule as the engine's own totals() — an expense is not counted
        * as a sale and leaves whatever tender it was paid from, same reasoning as a credit note two lines up. */
-      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, exp2 = 0;
+      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, red2 = 0, exp2 = 0;
       mine.forEach(function(b){
         total2 = r2(total2 + (b.total||0));
         if (b.kind === 'credit_note') {
-          back2 = r2(back2 + Math.abs(Number(b.total)||0));
+          var split2 = creditNoteSplit(b); back2 = r2(back2 + split2.refunded); red2 = r2(red2 + split2.reduced);
           (b.refunds||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
         } else if (b.kind === 'expense') {
           exp2 = r2(exp2 + Math.abs(Number(b.total)||0));
@@ -5306,7 +5318,7 @@ var CloudHost = {
           (b.payments||[]).forEach(function(p){ by2[p.how] = r2((by2[p.how]||0) + (p.amount||0)); });
         }
       });
-      return { count: count2, total: total2, by: by2, refunds: back2, expenses: exp2 };
+      return { count: count2, total: total2, by: by2, refunds: back2, reduced: red2, expenses: exp2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: lineUp() && !!this.cred(), queued: queue.length,
@@ -5563,7 +5575,7 @@ var CloudHost = {
     if (!lineUp()) return noQueue ? { ok:false, why:'there is no internet' } : null;
     try {
       var r = await fetchBy(this.api + path, { method:'POST',
-        headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(body) });
+        headers: this.auth(this.idemHeaders(path, body, { 'Content-Type':'application/json' })), body: JSON.stringify(body) });
       if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
       var refusal = await this.refusalOf(r);   /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
       var waitsForBill = r.status === 409 && refusal.code === WAITS_FOR_BILL;
@@ -5817,7 +5829,7 @@ var CloudHost = {
              identical to a hung one, and the cure for a hung one is a second drain over the top of this one. */
           this._busyAt = Date.now();
           var r = await fetchBy(url, { method:'POST',
-            headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(payload) });
+            headers: this.auth(this.idemHeaders(url.slice(this.api.length), payload, { 'Content-Type':'application/json' })), body: JSON.stringify(payload) });
           if (r.ok) {
             /**
              * ⭐⭐ THE SERVER CHECKS THE NUMBER WE PRINTED, and answers `number_check` only when something is
@@ -5897,7 +5909,7 @@ var CloudHost = {
               var moved = await renumberBill(bill, said, rows);   /* H5: a row it moved leaves `rows`, so its old copy is never written back */
               if (moved) { if (!why) why = 'Bill ' + moved.from + ' shared a number with another counter — recorded as ' + moved.to + '.'; continue; }
             }
-            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status);
+            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status); bill._code = code;
             bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
             /* ⭐ R2's ladder — 2s, 4s, 8s … to five minutes, then five minutes for ever. See qBackoff(). */
             bill._nextAt = bill._at + qBackoff(bill._tries);
@@ -5987,6 +5999,11 @@ function taxIdLabel(){
 /** the shop's country words from the registry (CBCountries.meta — AU/AE's legacy words included): taxName · taxId · postcode · region; {} when none */
 function countryWords(){ try { var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null; return (meta && meta.words) || {}; } catch (e) { cbQuiet('countryWords:1', e); return {}; } }   /* {} → the form's own words */
 /** the tax's own word — "Sales tax", "Consumption tax", "GST", "VAT" — the pack's words before its scheme code ("STAX", "JCT" were printed, 17 Oct audit) */
+/** ACC-191: a tax figure the engine could not decide (moneyOf gives null: supply unknown, a rate above 0, no head) says so in words — never 0.00, NaN or -0 */
+var NOT_DECIDED = 'not decided';
+function taxFigure(amount){ return amount == null ? NOT_DECIDED : money(amount); }
+/** ACC-191: the negative of a tax figure for a credit note; null (not decided) stays null, never -0 */
+function negatedTax(amount){ return amount == null ? null : -amount; }
 function schemeWord(){ var pack = shopPack(); return countryWords().taxName || (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
 /** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → one head (W1-TILL). */
@@ -6139,7 +6156,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-07.sec143';
+var TILL_BUILD = '2026-11-08.acc191c';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6560,7 +6577,7 @@ function chitOfSubscription(s){
       till: tillStamp(s.till, s.by),
       doc: 'subscription', slip: 'subscription',
       bill_no: s.no, billed_at: s.at,
-      payment: { mode: s.mode, paid: s.total, parts: s.payments || [] },
+      payment: { mode: s.mode, paid: s.total, parts: s.payments || [], cash_round: s.cash_round },
       /* ⭐ what was actually agreed — never classified into a scheme, per "we are not classifying... let it be
        * that way". `occurrences_total: null` means "runs until cancelled/paused", not a data gap. */
       subscription: { what: s.what, occurrences_total: s.occurrencesTotal, cadence_days: s.cadenceDays, starts_at: s.startsAt },
@@ -6663,7 +6680,7 @@ function chitOf(bill){
       not_invoice: bill.not_invoice || undefined,
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
       terms: bill.terms || null,
-      credit_override: bill.credit_override || null,
+      credit_override: bill.credit_override || null, price_basis: bill.price_basis, money_override: bill.money_override,   /* ACC-206 H */
       /* ⭐⭐⭐ THE INVOICE — CBTax.determine()'s result from billMoney(), carried UNCHANGED: this is the frozen invoice both
          ledgers post from (lib/tax-copy entryFor). A bill saved before it existed carries none; the server keeps its old path. */
       invoice: bill.invoice || undefined,
@@ -7354,15 +7371,19 @@ async function creditSinceRefresh(c){
  * Returns { by } when allowed, null when not.
  */
 async function ownerApprove(chk){
-  var book = pinBook();
-  var owners = Object.keys(book).map(function(k){ return book[k]; })
-    .filter(function(e){ return e && e.kind === 'entity' && !SIGN().pinLocked(e); });
   var msg = 'Over the credit limit.\n\nOwes ' + money(chk.owed) + ' now' + (chk.since ? ' (' + money(chk.since) + ' of it on this counter today)' : '')
     + '; this bill takes it to ' + money(chk.after)
     + ' against a limit of ' + money(chk.limit) + '. Only the owner can allow it.';
+  return ownerPinAsk(msg, 'Over the limit');
+}
+/** ACC-206 H: the owner's counter PIN, offline, for a refusal only the owner may lift (the credit limit, a bill whose money does not add up) → { by } or null */
+async function ownerPinAsk(msg, title){
+  var book = pinBook();
+  var owners = Object.keys(book).map(function(k){ return book[k]; })
+    .filter(function(e){ return e && e.kind === 'entity' && !SIGN().pinLocked(e); });
   if (!owners.length) { say(msg + '\n\nThe owner has no counter PIN on this counter, so it cannot be allowed here.'); return null; }
   var box = document.getElementById('askinput'); if (box) box.type = 'password';
-  var pin = await ask(msg + '\n\nOwner’s counter PIN:', '', 'Owner PIN', 'Over the limit');
+  var pin = await ask(msg + '\n\nOwner’s counter PIN:', '', 'Owner PIN', title);
   if (box) box.type = 'text';
   if (pin == null || !String(pin).trim()) return null;
   for (var i = 0; i < owners.length; i++) {
@@ -8365,7 +8386,7 @@ var TILL_OPS = [
    * under one roof." Product Lab joins the other two: a shop ADOPTS goods here rather than typing them.
    * ⚠️ A PERSON signs into it, not this counter — see the Offer Lab note above, which applies with more
    * force here: adopting creates sellable goods on a live shelf. */
-  { id: 'productlab', icon: '📋', label: 'Price Lab',          hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
+  { id: 'productlab', icon: '📋', label: 'Product Lab',          hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
   { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
   /* ⭐ [Labs split, 2026-09-26] Athi: "bring offer lab and combo lab as a separate item... combo lab earned
    * its place now" — was a modal reachable only from inside Offer Lab; now its own page, its own hub entry,
@@ -14123,7 +14144,7 @@ function paintQuick(){
     + '<span>Photos</span></label>'
     /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —
        one setting, two places to reach it, never two opinions about it (tillOptSet writes both). */
-    + '<select class="qopt" data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
+    + '<select class="qopt" data-testid="till-quick-src" title="where these keys come from" aria-label="Where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
     + QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '"' + (o.quickSource === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>'; }).join('')
     + '</select>'
     + (usesGroups
@@ -17342,9 +17363,221 @@ function unpark(n){
   PICKED = pp.picked || 'Cash'; PAY_ASKED = !!pp.asked; PARTS = Array.isArray(pp.parts) ? pp.parts : [];
   try { setOrderKind(pp.otype || 'dine'); setOrderTable(pp.table || ''); } catch (e) { cbQuiet('unpark:1', e); }
   try { paintParts(); } catch (e) { cbQuiet('unpark:2', e); }
-  PARKED.splice(n, 1); parkedSave(); price(); focusSearch();
+  PARKED.splice(n, 1); parkedSave(); price(); focusSearch(); recheckAfterUnpark(p.at).catch(function(e){ cbQuiet('unpark:3', e); });   /* CTR-212: parked past the timer, or the owner said every bill → read the catalogue again */
 }
 function dropParked(n){ PARKED.splice(n, 1); parkedSave(); }
+/* ═══ CTR-212 · PRICES ARE READ AGAIN BEFORE A BILL IS FINISHED ═══════════════════════════════════════════════════
+ * A bill is RE-PRICED only while it is still the shopkeeper's to change: before its number is taken (finish) and when a parked bill is picked up (unpark). After that the figures are
+ * the sale (REV-02, TILL-41). The recheck refreshes the cart's INPUTS from the catalogue (POST /api/till/recheck: price, rate facts, status, whether the product still exists, and the
+ * slabs / categories / face the rate is resolved with) and then runs THE SAME engine path once (price() then billMoney()); no second formula lives here. What is compared is carried
+ * values and the engine's own totals before and after, never a recomputation.
+ * DUE when the owner said "yes, every bill" (policy.recheck_prices === 'on') OR the bill was parked longer than policy.park_max_hours (12; whatever the setting says, even unanswered).
+ * The popup (ui id till-recheck-popup · path till.html › unpark/finish › recheckAsk) says what changed, line by line, and the bill before → after. "Use new prices" is the default;
+ * "Keep as quoted" is only for price moves, needs the owner's PIN and records price_basis.kept; a RATE move has no Keep (the rate in force is the law's); a product that is deleted or no
+ * longer sold can only be removed or the bill left (never billed, never dropped silently). No line, no line of money is ever changed while the answer is waiting.
+ * ⚠️ Offline, or the door fails: the bill is NEVER blocked (TILL-41): it sells at the prices it has and price_basis says why (offline · recheck_failed).
+ * price_basis → business_json.price_basis { checked, at, snapshot_at, parked_at, reason, kept[] }; each line carries catalogue_stamp (the row's price_changed_at when known; only a hint, see CTR-212 R2).
+ */
+var RECHECK_FIELDS = ['price', 'mrp', 'hsn', 'tax_slab', 'tax_slab_name', 'gst_rate', 'cess_rate', 'categories', 'category', 'status', 'unit'];
+/** the owner's answer to "check prices again before every bill?": 'on' | 'off' | null (nobody answered: the optional every-bill check is off, the parked-too-long check still runs) */
+function recheckSetting(){ return (S && S.policy && S.policy.recheck_prices) || null; }
+/** hours since a moment (0 when it is not a date) */
+function parkHoursOf(at){ var moment = Date.parse(at); return isNaN(moment) ? 0 : (Date.now() - moment) / 3600000; }
+/** was this bill parked longer than the platform timer (the snapshot's policy.park_max_hours, 12)? A server that sends no timer has none: false */
+function parkedTooLong(at){
+  var max = Number(S && S.policy && S.policy.park_max_hours);
+  return !!at && max > 0 && parkHoursOf(at) > max;
+}
+/** the oldest moment a line of this cart was parked, or null (a bill that was never parked) */
+function cartParkedAt(){
+  var times = CART.map(function(cartLine){ return cartLine.parked_at; }).filter(Boolean).sort();
+  return times.length ? times[0] : null;
+}
+/** is a recheck due on this cart: every bill when the owner said yes, or a bill parked past the timer whatever the setting says */
+function recheckDue(){ return recheckSetting() === 'on' || parkedTooLong(cartParkedAt()); }
+/** the one door: the cart's product ids in, the catalogue's current rows out → the answer, or { ok:false } (logged, never thrown) */
+async function recheckRead(){
+  var ids = [];
+  CART.forEach(function(cartLine){ if (cartLine.item_id && ids.indexOf(String(cartLine.item_id)) < 0) ids.push(String(cartLine.item_id)); });
+  if (!ids.length) return { ok: true, items: [] };
+  var answer = null;
+  try { answer = await HOST.tillPost('/api/till/recheck', { item_ids: ids }, { noQueue: true }); }
+  catch (e) { cbQuiet('recheckRead:1', e); }
+  if (answer && answer.ok && Array.isArray(answer.items)) return answer;
+  cbQuiet('recheckRead:2', new Error((answer && answer.why) || 'no answer'));
+  return { ok: false };
+}
+/** a product the shop has taken off for good (retired · redundant) or an inactive row: not sold any more */
+function recheckGone(answerRow){ return answerRow.found === false ? 'deleted' : (answerRow.active === false || answerRow.status === 'retired' || answerRow.status === 'redundant') ? 'withdrawn' : null; }
+/** the tax context a rate is resolved in: the answer's own slabs / categories / face when it carried them (an empty set is "could not read", never "no slabs") */
+function recheckContext(answer){
+  var current = { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] };
+  var carried = answer && Array.isArray(answer.slabs) && answer.slabs.length > 0;
+  if (!carried) return current;
+  return { face: answer.face || current.face, slabs: answer.slabs, categories: Array.isArray(answer.categories) ? answer.categories : current.categories };
+}
+/** the rate CBTax.slab.resolve gives a product's tax facts in a context (the same call price() makes at sale), or null */
+function recheckRateOf(itemData, ctx){
+  try { var resolved = CBTax.slab.resolve({ item_data: itemData || {}, face: ctx.face, slabs: ctx.slabs, categories: ctx.categories }); return resolved && resolved.rate != null ? Number(resolved.rate) : null; }
+  catch (e) { cbQuiet('recheckRateOf:1', e); return null; }
+}
+/** the shelf price of a cart line without the choices added on top of it (modAdd is added once, at the line) */
+function recheckBaseOf(cartLine){ return r2((Number(cartLine.price) || 0) - (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0)); }
+/** what moved on one cart line against the catalogue's answer → { c, it, gone, price: [from, to]|null, rate: [from, to]|null } or null */
+function recheckLineChange(cartLine, answerRow, ctx){
+  if (!answerRow || answerRow.checked === false) return null;
+  var gone = recheckGone(answerRow), change = { cartLine: cartLine, answerRow: answerRow, gone: gone, price: null, rate: null, unit: null };
+  if (gone) return change;
+  change.price = recheckPriceMove(cartLine, answerRow);
+  change.rate = recheckRateMove(cartLine, answerRow, ctx);
+  change.unit = recheckUnitMove(cartLine, answerRow);
+  return (change.price || change.rate || change.unit) ? change : null;
+}
+/** the shelf price moved? → [from, to], or null (the same price, or the very price the owner already chose to keep) */
+function recheckPriceMove(cartLine, answerRow){
+  var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
+  return from === to || keptAt === to ? null : [from, to];
+}
+/** the unit the product is sold in moved (CAT-264b: a unit change is a commercial change like price)? → [was, now], or null; an answer that names no unit is "unknown", never a move; sameness is the platform's CBUnits.sameUnit (case and plural folded), no second equality */
+function recheckUnitMove(cartLine, answerRow){
+  var unitWas = cartLine.unit || 'piece', unitNow = answerRow.unit ? String(answerRow.unit) : null;
+  return unitNow && !CBUnits.sameUnit(unitWas, unitNow) ? [unitWas, unitNow] : null;
+}
+/** the rate in force moved? → [was, now] through CBTax.slab.resolve in the old and the new tax context, or null */
+function recheckRateMove(cartLine, answerRow, ctx){
+  var rateWas = recheckRateOf(cartLine.item_data, { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] });
+  var rateNow = recheckRateOf(Object.assign({ name: answerRow.name }, taxInputOf(answerRow)), ctx);
+  return rateWas === rateNow ? null : [rateWas, rateNow];
+}
+/** every line that moved: the changes, in cart order */
+function recheckChanges(answer){
+  var by = {}, ctx = recheckContext(answer);
+  (answer.items || []).forEach(function(answerRow){ by[String(answerRow.item_id)] = answerRow; });
+  return CART.map(function(cartLine){ return recheckLineChange(cartLine, by[String(cartLine.item_id)], ctx); }).filter(Boolean);
+}
+/** put a line on the catalogue's current facts (price with its choices, mrp, hsn, the rate facts); the stamp rides the line */
+function recheckRefresh(cartLine, answerRow){
+  cartLine.price = r2((Number(answerRow.price) || 0) + (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0));
+  cartLine.mrp = Number(answerRow.mrp) > 0 ? Number(answerRow.mrp) : null;
+  cartLine.hsn = answerRow.hsn || null;
+  if (answerRow.unit) cartLine.unit = String(answerRow.unit);
+  cartLine.item_data = Object.assign({ name: answerRow.name }, taxInputOf(answerRow));
+  cartLine.catalogue_stamp = answerRow.stamp || null;
+  delete cartLine.kept;
+}
+/** make the answer the cart's truth: the tax context, each moved line refreshed, the gone lines left to the caller */
+function recheckApply(answer, changes){
+  var ctx = recheckContext(answer);
+  S.face = ctx.face; S.slabs = ctx.slabs; S.categories = ctx.categories;
+  changes.forEach(function(change){ if (!change.gone) recheckRefresh(change.cartLine, change.answerRow); });
+}
+/** this bill's total through the ONE engine path (price() then billMoney()), with the gone lines left out when asked */
+function recheckTotal(leaveGone, changes){
+  var held = CART;
+  if (leaveGone) CART = CART.filter(function(cartLine){ return !changes.some(function(change){ return change.gone && change.cartLine === cartLine; }); });
+  try { price(); return billMoney().net; }
+  finally { CART = held; }
+}
+/** the whole picture before the cashier chooses: the total before, the total after the new facts, and a way back — nothing is committed until a choice is made */
+function recheckTrial(answer, changes){
+  var snap = { cart: JSON.parse(JSON.stringify(CART)), face: S.face, slabs: S.slabs, categories: S.categories };
+  var before = (price(), billMoney().net);
+  recheckApply(answer, changes);
+  var after = recheckTotal(true, changes);
+  /* back IN PLACE: the changes hold these very line objects, so a restore may not swap them for copies */
+  var undo = function(){
+    CART.forEach(function(cartLine, index){ Object.keys(cartLine).forEach(function(key){ delete cartLine[key]; }); Object.assign(cartLine, snap.cart[index]); });
+    S.face = snap.face; S.slabs = snap.slabs; S.categories = snap.categories; price();
+  };
+  return { before: before, after: after, undo: undo };
+}
+/** one line of the popup, in the shopkeeper's words */
+function recheckWords(change){
+  var name = change.cartLine.name || 'Item';
+  if (change.gone) return name + ': ' + (change.gone === 'deleted' ? 'no longer in your catalogue' : 'no longer sold');
+  var bits = [];
+  if (change.price) bits.push(money(change.price[0]) + ' → ' + money(change.price[1]));
+  if (change.unit) bits.push('sold per ' + change.unit[0] + ' → per ' + change.unit[1] + ' (the quantity stays ' + change.cartLine.qty + ')');
+  if (change.rate) bits.push(schemeWord() + ' ' + (change.rate[0] == null ? '?' : change.rate[0]) + '% → ' + (change.rate[1] == null ? '?' : change.rate[1]) + '%');
+  return name + ': ' + bits.join(' · ');
+}
+/**
+ * the popup → 'use' | 'keep' | 'remove' | 'back'. MONEY PROMISE: the bill before → after, this bill only, never silent.
+ * A gone line: Remove or Go back. A rate or unit move: Use or Go back (no Keep). Price only: Use, or Keep as quoted (owner PIN).
+ */
+async function recheckAsk(changes, trial){
+  var gone = changes.some(function(change){ return change.gone; });
+  var keepAllowed = !gone && changes.every(function(change){ return change.price && !change.rate && !change.unit; });
+  var said = changes.map(recheckWords).join('\n') + '\n\nThis bill: ' + money(trial.before) + ' → ' + money(trial.after);
+  var yes = await sure(said, gone ? 'Remove them' : 'Use new prices', gone ? 'No longer sold' : 'Prices changed', keepAllowed ? 'Keep as quoted' : 'Go back');
+  if (yes) return gone ? 'remove' : 'use';
+  return keepAllowed ? 'keep' : 'back';
+}
+/** "Keep as quoted": the owner's PIN, then each moved line keeps the price it was rung at and says so (price_basis.kept) → true, or false when the owner did not agree */
+async function recheckKeep(changes){
+  var owner = await ownerPinAsk('Keep the old prices on this bill?\n\nOnly the owner can.', 'Keep as quoted');
+  if (!owner) return false;
+  var at = new Date().toISOString();
+  changes.forEach(function(change){
+    change.cartLine.kept = { by: String(owner.by.id), by_name: owner.by.name, at: at, why: 'price kept', carried: change.price[0], current: change.price[1] };
+  });
+  return true;
+}
+/** a line the catalogue answered for is marked checked now and no longer counts as parked */
+function recheckStamp(answer){
+  var at = answer.at || new Date().toISOString();
+  CART.forEach(function(cartLine){ cartLine.rechecked_at = at; delete cartLine.parked_at; });
+  return at;
+}
+/** a product that is gone leaves the bill only by the cashier's Remove */
+function recheckRemoveGone(changes){
+  CART = CART.filter(function(cartLine){ return !changes.some(function(change){ return change.gone && change.cartLine === cartLine; }); });
+}
+/**
+ * read, compare, ask, apply: true when the bill may go on (changes accepted, kept, or none), false when the cashier went back. The cart is only changed by an explicit choice.
+ */
+async function recheckResolve(answer){
+  var changes = recheckChanges(answer);
+  if (!changes.length) { recheckStamp(answer); return true; }
+  var trial = recheckTrial(answer, changes), choice = await recheckAsk(changes, trial);
+  trial.undo();
+  if (choice === 'back') return false;
+  if (choice === 'keep') { if (!(await recheckKeep(changes))) return false; price(); return !!recheckStamp(answer); }
+  recheckApply(answer, changes);
+  if (choice === 'remove') recheckRemoveGone(changes);
+  price(); recheckStamp(answer);
+  return true;
+}
+/** the fact stored with the bill: was the catalogue read again, when, against which snapshot, and why not when it was not */
+function recheckBasis(reason, checkedAt, kept, parkedAt){
+  var basis = { checked: !!checkedAt, at: checkedAt || null, snapshot_at: (S && S.at) || null, parked_at: parkedAt || null, reason: reason };
+  if (kept && kept.length) basis.kept = kept;
+  return basis;
+}
+/** the lines that kept their old price, as the bill records them */
+function recheckKeptList(){
+  return CART.filter(function(cartLine){ return cartLine.kept; }).map(function(cartLine){ return { item_id: cartLine.item_id, by: cartLine.kept.by, by_name: cartLine.kept.by_name, at: cartLine.kept.at, why: cartLine.kept.why, carried: cartLine.kept.carried, current: cartLine.kept.current }; });
+}
+/**
+ * before a bill's number is taken: → the price_basis to store, or false when the cashier went back. Not due: snapshot_fresh. Offline or the door failing: the sale goes on at the prices it has (reason says so).
+ */
+async function recheckBeforeBill(){
+  var parked = cartParkedAt();   /* read before a check clears answerRow: the bill says answerRow WAS parked */
+  if (!recheckDue()) return recheckBasis('snapshot_fresh', null, recheckKeptList(), parked);
+  if (!lineUp()) return recheckBasis('offline', null, recheckKeptList(), parked);
+  var answer = await recheckRead();
+  if (!answer.ok) { toastLine('Prices could not be checked just now. This bill uses the prices on screen.'); return recheckBasis('recheck_failed', null, recheckKeptList(), parked); }
+  if (!(await recheckResolve(answer))) return false;
+  return recheckBasis('recheck', answer.at || new Date().toISOString(), recheckKeptList(), parked);
+}
+/** a parked bill picked up: every line remembers when it was parked; if a check is due and the line is up, it runs now (offline: the bill is checked at finish) */
+async function recheckAfterUnpark(parkedAt){
+  CART.forEach(function(cartLine){ cartLine.parked_at = cartLine.parked_at || parkedAt; });
+  if (!recheckDue() || !lineUp()) return;
+  var answer = await recheckRead();
+  if (!answer.ok) { toastLine('Prices could not be checked just now. They are checked again when the bill is finished.'); return; }
+  await recheckResolve(answer);
+}
 /* ═══ R1 · THE BILL BEING RUNG SURVIVES THE DEVICE ══════════════════════════════════════ */
 /**
  * ── ⭐⭐⭐ A BILL CAN NEVER BE LOST ([TILL-41], 2026-09-18) ────────────────────────────────
@@ -18444,7 +18677,17 @@ function billWarnHTML(m){
   if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate', 'Fix', rateMay()));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   var bw = buyerWarnWords(m); if (bw) out.push(billWarnLine('buyer', bw, 'Name them'));
+  if (m && m.stop) out.push('<div class="t warnrow" data-testid="till-warn-money"><span>⚠ ' + esc(m.stop.words) + ' Only the owner can let it through.</span><span></span></div>');   /* ACC-206 H: said where it is sold; Bill asks the owner PIN */
   return out.join('');
+}
+/**
+ * why this bill is NOT a tax invoice, or null — read before the sale, never a stop.
+ * ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41): a taxed bill whose shop details disagree saves as NOT a tax
+ * invoice ('shop_details'). ⭐ CX1 (T1): …and a bill the shop's law says must name its buyer, with nobody named (buyerWarnWords), says 'buyer_identity'.
+ */
+function notInvoiceWhy(bill){
+  var clash = (shopTax().charges && Number(bill.tax) > 0) ? shopStateClash() : null;
+  return clash ? 'shop_details' : (!!buyerWarnWords(bill) ? 'buyer_identity' : null);
 }
 /**
  * ⭐ CX1 (T1): the pack says this bill must NAME ITS BUYER (reg-au: a tax invoice of A$1,000 or more shows the buyer's identity or ABN, s.29-70(1)(c)(ii))
@@ -18917,10 +19160,46 @@ function rwEncash(){
 
 /**
  * ⚠️ A DELIVERY THIS BILL RECORDS ({ state_code, address }) — the one thing that moves its place of supply off the shop.
- * The counter has no screen that takes a delivery address yet, so this stays null and every bill is over the counter;
- * whatever records one sets it here, and it travels on the bill (finish) and the chit (chitOf).
+ * CTR-186: "Deliver to" (deliverbtn) and, for a registered buyer of another state, the finish() question "over the counter or despatched?"
+ * set it through deliverTo(); with none, every bill is over the counter. It travels on the bill (finish) and the chit (chitOf).
  */
-var BILL_DELIVERY = null;
+var BILL_DELIVERY = null, BILL_DELIVERY_ASKED = false;   /* ASKED: the despatch question is put once per bill */
+/** deliverTo(code) → records where the goods go (a 2-digit state code; nothing clears it). placeOfSupply is still the engine's: only the fact is recorded here. */
+function deliverTo(code){
+  var stateCode = String(code == null ? '' : code).trim();
+  BILL_DELIVERY = /^\d{2}$/.test(stateCode) ? { state_code: stateCode } : null;
+  paintTotals(); draftSave();   /* paintTotals repaints the button too */
+}
+/** the button says where the bill goes, once it goes somewhere */
+function paintDeliver(){
+  var button = document.getElementById('deliverbtn'); if (!button) return;
+  button.hidden = !packSplitsByState();   /* a border pack (AU, AE) has no state to deliver to */
+  var stateName = BILL_DELIVERY && ((window.CBProfileMap || {}).STATE_NAMES || {})[BILL_DELIVERY.state_code];
+  button.textContent = BILL_DELIVERY ? 'To ' + (stateName || BILL_DELIVERY.state_code) : 'Deliver to';
+  button.title = BILL_DELIVERY ? 'goods go to state ' + BILL_DELIVERY.state_code + ' — tap to change' : 'goods sent to another state';
+}
+/** the Deliver-to popup (the page's own ask): a state name or its 2-digit code; empty = over the counter again */
+async function deliverPick(){
+  var maps = window.CBProfileMap || {};
+  var typed = await ask('State name or code. Empty = over the counter.', BILL_DELIVERY ? BILL_DELIVERY.state_code : '', 'State', 'Deliver to');
+  if (typed == null) return;
+  typed = String(typed).trim();
+  if (!typed) { deliverTo(null); return; }
+  var code = maps.stateCodeOfName ? maps.stateCodeOfName(typed) : null;
+  if (!code || !(maps.STATE_NAMES || {})[code]) { say('That is not a state.'); return; }
+  deliverTo(code);
+}
+/** a registered buyer of ANOTHER state, no delivery chosen: over the counter or despatched? (asked once per bill; despatched = their state) */
+async function deliverAsk(){
+  if (BILL_DELIVERY || BILL_DELIVERY_ASKED || !packSplitsByState()) return true;
+  var cust = custKnown(), buyerTax = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
+  var shopRec = (S && S.shop) || {}, mine = String(shopRec.state_code || String(shopRec.gstin || '').trim().slice(0, 2) || '');
+  if (!/^\d{2}/.test(buyerTax) || buyerTax.slice(0, 2) === mine) return true;
+  BILL_DELIVERY_ASKED = true;
+  var sent = await sure('Taken over the counter, or despatched to their state?', 'Despatched', 'Delivery', 'Over the counter');
+  if (sent) deliverTo(buyerTax.slice(0, 2));
+  return true;
+}
 /**
  * ⭐⭐⭐ THE BILL IS COMPUTED ONCE, BY THE ENGINE — CBTax.determine(), the INV-01 invoice (Athi, 2026-10-02: "the computation
  * should happen in only one place like billing, rest all the places the value has to only read, no recomputation").
@@ -18939,6 +19218,7 @@ var BILL_DELIVERY = null;
  */
 function billMoney(){
   var sh = (S && S.shop) || {}, taxed = shopTax().charges;
+  if (!String(sh.country || '').trim()) return noCountryMoney();   /* CTRY-94: the engine refuses a seller with no country, so a no-country shop never reaches it (never India) */
   /* ⚠️ WHICH WAY THE PRICE IS QUOTED. Inclusive (the Indian retail norm, and the default) splits the tax OUT of the shelf price;
      exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
   var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
@@ -18954,8 +19234,7 @@ function billMoney(){
      UAE shop billed tax-free. The goods are handed over at the counter, inside the shop's country: the same rule placeOfSupply
      already applies to the state (IGST Act s.10(1)(a)), now applied to the country. The engine is right to refuse the guess; the
      counter knows the shop. The server's seam is lib/tax-lines walkIn (the same rule, the same note). */
-  var shopCountry = String(sh.country || '').trim().toUpperCase();
-  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
+  var shopCountry = String(sh.country || '').trim().toUpperCase();  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
@@ -18969,13 +19248,11 @@ function billMoney(){
   }) : null;
   /* ⭐ BUY1: when the BORDER decided (supply 'domestic' — never a state pack's intra/inter), the frozen invoice SAYS the buyer was
      taxed as inside the shop's country; the note travels on the chit (business_json.invoice) like every engine note */
-  if (inv && inv._cb && inv._cb.supply === 'domestic' && shopCountry) {
-    inv._cb.notes = (inv._cb.notes || []).concat('Walk-in: taxed as a sale inside ' + shopCountry + '.');
-  }
+  walkInNote(inv, shopCountry);
   var m = moneyOf(inv);
   /* ⭐ each cart line shows its own figures — READ off its ItemList entry, the same row the invoice carries */
   CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; });
-  m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv;
+  m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv; m.stop = moneyStop(inv);   /* ACC-206 H: the engine's own verdict, read as data */
   return m;
 }
 /**
@@ -18987,6 +19264,54 @@ function billMoney(){
  *   row on the slip) · heads, supply, pos_state and each line's figures as the engine names them
  * ⚠️ No engine (or no invoice) → zeros and no lines, never a figure of its own; finish() then refuses the sale.
  */
+/** BUY1: a border-decided invoice (supply 'domestic') says the walk-in was taxed as inside the shop's country; the note rides the chit */
+function walkInNote(invoice, country){
+  if (!invoice || !invoice._cb || invoice._cb.supply !== 'domestic') return;
+  invoice._cb.notes = (invoice._cb.notes || []).concat('Walk-in: taxed as a sale inside ' + country + '.');
+}
+/** a shop with no country stated has no invoice: zeros, no engine call, and the engines' own NO_COUNTRY words (CBRegulation.status(null).why) */
+function noCountryMoney(){
+  var money = moneyOf(null), status = (window.CBRegulation && CBRegulation.status) ? CBRegulation.status(null) : null;
+  money.noCountry = true; money.why = (status && status.why) || 'Set the shop country first.';
+  money.taxed = false; money.inclusive = false; money.invoice = null;
+  return money;
+}
+/** the totals row that says why nothing can be billed yet; '' for a shop with a country */
+function noCountryRow(bill){
+  return bill.noCountry ? '<div class="t warnrow" data-testid="till-no-country"><span>' + esc(bill.why) + '</span><span></span></div>' : '';
+}
+/**
+ * ⭐ ACC-206 H — THE MONEY MUST ADD UP, OR THE SALE STOPS. The engine answers its own bridge (invoice._cb.bridge, tax v1.74.0+); when it did not balance this
+ * reads { step, unexplained_minor, words } off it and nothing else — no sum here (the server's lib/send-money stopOf reads the same fields). null = balanced, or an
+ * invoice frozen before the engine carried a bridge. Works offline: the engine is already on this page.
+ */
+function moneyStop(invoice){
+  var bridge = invoice && invoice._cb && invoice._cb.bridge;
+  if (!bridge || bridge.ok !== false) return null;
+  return { step: bridge.step, unexplained_minor: bridge.unexplained_minor, words: bridge.words || ('Does not add up at ' + bridge.step + '.') };
+}
+/**
+ * the bill does not add up: only the owner's counter PIN lets it through, and the owner types why. → business_json.money_override
+ * { by, at, why, step, unexplained_minor } (the shape routes/chits.js sendBridge writes; a counter key's `by` is accepted there), null = nothing to ask (it adds up), false = the sale stops here.
+ */
+async function moneyStopAsk(stop){
+  if (!stop) return null;
+  var said = stop.words + '\n\nThe bill does not add up. Only the owner can let it through.';
+  var owner = await ownerPinAsk(said, 'Money check');
+  if (!owner) return false;
+  var reason = String(await ask('Why is this bill right? (required)', '', 'Reason', 'Money check') || '').trim();
+  if (!reason) { say('A reason is required to let a bill that does not add up through.\n\nNothing was billed.'); return false; }
+  return { by: String(owner.by.id), by_name: owner.by.name, at: new Date().toISOString(), why: reason, step: stop.step, unexplained_minor: stop.unexplained_minor };
+}
+/** the line on a slip that says the owner let an unbalanced bill through, and who */
+function slipCheckedHTML(bill){
+  var held = bill && bill.money_override;
+  return held ? '<div data-testid="till-slip-moneychecked" style="font-size:.9em">Money checked by ' + esc(String(held.by_name || held.by)) + '</div>' : '';
+}
+/** the sentence finish() stops a sale with when there is no invoice */
+function saleStopWords(bill){
+  return bill.noCountry ? bill.why : 'Prices cannot be worked out on this counter right now.\n\nPress refresh while online.';
+}
 function moneyOf(inv){
   var e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
   if (!e) return { gross:0, save:0, net:0, base:0, tax:0, round:0, byRate:{}, heads:[], supply:'unknown', pos_state:null, lines:[] };
@@ -20621,7 +20946,7 @@ async function startOpen(){
   document.getElementById('startbody').insertAdjacentHTML('beforeend',
     '<button class="bring" data-testid="till-productlab-open" onclick="startClose();openProductLab()">'
     + '<b>Let me pick what I sell</b>'
-    + '<span class="out">Price Lab — the same lists, with a tick against each product</span>'
+    + '<span class="out">Product Lab — the same lists, with a tick against each product</span>'
     + '<span class="eg">choose a shelf at a time, set your own prices, add more whenever you like</span></button>');
 }
 function startClose(){ var d = document.getElementById('startdlg'); if (d && d.open) d.close(); }
@@ -20884,7 +21209,7 @@ var SUMFOLD = (function(){ try { return localStorage.getItem('till_sumfold') !==
 function toggleSum(){ SUMFOLD = !SUMFOLD; try { localStorage.setItem('till_sumfold', SUMFOLD ? '1' : '0'); } catch (e) { cbQuiet('toggleSum:1', e); } paintTotals(); }
 function paintTotals(){
   var m = billMoney();
-  try { paintStepBar(); } catch (e) { cbQuiet('paintTotals:1', e); }
+  try { paintStepBar(); paintDeliver(); } catch (e) { cbQuiet('paintTotals:1', e); }   /* CTR-186: paintDeliver rides the step bar's repaint */
   /* ⭐ the Pay button carries the amount, so it has to move when the amount does */
   try { payGo(); } catch (e) { cbQuiet('paintTotals:2', e); }
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
@@ -20946,14 +21271,14 @@ function paintTotals(){
         /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
            formatting choice — the buyer cannot claim the credit off it. */
         + (m.supply === 'unknown'
-            ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + money(m.tax) + '</span></div>'
+            ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + taxFigure(m.tax) + '</span></div>'
               + '<div class="t warnrow"><span colspan="2">No state on the ' + taxIdLabel() + ', so CGST/SGST cannot be split</span><span></span></div>'
             : '<div class="t"><span>' + schemeWord() + ' total</span><span>' + money(m.tax) + '</span></div>') : '');
   /* the toggle appears only when there IS detail to fold — an empty cart or a plain cash sale needs no control */
   var toggle = detail.trim()
     ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()">'
       + (SUMFOLD ? '▸ tax &amp; offer breakdown' : '▾ hide breakdown') + '</button></div>' : '';
-  document.getElementById('totals').innerHTML = (CART.length ? billWarnHTML(m) : '')
+  document.getElementById('totals').innerHTML = noCountryRow(m) + (CART.length ? billWarnHTML(m) : '')
     + '<div class="totdetail" data-testid="till-sum-detail"' + (SUMFOLD ? ' hidden' : '') + '>' + detail + '</div>'
     + toggle
     + savedHead
@@ -20979,7 +21304,10 @@ function addPart(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
   if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
-  PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
+  var coinAmount = cashDue(r2(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED));
+  if (!(coinAmount > 0)) { say('That rounds to nothing in ' + PICKED + ' - type at least the smallest coin.'); return; }   /* CTRY-77: never a Cash 0.00 part */
+  /* CTRY-77: a CASH part is TAKEN at the pack's coin step like the part that pays the rest (cashDue) — typed 10.02 on a 10.02 bill goes out 10.00, cash_round -0.02 follows from cashRoundOf */
+  PARTS.push({ how: PICKED, amount: coinAmount });
   PAY_ASKED = true;                                  /* taking a part IS saying how it was paid */
   document.getElementById('tendered').value = '';
   paintParts(); paintTotals(); draftSave();          /* R1 · a part payment is part of the bill */
@@ -21692,16 +22020,14 @@ async function postRewardBehindBill(bill){
 async function finish(){
   if (!CART.length) return { ok: false };
   if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
-  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */
+  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */ await deliverAsk();   /* CTR-186: another state's registered buyer — over the counter or despatched? — before the tax */
+  var basis = await recheckBeforeBill(); if (basis === false) return { ok: false };   /* CTR-212: prices read again before the number is taken; the cashier going back stops here, nothing billed */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
-  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return { ok: false }; }
-  /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
-     a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
-  var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
-  /* ⭐ CX1 (T1): …and a bill the shop's law says must name its buyer, with nobody named (buyerWarnWords) — the same honest title, not a stop */
-  var noBuyer = !clash && !!buyerWarnWords(m);
+  if (!m.invoice) { saleStop(saleStopWords(m)); return { ok: false }; }
+  var moneyOver = await moneyStopAsk(m.stop); if (moneyOver === false) return { ok: false };   /* ACC-206 H: a bill the engine says does not add up stops unless the owner lets it through */
+  var notInvoice = notInvoiceWhy(m);
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -21726,28 +22052,7 @@ async function finish(){
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
        decided it, so a reprint next year explains itself without the definition — the same reason a slab travels. */
-    lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit,
-                                          price:(c.unitPrice != null ? c.unitPrice : c.price), list_price:c.price,
-                                          priced_by:(c.priced && c.priced.kind) || null,
-                                          priced_why:(c.priced && c.priced.why) || null, qty:c.qty,
-                                          mrp:c.mrp || null,
-                                          /* ⭐ the line's own taxable value and tax, so a reprint prints the same
-                                             breakdown without recomputing it against today's slabs */
-                                          taxable:c.taxable != null ? c.taxable : null, tax:c.tax != null ? c.tax : null,
-                                          gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label,
-                                          /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over
-                                             a `save` that is the sum of all of them — tolerable on a screen you
-                                             can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a
-                                             reprint, a dispute and the shop all read a year later, and by then
-                                             nobody can re-derive which offers applied. Kept beside off_label
-                                             rather than replacing it, so every existing reader keeps working. */
-                                          offers:(c.offs||[]).map(function(a){
-                                            return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
-                                                     off:r2(Math.abs(a.amount)), why:a.why||null }; }),
-                                          save_unnamed:c.save_unnamed || 0,
-                                          /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
-                                          mods:(c.mods && c.mods.length ? c.mods : null),
-                                          hsn:c.hsn, gst_rate:c.gst_rate }; }),
+    lines: CART.map(billLineOf),   /* CTR-212: each line as the bill records it, one function (billLineOf, below) */
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
        from the shape of a bill would be a guess dressed as a finding. */
@@ -21755,7 +22060,7 @@ async function finish(){
        server's unique index makes a replay a no-op — so a bill that syncs twice does not award twice. */
     reward: RW.holder ? { holder: RW.holder, spend: RW.spend || 0 } : null,
     payment_asked: PAY_ASKED, change: changeOf(tendered, m.net, parts), cash_round: cashRoundOf(parts, m.net) || undefined,
-    total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
+    total: m.net, taxable: m.base, tax: m.tax /* ACC-191: null = not decided (supply unknown), stored as the engine said it, never 0 */, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
     heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round, delivery: BILL_DELIVERY || null,
@@ -21765,22 +22070,15 @@ async function finish(){
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
-    customer: Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
-                            cust ? { identity_id: cust.identity_id } : {},
-                            /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
-                               the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
-                            cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
-                            /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
-                               The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
-                            cust && cust.gstin && invoiceRule(m.net, cust.gstin) ? { gstin: cust.gstin } : {}),
+    customer: billCustomerOf(cust, m.net),   /* CTR-212: the buyer as the bill records it, one function (billCustomerOf, below) */
     /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
     terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
-    credit_override: override,
+    credit_override: override, price_basis: basis, money_override: moneyOver || undefined,   /* ACC-206 H: the owner let a bill that does not add up through */
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
     /* ⭐ WHY THIS TAX BILL IS NOT A TAX INVOICE, recorded with it (M41): a reprint after the shop is fixed must not turn it into one */
-    not_invoice: clash ? 'shop_details' : (noBuyer ? 'buyer_identity' : null),
+    not_invoice: notInvoice,
     /* ⭐ WHO CHECKED WHAT, AND WHEN. A shop that is inspected must be able to show the check happened. */
     age_checks: ageRecord(),
     /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess
@@ -21806,7 +22104,7 @@ async function finish(){
   showSlip(r.bill, m);
   autoPrint(r.bill);
   if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; paintOrderBar(); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
-  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
+  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; BILL_DELIVERY_ASKED = false; paintDeliver(); paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
@@ -21815,6 +22113,39 @@ async function finish(){
   menuFresh();
   load(); loadQuick();
   stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
+}
+/** the buyer as the bill stores it: name and phone as typed (Walk-in when blank), the known customer by id, a business on the rail by entity, and the buyer's ABN / TRN where the pack's tax invoice names it */
+function billCustomerOf(cust, billTotal){
+  return Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+  cust ? { identity_id: cust.identity_id } : {},
+  /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
+     the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
+  cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
+  /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
+     The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
+  cust && cust.gstin && invoiceRule(billTotal, cust.gstin) ? { gstin: cust.gstin } : {});
+}
+/** one cart line as the bill stores it: who it is and what decided its price (billLineFigures), every offer on the record, the chosen modifiers, hsn · rate · catalogue_stamp */
+function billLineOf(cartLine){
+  return Object.assign({ item_id:cartLine.item_id, name:cartLine.name, unit:cartLine.unit }, billLineFigures(cartLine), {
+    /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over a `save` that is the sum of all of them — tolerable on a screen you
+       can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a reprint, a dispute and the shop all read a year later, and by then
+       nobody can re-derive which offers applied. Kept beside off_label rather than replacing it, so every existing reader keeps working. */
+    offers:(cartLine.offs||[]).map(function(a){
+      return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
+               off:r2(Math.abs(a.amount)), why:a.why||null }; }),
+    save_unnamed:cartLine.save_unnamed || 0,
+    /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
+    mods:(cartLine.mods && cartLine.mods.length ? cartLine.mods : null),
+    hsn:cartLine.hsn, gst_rate:cartLine.gst_rate, catalogue_stamp:cartLine.catalogue_stamp || null });
+}
+/** a line's charge and what decided it: price (after the structure, before offers), list_price, priced_by · priced_why, qty, mrp, and the line's own taxable value and tax so a reprint prints the same breakdown without recomputing it against today's slabs */
+function billLineFigures(cartLine){
+  return { price:(cartLine.unitPrice != null ? cartLine.unitPrice : cartLine.price), list_price:cartLine.price,
+    priced_by:(cartLine.priced && cartLine.priced.kind) || null, priced_why:(cartLine.priced && cartLine.priced.why) || null,
+    qty:cartLine.qty, mrp:cartLine.mrp || null,
+    taxable:cartLine.taxable != null ? cartLine.taxable : null, tax:cartLine.tax != null ? cartLine.tax : null,
+    gross:cartLine.gross, save:cartLine.save, net:cartLine.net, off:cartLine.off, off_label:cartLine.off_label };
 }
 
 /**
@@ -21858,8 +22189,7 @@ function dayAddIssued(sheet, bill){
 /** an OLD bill's line (no by_rate): CBTax.splitLineTax(), the same formula the invoice used, not the report's own guess at it */
 function dayAddSplit(sheet, line){
   var rate = Number(line.gst_rate) || 0, lineNet = Number(line.net) || 0; if (!rate) return;
-  var split = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: lineNet, rate: rate, priceIncludesTax: taxIncluded() })
-    : (function(){ var base = taxIncluded() ? r2(lineNet * 100 / (100 + rate)) : lineNet; return { assessable: base, tax: r2(base * rate / 100) }; })();
+  var split = CBTax.splitLineTax({ net: lineNet, rate: rate, priceIncludesTax: taxIncluded() });
   sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
   sheet.rate[rate].base = r2(sheet.rate[rate].base + split.assessable);
   sheet.rate[rate].tax = r2(sheet.rate[rate].tax + split.tax);
@@ -21893,17 +22223,17 @@ function dayCloseSheet(rows){
    * drawer count wants those two on separate lines.
    */
   var rt0 = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(rows || []) : null;
+  var returnFigures = returnedFigures(rt0, back);
   var d = { bills: rt0 ? rt0.count : (rows || []).filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); }).length,
             first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
             rate:{}, modes:{}, people:{}, items:{}, taxed:false,
             /* ⭐ said out loud, never folded away — a day with returns in it is a different day */
-            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, refunded: {},
+            returns: rt0 ? rt0.returns : back.length, returned: returnFigures.returned, reduced: returnFigures.reduced, refunded: {},
             /* ⭐ [till expenses] the identical treatment, one column over — a day with expenses in it is also
              * a different day, and pretending the drawer only ever loses money to refunds would be exactly
              * the bug this whole engine exists to prevent, just for a different cause. */
             expenses: rt0 ? rt0.expenseCount : spent.length, expensed: rt0 ? rt0.expenses : 0, spentby: {} };
   back.forEach(function(b){
-    if (!rt0) d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
     /* ⚠️ per-tender refunds are this sheet's own — the engine nets them into `by`, and a drawer count must not */
     ((b.refunds) || []).forEach(function(x){
       d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
@@ -21964,11 +22294,34 @@ function dayCloseSheet(rows){
   d.expected_cash = r2(d.cash + d.float - d.cash_back - d.cash_out);
   return d;
 }
+/** CTR-196 — a credit note split into money handed back and money only taken off what is owed: the same rule as lib/rollup splitNote (a note with no refunds field counts wholly as a refund) */
+function creditNoteSplit(note){
+  var whole = Math.abs(Number(note.total) || 0);
+  if (!Array.isArray(note.refunds)) return { refunded: whole, reduced: 0 };
+  var paid = 0;
+  for (var at = 0; at < note.refunds.length; at++) paid += Number(note.refunds[at].amount) || 0;
+  var refunded = Math.min(r2(paid), whole);
+  return { refunded: refunded, reduced: r2(whole - refunded) };
+}
+/** the day's returned money and reduced money: the engine's figures, else the same split over the notes (CTR-196) */
+function returnedFigures(totals, notes){
+  if (totals) return { returned: totals.refunds, reduced: totals.reduced || 0 };
+  var out = { returned: 0, reduced: 0 };
+  for (var at = 0; at < notes.length; at++) {
+    var split = creditNoteSplit(notes[at]);
+    out.returned = r2(out.returned + split.refunded); out.reduced = r2(out.reduced + split.reduced);
+  }
+  return out;
+}
+/** the day slip's line for credit notes that only reduced what a customer owes — nothing when none did */
+function reducedRowHTML(closing){
+  return closing.reduced ? '<div>taken off what customers owe<span style="float:right">' + money(closing.reduced) + '</span></div>' : '';
+}
 function dayCloseHTML(d){
   /* ⭐ a returns block, only when there were returns — a line of zeroes every day trains people to skip it */
   var backBlock = d.returns
     ? '<hr><div><b>RETURNS</b></div>'
-      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(d.returned) + '</span></div>'
+      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(r2(d.returned + d.reduced)) + '</span></div>' + reducedRowHTML(d)
       + Object.keys(d.refunded).sort().map(function(how){
           return '<div>back in ' + esc(how) + '<span style="float:right">' + money(d.refunded[how]) + '</span></div>';
         }).join('')
@@ -22047,7 +22400,7 @@ async function dayClose(){
   var sd = document.getElementById('slipdlg'); if (sd.open) sd.close();   /* a bill slip still open: showModal on it would not repaint */
   sd.showModal();
   if (d.closed) return;
-  var chk = await dayServerCheck(rows);
+  var chk = await dayCheckThenRefresh(rows);
   if (tok !== DAY_TOK || DAY_D !== d) return;
   d.server = chk;
   dayCheckPaint(chk);
@@ -22063,13 +22416,43 @@ var DAY_D = null, DAY_ROWS = [];
  * ⚠️ Nothing here touches billing: only the close waits. Expenses never reach /bills, so they are left out of both sides.
  */
 function dayKeyOf(at){ var t = new Date(at); return isNaN(t) ? String(at || '').slice(0, 10) : t.toISOString().slice(0, 10); }
+/** CTR-197: the bill numbers the server names as withdrawn (cancelled or rejected) → { no: 1 }; anything else it sends is ignored */
+function withdrawnNos(list){
+  var out = {};
+  (Array.isArray(list) ? list : []).forEach(function(entry){ if (entry && entry.no) out[String(entry.no)] = 1; });
+  return out;
+}
+/** CTR-197: mark this device's own copy of each named bill withdrawn - kept for the record, out of every day sum (isDocRow). → how many were newly marked */
+async function dayMarkWithdrawn(gone){
+  var markedCount = 0;
+  if (!Object.keys(gone).length) return 0;
+  try {
+    var all = (await DB.all('bills')) || [];
+    for (var i = 0; i < all.length; i++) {
+      var row = all[i];
+      if (!row || !row.no || row._withdrawn || !gone[String(row.no)]) continue;
+      row._withdrawn = { at: Date.now() };
+      await DB.put('bills', row); markedCount++;
+    }
+  } catch (e) { cbQuiet('dayMarkWithdrawn:1', e); }
+  return markedCount;
+}
+/** CTR-197: the day check, and - when it just dropped a cancelled bill from this device's day - the report read again without it (dayClose starts by taking the newest turn, so the older pass ends; the second pass marks none) */
+async function dayCheckThenRefresh(rows){
+  var check = await dayServerCheck(rows);
+  if (check && check.marked) dayClose();
+  return check;
+}
 async function dayServerCheck(rows){
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return null;      /* the shop PC's program keeps its own day */
   var h; try { h = await HOST.history(2, tillId()); } catch (e) { h = { offline: true }; }
   if (!h || h.offline || !Array.isArray(h.bills)) return { state: 'offline' };
   var day = dayKeyOf(Date.now()), counted = function(b){ return !!(b && b.no) && !(isDocRow(b) || isExpenseRow(b)); };
+  /* ⭐ CTR-197: the server leaves a cancelled bill out of its list and NAMES it in `withdrawn`. A bill of this device that is named there is
+     known, not unsent: it is marked withdrawn in the store (out of the day's sums) and left out of both sides of the check. */
+  var gone = withdrawnNos(h.withdrawn), marked = await dayMarkWithdrawn(gone);
   var mine = {}, theirs = {};
-  (rows || []).filter(counted).forEach(function(b){ mine[String(b.no)] = b; });
+  (rows || []).filter(function(row){ return counted(row) && !gone[String(row.no)]; }).forEach(function(row){ mine[String(row.no)] = row; });
   h.bills.filter(function(b){ return counted(b) && dayKeyOf(b.at) === day; }).forEach(function(b){ theirs[String(b.no)] = b; });
   var more = Object.keys(theirs).filter(function(k){ return !mine[k]; }).map(function(k){ return theirs[k]; });
   var fewer = Object.keys(mine).filter(function(k){ return !theirs[k]; }).map(function(k){ return mine[k]; });
@@ -22078,7 +22461,7 @@ async function dayServerCheck(rows){
   var sales = function(list){ return list.filter(function(bill){ return !isReturnRow(bill); }); }, back = function(list){ return list.filter(isReturnRow); };
   /* an old note stored no amount: when none of the refunds carries one the sum is null (the bare word), never ₹0.00 */
   var backSum = function(list){ var known = back(list).filter(function(bill){ return bill.total != null; }); return known.length ? sum(known) : null; };
-  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer,
+  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer, marked: marked,
            moreTotal: sum(sales(more)), fewerTotal: sum(sales(fewer)), moreBack: back(more).length, fewerBack: back(fewer).length,
            moreBackTotal: backSum(more), fewerBackTotal: backSum(fewer) };
 }
@@ -22789,9 +23172,7 @@ function rcvLineTax(l){
   var rate = Number(l && l.gst_rate) || 0;
   if (!rate || !shopTax().charges) return { taxable: value, tax: 0, rate: 0 };
   /* ⚠️ CBTax.splitLineTax() — the same formula an invoice justifies itself by, not a second one for what we bought */
-  var sp = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: value, rate: rate, priceIncludesTax: !!RCV.tax_inclusive })
-    : (RCV.tax_inclusive ? (function(){ var b2 = r2(value * 100 / (100 + rate)); return { assessable: b2, tax: r2(value - b2) }; })()
-                          : { assessable: value, tax: r2(value * rate / 100) });
+  var sp = CBTax.splitLineTax({ net: value, rate: rate, priceIncludesTax: !!RCV.tax_inclusive });
   return { taxable: sp.assessable, tax: sp.tax, rate: rate };
 }
 /**
@@ -23255,7 +23636,7 @@ function tenderParts(parts, billNet, tendered){
     }
     return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];
   }
-  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: Math.min(tendered, rest) });
+  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: cashDue(Math.min(tendered, rest), payWayId(PICKED)) });   /* CTRY-77: a typed cash part below the rest is on the coin step too */
   return parts;
 }
 function slipHeadHTML(kind){
@@ -23347,7 +23728,7 @@ function slipHTML(bill, m){
     + t(esc(counterName()) + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
     /* ⭐ DINE-IN (table 4) / TAKEAWAY / DELIVERY — the bill already carries it (BF8) */
     + billOrderRow(bill, t)
-    + slipBuyerHTML(bill, t)
+    + slipBuyerHTML(bill, t) + slipCheckedHTML(bill)
     /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
     + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '')
     /* ⭐ the two-sided bill says so, in one line: the customer has their own copy on ChitBridge */
@@ -23475,16 +23856,16 @@ function domesticFootHTML(bill, row){
   return row('Taxable', money(bill.taxable))
     + ((bill.heads && bill.heads.length)
         ? bill.heads.map(function(head){ return row(taxHeadWord(head) + ' ' + head.rate + '%', money(head.amount)); }).join('')
-          + row(schemeWord() + ' total', money(bill.tax))
-        : row(schemeWord(), money(bill.tax)));
+          + row(schemeWord() + ' total', taxFigure(bill.tax))
+        : row(schemeWord(), taxFigure(bill.tax)));
 }
 /** one row per rate — the base and the tax as the bill STORED them (base, or taxable; a credit note's are negative), then the tax total */
 function perRateFootHTML(bill, row){
   var issued = bill.by_rate;
   return Object.keys(issued).sort(function(left, right){ return Number(left) - Number(right); }).map(function(rate){
     var figures = issued[rate] || {}, base = figures.base != null ? figures.base : figures.taxable;
-    return '<div data-testid="till-slip-rate-' + esc(rate) + '">' + row(esc(rate) + '% on ' + money(Number(base) || 0), money(Number(figures.tax) || 0)) + '</div>';
-  }).join('') + row(schemeWord() + ' total', money(bill.tax));
+    return '<div data-testid="till-slip-rate-' + esc(rate) + '">' + row(esc(rate) + '% on ' + money(Number(base) || 0), figures.tax == null ? NOT_DECIDED : money(Number(figures.tax) || 0)) + '</div>';
+  }).join('') + row(schemeWord() + ' total', taxFigure(bill.tax));
 }
 /**
  * ⭐ THE FOOT OF A TAX INVOICE: one row per rate, with the taxable value and the tax split the way this bill was
@@ -23759,7 +24140,7 @@ async function resendBill(no){
  * a list of what it is NOT is wrong the moment anything new exists. [[feedback-whitelist-drops-silently]]
  */
 /** M128: a despatch (D/..) or goods-received (GRN/..) note is stored beside the bills but is NOT one - the day's count, the slip's From-To and the Day book count bills only */
-function isDocRow(b){ return !!(b && (b.doc === true || b.kind === 'despatch' || b.kind === 'receipt')); }
+function isDocRow(row){ return !!(row && (row.doc === true || row.kind === 'despatch' || row.kind === 'receipt' || row._withdrawn)); }   /* CTR-197: a bill the server says was cancelled stays in the store but is no sale of the day */
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
@@ -23812,7 +24193,7 @@ async function renumberBill(bill, why, drainRows){   /* `drainRows` (optional): 
                   why: why || 'the number was already used by another counter' },
     _renum: tries + 1, _tries: 0
   });
-  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified; delete fresh.renumber_to;
+  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._code; delete fresh._verified; delete fresh.renumber_to;
   await DB.put('bills', fresh);
   await DB.put('queue', fresh);
   var companions = await rekeyCompanions(from, to);
@@ -23836,7 +24217,7 @@ async function rekeyCompanions(from, to){
     var row = rows.filter(function(x){ return x && x.no === oldKey; })[0];
     if (!row) continue;
     var moved = Object.assign({}, row, { no: to + BILL_COMPANIONS[i], _tries: 0 });
-    delete moved._nextAt; delete moved._status; delete moved._why;
+    delete moved._nextAt; delete moved._status; delete moved._why; delete moved._code;
     if (moved.tillPost && moved.tillPost.body && moved.tillPost.body.ref === from)
       moved.tillPost = Object.assign({}, moved.tillPost, { body: Object.assign({}, moved.tillPost.body, { ref: to }) });
     await DB.put('queue', moved);
@@ -24303,7 +24684,7 @@ async function openStuck(){
         var waitW = qWaitWords(q);
         var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted')
                 + (waitW ? ' · ' + waitW : '');
-        h += '<div class="t' + (q._why ? ' warnrow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
+        h += '<div class="t' + (q._why ? ' warnrow' : '') + (q._code === 'MONEY_UNBALANCED' ? ' stoprow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
           + '<span>' + esc(why)
           + ' <button class="pill" style="margin-inline-start:8px" data-testid="till-stuck-aside-' + esc(q.no)
           + '" onclick="setAside(\'' + esc(q.no) + '\')">set aside</button></span></div>';
@@ -25437,6 +25818,8 @@ function retMoney(){
       return r2(Math.max(0, v)) * ((Number(l[k]) || 0) < 0 ? -1 : 1);
     };
     var net = part('net'), taxable = part('taxable'), tax = part('tax'), save = part('save');
+    var taxUndecided = l.tax === null; /* ACC-191: the original line carried tax null = not decided; its return does too */
+    if (taxUndecided) out.taxUndecided = true;
     /**
      * ⚠️⚠️ from_line IS NOT DECORATION. A credit note holds only the lines actually coming back, so its line 0
      * may be the original's line 3. retLeft() first matched prior credit notes BY ARRAY INDEX and would have
@@ -25446,7 +25829,7 @@ function retMoney(){
      */
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net,
                                           gross: -part('gross'),
-                                          taxable: -taxable, tax: -tax, save: -save }));
+                                          taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }));
     out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
     out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
     out.count = r2(out.count + q);
@@ -25457,6 +25840,7 @@ function retMoney(){
       out.byRate[rt].tax = r2(out.byRate[rt].tax + tax);
     }
   });
+  if (out.taxUndecided) { out.tax = null; Object.keys(out.byRate).forEach(function(rate){ out.byRate[rate].tax = null; }); }
   return out;
 }
 function retPaint(){
@@ -25736,6 +26120,11 @@ function subPaint(){
 }
 /** ⭐⭐ ISSUE IT. Same discipline as an expense: numbered from its own series, written locally, queued, sent
  *  when the line is there. Unlike an expense, this IS a sale — see chitOfSubscription()'s own comment. */
+/** CTRY-77: a CASH subscription is TAKEN at the pack's coin step like a bill (cashDue); cash_round is what the coin changed, as on a bill (absent when nothing rounds) */
+function subTaken(amount){
+  var taken = cashDue(amount, payWayId(SUB_HOW)), moved = r2(taken - amount);
+  return { payments: [{ how: SUB_HOW, amount: taken }], cash_round: moved ? moved : undefined };
+}
 async function subIssue(){
   var what = SUB_WHAT.trim(), amount = r2(Number(SUB_AMOUNT) || 0), cadence = Number(SUB_CADENCE) || 0;
   if (!what) { toastLine('Say what this subscription/AMC is for first.'); return; }
@@ -25749,7 +26138,7 @@ async function subIssue(){
     + (occ ? ', ' + occ + ' included' : ', ongoing') + ', every ' + cadence + ' day(s)?';
   if (!(await sure(confirmWords, 'Yes, sign them up', 'New subscription/AMC'))) return;
   var body = { what: what, customer: { name: custName }, price: amount, total: amount, mode: SUB_HOW,
-    payments: [{ how: SUB_HOW, amount: amount }],
+    payments: subTaken(amount).payments, cash_round: subTaken(amount).cash_round,
     occurrencesTotal: occ, cadenceDays: cadence, startsAt: new Date().toISOString(),
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
   var r = { ok: false };
@@ -25862,9 +26251,9 @@ async function retIssue(){
     reason: why, reason_words: words,
     lines: m.lines,
     /* ⚠️ NEGATIVE, so every accumulator that adds up a day nets this without being taught about returns */
-    total: -m.total, taxable: -m.taxable, tax: -m.tax, saved: -m.saved,
+    total: -m.total, taxable: -m.taxable, tax: negatedTax(m.tax), saved: -m.saved, /* ACC-191: null = not decided, never -0 */
     by_rate: (function(){ var o = {}; Object.keys(m.byRate).forEach(function(k){
-        o[k] = { taxable: -m.byRate[k].taxable, tax: -m.byRate[k].tax }; }); return o; })(),
+        o[k] = { taxable: -m.byRate[k].taxable, tax: negatedTax(m.byRate[k].tax) }; }); return o; })(),
     /* ⚠️ THE HEADS AS ISSUED. A shop's registration can change; a credit note states what the ORIGINAL bill
        was issued under, or it would reverse a tax under a head nobody charged. */
     heads: against.heads || null, supply: against.supply || null,
@@ -26266,7 +26655,7 @@ function slipOfRow(b){
   var inv = (b && b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null;
   if (!inv) return Object.assign({}, b, { tax_lost: true });
   var m = moneyOf(inv);
-  return Object.assign({}, b, { total: m.net, taxable: m.base, tax: m.tax, saved: m.save, gross: m.gross, by_rate: m.byRate,
+  return Object.assign({}, b, { total: m.net, taxable: m.base, tax: m.tax /* ACC-191: null stays null = not decided */, saved: m.save, gross: m.gross, by_rate: m.byRate,
                                 heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round,
                                 lines: (b.lines || []).map(function(l, n){ return Object.assign({}, l, m.lines[n] || {}); }) });
 }

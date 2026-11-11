@@ -30,6 +30,10 @@ process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: this sweep runs the allow-list for real; production defaults to report */
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
+const ALLOW = require('./lib/allowlist-world.cjs');
+const APPROVE_ROUTE = 'POST /api/integrations/:actor_id/approve'; /* the one writer whose 200 the generator's stand-in database cannot reach: proved here, in the route file's own world */
+const isApprove = (route) => route === APPROVE_ROUTE;
 const MINE = (route) => / \/api\/integrations\//.test(route);
 const argv = process.argv.slice(2);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
@@ -160,7 +164,7 @@ const SCENARIOS = [
   { id: 'streams-policy-fails', route: 'GET /api/integrations/streams', status: 500, setup: { policyFails: true } },
   { id: 'putstreams-no-token', route: 'PUT /api/integrations/streams', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'putstreams-key-asks', route: 'PUT /api/integrations/streams', status: 403, setup: { asKey: true }, body: { order: 'kit@pc' } },
-  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: { colour: 'red' } },
+  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: {} },
   { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true }, body: { order: 'kit@pc' } },
   { id: 'putstreams-bad-body', route: 'PUT /api/integrations/streams', status: 422, body: { order: 12345 }, fresh: true },
   { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true }, body: { order: 'kit@pc' } },
@@ -239,7 +243,11 @@ const SUCCESS = [
   OK('stock-second-page', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: stockRowsOf(3) }, { url: I + '/stock/shop-a?limit=2&page=2' }),
   OK('stock-capped', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: stockRowsOf(201) }, { url: I + '/stock/shop-a?limit=500' }),
   OK('profile-map-empty', 'GET /api/integrations/profile-map', {}),
-  OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD })
+  OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD }),
+  /* the writers' success answers: a request that reaches each one's 200 is the example the generated output_allowlist case plays (S34) */
+  OK('approve-connector', 'POST /api/integrations/:actor_id/approve', { actor: { identity_id: A1, site: 'PC', connector_config: { key_jti: 'j1' } } }, { url: I + '/' + A1 + '/approve', body: {} }),
+  OK('putstreams-give', 'PUT /api/integrations/streams', {}, { body: { order: 'kit@pc', stock: null } }),
+  OK('profile-write', 'POST /api/integrations/profile', { asKey: true, profileValues: HELD }, { body: { source: 'tally', fields: { legal_name: 'Acme Pvt Ltd', state: 'Delhi' } } })
 ];
 
 function send(port, method, urlPath, body, headers) {
@@ -298,7 +306,7 @@ async function checkRoutes(port, recording) {
   const tested = {};
   for (const scenario of SCENARIOS.concat(SUCCESS)) {
     const answer = await runScenario(port, scenario);
-    recording[scenario.route + '|' + scenario.id] = Object.assign({ route: scenario.route, status: answer.status, body: answer.json }, scenario.ok ? { request: { url: scenario.url || scenario.route.split(' ')[1] } } : {});
+    recording[scenario.route + '|' + scenario.id] = Object.assign({ route: scenario.route, status: answer.status, body: answer.json }, scenario.ok ? { request: Object.assign({ url: scenario.url || scenario.route.split(' ')[1] }, scenario.body ? { body: scenario.body } : {}) } : {});
     const label = scenario.id;
     if (scenario.ok) {
       if (!argv.includes('--capture')) check(label + ': answers 200', answer.status === 200, answer.status);
@@ -364,7 +372,9 @@ function checkAllowList(recording) {
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
     check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its schema lists', held, { answers: answers.length, errors: fits.errors });
   });
+  const proved = ALLOW.checkAllowList(recording, { [APPROVE_ROUTE]: contract.APPROVE_OPERATION }, check); /* S34: the approve answer ({ ok, enrol }) is closed and every recorded 200 fits it */
   check('the filter dropped no key of any answer these scenes gave', droppedCount() === 0, droppedCount());
+  return proved;
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
@@ -387,7 +397,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
-  checkAllowList(recording);
+  const closedHeld = checkAllowList(recording);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -395,7 +405,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/integrations.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    ALLOW.writeEvidence(EVIDENCE_FILE, isApprove, closedHeld);
+  } else {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/integrations.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for the approve route exactly when its 200 held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, isApprove), closedHeld), closedHeld);
+  }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();

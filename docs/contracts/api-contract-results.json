@@ -2938,6 +2938,14 @@
     400
    ]
   },
+  "POST /api/entities/register": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/entities/verify": {
    "cases": 2,
    "failed": 0,
@@ -3434,6 +3442,14 @@
     400
    ]
   },
+  "POST /api/products/categories/bulk": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/products/import": {
    "cases": 6,
    "failed": 0,
@@ -3663,7 +3679,15 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
+   ]
+  },
+  "POST /api/signin/logout": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "POST /api/signin/pin": {
@@ -3671,7 +3695,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/signin/renew": {
@@ -3679,7 +3703,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/signin/sessions/revoke": {
@@ -3687,7 +3711,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/signin/verify": {
@@ -3695,7 +3719,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/simulator/feedback": {
@@ -3703,7 +3727,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/simulator/lead": {
@@ -3711,7 +3735,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/supplies": {
@@ -3986,6 +4010,14 @@
     400
    ]
   },
+  "POST /api/till/recheck": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/till/reconcile": {
    "cases": 2,
    "failed": 0,
@@ -4195,7 +4227,7 @@
    ]
   },
   "PUT /api/chits/:chit_id/status": {
-   "cases": 7,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4291,7 +4323,7 @@
    ]
   },
   "PUT /api/integrations/streams": {
-   "cases": 2,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

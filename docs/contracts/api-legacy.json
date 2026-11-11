@@ -1442,6 +1442,34 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "date-given-bs-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     }
     }
    ]
   },
@@ -1892,6 +1920,62 @@
       "error": "Only the owner may see what you owe.",
       "message": "Only the owner may see what you owe."
      }
+    },
+    {
+     "scenario": "date-given-dues-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     }
+    },
+    {
+     "scenario": "date-given-dues-year-out-of-range",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     }
     }
    ]
   },
@@ -2165,6 +2249,34 @@
      "fixture": {
       "error": "Not found",
       "message": "No such ledger."
+     }
+    },
+    {
+     "scenario": "date-given-ledger-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
      }
     }
    ]
@@ -2692,6 +2804,34 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "date-given-pl-both-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
+     }
     }
    ]
   },
@@ -2969,6 +3109,34 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "date-given-slashes-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
      }
     }
    ]
@@ -3260,6 +3428,118 @@
       "hint": "Check the shop's GSTIN in Country setup, then try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "gstr-month-not-a-month",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     }
+    },
+    {
+     "scenario": "gstr-month-year-out-of-range",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     }
+    },
+    {
+     "scenario": "gstr-month-words",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     }
+    },
+    {
+     "scenario": "gstr-form-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "BAD_FORM",
+      "message": "form must be one of: gstr1, gstr3b.",
+      "type": "https://chitbridge.com/problems/bad_form",
+      "title": "Return form not offered",
+      "status": 400,
+      "detail": "form must be one of: gstr1, gstr3b.",
+      "hint": "Pick GSTR-1 or GSTR-3B and try again.",
+      "request_id": "req-test",
+      "field": "form"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "BAD_FORM",
+      "message": "form must be one of: gstr1, gstr3b.",
+      "type": "https://chitbridge.com/problems/bad_form",
+      "title": "Return form not offered",
+      "status": 400,
+      "detail": "form must be one of: gstr1, gstr3b.",
+      "hint": "Pick GSTR-1 or GSTR-3B and try again.",
+      "request_id": "req-test",
+      "field": "form"
+     }
     }
    ]
   },
@@ -3351,6 +3631,34 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "ledger-month-not-a-month",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "DATE_INVALID",
+      "message": "Which month? Use YYYY-MM, like 2026-10.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "detail": "Which month? Use YYYY-MM, like 2026-10.",
+      "hint": "Use the month as YYYY-MM, for example 2026-10.",
+      "request_id": "req-test",
+      "field": "month"
      }
     }
    ]
@@ -4688,6 +4996,78 @@
       "error": "A manual entry needs a narration — what it is for.",
       "message": "A manual entry needs a narration — what it is for."
      }
+    },
+    {
+     "scenario": "date-given-slashes-write",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "date"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "date"
+     }
+    },
+    {
+     "scenario": "date-given-not-a-day-write",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "date"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "date"
+     }
+    },
+    {
+     "scenario": "entry-line-other-currency",
+     "status": 409,
+     "body_keys": {
+      "code": "CURRENCY_MISMATCH",
+      "error": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "message": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "field": "lines[0].currency"
+     },
+     "fixture": {
+      "code": "CURRENCY_MISMATCH",
+      "error": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "message": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "field": "lines[0].currency"
+     }
     }
    ]
   },
@@ -5261,6 +5641,18 @@
      "fixture": {
       "error": "Missing Idempotency-Key",
       "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
+    },
+    {
+     "scenario": "challan-reused-other-amount",
+     "status": 409,
+     "body_keys": {
+      "error": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment.",
+      "message": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment."
+     },
+     "fixture": {
+      "error": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment.",
+      "message": "Challan CPIN1 was already recorded for CGST 60 — not CGST 90. Use a new challan number for a further payment."
      }
     }
    ]
@@ -7312,6 +7704,18 @@
       "error": "Which customer?",
       "message": "Which customer?"
      }
+    },
+    {
+     "scenario": "write-off-above-due",
+     "status": 409,
+     "body_keys": {
+      "error": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off.",
+      "message": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off."
+     },
+     "fixture": {
+      "error": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off.",
+      "message": "Only ₹0 INR is still owed, so ₹5 INR cannot be written off."
+     }
     }
    ]
   },
@@ -7508,6 +7912,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "built-registration-never-said",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -7643,12 +8073,38 @@
      "body_keys": {
       "error": "Cannot compute",
       "code": "NO_COUNTRY",
-      "message": "Set the shop country first. The books never open on a guess."
+      "message": "Set the shop’s country first (Country setup) — the books are kept by its law."
      },
      "fixture": {
       "error": "Cannot compute",
       "code": "NO_COUNTRY",
-      "message": "Set the shop country first. The books never open on a guess."
+      "message": "Set the shop’s country first (Country setup) — the books are kept by its law."
+     }
+    },
+    {
+     "scenario": "computed-registration-never-said",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -9840,6 +10296,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9896,6 +10378,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9938,6 +10446,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9965,6 +10499,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10021,6 +10581,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10122,6 +10708,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10210,6 +10822,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "scheme (identity|phone) and value required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "scheme (identity|phone) and value required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10237,6 +10875,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10266,6 +10930,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10293,6 +10983,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10336,6 +11052,32 @@
       "code": "NO_COUNTRY",
       "message": "Set the shop country first. The books never open on a guess."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10351,6 +11093,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10380,6 +11148,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10407,6 +11201,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10513,6 +11333,30 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "an alias needs an item and the words the supplier uses",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "an alias needs an item and the words the supplier uses",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10772,6 +11616,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10872,6 +11742,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can close itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can close itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10971,6 +11867,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can report itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can report itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11128,6 +12050,32 @@
       "error": "Failed",
       "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11237,6 +12185,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11360,6 +12334,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "offer_id and item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "offer_id and item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11411,6 +12411,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11535,6 +12561,32 @@
      "fixture": {
       "error": "Too many",
       "message": "Too many wrong codes. Wait a minute and try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "type": "https://chitbridge.com/problems/pair_code_unknown",
+      "title": "Pairing code not known",
+      "status": 404,
+      "code": "PAIR_CODE_UNKNOWN",
+      "detail": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "hint": "Ask ChitBridge for a new code.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "type": "https://chitbridge.com/problems/pair_code_unknown",
+      "title": "Pairing code not known",
+      "status": 404,
+      "code": "PAIR_CODE_UNKNOWN",
+      "detail": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "hint": "Ask ChitBridge for a new code.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11784,6 +12836,32 @@
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11896,6 +12974,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11983,6 +13087,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12084,6 +13214,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12183,6 +13339,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12314,6 +13496,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "ref (the bill number) required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "ref (the bill number) required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12440,6 +13648,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "from and to holders required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "from and to holders required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12551,6 +13785,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12664,6 +13924,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12762,6 +14048,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12789,6 +14101,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12899,6 +14237,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -13011,6 +14375,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -20973,32 +22363,80 @@
    "answers": [
     {
      "scenario": "key-asks",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -21015,12 +22453,28 @@
     },
     {
      "scenario": "nothing-found",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -21029,32 +22483,80 @@
    "answers": [
     {
      "scenario": "key-asks",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -21071,12 +22573,28 @@
     },
     {
      "scenario": "nothing-found",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -21221,6 +22739,42 @@
      "fixture": {
       "error": "Failed to get children",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
      }
     }
    ]
@@ -22388,6 +23942,60 @@
       "error": "Failed to record delivery",
       "message": "Nothing to record"
      }
+    },
+    {
+     "scenario": "delivery-past-the-column",
+     "status": 400,
+     "body_keys": {
+      "error": "Amount too large",
+      "code": "CHIT_AMOUNT_TOO_LARGE",
+      "message": "A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.",
+      "field": "quantity",
+      "line": 1,
+      "max": "999999999999999.999",
+      "currency_code": null
+     },
+     "fixture": {
+      "error": "Amount too large",
+      "code": "CHIT_AMOUNT_TOO_LARGE",
+      "message": "A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.",
+      "field": "quantity",
+      "line": 1,
+      "max": "999999999999999.999",
+      "currency_code": null
+     }
+    },
+    {
+     "scenario": "delivery-correction-too-large",
+     "status": 409,
+     "body_keys": {
+      "error": "Correction too large",
+      "message": "Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.",
+      "line": 1,
+      "delivered": 1
+     },
+     "fixture": {
+      "error": "Correction too large",
+      "message": "Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.",
+      "line": 1,
+      "delivered": 1
+     }
+    },
+    {
+     "scenario": "delivery-on-a-rejected-copy",
+     "status": 409,
+     "body_keys": {
+      "error": "Order closed",
+      "message": "This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.",
+      "why": "wrong_step",
+      "from": "rejected"
+     },
+     "fixture": {
+      "error": "Order closed",
+      "message": "This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.",
+      "why": "wrong_step",
+      "from": "rejected"
+     }
     }
    ]
   },
@@ -22455,12 +24063,28 @@
     },
     {
      "scenario": "bad-id",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Not a participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not a participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -22525,12 +24149,28 @@
     },
     {
      "scenario": "dispute-by-a-non-participant",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Not a participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not a participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -22711,16 +24351,28 @@
     },
     {
      "scenario": "bad-id",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden",
-      "message": "Not a participant on this chit",
-      "why": "not_participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden",
-      "message": "Not a participant on this chit",
-      "why": "not_participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -22801,16 +24453,28 @@
     },
     {
      "scenario": "message-by-a-non-participant",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden",
-      "message": "Not a participant on this chit",
-      "why": "not_participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden",
-      "message": "Not a participant on this chit",
-      "why": "not_participant"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -26025,6 +27689,22 @@
       "error": "Status changed",
       "code": "status_conflict",
       "message": "Someone else just changed this."
+     }
+    },
+    {
+     "scenario": "status-taken-back",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     },
+     "fixture": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
      }
     },
     {
@@ -40848,6 +42528,22 @@
      }
     },
     {
+     "scenario": "assign-pull-bill-taken-back",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     },
+     "fixture": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     }
+    },
+    {
      "scenario": "assign-push-needs-a-target",
      "status": 400,
      "body_keys": {
@@ -43817,6 +45513,58 @@
       "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
       "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
       "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
      }
     }
    ]
@@ -48815,14 +50563,12 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {
@@ -48849,26 +50595,22 @@
     },
     {
      "scenario": "nothing-found",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {
      "scenario": "issue-no-such-supply",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {
@@ -49189,6 +50931,18 @@
         "detail": "price is not accepted here."
        }
       ]
+     }
+    },
+    {
+     "scenario": "buy-bill-number-reused-with-other-lines",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill already recorded",
+      "message": "Bill BILL-1 from Corner Hardware is already recorded with different lines; record a correction or use a new bill number."
+     },
+     "fixture": {
+      "error": "Bill already recorded",
+      "message": "Bill BILL-1 from Corner Hardware is already recorded with different lines; record a correction or use a new bill number."
      }
     }
    ]
@@ -61209,14 +62963,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -61280,6 +63040,90 @@
      }
     },
     {
+     "scenario": "release-until-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"until\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"until\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "until"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"until\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"until\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "until"
+     }
+    },
+    {
+     "scenario": "release-at-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     }
+    },
+    {
+     "scenario": "release-at-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     }
+    },
+    {
      "scenario": "release-breaks",
      "status": 500,
      "body_keys": {
@@ -61309,14 +63153,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -61353,6 +63203,34 @@
      "fixture": {
       "error": "Not found",
       "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "withdraw-at-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
      }
     },
     {
@@ -61397,14 +63275,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 409,
+     "status": 403,
      "body_keys": {
-      "error": "none",
-      "message": "Nothing is waiting to be published."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "none",
-      "message": "Nothing is waiting to be published."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -61449,14 +63333,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "validation",
-      "message": "choice must be use, keep or ok"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "validation",
-      "message": "choice must be use, keep or ok"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -61500,6 +63390,34 @@
   "POST /api/network-offers/catalogue/publish": {
    "answers": [
     {
+     "scenario": "publish-at-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     }
+    },
+    {
      "scenario": "key-asks",
      "status": 403,
      "body_keys": {
@@ -61513,14 +63431,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "not_yours",
-      "message": "That catalogue is not one you publish."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "not_yours",
-      "message": "That catalogue is not one you publish."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -61565,14 +63489,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "validation",
-      "message": "policy must be opt_in or opt_out"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "validation",
-      "message": "policy must be opt_in or opt_out"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -61703,6 +63633,1440 @@
      "fixture": {
       "error": "Set PIN failed",
       "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/recheck": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_ids",
+      "errors": [
+       {
+        "field": "item_ids",
+        "code": "MISSING_FIELD",
+        "detail": "item_ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "recheck-no-ids",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "recheck-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "price is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "price is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "price is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "price is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "recheck-too-many",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "At most 200 products in one check.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "At most 200 products in one check.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "At most 200 products in one check.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "At most 200 products in one check.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "recheck-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "recheck-unreadable",
+     "status": 503,
+     "body_keys": {
+      "error": "Unavailable",
+      "message": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "type": "https://chitbridge.com/problems/till_recheck_unavailable",
+      "title": "Prices could not be checked",
+      "status": 503,
+      "code": "TILL_RECHECK_UNAVAILABLE",
+      "detail": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "hint": "Finish the bill, or check again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unavailable",
+      "message": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "type": "https://chitbridge.com/problems/till_recheck_unavailable",
+      "title": "Prices could not be checked",
+      "status": 503,
+      "code": "TILL_RECHECK_UNAVAILABLE",
+      "detail": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "hint": "Finish the bill, or check again in a moment.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/service/:chit_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "get-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "pause-reason-not-one-of-the-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad reason",
+      "message": "reason must be one of: waiting_on_counterparty, waiting_on_third_party, waiting_on_parts, outside_service_hours, scheduled, other"
+     },
+     "fixture": {
+      "error": "Bad reason",
+      "message": "reason must be one of: waiting_on_counterparty, waiting_on_third_party, waiting_on_parts, outside_service_hours, scheduled, other"
+     }
+    },
+    {
+     "scenario": "pause-already-open",
+     "status": 409,
+     "body_keys": {
+      "error": "Already paused",
+      "message": "This request is already paused by you — end that pause before starting another."
+     },
+     "fixture": {
+      "error": "Already paused",
+      "message": "This request is already paused by you — end that pause before starting another."
+     }
+    },
+    {
+     "scenario": "pause-note-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "pause-time-not-a-time",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "That time is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "from"
+     },
+     "fixture": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "That time is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "from"
+     }
+    },
+    {
+     "scenario": "pause-time-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "pause-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    },
+    {
+     "scenario": "pause-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "answer-not-yes-or-no",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "answer-own-claim",
+     "status": 409,
+     "body_keys": {
+      "error": "Your own claim",
+      "message": "You raised this pause — the other party is the one who accepts or rejects it."
+     },
+     "fixture": {
+      "error": "Your own claim",
+      "message": "You raised this pause — the other party is the one who accepts or rejects it."
+     }
+    },
+    {
+     "scenario": "answer-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    },
+    {
+     "scenario": "answer-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "end-time-not-a-time",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "The time the pause ended is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "to"
+     },
+     "fixture": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "The time the pause ended is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "to"
+     }
+    },
+    {
+     "scenario": "end-time-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "end-already-ended",
+     "status": 409,
+     "body_keys": {
+      "error": "Not open",
+      "message": "That pause is already ended — its end time cannot be moved."
+     },
+     "fixture": {
+      "error": "Not open",
+      "message": "That pause is already ended — its end time cannot be moved."
+     }
+    },
+    {
+     "scenario": "end-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "resolve-names-no-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "resolve-code-not-one-of-the-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad resolution",
+      "message": "resolution_code must be one of: fixed, workaround_applied, not_reproducible, no_fault_found, withdrawn_by_requester, rejected, duplicate"
+     },
+     "fixture": {
+      "error": "Bad resolution",
+      "message": "resolution_code must be one of: fixed, workaround_applied, not_reproducible, no_fault_found, withdrawn_by_requester, rejected, duplicate"
+     }
+    },
+    {
+     "scenario": "resolve-note-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "resolve-not-tracked",
+     "status": 404,
+     "body_keys": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     },
+     "fixture": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     }
+    },
+    {
+     "scenario": "resolve-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    },
+    {
+     "scenario": "resolve-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "respond-not-tracked",
+     "status": 404,
+     "body_keys": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     },
+     "fixture": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     }
+    },
+    {
+     "scenario": "respond-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "PUT /api/service/:chit_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "put-priority-not-one-of-the-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad priority",
+      "message": "priority must be one of: P1, P2, P3, P4"
+     },
+     "fixture": {
+      "error": "Bad priority",
+      "message": "priority must be one of: P1, P2, P3, P4"
+     }
+    },
+    {
+     "scenario": "put-impact-not-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "impact",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "impact",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "put-impact-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "put-urgency-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "put-policy-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "put-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "POST /api/till/listen": {
+   "answers": [
+    {
+     "scenario": "listen-body-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "(body) must be a object.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "(body) must be a object.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "(body) must be a object.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "(body) must be a object.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
      }
     }
    ]

@@ -22,7 +22,9 @@ const reported = require('./api-reported.cjs');
 const TOOLS_DIR = __dirname;
 const rootArg = process.argv.indexOf('--root');
 const ROOT = rootArg > 0 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(TOOLS_DIR, '..');
-const STAGE = '2';
+/* 2b (9 Nov 2026): the thirteen columns of stage 2, and a route reads "meets standard" only with a sign-off made at stage 2 (dated on or after SIGNOFF_STAGE_FROM); a seven-column stamp of 23 Oct no longer counts */
+const STAGE = '2b';
+const SIGNOFF_STAGE_FROM = '2026-10-24';
 const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes', 'strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
 /* the six hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
 const HARDENING_COLUMNS = ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
@@ -241,7 +243,8 @@ function successSchemas(operation) {
 }
 
 /** a schema that lists its fields and refuses any other (the allow-list): an object with additionalProperties false */
-const refusesUnknownKeys = (schema) => !!schema && schema.additionalProperties === false;
+/** a schema that lists its keys and refuses the rest: an object itself, or a bare list whose items are such objects (the allow-list filter prunes a list at its rows) */
+const refusesUnknownKeys = (schema) => !!schema && (schema.additionalProperties === false || (schema.type === 'array' && !!schema.items && schema.items.additionalProperties === false));
 
 /** strict_input (S33): a route that takes a body declares it with additionalProperties false behind a schemaValidate check, AND its generated case (tools/api-contract-tests.cjs → api-hardening-evidence.json) saw an unknown key refused by name; a route with no body has nothing to refuse */
 function strictInputColumn(operation, leaf, facts, evidence) {
@@ -280,11 +283,14 @@ const tripsBudgetedColumn = (key, budget) => !!(budget && budget[key] && budget[
 /** a route whose path id S35 does not apply to: public by design (public_ids) or reachable only by the platform or the builder (platform_only); both lists live in api-hardening-scope.json, each entry with its reason */
 const idExempt = (scope, key) => scope.publicIds.has(key) || scope.platformOnly.has(key);
 
+/** strict_input applies to a route with a body that is not listed in tolerant_outward (API-43) */
+const strictApplies = (hasBody, scope, key) => hasBody && !scope.tolerantOutward[key];
+
 /** which of the six columns apply to a route (a column that does not apply passes, and is not counted as a pass in the per-column baseline) */
 function hardeningApplies(leaf, operation, scope) {
   const key = leaf.method + ' ' + leaf.path;
   const hasBody = !!(operation && require('../middleware/validate').bodySchemaOf(operation)) || BODY_METHODS.includes(leaf.method);
-  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !idExempt(scope, key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+  return { strict_input: strictApplies(hasBody, scope, key), output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !idExempt(scope, key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
 }
 
 /** cannot_answer (scope file): { 'METHOD /path': Set of statuses } the route can never answer; an entry without a route, a status and a reason of MIN_REASON characters counts for nothing (scopeProblems, run by --check, names it) */
@@ -296,11 +302,23 @@ function cannotAnswerOf(list) {
   return found;
 }
 
+/** tolerant_outward (scope file): { 'METHOD /path': reason } API-43 (Athi 6 Nov, restated 8 Nov): a door whose sender is outside us ignores an unknown body key until a /v2 path with notice. A reason shorter than MIN_REASON counts for nothing */
+const tolerantOutwardOf = (list) => Object.fromEntries(Object.entries(list || {}).filter(([, reason]) => hasReason(reason)));
+
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
   const file = readJson('docs/contracts/api-hardening-scope.json', {});
-  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), platformOnly: new Set(Object.keys(file.platform_only || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer) };
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), platformOnly: new Set(Object.keys(file.platform_only || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer), tolerantOutward: tolerantOutwardOf(file.tolerant_outward) };
 }
+
+/** the sentence for one tolerant_outward key that is not a route of the app, or no longer checks the fields it reads (schema_in); '' when sound */
+function tolerantRouteProblem(key, byKey) {
+  if (!byKey.has(key)) return 'tolerant_outward: "' + key + '" is not a route of the app';
+  return byKey.get(key).columns.schema_in ? '' : 'tolerant_outward: "' + key + '" must still check the fields it reads (schema_in)';
+}
+
+/** the sentences for the tolerant_outward list: each key a sound route, with a reason of MIN_REASON characters */
+const tolerantProblems = (list, byKey) => Object.entries(list || {}).flatMap(([key, reason]) => [tolerantRouteProblem(key, byKey), hasReason(reason) ? '' : 'tolerant_outward: "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters'].filter(Boolean));
 
 /**
  * scopeProblems(file, rows) — the exemptions of api-hardening-scope.json (public_ids, platform_only, cannot_answer) held to one rule each, for --check: a reason of MIN_REASON characters or more,
@@ -313,6 +331,7 @@ function scopeProblems(file, rows) {
     if (!byKey.has(key)) found.push(list + ': "' + key + '" is not a route of the app');
     if (!hasReason(reason)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
   }));
+  found.push(...tolerantProblems(file.tolerant_outward, byKey));
   const seen = new Set();
   (file.cannot_answer || []).forEach((entry) => {
     const name = 'cannot_answer: "' + entry.route + ' ' + entry.status + '"';
@@ -329,12 +348,16 @@ function scopeProblems(file, rows) {
 const MONEY_WORDS = /(^|[/-])(pay|payment|payments|receipt|receipts|refund|refunds|settle|settlement|credit|collect|collection|advance|redeem|wallet|cash|ledger|journal|invoice|invoices|purchase|bill|bills|billing|day-close|expense|expenses|payout|reward|points|transfer|deposit|adjust)(\b|[/:-]|$)/i;
 const unclassifiedMoney = (rows, scope) => rows.filter((row) => row.method !== 'GET' && MONEY_WORDS.test(row.path) && !scope.money.has(row.key) && !scope.notMoney.has(row.key)).map((row) => row.key);
 
+/** strict_input, or for an API-43 listed door (tolerant_outward) that it still checks the fields it reads (schema_in) */
+const strictOrTolerant = (scope, key, operation, leaf, facts, evidence) => (scope.tolerantOutward[key] ? schemaInColumn(operation, leaf, facts) : strictInputColumn(operation, leaf, facts, evidence));
+
 /** the thirteen machine columns of one route, each true or false */
 function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
   const key = leaf.method + ' ' + leaf.path;
   const codes = codesWritten(source);
-  const usesProblem = /\bproblem\(|\bfromError\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
-  const legacyOk = !/legacy:/.test(source) || !!legacyEntry;
+  const usesProblem = /\bproblem\(|\bfromError\(|\bsoftFault\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
+  /* a `legacy:` that is a problem spec's frozen body needs its entry in api-legacy.json; a boolean ANSWER key of that name (GET /api/signin/sessions says legacy: !req.session, a token from before M05) is data, not a frozen body */
+  const legacyOk = !/\blegacy:(?!\s*(?:!|true\b|false\b))/.test(source) || !!legacyEntry;
   return {
     schema_in: schemaInColumn(operation, leaf, facts),
     schema_out: schemaOutColumn(operation),
@@ -343,7 +366,7 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
     error_tests: declared.length > 0 && declared.every((status) => tested.includes(status) || !!(scope.cannotAnswer && scope.cannotAnswer[key] && scope.cannotAnswer[key].has(status))),
     status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
-    strict_input: strictInputColumn(operation, leaf, facts, evidence),
+    strict_input: strictOrTolerant(scope, key, operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
     foreign_id_404: foreignIdColumn(leaf, evidence, idExempt(scope, key)),
     idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence),
@@ -370,7 +393,7 @@ function rowOf(leaf, context) {
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
-  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key]));
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, exemptOf(context.scope, key), basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key]));
 }
 
 /** the reported columns (CAP-17 slice 1, tools/api-reported.cjs): shown on the row as `reported` and `reported_applies`, never in `columns`, so they cannot move a status */
@@ -404,9 +427,15 @@ function lineOf(fileText, leaf) {
   return found ? fileText.slice(0, found.index).split('\n').length : 0;
 }
 
+/** the ISO date inside a sign-off stamp ("cb-api ... 2026-11-08 PR#9"), or null when it shows none */
+const stampDate = (stamp) => { const found = /\d{4}-\d\d-\d\d/.exec(String(stamp || '')); return found ? found[0] : null; };
+
+/** a sign-off counts only when its stamp is dated at stage 2 or later (S15: no grandfathering of the seven-column stage); an undated stamp is not current */
+const signedAtStage = (stamp) => { const date = stampDate(stamp); return !!date && date >= SIGNOFF_STAGE_FROM; };
+
 /** status: "meets standard" is every machine column AND a current cb-api sign-off (S15); some columns, or a missing sign-off, is "partial" */
 function statusOf(columns, human) {
-  if (MACHINE_COLUMNS.every((name) => columns[name]) && human && human.signed_off_by_date) return 'meets standard';
+  if (MACHINE_COLUMNS.every((name) => columns[name]) && human && signedAtStage(human.signed_off_by_date)) return 'meets standard';
   /* progress is the seven core columns: a hardening column that does not apply passes for free and would make every route look begun */
   return MACHINE_COLUMNS.slice(0, MACHINE_COLUMNS.length - HARDENING_COLUMNS.length).some((name) => columns[name]) ? 'partial' : 'not started';
 }
@@ -505,14 +534,22 @@ function legacyRoutes() {
   return file.routes || {};
 }
 
+/** a row whose strict_input is met by the tolerant_outward exemption */
+const isExempt = (row) => !!(row.exempt && row.exempt.strict_input);
+
+/** the row's exempt note for a tolerant_outward door: { exempt: { strict_input: reason } }, else nothing */
+const exemptOf = (scope, key) => (scope.tolerantOutward[key] ? { exempt: { strict_input: scope.tolerantOutward[key] } } : {});
+
 /** totals by status, for the scorecard line */
 function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
   const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
   const fromRecordings = rows.filter((row) => row.output_allowlist_basis === 'recordings').length;
-  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows) }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
+  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows), tolerant_outward: rows.filter(isExempt).length }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
 }
 
+/** a table cell: 'exempt' for a column met by an exemption (tolerant_outward), else yes / no / - */
+const exemptMark = (row, name) => (row.exempt && row.exempt[name] && row.columns[name] === true ? 'exempt' : mark(row.columns[name]));
 const mark = (value) => (value === true ? 'yes' : value === false ? 'no' : '-');
 
 /** the committed docs/API-REGISTER.md text, LF line endings */
@@ -532,13 +569,15 @@ function renderMarkdown(register) {
   ].concat(counts.output_allowlist_from_recordings ? ['**Output allow-list closed from recordings only: ' + counts.output_allowlist_from_recordings + ' routes** (`output_allowlist_basis: recordings` in `docs/api-register.json`; their keys are the recorded answers, so a new key is reported and kept, never dropped, until the handler names its keys).', ''] : []).concat([
     'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs are kept by hand in `docs/api-signoffs.json` (each with the hash it was signed against; a moved hash makes the sign-off stale) and shown here and in `docs/api-register.json`, which are derived and never carry the source.',
     '',
+    '**tolerant_outward: ' + counts.tolerant_outward + '** routes read strict_input as exempt, never as yes (API-43: an unknown body key is ignored until /v2; the route still checks the fields it reads; the list is docs/contracts/api-hardening-scope.json tolerant_outward and its length may only go down).',
+    '',
     'Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
     '',
     '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   ]);
   register.routes.forEach((row) => {
-    const columns = MACHINE_COLUMNS.map((name) => mark(row.columns[name]));
+    const columns = MACHINE_COLUMNS.map((name) => exemptMark(row, name));
     const shown = reported.REPORTED_COLUMNS.map((name) => mark(row.reported[name]));
     lines.push('| ' + [row.method, row.path + (row.aliases ? ' (also ' + row.aliases.join(', ') + ')' : ''), row.owner_area, row.file + ':' + row.line].concat(columns, row.status, shown).join(' | ') + ' |');
   });
@@ -589,4 +628,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

@@ -20,12 +20,14 @@ function grab(name, optional) {
   let at = HTML.indexOf('\nfunction ' + name + '(');
   if (at < 0) at = HTML.indexOf('\nvar ' + name + ' = ');   /* a var-function (esc, money) or a table (SLIP_TITLE_EN) */
   if (at < 0) { assert.ok(optional, name + ' is gone from till.html'); return ''; }
+  const oneLine = HTML.slice(at + 1, HTML.indexOf('\n', at + 1));
+  if (/^var \w+ = [^{]*;$/.test(oneLine)) return oneLine;   /* a one-line var with no body (NOT_DECIDED, ACC-191) */
   let i = HTML.indexOf('{', at), depth = 0;
   for (; i < HTML.length; i++) { if (HTML[i] === '{') depth++; else if (HTML[i] === '}' && --depth === 0) break; }
   return HTML.slice(at, i + 1);
 }
 const PAGE_FNS = ['esc', 'r2', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule',
-  'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipHTML', 'shopTax'];
+  'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'shopTax'];
 const NEW_FNS = ['SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
   'packCollectsWithoutId', 'cashRule', 'payWayId', 'cashDue', 'cashRoundWords', 'slipCashRoundHTML', 'restBeforeLast', 'changeOf', 'cashRoundOf'];
 

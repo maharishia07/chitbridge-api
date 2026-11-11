@@ -50,11 +50,12 @@ function businesses(tree, claimed) {
  */
 function memory(options) {
   const given = options || {};
-  const data = Object.assign(businesses(!!given.tree, given.childClaimed), { edges: [], connections: [] });
+  const data = Object.assign(businesses(!!given.tree, given.childClaimed), { edges: [], connections: [], entityInserts: 0 });
   if (given.lonely) {
     data.identities = data.identities.filter((one) => one.identity_id !== C);
     data.entities = data.entities.filter((one) => one.id !== NODE.c);
   }
+  if (given.bare) data.entities = data.entities.filter((one) => one.id !== NODE.c); // C has an identity but no node: asking by its handle would make one
   if (given.edge) data.edges.push(Object.assign({ id: EDGE, parent_id: NODE.a, child_id: NODE.c, type: 'governance', state: 'requested', requested_by: NODE.a, in_flight: false, created_at: '2026-10-01T00:00:00.000Z' }, given.edge));
   if (given.request) data.connections.push({ connection_id: CONNECTION, from_entity_id: C, from_display_name: 'Shop C', from_bridge_id: 'CCCC4444', to_entity_id: A, to_display_name: 'Shop A', to_bridge_id: 'AAAA2222', status: given.request === true ? 'pending' : given.request, note: '', created_at: '2026-10-01T00:00:00.000Z' });
   const identity = (id) => data.identities.find((one) => one.identity_id === id);
@@ -65,9 +66,10 @@ function memory(options) {
   /** each rule: [pattern on the normalised statement, (params, sql) → rows] — the first that matches answers */
   const RULES = [
     [/^select identity_id, bridge_id, display_name from identities where identity_id = \$1 and identity_type = 'entity'/, (p) => [identity(p[0])].filter(Boolean)],
+    [/^select identity_id from identities where upper\(bridge_id\) = upper\(\$1\) and identity_type = 'entity'/, (p) => data.identities.filter((one) => same(one.bridge_id, p[0])).map((one) => ({ identity_id: one.identity_id }))],
     [/^select \* from cb_entity where bridge_id\s*=\s*\$1/, (p) => data.entities.filter((one) => same(one.bridge_id, p[0]))],
     [/^insert into cb_entity\(bridge_id,name,mode,owner_scope,path,claimed,app_ref\)/, (p) => [{ id: FIXED_NEW_NODE, bridge_id: 'REGISTERED1', name: p[1], mode: p[2], claimed: p[5], path: 'REGISTERED1' }]],
-    [/^insert into cb_entity/, () => []],
+    [/^insert into cb_entity/, (p) => { data.entityInserts++; data.entities.push({ id: 'new-node-' + data.entityInserts, bridge_id: p[0], name: p[1], mode: 'b2b', claimed: true, status: 'active', path: p[2] }); return []; }],
     [/^select \* from cb_entity where id\s*=\s*\$1/, (p) => [entity(p[0])].filter(Boolean)],
     [/^select \* from cb_edge where id\s*=\s*\$1/, (p) => [edge(p[0])].filter(Boolean)],
     [/as same from cb_entity e where e\.id = \$1/, (p) => {
@@ -88,7 +90,8 @@ function memory(options) {
     [/^update cb_edge set state='declined', approved_by=\$2/, (p) => [edge(p[0])].filter((one) => one && one.state === 'requested').map((one) => move(one, 'declined'))],
     [/^update cb_edge set state=\$3 where id=\$1 and state=\$2/, (p) => [edge(p[0])].filter((one) => one && one.state === p[1]).map((one) => move(one, p[2]))],
     [/^select 1 from cb_edge where child_id=\$1 and type = \$2/, (p) => data.edges.filter((one) => one.child_id === p[0] && one.type === p[1] && ['active', 'suspended'].includes(one.state)).map(() => ({ '?column?': 1 }))],
-    [/as bad$/, (p) => [{ bad: under(p[0], p[1]) }]],
+    [/as bad, nlevel\(\$2::ltree\) > 1 as deep$/, (p) => [{ bad: under(p[0], p[1]), deep: p[1].includes('.') }]],
+    [/^select set_config\('cb\.net_reroot'/, () =>[{ set_config: '' }]], // NET-93: the trigger's one door; a stand-in has no trigger
     [/^update cb_entity set path/, () => []],
     [/^update cb_edge set state='active', approved_by=\$2/, (p) => [move(edge(p[0]), 'active')].filter(Boolean)],
     [/^update cb_edge set state='declined', decided_at=now\(\)/, () => []],

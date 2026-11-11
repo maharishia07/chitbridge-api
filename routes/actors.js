@@ -117,7 +117,7 @@ const checked = (route) => {
  */
 async function entityTaskCap(entity_id) {
   if (!(await schema.hasTable('entity_actor_settings'))) return null;
-  const settingsRow = await db(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+  const settingsRow = await withEntity(entity_id, (shop) => shop.query(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id])); /* SEC-75: RLS */
   return (settingsRow.rows[0] && settingsRow.rows[0].default_max_tasks) || null;
 }
 /**
@@ -966,19 +966,13 @@ async function recordBreak(entity_id, subject, before, after, by, reason) {
 }
 
 /**
- * clearDisputeHandler(entity_id, actor_id) → how many open disputes stopped being routed to this (gone) person — 0 when the write fails (said in the log).
- * B1 RLS (b68): chit_disputes is per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain query would fail closed and silently leave the gone actor as handler.
+ * clearDisputeHandlerIn(client, entity_id, actor_id) → 1 when this (gone) person was the shop's dispute handler and is now cleared, else 0 (the web reads it as > 0).
+ * PPL-45: the handler is identities.dispute_handler_actor_id of the shop's own row (chit_disputes has no such column). It runs inside the removal's
+ * transaction (the caller's withEntity client), so a failure rolls the removal back with a 500 instead of leaving a gone person as handler.
  */
-async function clearDisputeHandler(entity_id, actor_id) {
-  try {
-    const cleared = await withEntity(entity_id, (client) =>
-      client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id])
-    );
-    return (cleared && cleared.rowCount) || 0;
-  } catch (e) {
-    logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e);
-    return 0;
-  }
+async function clearDisputeHandlerIn(client, entity_id, actor_id) {
+  const cleared = await client.query(`UPDATE identities SET dispute_handler_actor_id = NULL WHERE identity_id = $1 AND dispute_handler_actor_id = $2`, [entity_id, actor_id]);
+  return cleared.rowCount || 0;
 }
 
 // ── PUT /api/actors/:id/status ───────────────────────────────
@@ -1105,11 +1099,9 @@ router.put(
         }
         // Cover cleanup: a deactivated/removed actor can no longer be anyone's leave-cover — clear inbound
         // pointers too (its own cover pointer was cleared above). Leaves no dangling cover to a gone actor.
-        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [
-          actor_id,
-          entity_id
-        ]);
+        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [actor_id, entity_id]);
         covers_removed = _cc.rowCount || 0;
+        disputes_cleared = await clearDisputeHandlerIn(client, entity_id, actor_id);
         // Default auto-assign assignee: if it points to this actor, clear it (would otherwise route to a gone actor).
         const _da = await client.query(
           `UPDATE entity_actor_settings SET default_assignee_actor_id = NULL WHERE entity_id = $1 AND default_assignee_actor_id = $2`,
@@ -1129,8 +1121,6 @@ router.put(
       /* after COMMIT: a request in between may have re-cached the old "listed" answer */
       endedJtis.forEach(personSession.forget);
       endedKeys.forEach(auth.forgetKey);
-
-      disputes_cleared = await clearDisputeHandler(entity_id, actor_id);
 
       /* PEOPLE-SRV1 (compliance): switched off / removed goes on the IAM trail — by whom, from what state */
       const audit = await recordBreak(entity_id, actor_id, a.break_status, action === 'remove' ? 'removed' : 'deactivated', req.identity.identity_id, action);
@@ -1399,6 +1389,7 @@ async function pullChit(work) {
   const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull', {
     me: railActions.meOf(req)
   });
+  if (movedOnPull.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPull.from) }); /* RAIL-173: nothing was written */
   await taskCount(handle, action_by_id, 'take');
   // Log assignment event
   await handle(
@@ -1449,12 +1440,12 @@ async function pushChit(work) {
   // Warning if overloaded
   const overloaded = t.current_task_count >= t.max_tasks;
 
+  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
+  if (movedOnPush.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPush.from) }); /* RAIL-173: nothing was written, no count moved */
   // Reduce previous assignee count
   if (chitRow.assigned_to_actor_id) {
     await taskCount(handle, chitRow.assigned_to_actor_id, 'release');
   }
-
-  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
   await taskCount(handle, t.identity_id, 'take');
   // Log assignment — differentiate initial push from actor-to-actor transfer
   const isTransfer = !!chitRow.assigned_to_actor_id;
@@ -1516,16 +1507,12 @@ router.get('/settings', auth, async (req, res) => {
   try {
     const entity_id = req.identity.identity_type === 'actor' ? req.identity.parent_entity_id : req.identity.identity_id;
 
-    let result = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-
-    // Create default settings if not exist
-    if (result.rows.length === 0) {
-      result = await db(
-        `INSERT INTO entity_actor_settings (entity_id)
-         VALUES ($1) RETURNING *`,
-        [entity_id]
-      );
-    }
+    /* SEC-75: entity_actor_settings is under RLS (b842): read it, and create the default row, under the shop's own binding */
+    const result = await withEntity(entity_id, async (shop) => {
+      const found = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      if (found.rows.length) return found;
+      return shop.query(`INSERT INTO entity_actor_settings (entity_id) VALUES ($1) RETURNING *`, [entity_id]); // default settings if none
+    });
 
     const x = result.rows[0];
     /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
@@ -1567,31 +1554,34 @@ router.put(
         if (chk.rows.length === 0) return problem(req, res, { status: 400, ...words.badDefaultAssignee() });
       }
 
-      await db(
-        `INSERT INTO entity_actor_settings
-           (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
-            auto_assign_mode, default_assignee_actor_id)
-         VALUES ($1, COALESCE($2,'both'), COALESCE($3,10), COALESCE($4,false), COALESCE($5,false), COALESCE($6,'off'), $7)
-         ON CONFLICT (entity_id) DO UPDATE SET
-           assignment_model = COALESCE($2, entity_actor_settings.assignment_model),
-           default_max_tasks = COALESCE($3, entity_actor_settings.default_max_tasks),
-           all_task_visible = COALESCE($4, entity_actor_settings.all_task_visible),
-           auto_return_on_short_break = COALESCE($5, entity_actor_settings.auto_return_on_short_break),
-           auto_assign_mode = COALESCE($6, entity_actor_settings.auto_assign_mode),
-           default_assignee_actor_id = COALESCE($7, entity_actor_settings.default_assignee_actor_id),
-           updated_at = NOW()`,
-        [
-          entity_id,
-          assignment_model,
-          default_max_tasks,
-          all_task_visible,
-          auto_return_on_short_break,
-          auto_assign_mode || null,
-          default_assignee_actor_id || null
-        ]
-      );
+      /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
+      const updated = await withEntity(entity_id, async (shop) => {
+        await shop.query(
+          `INSERT INTO entity_actor_settings
+             (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
+              auto_assign_mode, default_assignee_actor_id)
+           VALUES ($1, COALESCE($2,'both'), COALESCE($3,10), COALESCE($4,false), COALESCE($5,false), COALESCE($6,'off'), $7)
+           ON CONFLICT (entity_id) DO UPDATE SET
+             assignment_model = COALESCE($2, entity_actor_settings.assignment_model),
+             default_max_tasks = COALESCE($3, entity_actor_settings.default_max_tasks),
+             all_task_visible = COALESCE($4, entity_actor_settings.all_task_visible),
+             auto_return_on_short_break = COALESCE($5, entity_actor_settings.auto_return_on_short_break),
+             auto_assign_mode = COALESCE($6, entity_actor_settings.auto_assign_mode),
+             default_assignee_actor_id = COALESCE($7, entity_actor_settings.default_assignee_actor_id),
+             updated_at = NOW()`,
+          [
+            entity_id,
+            assignment_model,
+            default_max_tasks,
+            all_task_visible,
+            auto_return_on_short_break,
+            auto_assign_mode || null,
+            default_assignee_actor_id || null
+          ]
+        );
 
-      const updated = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      });
       const saved = updated.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore

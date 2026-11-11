@@ -50,7 +50,7 @@ const sanitise = (str) => {
 const isCalendarDay = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && isDay(value); // date only, through the one day rule (isDay, API-17)
 
 /* one engine for the body (exact types: a number is not a string) and one for the URL (a query value is always text, so "5" may be the integer 5) */
-const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true };
+const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true, verbose: true }; /* verbose: a failure carries its parent schema, so a bound fragment (lib/bounds.js, x-bound) can be told from a hand-written keyword */
 const bodyEngine = new Ajv2020(AJV_OPTIONS);
 const urlEngine = new Ajv2020(Object.assign({ coerceTypes: true }, AJV_OPTIONS));
 const DEFAULT_REFUSAL = { status: 422, code: 'INVALID_INPUT' };
@@ -79,13 +79,27 @@ const fieldOf = (failure) => {
   return where.join('.') || '(body)';
 };
 
+/* the shopkeeper sentence of each bound keyword (SHARED-CHECKS 0a), used ONLY for a schema carrying x-bound (lib/bounds.js fragments): a frozen route that wrote the same keyword by hand keeps ajv's words byte for byte */
+const BOUND_SENTENCES = {
+  minimum: (field, params) => field + ' must be at least ' + params.limit + '.',
+  exclusiveMinimum: (field, params) => field + ' must be more than ' + params.limit + '.',
+  maximum: (field, params) => field + ' must be at most ' + params.limit + '.',
+  exclusiveMaximum: (field, params) => field + ' must be less than ' + params.limit + '.',
+  multipleOf: (field) => field + ' must be a whole number.',
+  maxLength: (field, params) => field + ' must be at most ' + params.limit + ' characters.',
+  maxItems: (field, params) => field + ' must have at most ' + params.limit + ' entries.',
+  format: (field, params) => field + (params.format === 'calendar-day' || params.format === 'date-time-day' ? ' must be a real date.' : ' is not in the form expected.'),
+  pattern: (field) => field + ' is not in a form that is accepted.'
+};
+
 /** the plain sentence for one failure: what is wrong with which field */
 const sentenceOf = (failure, field) => {
   if (failure.keyword === 'required') return field + ' is needed.';
   if (failure.keyword === 'type') return field + ' must be ' + (Array.isArray(failure.params.type) ? failure.params.type.join(' or ') : 'a ' + failure.params.type) + '.';
   if (failure.keyword === 'additionalProperties') return field + ' is not accepted here.'; /* API-3 strict input: refused, never dropped */
   if (failure.keyword === 'enum') return field + ' must be one of: ' + failure.params.allowedValues.join(', ') + '.';
-  return field + ' ' + failure.message + '.';
+  const isBound = failure.parentSchema && failure.parentSchema['x-bound'] === true;
+  return isBound && BOUND_SENTENCES[failure.keyword] ? BOUND_SENTENCES[failure.keyword](field, failure.params) : field + ' ' + failure.message + '.';
 };
 
 const KIND_CODES = { required: 'MISSING_FIELD', additionalProperties: 'UNKNOWN_FIELD' };
@@ -153,4 +167,12 @@ const queryDay = (...names) =>
     return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: failures[0].detail, field: failures[0].field, errors: failures });
   };
 
-module.exports = { queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+/**
+ * REGISTERED_FORMATS — every ajv format a contract may name, each over the ONE reader of its shape (SHARED-CHECKS 0a). ajv runs with strict: false and ajv-formats is not a
+ * dependency, so a format nobody registered is silently ignored; tests/ajv-formats-registered.test.cjs fails when any contract names one that is not here (silence is the bug).
+ * 'calendar-day' reads isCalendarDay (date only), 'date-time-day' reads isDay (a day, optionally with a time).
+ */
+const REGISTERED_FORMATS = { 'calendar-day': isCalendarDay, 'date-time-day': isDay };
+Object.keys(REGISTERED_FORMATS).forEach((name) => [bodyEngine, urlEngine].forEach((engine) => engine.addFormat(name, REGISTERED_FORMATS[name])));
+
+module.exports = { REGISTERED_FORMATS, urlEngine, queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };

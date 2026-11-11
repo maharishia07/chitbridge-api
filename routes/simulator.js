@@ -12,7 +12,7 @@
 const express = require('express');
 const router = express.Router();
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
-const { contract, words, faultOf, writeFaultOf } = require('../lib/simulator-contract'); // the contract (each route's operation), the words of a refusal and of a fault
+const { contract, schemaOptions, words, faultOf, writeFaultOf } = require('../lib/simulator-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 
@@ -79,7 +79,7 @@ router.get('/content', ...contract.checked('GET /content'), async (req, res) => 
 });
 
 // POST /api/simulator/lead — the gate. { name, email, org? } → { token, leadId }.
-router.post('/lead', ...contract.checked('POST /lead'), async (req, res) => {
+router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
     const email = String(req.body.email || '')
@@ -104,7 +104,7 @@ router.post('/lead', ...contract.checked('POST /lead'), async (req, res) => {
 });
 
 // POST /api/simulator/feedback — { section, rating, message, leadId? }.
-router.post('/feedback', ...contract.checked('POST /feedback'), async (req, res) => {
+router.post('/feedback', ...contract.checked('POST /feedback', schemaOptions), async (req, res) => {
   try {
     const message = String(req.body.message || '').trim();
     if (!message) return problem(req, res, { status: 400, ...words.messageMissing() });

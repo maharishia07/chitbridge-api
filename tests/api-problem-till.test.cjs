@@ -48,6 +48,9 @@ const SECRET_SQL = 'relation "party_secret" does not exist -- SELECT secret FROM
 const FRESH = { realAuth: false, who: OWNER, key: null, db: 'ok', sqlRows: null };
 const world = Object.assign({}, FRESH);
 
+/** PLT-86c: the error pg throws when the backend is killed under a query (57P01, FATAL; its stack is inside node_modules/pg) */
+const lostConnection = () =>
+  Object.assign(new Error('terminating connection due to administrator command'), { severity: 'FATAL', code: '57P01', stack: 'error: terminating connection due to administrator command\n    at Client._handleErrorMessage (/x/node_modules/pg/lib/client.js:652:17)' });
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
 function rowsFor(sql) {
   if (world.sqlRows) {
@@ -55,6 +58,7 @@ function rowsFor(sql) {
     if (given) return given;
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
+  if (world.db === 'lost') throw lostConnection();
   return { rows: [], rowCount: 0 };
 }
 const mock = (relative, exported) => {
@@ -83,6 +87,7 @@ function installStubs() {
     trySavepoint: async (handle, run, fallback) => run().catch(() => fallback),
     readBatch: async (entity, actor, statements) => {
       if (world.db === 'fail') throw new Error(SECRET_SQL);
+      if (world.db === 'lost') throw lostConnection();
       return statements.map(() => ({ rows: [], rowCount: 0 }));
     }
   };
@@ -104,6 +109,7 @@ const WORLDS = [
   { id: 'staff-asks', setup: { who: STAFF } },
   { id: 'bad-id', setup: {}, badId: true },
   { id: 'db-fails', setup: { db: 'fail' } },
+  { id: 'db-lost', setup: { db: 'lost' } },
   { id: 'nothing-found', setup: {} }
 ];
 const X = (id, route, status, extra) => Object.assign({ id, route, expect: status, setup: {} }, extra);
@@ -136,6 +142,8 @@ const RATE_SHELF = (sql) =>
 const RATE_ITEM = (sql) =>
   RATE_SHELF(sql) ||
   (/SELECT item_data FROM catalogue_items/.test(sql) ? { rows: [{ item_data: { name: 'Poori', price: 40 } }], rowCount: 1 } : /^\s*UPDATE catalogue_items/.test(sql) ? { rows: [{ item_id: ITEM }], rowCount: 1 } : undefined);
+/* CTR-212 S1: the shop's one product row (ITEM) answered; ITEM2 has no row here, so it is answered found:false */
+const RECHECK_ROWS = (sql) => (/FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY/.test(sql) ? { rows: [{ item_id: ITEM, item_data: { name: 'Pen', price: 120, gst_rate: 18, hsn: '9608' }, is_active: true }], rowCount: 1 } : undefined);
 /* API-8 (till): the stand-ins the success scenes below share */
 const ITEM2 = '33333333-3333-4333-8333-333333333333';
 const WHEN = new Date('2026-10-29T04:00:00Z');
@@ -206,6 +214,8 @@ const EXTRAS = [
   X('not-an-offer', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('reward', 'live') } }),
   X('offer-not-live', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('offer', 'draft') } }),
   X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
+  X('listen-body-not-an-object', 'POST /api/till/listen', 400, { body: ['AAAA'] }),
+  X('listen-transcriber-breaks', 'POST /api/till/listen', 200, { body: { audio: 'AAAA' }, patch: [['lib/speech.js', 'transcribe', throwsLater]] }),
   X('price-no-item', 'POST /api/till/price', 400, { body: {} }),
   X('price-not-a-number', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: -1 } }),
   /* CTR-168: no number at all is refused in PATCH /products' words, never read as 0 or 1 */
@@ -231,6 +241,14 @@ const EXTRAS = [
   X('rate-item-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHELF } }),
   X('rate-write-breaks', 'POST /api/till/rate', 500, { body: RATE_BODY, setup: { db: 'fail', sqlRows: RATE_SHELF } }),
   X('rate-set', 'POST /api/till/rate', 200, { body: RATE_BODY, setup: { sqlRows: RATE_ITEM } }),
+  /* CTR-212 S1 · POST /recheck: no ids, a key beside item_ids, more than 200 ids, the read breaking; and the 200 (a product, one deleted, one that is another shop's) the output allow-list is derived from */
+  X('recheck-no-ids', 'POST /api/till/recheck', 400, { body: { item_ids: [] } }),
+  X('recheck-unknown-key', 'POST /api/till/recheck', 400, { body: { item_ids: [ITEM], price: 1 } }),
+  X('recheck-too-many', 'POST /api/till/recheck', 400, { body: { item_ids: Array.from({ length: 201 }, (_, i) => '7' + String(i).padStart(7, '0') + '-7777-4777-8777-777777777777') }, said: 'At most 200 products in one check.' }),
+  X('recheck-read-breaks', 'POST /api/till/recheck', 500, { body: { item_ids: [ITEM] }, setup: { db: 'fail' } }),
+  /* the tax shelf cannot be read for a shop that HAS a tax number (readShelf answers null): 503 TILL_RECHECK_UNAVAILABLE, never a 200 with empty slabs */
+  X('recheck-unreadable', 'POST /api/till/recheck', 503, { body: { item_ids: [ITEM] }, setup: { sqlRows: (sql) => RECHECK_ROWS(sql) || RATE_SHOP('regular')(sql) }, patch: [['lib/tax-shelf.js', 'readShelf', async () => null]], said: 'The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.' }),
+  X('recheck-answers', 'POST /api/till/recheck', 200, { body: { item_ids: [ITEM, ITEM2] }, setup: { sqlRows: RECHECK_ROWS } }),
   X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
   X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),
   X('alias-bad-factor', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'SUNFL OIL', factor: -2 } }),

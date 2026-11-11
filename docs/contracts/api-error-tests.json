@@ -188,6 +188,9 @@
   404,
   500
  ],
+ "GET /api/assist/catalogue-sources": [
+  500
+ ],
  "GET /api/assist/container/:id": [
   404,
   500
@@ -214,6 +217,9 @@
  "GET /api/assist/resolve": [
   400,
   404,
+  500
+ ],
+ "GET /api/assist/standards": [
   500
  ],
  "GET /api/assist/whoami": [
@@ -243,6 +249,7 @@
   500
  ],
  "GET /api/books/bs": [
+  400,
   401,
   404,
   500
@@ -285,6 +292,7 @@
   500
  ],
  "GET /api/books/dues": [
+  400,
   401,
   403,
   404,
@@ -315,6 +323,7 @@
   500
  ],
  "GET /api/books/ledger/:account": [
+  400,
   401,
   404,
   500
@@ -362,6 +371,7 @@
   500
  ],
  "GET /api/books/pl": [
+  400,
   401,
   404,
   500
@@ -396,6 +406,7 @@
   500
  ],
  "GET /api/books/trial-balance": [
+  400,
   401,
   404,
   500
@@ -484,7 +495,8 @@
  ],
  "GET /api/chits/:chit_id/catalogue-overlay": [
   401,
-  422
+  422,
+  500
  ],
  "GET /api/chits/:chit_id/costs": [
   401,
@@ -498,12 +510,12 @@
  ],
  "GET /api/chits/:chit_id/disputes": [
   401,
-  403,
+  404,
   500
  ],
  "GET /api/chits/:chit_id/messages": [
   401,
-  403,
+  404,
   422,
   500
  ],
@@ -529,6 +541,7 @@
  "GET /api/chits/:id/children": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/chits/:id/trace": [
@@ -725,7 +738,8 @@
   503
  ],
  "GET /api/entities/constitutions": [
-  400
+  400,
+  500
  ],
  "GET /api/entities/entitlements": [
   401,
@@ -1260,6 +1274,7 @@
   500
  ],
  "GET /api/tax/gstr": [
+  400,
   401,
   422,
   500
@@ -1270,6 +1285,7 @@
   500
  ],
  "GET /api/tax/ledger": [
+  400,
   401,
   500
  ],
@@ -1367,7 +1383,8 @@
  ],
  "GET /api/till/bills": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/catalogue/blueprints": [
   401,
@@ -1377,7 +1394,8 @@
  "GET /api/till/counters": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/engine/:name": [
   401,
@@ -1386,12 +1404,14 @@
  ],
  "GET /api/till/match": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/quick-keys/groups": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/quick-keys/hidden": [
   401,
@@ -1401,7 +1421,8 @@
  "GET /api/till/quick-keys/screen-config": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/quick-keys/state": [
   400,
@@ -1418,36 +1439,43 @@
  "GET /api/till/screens": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/snapshot": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/stock": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/summary": [
   400,
   401,
   422,
-  500
+  500,
+  503
  ],
  "GET /api/till/tasks": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/verify": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/worth-an-offer": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/work/:chit_id": [
   401,
@@ -1822,9 +1850,11 @@
   500
  ],
  "POST /api/books/entries": [
+  400,
   401,
   403,
   404,
+  409,
   422,
   500
  ],
@@ -1876,6 +1906,7 @@
   401,
   403,
   404,
+  409,
   422,
   500
  ],
@@ -2034,6 +2065,7 @@
   401,
   403,
   404,
+  409,
   500
  ],
  "POST /api/books/year/:fy/close": [
@@ -2241,18 +2273,20 @@
   401,
   403,
   404,
+  409,
   500
  ],
  "POST /api/chits/:chit_id/disputes": [
   400,
   401,
-  403,
+  404,
   500
  ],
  "POST /api/chits/:chit_id/messages": [
   400,
   401,
   403,
+  404,
   500
  ],
  "POST /api/chits/:chit_id/payment": [
@@ -2637,9 +2671,15 @@
   409,
   500
  ],
+ "POST /api/entities/register": [
+  400,
+  409,
+  500
+ ],
  "POST /api/entities/verify": [
   400,
   403,
+  409,
   500,
   503
  ],
@@ -2836,6 +2876,7 @@
   400,
   401,
   403,
+  409,
   500
  ],
  "POST /api/keys": [
@@ -2891,6 +2932,7 @@
   500
  ],
  "POST /api/network-offers/:id/withdraw": [
+  400,
   401,
   403,
   404,
@@ -2910,6 +2952,7 @@
   500
  ],
  "POST /api/network-offers/catalogue/publish": [
+  400,
   401,
   403,
   404,
@@ -3065,6 +3108,12 @@
   500
  ],
  "POST /api/products/bulk-update": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/products/categories/bulk": [
   400,
   401,
   403,
@@ -3274,8 +3323,10 @@
   500
  ],
  "POST /api/signin/logout": [
+  400,
   401,
-  403
+  403,
+  500
  ],
  "POST /api/signin/pin": [
   400,
@@ -3285,7 +3336,8 @@
  "POST /api/signin/renew": [
   400,
   401,
-  403
+  403,
+  500
  ],
  "POST /api/signin/sessions/revoke": [
   400,
@@ -3297,6 +3349,7 @@
  "POST /api/signin/verify": [
   400,
   403,
+  409,
   500,
   503
  ],
@@ -3325,6 +3378,7 @@
  "POST /api/supplies/purchase": [
   400,
   401,
+  409,
   422,
   500,
   503
@@ -3333,6 +3387,7 @@
   400,
   401,
   403,
+  409,
   422,
   500
  ],
@@ -3427,7 +3482,8 @@
   403,
   409,
   422,
-  500
+  500,
+  503
  ],
  "POST /api/till/close": [
   400,
@@ -3449,7 +3505,8 @@
   403,
   404,
   409,
-  500
+  500,
+  503
  ],
  "POST /api/till/flags": [
   400,
@@ -3459,6 +3516,7 @@
   500
  ],
  "POST /api/till/listen": [
+  400,
   401
  ],
  "POST /api/till/offer-item": [
@@ -3471,7 +3529,8 @@
  "POST /api/till/pair": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "POST /api/till/pair/claim": [
   404,
@@ -3517,6 +3576,13 @@
   409,
   500
  ],
+ "POST /api/till/recheck": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
  "POST /api/till/reconcile": [
   401,
   403,
@@ -3554,12 +3620,14 @@
   400,
   401,
   403,
-  500
+  500,
+  503
  ],
  "POST /api/till/state": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "POST /api/till/stock": [
   400,
@@ -3616,6 +3684,7 @@
   400,
   401,
   404,
+  409,
   500
  ],
  "PUT /api/actors/break": [

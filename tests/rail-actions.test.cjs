@@ -233,7 +233,9 @@ const tally = {};
          said the safe sentence. ONLY that: same status, same keys, the old message must be the safe sentence and the new one a sentence of its own. */
       const saidNow = (old, now) => o.status === 400 && /\/(deliver-lines|assign-lines|amend)$/.test(x.sub) && old && now && old.message === 'Something went wrong — please try again.' && typeof now.message === 'string' && now.message !== old.message
         ? Object.assign({}, now, { message: old.message }) : now;
-      const ok = o.status === x.after.status && strip(o.body) === strip(saidNow(o.body, x.after.body), o.body);
+      /* S35 (deliberate, batch 2026-11-11): a login that holds NO copy of the chit is told the one 404 on dispute and message, where the route said 403 (same word for unknown, another shop's and not yours). ONLY that: stranger, those three actions, 403 → 404 with the one sentence. */
+      const s35 = /^stranger/.test(x.name) && /^(dispute|message_external|message_internal)$/.test(x.a) && o.status === 403 && x.after.status === 404 && x.after.body.message === 'Chit not found or you do not have access';
+      const ok = s35 || o.status === x.after.status && strip(o.body) === strip(saidNow(o.body, x.after.body), o.body);
       if (ok) same++;
       t(x.name + ' · ' + x.a + ': before ' + o.status + ' = after ' + x.after.status + ', same body but `why`', ok,
         'before ' + o.status + ' ' + strip(o.body).slice(0, 160) + '\n       after  ' + x.after.status + ' ' + strip(x.after.body).slice(0, 160));
@@ -278,6 +280,11 @@ const tally = {};
   const task = { accept: { ok: true } };
   t('not a bill (a task, an order, a bill I issued) → the rail\'s answer, the same object', RA.forBill('bill_issued', gap, task) === task && RA.forBill(null, gap, task) === task);
   t('the chit read composes it (routes/chits.js: railActions.forBill over docOf + books_wait)', /railActions\.forBill\(\s*_doc,\s*bundle\.books_wait,/.test(SRC) && /doc: _doc,/.test(SRC) && /books_wait: bundle\.books_wait \|\| null/.test(SRC));
+
+  /* RAIL-193: the status words a delivery is refused on are the rail's own — states of its table and ends of the road, the refusal word one of rail.WHY */
+  t('RAIL-193 · deliveryOn: the withdrawn words are states of rail.TRANSITIONS and of the closed bucket', RA.WITHDRAWN.every((w) => Object.keys(rail.TRANSITIONS).includes(w) && RA.BUCKETS.close.includes(w)));
+  t('RAIL-193 · deliveryOn refuses rejected and cancelled with the rail word wrong_step and a sentence naming the status', ['rejected', 'cancelled'].every((w) => { const v = RA.deliveryOn(w); return v.ok === false && v.why === 'wrong_step' && Object.keys(rail.WHY).includes(v.why) && v.from === w && v.say.includes(w); }));
+  t('RAIL-193 · deliveryOn lets every other status through (a completed copy still takes a correction)', Object.keys(rail.TRANSITIONS).filter((w) => !RA.WITHDRAWN.includes(w)).every((w) => RA.deliveryOn(w).ok === true));
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');

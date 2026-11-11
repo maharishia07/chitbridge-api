@@ -36,6 +36,7 @@ const { problem } = require('../lib/problem');
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
 const { intFromEnv } = require('../lib/limits');
+const { isPoolBusy } = require('../lib/knownerr');
 const DEFAULT_WINDOW_HOURS = 48;
 /* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
    after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
@@ -48,6 +49,9 @@ const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
 /** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, a refused token (401) or a refused role/scope (403: hat-gate, key scope, enrol pending — lifted later by a promotion or an approval) */
 const notSettled = (status) => status >= 500 || status === 401 || status === 403;
+/** idem3 (7 Nov): a 4xx that says "not YET" is no outcome: the till queues the points behind their bill and sends the SAME key again once the bill has landed, so the first 409 must not become the key's answer. Add a code here only if its route says it is waiting for something, never refusing. */
+const WAITING_CODES = new Set(['BILL_NOT_RECORDED']);
+const waitsFor = (body) => !!(body && WAITING_CODES.has(body.code));
 const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
 
 /**
@@ -137,7 +141,7 @@ const dbStore = {
   },
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
-      if (notSettled(status) || carriesCode(body)) {
+      if (notSettled(status) || carriesCode(body) || waitsFor(body)) {
         // a server error, a refused token or an answer that carries a code is NOT recorded — let a retry re-run it
         await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
       } else {
@@ -179,7 +183,7 @@ const memoryStore = {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
     if (!held) return;
-    if (notSettled(status) || carriesCode(body))
+    if (notSettled(status) || carriesCode(body) || waitsFor(body))
       unverified.delete(memoryKey); // not a completed outcome (or it carries a code) — a retry may run again
     else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
   },
@@ -217,11 +221,12 @@ function answerExisting(req, res, held, hash, isVerified) {
  */
 function runAndRecord(req, res, next, store, claim) {
   let captured = false;
+  /* PLT-69: past REQUEST_TIMEOUT_MS the client has its 503 and lib/limits leaves res.json alive, so this wrapper still records a late answer (even a key claimed after the deadline) */
   const origJson = res.json.bind(res);
   res.json = (body) => {
     if (captured) return origJson(body);
     captured = true;
-    const status = res.statusCode;
+    const status = require('../lib/limits').answerStatus(res); /* not res.statusCode: past the deadline that is our 503 */
     store
       .finalize(claim.entity, claim.key, status, body)
       .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }))
@@ -247,12 +252,25 @@ function runUnverified(req, res, next, claim, why) {
 
 /** the key is ours to hold: the durable store, or the memory when the store is off. `req.idempotencyHeld` says so to a gate further down the chain (FIN-63) */
 function holdKey(req, res, next, claim) {
+  /* ⭐ PLT-85: the client left before the claim: claim nothing and run nothing (nobody can read the answer, and a retry is a first try). After the claim the route always runs to COMMIT. */
+  if (res.locals && res.locals.clientGone) return log.info('idempotency: the client left before the claim — nothing claimed, nothing run', { id: req.id, method: req.method, path: req.path });
   req.idempotencyHeld = claim.key;
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
   return dbStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
     .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, true) : runAndRecord(req, res, next, dbStore, claim)))
-    .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
+    .catch((e) => (isPoolBusy(e) ? answerBusyStore(req, res, e) : runUnverified(req, res, next, claim, storeWhy(e))));
+}
+
+/**
+ * ⭐ PLT-85: A BUSY POOL IS NOT A MISSING TABLE. The memory-only path (LIM2) is for a store that is not there (b109 not run); when the pool simply had no free
+ * connection the claim never reached the database, and running the handler on process memory let a crash or a second instance forget the key and make a
+ * second bill on the retry. Nothing ran and nothing was claimed: answer 503 SERVER_BUSY (Retry-After) and the till retries the same key as a first try.
+ */
+function answerBusyStore(req, res, err) {
+  log.warn('idempotency: the database pool is busy — the request is turned away before it runs, nothing is claimed', { id: req.id, path: req.path, err: err && err.message });
+  const refusal = require('../lib/knownerr').known(err);
+  return problem(req, res, { status: refusal.status, code: refusal.body.code, detail: refusal.body.message, hint: refusal.body.hint, params: refusal.body.params, legacy: refusal.body });
 }
 /** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
 const windowHours = () => intFromEnv('IDEMPOTENCY_WINDOW_HOURS', DEFAULT_WINDOW_HOURS);

@@ -171,6 +171,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
+  'stock-sweep.js',
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
      govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
      same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
@@ -210,6 +212,16 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* SHARED-CHECKS 0a (2026-11-09): the schema fragments a route names for a quantity, minor-unit amount, day, text, page and list bound (ceilings read off chit-ceiling). Decides no money, tax or rule. */
+  'bounds.js',
+  /* CUR-1 (2026-11-09, ACC-331/332): which cells of a bill or a journal can carry a currency and the one refusal of another currency (lib/money.assertSameCurrency decides). Decides no money rule. */
+  'currency-cells.js',
+  /* CAT-313 (2026-11-09): the SQL condition of the product search (named visible fields, literal LIKE). Decides no money, tax or rule. */
+  'catalogue-search.js',
+  /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */
+  'party-contact.js',
+  /* CRM-247/248 (2026-11-09): the one SQL predicate for a deleted party (hidden_at). Decides no money, tax or rule. */
+  'party-live.js',
   /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
      the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
      No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */
@@ -430,6 +442,7 @@ const INFRA_LIBS = [
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
   'owner.js',              // is this request the owner — one test for every owner-only switch
+  'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
   'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
   'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
@@ -514,6 +527,8 @@ const INFRA_LIBS = [
      frozen invoice's own figures and says held / refused for the buyer line; it asserts no threshold, rate or sentence of CB's own.
      Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
   'bill-paper.js',         // the buyer line of a counter bill at send — the pack's rule, the one tax-id check
+  'cash-step.js',          // CTRY-77: a cash part off the pack's cashRounding step is refused at send — reads the SHOP's pack, no rule typed here
+  'credit-cap.js',        // ACC-286: a counter credit note cannot credit more than its bill — figures picked and compared, no rule typed here
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
@@ -764,6 +779,8 @@ const ENGINE_OTHER = [
      applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
   'ctpreturn.js',
   'chit-proposal.js',
+  'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
+  'price-note.js',    /* ACC-192 1b + 2: the credit or debit note an accepted price change on an issued invoice issues (changed lines only, one direction, idempotent, through the one send path) */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
@@ -893,15 +910,22 @@ const ENGINE_OTHER = [
   /* LEAN-PLAN §8 #3 (2026-10-31) — chit-move.js is moveStatus lifted out of routes/chits.js (the ONE status writer over rail-status, so lib no longer
      requires a route); chit-crossing.js is the delivery-agent crossing + message copies it needs, lifted with it. CB's own plumbing, no engine rule. */
   'chit-move.js', 'chit-crossing.js',
+  /* RAIL-205 (2026-11-09) — chit-ceiling.js: the widest total, quantity and price a chit's own columns hold, read off their declared precision; send and amend refuse past it. CB's own plumbing over its own schema, no engine rule. */
+  'chit-ceiling.js',
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',
+  /* RAIL-187 (2026-11-08) — dispute-audience.js: who receives a dispute's message (roster or chit-wide), read once for the message route and the file route. CB's own rail rule. */
+  'dispute-audience.js',
   /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
      and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
   'workflow.js', 'work-rows.js',
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the
+     receivable rule is engine (books) or adoption (counter) needs cb-capability's call. */
+  'upi-waiting.js',
   /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
      endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
   'item-cost.js',

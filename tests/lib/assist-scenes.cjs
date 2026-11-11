@@ -40,7 +40,7 @@ function extras(tools) {
   const failing = { db: 'fail' };
   const asStranger = { who: { identity_id: STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' } };
   /** a signed-in caller for the assistant's soft sign-in, and a model that answers */
-  const signedIn = { jwt: { verifyJwt: () => ({ claims: { identity_id: SHOP, identity_type: 'entity' } }) } };
+  const signedIn = { auth: { softIdentity: async () => ({ identity_id: SHOP, identity_type: 'entity', parent_entity_id: null }) } }; /* SEC-149: the soft reader is middleware/auth.softIdentity */
   const model = (text) => ({ ai: { invokeSkill: async () => ({ draft: text, model: 'stand-in', usage: { input_tokens: 1, output_tokens: 2 } }) } });
   const modelRefuses = (status) => ({ ai: { invokeSkill: refusedWith(status) } });
   const live = (patch) => ({ env: MODEL_ON, headers: BEARER, patch: Object.assign({}, signedIn, patch) });
@@ -155,7 +155,10 @@ function extras(tools) {
     X('penetration-fault', 'GET ' + at('/penetration'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('questions-listed', 'GET ' + at('/questions'), 200, { setup: { sqlRows: answering(/FROM assist_qa/, [{ id: '1', q: 'x?', a: 'y.', topics: [], context: ['*'], fit: null, media: null }]) } }),
     X('questions-for-a-screen', 'GET ' + at('/questions'), 200, { url: at('/questions?context=compose,network') }),
-    X('questions-unread', 'GET ' + at('/questions'), 500, { setup: failing, throws: true })
+    X('questions-unread', 'GET ' + at('/questions'), 500, { setup: failing, throws: true }),
+    /* a fault in the two pickers' own libraries: before, an uncaught throw (no answer at all); now the route's 500 in its own two keys, nothing of the cause */
+    N('standards-fault', 'GET ' + at('/standards'), 500, { throws: true, patch: { compliance: { listTemplates: boom } } }),
+    N('catalogue-sources-fault', 'GET ' + at('/catalogue-sources'), 500, { throws: true, patch: { catalogueBuild: { listSources: boomLater } } })
   ];
 
   const helpDesk_ = [

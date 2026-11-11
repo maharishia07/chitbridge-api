@@ -277,6 +277,43 @@ jobs:
           S41_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/isolation-s41.test.cjs
+      - name: CAT-264a · the commercial stamp (b845) on real Postgres as cb_app, RLS on — each key of the one list moves it; is_active, a rename and the CUR-1 backfill do not
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cat-264a-commercial-stamp.realstack.cjs
+      - name: CUR-1 slice 3 · chit_header.currency_code (b846) and the b847 backfill on real Postgres — seeded as cb_app in two entities, backfilled as the owner; every bucket, mismatch kept as two codes, idempotent, rollback
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CUR1_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cur1-header-currency.realstack.cjs
+      - name: CAT-313/314 · GET /api/products?q= searches the named visible fields only (a hidden cost is never a search hit) and % _ \ match themselves (real Postgres)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cat-313-search-blind.realstack.cjs
+      - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cat-316-money-doors.realstack.cjs
+      - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on) — a traded store is refused for a product, a chit and a books entry
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/set80-currency-lock-rls.realstack.cjs
+      - name: SET-86 · country-setup is a merge-patch under RLS (real Postgres, api role cb_app) — an omitted tax block keeps the registration, a de-registration needs the confirm, two saves merge over each other (row lock)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/set86-country-setup-merge.realstack.cjs
+      - name: NET-93 · a business joins and leaves a network tree through the approved edge (b843's root-immutable trigger, one consented door); a cycle answers 409 never 500 (real Postgres, api role cb_app)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/net-93-tree-approve.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
@@ -417,16 +454,34 @@ jobs:
           node-version: "22"
       - name: npm audit (production dependencies, high and above)
         run: npm audit --omit=dev --audit-level=high
+      # 8 Nov 2026 (Athi): GitHub release downloads 504'd for hours and turned every scan red. The binary is now CACHED between runs,
+      # the download is RETRIED, and if GitHub releases are still down it is copied from the OFFICIAL image ghcr.io/gitleaks/gitleaks at the
+      # SAME version. The version is asserted either way; the scan itself is unchanged.
+      - name: gitleaks binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/gl-bin
+          key: gitleaks-8.24.3-linux-x64
       - name: gitleaks (whole working tree, no history)
         env:
           GITLEAKS_VERSION: "8.24.3"
         run: |
           set -e
-          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
-          curl -sSfL -o "$RUNNER_TEMP/gl.tgz" "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          curl -sSfL -o "$RUNNER_TEMP/gl.sum" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
-          grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz\$" "$RUNNER_TEMP/gl.sum" | sed "s|  .*|  $RUNNER_TEMP/gl.tgz|" | sha256sum -c -
-          tar -xzf "$RUNNER_TEMP/gl.tgz" -C "$RUNNER_TEMP" gitleaks
+          bin="$RUNNER_TEMP/gl-bin/gitleaks"; mkdir -p "$RUNNER_TEMP/gl-bin"
+          if [ ! -x "$bin" ]; then
+            base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+            get() { curl -sSfL --retry 5 --retry-delay 15 --retry-all-errors -o "$1" "$2"; }
+            if get "$RUNNER_TEMP/gl.tgz" "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" && get "$RUNNER_TEMP/gl.sum" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"; then
+              grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz\$" "$RUNNER_TEMP/gl.sum" | sed "s|  .*|  $RUNNER_TEMP/gl.tgz|" | sha256sum -c -
+              tar -xzf "$RUNNER_TEMP/gl.tgz" -C "$RUNNER_TEMP/gl-bin" gitleaks
+            else
+              echo "::warning::GitHub release download failed; using the official image ghcr.io/gitleaks/gitleaks:v${GITLEAKS_VERSION}"
+              img="ghcr.io/gitleaks/gitleaks:v${GITLEAKS_VERSION}"; docker pull -q "$img"
+              cid=$(docker create "$img"); docker cp "$cid:/usr/bin/gitleaks" "$bin"; docker rm "$cid" >/dev/null
+            fi
+          fi
+          ln -sf "$bin" "$RUNNER_TEMP/gitleaks"
+          "$RUNNER_TEMP/gitleaks" version | grep -q "${GITLEAKS_VERSION}" || { echo "gitleaks is not ${GITLEAKS_VERSION}"; exit 1; }
           "$RUNNER_TEMP/gitleaks" detect --no-git --source . --config .gitleaks.toml --redact --verbose --exit-code 2
       # 14 Oct: the commits of this push / PR through the FREE CLI (gitleaks-action@v2 demanded a paid licence whenever its owner lookup
       # failed — a flake that blocked green PRs). Same binary as the step above; same config.
