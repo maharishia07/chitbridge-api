@@ -114,6 +114,7 @@ const holdsCopy = async (entity_id, chit_id) =>
  * a route not listed here (it answers an unknown id 200, or never reads the id) is left as it was. Signed-out callers still get their 401 first: a junk id is judged after sign-in.
  * tests/k1-chits-guard.test.cjs proves each entry equals the answer of an unknown uuid on the same route, so the two cannot drift.
  */
+const chitPaid = require('../lib/chit-paid'); /* RAIL-216: the paid fact + the buyer's notice */
 const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
 const notHere = (message) => said404({ error: 'Not found', message });
 const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
@@ -5119,7 +5120,9 @@ async function markChitPaid(db, press) {
     `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
     [JSON.stringify(payment), chit_id, entity_id]
   );
-  return marked.rows.length ? { books } : null;
+  if (!marked.rows.length) return null;
+  await chitPaid.tellPaid(db, entity_id, chit_id, chitPaid.NOTICE.marked, { id: payment.by }); /* RAIL-216: the sender's own timeline learns it (its withdraw asks) */
+  return { books };
 }
 /** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
 function pressPayment(req, entity_id) {
@@ -5192,12 +5195,14 @@ router.post(
 router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const r = await withEntity(entity_id, (db) =>
-      db.query(
+    const r = await withEntity(entity_id, async (db) => {
+      const cleared = await db.query(
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
-      )
-    );
+      );
+      if (cleared.rows.length) await chitPaid.tellPaid(db, entity_id, req.params.chit_id, chitPaid.NOTICE.cleared, { id: (req.identity && req.identity.identity_id) || null }); /* RAIL-216: the sender is told it is unpaid again */
+      return cleared;
+    });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
     /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
     let books = null;
@@ -6693,6 +6698,8 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     });
     if (gate.refused) {
       const g = gate.refused;
+      /* RAIL-216: money is on it — a credit note reverses it, the sale is not withdrawn (409, the problem shape; the sale and the books stay as they were) */
+      if (g.why === 'paid') return problem(req, res, { status: 409, ...said({ ...railStatus.paidSaid(), from: g.from }, 'CHIT_CONFLICT') });
       if (g.why !== 'wrong_step') {
         return problem(req, res, railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] })));
       }
