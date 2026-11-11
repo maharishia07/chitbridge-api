@@ -5,8 +5,8 @@
   "routes": 639,
   "no_does": 629,
   "not_started": 0,
-  "partial": 67,
-  "meets": 572,
+  "partial": 69,
+  "meets": 570,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -26922,7 +26922,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3547,
+   "line": 3514,
    "hash": "e394ff0b0e21e9d3",
    "does": "",
    "errors": {
@@ -27018,7 +27018,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3435,
+   "line": 3402,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -27210,7 +27210,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4141,
+   "line": 4108,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -27308,7 +27308,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3763,
+   "line": 3730,
    "hash": "917b5f2623190141",
    "does": "",
    "errors": {
@@ -28215,7 +28215,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3503,
+   "line": 3470,
    "hash": "7c470871e76779bc",
    "does": "",
    "errors": {
@@ -28315,7 +28315,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3733,
+   "line": 3700,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -46329,7 +46329,7 @@
    "owner_agent": "cb-security",
    "file": "routes/csp-report.js",
    "line": 82,
-   "hash": "21a51c23f6a6bef6",
+   "hash": "89893d50e45000c9",
    "does": "",
    "errors": {
     "count": 0,
@@ -53825,7 +53825,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2212,
-   "hash": "dba1915afac8678d",
+   "hash": "2b6ce9414d7f54fc",
    "does": "",
    "errors": {
     "count": 0,
@@ -53838,13 +53838,9 @@
    },
    "reads": [
     "catalogue_items",
-    "entity_schemas",
     "identities"
    ],
-   "writes": [
-    "definition",
-    "definition_version"
-   ],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -53898,10 +53894,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2b6ce9414d7f54fc"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -59057,7 +59054,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4014,
+   "line": 3981,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -59160,7 +59157,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3314,
-   "hash": "3dd65abc975c9a01",
+   "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
     "count": 0,
@@ -59175,13 +59172,9 @@
     "codes": []
    },
    "reads": [
-    "catalogue_items",
-    "identities"
+    "catalogue_items"
    ],
-   "writes": [
-    "definition",
-    "definition_version"
-   ],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -59238,10 +59231,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a77c76eac150976c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "till.html"
    ],
@@ -59674,7 +59668,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4075,
+   "line": 4042,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -60297,7 +60291,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1919,
-   "hash": "f0ac99570fb42ce8",
+   "hash": "45ed4c4ba28822dd",
    "does": "",
    "errors": {
     "count": 0,
@@ -60367,9 +60361,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f0ac99570fb42ce8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 contract/till-strict 4ab88e89 strict_input: handler and contract re-read; body keys equal the keys the handler reads, no till sends this door (till.html, agent till.js, history checked), refusal is 400 TILL_BAD_REQUEST problem+legacy via schemaValidate, 13 columns pass",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -60398,7 +60391,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1845,
-   "hash": "9a446ad0d889e1ce",
+   "hash": "7cc9a8b4f101a389",
    "does": "",
    "errors": {
     "count": 0,
@@ -60468,9 +60461,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9a446ad0d889e1ce"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 contract/till-strict 4ab88e89 strict_input: handler and contract re-read; body keys equal the keys the handler reads, no till sends this door (till.html, agent till.js, history checked), refusal is 400 TILL_BAD_REQUEST problem+legacy via schemaValidate, 13 columns pass",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [

@@ -1142,8 +1142,7 @@
   },
   "POST /api/till/quick-keys/state": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1180,8 +1179,7 @@
   },
   "POST /api/till/quick-keys/screen-config": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5232,8 +5230,7 @@
   },
   "POST /api/csp-report": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
