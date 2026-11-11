@@ -535,6 +535,7 @@ const INFRA_LIBS = [
   'itemstatus.js',         // derives a display status
   'ctp-contract.js',       // API-1 slice 1d: routes/ctp.js's OpenAPI operations and the old answers a peer reads — a contract, not an engine
   'storefront-contract.js', // API-1 slice 1e: the public storefront doors' OpenAPI operations and the old answers shop.html reads — a contract, not an engine
+  'erp-receipt.js',        // CON-ERP-IDEM: the receipt of an ERP document (the key, the claim, the finish) - table access of one door, not a rule of the platform
   'connector-rows.js',     // SET-35: the checked-in connectors - one statement, one row shape - read by GET /integrations/status and the Connectors Home card
   'match.js',              // matching helpers
   'measure.js',            // unit handling
