@@ -258,6 +258,27 @@ function create() {
       rows.forEach((l) => { const role = (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; by[role] = by[role] || { role, dr_minor: 0, currency: l.currency }; by[role].dr_minor += l.dr_minor; });
       return Object.values(by);
     },
+    /* ACC-336: b849 tax_period and b854 tax_close "ran" in the stand-in (T.noTaxColumns turns them off for the column-absent case) */
+    async taxColumnsReady() { return { period: !T.noTaxColumns, close: !T.noTaxColumns }; },
+    async taxPaymentsNaming(db, e, taxPeriod, roles) {
+      const reversed = (h) => T.entries.some((x) => x.entity_id === e && x.reverses_entry_id === h.entry_id);
+      const out = [];
+      T.entries.filter((h) => h.entity_id === e && h.tax_period === taxPeriod && !h.reverses_entry_id && !reversed(h)).forEach((h) => {
+        T.lines.filter((l) => l.entry_id === h.entry_id && l.dr_minor > 0).forEach((l) => {
+          const role = (T.accounts.find((x) => x.account_id === l.account_id) || {}).role;
+          if (roles.indexOf(role) >= 0) out.push({ entry_id: h.entry_id, entry_no: h.entry_no, posting_date: ymd(h.posting_date), created_at: h.created_at, role, dr_minor: l.dr_minor, currency: l.currency });
+        });
+      });
+      return out.sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)) || String(p.entry_id).localeCompare(String(q.entry_id)));
+    },
+    async taxPaymentsWithoutPeriod(db, e, from) {
+      const reversed = (h) => T.entries.some((x) => x.entity_id === e && x.reverses_entry_id === h.entry_id);
+      return T.entries.filter((h) => h.entity_id === e && /^(tax_payment|gst_payment)$/.test(h.event_type) && !h.tax_period && !h.reverses_entry_id && !reversed(h) && ymd(h.posting_date) >= from).length;
+    },
+    async taxCloseOf(db, e, ref, closeColumn) {
+      const h = T.entries.find((x) => x.entity_id === e && x.source_ref === ref);
+      return h ? { entry_id: h.entry_id, entry_no: h.entry_no, created_at: h.created_at, tax_close: closeColumn ? clone(h.tax_close || null) : null } : null;
+    },
     async paymentsOfChit(db, e, chit) { const key = 'chitpay:' + chit; return T.payments.filter((x) => x.entity_id === e && (x.client_ref === key || String(x.client_ref || '').indexOf(key + ':') === 0)).map((p) => ({ payment_id: p.payment_id, amount_minor: p.amount_minor, currency: p.currency, client_ref: p.client_ref })); },
     async paymentByRef(db, e, ref) { const p = T.payments.find((x) => x.entity_id === e && x.client_ref === String(ref)); return p ? { payment_id: p.payment_id, mode: p.mode } : null; },
     async cheques(db, e, all, limit) {
