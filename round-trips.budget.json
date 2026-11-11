@@ -3133,10 +3133,23 @@
     },
     "POST /api/channels/:id/approve": {
       "file": "channels.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "status": "verified"
+      }
     },
     "POST /api/channels/:id/auto-raise": {
       "file": "channels.js",
@@ -3155,10 +3168,23 @@
     },
     "POST /api/channels/:id/revoke": {
       "file": "channels.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "status": "declared"
+      }
     },
     "POST /api/channels/:id/template": {
       "file": "channels.js",
@@ -3169,10 +3195,26 @@
     },
     "POST /api/channels/:id/template-approve": {
       "file": "channels.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_body": {
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "name": "order_status_update"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "templates": {}
+      }
     },
     "POST /api/chits/:chit_id/amend": {
       "file": "chits.js",
@@ -3820,17 +3862,42 @@
     },
     "POST /api/identity/documents/:scheme/code": {
       "file": "identity-docs.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "VAULT_ENC_KEY": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "fixture_path": "/api/identity/documents/EMAIL/code",
+      "fixture_row": {
+        "identity_id": "e1",
+        "value_enc": "{\"v\":1,\"alg\":\"aes-256-gcm\",\"iv\":\"rTOmH48Y4u2ryK5D\",\"tag\":\"jcatMTPwn/oCZUqztJf3wA==\",\"ct\":\"qajpguFipDQcMGAQQ0nRce1rRM05BQ==\"}",
+        "status": "unverified",
+        "verification_ref": "otp:bcdbe3ac34bf8b307333da8854fa664ec108a906c0169b393535406051d559f4:4102444800000:0"
+      }
     },
     "POST /api/identity/documents/:scheme/verify": {
       "file": "identity-docs.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "VAULT_ENC_KEY": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "fixture_path": "/api/identity/documents/EMAIL/verify",
+      "fixture_body": {
+        "code": "123456"
+      },
+      "fixture_row": {
+        "identity_id": "e1",
+        "value_enc": "{\"v\":1,\"alg\":\"aes-256-gcm\",\"iv\":\"rTOmH48Y4u2ryK5D\",\"tag\":\"jcatMTPwn/oCZUqztJf3wA==\",\"ct\":\"qajpguFipDQcMGAQQ0nRce1rRM05BQ==\"}",
+        "status": "unverified",
+        "verification_ref": "otp:bcdbe3ac34bf8b307333da8854fa664ec108a906c0169b393535406051d559f4:4102444800000:0"
+      }
     },
     "POST /api/integrations/:actor_id/approve": {
       "file": "integrations.js",
@@ -4524,10 +4591,21 @@
     },
     "POST /api/testing/cases/gherkin": {
       "file": "testing.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_body": {
+        "text": "Feature: Rt\n\n  Scenario: CTR-001 One\n    Given a\n    Then b\n\n  Scenario: CTR-002 Two\n    Given a\n    Then b"
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {},
+        "version": 1,
+        "case_id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "POST /api/testing/cases/import": {
       "file": "testing.js",
@@ -4553,10 +4631,17 @@
     },
     "POST /api/testing/cmdb/seed": {
       "file": "testing.js",
-      "trips": 50,
+      "trips": 1,
       "wire": null,
-      "fired": false,
-      "why": "answered 500 on the stub"
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {},
+        "version": 1
+      }
     },
     "POST /api/testing/evidence": {
       "file": "testing.js",

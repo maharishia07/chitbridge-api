@@ -76,6 +76,16 @@
  "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
  "cannot_answer": [
   {
+   "route": "GET /api/actors/check-login",
+   "status": 500,
+   "reason": "the answer is one frozen constant object read from memory with no query; the only fault left is Express itself failing to write, which no request can provoke, so no test can show a 500"
+  },
+  {
+   "route": "POST /api/actors/login",
+   "status": 409,
+   "reason": "the shared sign-in refusal list names 409 CHOOSE_IDENTITY, but this door looks the person up by key@business and refuses two businesses of one name with the plain refusal (routes/signin.js actorLogin), so it never lists accounts to choose from"
+  },
+  {
    "route": "GET /api/catalogue/:bridge_id/my-documents",
    "status": 404,
    "reason": "the path id is the shop browsed; the read is the caller's own documents and answers a list, so there is no missing row to answer 404"

@@ -79,11 +79,15 @@ function reportsOf(body) {
   });
 }
 
-router.post('/', reportLimiter, express.json({ type: TYPES, limit: '8kb' }), declaresStatuses([413, 429]), ...contract.checked('POST /'), (req, res) => {
-  reportsOf(req.body).forEach((item) => {
-    if (item.directive || item.blocked) log.warn('csp violation', item);
-  });
-  res.status(204).end();
+router.post('/', reportLimiter, express.json({ type: TYPES, limit: '8kb' }), declaresStatuses([413, 429]), ...contract.checked('POST /'), (req, res, next) => {
+  try {
+    reportsOf(req.body).forEach((item) => {
+      if (item.directive || item.blocked) log.warn('csp violation', item);
+    });
+    res.status(204).end();
+  } catch (err) {
+    next(err); /* a fault of ours goes to the server's one error handler (a Problem 500 with the request id), never an Express default page */
+  }
 });
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the route (lib/csp-report-contract.js)

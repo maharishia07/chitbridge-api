@@ -911,8 +911,12 @@ async function actorLogin(req, res) {
  * Read-only: it issues no code. Retires with the other aliases (PR 16).
  */
 const CHECK_LOGIN_ANSWER = Object.freeze({ valid: true, has_pin: false });
-function checkLogin(req, res) {
-  res.json(CHECK_LOGIN_ANSWER);
+function checkLogin(req, res, next) {
+  try {
+    res.json(CHECK_LOGIN_ANSWER);
+  } catch (err) {
+    next(err); /* a fault of ours goes to the server's one error handler (a Problem 500 with the request id) */
+  }
 }
 
 /* ── pin ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
