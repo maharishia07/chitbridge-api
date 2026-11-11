@@ -24,27 +24,44 @@ test('a listed route: strict_input does not apply; an unlisted one still does', 
   assert.strictEqual(register.hardeningApplies(leaf, null, scopeWith({})).strict_input, true);
 });
 
-test('the real scope file lists exactly the API-43 doors and each has a reason', () => {
+test('the real scope file lists the API-43 doors and the S33-T doors, each sound', () => {
   const found = register.hardeningScope().tolerantOutward;
-  assert.deepStrictEqual(Object.keys(found).sort(), ['POST /api/offers/evaluate', 'POST /api/offers/explain', KEY]);
+  assert.deepStrictEqual(Object.keys(found).sort(), ['POST /api/integrations/ask/:handle/stock', 'POST /api/integrations/heartbeat', 'POST /api/integrations/profile', 'POST /api/offers/evaluate', 'POST /api/offers/explain', KEY]);
 });
 
-test('scopeProblems: short reason, unknown route and a route with no schema check are named', () => {
-  const rows = [{ key: KEY, declared: [], columns: { schema_in: true } }, { key: 'POST /api/x', declared: [], columns: { schema_in: false } }];
-  const none = register.scopeProblems({ tolerant_outward: { [KEY]: REASON } }, rows);
-  assert.deepStrictEqual(none, []);
-  const bad = register.scopeProblems({ tolerant_outward: { [KEY]: 'short', 'POST /api/x': REASON, 'POST /api/nope': REASON } }, rows).join('\n');
-  assert.ok(/needs a reason/.test(bad) && /must still check the fields/.test(bad) && /not a route of the app/.test(bad), bad);
+const rows = [{ key: KEY, declared: [], columns: { schema_in: true } }, { key: 'POST /api/x', declared: [], columns: { schema_in: false } }];
+const entry = (extra) => Object.assign({ reason: REASON, caller_class: 'keyed_outward', test: 'tests/api-43-pricing-tolerant.test.cjs' }, extra);
+
+test('scopeProblems: a sound entry has none; short reason, bad class, missing or empty test file, unknown route and no schema check are named', () => {
+  assert.deepStrictEqual(register.scopeProblems({ tolerant_outward: { [KEY]: entry() } }, rows), []);
+  const bad = register.scopeProblems({ tolerant_outward: { [KEY]: entry({ reason: 'short', caller_class: 'someone', test: 'tests/nope.test.cjs' }), 'POST /api/x': entry(), 'POST /api/nope': entry() } }, rows).join('\n');
+  assert.ok(/needs a reason/.test(bad) && /caller_class must be one of/.test(bad) && /does not exist/.test(bad) && /must still check the fields/.test(bad) && /not a route of the app/.test(bad), bad);
 });
 
-test('ratchet: the list may not grow, may shrink; first run records', () => {
-  const head = (n) => ({ counts: { tolerant_outward: n } });
+test('scopeProblems: an old string entry, and a test file that never sends zz_unknown, count for nothing', () => {
+  assert.match(register.scopeProblems({ tolerant_outward: { [KEY]: REASON } }, rows).join('\n'), /must be { reason, caller_class, test }/);
+  assert.match(register.scopeProblems({ tolerant_outward: { [KEY]: entry({ test: 'tests/api-tolerant-outward.test.cjs' }) } }, rows).join('\n').replace('POST /api/pricing/price', 'X'), /does not mention/);
+  assert.deepStrictEqual(Object.keys(register.hardeningScope().tolerantOutward).includes(KEY), true);
+});
+
+test('an unsound entry does not exempt: the route stays strict; a list past its ceiling is a sentence', () => {
+  const found = register.scopeProblems({ tolerant_outward_ceiling: 1, tolerant_outward: { [KEY]: entry(), 'POST /api/x': entry() } }, rows).join('\n');
+  assert.match(found, /above its ceiling 1/);
+});
+
+test('ratchet: the list is held by its ceiling, not by its length', () => {
+  const ceiling = require('../docs/contracts/api-hardening-scope.json').tolerant_outward_ceiling;
   const quiet = console.log;
   console.log = () => {};
   try {
-    assert.strictEqual(ratchet.checkTolerant({ tolerant_outward: 3 }, head(4), { tolerant_outward: 4 }).length, 1);
-    assert.strictEqual(ratchet.checkTolerant({ tolerant_outward: 3 }, head(2), { tolerant_outward: 3 }).length, 0);
-    assert.strictEqual(ratchet.checkTolerant({}, head(3), { tolerant_outward: 3 }).length, 0);
-    assert.strictEqual(ratchet.checkTolerant({ tolerant_outward: 3 }, head(3), {}).length, 1);
+    assert.strictEqual(ratchet.checkTolerant({}, { counts: { tolerant_outward: ceiling + 1 } }).length, 1);
+    assert.strictEqual(ratchet.checkTolerant({ tolerant_outward: 3 }, { counts: { tolerant_outward: ceiling } }).length, 0);
   } finally { console.log = quiet; }
+});
+
+test('a tolerant door meets only when every known key is typed (knownKeysTyped)', () => {
+  const op = (properties) => ({ requestBody: { content: { 'application/json': { schema: { type: 'object', properties } } } } });
+  assert.strictEqual(register.knownKeysTyped(op({ a: { type: 'string' }, b: { enum: [1] } })), true);
+  assert.strictEqual(register.knownKeysTyped(op({ a: {} })), false);
+  assert.strictEqual(register.knownKeysTyped(op({})), false);
 });

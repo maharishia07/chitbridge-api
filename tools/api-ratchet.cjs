@@ -304,14 +304,13 @@ function checkCodes(baseRatchet, headRatchet) {
   return problems;
 }
 
-/** API-43: the tolerant_outward list (docs/contracts/api-hardening-scope.json) may only get shorter; the first run with no base figure just records it. Adding a key needs a ratchet change on purpose (a cb-critic go) */
-function checkTolerant(baseRatchet, head, headRatchet) {
+/** S33-T (Athi 11 Nov): the tolerant_outward list may change only with its proofs (reason, caller class, test file: tools/api-register.cjs --check names each) and may not pass tolerant_outward_ceiling of the scope file. The meets count is still held by checkNotMeeting: a route moved to the list meets only when its column passes */
+function checkTolerant(baseRatchet, head) {
   const now = head.counts.tolerant_outward;
+  const ceiling = require('../docs/contracts/api-hardening-scope.json').tolerant_outward_ceiling;
   const problems = [];
-  const before = baseRatchet.tolerant_outward;
-  if (before !== undefined && now > before) problems.push('tolerant_outward rose to ' + now + ' (allowed ' + before + '): the list of API-43 doors may only go down');
-  if (headRatchet.tolerant_outward === undefined || headRatchet.tolerant_outward < now) problems.push('docs/api-ratchet.json tolerant_outward is ' + headRatchet.tolerant_outward + ' but the list has ' + now + ': run node tools/api-ratchet.cjs --write');
-  console.log('tolerant_outward: ' + now + ' (base ratchet ' + String(before) + ')');
+  if (typeof ceiling === 'number' && now > ceiling) problems.push('tolerant_outward has ' + now + ' doors, above its ceiling ' + ceiling + ': raise tolerant_outward_ceiling only with a cb-api sign-off');
+  console.log('tolerant_outward: ' + now + ' (ceiling ' + String(ceiling) + ')');
   return problems;
 }
 
@@ -340,11 +339,6 @@ function refuseRises(previous, now) {
   if (!flag('--seed') && now.notMeeting > previous.not_meeting + added) throw new Error('refusing to raise the count of routes not meeting the standard');
 }
 
-/** --write never records a longer tolerant_outward list than the committed one */
-function refuseTolerantRise(previous, now) {
-  if (previous && previous.tolerant_outward !== undefined && now > previous.tolerant_outward) throw new Error('refusing to raise the tolerant_outward list (' + now + ' against ' + previous.tolerant_outward + ')');
-}
-
 /** --write: rewrite docs/api-ratchet.json from the head register (never raises the count) */
 function writeRatchet(head) {
   const codes = require('./error-codes.cjs');
@@ -353,7 +347,6 @@ function writeRatchet(head) {
   const notMeeting = head.counts.routes - head.counts.meets;
   const columnsFailing = Object.fromEntries(Object.keys(head.counts.columns || {}).map((name) => [name, head.counts.columns[name].failing]));
   const rawNow = rawErrorWritesOf(ROOT).length;
-  refuseTolerantRise(previous, head.counts.tolerant_outward);
   refuseRises(previous, { notMeeting, rawNow, columnsFailing, routes: head.counts.routes });
   if (previous && previous.routes_without_does !== undefined && head.counts.no_does > previous.routes_without_does + Math.max(0, head.counts.routes - previous.total)) throw new Error('refusing to raise the count of routes with no @does');
   const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, routes_without_does: head.counts.no_does, tolerant_outward: head.counts.tolerant_outward, columns_failing: columnsFailing, reported_failing: Object.fromEntries(Object.keys(head.counts.reported || {}).map((name) => [name, head.counts.reported[name].failing])), debt: previous ? previous.debt : [] };
