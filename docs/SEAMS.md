@@ -67,6 +67,7 @@ of file each thing is; this says what already does the job.
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
+| 38 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
@@ -90,6 +91,7 @@ of file each thing is; this says what already does the job.
 | 31 | `sentence` | `one-person.js` |  |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 32 | `note` | `dbwatch.js` |  |
+| 30 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 31 | `hold` | `orders.js` |  |

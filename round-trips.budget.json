@@ -2615,14 +2615,6 @@
       "fired": true,
       "status": 422
     },
-    "POST /api/assist/resolve": {
-      "file": "assist.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 410,
-      "floor_is_cost": "retired on purpose: it answers 410 ASSIST_REVIEW_RETIRED before any query (routes/assist.js, the handler is one problem() call), so the 410 the stub gets is the whole cost"
-    },
     "POST /api/attachments": {
       "file": "attachments.js",
       "trips": 0,
