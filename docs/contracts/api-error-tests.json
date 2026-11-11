@@ -3059,6 +3059,7 @@
   400,
   401,
   403,
+  422,
   500
  ],
  "POST /api/privacy/me/consent": [

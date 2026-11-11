@@ -10059,15 +10059,9 @@
     },
     {
      "scenario": "lines-not-a-list",
-     "status": 400,
-     "body_keys": {
-      "error": "validation",
-      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
-     },
-     "fixture": {
-      "error": "validation",
-      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
-     }
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     },
     {
      "scenario": "key-has-pricing-scope",

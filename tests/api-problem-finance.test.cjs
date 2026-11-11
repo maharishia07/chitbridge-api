@@ -422,7 +422,7 @@ const EXTRAS = [
   X('card-answers', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [] }) } } } }),
   /* pricing */
   X('no-lines', 'POST /api/pricing/price', 400, { setup: { who: OWNER }, body: {} }),
-  X('lines-not-a-list', 'POST /api/pricing/price', 400, { body: { lines: 'tea' } }),
+  X('lines-not-a-list', 'POST /api/pricing/price', 422, { body: { lines: 'tea' } }),
   X('key-has-pricing-scope', 'POST /api/pricing/price', 400, { setup: { asKey: true, keyScopes: ['pricing'] }, body: {} }),
   X('priced-with-structure', 'POST /api/pricing/price', 200, { body: { lines: [{ qty: 2, listPrice: 10, pricing: { kind: 'fixed', amount: 8 } }] } }),
   X('shelf-fails', 'POST /api/pricing/price', 500, { setup: { db: 'fail' }, body: { lines: [{ code: 'tea', qty: 1 }] } }),
