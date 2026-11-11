@@ -22471,6 +22471,72 @@
         "perLine"
       ]
     },
+    "POST /api/products/categories/bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "done",
+          "unchanged",
+          "refused",
+          "results"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "done": {
+            "type": "number"
+          },
+          "unchanged": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "result"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/products/categories/bulk",
+        "body": {
+          "ids": [
+            "22222222-2222-4222-8222-222222222222",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "add": [
+            "22222222-2222-4222-8222-222222222222"
+          ]
+        }
+      }
+    },
     "POST /api/quick-keys/groups": {
       "status": "201",
       "schema": {

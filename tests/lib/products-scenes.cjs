@@ -54,6 +54,8 @@ function extras(tools) {
   const markedOut = (rows) => answering(/^s*UPDATE catalogue_items/, rows.map((row) => Object.assign({ item_data: ITEM({ status: 'unavailable' }).item_data }, row)));
   const withMedia = (media) => firstOf(answering(/^s*UPDATE catalogue_items/, [{ item_data: ITEM({ media }).item_data }]), shelf);
   const costHidden = { cost: { canReadSafe: async () => false } };
+  const CATEGORY = '22222222-2222-4222-8222-222222222222';
+  const categoriesBulkRows = firstOf(answering(/FROM definition/, [{ definition_id: CATEGORY, name: 'Fruit', status: 'live' }]), answering(/FOR UPDATE/, [{ item_id: PARTY, item_data: ITEM().item_data }]), shelf);
   const importBody = (more) => Object.assign({ csv: CSV, decisions: DECIDED, confirm: true }, more);
   return [
     /* POST / */
@@ -93,6 +95,14 @@ function extras(tools) {
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
     X('edits-written', 'POST ' + P + '/bulk-update', 200, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: withRows(shelf) }),
     X('edits-db-fails', 'POST ' + P + '/bulk-update', 500, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: failing }),
+    /* POST /categories/bulk (QA-130, born after the sweep: N) */
+    N('categories-bulk-nothing-named', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY] } }),
+    N('categories-bulk-both-ways', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY], add: [CATEGORY], remove: [CATEGORY] } }),
+    N('categories-bulk-too-many', 'POST ' + P + '/categories/bulk', 400, { body: { ids: manyOf(201, PARTY).map((id, at) => id + at), add: [CATEGORY] } }),
+    N('categories-bulk-unknown-category', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY], add: [CATEGORY] } }),
+    N('categories-bulk-cost-blind', 'POST ' + P + '/categories/bulk', 403, { body: { ids: [PARTY], add: [CATEGORY] }, setup: costBlind }),
+    N('categories-bulk-done', 'POST ' + P + '/categories/bulk', 200, { body: { ids: [PARTY, '33333333-3333-4333-8333-333333333333'], add: [CATEGORY] }, setup: withRows(categoriesBulkRows) }),
+    N('categories-bulk-db-fails', 'POST ' + P + '/categories/bulk', 500, { body: { ids: [PARTY], add: [CATEGORY] }, setup: failing }),
     /* GET / */
     X('list-answers', 'GET ' + P, 200, { setup: withRows(listRows) }),
     X('list-by-text', 'GET ' + P, 200, { url: P + '?q=tea&limit=10&offset=0', setup: withRows(listRows) }),

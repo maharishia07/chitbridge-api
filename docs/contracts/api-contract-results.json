@@ -3442,6 +3442,14 @@
     400
    ]
   },
+  "POST /api/products/categories/bulk": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/products/import": {
    "cases": 6,
    "failed": 0,

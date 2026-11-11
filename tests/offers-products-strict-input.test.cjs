@@ -29,6 +29,7 @@ const CASES = [
   ['POST /api/products', 'routes/products.js', [{ item_data: { name: 'Tea' } }]],
   ['POST /api/products/status/bulk', 'routes/products.js', [{ ids: [UUID], status: 'available' }]],
   ['POST /api/products/bulk-update', 'routes/products.js', [{ items: [{ id: UUID, item_data: { name: 'x' } }] }]],
+  ['POST /api/products/categories/bulk', 'routes/products.js', [{ ids: [UUID], add: [UUID] }, { ids: [UUID], remove: [UUID] }]],
   ['POST /api/products/starter-columns', 'routes/products.js', [{ vertical: 'kirana' }, { vertical: 'kirana', fields: [], custom: [] }]],
   ['POST /api/products/:id/schedule', 'routes/products.js', [{ effective_at: '2026-12-01', item_data: { price: 5 } }]],
   ['PUT /api/products/:id/availability', 'routes/products.js', [{ qty: 4, source: 'count' }, { qty: 2, as_of: '2026-11-01', location: 'main' }]],

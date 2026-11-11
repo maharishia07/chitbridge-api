@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 638,
-  "no_does": 628,
+  "routes": 639,
+  "no_does": 629,
   "not_started": 0,
-  "partial": 97,
+  "partial": 98,
   "meets": 541,
   "columns": {
    "strict_input": {
-    "applies": 347,
+    "applies": 348,
     "failing": 44
    },
    "output_allowlist": {
-    "applies": 638,
+    "applies": 639,
     "failing": 11
    },
    "foreign_id_404": {
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 638,
+    "applies": 639,
     "failing": 16
    }
   },
@@ -43,12 +43,12 @@
     "failing": 39
    },
    "rate_limited": {
-    "applies": 638,
+    "applies": 639,
     "failing": 479
    }
   },
   "tolerant_outward": 3,
-  "output_allowlist_from_recordings": 141
+  "output_allowlist_from_recordings": 142
  },
  "machine_columns": [
   "schema_in",
@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1791,
+   "line": 1832,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1941,
+   "line": 1982,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1989,7 +1989,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1672,
+   "line": 1713,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -22139,7 +22139,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 699,
+   "line": 740,
    "hash": "c58e08fca2facb60",
    "does": "",
    "errors": {
@@ -22249,7 +22249,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1618,
+   "line": 1659,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22347,7 +22347,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1977,
+   "line": 2018,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22453,7 +22453,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1058,
+   "line": 1099,
    "hash": "699e33f654a66cd9",
    "does": "",
    "errors": {
@@ -22553,7 +22553,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2092,
+   "line": 2133,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -22650,7 +22650,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1836,
+   "line": 1877,
    "hash": "6552c50215b46546",
    "does": "",
    "errors": {
@@ -22753,7 +22753,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1389,
+   "line": 1430,
    "hash": "40bea3f52459651d",
    "does": "",
    "errors": {
@@ -22853,7 +22853,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1087,
+   "line": 1128,
    "hash": "450991b1787aac03",
    "does": "",
    "errors": {
@@ -22953,7 +22953,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 987,
+   "line": 1028,
    "hash": "36bec6618ba3d688",
    "does": "",
    "errors": {
@@ -30655,7 +30655,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1559,
+   "line": 1600,
    "hash": "6a5797d12ad93b40",
    "does": "",
    "errors": {
@@ -52881,7 +52881,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 428,
+   "line": 429,
    "hash": "1bddfcabcbea24c6",
    "does": "",
    "errors": {
@@ -52985,7 +52985,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1876,
+   "line": 1917,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53092,7 +53092,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1638,
+   "line": 1679,
    "hash": "185af50f007a0f0f",
    "does": "",
    "errors": {
@@ -53203,7 +53203,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1686,
+   "line": 1727,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53304,7 +53304,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 493,
+   "line": 494,
    "hash": "90be73d405856299",
    "does": "",
    "errors": {
@@ -53406,7 +53406,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 646,
+   "line": 687,
    "hash": "a685f08236988712",
    "does": "",
    "errors": {
@@ -53506,13 +53506,111 @@
    }
   },
   {
+   "key": "POST /api/products/categories/bulk",
+   "method": "POST",
+   "path": "/api/products/categories/bulk",
+   "owner_area": "products",
+   "owner_agent": "cb-catalogue",
+   "file": "routes/products.js",
+   "line": 603,
+   "hash": "2dd38dbe13afdf0c",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     403,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [
+    "catalogue_items"
+   ],
+   "writes": [
+    "catalogue_items"
+   ],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "output_allowlist_basis": "recordings",
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 0,
+    "wire": 0,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "POST /api/products/import",
    "method": "POST",
    "path": "/api/products/import",
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1184,
+   "line": 1225,
    "hash": "31d7f428eac73403",
    "does": "",
    "errors": {
@@ -53627,7 +53725,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1111,
+   "line": 1152,
    "hash": "39622ebf11654c79",
    "does": "",
    "errors": {
@@ -53732,7 +53830,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2194,
+   "line": 2235,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -53836,7 +53934,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1400,
+   "line": 1441,
    "hash": "2eaff1d170a6af28",
    "does": "",
    "errors": {
@@ -53939,7 +54037,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 544,
+   "line": 545,
    "hash": "b194b999878fae7b",
    "does": "",
    "errors": {
@@ -64900,7 +64998,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1731,
+   "line": 1772,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -65002,7 +65100,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1761,
+   "line": 1802,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {

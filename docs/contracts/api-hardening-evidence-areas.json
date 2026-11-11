@@ -1502,6 +1502,9 @@
   "POST /api/products/bulk-update": {
    "output_allowlist": true
   },
+  "POST /api/products/categories/bulk": {
+   "output_allowlist": true
+  },
   "POST /api/products/import": {
    "output_allowlist": true
   },
