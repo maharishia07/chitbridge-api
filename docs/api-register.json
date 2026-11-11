@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 98,
-  "meets": 540,
+  "partial": 97,
+  "meets": 541,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -63243,7 +63243,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5285,
-   "hash": "037060563fb813f2",
+   "hash": "b7cf1cbeb711e833",
    "does": "",
    "errors": {
     "count": 0,
@@ -63251,6 +63251,7 @@
      400,
      401,
      404,
+     409,
      500
     ],
     "codes": []
@@ -63293,6 +63294,7 @@
     400,
     401,
     404,
+    409,
     500
    ],
    "notes": [
@@ -63314,11 +63316,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "037060563fb813f2"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1086 QA-131 stage2 re-review c91b880b+: all 13 columns true; from/use optional and closed (strict body, use enum resale|use|asset), 200 answer unchanged without them (test C); 409 status_from_changed, 409 use_refused, 400 status_use_unneeded registered with shopkeeper sentences and sent as problem details keeping current_status/expected_from; 409 now declared inline in the contract (was answered but undeclared); replay is the global idempotency middleware (test D)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-assist.js",
