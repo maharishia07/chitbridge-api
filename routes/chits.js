@@ -5121,7 +5121,7 @@ async function markChitPaid(db, press) {
     [JSON.stringify(payment), chit_id, entity_id]
   );
   if (!marked.rows.length) return null;
-  await chitPaid.tellPaid(db, entity_id, chit_id, chitPaid.NOTICE.marked, { id: payment.by }); /* RAIL-216: the sender's own timeline learns it (its withdraw asks) */
+  await chitPaid.tellPaid(db, entity_id, chit_id, { id: payment.by }); /* RAIL-216: the sender's own timeline learns it (its withdraw asks) */
   return { books };
 }
 /** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
@@ -5200,7 +5200,6 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
       );
-      if (cleared.rows.length) await chitPaid.tellPaid(db, entity_id, req.params.chit_id, chitPaid.NOTICE.cleared, { id: (req.identity && req.identity.identity_id) || null }); /* RAIL-216: the sender is told it is unpaid again */
       return cleared;
     });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });

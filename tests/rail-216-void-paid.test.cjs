@@ -36,6 +36,7 @@ const IDEM = { n: 0 };
 
   /* ── the chit world: one header per chit (sender · purpose · tender on the SENDER's copy · the buyer's mark on the BUYER's copy), statuses, timelines ── */
   const HEAD = {}; let STATUS = [], LOG = [], MSGS = 0;
+  const counterBill = { bill_no: 'B-1', till: { id: 'T-1' } };
   const copyBusiness = (chit, entity) => (entity === chit.sender ? chit.sellerBusiness : chit.buyerBusiness) || {};
   function rowsFor(sql, p) {
     const s = one(sql); p = p || [];
@@ -45,9 +46,9 @@ const IDEM = { n: 0 };
     if (/^UPDATE chit_status SET current_status = \$1/.test(s)) { const hit = STATUS.filter((r) => r.chit_id === p[1] && r.entity_id === p[2] && r.direction === dir && r.current_status === p[3]); hit.forEach((r) => { r.current_status = p[0]; }); return hit.map((r) => ({ chit_id: r.chit_id })); }
     if (/SELECT sender_entity_id FROM chit_header/.test(s)) return HEAD[p[0]] ? [{ sender_entity_id: HEAD[p[0]].sender }] : [];
     if (/SELECT all_recipients FROM chit_header/.test(s)) return [{ all_recipients: [] }];
-    if (/^SELECT purpose FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 AND sender_entity_id = \$2/.test(s)) return HEAD[p[0]] && HEAD[p[0]].sender === p[1] ? [{ purpose: HEAD[p[0]].purpose }] : [];
+    if (/^SELECT purpose, sender_entity_id, business_json FROM chit_header/.test(s)) return HEAD[p[0]] ? [{ purpose: HEAD[p[0]].purpose, sender_entity_id: HEAD[p[0]].sender, business_json: copyBusiness(HEAD[p[0]], p[1]) }] : [];
     if (/^SELECT business_json->'payment' AS payment FROM chit_header/.test(s)) return HEAD[p[0]] ? [{ payment: copyBusiness(HEAD[p[0]], p[1]).payment || null }] : [];
-    if (/^SELECT action FROM state_log WHERE chit_id/.test(s)) return LOG.filter((r) => r.chit_id === p[0] && r.entity_id === p[1] && /^payment_(marked|cleared)$/.test(r.action)).slice(-1).reverse().map((r) => ({ action: r.action }));
+    if (/^SELECT 1 FROM state_log WHERE chit_id/.test(s)) return LOG.filter((r) => r.chit_id === p[0] && r.entity_id === p[1] && r.action === 'payment_marked').slice(0, 1).map(() => ({ '?column?': 1 }));
     if (/^SELECT chit_log_targets\(/.test(s)) { LOG.push({ chit_id: p[0], entity_id: p[1], action: p[2] }); return [{ chit_log_targets: null }]; }
     if (/^INSERT INTO state_log/.test(s)) { LOG.push({ chit_id: p[0], entity_id: p[1], action: p[2] }); return []; }
     if (/jsonb_build_object\('payment'/.test(s)) { const c = HEAD[p[1]]; c.buyerBusiness = Object.assign({}, c.buyerBusiness, { payment: JSON.parse(p[0]) }); return [{ chit_id: p[1] }]; }
@@ -92,7 +93,7 @@ const IDEM = { n: 0 };
     const chit = id(n);
     HEAD[chit] = Object.assign({ sender: SHOP, purpose, sellerBusiness: {}, buyerBusiness: {} }, extra || {});
     STATUS.push({ chit_id: chit, entity_id: SHOP, direction: 'sent', current_status: 'delivered' }, { chit_id: chit, entity_id: BUYER, direction: 'received', current_status: 'accepted' });
-    return { chit, entry: purpose === 'invoice' ? await post(chit) : null };
+    return { chit, entry: purpose !== 'credit_note' ? await post(chit) : null };
   };
   const sentStatus = (chit) => STATUS.find((r) => r.chit_id === chit && r.entity_id === SHOP).current_status;
   const VOID = (chit) => call(SHOP, 'PUT', '/api/chits/' + chit + '/void', { reason: 'wrong customer' });
@@ -120,13 +121,13 @@ const IDEM = { n: 0 };
   v = await VOID(inv.chit);
   refusedPaid('half payment', v, inv.chit, inv.entry);
 
-  console.log('\n— 3 · paid, then the payment is cleared (refunded) → the void is allowed again —');
+  console.log('\n— 3 · paid, then the buyer clears the mark: the notice is monotonic, the void stays refused (refund = credit note) —');
   inv = await makeInvoice(3, 'invoice');
   await BUYER_PAYS(inv.chit, 77);
-  const first = await VOID(inv.chit);
   const unmark = await call(BUYER, 'DELETE', '/api/chits/' + inv.chit + '/payment');
-  const second = await VOID(inv.chit);
-  t('paid → 409; the buyer clears the mark (200) → the same void now 200, the sale reversed once', first.status === 409 && unmark.status === 200 && second.status === 200 && sentStatus(inv.chit) === 'cancelled' && !!reversalOf(inv.entry), [first.status, unmark.status, second.status].join('/'));
+  v = await VOID(inv.chit);
+  t('the buyer\'s DELETE /payment answers 200 and the void is STILL refused (the buyer\'s books keep the payment)', unmark.status === 200, String(unmark.status));
+  refusedPaid('paid then cleared', v, inv.chit, inv.entry);
 
   console.log('\n— 4 · unpaid invoice, an order with a mark, a credit note —');
   inv = await makeInvoice(4, 'invoice');
@@ -141,21 +142,30 @@ const IDEM = { n: 0 };
   t('a credit note (own purpose) is not asked → 200', v.status === 200, v.status + ' ' + JSON.stringify(v.body));
 
   console.log('\n— 5 · counter bill: the tender is on the bill (paid at issue) —');
-  inv = await makeInvoice(7, 'invoice', { sellerBusiness: { counter_bill: true, payment: { parts: [{ mode: 'cash', amount_minor: 7700 }] } } });
+  inv = await makeInvoice(7, 'order', { sellerBusiness: { ...counterBill, payment: { parts: [{ how: 'cash', amount: 77 }] } } });
   v = await VOID(inv.chit);
   refusedPaid('counter bill with tender', v, inv.chit, inv.entry);
 
+  inv = await makeInvoice(9, 'order', { sellerBusiness: { ...counterBill, payment: { parts: [{ how: 'credit', amount: 77 }] } } });
+  v = await VOID(inv.chit);
+  t('a counter bill sold on CREDIT (no money came) → 200, the credit sale can be withdrawn', v.status === 200 && sentStatus(inv.chit) === 'cancelled', v.status + ' ' + JSON.stringify(v.body));
+
   console.log('\n— 6 · named counter bill, paid LATER: the seller\'s own books hold the receipt —');
-  inv = await makeInvoice(8, 'invoice', { sellerBusiness: { counter_bill: true, customer: { name: 'Mala' } } });
+  inv = await makeInvoice(8, 'order', { sellerBusiness: { ...counterBill, customer: { name: 'Mala' } } });
   const rec = await X.B.recordPayment(X.db, SHOP, { party_id: MALA, direction: 'in', mode: 'cash', amount_minor: 3000, currency: 'INR', received_at: '2026-11-09', client_ref: 'rail216-rec-1', by: SHOP, allocations: [{ against_ref: inv.chit, amount_minor: 3000 }] });
   v = await VOID(inv.chit);
   t('a partial receipt (30.00) allocated in the seller\'s books was recorded', rec && (rec.ok !== false), JSON.stringify(rec).slice(0, 200));
   refusedPaid('named bill with a receipt in the books', v, inv.chit, inv.entry);
-  if (typeof X.B.reversePayment === 'function' && rec && rec.payment && rec.payment.payment_id) {
-    const undone = await X.B.reversePayment(X.db, SHOP, rec.payment.payment_id, { reason: 'bounced', by: SHOP });
-    v = await VOID(inv.chit);
-    t('…the receipt reversed (refunded) → the void is allowed again', undone && undone.ok !== false && v.status === 200, v.status + ' ' + JSON.stringify(v.body));
-  } else t('…the receipt reversed → allowed again (reversePayment not exposed here: covered by section 3 on the notice path)', true);
+  const payEntry = await X.store.entryBySource(X.db, SHOP, 'pay:' + rec.payment.payment_id);
+  const undone = await X.B.reverseEntry(X.db, SHOP, payEntry.entry_id, { reason: 'receipt entered in error', by: SHOP });
+  v = await VOID(inv.chit);
+  t('…the seller reverses that receipt in the seller\'s own books (the seller recorded it) → the void is allowed again', undone && undone.ok !== false && v.status === 200 && !!reversalOf(inv.entry), v.status + ' ' + JSON.stringify(v.body).slice(0, 300) + ' ' + JSON.stringify(undone).slice(0, 200));
+
+  console.log('\n— 6b · the sender\'s own cancel through PUT /status is the same gate (self-chit: both copies mine) —');
+  inv = await makeInvoice(10, 'invoice', { sellerBusiness: { payment: { method: 'cash', amount: 77 } } });
+  STATUS.push({ chit_id: inv.chit, entity_id: SHOP, direction: 'received', current_status: 'accepted' });
+  const st = await call(SHOP, 'PUT', '/api/chits/' + inv.chit + '/status', { status: 'cancelled' });
+  t('a paid invoice cancelled by its sender through the status door → 409 why paid, nothing reversed', st.status === 409 && st.body.why === 'paid' && !reversalOf(inv.entry), st.status + ' ' + JSON.stringify(st.body).slice(0, 300));
 
   console.log('\n— 7 · the rule lives in the ONE gate, not in the route —');
   const gateSrc = fs.readFileSync(path.join(H.API, 'lib', 'rail-status.js'), 'utf8'), routeSrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
