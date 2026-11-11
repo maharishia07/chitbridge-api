@@ -446,6 +446,7 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
     });
 
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
+    if (out.unconfirmed) return problem(req, res, { status: 428, ...words.liveUnconfirmed() }); // UX-110: said here too so the route's own text names every status it answers (S15 status_codes)
     if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
     /* CTR-157: an offer made live, paused or changed is what every open counter prices with, so they hear it now, as for a create or a retire */

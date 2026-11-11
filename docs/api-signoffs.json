@@ -883,11 +883,11 @@
    "lifecycle": "stable"
   },
   "GET /api/facts/rail/chits": {
-   "hash": "05d5f33a3f03c039",
+   "hash": "3a66511732cf316b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
    "lifecycle": "stable"
   },
   "GET /api/folders": {
@@ -3107,11 +3107,11 @@
    "lifecycle": "stable"
   },
   "POST /api/keys": {
-   "hash": "490457a79b48d9d6",
+   "hash": "3e1a66a887f89d1a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#330",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/kyb/credential": {
@@ -4000,6 +4000,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+   "lifecycle": "stable"
+  },
+  "PUT /api/definitions/:id": {
+   "hash": "a98dacd9acb4fa31",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
    "lifecycle": "stable"
   },
   "PUT /api/entities/populations/:code/desk": {
