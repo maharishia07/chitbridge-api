@@ -5265,6 +5265,15 @@
    "hint": "Ask the sender to send it again as a new bill.",
    "owner_area": "chits",
    "since": "2026-11-07"
+  },
+  {
+   "code": "use_refused",
+   "status": "409",
+   "title": "What the goods are for was not saved",
+   "shopkeeper": "What the goods are for could not be saved, so the bill was not accepted.",
+   "hint": "Look at the bill, then try again.",
+   "owner_area": "chits",
+   "since": "2026-11-11"
   }
  ]
 }
