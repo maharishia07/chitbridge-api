@@ -53,7 +53,7 @@ router.post('/create-default', auth, ...checked('POST /create-default'), async (
     const entity_id = req.identity.identity_id;
     // ONE implementation (also called at mint) — idempotent: returns the existing active schema instead of 400.
     const r = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
-    if (r.error || !r.schema_id) return problem(req, res, createRefused(req, r)); // ⚠️ relays the bootstrap's own text, as it always did (a finding, see lib/schemas-contract.js)
+    if (r.error || !r.schema_id) return problem(req, res, createRefused(req, r)); // the bootstrap's text goes to the log, never to the caller (lib/schemas-contract.js createRefused)
     const result = await query(
       `SELECT es.*, json_agg(sf ORDER BY sf.display_order) as fields
        FROM entity_schemas es

@@ -47666,11 +47666,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -47678,11 +47678,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "Cannot read properties of undefined (reading 'schema_id')"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "Cannot read properties of undefined (reading 'schema_id')"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -47690,11 +47690,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "the bootstrap said no"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "the bootstrap said no"
+      "message": "Something went wrong — please try again."
      }
     },
     {
@@ -47702,11 +47702,11 @@
      "status": 500,
      "body_keys": {
       "error": "Failed to create schema",
-      "message": "no schema"
+      "message": "Something went wrong — please try again."
      },
      "fixture": {
       "error": "Failed to create schema",
-      "message": "no schema"
+      "message": "Something went wrong — please try again."
      }
     },
     {
