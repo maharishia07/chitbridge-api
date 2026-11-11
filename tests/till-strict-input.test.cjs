@@ -23,7 +23,7 @@ const ok = (name, cond, why) => {
 };
 
 const LIVE = ['/alias', '/catalogue', '/close', '/diagnostic', '/enrol', '/listen', '/pair', '/pair/claim', '/quick-keys/hide', '/quick-keys/unhide', '/reconcile', '/screens/rename', '/screens/revoke', '/shop', '/state'];
-const QUEUED = ['/flags', '/stock', '/stock/bulk', '/reward']; /* reward/claim, quick-keys/state, quick-keys/screen-config: no till ever sent them, so none can be queued: closed in till-strict-replay.test.cjs */
+const QUEUED = ['/flags', '/stock', '/stock/bulk', '/reward', '/reward/claim']; /* quick-keys/state and quick-keys/screen-config: no till ever sent them, so none can be queued: closed in till-strict-replay.test.cjs. reward/claim waits for its round-trip budget line (cb-speed) before cb-api can sign it */
 /* what the counter sends today, call site by call site (web till.html at origin/main, 11 Nov 2026) */
 const SENT = {
   '/alias': ['item_id', 'by', 'text', 'unit', 'factor'], '/catalogue': ['blueprint'], '/close': ['last_no', 'bills', 'next', 'period'],

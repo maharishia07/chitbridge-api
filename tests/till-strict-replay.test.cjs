@@ -1,9 +1,9 @@
 'use strict';
 /**
- * tests/till-strict-replay.test.cjs - S33 STRICT INPUT ON THE THREE COUNTER DOORS THE TILL NEVER QUEUES (reward/claim, quick-keys/state, quick-keys/screen-config)
+ * tests/till-strict-replay.test.cjs - S33 STRICT INPUT ON THE TWO COUNTER DOORS THE TILL NEVER SENDS (quick-keys/state, quick-keys/screen-config)
  * (tests/till-strict-input.test.cjs covers the live doors closed by batch 2026-11-11; flags, stock, stock/bulk and reward stay OPEN: the till queues those offline
- * and an older queued body must not wedge, PM/ATHI-DECISIONS 2026-11-09.) No till version has ever sent these three (till.html + history + agent: only the idempotency key
- * helper names reward/claim), so no old queued body exists.
+ * and an older queued body must not wedge, PM/ATHI-DECISIONS 2026-11-09.) No till version has ever sent these two (till.html + history + agent: only the idempotency key
+ * helper names reward/claim, which no caller uses), so no old queued body exists.
  *   REPLAY  the body the handler reads (and a null-valued twin) is never answered UNKNOWN_FIELD.
  *   JUNK    the same body plus an unknown key is refused 400 TILL_BAD_REQUEST in the problem shape, naming the key.
  * Run: node tests/till-strict-replay.test.cjs
@@ -24,12 +24,10 @@ app.use(h.app('/api/till', till));
 const SAVED = {
   'POST /quick-keys/screen-config': { config: { photos: true } },
   'POST /quick-keys/state': { business_date: '2026-11-11', shift_id: ID, active_group_ids: [ID] },
-  'POST /reward/claim': { from: { scheme: 'phone', value: '9999999999' }, to: { scheme: 'identity', value: ID }, ref: 'C1/26-27/0042' },
 };
 /** the same bodies with the nulls a till sends for "none" (by: null, shift_id: null) */
 const NULLED = {
   'POST /quick-keys/state': { business_date: '2026-11-11', shift_id: null, active_group_ids: [] },
-  'POST /reward/claim': { from: { scheme: 'phone', value: '9999999999' }, to: { scheme: 'identity', value: ID }, ref: null },
 };
 const unknownKeyRefusal = (r) => r.status === 400 && r.body && Array.isArray(r.body.errors) && r.body.errors.some((e) => e.code === 'UNKNOWN_FIELD');
 const send = (route, body) => h.run(app, { method: 'POST', url: '/api/till' + route.split(' ')[1], body, identity: { identity_id: SHOP }, settle: 5 });
