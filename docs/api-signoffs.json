@@ -3955,11 +3955,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/status": {
-   "hash": "b4028826f237799e",
+   "hash": "b7cf1cbeb711e833",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2 re-review c15cf4e8: all 13 columns true; every takeBackCancelled books branch recorded, prune() drops 0 keys on all 13 recorded 200s; replay unchanged (no route or lib change since 663/663)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1086 QA-131 stage2 re-review c91b880b+: all 13 columns true; from/use optional and closed (strict body, use enum resale|use|asset), 200 answer unchanged without them (test C); 409 status_from_changed, 409 use_refused, 400 status_use_unneeded registered with shopkeeper sentences and sent as problem details keeping current_status/expected_from; 409 now declared inline in the contract (was answered but undeclared); replay is the global idempotency middleware (test D)",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/use": {

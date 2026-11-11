@@ -2059,7 +2059,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **PUT /api/chits/:chit_id/status** · chits · cb-rail · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500 · money n (derived)
 - effect: offline queueable · round trips 0 (wire 0; share app.html 0/155, cap-assist.js 0/2, cap-bank.js 0/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: app.html, cap-assist.js, cap-bank.js, cap-books.js, cap-catalogue.js, cap-compare.js, cap-country.js, cap-crm-calls.js, cap-crm-groups.js, cap-crm-leads.js, cap-crm-privacy.js, cap-crm-record.js, cap-crm.js, cap-dispute.js, cap-employees.js, cap-finance-cheques.js, cap-finance-returns.js, cap-marketing.js, cap-period.js, cap-register.js, cap-settings.js, cap-shop.js, cap-suppliers.js, cap-tasks.js, chit-sheet.js, core.js, country-profiles.js, shop-privacy.js, till.html · actions: -
 
