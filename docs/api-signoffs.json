@@ -3763,19 +3763,19 @@
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/screen-config": {
-   "hash": "7073d24f16ce0ca0",
+   "hash": "45ed4c4ba28822dd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 contract/till-strict 4ab88e89 strict_input: handler and contract re-read; body keys equal the keys the handler reads, no till sends this door (till.html, agent till.js, history checked), refusal is 400 TILL_BAD_REQUEST problem+legacy via schemaValidate, 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/state": {
-   "hash": "668b1080ceb29326",
+   "hash": "7cc9a8b4f101a389",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 contract/till-strict 4ab88e89 strict_input: handler and contract re-read; body keys equal the keys the handler reads, no till sends this door (till.html, agent till.js, history checked), refusal is 400 TILL_BAD_REQUEST problem+legacy via schemaValidate, 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/unhide": {
