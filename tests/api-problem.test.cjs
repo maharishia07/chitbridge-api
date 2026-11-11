@@ -25,6 +25,7 @@ process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const crypto = require('crypto');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 const EVIDENCE_FILE = path.join(__dirname, '..', 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
@@ -231,7 +232,10 @@ function checkAllowList(recording) {
   const answers = Object.values(recording).filter((one) => one.route === 'GET /api/keys' && one.status === 200 && one.body);
   const fits = shape && engine.compile(shape.schema);
   check('GET /api/keys: every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
+  /* the revoke answer is closed at its root ({ message, jti }): its recorded 200 (the scene that revokes a listed key) must fit it with nothing dropped, which is what the register reads as output_allowlist for DELETE /api/keys/:jti (the generated case finds no key on the stand-in database and answers 404) */
+  const held = ALLOW.checkAllowList(recording, { [KEYS_FOREIGN_ROUTE]: require(path.join(HERE, 'routes', 'keys.js')).openapi.paths['/api/keys/{jti}'].delete }, check);
   check('the output allow-list dropped no key from any answer', droppedKeys().length === 0, droppedKeys());
+  return held;
 }
 
 function checkUnits() {
@@ -273,7 +277,7 @@ function checkUnits() {
   const foreignProved = argv.includes('--capture') || argv.includes('--compare') ? {} : await checkForeignIds(server.address().port);
   server.close();
   await checkServerHandlers(recording);
-  if (!argv.includes('--capture') && !argv.includes('--compare')) checkAllowList(recording);
+  const allowHeld = !argv.includes('--capture') && !argv.includes('--compare') ? checkAllowList(recording) : {};
   if (argv.includes('--compare')) process.exit(compare(argv[argv.indexOf('--compare') + 1], recording) ? 1 : 0);
   if (argv.includes('--capture')) fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort()]));
@@ -283,8 +287,13 @@ function checkUnits() {
   const mine = Object.fromEntries(Object.keys(onDisk).filter(OURS).map((route) => [route, onDisk[route]]));
   const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter((route) => !OURS(route)).map((route) => [route, onDisk[route]])), coverage);
   const keysForeign = (route) => route === KEYS_FOREIGN_ROUTE;
-  if (argv.includes('--write')) FOREIGN.writeEvidence(EVIDENCE_FILE, keysForeign, foreignProved);
-  else if (!argv.includes('--capture')) check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for DELETE /api/keys/:jti exactly when it held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, keysForeign), foreignProved), foreignProved);
+  if (argv.includes('--write')) {
+    FOREIGN.writeEvidence(EVIDENCE_FILE, keysForeign, foreignProved);
+    ALLOW.writeEvidence(EVIDENCE_FILE, keysForeign, allowHeld);
+  } else if (!argv.includes('--capture')) {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for DELETE /api/keys/:jti exactly when its recorded 200 held', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, keysForeign), allowHeld), allowHeld);
+  }
+  if (!argv.includes('--write') && !argv.includes('--capture')) check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for DELETE /api/keys/:jti exactly when it held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, keysForeign), foreignProved), foreignProved);
   if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   else if (!argv.includes('--capture')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover', sameValue(mine, coverage), coverage);
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
