@@ -26,7 +26,9 @@ const OWNER = { identity_id: 'e1', identity_type: 'entity', display_name: 'Owner
 const BLIND = { identity_id: 'a1', identity_type: 'actor', access_level: 'editor', parent_entity_id: 'e1', display_name: 'Blind' };
 const SEEING = { identity_id: 'a2', identity_type: 'actor', access_level: 'editor', parent_entity_id: 'e1', display_name: 'Seeing' };
 const P = (n) => '00000000-0000-4000-8000-00000000000' + n;
-const [A, B, C, GONE, LEGACY] = [P(1), P(2), P(3), P(9), P(4)];
+const [A, B, C, GONE, LEGACY, SHORT, ORPHANED] = [P(1), P(2), P(3), P(9), P(4), P(5), P(6)];
+const RETIRED = 'f0000000-0000-4000-8000-000000000003';
+const ORPHAN = 'f0000000-0000-4000-8000-0000000000aa';
 const FRUIT = 'f0000000-0000-4000-8000-000000000001';
 const VEG = 'f0000000-0000-4000-8000-000000000002';
 const ROW = (data) => JSON.parse(JSON.stringify(data));
@@ -44,9 +46,11 @@ const call = (port, body) => new Promise((ok) => {
     [A, { name: 'Apple', price: 10, cost: 4 }],
     [B, { name: 'Banana', price: 5, categories: [FRUIT], category_names: ['Fruit'] }],
     [C, { name: 'Carrot', price: 7, categories: [FRUIT, VEG], category_names: ['Fruit', 'Veg'] }],
-    [LEGACY, { name: 'Date', price: 20, category: FRUIT, category_name: 'Fruit' }]
+    [LEGACY, { name: 'Date', price: 20, category: FRUIT, category_name: 'Fruit' }],
+    [SHORT, { name: 'Fig', price: 9, categories: [FRUIT, VEG], category_names: ['Fruit'] }],
+    [ORPHANED, { name: 'Gourd', price: 3, categories: [ORPHAN, FRUIT], category_names: [] }]
   ]);
-  const MASTER = [{ definition_id: FRUIT, name: 'Fruit', status: 'live' }, { definition_id: VEG, name: 'Vegetables', status: 'live' }];
+  const MASTER = [{ definition_id: FRUIT, name: 'Fruit', status: 'live' }, { definition_id: VEG, name: 'Vegetables', status: 'live' }, { definition_id: RETIRED, name: 'Old shelf', status: 'retired' }];
   const db = {
     query: async (sql, params) => {
       if (DB_DOWN) throw new Error('simulated database failure');
@@ -102,6 +106,21 @@ const call = (port, body) => new Promise((ok) => {
 
   console.log('\n-- the legacy single category is folded in, as the single attach does --');
   t('a product holding only the legacy key: add Veg keeps Fruit and drops the legacy keys', [lines(await call(port, { ids: [LEGACY], add: [VEG] })), STORE.get(LEGACY).categories, 'category' in STORE.get(LEGACY), 'category_name' in STORE.get(LEGACY)], [['4:done'], [FRUIT, VEG], false, false]);
+
+  console.log('\n-- a retired category: no new product, but it can always be taken off --');
+  UPDATES = 0;
+  const retiredAdd = await call(port, { ids: [A], add: [RETIRED] });
+  t('adding a retired category is refused 400 naming it, nothing written', [retiredAdd.status, retiredAdd.body.unknown, UPDATES], [400, [RETIRED], 0]);
+  STORE.get(B).categories = [RETIRED]; STORE.get(B).category_names = ['Old shelf'];
+  t('removing a retired category is allowed', [lines(await call(port, { ids: [B], remove: [RETIRED] })), 'categories' in STORE.get(B)], [['2:done'], false]);
+
+  console.log('\n-- ids repeated in the request; names shorter than ids --');
+  UPDATES = 0;
+  const twice = await call(port, { ids: [B, B, A, A], add: [FRUIT, FRUIT] });
+  t('a product named twice is answered once', lines(twice), ['2:done', '1:unchanged']);
+  t('...and written once', UPDATES, 1);
+  t('shorter names: removing the first id leaves ids and names the same length', [lines(await call(port, { ids: [SHORT], remove: [FRUIT] })), STORE.get(SHORT).categories, STORE.get(SHORT).category_names], [['5:done'], [VEG], ['Vegetables']]);
+  t('names missing for an id the master lacks: the id stands in, lengths match', [lines(await call(port, { ids: [ORPHANED], add: [VEG] })), STORE.get(ORPHANED).category_names], [['6:done'], [ORPHAN, 'Fruit', 'Vegetables']]);
 
   console.log('\n-- refusals write nothing --');
   UPDATES = 0;
