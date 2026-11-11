@@ -1379,11 +1379,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products/lists": {
-   "hash": "53042587c8e14b98",
+   "hash": "b43ae7cffcf356bd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent re-sign) 2026-11-11 PR#1099 stage2: handler read; store_id/store_name only added to the open lists[] card, read-only, auth and errors unchanged, store failures logged never relayed, 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/products/media/:item_id/:mid": {

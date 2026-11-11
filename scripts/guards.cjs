@@ -62,6 +62,7 @@ const GUARDS = [
   'vault-patch.test.cjs',
   'keys-kinds.test.cjs', // SET-WALK1 W15: the key kind 'testing' is offered to and minted by the platform role only (GET /keys scopes · POST 403 NOT_PLATFORM)       // ⭐ SET-WALK1 W25: the vault PUT is a merge-patch (RFC 7386 over the keyed view) with a version — 409 VAULT_CHANGED in words, never a blind replace
   'policy-one-writer.test.cjs', // ⭐⭐ T2-POLICY: policy_flags written only by policy.patchKey (22 → 0); the shop's tax number/address only by profile's one writer (3 → 0)
+  'cat124-reference-store-lists.test.cjs', // ⭐ CAT-124 C1+C2: the Product Lab's six cards come from the six reference stores (fallback to the constant where unloaded)
   'vertical-resolver.test.cjs', // ⭐ VERT-1/VERT-8: ONE answer to the shop's trade (govresolve.verticalOf); the five readers ask it; the Price Lab opens on the trade's list
   'trade-srv1.test.cjs', // ⭐ TRADE-SRV1: AU/AE lanes (b538), origin/sector stated or ASKED (never IN/paint), ?abroad=1, papers by deal, the day's rate, may/why on trade writes
   'profile-write-gate.test.cjs', // ⭐ SEC-71: PUT /profile, PUT /profile/vault, PATCH /entities/profile sit behind lib/access.writeGate — a viewer/commenter is refused with the rail's sentence, owner and editor pass
