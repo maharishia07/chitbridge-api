@@ -174,7 +174,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
 function checkAllowList(recording) {
   console.log('\n-- the closed success schemas hold every recorded success answer --');
   const operations = contractModule().OPERATIONS;
-  return FOREIGN.ownedBy(ALLOW.checkAllowList(recording, Object.fromEntries(Object.keys(operations).filter((route) => !SIGN_IN.includes(route)).map((route) => [route, operations[route]])), check), lab.mine); /* only the routes this test owns */
+  return FOREIGN.ownedBy(ALLOW.checkAllowList(recording, operations, check), lab.mine); /* only the routes this test owns */
 }
 /** the shop's routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {

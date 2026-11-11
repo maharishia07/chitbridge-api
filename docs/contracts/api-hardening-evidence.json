@@ -208,10 +208,18 @@
   },
   "POST /api/chits/:chit_id/messages": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/disputes": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/diagnosis": {
    "output_allowlist": true

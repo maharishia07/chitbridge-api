@@ -11,8 +11,8 @@
  "tolerant_outward": 3,
  "columns_failing": {
   "strict_input": 44,
-  "output_allowlist": 11,
-  "foreign_id_404": 13,
+  "output_allowlist": 7,
+  "foreign_id_404": 9,
   "idempotent_money_write": 2,
   "inbound_validated": 0,
   "trips_budgeted": 16
