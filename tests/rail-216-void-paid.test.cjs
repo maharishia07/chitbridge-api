@@ -194,6 +194,14 @@ const IDEM = { n: 0 };
   t('unit per rule: an order, a credit note and a chit I did not send are not asked (false)', (await chitPaid.paidFactsOf(tx, SHOP, id(5))) === false && (await chitPaid.paidFactsOf(tx, SHOP, id(6))) === false && (await chitPaid.paidFactsOf(tx, BUYER, id(1))) === false);
   t('unit per rule: the refusal words name the credit note and carry why "paid"', chitPaid.PAID_SAID.why === 'paid' && /credit note/.test(chitPaid.PAID_SAID.message) && chitPaid.NOTICE.marked === 'payment_marked');
 
+  console.log('\n— 10 · every reader of state_log is named: none can show the payment marker —');
+  const READERS = { 'lib/bill-steps.js': 1, 'routes/chits.js': 1, 'routes/notifications.js': 1, 'lib/chit-paid.js': 1 }; /* bill-steps: allow-list of actions · chits.js: name subqueries read action created only, the pulse reads MAX(created_at), the detail timeline excludes payment_marked · notifications: NULL actor never passes <> me, clear-all inserts ids and shows nothing · chit-paid: reads it by its exact action */
+  const readsLog = /\b(FROM|JOIN)\s+state_log\b/i;
+  const hits = []; for (const dir of ['routes', 'lib']) for (const f of fs.readdirSync(path.join(H.API, dir))) { if (/\.js$/.test(f) && readsLog.test(fs.readFileSync(path.join(H.API, dir, f), 'utf8').replace(/INSERT INTO state_log[^;`]*?SELECT[^;`]*?FROM state_log/gi, ''))) hits.push(dir + '/' + f); }
+  const unknown = hits.filter((f) => !READERS[f]);
+  t('a file that reads state_log and is not in the reviewed list fails here (name it: exclude payment_marked or say why it cannot surface): ' + JSON.stringify(unknown), unknown.length === 0);
+  t('the feed keeps the NULL-actor comment and the <> test (not IS DISTINCT FROM)', /ON PURPOSE/.test(notifSrc) && /sl\.action_by_identity_id <> \$2/.test(notifSrc) && !/action_by_identity_id IS DISTINCT FROM \$2/.test(notifSrc));
+
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
