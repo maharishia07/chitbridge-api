@@ -2236,7 +2236,6 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
   try {
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
-    const cats = require('../lib/categories');
     const b = req.body || {};
 
     const bp = BP.blueprint(b.list);
@@ -2342,26 +2341,10 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
       });
     }
 
-    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the
-       product. If this and routes/till.js ever differ, they are two opinions about one act. */
-    const wantCats = [...new Set(items.map((x) => x.categoryName).filter(Boolean))];
-    let catIds = new Map();
-    if (wantCats.length) {
-      try {
-        catIds = await cats.ensureCategories(entity_id, wantCats, { withEntity, by: (req.identity && req.identity.identity_id) || null });
-      } catch (e) {
-        return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(e)) });
-      }
-    }
-    items = items.map((x) => {
-      const out = Object.assign({}, x);
-      const id = x.categoryName ? catIds.get(x.categoryName) : null;
-      delete out.categoryName;
-      if (id) out.categories = [id];
-      return out;
-    });
-
-    const w = await catwrite.writeItems({ entity_id, items });
+    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the product — and both are written in ONE
+       transaction (catwrite.writeCitedItems), so a refused adopt leaves no category behind (CAT-124 F1). */
+    const w = await catwrite.writeCitedItems({ entity_id, items, by: (req.identity && req.identity.identity_id) || null });
+    if (w.categoriesFailed) return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(w.categoriesFailed)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
 
     shopChanged(entity_id, 'product list adopted');
