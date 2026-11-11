@@ -47,7 +47,7 @@ function page(o) {
   };
   ctx.window.CBTax = CBTAX;
   vm.createContext(ctx);
-  vm.runInContext(['billMoney', 'billWhen', 'engineReadyFor', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry', 'bandWordsOf', 'moneyOf', 'noCountryMoney', 'walkInNote', 'taxIncluded', 'moneyStop', 'deliverTo', 'deliverAsk', 'deliverPick', 'paintDeliver'].map(grab).join('\n')
+  vm.runInContext(['billMoney', 'billWhen', 'billStopMoney', 'noDayMoney', 'dayInZone', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry', 'bandWordsOf', 'moneyOf', 'noCountryMoney', 'walkInNote', 'taxIncluded', 'moneyStop', 'deliverTo', 'deliverAsk', 'deliverPick', 'paintDeliver'].map(grab).join('\n')
     + '\nthis.__f = { billMoney: billMoney, deliverTo: typeof deliverTo === "function" ? deliverTo : null, deliverAsk: typeof deliverAsk === "function" ? deliverAsk : null, deliverPick: typeof deliverPick === "function" ? deliverPick : null };', ctx);
   return ctx;
 }

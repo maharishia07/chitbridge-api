@@ -15,7 +15,7 @@ function grab(n) {
   return h.slice(at, i + 1);
 }
 const FNS = ['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop', 'billWhen', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry',
-  'bandWordsOf', 'rateNoteOf', 'slipRateOf', 'pinBillMoment', 'engineReadyFor', 'slipOfRow', 'stampBands'];
+  'bandWordsOf', 'rateNoteOf', 'slipRateOf', 'pinBillMoment', 'billStopMoney', 'noDayMoney', 'dayInZone', 'slipOfRow', 'stampBands'];
 const SHOP = { name: 'Kolkata Garments', gstin: '19AABCK1234F1Z6', state_code: '19', country: 'IN', reg_type: 'regular' };
 
 /** the page with a clock stopped at `now` (an ISO instant); `taxed` false = a shop that charges no GST */
@@ -100,9 +100,20 @@ ok('billed_at and the band read the SAME day: the bill is saved AT the priced mo
   assert.ok(grab('finish').includes('pinBillMoment(body, m)'), 'finish() pins the body before HOST.bill');
   assert.ok(grab('finish').indexOf('pinBillMoment') < grab('finish').indexOf('HOST.bill('), 'and before the number is taken');
 });
-ok('a zone the device refuses gives no day, so NO invoice and the sale stops - never an unbanded bill at the catalogue rate', () => {
+ok('a zone the device refuses falls back to the pack zone (the same shop day)', () => {
   const p = page(RANG, [line('6109', 2500, 12)]); vm.runInContext("function shopTz(){ return 'Nowhere/Land'; }", p);
-  assert.strictEqual(p.shopDayOf(), ''); assert.strictEqual(p.billMoney().invoice, null);
+  assert.strictEqual(p.shopDayOf(), '2025-09-22'); assert.strictEqual(p.billMoney().net, 2625);
+});
+ok('no readable shop day at all (zone refused, no pack zone): NO invoice, the cart row says why BEFORE Pay, and finish() stops with those words, not "press refresh"', () => {
+  const p = page(RANG, [line('6109', 2500, 12)]); vm.runInContext("function shopTz(){ return 'Nowhere/Land'; } function shopPack(){ return null; }", p);
+  assert.strictEqual(p.shopDayOf(), '');
+  const m = p.billMoney();
+  assert.strictEqual(m.invoice, null); assert.ok(!m.noCountry); assert.ok(/cannot read the shop/.test(m.why) && /time zone/.test(m.why), m.why);
+  vm.runInContext(['noCountryRow', 'saleStopWords'].map(grab).join(" "), p);
+  assert.ok(p.noCountryRow(m).includes('till-no-country') && p.noCountryRow(m).includes('time zone'), 'the totals row shows it');
+  assert.strictEqual(p.saleStopWords(m), m.why);
+  assert.ok(!/refresh/.test(p.saleStopWords(m)));
+  assert.strictEqual(p.noCountryRow({}), '');
 });
 ok('a credit note keys its rate-wise foot by the rate the ORIGINAL invoice charged (the band), not the catalogue rate stored on the line', () => {
   const p = page(RANG, [line('6109', 2500.01, 12)]); vm.runInContext(grab('retRateOf'), p);

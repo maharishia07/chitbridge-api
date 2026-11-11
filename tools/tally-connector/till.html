@@ -5698,7 +5698,7 @@ var CloudHost = {
   },
   async bill(b){
     LAST_SERIES = null;
-    var no = await nextNumber();
+    var no = await nextNumber(undefined, false, b && b.at);
     var bill = Object.assign({ no: no, at: new Date().toISOString(), till: tillId(),
                                catalogue_version: S && S.version, series: LAST_SERIES }, b);
     await DB.put('bills', bill);
@@ -6261,15 +6261,15 @@ function underSeriesLock(task){
 }
 /* ⭐ M54 (walk 2026-10-10): `peek` answers the SAME number finish() would get, and writes nothing — Settings › Bills said
    "Next bill: C5/26-27/0003" from a worked example (seq 3) while the next sale correctly took 0004. A peek never waits for the lock. */
-async function nextNumber(kind, peek){
+async function nextNumber(kind, peek, at){
   if (peek) return takeNumber(kind, true);
-  return underSeriesLock(function(){ return takeNumber(kind, false); });
+  return underSeriesLock(function(){ return takeNumber(kind, false, at); });
 }
 /** the number itself: read the series box once, roll it if the period turned, take the seq, write it back (unless peeking), compose */
-async function takeNumber(kind, peek){
+async function takeNumber(kind, peek, at){
   var country = docCountry();
   var D = DOCNUM();   /* W1-TILL: the one numbering rule — a missing engine is said, not replaced by an April formula */
-  var now = new Date();
+  var now = at ? new Date(at) : new Date();   /* CTRY-139: a bill pinned at its priced moment takes the number of THAT moment's period */
   /**
    * ── ⭐⭐⭐ THE SHOP'S SCHEME (Athi, 2026-09-16) ────────────────────────────────────────────────────────────
    *
@@ -19218,7 +19218,7 @@ async function deliverAsk(){
  */
 function billMoney(){
   var sh = (S && S.shop) || {}, taxed = shopTax().charges;
-  if (!String(sh.country || '').trim()) return noCountryMoney();   /* CTRY-94: the engine refuses a seller with no country, so a no-country shop never reaches it (never India) */
+  var halt = billStopMoney(sh); if (halt) return halt;   /* CTRY-94: the engine refuses a seller with no country, so a no-country shop never reaches it (never India) */
   /* ⚠️ WHICH WAY THE PRICE IS QUOTED. Inclusive (the Indian retail norm, and the default) splits the tax OUT of the shelf price;
      exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
   var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
@@ -19234,7 +19234,7 @@ function billMoney(){
      UAE shop billed tax-free. The goods are handed over at the counter, inside the shop's country: the same rule placeOfSupply
      already applies to the state (IGST Act s.10(1)(a)), now applied to the country. The engine is right to refuse the guess; the
      counter knows the shop. The server's seam is lib/tax-lines walkIn (the same rule, the same note). */
-  var shopCountry = String(sh.country || '').trim().toUpperCase(), when = billWhen();  var inv = engineReadyFor(when) ? CBTax.determine({
+  var shopCountry = String(sh.country || '').trim().toUpperCase(), when = billWhen();  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
@@ -19266,8 +19266,6 @@ function billMoney(){
  */
 /** ⭐ CTRY-139: the moment a bill is priced at and its shop day — the day the engine reads the law's dated price band by (asOf), and the day billed_at must read */
 function stampBands(){ try { billMoney(); } catch (e) { cbQuiet('stampBands:1', e); } }
-/** the engine is loaded AND the bill has a shop day to read the dated price band by: no day = no invoice, so the sale stops rather than bill unbanded */
-function engineReadyFor(when){ return !!(window.CBTax && CBTax.determine && when.day); }
 function billWhen(){ var now = new Date(); return { at: now.toISOString(), day: shopDayOf(now) }; }
 /** ⭐ CTRY-139: the words the ENGINE wrote for a line the law re-rated by price band (ItemList[n]._band, e.g. "18% · price above Rs 2,500 per piece") — read, never composed here; '' = no band */
 function bandWordsOf(invoice, index){ var item = invoice && invoice.ItemList && invoice.ItemList[index]; return (item && item._band) || ''; }
@@ -19281,6 +19279,18 @@ function walkInNote(invoice, country){
   invoice._cb.notes = (invoice._cb.notes || []).concat('Walk-in: taxed as a sale inside ' + country + '.');
 }
 /** a shop with no country stated has no invoice: zeros, no engine call, and the engines' own NO_COUNTRY words (CBRegulation.status(null).why) */
+/** what stops a bill before the engine is asked: no country, or no shop day to read the dated price band by (never billed unbanded); null = go on */
+function billStopMoney(shop){
+  if (!String(shop.country || '').trim()) return noCountryMoney();
+  return shopDayOf() ? null : noDayMoney();
+}
+/** the counter cannot read the shop's date (a zone the device refuses and no pack zone): no invoice, and the words say what to do */
+function noDayMoney(){
+  var money = moneyOf(null);
+  money.why = 'This counter cannot read the shop’s date, so it cannot work out the tax. Set the time zone in Settings.';
+  money.taxed = false; money.inclusive = false; money.invoice = null;
+  return money;
+}
 function noCountryMoney(){
   var money = moneyOf(null), status = (window.CBRegulation && CBRegulation.status) ? CBRegulation.status(null) : null;
   money.noCountry = true; money.why = (status && status.why) || 'Set the shop country first.';
@@ -19289,7 +19299,7 @@ function noCountryMoney(){
 }
 /** the totals row that says why nothing can be billed yet; '' for a shop with a country */
 function noCountryRow(bill){
-  return bill.noCountry ? '<div class="t warnrow" data-testid="till-no-country"><span>' + esc(bill.why) + '</span><span></span></div>' : '';
+  return bill.why ? '<div class="t warnrow" data-testid="till-no-country"><span>' + esc(bill.why) + '</span><span></span></div>' : '';
 }
 /**
  * ⭐ ACC-206 H — THE MONEY MUST ADD UP, OR THE SALE STOPS. The engine answers its own bridge (invoice._cb.bridge, tax v1.74.0+); when it did not balance this
@@ -19321,7 +19331,7 @@ function slipCheckedHTML(bill){
 }
 /** the sentence finish() stops a sale with when there is no invoice */
 function saleStopWords(bill){
-  return bill.noCountry ? bill.why : 'Prices cannot be worked out on this counter right now.\n\nPress refresh while online.';
+  return bill.why ? bill.why : 'Prices cannot be worked out on this counter right now.\n\nPress refresh while online.';
 }
 function moneyOf(inv){
   var e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
@@ -20342,9 +20352,15 @@ function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
 /** ⭐ CTRY-139: the shop's calendar day (YYYY-MM-DD) of a moment, in the shop's zone — never a UTC slice (00:10 IST on 22 Sep is the 22nd). Built from Intl parts so no locale format can change it. The till's twin of the api's books-hooks.dayOf; a zone the device refuses answers '' (never a guess). */
 function shopDayOf(at){
   var moment = new Date(at == null ? Date.now() : at); if (isNaN(moment)) return '';
-  var parts = {}, zone = tzOpt({ year: 'numeric', month: '2-digit', day: '2-digit' });
-  try { new Intl.DateTimeFormat('en-US', zone).formatToParts(moment).forEach(function(part){ parts[part.type] = part.value; }); }
-  catch (e) { cbQuiet('shopDayOf:1', e); return ''; }   /* '' = no day: never a guess */
+  var pack = shopPack(), packZone = pack && Array.isArray(pack.timeZones) ? pack.timeZones[0] : null;
+  return dayInZone(moment, shopTz()) || (packZone ? dayInZone(moment, packZone) : '');   /* a zone the device refuses falls back to the pack's own; '' = no day, never a guess */
+}
+/** the YYYY-MM-DD of a moment in one zone (none named = the device's), from Intl parts; '' when the zone is refused */
+function dayInZone(moment, zone){
+  var parts = {}, opts = { year: 'numeric', month: '2-digit', day: '2-digit' };
+  if (zone) opts.timeZone = zone;
+  try { new Intl.DateTimeFormat('en-US', opts).formatToParts(moment).forEach(function(part){ parts[part.type] = part.value; }); }
+  catch (e) { cbQuiet('dayInZone:1', e); return ''; }
   return parts.year + '-' + parts.month + '-' + parts.day;
 }
 /** 24-hour hh:mm in shop time — what the bar, the lock and the logs print */

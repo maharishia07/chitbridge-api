@@ -35,7 +35,7 @@ function fnText(src, sig) {
   const end = src.indexOf('\n}\n', at);
   return src.slice(at, end + 2);
 }
-const LIFT = ['var QUIET_MAX = 200, QUIET = [];', 'function cbQuiet(', 'function billMoney(', 'function billWhen(', 'function engineReadyFor(', 'function tzOpt(', 'function shopTz(', 'function shopPack(', 'function docCountry(', 'function shopDayOf(', 'function bandWordsOf(', 'function stampBands(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'function walkInNote(',
+const LIFT = ['var QUIET_MAX = 200, QUIET = [];', 'function cbQuiet(', 'function billMoney(', 'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function tzOpt(', 'function shopTz(', 'function shopPack(', 'function docCountry(', 'function shopDayOf(', 'function bandWordsOf(', 'function stampBands(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'function walkInNote(',
   'function taxIncluded(', 'function taxInputOf(', 'function lineOf(', 'function pricedAt(', 'function price(',
   'var RECHECK_FIELDS', 'function recheckSetting(', 'function parkHoursOf(', 'function parkedTooLong(', 'function cartParkedAt(', 'function recheckDue(', 'async function recheckRead(',
   'function recheckGone(', 'function recheckContext(', 'function recheckRateOf(', 'function recheckBaseOf(', 'function recheckLineChange(', 'function recheckPriceMove(', 'function recheckRateMove(', 'function recheckUnitMove(', 'function recheckChanges(', 'function recheckRefresh(',
