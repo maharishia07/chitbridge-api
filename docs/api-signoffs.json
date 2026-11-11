@@ -2659,11 +2659,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/send": {
-   "hash": "0deba8ed2fed4a3e",
+   "hash": "d43294ebda426ddd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/combo-templates": {
@@ -3715,11 +3715,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/flags": {
-   "hash": "65214f74263076ca",
+   "hash": "7aa0353c6b3693da",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/till/listen": {
@@ -3763,11 +3763,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/hide": {
-   "hash": "44dca3831063363e",
+   "hash": "64b7939017124705",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/screen-config": {
@@ -3787,11 +3787,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/unhide": {
-   "hash": "177096623508ee58",
+   "hash": "a1963fe17d788f40",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/till/rate": {
@@ -3819,19 +3819,19 @@
    "lifecycle": "stable"
   },
   "POST /api/till/reward": {
-   "hash": "e0244e6670840cab",
+   "hash": "0a6e72f6afb69950",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/till/reward/claim": {
-   "hash": "aa0eb6ceeead07c5",
+   "hash": "a51c77c0c4211825",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/till/screens/rename": {
@@ -3867,19 +3867,19 @@
    "lifecycle": "stable"
   },
   "POST /api/till/stock": {
-   "hash": "23ce0464860c30d3",
+   "hash": "19ae9474f5b0153b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/till/stock/bulk": {
-   "hash": "241047c4aa9d0ca5",
+   "hash": "206c3d8648cf8b35",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-11 api/till-tolerant-doors (on #1105) stage2 tolerant-by-design: handler re-read, typed kinds checked against till.html/till.js call sites, 13 columns yes, unknown key ignored, wrong kind 400 never 401/403, answers unchanged",
    "lifecycle": "stable"
   },
   "PUT /api/actors/:id/delegate": {
