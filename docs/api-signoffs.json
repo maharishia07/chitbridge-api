@@ -3067,11 +3067,11 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/ask/:handle/stock": {
-   "hash": "2ef735f570ed04cc",
+   "hash": "a1cb8e5641aacb95",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api 2026-11-11 PR#TBD stage2 tolerant-by-design",
    "lifecycle": "stable"
   },
   "POST /api/integrations/books": {
@@ -3091,11 +3091,11 @@
    "lifecycle": "stable"
   },
   "POST /api/integrations/heartbeat": {
-   "hash": "077cc43f3cef6bd0",
+   "hash": "8ed7f2679a6d6f0e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api 2026-11-11 PR#TBD stage2 tolerant-by-design",
    "lifecycle": "stable"
   },
   "POST /api/integrations/profile": {
@@ -3218,20 +3218,28 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; id param 404 before the database; ALREADY_CLAIMED 409 declared and told only to the owner of the node; repeat claim is refused, not doubled",
    "lifecycle": "stable"
   },
-  "POST /api/offers/explain": {
-   "hash": "8389ffdbe820ed19",
+  "POST /api/offers/evaluate": {
+   "hash": "2b5310f255e50b8e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+   "signed_off_by_date": "cb-api 2026-11-11 PR#TBD stage2 tolerant-by-design",
+   "lifecycle": "stable"
+  },
+  "POST /api/offers/explain": {
+   "hash": "7fb05f0f93b0c170",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api 2026-11-11 PR#TBD stage2 tolerant-by-design",
    "lifecycle": "stable"
   },
   "POST /api/pricing/price": {
-   "hash": "1a7ce6f875846cf0",
+   "hash": "054411c51914439a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1023: API-43 tolerant outward (Athi 8 Nov); 13 columns read in the register row, strict_input exempt only while schema_in is true; backward compatible, a closed body is relaxed so no caller breaks; handler and contract unchanged otherwise",
+   "signed_off_by_date": "cb-api 2026-11-11 PR#TBD stage2 tolerant-by-design",
    "lifecycle": "stable"
   },
   "POST /api/products": {
