@@ -8,7 +8,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 158 | `list` | `amend.js` |  |
+| 159 | `list` | `amend.js` |  |
 | 129 | `rows` | `crm.js` | still in them: |
 | 118 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
@@ -55,8 +55,8 @@ of file each thing is; this says what already does the job.
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 43 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `rules` | `docnumber.js` | the rule set for a country — |
-| 41 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 41 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 41 | `live` | `receivables.js` | the allocations that still count: |
@@ -87,10 +87,10 @@ of file each thing is; this says what already does the job.
 | 31 | `sentence` | `one-person.js` |  |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 31 | `note` | `dbwatch.js` |  |
-| 31 | `hold` | `orders.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 30 | `account` | `home-facts.js` | OMITTED: |
+| 30 | `hold` | `orders.js` |  |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `sheet` | `cap-employees.js` |  |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
@@ -101,10 +101,10 @@ of file each thing is; this says what already does the job.
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 28 | `owner` | `books.js` |  |
+| 27 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 27 | `opts` | `cap-stock.js` |  |
 | 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 26 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 26 | `view` | `country-ready.js` |  |
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
@@ -133,12 +133,12 @@ of file each thing is; this says what already does the job.
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
 | 21 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 21 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `next` | `cap-stock.js` | the next level: |
 | 20 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 20 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
-| 20 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 19 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
