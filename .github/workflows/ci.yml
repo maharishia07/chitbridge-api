@@ -164,6 +164,13 @@ jobs:
           node tools/api-contract-tests.cjs --write
           node tools/api-register.cjs
           node tools/api-ratchet.cjs --write || echo "ratchet --write refused (see above); the check below judges it"
+      - name: a feature PR carries no derived file (register, contract results, ratchet counts); the batch commits them once
+        if: ${{ env.CB_GENERATED == 'regen' }}
+        run: |
+          git fetch origin main --depth=1000 || true
+          node tools/generated-guard.cjs --base origin/main
+      - name: sign-offs file is one entry per line, sorted, no duplicate key (hand record; tools/hand-file-fix.cjs --fix lays it out)
+        run: node tools/hand-file-fix.cjs --check signoffs
       - name: register equals the code (docs/API-REGISTER.md, api-register.json, ERROR-CODES.md); in regen mode only the checks that are not equality can fail
         run: node tools/api-register.cjs --check
       - name: sign-offs gone stale (a route whose hash moved since cb-api signed it)
