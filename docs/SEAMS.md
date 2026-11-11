@@ -11,9 +11,9 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 160 | `list` | `amend.js` |  |
 | 130 | `rows` | `crm.js` | still in them: |
-| 119 | `words` | `variant.browser.js` |  |
+| 120 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
-| 113 | `read` | `books-cashflow.js` | Trips: |
+| 114 | `read` | `books-cashflow.js` | Trips: |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
@@ -44,10 +44,10 @@ of file each thing is; this says what already does the job.
 | 52 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 51 | `toast` | `accounts-shell.js` |  |
-| 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 52 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `count` | `money-check.js` | the count /health reads |
-| 49 | `view` | `books-payables.js` | group: |
+| 50 | `view` | `books-payables.js` | group: |
 | 49 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 46 | `read` | `cap-print.js` |  |
@@ -64,7 +64,7 @@ of file each thing is; this says what already does the job.
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `host` | `chit-sheet.js` |  |
-| 39 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
@@ -75,7 +75,7 @@ of file each thing is; this says what already does the job.
 | 36 | `page` | `cap-catalogue.js` |  |
 | 35 | `closeModal` | `app.html` |  |
 | 35 | `shell` | `pick.js` |  |
-| 35 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
+| 36 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 34 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
@@ -89,7 +89,7 @@ of file each thing is; this says what already does the job.
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `sentence` | `one-person.js` |  |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 31 | `note` | `dbwatch.js` |  |
+| 32 | `note` | `dbwatch.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 30 | `hold` | `orders.js` |  |
@@ -122,7 +122,7 @@ of file each thing is; this says what already does the job.
 | 23 | `keep` | `signin.js` | see. |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `entries` | `books-store.js` |  |
-| 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
+| 23 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
@@ -130,7 +130,7 @@ of file each thing is; this says what already does the job.
 | 21 | `cblog` | `core.js` | const __cblog = []; |
 | 21 | `note` | `device-id.js` | note(where, problem) — |
 | 21 | `reason` | `lab-kit.js` | W9: |
-| 21 | `says` | `adopt.js` |  |
+| 22 | `says` | `adopt.js` |  |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
 | 21 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
