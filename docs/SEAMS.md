@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
 | 131 | `rows` | `crm.js` | still in them: |
-| 123 | `words` | `variant.browser.js` |  |
+| 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
-| 41 | `live` | `receivables.js` | the allocations that still count: |
+| 42 | `live` | `receivables.js` | the allocations that still count: |
 | 40 | `facts` | `bill-steps.js` | MY state_log — |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
@@ -135,7 +135,7 @@ of file each thing is; this says what already does the job.
 | 21 | `reason` | `lab-kit.js` | W9: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
-| 21 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 22 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 21 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `next` | `cap-stock.js` | the next level: |
@@ -191,7 +191,7 @@ of file each thing is; this says what already does the job.
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
-| 15 | `where` | `istest.js` | READING is_test is fine and stays — |
+| 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
