@@ -357,6 +357,8 @@ const GUARDS = [
   'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
   'testing-strict-input.test.cjs', // S33: the test board's closed write bodies refuse an unknown key by name and still take every key a handler reads or a caller sends (k13)
   'till-strict-input.test.cjs', // S33: the counter's 15 live-only doors refuse an unknown key by name and still take every key the handler reads or the till sends; the 7 queueable doors stay open (api end-A, 11 Nov)
+  'till-strict-replay.test.cjs', // S33 (#1103): the two counter doors the till never sends (quick-keys state, screen-config) refuse an unknown key and replay unchanged; 5 checks
+  'cat124-adopt-refusal-atomic.test.cjs', // CAT-124 (#1097): a refused adopt leaves no category behind (one transaction, 8 checks)
   'platform-strict-input.test.cjs', // S33: channels platform doors and POST /api/keys refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'chits-b-strict-input.test.cjs', // S33: the rest of the chits write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'entities-strict-input.test.cjs', // S33: entities and relationships write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
