@@ -289,6 +289,30 @@
         "body": {}
       }
     },
+    "DELETE /api/keys/:jti": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "jti"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/keys/a1b2c3"
+      }
+    },
     "DELETE /api/products/:id": {
       "status": "200",
       "schema": {
@@ -6180,6 +6204,54 @@
       ],
       "example": {
         "url": "/api/crm/segments"
+      }
+    },
+    "GET /api/facts/:card": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "lines"
+        ],
+        "properties": {
+          "lines": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/facts/till"
+      }
+    },
+    "GET /api/facts/rail/chits": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "overdue_days",
+          "truncated",
+          "items"
+        ],
+        "properties": {
+          "overdue_days": {
+            "type": "number"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "items": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/facts/rail/chits"
       }
     },
     "GET /api/invoice/:chit_id": {
@@ -21660,6 +21732,65 @@
               "listPrice": 100,
               "gst_rate": 5
             }
+          ]
+        }
+      }
+    },
+    "POST /api/keys": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "note",
+          "key",
+          "jti",
+          "name",
+          "scopes",
+          "created_at",
+          "expires_at",
+          "last4"
+        ],
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "last4": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/keys",
+        "body": {
+          "name": "Tally connector",
+          "scopes": [
+            "connector"
           ]
         }
       }

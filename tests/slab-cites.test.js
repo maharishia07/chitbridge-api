@@ -43,5 +43,13 @@ const fakeDb = (state) => ({
     assert.strictEqual(st.products[0].tax_slab, 'IN-GST-5'); assert.strictEqual(st.products[0].gst_rate, 5); assert.strictEqual(st.products[0].tax_slab_name, 'GST 5%');
     assert.strictEqual(st.products[1].tax_slab, 'keep'); assert.strictEqual(st.categories[0].default_slab, 'IN-GST-5'); assert.strictEqual(st.categories[1].default_slab, 'keep');
   });
+  await t('takeover scope is the connection (RLS context), never a shop id of its own: one catalogue UPDATE, active rows only, no entity argument', async () => {
+    const seen = [];
+    const db = { query: async (sql, params) => { seen.push({ sql, params }); return { rowCount: 0, rows: [] }; } };
+    await C.takeover(db, 'old', { id: 'new', name: 'N', rate: 5 });
+    const upd = seen.filter((c) => /UPDATE catalogue_items/.test(c.sql));
+    assert.strictEqual(upd.length, 1);
+    assert.ok(/is_active = true AND item_data->>\$3 = \$1/.test(upd[0].sql) && upd[0].params.length === 3, 'scoping is left to withEntity + b851, so a call outside it must not pass an entity');
+  });
   console.log(`slab-cites: ${n} passed, ${f} failed`); process.exit(f ? 1 : 0);
 })();

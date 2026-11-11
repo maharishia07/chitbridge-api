@@ -69,6 +69,12 @@ const KEY_RECORD = {
   properties: { jti: { type: 'string' }, name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string' } }, created_at: { type: 'string' }, expires_at: { type: 'string' }, last4: { type: 'string' } }
 };
 const json = (schema) => ({ 'application/json': { schema } });
+const MINT_SHAPE = shapeOf('POST /api/keys');
+const MINT_FILTER = [outputFilter(MINT_SHAPE, 'POST /api/keys')].filter(Boolean);
+const REVOKE_SHAPE = shapeOf('DELETE /api/keys/:jti');
+const REVOKE_FILTER = [outputFilter(REVOKE_SHAPE, 'DELETE /api/keys/:jti')].filter(Boolean);
+/** the derived answer of a route when its recorded status is the one declared, else the hand-written one */
+const answerOf = (shape, status, written) => (shape && String(shape.status) === status ? shape.schema : written);
 const MINT_OPERATION = {
   summary: 'Mint an API key (session only)',
   tags: ['keys'],
@@ -82,7 +88,7 @@ const MINT_OPERATION = {
     })
   },
   responses: {
-    201: { description: 'the key, shown once', content: json({ type: 'object', required: ['key', 'note'].concat(KEY_RECORD.required), properties: Object.assign({ key: { type: 'string' }, note: { type: 'string' } }, KEY_RECORD.properties) }) },
+    201: { description: 'the key, shown once', content: json(answerOf(MINT_SHAPE, '201', { type: 'object', required: ['key', 'note'].concat(KEY_RECORD.required), properties: Object.assign({ key: { type: 'string' }, note: { type: 'string' } }, KEY_RECORD.properties) })) },
     400: refused('the request cannot be made into a key'),
     401: refused('no or bad credentials'),
     403: refused('a key, a co-assist or a shop asking for a platform kind'),
@@ -110,7 +116,7 @@ const REVOKE_OPERATION = {
   security: [{ bearer: [] }],
   parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string', minLength: 1 } }],
   responses: {
-    200: { description: 'revoked', content: json({ type: 'object', required: ['message', 'jti'], properties: { message: { type: 'string' }, jti: { type: 'string' } } }) },
+    200: { description: 'revoked', content: json(answerOf(REVOKE_SHAPE, '200', { type: 'object', required: ['message', 'jti'], properties: { message: { type: 'string' }, jti: { type: 'string' } } })) },
     401: refused('no or bad credentials'),
     403: refused('a key or a co-assist cannot revoke'),
     404: refused('no such key in this shop'),
@@ -148,7 +154,7 @@ function platformScopeRefusal(req, askedScopes) {
   };
 }
 /* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
-router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), schemaValidate(MINT_OPERATION, MINT_REFUSAL), async (req, res) => {
+router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), schemaValidate(MINT_OPERATION, MINT_REFUSAL), ...MINT_FILTER, async (req, res) => {
   try {
     const b = req.body || {};
     const refusal = platformScopeRefusal(req, b.scopes);
@@ -164,7 +170,7 @@ router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'),
 
 /* ⚠️ FOR UPDATE, same reason as mint() and setEnrol() — a revoke racing a mint on the same list must not have
    whichever save() lands second resurrect the key the other request just removed, or drop the one it just added. */
-router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), schemaValidate(REVOKE_OPERATION), async (req, res) => {
+router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), schemaValidate(REVOKE_OPERATION), ...REVOKE_FILTER, async (req, res) => {
   /* L1: the owner gate, see GET / above */
   try {
     const entity_id = auth.entityOf(req);
