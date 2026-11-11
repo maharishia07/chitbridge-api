@@ -482,6 +482,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
    "lifecycle": "stable"
   },
+  "GET /api/capture/webhook/whatsapp": {
+   "hash": "0a50596c571c6882",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+   "lifecycle": "stable"
+  },
   "GET /api/catalogue-face": {
    "hash": "ee712191c3c054d0",
    "names_clear": true,
@@ -3210,6 +3218,14 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; id param 404 before the database; ALREADY_CLAIMED 409 declared and told only to the owner of the node; repeat claim is refused, not doubled",
    "lifecycle": "stable"
   },
+  "POST /api/offers/explain": {
+   "hash": "8389ffdbe820ed19",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+   "lifecycle": "stable"
+  },
   "POST /api/pricing/price": {
    "hash": "1a7ce6f875846cf0",
    "names_clear": true,
@@ -3291,11 +3307,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/lists/adopt": {
-   "hash": "17aa750372131c9d",
+   "hash": "dba1915afac8678d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
    "lifecycle": "stable"
   },
   "POST /api/products/starter-columns": {
@@ -4035,11 +4051,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/governance/country-setup": {
-   "hash": "9727085818d155d3",
+   "hash": "dec2d5f5962bac59",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
    "lifecycle": "stable"
   },
   "PUT /api/governance/profile": {
@@ -4179,11 +4195,11 @@
    "lifecycle": "stable"
   },
   "GET /api/relationships/customers": {
-   "hash": "acc4288324db9478",
+   "hash": "2c73efd115705c67",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 round 2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
    "lifecycle": "stable"
   },
   "DELETE /api/schemas/fields/:field_key": {

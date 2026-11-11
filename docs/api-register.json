@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 94,
-  "meets": 544,
+  "partial": 92,
+  "meets": 546,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 9
+    "failing": 11
    },
    "foreign_id_404": {
     "applies": 202,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 3,
-  "output_allowlist_from_recordings": 143
+  "output_allowlist_from_recordings": 141
  },
  "machine_columns": [
   "schema_in",
@@ -1348,7 +1348,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 488,
+   "line": 487,
    "hash": "e89a80ebaeec0b45",
    "does": "",
    "errors": {
@@ -1668,8 +1668,8 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 173,
-   "hash": "8e332cc92b68afef",
+   "line": 167,
+   "hash": "037a59863cd4f43e",
    "does": "",
    "errors": {
     "count": 2,
@@ -1746,9 +1746,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8e332cc92b68afef"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#330",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -8032,13 +8031,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -15465,7 +15464,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 45,
-   "hash": "737919d35ffe12ae",
+   "hash": "bbabdc627fec2b0f",
    "does": "",
    "errors": {
     "count": 0,
@@ -15535,9 +15534,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "737919d35ffe12ae"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -15562,7 +15560,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 36,
-   "hash": "3a66511732cf316b",
+   "hash": "05d5f33a3f03c039",
    "does": "",
    "errors": {
     "count": 0,
@@ -15591,7 +15589,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15614,7 +15612,6 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
-   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -15629,10 +15626,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
     "lifecycle": "stable"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-chits.js",
     "cap-tasks.js"
@@ -20104,7 +20101,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 130,
+   "line": 124,
    "hash": "5d347d3eb8faeb49",
    "does": "",
    "errors": {
@@ -23320,11 +23317,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2c73efd115705c67"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -46772,7 +46768,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 549,
+   "line": 548,
    "hash": "0ecdb82b18aa5e62",
    "does": "",
    "errors": {
@@ -50075,8 +50071,8 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 157,
-   "hash": "3e1a66a887f89d1a",
+   "line": 151,
+   "hash": "f608bc9d17d38dbe",
    "does": "",
    "errors": {
     "count": 3,
@@ -50114,7 +50110,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -50138,7 +50134,6 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
-   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -50153,10 +50148,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f608bc9d17d38dbe"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -52543,13 +52539,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -53809,11 +53805,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dba1915afac8678d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -63719,7 +63714,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
    "line": 380,
-   "hash": "a98dacd9acb4fa31",
+   "hash": "7b50ec74f900b445",
    "does": "",
    "errors": {
     "count": 0,
@@ -63759,7 +63754,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -63801,13 +63796,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
-    "lifecycle": "stable"
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-categories.js",
@@ -64230,11 +64225,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dec2d5f5962bac59"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 (resign branch): handler re-read for the 13 columns after its hash moved; no leak path in any answer; no handler change in this PR",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-country.js"
    ],
