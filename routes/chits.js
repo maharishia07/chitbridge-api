@@ -120,15 +120,14 @@ const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(ask
 /** S35: a chit this login holds no copy of, unknown or another shop's, is the one 404; a verdict of the rail on a copy it does hold stays its own refusal */
 const refuseUnlessHeld = (req, res, held, refusal) => problem(req, res, held ? refusal : { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
 const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
-const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
-const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
+const registerSays = (label, message, status = 404) => (req) => faultOf(Object.assign(new Error(message), { status }), req, label, { words: true }); /* lib/raida's own refusal, the sentence it always gave: S35 a register, entry or issue this shop holds none of is a 404 (a missing dispute id stays the 400) */
 const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
 const CHIT_GONE = {
   'GET /:chit_id': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/use': notHere('Chit not found'),
   'GET /:chit_id/messages': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/disputes': notHere('Chit not found or you do not have access'),
-  'GET /:chit_id/diagnosis': noCopy,
+  'GET /:chit_id/diagnosis': notHere('Chit not found or you do not have access'),
   'PUT /:chit_id/use': said404({ error: 'Not saved', message: 'Chit not found' }),
   'PUT /:chit_id/status': said404({ error: 'Not found', message: 'Chit not found', why: 'not_received' }),
   'PUT /:chit_id/void': notHere('Chit not found'),
@@ -158,7 +157,7 @@ const RAIDA_GONE = {
   'POST /register/entries/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
   'POST /register/entries/:raida_id/revise': registerSays('Failed to revise it', 'No such entry.'),
   'POST /:chit_id/raida/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
-  'POST /:chit_id/raida/:raida_id/dispute': (req) => registerSays('Failed to link the dispute', req.body && req.body.dispute_id ? 'No issue with that id.' : 'A dispute id is required.')(req)
+  'POST /:chit_id/raida/:raida_id/dispute': (req) => (req.body && req.body.dispute_id ? registerSays('Failed to link the dispute', 'No issue with that id.') : registerSays('Failed to link the dispute', 'A dispute id is required.', 400))(req)
 };
 const SUBJECT_GONE = {
   'POST /register/subjects/:subject_id/close': registerSays('Cannot close yet', 'No such register.')
@@ -6067,7 +6066,7 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
       const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       return { hdr: nestedHdr, det: nestedDet };
     });
-    if (!rls) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!rls) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: as GET /:chit_id/messages */
     const { hdr, det } = rls;
     let itemLabel = null;
     try {

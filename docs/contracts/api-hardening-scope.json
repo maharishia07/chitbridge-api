@@ -176,46 +176,6 @@
    "reason": "a microphone must never be the reason a sale stops: every fault of the route answers 200 ok:false (the counter falls back to the browser recogniser) and is logged with the request id, so there is no 500 to answer; KNOWN GAP, not closed: lib/speech.js why can carry up to 200 characters of the speech provider own error text (lines 103 and 115), so the route stays partial until cb-ai gives that why one plain sentence"
   },
   {
-   "route": "GET /api/chits/:chit_id/diagnosis",
-   "status": 404,
-   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/:chit_id/raida/:raida_id/close",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/:chit_id/raida/:raida_id/dispute",
-   "status": 404,
-   "reason": "lib/raida linkDispute answers an issue the shop does not hold with 400 CHIT_BAD_REQUEST (\"No issue with that id.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/entries/:raida_id/accept",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/entries/:raida_id/close",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/entries/:raida_id/revise",
-   "status": 404,
-   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/subjects/:subject_id/close",
-   "status": 404,
-   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
-   "route": "POST /api/chits/register/subjects/:subject_id/entries",
-   "status": 404,
-   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
-  },
-  {
    "route": "GET /api/entities/routing/preview",
    "status": 500,
    "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault of the route is never a 500 (a preview never red-boxes a form); KNOWN GAP, not closed: lib/raiseticket.js resolveDesk (line 150) turns a database fault into why with the raw code and message, and the route returns it in that 200, so the route stays partial until the raise-a-ticket owner gives that why one plain sentence"

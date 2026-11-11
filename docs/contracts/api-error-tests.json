@@ -505,7 +505,7 @@
  ],
  "GET /api/chits/:chit_id/diagnosis": [
   401,
-  403,
+  404,
   500
  ],
  "GET /api/chits/:chit_id/disputes": [
@@ -2343,12 +2343,14 @@
  "POST /api/chits/:chit_id/raida/:raida_id/close": [
   400,
   401,
+  404,
   500,
   503
  ],
  "POST /api/chits/:chit_id/raida/:raida_id/dispute": [
   400,
   401,
+  404,
   500,
   503
  ],
@@ -2380,20 +2382,21 @@
   500
  ],
  "POST /api/chits/register/entries/:raida_id/accept": [
-  400,
   401,
+  404,
   500,
   503
  ],
  "POST /api/chits/register/entries/:raida_id/close": [
   400,
   401,
+  404,
   500,
   503
  ],
  "POST /api/chits/register/entries/:raida_id/revise": [
-  400,
   401,
+  404,
   500,
   503
  ],
@@ -2404,8 +2407,8 @@
   503
  ],
  "POST /api/chits/register/subjects/:subject_id/close": [
-  400,
   401,
+  404,
   409,
   500,
   503
@@ -2413,6 +2416,7 @@
  "POST /api/chits/register/subjects/:subject_id/entries": [
   400,
   401,
+  404,
   500,
   503
  ],

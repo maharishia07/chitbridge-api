@@ -8,6 +8,32 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "overlay-catalogue-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load catalogue",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to load catalogue",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -22307,32 +22333,80 @@
    "answers": [
     {
      "scenario": "key-asks",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -22349,12 +22423,54 @@
     },
     {
      "scenario": "nothing-found",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Forbidden"
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "diagnosis-of-a-chit-not-mine",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -22453,6 +22569,32 @@
     },
     {
      "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "disputes-of-a-chit-not-mine",
      "status": 404,
      "body_keys": {
       "error": "Not found",
@@ -22602,6 +22744,58 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "messages-of-a-chit-not-mine",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "messages-read-refused",
+     "status": 500,
+     "body_keys": {
+      "error": "Get messages failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Get messages failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -22636,6 +22830,32 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -22946,6 +23166,32 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -22996,6 +23242,32 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list registers",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to list registers",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -23011,6 +23283,32 @@
      "fixture": {
       "error": "Failed to read the library",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read the library",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to read the library",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -23034,6 +23332,32 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to walk it",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to walk it",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -25045,26 +25369,54 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to close it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to close it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25101,6 +25453,32 @@
      "fixture": {
       "error": "Failed to close it",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "chit-entry-close-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -25145,14 +25523,28 @@
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to link the dispute",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to link the dispute",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25169,14 +25561,28 @@
     },
     {
      "scenario": "dispute-link-unknown-entry",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to link the dispute",
-      "message": "No issue with that id."
+      "message": "No issue with that id.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No issue with that id.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to link the dispute",
-      "message": "No issue with that id."
+      "message": "No issue with that id.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No issue with that id.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25773,26 +26179,54 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to record the acceptance",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to record the acceptance",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to record the acceptance",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to record the acceptance",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25809,14 +26243,28 @@
     },
     {
      "scenario": "accept-unknown-entry",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to record the acceptance",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to record the acceptance",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25861,26 +26309,54 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to close it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to close it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25918,6 +26394,32 @@
       "error": "Failed to close it",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "entry-close-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -25949,26 +26451,54 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to revise it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to revise it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to revise it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to revise it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -25985,14 +26515,28 @@
     },
     {
      "scenario": "revise-unknown-entry",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to revise it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to revise it",
-      "message": "No such entry."
+      "message": "No such entry.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such entry.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -26037,14 +26581,28 @@
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to open the register",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to open the register",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -26113,26 +26671,54 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Cannot close yet",
-      "message": "No such register."
+      "message": "No such register.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such register.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Cannot close yet",
-      "message": "No such register."
+      "message": "No such register.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such register.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Cannot close yet",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Cannot close yet",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -26149,14 +26735,28 @@
     },
     {
      "scenario": "register-close-unknown",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Cannot close yet",
-      "message": "No such register."
+      "message": "No such register.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such register.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Cannot close yet",
-      "message": "No such register."
+      "message": "No such register.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such register.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -26241,14 +26841,28 @@
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to record it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to record it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -26289,14 +26903,28 @@
     },
     {
      "scenario": "entry-on-an-unknown-register",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Failed to record it",
-      "message": "No such register."
+      "message": "No such register.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such register.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to record it",
-      "message": "No such register."
+      "message": "No such register.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such register.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -26329,14 +26957,28 @@
     },
     {
      "scenario": "db-fails",
-     "status": 503,
+     "status": 500,
      "body_keys": {
       "error": "Failed to save it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Failed to save it",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -61388,6 +62030,58 @@
       "hint": "Name the item on the line, or remove the line.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -61818,6 +62512,58 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -62144,6 +62890,58 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -62418,6 +63216,58 @@
       "code": "CHIT_NOT_PERMITTED",
       "detail": "Your access is view-only. You can read this chit but not change it.",
       "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
       "request_id": "req-test"
      }
     }
