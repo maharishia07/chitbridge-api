@@ -3643,43 +3643,43 @@
    "lifecycle": "stable"
   },
   "POST /api/till/alias": {
-   "hash": "1b393f3ac10694ac",
+   "hash": "8e1f08ad996388b1",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/catalogue": {
-   "hash": "0b022d0054a67cb1",
+   "hash": "3dd65abc975c9a01",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/close": {
-   "hash": "220f807a69f0ef45",
+   "hash": "1106ed553e2a249e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/diagnostic": {
-   "hash": "b8af7e64143ede8b",
+   "hash": "fe2b534fc88c7bbf",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/enrol": {
-   "hash": "d3d29fb2332f13de",
+   "hash": "b5d1d38fbdf85c1f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/flags": {
@@ -3688,6 +3688,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "lifecycle": "stable"
+  },
+  "POST /api/till/listen": {
+   "hash": "5752509fbd70958f",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/offer-item": {
@@ -3699,11 +3707,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/pair": {
-   "hash": "b8944df3397c8a0b",
+   "hash": "fb7ee244234d4a45",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/pair/claim": {
@@ -3723,11 +3731,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/hide": {
-   "hash": "c041346835b390b6",
+   "hash": "44dca3831063363e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/screen-config": {
@@ -3747,11 +3755,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/quick-keys/unhide": {
-   "hash": "dbbc8c561f7c33d7",
+   "hash": "177096623508ee58",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/rate": {
@@ -3771,11 +3779,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/reconcile": {
-   "hash": "fe056ad1a25bb4e7",
+   "hash": "bce8298f80a6601e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/reward": {
@@ -3795,35 +3803,35 @@
    "lifecycle": "stable"
   },
   "POST /api/till/screens/rename": {
-   "hash": "035453d24223f376",
+   "hash": "e8dec48d423da49f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/screens/revoke": {
-   "hash": "a282304c2a83381b",
+   "hash": "5ff14e252baed951",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/shop": {
-   "hash": "ccac90af562b2eeb",
+   "hash": "cb54f167d22e1630",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/state": {
-   "hash": "4f046894dfe93c93",
+   "hash": "45a5375daea12e4d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
    "lifecycle": "stable"
   },
   "POST /api/till/stock": {

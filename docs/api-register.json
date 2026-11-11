@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 97,
-  "meets": 541,
+  "partial": 83,
+  "meets": 555,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -59039,11 +59039,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8e1f08ad996388b1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59148,11 +59147,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3dd65abc975c9a01"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59251,11 +59249,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1106ed553e2a249e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59352,11 +59349,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fe2b534fc88c7bbf"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59453,11 +59449,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b5d1d38fbdf85c1f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59657,13 +59652,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59866,11 +59861,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fb7ee244234d4a45"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "till.html"
@@ -60182,11 +60176,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "44dca3831063363e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -60487,11 +60480,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "177096623508ee58"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -60798,11 +60790,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bce8298f80a6601e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61113,11 +61104,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e8dec48d423da49f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61218,11 +61208,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5ff14e252baed951"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61323,11 +61312,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cb54f167d22e1630"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -61424,11 +61412,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "45a5375daea12e4d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
