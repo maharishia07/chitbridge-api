@@ -272,7 +272,7 @@ function requiresIdempotencyKey(operation, leaf) {
 }
 
 /** idempotent_money_write (S36): a money write (docs/contracts/api-hardening-scope.json) must REQUIRE the header, and its generated case saw no key refused 422 and a resend replayed; the global middleware only honours the header when sent, which is opt-in */
-const idempotentMoneyColumn = (isMoneyWrite, operation, leaf, evidence) => !isMoneyWrite || (requiresIdempotencyKey(operation, leaf) && !!(evidence && evidence.idempotent_money_write === true));
+const idempotentMoneyColumn = (isMoneyWrite, operation, leaf, evidence, machineKeyed) => !isMoneyWrite || !!machineKeyed || (requiresIdempotencyKey(operation, leaf) && !!(evidence && evidence.idempotent_money_write === true));
 
 /** inbound_validated (S37): a peer or webhook door checks its JSON against a schema (schemaValidate with a body schema) before the handler reads it */
 const inboundColumn = (isInbound, operation, facts) => !isInbound || (facts.hasSchemaCheck && !!(operation && require('../middleware/validate').bodySchemaOf(operation)));
@@ -310,10 +310,32 @@ const TOLERANT_CLASSES = ['queued_till', 'queued_web_outbox', 'provider_webhook'
 const soundTolerantEntry = (entry) => !!entry && typeof entry === 'object' && hasReason(entry.reason) && TOLERANT_CLASSES.includes(entry.caller_class) && typeof entry.test === 'string' && entry.test.length > 0;
 const tolerantOutwardOf = (list) => Object.fromEntries(Object.entries(list || {}).filter(([, entry]) => soundTolerantEntry(entry)).map(([key, entry]) => [key, entry.reason]));
 
+/**
+ * machine_keyed (scope file): [{ route, key_order, reason, test }] — a keyed machine door (an agent that sends its own key and cannot send Idempotency-Key) that dedupes by its OWN key order instead (Athi 11 Nov 2026, CON-ERP-IDEM).
+ * S36 passes such a route ONLY while its test file proves the cases in MACHINE_KEYED_CASES; a listed route whose test is missing or does not carry the cases fails --check and does not pass the column.
+ */
+const MACHINE_KEYED_CASES = ['K1 ', 'K2 ', 'K3 ', 'K4 ', 'K5 ', 'K6 ']; /* the case ids the test prints: same payload once · two payloads two chits · failed emit 503 then retry · stale pending re-claimed · header beats hash · same key other body 422 */
+/** the sentence for one machine_keyed entry that is not sound; '' when it is */
+function machineKeyedProblem(entry, byKey) {
+  const name = 'machine_keyed: "' + (entry && entry.route) + '"';
+  if (!entry || typeof entry !== 'object' || !entry.route) return 'machine_keyed: each entry must be { route, key_order, reason, test }';
+  if (!byKey.has(entry.route)) return name + ' is not a route of the app';
+  if (!Array.isArray(entry.key_order) || entry.key_order.length === 0) return name + ' needs a key_order (the keys it dedupes by, in order)';
+  if (!hasReason(entry.reason)) return name + ' needs a reason of at least ' + MIN_REASON + ' characters';
+  if (!entry.test || !fs.existsSync(path.join(ROOT, String(entry.test)))) return name + ' test file ' + entry.test + ' does not exist';
+  const text = fs.readFileSync(path.join(ROOT, String(entry.test)), 'utf8');
+  const missing = [entry.route].concat(MACHINE_KEYED_CASES).filter((needle) => !text.includes(needle));
+  return missing.length ? name + ' test file ' + entry.test + ' does not prove ' + missing.map((word) => '"' + word.trim() + '"').join(', ') : '';
+}
+/** the routes whose machine_keyed entry holds (with no byKey the route is taken as real: the register's own check names an unreal route) */
+const machineKeyedOf = (list) => new Set((Array.isArray(list) ? list : []).filter((entry) => !machineKeyedProblem(entry, new Map([[entry && entry.route, true]]))).map((entry) => entry.route));
+/** the sentences for the machine_keyed list, for --check */
+const machineKeyedProblems = (list, byKey) => (Array.isArray(list) ? list : []).map((entry) => machineKeyedProblem(entry, byKey)).filter(Boolean);
+
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
   const file = readJson('docs/contracts/api-hardening-scope.json', {});
-  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), platformOnly: new Set(Object.keys(file.platform_only || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer), tolerantOutward: tolerantOutwardOf(file.tolerant_outward) };
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), platformOnly: new Set(Object.keys(file.platform_only || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer), tolerantOutward: tolerantOutwardOf(file.tolerant_outward), machineKeyed: machineKeyedOf(file.machine_keyed) };
 }
 
 /** the sentence for one tolerant_outward key that is not a route of the app, or no longer checks the fields it reads (schema_in); '' when sound */
@@ -355,6 +377,7 @@ function scopeProblems(file, rows) {
     if (!hasReason(reason)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
   }));
   found.push(...tolerantProblems(file.tolerant_outward, byKey, file.tolerant_outward_ceiling));
+  found.push(...machineKeyedProblems(file.machine_keyed, byKey));
   const seen = new Set();
   (file.cannot_answer || []).forEach((entry) => {
     const name = 'cannot_answer: "' + entry.route + ' ' + entry.status + '"';
@@ -401,7 +424,7 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     strict_input: strictOrTolerant(scope, key, operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
     foreign_id_404: foreignIdColumn(leaf, evidence, idExempt(scope, key)),
-    idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence),
+    idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence, scope.machineKeyed.has(key)),
     inbound_validated: inboundColumn(scope.inbound.has(key), operation, facts),
     trips_budgeted: tripsBudgetedColumn(key, budget)
   };
@@ -660,4 +683,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

@@ -92,6 +92,7 @@ const sources = () => ({
   math: Math,
   date: Date,
   mint: require(path.join(HERE, 'lib', 'mint')),
+  schema: require(path.join(HERE, 'lib', 'schema')),
   storage: require(path.join(HERE, 'lib', 'storage'))
 });
 const contractModule = () => require(path.join(HERE, 'lib', 'connectors-contract.js'));
@@ -202,7 +203,7 @@ function reportFindings(recording) {
   console.log('\n-- findings (listed, not fixed) --');
   console.log('  FINDING POST /api/connectors/ingest: a 200 carries the exception text in `file_err` / `proof_err` (' + carrying.length + ' scenes show it)');
   const erp = Object.keys(recording).filter((key) => key.startsWith('POST ' + MOUNT + '/erp-ingest|') && recording[key].body && recording[key].body.outcome === 'failed');
-  console.log('  FINDING POST /api/connectors/erp-ingest: a 200 with outcome "failed" when the outcome chit was not delivered (' + erp.length + ' scene)');
+  console.log('  FIXED POST /api/connectors/erp-ingest (CON-ERP-IDEM): a failed outcome chit is a 503, not a 200 (' + erp.length + ' answers still say outcome failed with 200)');
   return carrying;
 }
 

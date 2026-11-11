@@ -26,6 +26,19 @@
   "POST /api/ctp/deliver",
   "POST /api/ctp/query"
  ],
+ "machine_keyed_about": "CON-ERP-IDEM (Athi 11 Nov 2026): a keyed machine door is a money write whose caller (an agent we do not redeploy) cannot send an Idempotency-Key header. It dedupes by its own key_order instead, and S36 idempotent_money_write passes it ONLY while its test file proves the six cases (K1 same payload once, K2 two payloads two chits, K3 a failed emit is 503 and the retry creates the chit, K4 a stale pending receipt is claimed again, K5 the header key beats the hash, K6 the same key with another body is 422). A listed route whose test is missing or does not carry them fails tools/api-register.cjs --check.",
+ "machine_keyed": [
+  {
+   "route": "POST /api/connectors/erp-ingest",
+   "key_order": [
+    "Idempotency-Key header",
+    "doc_ref (with doc_type)",
+    "payload hash"
+   ],
+   "reason": "keyed machine door; the kit cannot send Idempotency-Key; revisit at the next kit release",
+   "test": "tests/erp-ingest-idempotency.test.cjs"
+  }
+ ],
  "public_ids": {
   "GET /api/catalogue/:bridge_id": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "GET /api/catalogue/:bridge_id/capture-fields": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",

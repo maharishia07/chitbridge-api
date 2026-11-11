@@ -24,7 +24,8 @@ const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution 
 const { body, param } = require('express-validator');
 const { validateAsProblem, sanitise } = require('../middleware/validate');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { words, failed, ingestRefusal, checked, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract'); // API-4: the contract (each route's operation) and the words of a refusal
+const { words, failed, ingestRefusal, checked, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract');
+const { claimReceipt, finishReceipt } = require('../lib/erp-receipt'); // CON-ERP-IDEM: the receipt's key, claim and re-claim // API-4: the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
@@ -478,54 +479,50 @@ async function emitSignalChit({
 }
 
 // Shared ERP process-then-forget CORE (used by both the key-authed /erp-ingest and the owner-authed /erp-test).
-// (1) Claim the receipt slot = the idempotency lock (a retry returns the first receipt, no re-emit). (2) PROCESS by
-// emitting only the SUMMARY (doc_type/ref/amount) as a co-held chit. (3) FORGET — finalise the receipt; the raw
-// payload is NEVER written. Returns the receipt shape. Callers pass the already-resolved actor/entity/cfg/cc.
-async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc }) {
+// (1) CLAIM the receipt (lib/erp-receipt: the caller's Idempotency-Key, else the document's doc_ref, else the payload hash; a failed or long-pending receipt is claimed again, so a retry runs the emit).
+// (2) PROCESS by emitting only the SUMMARY (doc_type/ref/amount) as a co-held chit. (3) FORGET — finalise the receipt; the raw payload is NEVER written.
+// Returns the receipt shape; `state` says why no emit ran ('conflict' · 'in_progress'), and a failed emit keeps its error on a hidden `emit_error` for the door to answer non-2xx (a 2xx lost the document).
+async function emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, cc, payload }) {
+  const extra = { doc_type, doc_ref };
+  if (payload.amount != null) extra.amount = payload.amount;
+  if (payload.currency) extra.currency = String(payload.currency).slice(0, 8);
+  const emit = await emitSignalChit({ entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc, kind: 'erp_document', signal: doc_type, value: doc_ref, extra, device_id: doc_ref, bridge_id: null });
+  return emit.chit_id;
+}
+async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc, idempotencyKey }) {
   const payload_hash = hashPayload(payload); // the ONLY trace of the raw document we keep
-  const receipt_id = uuidv4();
-  const claim = await withEntity(entity_id, (c) =>
-    c.query(
-      `INSERT INTO connector_receipt (receipt_id, entity_id, actor_id, doc_type, doc_ref, payload_hash, outcome)
-     VALUES ($1,$2,$3,$4,$5,$6,'pending')
-     ON CONFLICT (actor_id, payload_hash) DO NOTHING RETURNING receipt_id`,
-      [receipt_id, entity_id, actor.identity_id, doc_type, doc_ref, payload_hash]
-    )
-  );
-  if (claim.rows.length === 0) {
-    const ex = await withEntity(entity_id, (c) =>
-      c.query(`SELECT receipt_id, outcome, chit_id FROM connector_receipt WHERE actor_id = $1 AND payload_hash = $2`, [actor.identity_id, payload_hash])
-    );
-    const r = ex.rows[0] || {};
-    return { receipt_id: r.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: r.chit_id || null, idempotent: true, note: null };
+  const claim = await claimReceipt({ entityId: entity_id, actorId: actor.identity_id, docType: doc_type, docRef: doc_ref, payloadHash: payload_hash, idempotencyKey });
+  if (claim.state === 'conflict' || claim.state === 'in_progress') return { state: claim.state, receipt_id: null, payload_hash, outcome: claim.state, chit_id: null, idempotent: true, note: null };
+  if (claim.state === 'duplicate') {
+    const held = claim.held;
+    return { receipt_id: held.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: held.chit_id || null, idempotent: true, note: null };
   }
+  const receipt_id = claim.receipt_id;
   let chit_id = null,
     outcome = cc ? 'processed' : 'logged',
-    note = null;
+    note = null,
+    emit_error = null;
   try {
-    const extra = { doc_type, doc_ref };
-    if (payload.amount != null) extra.amount = payload.amount;
-    if (payload.currency) extra.currency = String(payload.currency).slice(0, 8);
-    const emit = await emitSignalChit({
-      entity_id,
-      actor,
-      folder: cfg.folder || 'ERP',
-      sub_type: 'erp:' + doc_type,
-      cc,
-      kind: 'erp_document',
-      signal: doc_type,
-      value: doc_ref,
-      extra,
-      device_id: doc_ref,
-      bridge_id: null
-    });
-    chit_id = emit.chit_id;
+    chit_id = await emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, cc, payload });
   } catch (e) {
     outcome = 'failed';
+    emit_error = e;
     note = 'Receipt kept, but the outcome chit could not be delivered: ' + safeErr(e);
   }
-  await withEntity(entity_id, (c) => c.query(`UPDATE connector_receipt SET outcome = $1, chit_id = $2 WHERE receipt_id = $3`, [outcome, chit_id, receipt_id]));
-  return { receipt_id, payload_hash, outcome, chit_id, idempotent: false, note };
+  await finishReceipt(entity_id, receipt_id, outcome, chit_id);
+  const out = { receipt_id, payload_hash, outcome, chit_id, idempotent: false, note };
+  Object.defineProperty(out, 'emit_error', { value: emit_error, enumerable: false });
+  return out;
+}
+
+/** the answer for a receipt that did not end in a chit: a key reused with another body is 422, a key still in hand is 409, a failed emit is 503 (or the refusal the database meant), so the agent keeps the event; null when the receipt is done */
+function erpReceiptRefusal(out, actor) {
+  if (out.state === 'conflict') return { status: 422, ...words.keyReused() };
+  if (out.state === 'in_progress') return { status: 409, ...words.receiptInProgress() };
+  if (out.outcome !== 'failed') return null;
+  logger.error('connectors.erp-ingest: outcome chit not delivered, the agent keeps the document', { actor: actor.identity_id, why: String(out.emit_error && out.emit_error.message).slice(0, 200) });
+  const known = require('../lib/knownerr').known(out.emit_error);
+  return known ? ingestRefusal(known) : { status: 503, ...words.chitNotDelivered() };
 }
 
 // POST /api/connectors/ingest — DEVICE-FACING. Auth by the CB-issued ActorKey (X-Bridge-Key header), NOT a user JWT.
@@ -705,7 +702,9 @@ router.post(
       // Heartbeat — health goes live for the ERP connector (independent of processing below).
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
 
-      const out = await processErpDocument({ actor, entity_id, cfg, payload: req.body.payload, doc_type, doc_ref, cc });
+      const out = await processErpDocument({ actor, entity_id, cfg, payload: req.body.payload, doc_type, doc_ref, cc, idempotencyKey: String(req.get('idempotency-key') || '').trim() });
+      const refusal = erpReceiptRefusal(out, actor);
+      if (refusal) return problem(req, res, refusal);
       res.json({ message: out.idempotent ? 'duplicate' : 'received', ...out });
     } catch (err) {
       problem(req, res, failed(err, req, 'ERP ingest failed'));

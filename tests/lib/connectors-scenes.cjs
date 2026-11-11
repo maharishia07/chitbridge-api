@@ -43,12 +43,13 @@ const SECRET_TEXT = 'relation "secret_table" does not exist -- SELECT secret FRO
 const pgError = (code, message) => Object.assign(new Error(message || SECRET_TEXT), { code });
 
 /**
- * stubRows(spec) → the harness's sqlRows: the rows a statement gets, by its shape. spec: { caps, hat, actor, owner, connections, receipts, email, otpRow, parties, noEntity, duplicate, raise: [[pattern, code, message?]], conn, connMissing }.
+ * stubRows(spec) → the harness's sqlRows: the rows a statement gets, by its shape. spec: { caps, hat, actor, owner, connections, receipts, email, otpRow, parties, noEntity, duplicate, held (the receipt a duplicate finds), raise: [[pattern, code, message?]], conn, connMissing }.
  * A record is answered only to its owning shop (spec.owner, SHOP unless the scene is asking as a stranger), as RLS and `WHERE parent_entity_id = $2` would.
  */
 function stubRows(spec) {
   const s = Object.assign({ caps: ['connector'], hat: 'act', actor: ERP_ACTOR, owner: SHOP, connections: [CONNECTION_ROW], receipts: [], email: 'owner@example.com', otpRow: null, parties: [PARTY], raise: [] }, spec);
   const mine = (params) => params[0] === ACTOR && params[1] === s.owner && s.actor;
+  let heldHash = null; /* the hash the door just claimed with: a duplicate holds the SAME body unless a scene gives `held` */
   return (sql, params) => {
     const text = String(sql).replace(/\s+/g, ' ').trim();
     const hit = s.raise.find(([pattern]) => pattern.test(text));
@@ -72,8 +73,8 @@ function stubRows(spec) {
     if (/SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at/.test(text)) return answer([Object.assign({ status: 'active', created_at: STAMP, connection_count: '1' }, s.actor)]);
     if (/SELECT email, display_name FROM identities/.test(text)) return answer(s.email === null ? [{ email: null, display_name: 'Mayur' }] : [{ email: s.email, display_name: 'Mayur' }]);
     if (/SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities/.test(text)) return answer([s.otpRow || { identity_id: SHOP, otp_code: '482910', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 0 }]);
-    if (/INSERT INTO connector_receipt/.test(text)) return answer(s.duplicate ? [] : [{ receipt_id: 'r-new' }]);
-    if (/SELECT receipt_id, outcome, chit_id FROM connector_receipt/.test(text)) return answer([{ receipt_id: 'r-first', outcome: 'processed', chit_id: 'c-first' }]);
+    if (/INSERT INTO connector_receipt/.test(text)) { heldHash = params[5]; return answer(s.duplicate ? [] : [{ receipt_id: 'r-new' }]); }
+    if (/SELECT receipt_id, outcome, chit_id, payload_hash, received_at FROM connector_receipt/.test(text)) return answer([Object.assign({ receipt_id: 'r-first', outcome: 'processed', chit_id: 'c-first', payload_hash: heldHash, received_at: STAMP }, s.held)]);
     if (/FROM connector_receipt WHERE actor_id/.test(text)) return answer(s.receipts);
     if (/SELECT COUNT\(\*\)::int AS n FROM connector_connection/.test(text)) return answer([{ n: s.connections.length }]);
     if (/SELECT bridge_id, ref, conn_config FROM connector_connection/.test(text)) return answer(s.connections);
@@ -170,7 +171,9 @@ function extras(tools) {
     erp('erp-ingest-to-is-an-object', 400, erpDoc({ to: { a: 1 } })) /* S33-T: a known key of the wrong kind is refused in the problem shape */,
     erp('erp-ingest-received-own-fields', 200, erpDoc({ doc_type: 'order', doc_ref: 'PO-7' }), {}, { patch: delivering }),
     erp('erp-ingest-duplicate', 200, erpDoc({}), { duplicate: true }, { patch: delivering }),
-    erp('erp-ingest-outcome-chit-failed', 200, erpDoc({}), {}, { patch: notDelivered }),
+    erp('erp-ingest-outcome-chit-failed', 503, erpDoc({}), {}, { patch: notDelivered }) /* CON-ERP-IDEM: a failed emit is NOT a 200, or the agent drops the document and its retry is a duplicate */,
+    erp('erp-ingest-key-reused', 422, erpDoc({}), { duplicate: true, held: { payload_hash: 'a-different-body' } }, { patch: Object.assign({ schema: { hasColumn: async () => true } }, delivering) }),
+    erp('erp-ingest-first-try-still-running', 409, erpDoc({}), { duplicate: true, held: { outcome: 'pending', chit_id: null, received_at: new Date() } }, { patch: Object.assign({ schema: { hasColumn: async () => true } }, delivering) }),
     erp('erp-ingest-heartbeat-fails', 500, erpDoc({}), failing(/UPDATE identities SET last_seen/)),
     erp('erp-ingest-claim-fails', 500, erpDoc({}), failing(/INSERT INTO connector_receipt/))
   ];
