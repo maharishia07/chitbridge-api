@@ -77,6 +77,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTION_BAD_REQUEST | 400 | Cannot connect to yourself | You cannot connect to your own business. | Choose another business. | network | 2026-10-23 |
 | CONNECTION_EXISTS | 400 | Already connected | A connection with this business already exists. | Open your connections to see where it stands. | network | 2026-10-23 |
 | CONNECTOR_DEVICE_OFF | 409 | Connection switched off | This device connection is switched off. | Switch it on in the connector’s list. | connectors | 2026-10-23 |
+| CONNECTOR_FOLDER_NOT_FILED | 200 | Reading kept, folder not filed | The reading was kept, but it could not be put in its folder. | It is in your tasks; move it to the folder by hand. | connectors | 2026-11-12 |
 | CONNECTOR_HAS_DEVICES | 409 | Connector has devices | This connector still has devices attached. | Remove its devices first, then delete it. | connectors | 2026-10-23 |
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONNECTOR_IN_USE | 409 | Connector in use | This connector has raised records, so it cannot be deleted. | Switch its devices off instead. | connectors | 2026-10-23 |
@@ -84,6 +85,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTOR_NAME_MISMATCH | 400 | Gateway name does not match | The gateway name you typed does not match. | Type the name exactly as it is shown. | connectors | 2026-10-23 |
 | CONNECTOR_NOT_APPROVED | 403 | Connector not approved | This connector is waiting for approval. | Approve this PC in Settings, Integrations, Running connectors. | auth | 2026-10-31 |
 | CONNECTOR_NO_EMAIL | 400 | No email to send to | The business has no email address to send the code to. | Add an email address in Settings, then ask again. | connectors | 2026-10-23 |
+| CONNECTOR_PROOF_NOT_KEPT | 200 | Reading kept, picture not kept | The reading was kept, but its picture could not be saved. | The device may send the picture again. | connectors | 2026-11-12 |
 | CONNECTOR_WRONG_TYPE | 409 | Wrong kind of connector | This door is only for ERP connectors. | Devices send their readings to the device door. | connectors | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | We could not read their consent, so nothing was sent. | Try again in a moment. | whatsapp-out | 2026-10-22 |
 | CONTAINER_STORE_MISSING | 503 | Product containers not ready | The container model arrives after the next update. Nothing was saved. | Try again after the next update. | assist | 2026-11-07 |

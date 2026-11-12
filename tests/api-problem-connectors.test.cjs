@@ -196,17 +196,15 @@ async function checkForeignIds(port) {
   return { proved: recording.proved(), failures, asked: items.length };
 }
 
-/** the two raw-text keys of a POST /ingest success (a known finding, listed for cb-security, not fixed here): printed so the run says where they are */
-function reportFindings(recording) {
-  const ingest = Object.keys(recording).filter((key) => key.startsWith('POST ' + MOUNT + '/ingest|') && recording[key].status === 200 && recording[key].body);
-  const carrying = ingest.filter((key) => /secret|bucket/.test(JSON.stringify(recording[key].body)));
-  console.log('\n-- findings (listed, not fixed) --');
-  console.log('  FINDING POST /api/connectors/ingest: a 200 carries the exception text in `file_err` / `proof_err` (' + carrying.length + ' scenes show it)');
-  const erp = Object.keys(recording).filter((key) => key.startsWith('POST ' + MOUNT + '/erp-ingest|') && recording[key].body && recording[key].body.outcome === 'failed');
-  console.log('  FIXED POST /api/connectors/erp-ingest (CON-ERP-IDEM): a failed outcome chit is a 503, not a 200 (' + erp.length + ' answers still say outcome failed with 200)');
-  return carrying;
+/**
+ * CON-159: the keys of a POST /ingest success that once carried an exception's text (`file_err`, `proof_err`) now hold a code or null (ASVS v4.0.3 7.4.1). Returns the keys of every
+ * ingest answer, any status, whose body shows the stand-in's thrown text ("bucket ..." from the storage, "relation ... SELECT secret" from the database).
+ */
+function ingestAnswersWithExceptionText(recording) {
+  const ingest = Object.keys(recording).filter((key) => key.startsWith('POST ' + MOUNT + '/ingest|') && recording[key].body);
+  return ingest.filter((key) => /secret|bucket|relation "|SELECT/.test(JSON.stringify(recording[key].body)));
 }
-
+console.log('');
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
@@ -237,7 +235,6 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkCodesRegistered(contractModule());
   checkContractShape(routes);
   checkFrozenFaults(recording);
-  reportFindings(recording);
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
@@ -255,9 +252,14 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a 5xx never says its cause: no answer of 500 and over carries the database text (' + faults.length + ' answers)', faults.filter(leaks).length === 0, faults.filter(leaks));
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400 && recording[key].status < 500);
   check('a 4xx never carries the database text either (' + refused.length + ' answers)', refused.filter(leaks).length === 0, refused.filter(leaks));
-  const everywhere = Object.keys(recording).filter((key) => !key.startsWith('POST ' + MOUNT + '/ingest|') && leaks(key));
-  check('no answer of any route but POST /ingest, a 200 included, carries the text of a thrown error (a body scan: ' + Object.keys(recording).length + ' answers; the ingest 200 is the finding above)', everywhere.length === 0, everywhere);
+  const everywhere = Object.keys(recording).filter(leaks);
+  check('no answer of any route, a 200 included, carries the text of a thrown error (a body scan: ' + Object.keys(recording).length + ' answers)', everywhere.length === 0, everywhere);
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
+  const carrying = ingestAnswersWithExceptionText(recording);
+  check('CON-159: no answer of POST /ingest carries exception text, a 200 included (' + Object.keys(recording).filter((key) => key.startsWith('POST ' + MOUNT + '/ingest|')).length + ' answers scanned)', carrying.length === 0, carrying);
+  check('CON-159: a proof that was not kept says CONNECTOR_PROOF_NOT_KEPT in proof_err, a folder not filed says CONNECTOR_FOLDER_NOT_FILED in file_err, and a clean answer says null',
+    rec('POST ' + MOUNT + '/ingest', 'ingest-proof-not-kept').body.proof_err === 'CONNECTOR_PROOF_NOT_KEPT' && rec('POST ' + MOUNT + '/ingest', 'ingest-folder-not-filed').body.file_err === 'CONNECTOR_FOLDER_NOT_FILED' && rec('POST ' + MOUNT + '/ingest', 'ingest-proof-kept').body.proof_err === null,
+    [rec('POST ' + MOUNT + '/ingest', 'ingest-proof-not-kept').body, rec('POST ' + MOUNT + '/ingest', 'ingest-folder-not-filed').body]);
   const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
