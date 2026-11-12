@@ -6922,6 +6922,7 @@ router.recordResolve = recordResolve;
 router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
+module.exports.sendBillCopyFor = sendBillCopyFor; /* OPS-83: tests/ops83-match-money.test.cjs pins the till-written order.from on the buyer invoice copy */
 module.exports.refOf = refOf; /* PLT-70: lib/limits asks the one reader whether a send carries a bill number */
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */

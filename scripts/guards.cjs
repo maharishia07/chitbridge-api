@@ -882,6 +882,7 @@ const GUARDS = [
   'not-migrated.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS the proof that lib/not-migrated.js words a "waiting for the update" answer in plain words with its required "meanwhile", and 
   'ops-81-one-payable.test.cjs', // U1 (8 Nov, was run by no CI job): OPS-81 · A SUPPLIER BILL POSTS ONE PAYABLE, WHICHEVER PAPER ARRIVES FIRST.
   'ops82-match-invoice.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ops82-match-invoice.test.cjs — OPS-82: GET /api/till/match attaches to each purchase order the supplier invoice that BILLS i
+  'ops83-match-money.test.cjs', // OPS-83: tests/ops83-match-money.test.cjs — GET /api/till/match compares tax-in with tax-in through lib/their-bill.check on carried figures (received_with_tax, money_code); pins the till-written order.from (OPS-124)
   'pack-words.test.cjs', // U1 (8 Nov, was run by no CI job): AU-WORDS (2026-10-15): the words a screen says for a shop's country come from ONE reader (lib/pack-words), per pack.
   'plt86c-bills-inflight-503.test.cjs', // U1 (8 Nov, was run by no CI job): PLT-86c: a database connection killed under GET /api/till/bills answers 503 DB_CONNECTION_LOST.
   'prove-session.test.cjs', // U1 (8 Nov, was run by no CI job): tests/prove-session.test.cjs — tools/tally-connector/prove.js session(): every write is ONE attempt with its OWN Idempotency-Key.
