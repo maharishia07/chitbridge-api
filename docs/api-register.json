@@ -29104,7 +29104,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -31910,7 +31910,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -32123,7 +32123,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handler and contract re-read; the 400 PRICE_DECIMALS (registered, shopkeeper sentence, one error shape) is now a recorded error test; additive only; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -42842,7 +42842,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -52438,7 +52438,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-317 (the parked change is judged by the PATCH validator when parked and again when due; refusals are the existing 400 in its words, a stamp refusal 400, a due change refused is cancelled and logged); 400, 409 declared inline, scenes present; backward_compatible: same statuses as before, a bad parked change is refused at the door instead of failing silently when due; all 13 machine columns read yes",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -52543,7 +52543,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (connector feed), proof in api-tolerant-doors; 13 columns pass on regenerated evidence",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -52748,7 +52748,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/323 (each item stamped like PUT /:id/status; the owner reads the stored rows so a status the row already holds is not a change; refusals are the existing 400 PRODUCT_BAD_REQUEST); 400 declared inline with a scene; backward_compatible: unchanged statuses, legacy words pass, only a bad new status word or number is refused; all 13 machine columns read yes",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -52958,7 +52958,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers web cap-catalogue and till (noQueue), confirm boolean, sheet string or integer; 13 columns pass on regenerated evidence",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -59433,7 +59433,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -61837,7 +61837,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-11-12 PR#1155 (independent review: CAT-277 gate re-sign, owner-only 403 OWNER_ONLY via lib/owner ownerOnly, no web caller, bite proven, bfla evidence regenerated, 13 columns read yes) stage2",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -64328,7 +64328,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",

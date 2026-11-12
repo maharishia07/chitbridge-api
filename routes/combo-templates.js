@@ -49,14 +49,16 @@ function badDefinition(def) {
 
 /** ⚠️ a price is not required to SAVE a combo (a draft, or a per-product template, may not have one of its
  *  own yet) — only to PUSH a NEW product from it (see /:id/push below). null/undefined both mean "none yet". */
-function badPrice(price) {
+function badPrice(price, currency) {
   if (price === undefined || price === null || price === '') return null;
   const n = Number(price);
   if (!Number.isFinite(n) || n < 0) return 'Price must be a number, and cannot be negative.';
-  return null;
+  if (n > MAX_NUMBER) return 'Price is too large (at most ' + MAX_NUMBER + ').'; /* CAT-310: the catalogue's one ceiling (a 500 at the numeric column before) */
+  return currency ? require('../lib/money').priceDecimalsRefusal({ price: n }, currency) : null; /* CAT-308: no finer than the shop's currency (a saved combo would be refused at its push) */
 }
 /** the price a request carries as a stored value: absent, null or '' is none yet (null), else the number */
 const priceOrNull = (price) => (price === undefined || price === null || price === '' ? null : Number(price));
+const { MAX_NUMBER } = require('../lib/catalogue-write');
 const COLS = 'id, name, definition, price, product_item_id, created_at, updated_at';
 
 // GET /api/combo-templates — the library, newest first
@@ -84,7 +86,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
     if (nameErr) return problem(req, res, said(400, 'COMBO_NAME_INVALID', 'Invalid name', nameErr));
     const defErr = badDefinition(req.body.definition);
     if (defErr) return problem(req, res, said(400, 'COMBO_INVALID', 'Invalid combo', defErr));
-    const priceErr = badPrice(req.body.price);
+    const priceErr = badPrice(req.body.price, await require('../lib/regional').currencyFor(entity_id));
     if (priceErr) return problem(req, res, said(400, 'COMBO_PRICE_INVALID', 'Invalid price', priceErr));
     const price = priceOrNull(req.body.price);
     const r = await withEntity(entity_id, (db) =>
@@ -125,6 +127,8 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     const name = 'name' in req.body ? String(req.body.name).trim() : cur.rows[0].name;
     const definition = 'definition' in req.body ? req.body.definition : cur.rows[0].definition;
     const price = 'price' in req.body ? priceOrNull(req.body.price) : cur.rows[0].price;
+    const finer = require('../lib/money').priceDecimalsRefusal({ price }, await require('../lib/regional').currencyFor(entity_id), { price: cur.rows[0].price }); /* CAT-308: unless it is the price the template already holds */
+    if (finer) return problem(req, res, said(400, 'COMBO_PRICE_INVALID', 'Invalid price', finer));
     /* ⚠️ NOT VALIDATED AGAINST catalogue_items HERE — same "not a foreign key" tolerance as the column
      * itself (b267): a bogus or cross-entity id simply never resolves at push time and that push falls back
      * to a clean create, exactly like a dangling link left by a deleted product. */
@@ -160,7 +164,7 @@ async function updateLinkedProduct(entity_id, existing, wantedFields) {
   });
   if (decl.error)
     return { refusal: { status: 400, code: 'PRODUCT_INVALID', body: { error: 'Invalid product', code: decl.code || undefined, message: decl.error } } };
-  const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
+  const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id), existing.item_data); /* CAT-308: the product's own unchanged legacy price is not refused */
   const written = await withEntity(entity_id, (db) =>
     require('../lib/catalogue-write').patchItems(db, entity_id /* CAT-W1: the one product writer */, [{ item_id: existing.item_id, replace: stamped }], {
       returning: '*'
