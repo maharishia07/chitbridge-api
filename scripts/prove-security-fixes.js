@@ -2,6 +2,10 @@
 // These run against the live API and assert the GUARDS (they go RED on the exploit). node scripts/prove-security-fixes.js
 // NOTE (reviewer 2026-07-14): the DEFINER-level guards — NEW-1 · M2 · M3/ROOT — are NOT reachable via the API (the route
 // guards fire first), so they live in scripts/prove-definer-guards.js (DB-direct). This file no longer claims them.
+// OWNS      the live (API) proof of the reviewer security fixes T1 · T4 · M1 · S1 (read-only walk against a running api, never production data changes beyond its own test shops)
+// CALLED BY by hand, against a SIT box: CB_API=<url> node scripts/prove-security-fixes.js · tests/prove-security-fixes-gated.test.cjs (the S1 gated branch)
+// FLOW      sign up two test shops → T1/T4/M1 guards → S1 (a lead token, or the gated 404 on a sealed box) → PASS/FAIL count, exit 1 on any FAIL
+// CARD      18-identity-sign-in-and-access/security-proofs
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0,
   F = 0;
