@@ -423,6 +423,8 @@ router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), 
   try {
     const owner = ctx(req),
       id = idOf(req);
+    /* CRM-239: done is a JSON true or false. "false" (a non-empty string) is truthy and closed the follow-up; refuse it in words, nothing changes (checked here, not in lib/crm-followups) */
+    if (req.body && 'done' in req.body && typeof req.body.done !== 'boolean') throw bad('Send done as true or false.', 400, 'BAD_FLAG');
     const f = await withEntity(owner, (h) => F.patch(h, owner, id, req.body, { by: byOf(req), isOwner: isOwner(req) }));
     res.json({ followup: f });
   } catch (e) {
