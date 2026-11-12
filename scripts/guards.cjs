@@ -180,6 +180,7 @@ const GUARDS = [
   'network-view.test.js', // QA wave 1 (FR-N5/N6): one shopfront over many departments - a private department is absent, categories are never invented, search finds only what is shown
   'ppl-40-reset-revokes-sessions.test.cjs', // PPL-40: a code or PIN reset (DELETE /:id/pin, POST /:id/otp) unlists every session the person opened, leaves a colleague's, and ends them before the new code is written
   'cat-277-source-owner-only.test.cjs', // CAT-277: PUT /api/assist/catalogue-source is the owner's: a co-assist and a key are refused 403 OWNER_ONLY with no query; the owner still authors
+  'net-53-closed-shop-not-searched.test.cjs', // NET-53: a closed shop is not searched in its network (availability fast path + fan-out, GET /stores); the open shop stays; a failed closed-shop read falls back to the filtered fan-out
   'actors-switch-off.test.cjs', // QA wave 1: the owner's switch off / remove / back on of a person (PUT /api/actors/:id/status): the write, the cleanup counts, the refusals
   'supplier-list-crud.test.cjs', // QA wave 1: PATCH only the caller's own supplier row, UNKNOWN_FIELD, a real business is not renamed; DELETE owner-only, 404, the CRM's one remove
   'availability.test.js', // QA wave 1: a stock figure carries its date, an absent figure is never zero, a stale one never outranks a fresh one (lib/availability)

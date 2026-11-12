@@ -67,8 +67,8 @@ of file each thing is; this says what already does the job.
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `host` | `chit-sheet.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
+| 39 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 38 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
-| 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
 | 37 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
@@ -208,4 +208,4 @@ of file each thing is; this says what already does the job.
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
-| 14 | `edit` | `person-session.js` |  |
+| 14 | `search` | `network-search.js` | the whole question: |
