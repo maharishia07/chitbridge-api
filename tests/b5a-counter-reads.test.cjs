@@ -16,17 +16,18 @@ process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
 
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-let BILL_ROWS = [], FILED = [], OFFER_ROWS = [];
+let BILL_ROWS = [], FILED = [], OFFER_ROWS = [], ZONE = 'Asia/Kolkata';
 const LOG = [];
 function rowsFor(sql, params) {
   const text = String(sql);
-  if (/to_jsonb\(i\)/.test(text)) return [{ timezone: 'Asia/Kolkata', country: 'IN' }];
+  if (/COALESCE.timezone, country. AS zone/.test(text)) return [{ zone: ZONE }];
   if (/WITH lines AS/.test(text)) return OFFER_ROWS;
   if (/'summary' ->> 'period'/.test(text)) return FILED.map((summary) => ({ business_json: { summary } }));
   if (!/h\.sender_entity_id = \$1 AND h\.purpose IN/.test(text)) return [];
   LOG.push(params);
   const by = params[4], till = params[3];
-  const hit = BILL_ROWS.filter((r) => (!by || (r.business_json.till.by || {}).id === by) && (!till || r.business_json.till.id.toUpperCase() === String(till).toUpperCase()));
+  const bothArms = /UNION ALL/.test(text); /* BILLS_SQL has the withdrawn arm; the summary's live statement does not */
+  const hit = BILL_ROWS.filter((r) => (bothArms || !r.withdrawn) && (!by || (r.business_json.till.by || {}).id === by) && (!till || r.business_json.till.id.toUpperCase() === String(till).toUpperCase()));
   return hit.sort((x, y) => (x.created_at < y.created_at ? 1 : -1)).slice(0, params[2]).map((r) => Object.assign({ withdrawn: false }, r));
 }
 const tx = { query: async (s, p) => ({ rows: rowsFor(s, p) }) };
@@ -51,7 +52,8 @@ require(path.join(API, 'lib', 'tax-shelf')).readShelf = async () => null;
 const clock = require(path.join(API, 'lib', 'shop-clock'));
 clock.set('2026-11-12T19:00:00Z');
 
-const bill = (no, at, total, tillId, byId) => ({
+const bill = (no, at, total, tillId, byId, withdrawn) => ({
+  withdrawn: !!withdrawn,
   chit_id: 'c-' + no, created_at: at, line_items: [],
   business_json: { bill_no: no, billed_at: at, slip: 'cash', till: { id: tillId, name: 'Counter ' + tillId, by: byId ? { id: byId, name: 'P' } : null }, payment: { parts: [{ how: 'Cash', amount: total }], total }, customer: { name: 'Walk-in' } },
   summary_json: { money: { total, taxable: total, tax: 0, savings: 0 } }
@@ -115,6 +117,45 @@ const totalsOf = (count, gross) => ({ count, returns: 0, gross, refunds: 0, redu
     assert.deepStrictEqual(got.rows, []);
   });
 
+  await ok('CTR-205: by= also filters the WITHDRAWN arm in SQL (130 newer withdrawn by A do not crowd out the other person)', async () => {
+    BILL_ROWS = [bill('WB', iso(1), 10, 'C1', B, true)];
+    for (let i = 0; i < 130; i++) BILL_ROWS.push(bill('WA' + i, iso(100 + i), 10, 'C1', A, true));
+    const got = await get('/bills?by=' + B + '&limit=100');
+    assert.deepStrictEqual(got.withdrawn.map((r) => r.no), ['WB']);
+  });
+  await ok('CTR-195: a counter filed MID-DAY keeps its filed figure and folds the bills rung AFTER the filing (no under-read, no double)', async () => {
+    const late = bill('L', '2026-11-12T18:58:00Z', 40, 'C1', A); /* after the 18:45Z filing */
+    BILL_ROWS = [X, Y, late]; /* X (18:40Z) is inside the filing; Y (18:50Z) and late are after it */
+    FILED = [Object.assign({ summarised_at: '2026-11-12T18:45:00Z' }, { period: 'day', key: '2026-11-13', till: { id: 'C1', name: 'Counter C1' }, totals: totalsOf(1, 500) })];
+    const row = (await get('/summary?period=day')).rows[0];
+    assert.strictEqual(row.totals.gross, 790); /* 500 filed + 250 + 40 */
+    assert.strictEqual(row.totals.count, 3);
+    assert.strictEqual(row.live, true);
+  });
+  await ok('CTR-195: a re-sent bill (same counter, same number) is folded once', async () => {
+    FILED = [];
+    const again = bill('X', '2026-11-12T18:41:00Z', 500, 'C1', A); /* the re-send of X, a second chit */
+    again.chit_id = 'c-X-again';
+    BILL_ROWS = [X, again, Y];
+    const row = (await get('/summary?period=day')).rows[0];
+    assert.strictEqual(row.totals.gross, 750);
+    assert.strictEqual(row.totals.count, 2);
+  });
+  await ok('CTR-195: live_capped from the live arm alone - a full live arm plus an older withdrawn row is still capped', async () => {
+    BILL_ROWS = [bill('OLDW', '2026-11-11T20:00:00Z', 5, 'C1', A, true)];
+    for (let i = 0; i < 500; i++) BILL_ROWS.push(bill('T' + i, new Date(Date.parse('2026-11-12T18:35:00Z') + i * 1000).toISOString(), 1, 'C1', A));
+    FILED = [];
+    const got = await get('/summary?period=day');
+    assert.strictEqual(got.live_capped, true);
+    assert.strictEqual(got.rows[0].totals.count, 500);
+  });
+  await ok('CTR-209: west of UTC (Los Angeles): at 19:00 PST on the 12th an expiry of the 12th is "expires today", a sale at 17:00 PST is not quiet', async () => {
+    ZONE = 'America/Los_Angeles'; clock.set('2026-11-13T03:00:00Z');
+    OFFER_ROWS = [{ item_id: 'i1', name: 'Milk', expiry: '2026-11-12', last_sold: '2026-11-13T01:00:00Z' }];
+    const got = await get('/worth-an-offer?quiet=1&days=3');
+    assert.deepStrictEqual(got.items.map((i) => i.why), [['expires today']]);
+    ZONE = 'Asia/Kolkata'; clock.set('2026-11-12T19:00:00Z');
+  });
   await ok('CTR-209: /worth-an-offer reads days in the SHOP zone (expiry today -> "expires today"; sold 00:10 IST today -> not quiet)', async () => {
     OFFER_ROWS = [{ item_id: 'i1', name: 'Milk', expiry: '2026-11-13', last_sold: '2026-11-12T18:40:00Z' }];
     const got = await get('/worth-an-offer?quiet=1&days=3');

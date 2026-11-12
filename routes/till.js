@@ -1976,7 +1976,7 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), ...checked('GET /
     const days = Math.max(1, Math.min(180, Number(req.query.days) || 14));
     const quiet = Math.max(1, Math.min(365, Number(req.query.quiet) || 14));
     /* ONE trip: the products' dates and the shop's zone ride the same transaction (CTR-209) */
-    const [found, zone] = await withEntity(entity_id, async (db) => [await db.query(WORTH_AN_OFFER_SQL, [entity_id]), await shopZone(db, entity_id)]);
+    const [found, zone] = await withEntity(entity_id, async (db) => [await db.query(WORTH_AN_OFFER_SQL, [entity_id]), await require('../lib/crm-followups').zoneOfShop(db, entity_id)]);
     const suggestions = offerSuggestions(found.rows, days, quiet, zone);
     res.json({
       ok: true,
@@ -2045,12 +2045,6 @@ const WORTH_AN_OFFER_SQL = `WITH lines AS (
                       WHERE ci.entity_id = $1 AND ci.is_active = true
                         AND ci.item_id::text = COALESCE(line->>'item_id', line#>>'{item_data,item_id}'))
        GROUP BY 1`;
-
-/** the shop's zone row ({ timezone, country }) - one read; to_jsonb so a database the zone column has not reached reads null, not an error (b176) */
-async function shopZone(runner, entity_id) {
-  const found = await runner.query("SELECT to_jsonb(i) ->> 'timezone' AS timezone, i.country FROM identities i WHERE i.identity_id = $1", [entity_id]);
-  return found.rows[0] || {};
-}
 
 /**
  * whole SHOP days from today to a date (negative = in the past). Both ends are the shop's calendar day in the shop's own zone
@@ -3523,7 +3517,7 @@ async function periodSummary(entity_id, asked) {
     return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false } };
   });
   const filed = found.rows.map((row) => (row.business_json || {}).summary);
-  const rows = rollup.acrossCounters(filed.concat(live.summaries)).slice(0, limit); /* filed first: acrossCounters keeps the first sighting, so a filed day wins */
+  const rows = rollup.acrossCounters(live.summaries.concat(filed)).slice(0, limit); /* a counter filed mid-day: its filed figure PLUS the later bills (liveToday) comes first and is the one kept */
   markLive(rows, live.summaries);
   const tillIds = filed.concat(live.summaries).map((sum) => ((sum || {}).till || {}).id);
   return { period, rows, counters: Array.from(new Set(tillIds.filter(Boolean))).sort(), live_capped: live.capped };
@@ -3533,32 +3527,69 @@ async function periodSummary(entity_id, asked) {
 const engineRow = (bill) => ({ kind: bill.kind === 'credit_note' ? 'credit_note' : 'sale', total: bill.total, payments: bill.payments, refunds: bill.refunds });
 
 /**
+ * today's LIVE bills, newest first, WITHOUT their lines (a summary needs the money, not the basket - no chit_detail join).
+ * Same conditions as BILLS_SQL's live arm (the shop's own counter bills, a bill the books reversed left out) over the last 2 days.
+ */
+const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, h.summary_json
+         FROM chit_header h
+        WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
+          AND h.business_json ? 'bill_no'
+          AND h.created_at > NOW() - ($2 || ' days')::interval
+          ${counterBill.NOT_WITHDRAWN_SQL}
+        ORDER BY h.created_at DESC LIMIT $3`;
+
+/** the moment a bill was rung (ms): its billed_at, else when the server got it */
+const rungAt = (row) => Date.parse((row.business_json || {}).billed_at || row.created_at);
+
+/** a re-sent bill is the same bill: one per counter and bill number, the newest sighting kept (rows arrive newest first) */
+function distinctBills(rows) {
+  const seen = new Set();
+  return rows.filter((row) => {
+    const business = row.business_json || {};
+    const sighting = tillKeyOf(business.till) + ' ' + business.bill_no;
+    if (seen.has(sighting)) return false;
+    seen.add(sighting);
+    return true;
+  });
+}
+
+/**
  * CTR-195: TODAY'S LIVE BILLS as one day summary per counter, so "today" is on the screen before the day is filed.
  * ⭐ Same arithmetic as a filed day: rollup.totals over the bills, then rollup.summary - nothing is added or rounded here.
- * ⚠️ A counter whose day is already FILED is left out (filed wins; counting both would double the day's takings).
- * ⚠️ The shop's day is the SHOP's zone (shop-clock.bizDay), and the statement is the one Earlier bills reads (BILLS_SQL, no lines needed here).
- * capped: the page filled and its oldest bill is still today's - more bills may exist than were folded; said, never silent.
+ * ⚠️ A counter whose day is already FILED keeps its filed figure, and only the bills rung AFTER the filing (its summarised_at) are
+ *    folded on top (rollup.fold) - never a double, never an under-read after a mid-day filing.
+ * ⚠️ The shop's day is the SHOP's zone (shop-clock.bizDay, zone from crm-followups.zoneOfShop - the one reader).
+ * capped: the live arm filled and its oldest bill is still today's - more bills may exist than were folded; said, never silent.
  */
 async function liveToday(db, entity_id, filed) {
-  const rollup = require('../lib/rollup');
   const shopClock = require('../lib/shop-clock');
-  const zone = await shopZone(db, entity_id);
+  const zone = await require('../lib/crm-followups').zoneOfShop(db, entity_id);
   const today = shopClock.today(zone);
-  const found = await db.query(BILLS_SQL, [entity_id, '2', BILLS_MAX, null, null]);
-  const mine = found.rows.filter((row) => !row.withdrawn && shopClock.bizDay((row.business_json || {}).billed_at || row.created_at, zone) === today);
-  const done = new Set(filed.filter((sum) => sum && sum.key === today).map((sum) => tillKeyOf(sum.till)));
+  const found = await db.query(LIVE_BILLS_SQL, [entity_id, '2', BILLS_MAX]);
+  const isToday = (row) => shopClock.bizDay(rungAt(row), zone) === today;
+  const oldest = found.rows.length ? found.rows[found.rows.length - 1] : null;
+  return { summaries: liveSummaries(found.rows.filter(isToday), filed, today), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
+}
+
+/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at */
+function liveSummaries(todays, filed, today) {
+  const rollup = require('../lib/rollup');
+  const filedBy = new Map(); /* newest filing of today per counter (filed rows arrive newest first) */
+  for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
   const byTill = new Map();
-  for (const row of mine) {
+  for (const row of distinctBills(todays)) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
-    if (done.has(till)) continue;
+    const filing = filedBy.get(till);
+    if (filing && !(rungAt(row) > Date.parse(filing.summarised_at))) continue; /* already inside the filed figure */
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
-  const summaries = Array.from(byTill.values()).map((group) => rollup.summary('day', today, rollup.totals(group.rows), { till: group.till, at: new Date().toISOString() }));
-  const oldest = found.rows.length ? found.rows[found.rows.length - 1] : null;
-  const capped = found.rows.length >= BILLS_MAX && !!oldest && shopClock.bizDay((oldest.business_json || {}).billed_at || oldest.created_at, zone) === today;
-  return { summaries, capped };
+  return Array.from(byTill.entries()).map(([till, group]) => {
+    const filing = filedBy.get(till);
+    const parts = rollup.totals(group.rows);
+    return rollup.summary('day', today, filing ? rollup.fold([filing.totals, parts]) : parts, { till: group.till, at: filing ? filing.summarised_at : new Date().toISOString() });
+  });
 }
 
 /** the one counter identity acrossCounters dedupes on: id, else name, else 'C?' */
