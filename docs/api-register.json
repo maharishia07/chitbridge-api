@@ -44834,7 +44834,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
+        "signed_off_by_date": "cb-api 2026-11-12 PR#1156 (independent review: CMP-42 staff door writes source staff and actor id, refuses self/reply in words, shopper door the one writer of self; web caller sends no source; bite proven; 13 columns read yes) stage2",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -52014,7 +52014,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1156 stage2: handler re-read after the hash moved (CMP-42: the customer's own answer is now stored with source 'self'; no input, output, status or code change); one error shape, backward compatible; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",

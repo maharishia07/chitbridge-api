@@ -634,13 +634,22 @@ router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:
     problem(req, res, crmFault(e, req));
   }
 });
+/**
+ * who may: any login of the shop (a hat-gate refuses a viewer's write first). CMP-42: this door is STAFF writing down what a customer said, so the row says so —
+ * source 'staff' and the actor's id as its source_ref. 'self' (the customer's own answer, routes/privacy.js) and 'reply' (a STOP message, lib/optout.js) are written only by
+ * those paths; a body that names either is refused in words, never relabelled silently.
+ */
+const STAFF_SOURCE_WHY = 'A shop notes what a customer said as staff. The customer’s own answer comes from the customer, and a reply from the message.';
 router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
+    const sent = req.body && typeof req.body === 'object' ? req.body : {};
+    if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY);
+    const body = Object.assign({}, sent, { source: 'staff', source_ref: byOf(req) });
     const pref = await withEntity(owner, async (h) => {
       await mine(h, owner, id);
-      return PV.notePref(h, owner, id, req.body, byOf(req));
+      return PV.notePref(h, owner, id, body, byOf(req));
     });
     res.status(201).json({ pref });
   } catch (e) {

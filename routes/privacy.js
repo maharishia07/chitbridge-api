@@ -74,7 +74,7 @@ router.post('/me/consent', customerAuth, ...contract.checked('POST /me/consent')
     const w = whoOf(req),
       b = req.body || {};
     const out = await withEntity(w.shop, async (h) => {
-      const pref = await PV.notePref(h, w.shop, w.me, { channel: b.channel, purpose: b.purpose, allowed: b.allowed }, w.me);
+      const pref = await PV.notePref(h, w.shop, w.me, { channel: b.channel, purpose: b.purpose, allowed: b.allowed, source: 'self', source_ref: w.me }, w.me); /* CMP-42: the one writer that may say "self" — the party is the actor */
       return { pref, may: (await PV.prefs(h, w.shop, w.me)).may };
     });
     res.status(201).json(out);
