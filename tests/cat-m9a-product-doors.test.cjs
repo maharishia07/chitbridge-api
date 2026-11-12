@@ -159,7 +159,7 @@ async function elsewhere() {
   r = await ask('POST', P + '/availability/bulk', { items: [{ item_id: PARTY, qty: true }, { item_id: PARTY, qty: 3 }] }, feed);
   check('feed: the row with qty true is counted bad, the row with qty 3 is written (per row)', r.status === 200 && r.json.bad === 1 && r.json.written === 1, r.json);
   r = await ask('PUT', '/api/assist/catalogue-source', { source_key: 'y'.repeat(60000) }, shelf(AUD));
-  check('assist catalogue-source: a 60,000-character source_key → 400 (it was stored with 200)', r.status === 400 && /source_key is too long \(at most 200 characters\)/.test(words(r)), [r.status, words(r).slice(0, 100)]);
+  check('assist catalogue-source: a 60,000-character source_key → 422 INVALID_INPUT (it was stored with 200)', r.status === 422 && /source_key must be at most 200 characters/.test(words(r)), [r.status, words(r).slice(0, 100)]);
 }
 
 /** the counter's price move: the same rule, and the refusal is shown (400), not parked for the queue to send again */

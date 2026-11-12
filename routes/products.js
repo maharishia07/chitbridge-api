@@ -196,6 +196,10 @@ const identity = require('../lib/identity'); // which line is this, and which pr
 const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
 /* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
+/** CAT-308: the row as it will be stored, stamped with the shop's money; a price finer than the currency throws its sentence (userMessage) unless the sheet leaves the stored price as it was */
+function stampRow(merged, currency, prior) {
+  return money.stampItem(merged, currency, prior ? prior.item_data : undefined);
+}
 function userSafeMessage(e) {
   return e.userMessage || safeErr(e);
 }
@@ -312,9 +316,10 @@ async function defaultSchemaId(entity_id) {
  */
 const { schemaFieldsOf, validateAgainst } = catwrite;
 
-async function validateItem(schema_id, item_data, stored) {
-  if (!schema_id) return null;
-  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
+async function validateItem(schema_id, item_data, stored, currency) {
+  const finer = currency ? money.priceDecimalsRefusal(item_data, currency, stored) : null; /* CAT-308 */
+  if (!schema_id) return finer;
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored) || finer;
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
@@ -686,10 +691,8 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
 
     const list = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
-      const finer = verr ? null : money.priceDecimalsRefusal(items[i].item_data, currency, stored && stored.get(items[i].id)); /* CAT-308: a price finer than the currency is this row's error */
+      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id), currency); /* CAT-308: a price finer than the currency is this row's error too */
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
-      else if (finer) list.push({ index: i, id: items[i].id, message: finer, code: money.PRICE_DECIMALS });
     }
     if (list.length) {
       return problem(req, res, { status: 400, ...words.refusedItems(list) });
@@ -1369,13 +1372,7 @@ router.post(
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
           }
-          /* CAT-308: a price finer than the currency is THIS row's failure (its sentence), the rest of the sheet still lands */
-          const finer = money.priceDecimalsRefusal(merged, currency, prior?.item_data);
-          if (finer) {
-            outcome.push({ line, sku, action: 'failed', name: item.name, message: finer });
-            continue;
-          }
-          const stamped = money.stampItem(merged, currency, prior?.item_data);
+          const stamped = stampRow(merged, currency, prior);
           if (prior) {
             updates.push({ item_id: prior.item_id, replace: stamped });
             outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });
@@ -1736,7 +1733,7 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
           continue;
         }
         const figure = { qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location };
-        const rec = availability.refusal(figure) ? null : availability.stamp(figure); /* CAT-232: a broken row is counted bad (this row only), never stored as a figure nobody sent */
+        const rec = availability.stampChecked(figure).stamped; /* CAT-232: a broken row is counted bad (this row only), never stored as a figure nobody sent */
         if (!rec) {
           count++;
           continue;
@@ -1757,17 +1754,14 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
 router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const unclear = availability.refusal(req.body); /* CAT-232: say what stamp() would have quietly changed */
-    if (unclear) return problem(req, res, { status: 400, ...words.badAvailability(unclear) });
-    const rec = availability.stamp(req.body);
-    if (!rec) {
-      return problem(req, res, { status: 400, ...words.badQuantity() });
-    }
+    const rec = availability.stampChecked(req.body); /* CAT-232: a figure stamp() would quietly change is refused, with the sentence */
+    if (rec.refused) return problem(req, res, { status: 400, ...words.badAvailability(rec.refused) });
+    if (!rec.stamped) return problem(req, res, { status: 400, ...words.badQuantity() });
     const r = await withEntity(entity_id, (db) =>
-      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec } }], { returning: 'item_id, item_data' })
+      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec.stamped } }], { returning: 'item_id, item_data' })
     );
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchItem() });
-    res.json({ message: 'Availability updated', availability: rec });
+    res.json({ message: 'Availability updated', availability: rec.stamped });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Availability update failed'));
   }

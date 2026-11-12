@@ -394,14 +394,12 @@ function sourceRefusal(row, owner) {
   return require('../lib/platformroot').isRoot(String(owner)) ? null : words.sourceOfThePlatform();
 }
 
-const SOURCE_KEY_MAX = 200;
 router.put('/catalogue-source', auth, ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
     const source_key = typeof b.source_key === 'string' && b.source_key.trim() ? b.source_key.trim() : '';
     if (!source_key) return problem(req, res, { status: 422, ...words.sourceKeyNeeded() });
-    if (source_key.length > SOURCE_KEY_MAX) return problem(req, res, { status: 400, ...words.sourceKeyTooLong(SOURCE_KEY_MAX) }); /* CAT-246: a key is a label (a 60k-character one was stored with 200) */
     let exists;
     try {
       exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]);
