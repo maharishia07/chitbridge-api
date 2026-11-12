@@ -526,7 +526,6 @@
   "src/app.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "src/db.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "src/lib/bridgeId.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "src/routes/catalogue.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "src/routes/network.js": {"score":11,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":1,"noHeader":0},
   "src/services/catalogue.js": {"score":7,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "src/services/chit.js": {"score":18,"long40":2,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":1,"emptyCatch":0,"noHeader":1},

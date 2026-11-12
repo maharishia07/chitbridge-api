@@ -1662,10 +1662,6 @@
   "warnings": 0,
   "prettierOk": true
  },
- "src/routes/catalogue.js": {
-  "warnings": 0,
-  "prettierOk": true
- },
  "src/routes/network.js": {
   "warnings": 0,
   "prettierOk": true
