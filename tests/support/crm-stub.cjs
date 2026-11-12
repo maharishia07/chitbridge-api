@@ -33,6 +33,7 @@ function make() {
 
   async function run(sqlRaw, p) {
     const sql = norm(sqlRaw); p = p || []; data.queries.push(sql); if (data.pre) { const x = await data.pre(sql, p); if (x) return x; }
+    if (/^SELECT pg_advisory_xact_lock\(/.test(sql) || /^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(sql)) return { rows: [] };   /* B10: the shop's mint lock and the mint's savepoint (no concurrency in a stub) */
     if (/to_jsonb\(i\)->'policy_flags'->'crm'/.test(sql)) return { rows: [{ crm: data.rule || null }] };
     if (/FROM customer_list cl JOIN identities i/.test(sql)) {
       if (/party_item/.test(sql) && data.hvMissing) throw gone('party_item');

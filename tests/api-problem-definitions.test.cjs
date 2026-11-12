@@ -40,7 +40,7 @@ const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const TOOLS = { answering, raising, firstOf, SECRET_SQL };
 const ROUTE_COUNT = 6;
 const MIN_SCENARIOS = 80;
-const MIN_FROZEN_5XX = 23; /* K-1: three bad-id answers (GET, PUT, DELETE /:id) are now the 404 of an unknown id, not a frozen 500 */
+const MIN_FROZEN_5XX = 22; // 22 since M9b: the freeze of an id that is no uuid is a 400 now /* K-1: three bad-id answers (GET, PUT, DELETE /:id) are now the 404 of an unknown id, not a frozen 500 */
 const MIN_FROZEN = 50;
 const lab = harness({
   here: HERE,

@@ -33,6 +33,10 @@ const customerGroups = require('../lib/customer-groups'); // the one segment exp
 const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields = require('../lib/party-fields');
+const { liveSql, hiddenSql, restoredAnswer } = require('../lib/party-live');
+const { restore } = require('../lib/party-restore');
+const SL_HIDDEN = hiddenSql('sl'); // the mirror: a removed supplier row (CRM-247)
+const SL_LIVE = liveSql('sl'); // the live-row predicate on the supplier_list alias `sl`, spelled once like A_BUSINESS (a constant in the SQL, never an interpolated call) // CRM-247: a deleted party's one predicate, the way back, and the answer's words
 /** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
 function unknownKeyRefusal(body, allowed) {
   const unknown = Object.keys(body || {}).filter((item) => allowed.indexOf(item) < 0);
@@ -115,6 +119,39 @@ async function remoteAddress(req, res, next) {
 remoteAddress.addsStatuses = words.ADDRESS_GATE_STATUSES; /* tools/api-register.cjs reads the statuses a gate answers from here */
 
 /**
+ * addLocalSupplier(db, owner, name, fields) → { local } (the mint said no: local.error) | { dup: true } (already on the live list) | { local, restored? } — a local supplier added by NAME on the caller's
+ * transaction: lock, mint (kind 'sup'), the deleted-or-live check, the list row.
+ * ⚠️ added_via = 'manual', NOT 'local': the column has a CHECK (manual/transaction/import) and 'local' failed it, a 500 caught by [SUP-02]. 'manual' is also true: it records HOW the row arrived
+ * (a person typed it); whether they are on the rail is the handle's job.
+ */
+async function addLocalSupplier(db, owner, name, fields) {
+  const ident = require('../lib/local-identity');
+  await ident.takeMintLock(db, owner);
+  const local = await ident.mint(owner, name, { query: db.query.bind(db), savepoint: true });
+  if (local.error) return { local };
+  return Object.assign({ local }, await listSupplier(db, owner, local.identity_id, fields));
+}
+
+/**
+ * listSupplier(db, owner, partyId, fields) → { dup: true } (already on the live list) · { restored: true } (it was DELETED: CRM-247 brings the same record back, nothing new is written) · {} (the row was added).
+ * The one place both doors (a name, a ChitBridge business) look at the list before they write.
+ */
+async function listSupplier(db, owner, partyId, fields) {
+  const held = await db.query(`SELECT ${SL_HIDDEN} AS hidden FROM supplier_list sl WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = $2`, [owner, partyId]);
+  if (held.rows.length > 0) {
+    if (!held.rows[0].hidden) return { dup: true };
+    await restore(db, owner, partyId);
+    return { restored: true };
+  }
+  await db.query(
+    `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
+    [owner, partyId, fields.kind, fields.category, fields.nickname, fields.notes, fields.preferred]
+  );
+  return {};
+}
+
+/**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
  * Athi, 2026-09-10: *"still a non-CB person can be a supplier, we can set the flag again — he is not part of CB?"*
@@ -150,7 +187,7 @@ router.post(
   '/suppliers',
   [
     body('supplier_bridge_id').optional({ nullable: true }).trim(),
-    body('name').optional({ nullable: true }).trim().isLength({ max: 120 }),
+    body('name').optional({ nullable: true }).isString().withMessage('Type the name as text').trim().isLength({ max: 120 }), // CRM-251
     body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
     body('category').optional().trim().isLength({ max: 50 }),
     body('nickname').optional().trim().isLength({ max: 80 }),
@@ -183,31 +220,16 @@ router.post(
 
       /* ── OFF THE RAIL: a name, and an id minted for it. ─────────────────────────────────────────────────── */
       if (!bridge) {
-        const local = await require('../lib/local-identity').mint(owner, localName, { query });
-        if (local.error) return problem(req, res, mintRefusal(local));
-        const dupL = await withEntity(owner, (db) =>
-          db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id])
-        );
-        if (dupL.rows.length > 0) return problem(req, res, { status: 409, ...words.listed(localName + ' is already in your supplier list') });
-        await withEntity(owner, (db) =>
-          db.query(
-            /**
-             * ⚠️ added_via = 'manual', NOT 'local'. `added_via` has a CHECK constraint (manual/transaction/import)
-             * and 'local' failed it — a 500 that reached the screen as "Something went wrong", caught by [SUP-02]
-             * on its first run.
-             * ⭐ AND 'manual' IS ALSO THE RIGHT ANSWER, not just the permitted one. The column records HOW the row
-             * arrived — a person typed it — which is true of both kinds. WHETHER they are on the rail is the
-             * handle's job, and putting it here as well would be the same fact in two places, free to disagree.
-             */
-            `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind,
-                                      category, nickname, notes, preferred, added_via)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-            [owner, local.identity_id, kind, category, nickname, notes, preferred]
-          )
-        );
+        /* CRM-226/230/231: ONE transaction — the shop's mint lock first (lib/local-identity, the autocommit pool would release it at once), then mint, the live-or-deleted check and the list row.
+           CRM-247: a NAME that matches a DELETED supplier brings that supplier back (lib/party-restore) instead of answering "already in your list". */
+        const added = await withEntity(owner, async (db) => addLocalSupplier(db, owner, localName, { kind, category, nickname, notes, preferred }));
+        if (added.local.error) return problem(req, res, mintRefusal(added.local));
+        if (added.dup) return problem(req, res, { status: 409, ...words.listed(localName + ' is already in your supplier list') });
+        const local = added.local;
         const localNo = await numberParty(owner, local.identity_id);
         return res.json({
           message: 'Supplier added',
+          ...restoredAnswer(added.restored, local.display_name),
           supplier: {
             supplier_entity_id: local.identity_id,
             bridge_id: local.bridge_id,
@@ -234,18 +256,8 @@ router.post(
       if (sup.rows.length === 0) return problem(req, res, { status: 404, ...words.noBusiness() });
       if (sup.rows[0].identity_id === owner) return problem(req, res, { status: 400, ...words.addSelf() });
 
-      const dup = await withEntity(owner, (db) =>
-        db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, sup.rows[0].identity_id])
-      );
-      if (dup.rows.length > 0) return problem(req, res, { status: 409, ...words.listed('Already in your supplier list') });
-
-      await withEntity(owner, (db) =>
-        db.query(
-          `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-          [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]
-        )
-      );
+      const listed = await withEntity(owner, (db) => listSupplier(db, owner, sup.rows[0].identity_id, { kind, category, nickname, notes, preferred })); /* CRM-247: a deleted supplier comes back */
+      if (listed.dup) return problem(req, res, { status: 409, ...words.listed('Already in your supplier list') });
 
       /* ⭐ ON THE RAIL WAS ASSERTED, NOW ASKED (2026-10-02): an inactive business, or one in another sandbox, is found by
          the lookup above but cannot trade with this shop — lib/istest mayTrade, b249's rule. Added anyway (the list is the
@@ -254,6 +266,7 @@ router.post(
       const supNo = await numberParty(owner, sup.rows[0].identity_id);
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
+        ...restoredAnswer(listed.restored, sup.rows[0].display_name),
         supplier: {
           supplier_entity_id: sup.rows[0].identity_id, bridge_id: bridge, ...req.remoteShown, /* API-6 (25 Oct): the id the list and the catalogue read are addressed by, on every add · RAIL-101: the address, when the supplier was adopted from one */
           display_name: sup.rows[0].display_name,
@@ -300,7 +313,7 @@ function listSuppliers(db, owner) {
                    THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
-       WHERE sl.owner_entity_id = $1
+       WHERE sl.owner_entity_id = $1 AND ${SL_LIVE} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
        ORDER BY sl.preferred DESC, sl.created_at DESC`,
     [owner]
   );
@@ -561,7 +574,7 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
                         AND es.status = 'active' AND es.is_default = true) AS has_catalogue
          FROM supplier_list sl
          JOIN identities i ON i.identity_id = sl.supplier_entity_id
-        WHERE sl.owner_entity_id = $1
+        WHERE sl.owner_entity_id = $1 AND ${require('../lib/party-live').liveSql('sl')}
           AND COALESCE(i.sealed, false) = false
           /* ⚠️ NOT LOCAL SUPPLIERS (b218). "Who stocks this?" is answered by reading catalogues, and a local
              supplier has none — including them would spend a read per row to learn nothing and then report "no",
@@ -846,6 +859,48 @@ router.get('/customers/:id/rewards', auth, ...checked('GET /customers/:id/reward
 });
 
 /**
+ * addLocalCustomer(owner, body) → { refusal } (a spec for problem()) | { answer } — the NAME half of POST /customers: the phone through its one check, the tax id (CRM-244: bounded always, the pack's check only for a
+ * STATED country), then the one add-customer on one transaction. CRM-247: a name that matches a DELETED customer brings that customer back (the answer says so, with restored: true).
+ * ⭐ phone and GSTIN go where the till's customer query already reads them: identities.otp_contact (as phone) and .gstn, no schema change.
+ */
+async function addLocalCustomer(owner, body) {
+  const ident = require('../lib/local-identity');
+  const localName = sanitise(String(body.name || '').trim());
+  const typedPhone = ident.phoneOf(body.phone); /* ⭐ CRM-MINT1: the one phone check (it was 6–20 characters here, ≥ 8 digits everywhere else) */
+  if (typedPhone.bad) return { refusal: { status: 400, ...words.badPhone() } };
+  const taxId = partyFields.doorTaxId(sanitise(String(body.gstin || '')), body.country);
+  if (taxId.why) return { refusal: { status: 400, ...words.badTaxId(taxId.why) } };
+  const phone = typedPhone.phone,
+    gstin = taxId.value || '';
+  /* ⭐ CRM-MINT1: mint · contact · list row · number — the one add-customer, one transaction */
+  const added = await withEntity(owner, (conn) => ident.addCustomer(conn, owner, { name: localName, phone, gstin, via: 'manual' }));
+  if (added.refused) return { refusal: mintRefusal(added.refused) };
+  if (added.exists) return { refusal: { status: 409, ...words.listed(ident.existsWords(added, localName + ' is already in your customer list')) } };
+  const local = added.local;
+  const why = 'not on ChitBridge — bills stay with you';
+  return {
+    answer: {
+      message: 'Customer added — ' + why,
+      ...restoredAnswer(added.restored, local.display_name),
+      customer: {
+        customer_list_id: added.customer_list_id,
+        customer_identity_id: local.identity_id,
+        display_name: local.display_name,
+        user_id: local.user_id,
+        bridge_id: local.bridge_id,
+        segment: 'new',
+        added_via: 'manual',
+        party_no: added.party_no,
+        phone: phone || null,
+        gstin: gstin || null,
+        on_rail: false,
+        one_sided: { why }
+      }
+    }
+  };
+}
+
+/**
  * ⭐ ADD A CUSTOMER BY HAND (Athi, 2026-09-06: "Chola Auto Care should be coming as a customer — can we add a + icon to include a customer?").
  * The list filled itself only from trades (storefront order, a bill, since today a Suppliers-menu order). A seller who knows their customer
  * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),
@@ -854,8 +909,8 @@ router.get('/customers/:id/rewards', auth, ...checked('GET /customers/:id/reward
 router.post(
   '/customers',
   [
-    body('handle').optional().trim(),
-    body('name').optional().trim(),
+    body('handle').optional().isString().withMessage('The User ID must be text').trim(),
+    body('name').optional().isString().withMessage('Type the name as text').trim(), // CRM-251: an object or a number was minted as "[object Object]"
     body().custom((b) => {
       if (!String((b && b.handle) || '').trim() && !String((b && b.name) || '').trim())
         throw new Error('Give a User ID or email for a ChitBridge business, or a name for a local customer');
@@ -874,39 +929,8 @@ router.post(
          credit possible. The supplier door's own path: lib/local-identity.mint (kind 'cus') gives an ordinary entity row with a
          `~owner.cus-nnnn` handle, never a recipient (handle.isMinted), so a bill to them is one-sided: recorded and booked, not sent. */
       if (!handle) {
-        const localName = sanitise(String(req.body.name || '').trim());
-        const L = require('../lib/local-identity');
-        const ph = L.phoneOf(req.body.phone); /* ⭐ CRM-MINT1: the one phone check (it was 6–20 characters here, ≥ 8 digits everywhere else) */
-        if (ph.bad) return problem(req, res, { status: 400, ...words.badPhone() });
-        const phone = ph.phone;
-        /* ⭐ phone and GSTIN go where the till's customer query already reads them: identities.otp_contact (as phone) and .gstn —
-           no schema change. Nothing looks an identity up BY otp_contact, so a minted row cannot be reached through it. */
-        const gstin = sanitise(String(req.body.gstin || ''))
-          .replace(/\s+/g, '')
-          .toUpperCase();
-        /* ⭐ CRM-MINT1: mint · contact · list row · number — the one add-customer, one transaction */
-        const a = await withEntity(owner, (h) => L.addCustomer(h, owner, { name: localName, phone, gstin, via: 'manual' }));
-        if (a.refused) return problem(req, res, mintRefusal(a.refused));
-        if (a.exists) return problem(req, res, { status: 409, ...words.listed(L.existsWords(a, localName + ' is already in your customer list')) });
-        const local = a.local;
-        const why = 'not on ChitBridge — bills stay with you';
-        return res.json({
-          message: 'Customer added — ' + why,
-          customer: {
-            customer_list_id: a.customer_list_id,
-            customer_identity_id: local.identity_id,
-            display_name: local.display_name,
-            user_id: local.user_id,
-            bridge_id: local.bridge_id,
-            segment: 'new',
-            added_via: 'manual',
-            party_no: a.party_no,
-            phone: phone || null,
-            gstin: gstin || null,
-            on_rail: false,
-            one_sided: { why }
-          }
-        });
+        const added = await addLocalCustomer(owner, req.body);
+        return added.refusal ? problem(req, res, added.refusal) : res.json(added.answer);
       }
       /* ⚠️ Same fence as the supplier add: a `~` handle is a party some OTHER business minted, and it resolves by
          user_id like any entity. Answer as if it does not exist rather than confirming the guess. */
@@ -964,7 +988,11 @@ router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/group
   try {
     if (req.api_key) return problem(req, res, { status: 403, ...words.keyFence() });
     const owner = ctx(req);
-    const groups = customerGroups.cleanGroups(req.body && req.body.groups);
+    /* CRM-233: groups is a LIST of names. A value that is not a list (a string, an object, a number) is refused in words and the customer's groups stay as they were (cleanGroups turned it into [] and cleared them).
+       A body with no `groups` key at all keeps its old answer (held for the owner: the frozen answers of tests/api-problem-relationships) */
+    const sent = req.body && req.body.groups;
+    if (sent !== undefined && !Array.isArray(sent)) return problem(req, res, { status: 400, ...words.groupsNotList() });
+    const groups = customerGroups.cleanGroups(sent);
     const r = await withEntity(owner, (db) => customerGroups.setGroups(db, owner, req.params.id, groups));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     res.json({ ok: true, groups: r.rows[0].groups });

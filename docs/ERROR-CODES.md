@@ -189,6 +189,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
 | DEFINITION_INCOMPLETE | 422 | Rule has no value | This rule has no value yet, so it would do nothing. | Fill in the value, then save again. | definitions | 2026-10-23 |
 | DEFINITION_NAME_TAKEN | 409 | Name already used | You already have one of this kind with that name. | Choose another name. | definitions | 2026-10-23 |
+| DEFINITION_STALE | 409 | Changed by someone else | Someone saved this definition after you opened it, so your save was not written over theirs. | Open it again, check the new version and redo your change. | definitions | 2026-11-12 |
 | DEFINITION_TAKEOVER_NOT_LIVE | 400 | Slab cannot take over | The slab chosen to take over is not a live slab here. | Choose one of your live slabs. | definitions | 2026-10-23 |
 | DEFINITION_TAKEOVER_SAME | 400 | Same slab chosen | The slab chosen to take over is the one being retired. | Choose a different slab. | definitions | 2026-10-23 |
 | DEVICE_MISMATCH | 401 | Device mismatch | This sign-in belongs to another device. | Sign in again on this device. | auth | 2026-10-22 |
@@ -208,6 +209,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
 | EMAIL_TAKEN | 409 | Email taken | That e-mail already signs in to another account. | Use the person's own e-mail, or leave it empty. | actors | 2026-10-22 |
+| EMAIL_UNAVAILABLE | 409 | E-mail not available | That e-mail cannot be used for this person. | Use the person's own e-mail, or leave it empty. | actors | 2026-11-12 |
 | EMPLOYEE_EMAIL_REQUIRED | 400 | Employee email required | This person needs an e-mail address for the first code. | Add their e-mail, then try again. | employee-code | 2026-10-22 |
 | CODE_ISSUE_LIMIT | 429 | Too many codes | Five codes were made for this person in the last 15 minutes. | Wait a few minutes, then make a new one. | employee-code | 2026-10-24 |
 | CODE_SHOW_NOT_READY | 503 | Showing a code is not ready | This environment cannot show a first code yet, so none was made. | Add their e-mail, or try again later. | employee-code | 2026-10-24 |

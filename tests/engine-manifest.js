@@ -562,6 +562,8 @@ const INFRA_LIBS = [
      classifications for one file is how a rule quietly becomes plumbing. Removed 2026-09-09 after checking that
      nothing reads it here: inventory.cjs tests TIER before INFRA, so the file already reported engine.tier. */
   'definition-check.js',   // the value a definition kind cannot do without (the form's sentences, refused by the API too)
+  'reward-check.js',       // CAT-272: the numbers of a reward programme the earning engine would misread; the reward branch of definition-check
+  'party-restore.js',      // CRM-247: a deleted party's list rows un-hidden (the way back from removeParty), kept out of party-live so the till's DB-free groups reader stays DB-free
   'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
   'offers-live.js',        // the seller's live offers applied to a set of lines — the one function the storefront order AND the send path call
@@ -582,6 +584,7 @@ const ENGINE_OTHER = [
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
+  'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
   'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */

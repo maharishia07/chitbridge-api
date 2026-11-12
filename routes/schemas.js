@@ -14,6 +14,7 @@ const { query, withEntity } = require('../db');
 /* ⭐ ONE PLACE DECIDES REMOVABILITY — the GET reports it and the DELETE enforces it from the same function, so a
    screen can never be told a column is removable and then refused. */
 const columnRules = require('../lib/column-rules');
+const schedule = require('../lib/schedule'); /* CAT-326: parked changes count as values held */
 /* ⭐ ONE resolver for every surface that answers "what are my columns". */
 const catcols = require('../lib/catalogue-columns');
 const auth = require('../middleware/auth');
@@ -197,7 +198,7 @@ router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'
         [entity_id, key]
       )
     );
-    const n = (u.rows[0] && u.rows[0].n) || 0;
+    const n = ((u.rows[0] && u.rows[0].n) || 0) + (await schedule.parkedUsing(entity_id, key)); /* CAT-326: a value parked for a date counts as a value held */
     if (n > 0) {
       return problem(req, res, { status: 409, ...words.inUse(n, f.rows[0].field_name) });
     }
@@ -325,7 +326,7 @@ router.patch(
             [entity_id, key]
           )
         );
-        const n = (u.rows[0] && u.rows[0].n) || 0;
+        const n = ((u.rows[0] && u.rows[0].n) || 0) + (await schedule.parkedUsing(entity_id, key)); /* CAT-326 */
         const whyNot = columnRules.retypeWhy({ field_key: key, field_name: cur.field_name, used_by: n });
         if (whyNot) return problem(req, res, { status: 409, ...words.retypeRefused(n, whyNot) });
         set('field_type', t);

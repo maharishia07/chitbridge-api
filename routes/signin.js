@@ -42,6 +42,8 @@ const identityAuth = require('../lib/identity-auth');
 const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
+const { rateLimit } = require('../lib/rate-limit'); // the one limiter factory (429 problem+json RATE_LIMITED)
+const { intFromEnv } = require('../lib/limits');
 const { problem, internalSpec } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { failed } = require('../lib/products-contract'); // a fault of ours: a 500 that says nothing of its cause (the old body kept: the screen's label and the safe sentence)
 const { contract, schemaOptions, VERIFY_REFUSALS } = require('../lib/signin-contract'); // the operations of the routes that read an input
@@ -323,6 +325,26 @@ async function storeCode(identity_id) {
   await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [code, expires, identity_id]);
   return code;
 }
+/**
+ * ⭐ SEC-148 · sentWords(sent) → the ONE sentence for a mail's outcome ({ delivered, dev } from lib/notify). The new-address path (sendCode) and the held-address path
+ * (routes/entities.js, the "already on file" notice) both say it, so a mailer outage reads the same on both and the words cannot tell a held address from a free one.
+ */
+/**
+ * ⭐ SEC-148 · askAddressCap — the register door's PER-ADDRESS cap (REGISTRATION only: mode:'login' is the owner's sign-in and is never counted) (the app-level authLimiter counts per IP, so many IPs could mail one address without end). One budget per typed
+ * address, counted BEFORE anything is looked up, so a held address and a free one are capped alike and over the cap both answer the same 429 (OWASP ASVS V2.2 / V11 anti-automation;
+ * the code mail and the "already on file" notice are the same send). REGISTER_PER_ADDRESS_MAX (default 5) per hour, in this process like the other limiters.
+ */
+const askAddressCap = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: intFromEnv('REGISTER_PER_ADDRESS_MAX', 5),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => 'addr:' + typedByAsk({ body: req.body || {} }).toLowerCase().slice(0, 200),
+  skip: (req) => !typedByAsk({ body: req.body || {} }) || (req.body || {}).mode === 'login', /* the register door is also the owner's LOGIN (mode:'login'): never capped, only registration is */
+  message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
+});
+const sentWords = (sent) =>
+  sent && sent.delivered ? 'Verification code sent to your email' : sent && sent.dev ? 'Dev mode — verification code issued' : "We couldn't send your code — please try again.";
 async function sendCode(req, res, { identity_id, email, display_name }, extra) {
   const otp = await storeCode(identity_id);
   /**
@@ -347,11 +369,7 @@ async function sendCode(req, res, { identity_id, email, display_name }, extra) {
   return res.json(
     Object.assign(
       {
-        message: sent.delivered
-          ? 'Verification code sent to your email'
-          : sent.dev
-            ? 'Dev mode — verification code issued'
-            : "We couldn't send your code — please try again.",
+        message: sentWords(sent),
         email,
         ...(devOtp.mayExposeOtp() && { dev_otp: otp })
       },
@@ -964,5 +982,5 @@ router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinCh
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
-Object.assign(router, { holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
+Object.assign(router, { askAddressCap, sentWords, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

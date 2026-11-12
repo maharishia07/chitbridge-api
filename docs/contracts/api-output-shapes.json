@@ -8961,6 +8961,12 @@
               }
             },
             "additionalProperties": false
+          },
+          "restored": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9375,6 +9381,12 @@
           },
           "points_claimed": {
             "type": "number"
+          },
+          "restored": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -15780,7 +15792,10 @@
           "fy_start_month": {
             "type": "number"
           },
-          "slots": {}
+          "slots": {},
+          "live_capped": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },
@@ -30133,6 +30148,9 @@
           },
           "customer": {
             "type": "object"
+          },
+          "restored": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -30194,6 +30212,9 @@
           },
           "supplier": {
             "type": "object"
+          },
+          "restored": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
