@@ -88,6 +88,8 @@ const serve = () => {
     const row = (dues.body.parties || []).find((party) => party.party_id === SUPP);
     ok('/dues supplier row: Rs 10.00 + Rs 24.00 ahead = balance_minor 3400', row && row.balance_minor === 3400, JSON.stringify(row));
     ok('...with balance_words from owesWords (the payment outcome words): they owe you Rs 34', row && row.balance_words === 'they owe you ₹34', JSON.stringify(row));
+    const wo = await q('POST', '/write-off', { party_id: MALA, amount_minor: true, reason: 'bad debt' });
+    ok('write-off amount_minor true -> 400 "How much?" (the same reader; it was 1)', wo.status === 400 && wo.body.error === 'How much?', wo.status + ' ' + JSON.stringify(wo.body));
     const DV = require('../lib/dues-view');
     const seen = DV.blindDuesRow({ party_id: 's', side: 'supplier', balance_minor: 3400, balance_words: 'they owe you ₹34', disputed_minor: 0, buckets: {} });
     ok('a cost-blind reader gets balance_words null on a supplier row (the words carry the money)', seen.balance_words === null && seen.balance_minor === null, JSON.stringify(seen));
