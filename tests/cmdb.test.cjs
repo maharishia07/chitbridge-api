@@ -144,7 +144,7 @@ it('⚠️⚠️ both writes check the gate BEFORE anything is written', () => {
 });
 it('a record is versioned only when it changes (the upsert compares before it writes)', () => {
   const up = ROUTES.slice(ROUTES.indexOf('async function upsertVersioned('));
-  assert.ok(/JSON\.stringify\(cur\.rows\[0\]\.rules \|\| \{\}\) === JSON\.stringify\(rules\)/.test(up.slice(0, 2500)), 'the no-change check is gone');
+  assert.ok(/canon\.canon\(cur\.rows\[0\]\.rules \|\| \{\}\) === canon\.canon\(rules\)/.test(up.slice(0, 2500)), 'the no-change check is gone');
 });
 
 console.log('\nTHE FIELD LEDGER — a record may list the fields of an item kind; the shape refuses a row that does not fit\n');
