@@ -104,11 +104,11 @@ const got = (line_id, ordered, dq, o) => ev(line_id, ordered, Object.assign({ de
   const asg = (edits) => refusedWith(() => assign.assign(ME, 'c1', edits, {}));
   t('R22 an empty list is refused', (await asg([])) === 'Nothing to assign');
   t('R22 an edit with no line_id is refused', (await asg([{ assignee_actor_id: null }])) === 'Each assignment needs a line_id');
-  t('R22 assignee_actor_id left out is refused (null is not the same thing)', /^Send assignee_actor_id explicitly/.test(await asg([{ line_id: 'l1' }])));
-  t('R22 a due_date not shaped YYYY-MM-DD is refused', (await asg([{ line_id: 'l1', assignee_actor_id: null, due_date: '28/10/2026' }])) === 'due_date must be YYYY-MM-DD');
-  t('R22 a due_date with the shape but no such day is refused, not cast', (await asg([{ line_id: 'l1', assignee_actor_id: null, due_date: '2026-02-30' }])) === 'due_date must be YYYY-MM-DD');
-  t('R25 a state that is not open or done is refused, not stored as open', (await asg([{ line_id: 'l1', assignee_actor_id: null, state: 'finished' }])) === 'state must be open or done');
-  t('R25 open and done pass, in any case', (await asg([{ line_id: 'l1', assignee_actor_id: null, state: 'DONE' }])) === '' && (await asg([{ line_id: 'l1', assignee_actor_id: null, state: 'open' }])) === '');
+  t('R22 assignee_actor_id left out is refused (null is not the same thing)', /^Send assignee_actor_id explicitly/.test(await asg([{ line_id: LINE_UUID }])));
+  t('R22 a due_date not shaped YYYY-MM-DD is refused', (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, due_date: '28/10/2026' }])) === 'due_date must be YYYY-MM-DD');
+  t('R22 a due_date with the shape but no such day is refused, not cast', (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, due_date: '2026-02-30' }])) === 'due_date must be YYYY-MM-DD');
+  t('R25 a state that is not open or done is refused, not stored as open', (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, state: 'finished' }])) === 'state must be open or done');
+  t('R25 open and done pass, in any case', (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, state: 'DONE' }])) === '' && (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, state: 'open' }])) === '');
   calls.length = 0;
   answer = () => ({ rows: [{ line_id: 'l1' }] });
   await assign.assign(ME, 'c1', [{

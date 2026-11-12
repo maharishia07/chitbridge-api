@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 4,
-  "meets": 634,
+  "partial": 7,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 324,
@@ -33115,7 +33115,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
    "line": 79,
-   "hash": "07ac7405642c8930",
+   "hash": "7fa22d81e90e3f57",
    "does": "",
    "errors": {
     "count": 0,
@@ -33191,10 +33191,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7fa22d81e90e3f57"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "attach-ui.js"
@@ -42003,7 +42004,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4528,
-   "hash": "0065084284fd1df2",
+   "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
     "count": 0,
@@ -42073,10 +42074,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2ecd7b19ece06d6a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -42914,7 +42916,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4284,
-   "hash": "1899c9cfdf06ac32",
+   "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
     "count": 0,
@@ -42985,10 +42987,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4f89447214ef870f"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],

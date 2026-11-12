@@ -1883,7 +1883,7 @@
    ]
   },
   "POST /api/attachments": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2555,7 +2555,7 @@
    ]
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
-   "cases": 5,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2627,7 +2627,7 @@
    ]
   },
   "POST /api/chits/register/subjects": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
