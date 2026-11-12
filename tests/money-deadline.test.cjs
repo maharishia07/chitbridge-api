@@ -1,80 +1,103 @@
 'use strict';
 /**
- * money-deadline.test.cjs — PLT-70: the money doors (chits, offers, invoice, books entries) keep the request deadline though they are on the LARGE body list.
- * Proves, with the REAL lib/limits + REAL middleware/idempotency (memory store; no network, no DB):
- *  (a) a slow chit write answers 503 REQUEST_TIMEOUT at the deadline; (b) the late write still commits exactly once (the 503 does not stop the handler);
- *  (c) a retry with the same Idempotency-Key gets the first chit (replay), never a second chit or journal line; (d) the statement cut is DB_STATEMENT_TIMEOUT_MS (15 s default, live pg_sleep when DATABASE_URL is set).
- * Also: a genuinely bulk route (products import) still has no deadline.
+ * money-deadline.test.cjs — PLT-70: POST /api/chits/send (the till's bill door) keeps the request deadline, and the deadline cannot loop a slow till.
+ * The REAL routes/chits.js, the REAL middleware/auth-first.js, the REAL lib/limits.js, mounted in server.js's order (parsers · authThenParse · requestTimeout).
+ * Only the database and the sign-in are stand-ins. No network beyond 127.0.0.1.
+ *  (1) SLOW BODY: a bill whose body streams for longer than the deadline still gets its 2xx (the clock starts after the body is read), and server.js mounts requestTimeout after authThenParse.
+ *  (2) REPLAY ON THE REAL ROUTE: a bill whose work outlasts the deadline answers 503 REQUEST_TIMEOUT; the handler runs on and finishes once; the retry with the same client_ref is
+ *      answered duplicate:true with the chit that exists, and nothing is inserted (no second chit, no second journal line).
+ *  (3) THE DOORS WITH NO REPLAY keep no deadline (every other chit door, books entries, offers, invoice, bulk imports); the 15 s statement cut is DB_STATEMENT_TIMEOUT_MS.
  * Run: node tests/money-deadline.test.cjs
  */
-const path = require('path'), http = require('http'), express = require('express');
+const path = require('path'), http = require('http'), fs = require('fs'), express = require('express');
 const API = path.join(__dirname, '..');
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-auth-guards';
-process.env.REQUEST_TIMEOUT_MS = '100';
-const jwt = require('jsonwebtoken');
-const stub = (rel, exports) => { const id = path.join(API, rel); require.cache[require.resolve(id)] = { id, filename: id, loaded: true, exports }; };
-stub('db', { withEntity: async () => { throw Object.assign(new Error('no table'), { code: '42P01' }); }, query: async () => ({ rows: [] }) });
-stub('lib/logger', { warn() {}, info() {}, debug() {}, error() {}, critical() {}, fellBack() {} });
-stub('middleware/auth', Object.assign((req, res, next) => next(), { entityOf: () => 'shop-1' }));
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+process.env.NODE_ENV = 'test';
+process.env.REQUEST_TIMEOUT_MS = '400';
+
+const SHOP = '11111111-1111-4111-8111-111111111111', CHIT = '22222222-2222-4222-8222-222222222222';
+const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test shop', bridge_id: 'TESTSHOP' };
+const mock = (rel, exported) => { const file = require.resolve(path.join(API, rel)); require.cache[file] = { id: file, filename: file, loaded: true, exports: exported }; };
+let inserts = 0;
+const rows = (sql) => {
+  if (/INSERT INTO chit_header/.test(String(sql))) inserts++;
+  if (/SELECT COUNT\(/i.test(String(sql))) return { rows: [{ count: '0' }], rowCount: 1 };
+  return { rows: [], rowCount: 0 };
+};
+const client = { query: async (sql) => rows(sql) };
+const known = { query: async (sql) => rows(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, db, run) => run(client), readBatch: async (id, st) => (st || []).map(() => rows('')), trySavepoint: async (db, run, fb) => { try { return await run(db); } catch (e) { return fb; } } };
+const db = new Proxy(known, { get: (t, n) => (n in t ? t[n] : typeof n === 'symbol' || n === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
+mock('db', db); mock('db/index', db);
+const realAuth = require(path.join(API, 'middleware', 'auth'));
+const { holderOf } = require(path.join(API, 'lib', 'holder'));
+const stubAuth = (req, res, next) => { req.identity = OWNER; req.api_key = { jti: 'j1', scopes: ['till'] }; req.till = holderOf({ kind: 'api_key', jti: 'j1', scopes: ['till'] }, {}, null); next(); };
+mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
+console.error = () => undefined;
+const say = console.log;
+console.log = (...p) => (typeof p[0] === 'string' && p[0].startsWith('{"t":') ? undefined : say(...p));
+
 const limits = require(path.join(API, 'lib', 'limits'));
-const idempotency = require(path.join(API, 'middleware', 'idempotency'));
+const authFirst = require(path.join(API, 'middleware', 'auth-first'));
+const ownBill = require(path.join(API, 'lib', 'counter-bill'));
+const router = require(path.join(API, 'routes', 'chits.js'));
+const BILL = { recipients: [{ self: true }], purpose: 'order', client_ref: 'B-1', business_json: { till: { id: 'T-A' }, billed_at: '2026-10-23T10:00:00Z' } };
 
 let pass = 0, fail = 0;
-const ok = (c, m) => { if (c) { pass++; console.log('  ok  ' + m); } else { fail++; console.log('  FAIL ' + m); } };
+const ok = (c, m) => { if (c) { pass++; say('  ok  ' + m); } else { fail++; say('  FAIL ' + m); } };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const token = jwt.sign({ identity_id: 'shop-1' }, process.env.JWT_SECRET);
-const chits = [], journal = [];
-const app = express();
-app.use(express.json());
-app.use(limits.requestTimeout);
-app.use('/api', idempotency);
-app.post('/api/chits/send', async (req, res) => {
-  await wait(300); /* slower than the 100 ms deadline: the 503 has gone, the write carries on */
-  const id = 'c-' + (chits.length + 1); chits.push(id); journal.push('je-' + id);
-  res.status(201).json({ id });
-});
-app.post('/api/products/import', async (req, res) => { await wait(300); res.status(200).json({ imported: 1 }); });
 
-const call = (port, route, key) => new Promise((resolve) => {
-  const data = Buffer.from('{"n":"a"}');
-  const q = http.request({ host: '127.0.0.1', port, method: 'POST', path: route, headers: { 'content-type': 'application/json', 'content-length': data.length, authorization: 'Bearer ' + token, 'idempotency-key': key } }, (r) => {
+/** POST the bill; the body is written in pieces, `gapMs` apart (a slow upload) */
+const send = (port, bill, pieces, gapMs) => new Promise((resolve) => {
+  const text = JSON.stringify(bill), size = Math.ceil(text.length / pieces);
+  const q = http.request({ host: '127.0.0.1', port, method: 'POST', path: '/api/chits/send', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer x' } }, (r) => {
     let b = ''; r.on('data', (c) => { b += c; });
-    r.on('end', () => { let j = null; try { j = JSON.parse(b); } catch (_) {} resolve({ status: r.statusCode, replay: r.headers['x-idempotent-replay'], body: j }); });
+    r.on('end', () => { let j = null; try { j = JSON.parse(b); } catch (_) {} resolve({ status: r.statusCode, body: j }); });
   });
-  q.on('error', (e) => resolve({ status: 0, error: e.message })); q.setTimeout(1500, () => q.destroy()); q.write(data); q.end();
+  q.on('error', (e) => resolve({ status: 0, error: e.message }));
+  (async () => { for (let i = 0; i < pieces; i++) { q.write(text.slice(i * size, (i + 1) * size)); if (i < pieces - 1) await wait(gapMs); } q.end(); })();
 });
 
 (async () => {
+  /* server.js's order, read from the file */
+  const src = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
+  const at = (re) => { const m = re.exec(src); return m ? m.index : -1; };
+  const iParse = at(/app\.use\(authFirst\.authThenParse\)/), iTimeout = at(/app\.use\(require\('\.\/lib\/limits'\)\.requestTimeout\)/);
+  ok(iParse > 0 && iTimeout > iParse, 'server.js mounts the request deadline AFTER the body is read (authThenParse)');
+
+  const app = express();
+  app.use((req, res, next) => { req.id = 'req-test'; next(); });
+  app.use(authFirst.parsers);
+  app.use(authFirst.authThenParse);
+  app.use(limits.requestTimeout);
+  app.use('/api/chits', router);
   const srv = app.listen(0); await new Promise((r) => srv.on('listening', r));
   const port = srv.address().port;
-  const door = (p) => limits.isMoneyDoor({ path: p });
-  ok(door('/api/chits/send') && door('/api/offers/send') && door('/api/invoice/x') && door('/api/books/entries') && !door('/api/books/packs') && !door('/api/products/import'), 'isMoneyDoor names the money doors and not the bulk ones');
+  const original = ownBill.byRef;
 
-  let r = await call(port, '/api/chits/send', 'm1');
-  ok(r.status === 503 && r.body && r.body.code === 'REQUEST_TIMEOUT', '(a) a slow chit write answers 503 REQUEST_TIMEOUT at the deadline (got ' + r.status + ')');
-  await wait(350);
-  ok(chits.length === 1 && journal.length === 1, '(b) the late write committed exactly once after the 503 (chits=' + chits.length + ')');
-  r = await call(port, '/api/chits/send', 'm1');
-  ok(r.status === 201 && r.replay === 'true' && r.body && r.body.id === 'c-1', '(c) the retry with the same key gets the first chit (got ' + r.status + ' ' + JSON.stringify(r.body) + ')');
-  ok(chits.length === 1 && journal.length === 1, '(c) no second chit and no second journal entry (chits=' + chits.length + ', journal=' + journal.length + ')');
+  /* (1) a body that takes 3 x 250 ms = 750 ms to arrive, deadline 400 ms: the clock starts after it */
+  ownBill.byRef = async () => ({ chit_id: CHIT, till_id: 'T-A', billed_at: null });
+  const t0 = Date.now();
+  let r = await send(port, BILL, 4, 250);
+  ok(Date.now() - t0 > 700 && r.status === 200 && r.body && r.body.chit_id === CHIT, '(1) a body streamed past the deadline still gets its 2xx (got ' + r.status + ' after ' + (Date.now() - t0) + ' ms)');
 
-  r = await call(port, '/api/products/import', 'b1');
-  ok(r.status === 200, 'a bulk route (products import) still has no deadline (got ' + r.status + ')');
-
-  delete process.env.DB_STATEMENT_TIMEOUT_MS;
-  ok(limits.statementTimeoutMs() === 15000, '(d) the statement cut defaults to 15 s');
-  const dbSrc = require('fs').readFileSync(path.join(API, 'db', 'index.js'), 'utf8');
-  ok(/SET LOCAL statement_timeout/.test(dbSrc), '(d) every transaction sets the statement cut on BEGIN');
-  if (process.env.DATABASE_URL) {
-    process.env.DB_STATEMENT_TIMEOUT_MS = '1000';
-    delete require.cache[require.resolve(path.join(API, 'db'))];
-    const db = require(path.join(API, 'db'));
-    let code = null;
-    try { await db.withTransaction((c) => c.query('SELECT pg_sleep(5)')); } catch (e) { code = e.code; }
-    ok(code === '57014', '(d) live: a statement past the cut is cancelled and rolled back (57014; got ' + code + ')');
-    try { await db.pool.end(); } catch (_) {}
-  } else console.log('  --  DATABASE_URL not set: the live pg_sleep cut is proven by tests/limits.test.cjs on the box');
+  /* (2) the work outlasts the deadline: byRef is slow the first time, answers the held chit after */
+  let calls = 0, finished = 0;
+  ownBill.byRef = async () => { calls++; if (calls === 1) { await wait(700); finished++; } return { chit_id: CHIT, till_id: 'T-A', billed_at: null }; };
+  r = await send(port, BILL, 1, 0);
+  ok(r.status === 503 && r.body && r.body.code === 'REQUEST_TIMEOUT', '(2) a bill past the deadline answers 503 REQUEST_TIMEOUT (got ' + r.status + ')');
+  await wait(500);
+  ok(finished === 1, '(2) the handler ran on and finished once after the 503');
+  r = await send(port, BILL, 1, 0);
+  ok(r.status === 200 && r.body && r.body.duplicate === true && r.body.chit_id === CHIT && r.body.client_ref === 'B-1', '(2) the retry with the same client_ref gets duplicate:true with the chit that exists (got ' + r.status + ' ' + JSON.stringify(r.body) + ')');
+  ok(inserts === 0, '(2) no second chit and no second journal line were written (inserts=' + inserts + ')');
+  ownBill.byRef = original;
   srv.close();
-  console.log('\n  money-deadline: ' + pass + ' passed, ' + fail + ' failed');
+
+  /* (3) the doors with no replay of their own keep no deadline */
+  const bulk = (p) => limits.isBulk({ path: p });
+  ok(!bulk('/api/chits/send') && !bulk('/api/chits/send/') && bulk('/api/chits/abc/amend') && bulk('/api/chits') && bulk('/api/books/entries') && bulk('/api/offers/x') && bulk('/api/invoice/x') && bulk('/api/products/import') && !bulk('/api/people'), '(3) only POST /api/chits/send is a large route that keeps the deadline');
+  delete process.env.DB_STATEMENT_TIMEOUT_MS;
+  ok(limits.statementTimeoutMs() === 15000 && /SET LOCAL statement_timeout/.test(fs.readFileSync(path.join(API, 'db', 'index.js'), 'utf8')), '(3) the statement cut is DB_STATEMENT_TIMEOUT_MS, 15 s by default, set on every transaction (live pg_sleep in tests/limits.test.cjs)');
+  say('\n  money-deadline: ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(2); });
+})().catch((e) => { say(e); process.exit(2); });
