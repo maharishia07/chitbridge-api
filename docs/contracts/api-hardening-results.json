@@ -2326,6 +2326,10 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "an unknown id answered 403, not 404"
    }
   },
   "GET /api/catalogue/network/:bridge_id": {
@@ -2366,6 +2370,10 @@
   "GET /api/catalogue/:bridge_id/support/preview": {
    "output_allowlist": {
     "pass": true
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/support/start": {
@@ -2384,6 +2392,10 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/order/confirm": {
@@ -2393,6 +2405,10 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -2402,6 +2418,10 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "GET /api/catalogue/:bridge_id/my-orders": {
