@@ -114,10 +114,13 @@ function cut(src, start) {
    tests/one-rounding-rule.test.cjs now asserts that, and that nothing platform-owned grows one back. What is left
    here are the ADOPTED engines' own fallbacks, which only a chitbridge-engines release can retire. */
 const COPIES = [
-  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'offers-engine.js', 'pricing-engine.js']
+  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'pricing-engine.js']
     .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
-  ...['variant.js', 'offers.js', 'pricing.js']
+  ...['variant.js', 'pricing.js']
     .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n)', 'roundMoney_']),
+  /* offers v1.89.0 split the helper: roundMoney_ asks moneyEngine_() and the same-rule fallback is its own function, which is what is cut and held equal here */
+  [path.join(API, 'lib', 'offers-engine.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
+  [path.join(WEB_APP, 'offers.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
 ];
 for (const [file, start, name] of COPIES) {
   it('⭐ ' + path.basename(file) + ' — its fallback is money.round', () => {
