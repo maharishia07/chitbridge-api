@@ -50,7 +50,7 @@ function checkBooksRef() {
   ok('a 300-character ref is accepted at the door (the kit swallows a refusal, so the record must not be lost)', statusOf(route, Object.assign({ ref: 'v'.repeat(300) }, chit)) === 200);
   ok('an object ref is refused', refused(route, Object.assign({ ref: { a: 1 } }, chit)));
   const source = require('fs').readFileSync(path.join(ROOT, 'routes', 'integrations.js'), 'utf8');
-  ok('the handler cuts the ref to REF_MAX and logs that it did', /slice(0, REF_MAX)/.test(source) && /kept the first/.test(source));
+  ok('the handler cuts the ref to REF_MAX and logs that it did', source.includes('ref.slice(0, REF_MAX)') && /kept the first/.test(source));
 }
 
 function checkOfferText() {
