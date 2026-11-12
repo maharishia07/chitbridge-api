@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -29416,11 +29416,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "115c3048fe2f6db9"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1189 stage2 (re-sign; CRM-239 done non-boolean 400 BAD_FLAG, web sends only done:true)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm.js"
    ],

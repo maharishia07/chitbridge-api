@@ -383,9 +383,9 @@
    "code": "BAD_FLAG",
    "status": "400",
    "title": "Flag not true or false",
-   "shopkeeper": "priceIncludesTax must be true or false.",
+   "shopkeeper": "That answer must be true or false.",
    "hint": "Send true or false.",
-   "owner_area": "tax",
+   "owner_area": "api",
    "since": "2026-10-23"
   },
   {
