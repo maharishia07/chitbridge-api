@@ -305,19 +305,6 @@
    "grows": false,
    "exercised": true
   },
-  "GET /api/assist/gaps": {
-   "0": {
-    "trips": 0
-   },
-   "10": {
-    "trips": 0
-   },
-   "100": {
-    "trips": 0
-   },
-   "grows": false,
-   "exercised": true
-  },
   "GET /api/assist/penetration": {
    "0": {
     "trips": 1
@@ -1333,32 +1320,6 @@
    "exercised": true
   },
   "GET /api/combo-templates": {
-   "0": {
-    "trips": 1
-   },
-   "10": {
-    "trips": 1
-   },
-   "100": {
-    "trips": 1
-   },
-   "grows": false,
-   "exercised": true
-  },
-  "GET /api/connections/list": {
-   "0": {
-    "trips": 1
-   },
-   "10": {
-    "trips": 1
-   },
-   "100": {
-    "trips": 1
-   },
-   "grows": false,
-   "exercised": true
-  },
-  "GET /api/connections/pending": {
    "0": {
     "trips": 1
    },
@@ -2901,19 +2862,6 @@
    },
    "100": {
     "trips": 5
-   },
-   "grows": false,
-   "exercised": true
-  },
-  "GET /api/schemas/my": {
-   "0": {
-    "trips": 1
-   },
-   "10": {
-    "trips": 1
-   },
-   "100": {
-    "trips": 1
    },
    "grows": false,
    "exercised": true
