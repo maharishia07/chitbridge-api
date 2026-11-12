@@ -313,6 +313,9 @@ const EXTRAS = [
   X('inbox-cost-blind-asks-amount', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?sort=amount&amount_min=100&amount_max=9000', setup: { who: STAFF, sqlRows: answering(/SELECT ch.chit_id/, [INBOX_ROW(CANCEL)]) } }),
   X('sent-cost-blind', 'GET ' + C + '/sent', 200, { setup: { who: STAFF, sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [SENT_ROW(CANCEL)]) } }),
   X('folder-cost-blind', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=archive', setup: { who: STAFF, sqlRows: answering(/SELECT DISTINCT ON/, [FOLDER_ROW(CANCEL)]) } }),
+  X('inbox-filter-invalid', 'GET ' + C + '/inbox', 400, { url: C + '/inbox?date_from=2026-02-30' }),
+  X('sent-filter-invalid', 'GET ' + C + '/sent', 400, { url: C + '/sent?assigned_to=nobody' }),
+  X('folder-filter-invalid', 'GET ' + C + '/folder', 400, { url: C + '/folder?view=archive&date_to=junk' }),
   X('rollup-cost-blind', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state', setup: { who: STAFF, sqlRows: answeringAll([[/AS n$|::int AS n\s/m, [{ n: 1 }]], [/AS members/, [{ key: 'pending', chits: 2, total_value: '360.00', members: [{ total_value: '360', purpose: 'order', sender_entity_id: OTHER, all_recipients: CHIT_ROW.all_recipients, business_json: {} }] }]]]) } }),
   /* RAIL-147: the same cost-blind co-assist WRITES — on a bill received (a cost-side chit by its document kind) a price he sends is refused 403 COST_BLIND and nothing is written; a
      quantity-only amend is recorded with the stored price kept (the answer's line carries no price); a reprice is refused; the rule and the keys are tests/rail147-amend-cost-gate.test.cjs ── */
@@ -520,7 +523,7 @@ const EXTRAS = [
   /* RAIL-128: no copy held → the 404 every own-copy write answers (an id in the URL learns nothing) */
   X('amend-chit-not-held', 'POST ' + C + '/:chit_id/amend', 404, { body: { edits: [] } }),
   X('reprice-chit-not-held', 'POST ' + C + '/:chit_id/reprice', 404, { body: {} }),
-  X('cost-chit-not-held', 'POST ' + C + '/:chit_id/costs', 404, { body: [{ kind: 'fare', amount: 50 }] }),
+  X('cost-chit-not-held', 'POST ' + C + '/:chit_id/costs', 404, { body: [{ kind: 'fare', amount: 50, currency: 'inr' }] }),
   /* RAIL-133: a library's own 400 reaches the person in its words (frozen below); amend names the field and never echoes the value typed (Q19) */
   X('assign-due-date-not-a-date', 'POST ' + C + '/:chit_id/assign-lines', 400, { body: { edits: [{ line_id: PARTY, assignee_actor_id: null, due_date: 'soon' }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
   X('amend-price-not-a-number', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line_index: 0, line: { particulars: 'Tea', quantity: 1, price: '<b>12</b>' } }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
@@ -557,7 +560,7 @@ const EXTRAS = [
   X('reprice-previewed', 'POST ' + C + '/:chit_id/reprice', 200, { body: { preview: true, line_ids: [PARTY] }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) } }),
   X('reprice-applied', 'POST ' + C + '/:chit_id/reprice', 200, { body: { only_unpriced: true }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) }, patch: { amend: { record: async () => ({ amendments: [{ amendment_id: PARTY }] }) } } }),
   X('reprice-no-catalogue', 'POST ' + C + '/:chit_id/reprice', 200, { body: {}, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW, Object.assign({}, LINE_ROW, { line_id: OTHER, particulars: 'Pallet', price: '12', removed: false })]]]) } }),
-  X('cost-recorded', 'POST ' + C + '/:chit_id/costs', 200, { body: [{ kind: 'fare', amount: 50, currency: 'inr', note: 'auto' }, { kind: 'labour', minutes: 80, rate_per_hour: 150 }], setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/INSERT INTO chit_line_cost/, [COST_ROW]]]) } }),
+  X('cost-recorded', 'POST ' + C + '/:chit_id/costs', 200, { body: [{ kind: 'fare', amount: 50, currency: 'inr', note: 'auto' }, { kind: 'labour', minutes: 80, rate_per_hour: 150, currency: 'inr' }], setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/INSERT INTO chit_line_cost/, [COST_ROW]]]) } }),
   X('costs-read-owner', 'GET ' + C + '/:chit_id/costs', 200, { setup: { sqlRows: answeringAll([[/FROM chit_line_cost WHERE/, [COST_ROW]], [/FROM chit_detail WHERE/, [{ total_value: '360.00', currency_code: 'INR' }]]]) } }),
   X('costs-read-mixed-currency', 'GET ' + C + '/:chit_id/costs', 200, { setup: { sqlRows: answeringAll([[/FROM chit_line_cost WHERE/, [COST_ROW, COST_BARE]], [/FROM chit_detail WHERE/, [{ total_value: null, currency_code: null }]]]) } }),
   X('costs-read-mine-only', 'GET ' + C + '/:chit_id/costs', 200, { setup: { who: STAFF, sqlRows: answering(/FROM chit_line_cost WHERE/, [COST_ROW]) } }),

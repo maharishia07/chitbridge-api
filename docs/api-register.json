@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6321,
+   "line": 6348,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5194,
+   "line": 5226,
    "hash": "8289e954b5c807d1",
    "does": "",
    "errors": {
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6582,
+   "line": 6609,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -4145,8 +4145,8 @@
    "owner_area": "attachments",
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
-   "line": 111,
-   "hash": "2e53c392e8f73a83",
+   "line": 122,
+   "hash": "30b3a8f08d9e9732",
    "does": "",
    "errors": {
     "count": 0,
@@ -4214,7 +4214,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; bytes route, noKeys is the right allow-list (no keys to list); answers unchanged",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -9138,7 +9138,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3680,
+   "line": 3712,
    "hash": "5b3b7b59d1faaf33",
    "does": "",
    "errors": {
@@ -9286,7 +9286,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5008,
+   "line": 5040,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9388,7 +9388,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4231,
+   "line": 4263,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9488,7 +9488,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6061,
+   "line": 6088,
    "hash": "ad2b481cd5b97231",
    "does": "",
    "errors": {
@@ -9587,7 +9587,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6015,
+   "line": 6042,
    "hash": "db87c3b5029337bc",
    "does": "",
    "errors": {
@@ -9697,7 +9697,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5588,
+   "line": 5620,
    "hash": "82ed2a6878097cdb",
    "does": "",
    "errors": {
@@ -9911,7 +9911,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4438,
+   "line": 4470,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10011,7 +10011,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4549,
+   "line": 4581,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10309,7 +10309,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6222,
+   "line": 6249,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10417,17 +10417,20 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3235,
-   "hash": "54b00476fd18ef9d",
+   "line": 3267,
+   "hash": "8dafbdfc875c70c5",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
+     400,
      401,
      422,
      500
     ],
-    "codes": []
+    "codes": [
+     "FILTER_INVALID"
+    ]
    },
    "reads": [
     "chit_disputes",
@@ -10467,6 +10470,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -10489,7 +10493,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10520,17 +10524,20 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3431,
-   "hash": "130ced1d0eda9241",
+   "line": 3463,
+   "hash": "158440f72b9764bf",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
+     400,
      401,
      422,
      500
     ],
-    "codes": []
+    "codes": [
+     "FILTER_INVALID"
+    ]
    },
    "reads": [
     "chit_disputes",
@@ -10572,6 +10579,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -10594,7 +10602,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10627,7 +10635,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3618,
+   "line": 3650,
    "hash": "77f9463c104b2ef9",
    "does": "",
    "errors": {
@@ -10724,7 +10732,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4420,
+   "line": 4452,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10822,7 +10830,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4260,
+   "line": 4292,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -10918,7 +10926,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4270,
+   "line": 4302,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11016,7 +11024,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4312,
+   "line": 4344,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11111,7 +11119,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4377,
+   "line": 4409,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11211,7 +11219,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3330,
+   "line": 3362,
    "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
@@ -11313,17 +11321,20 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3168,
-   "hash": "4fb72caa3f81d69c",
+   "line": 3200,
+   "hash": "28854d3230999418",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
+     400,
      401,
      422,
      500
     ],
-    "codes": []
+    "codes": [
+     "FILTER_INVALID"
+    ]
    },
    "reads": [
     "chit_detail",
@@ -11369,6 +11380,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -11391,7 +11403,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11733,7 +11745,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3645,
+   "line": 3677,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -19237,7 +19249,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 983,
+   "line": 1001,
    "hash": "621e2f2f391396f3",
    "does": "",
    "errors": {
@@ -19333,7 +19345,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 833,
+   "line": 851,
    "hash": "457ba6a1ba37fd28",
    "does": "",
    "errors": {
@@ -19431,7 +19443,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 718,
+   "line": 726,
    "hash": "70de3a5a5b1f6993",
    "does": "",
    "errors": {
@@ -19529,7 +19541,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 961,
+   "line": 979,
    "hash": "af4a542c64bc4085",
    "does": "",
    "errors": {
@@ -19625,7 +19637,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 751,
+   "line": 759,
    "hash": "f97d3783abe3f0d1",
    "does": "",
    "errors": {
@@ -24543,7 +24555,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 99,
+   "line": 100,
    "hash": "7d620eeddb9eb249",
    "does": "",
    "errors": {
@@ -24749,7 +24761,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "b0fb95da2f4e8a1c",
+   "hash": "982fa58847fe59d3",
    "does": "",
    "errors": {
     "count": 0,
@@ -24820,7 +24832,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1180 stage2: C11 10c read: GET /tax/ledger gains the additive dropped_why key (fixed sentences 'Bill X: it could not be read.', no error text relayed), declared in api-output-shapes; an unreadable expense chit is named in dropped instead of losing every ITC in silence; no refusal path or status changed; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31028,7 +31040,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 85,
-   "hash": "11c5de3b07e9af43",
+   "hash": "467e34ad571a57e8",
    "does": "",
    "errors": {
     "count": 0,
@@ -31100,7 +31112,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -38479,7 +38491,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1181,
-   "hash": "622c83d3ce290ba1",
+   "hash": "3e69e940a86dcd21",
    "does": "",
    "errors": {
     "count": 3,
@@ -38558,7 +38570,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: AI-34 shopper name bounded to 255 (identities.display_name varchar(255)), null stays no name; a longer name was a database 500, now the standard 422 naming name; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -38688,7 +38700,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1282,
-   "hash": "7d9d4681880be122",
+   "hash": "0e9d131e287ebb29",
    "does": "",
    "errors": {
     "count": 2,
@@ -38762,7 +38774,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text; was a seven-column sign-off of 2026-10-23, no handler change",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: AI-34 same shopper-name bound (shared SHOPPER_NAME), same 422; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39792,7 +39804,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4922,
+   "line": 4954,
    "hash": "b5bf1ff993c4dff3",
    "does": "",
    "errors": {
@@ -39902,7 +39914,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6474,
+   "line": 6501,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40010,7 +40022,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4773,
+   "line": 4805,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40116,7 +40128,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5246,
+   "line": 5278,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40222,8 +40234,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4213,
-   "hash": "9cb42a8345e6c19c",
+   "line": 4245,
+   "hash": "380c285599bb79c1",
    "does": "",
    "errors": {
     "count": 0,
@@ -40293,7 +40305,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: QA-142 read: figures typed and bounded (money below 10^13, minutes int32, derived amount re-checked), 422 naming the field; web sends no cost body; qa-142-cost-figures 77 ok; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40318,7 +40330,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4583,
+   "line": 4615,
    "hash": "2230812987fb9ca7",
    "does": "",
    "errors": {
@@ -40428,8 +40440,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5831,
-   "hash": "dac6f3853a1f6aa9",
+   "line": 5863,
+   "hash": "d6eb5545b4017d0b",
    "does": "",
    "errors": {
     "count": 0,
@@ -40505,7 +40517,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404 (was 403); web raise toast shows the failure, none branches on 403",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40548,8 +40560,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5447,
-   "hash": "e47df5423efd75e7",
+   "line": 5479,
+   "hash": "acb999f6908ec147",
    "does": "",
    "errors": {
     "count": 0,
@@ -40626,7 +40638,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reader, not the builder) 2026-11-11 PR#1096 stage2: handler re-read and 13 columns checked; no copy held is the one 404, a rail verdict on a held copy stays its own 403 (refuseUnlessHeld); web composer shows the server words",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40655,7 +40667,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5156,
+   "line": 5188,
    "hash": "fd0d3624e4edb5a0",
    "does": "",
    "errors": {
@@ -41154,7 +41166,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4452,
+   "line": 4484,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -41254,7 +41266,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4508,
+   "line": 4540,
    "hash": "a6c3059bcdab231a",
    "does": "",
    "errors": {
@@ -41354,7 +41366,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4528,
+   "line": 4560,
    "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
@@ -41450,7 +41462,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4174,
+   "line": 4206,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -41550,7 +41562,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6553,
+   "line": 6580,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -41655,7 +41667,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6532,
+   "line": 6559,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -41759,7 +41771,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6514,
+   "line": 6541,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -41863,7 +41875,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6794,
+   "line": 6821,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -41969,7 +41981,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4398,
+   "line": 4430,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42065,7 +42077,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4367,
+   "line": 4399,
    "hash": "b4db7e428e83b4b7",
    "does": "",
    "errors": {
@@ -42165,7 +42177,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4388,
+   "line": 4420,
    "hash": "614db4519036ff5d",
    "does": "",
    "errors": {
@@ -42265,7 +42277,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4284,
+   "line": 4316,
    "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
@@ -42366,7 +42378,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4302,
+   "line": 4334,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -42466,7 +42478,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4344,
+   "line": 4376,
    "hash": "89b46078bdc9bea1",
    "does": "",
    "errors": {
@@ -42566,7 +42578,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4323,
+   "line": 4355,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -42660,8 +42672,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 408,
-   "hash": "b68ccb2d02c48523",
+   "line": 411,
+   "hash": "2fff915f42996c30",
    "does": "",
    "errors": {
     "count": 0,
@@ -42736,7 +42748,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: typed keys, unknown key ignored (S33-T tolerant_outward, queued till); handler reads checked against SEND_BODY; rail126-send-typed 39 ok; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45387,7 +45399,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 737,
-   "hash": "405b8d8947bd2693",
+   "hash": "57a3696e9ad8ab93",
    "does": "",
    "errors": {
     "count": 0,
@@ -45457,7 +45469,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: MKT-26 offer text must be text within TEXT_MAX (a number or object went out as \"5\"/[object Object]); a control character such as NUL is refused 400 at the door (400 declared, registered); null stays the handler NO_TEXT; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -48733,7 +48745,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 940,
+   "line": 958,
    "hash": "aa16ade8f3f0dd21",
    "does": "",
    "errors": {
@@ -48828,8 +48840,8 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 672,
-   "hash": "e2e8bbb2e50fede2",
+   "line": 680,
+   "hash": "0672ad19cc37824b",
    "does": "",
    "errors": {
     "count": 1,
@@ -48903,7 +48915,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: CON-123 kind and outcome are the words the kit writes (400 with the failure sentence, chit_id keeps its old words); a ref over 120 is cut and logged, an object ref refused; answers unchanged; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -48928,7 +48940,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 801,
+   "line": 819,
    "hash": "d86df23c95c37d1d",
    "does": "",
    "errors": {
@@ -49134,7 +49146,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1019,
+   "line": 1037,
    "hash": "6627938ea0d3c11c",
    "does": "",
    "errors": {
@@ -49975,7 +49987,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 438,
+   "line": 439,
    "hash": "a4401816d7a77a5a",
    "does": "",
    "errors": {
@@ -50197,7 +50209,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 403,
-   "hash": "bfdcb3d04502a11d",
+   "hash": "1027ead797365984",
    "does": "",
    "errors": {
     "count": 3,
@@ -50279,7 +50291,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1181 stage2: NET-56 read in routes/network-offers.js withdraw: a second withdraw keeps the earlier end (net.earlierEnd) and the first withdrawn_at, a first withdraw unchanged; no new status, code or answer key, no refusal path touched; web caller netOfferWithdraw sends only at; 13 columns true; net-56 test green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56390,7 +56402,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1172 stage2: re-read, hash unchanged (the gate is a router.use ahead of the routes, not in the hash), 13 columns pass; sealed environments (production, uat, staging, live, prod) answer these three exactly as an unknown path (the app's own no-such-route 404, no new code, no sentence naming the tour); unsealed answers unchanged",
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56507,7 +56519,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 61,
-   "hash": "3b16aa55740768ab",
+   "hash": "364fce06aaa4049b",
    "does": "",
    "errors": {
     "count": 0,
@@ -56581,7 +56593,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56610,8 +56622,8 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 132,
-   "hash": "062ce99b9f77f313",
+   "line": 138,
+   "hash": "471fc8c79f9c2f6f",
    "does": "",
    "errors": {
     "count": 0,
@@ -56683,7 +56695,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: unknown or another shop id answers 404 NOT_FOUND like PATCH /:id; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56712,8 +56724,8 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 119,
-   "hash": "bd2e466d1f7552ff",
+   "line": 125,
+   "hash": "a1f8fa3246544304",
    "does": "",
    "errors": {
     "count": 0,
@@ -56789,7 +56801,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56818,7 +56830,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 185,
+   "line": 186,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -56922,7 +56934,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 148,
+   "line": 149,
    "hash": "f06e00970724f9d6",
    "does": "",
    "errors": {
@@ -62177,7 +62189,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6140,
+   "line": 6167,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62289,7 +62301,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6366,
+   "line": 6393,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62394,7 +62406,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6422,
+   "line": 6449,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -62501,7 +62513,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6497,
+   "line": 6524,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -62606,7 +62618,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5290,
+   "line": 5322,
    "hash": "b7cf1cbeb711e833",
    "does": "",
    "errors": {
@@ -62765,7 +62777,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4572,
+   "line": 4604,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -62869,7 +62881,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6651,
+   "line": 6678,
    "hash": "bca9bf272f4bc0fc",
    "does": "",
    "errors": {
@@ -63950,11 +63962,11 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 760,
-   "hash": "9f7a6d4d41aa7697",
+   "line": 784,
+   "hash": "2a1be8be966e3ef7",
    "does": "",
    "errors": {
-    "count": 3,
+    "count": 4,
     "statuses": [
      400,
      401,
@@ -63965,7 +63977,8 @@
     "codes": [
      "INTEGRATION_BAD_REQUEST",
      "KEY_CANNOT_DECIDE",
-     "NO_STREAM_NAMED"
+     "NO_STREAM_NAMED",
+     "STREAM_OWNER_UNKNOWN"
     ]
    },
    "reads": [],
@@ -64027,7 +64040,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: CON-110 a stream owner must be a kit of this shop: new 422 STREAM_OWNER_UNKNOWN registered with a shopkeeper sentence, 422 declared, the id is not echoed, old 422 for a non-id kept; owner map logic lifted unchanged into ownersAfter; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",

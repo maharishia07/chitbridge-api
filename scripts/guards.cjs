@@ -32,6 +32,7 @@ const TESTS = path.join(__dirname, '..', 'tests');
 
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
+  'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
   'endpoint-usage.test.cjs', // janitor (23 Oct): the wide endpoint run: a comment is no call, a dynamic segment meets only a :param, a bucket follows its best evidence
   'till-vendor.test.js', // the counter and its vendored engines agree, byte for byte
@@ -384,6 +385,7 @@ const GUARDS = [
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs', // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
+  'c11-10c-tax-month.test.cjs', // C11 10c: ACC-302 one unreadable expense chit is named in dropped and the month keeps every other bill's ITC; SPD-18 a month's parties are one identities read, ledger identical to the per-copy path; ACC-276 whole-minor words
   'bill-paper.test.cjs', // ⭐ CTRY-76: a tax invoice of A$1,000 or more names its buyer (reg-au s.29-70(1)(c)(ii)) — held under not_invoice, never a stop; a bad buyer ABN/GSTIN is refused by the ONE check (profile.taxIdRefusal)
   'page-name.test.cjs', // ⭐ N03: every chit names its detail page at mint (base by default); an unknown name is refused; nothing rewrites it
   'two-sided-bill.test.cjs', // a till sends its own on-rail customer their copy — and nobody else; one shop row; replay-safe
@@ -482,6 +484,7 @@ const GUARDS = [
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-bell.test.cjs', // API-4 sweep, the bell: every refusal of routes/events.js and routes/notifications.js (6 routes) is a Problem with its old keys frozen; the stream opens with a ticket in ?t= and ?ticket=, its frames and heartbeat unchanged; no answer says its cause; notif_dismissed has no foreign key, so a foreign log_id is no oracle
   'api-problem-supplies.test.cjs', // API-4 sweep, the supplies: every refusal of the 5 routes of routes/supplies.js (what a shop buys to use: list, add, edit, purchase, issue) is a Problem with its old keys frozen; no success answer moved; no answer of any status carries a thrown text; another shop's supply id answers as an unknown one (S35); an id in a body reaches no statement unscoped
+  'c11-10a-supplies-bounds.test.cjs', // C11 10a: the supplies doors refuse a figure past its column, a day that is no day or past tomorrow and a blank name (422, field named); numeric text read against the same bounds; the Idempotency-Key as the ref of an issue
   'ops-72-duplicate-bill.test.cjs', // OPS-72: a bill number used before is answered in words — the same bill again is "already recorded" (0 counted), the same supplier's number with other lines is a 409, another supplier's bill counts
   'ops-80-fefo-replay.test.cjs', // OPS-80: a replayed FEFO issue of batch-tracked stock (twice, concurrent, half-done, short) takes the goods out once and answers the first call's batches
   'api-problem-privacy.test.cjs', // API-4 sweep, the privacy routes: every refusal of the 4 routes of routes/privacy.js (the public facts and the shopper's own page) is a Problem with its old keys frozen; no success answer moved; no answer of any status carries a thrown text or another shopper's data; the shopper and the shop come from the token alone; a write appends one row
@@ -562,6 +565,7 @@ const GUARDS = [
   'settings-owner-gate.test.cjs', // T3-SETTINGS: ONE owner gate (lib/owner.gate) on every counters write - a co-assist 403 OWNER_ONLY, db never asked; GET /counters + GET /entities/policy say may/why with the refusal's own sentence
   'chit-crossing.test.cjs', // LEAN-PLAN §8 #3: lib/chit-crossing (lifted with moveStatus) - definer vs legacy fallback, 9-arg retry only when no line was named
   'chits-files.test.cjs', // LEAN-PLAN §8 #4: tools/chits-files.cjs is the ONE list of chits files; no test or script reads routes/chits.js by a literal path
+  'money-deadline.test.cjs', // PLT-70: the money doors keep the request deadline: 503 at the deadline, the late write commits once, the keyed retry replays; bulk routes keep none
   'timeout-idempotency.test.cjs', // PLT-69: a keyed request past REQUEST_TIMEOUT_MS gets its 503 (problem shape); retry = 409 while it runs, the stored answer after; the handler runs once
   'plt85-admission.test.cjs', // PLT-85 / SPD-45: over API_MAX_INFLIGHT the answer is 503 SERVER_BUSY + Retry-After before any handler; aborted requests give their place back once; a busy pool at the idempotency claim never runs the handler on memory
   'stuck-close.test.cjs', // round 2: a counter sale / summary chit sent to its own shop closes when the books hold it - through moveStatus, only an open own copy
@@ -629,6 +633,7 @@ const GUARDS = [
   'ai-box.test.cjs',
   'ai-one-pipe.test.cjs',
   'assign-merge-patch.test.cjs',
+  'connect-10d-input-shape.test.cjs', // C11 batch 10d (12 Nov): a chit line goes to someone on the team (one reader with the follow-up door, nothing written for a stranger), an offer's text is text, a shopper name fits its column, a new quick-key group is typed like a changed one; 42 checks
   'auth-first-routes.test.cjs',
   'baseline-from-snapshot.test.cjs',
   'books-close-country.test.cjs',
@@ -868,6 +873,9 @@ const GUARDS = [
   'idem3-till-reward.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idem3-till-reward.test.cjs — the counter's two points writes are SAFE TO REPEAT (contract pass, 7 Nov 2026).
   'idoc-subject.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idoc-subject.test.cjs — who may file a document against whom.
   'net-94-release-time.test.cjs', // NET-94/NET-87 (9 Nov): a GIVEN release time that is not a date is a 400 DATE_INVALID, never the next opening or no end
+  'net-56-withdraw-earlier-end.test.cjs', // B13 (12 Nov): NET-56 a second withdraw keeps the EARLIER end and answers 200 with it (ATHI-DECISIONS 6 Nov)
+  'net-76-ask-by-bridge-id.test.cjs', // B13 (12 Nov): NET-76 an ask by childBridgeId makes a local shop's node; a remote one is refused, nothing written
+  'plt-67-register-member-taken.test.cjs', // B13 (12 Nov): PLT-67 register refuses a retired or local key (NET_KEY_TAKEN); an active member needs --update (spin.sh passes it)
   'net-77-remote-dealer-409-mutation.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 mutation checks: break the refusal two ways and tests/net-77-remote-dealer-409.test.cjs MUST go red each time.
   'net-77-remote-dealer-409.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 (owner cb-network): asking to connect to a business on ANOTHER installation (a supplier stub here) is refused, nothing save
   'net-edge-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): NET-EDGE (owner cb-network): the five POST /api/network/connections/:id/{approve,decline,suspend,resume,disconnect} answers name t

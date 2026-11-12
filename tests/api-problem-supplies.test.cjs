@@ -233,6 +233,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkContractShape(routes);
   checkFrozen5xx(recording);
   checkLeaks(recording);
+  check('C11 10a: a refused shape (a figure past its column, a day that is no day or past tomorrow, a blank name) reached the database with no statement', scenes.SHAPE_STATEMENTS.length === 0, scenes.SHAPE_STATEMENTS.slice(0, 2));
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 20, frozen);

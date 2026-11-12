@@ -212,6 +212,11 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
+  'dispute-alert.js',
+  'line-shape.js',
+  'list-filters.js',
+  'team-member.js',
   /* SHARED-CHECKS 0a (2026-11-09): the schema fragments a route names for a quantity, minor-unit amount, day, text, page and list bound (ceilings read off chit-ceiling). Decides no money, tax or rule. */
   'bounds.js',
   /* CUR-1 (2026-11-09, ACC-331/332): which cells of a bill or a journal can carry a currency and the one refusal of another currency (lib/money.assertSameCurrency decides). Decides no money rule. */

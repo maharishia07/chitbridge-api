@@ -434,6 +434,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_LINE_ID",
+   "status": "400",
+   "title": "Invalid line id",
+   "shopkeeper": "A line's own id is not an id, or two lines share one, so nothing was saved.",
+   "hint": "Leave line_id out and one is made, or send the one the chit gave.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
+  },
+  {
    "code": "BAD_NAME",
    "status": "400",
    "title": "Bad name",
@@ -1667,6 +1676,15 @@
    "since": "2026-10-25"
   },
   {
+   "code": "CTP_UNRESOLVABLE",
+   "status": "503",
+   "title": "Could not reach the other side",
+   "shopkeeper": "Where one of the chit's parties is hosted could not be read just now, so nothing was written.",
+   "hint": "Try again in a moment.",
+   "owner_area": "ctp",
+   "since": "2026-11-12"
+  },
+  {
    "code": "CTP_VERSION_UNSUPPORTED",
    "status": "400",
    "title": "Version not read",
@@ -2061,6 +2079,15 @@
    "hint": "Open the connection to see where it stands.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "FILTER_INVALID",
+   "status": "400",
+   "title": "Invalid filter",
+   "shopkeeper": "A date or a person in the list's filter is not a value it can use.",
+   "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
   },
   {
    "code": "FOLDER_BAD_REQUEST",
@@ -3033,6 +3060,15 @@
    "hint": "Take some of it out and save again.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "NET_KEY_TAKEN",
+   "status": "409",
+   "title": "Installation key already taken",
+   "shopkeeper": "That installation key is already in the member registry (hosted here, retired, or an active member), so it was not overwritten. Nothing was changed.",
+   "hint": "Pick a new key, or add --update to change an active member.",
+   "owner_area": "network",
+   "since": "2026-11-12"
   },
   {
    "code": "NET_WRITE_DISABLED",
@@ -4268,6 +4304,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "RETENTION_TOO_LONG",
+   "status": "400",
+   "title": "Kept too long",
+   "shopkeeper": "A chit cannot be kept for more than a hundred years.",
+   "hint": "Choose an earlier expiry date.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
+  },
+  {
    "code": "RETURN_FROM_RAIL",
    "status": "422",
    "title": "Return comes from bills",
@@ -4617,6 +4662,15 @@
    "hint": "Ask your administrator to finish the update.",
    "owner_area": "capture",
    "since": "2026-11-07"
+  },
+  {
+   "code": "STREAM_OWNER_UNKNOWN",
+   "status": "422",
+   "title": "Not a connector of this shop",
+   "shopkeeper": "That is not a connector of this shop.",
+   "hint": "Pick a connector from the list, or leave the stream unowned.",
+   "owner_area": "integrations",
+   "since": "2026-11-12"
   },
   {
    "code": "SUBMISSION_REJECTED",

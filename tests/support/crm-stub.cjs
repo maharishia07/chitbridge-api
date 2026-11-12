@@ -87,7 +87,7 @@ function make() {
     }
     if (/^SELECT cl\.customer_identity_id AS pid/.test(sql)) return { rows: data.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
     if (/^SELECT sl\.supplier_entity_id AS pid/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
-    if (/^SELECT 1 FROM identities WHERE identity_id = \$1 AND \(identity_id = \$2/.test(sql)) return { rows: data.team.indexOf(p[0]) >= 0 && p[1] === 'E1' ? [{ '?column?': 1 }] : [] };
+    if (/^SELECT identity_id FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND \(identity_id = \$2/.test(sql)) return { rows: p[0].filter((id) => data.team.indexOf(id) >= 0 && p[1] === 'E1').map((id) => ({ identity_id: id })) }; /* lib/team-member: who of the ids is on the team */
     if (/^INSERT INTO party_followup/.test(sql)) {
       if (!data.migrated) throw gone('party_followup');
       const r = { followup_id: uid(), owner: p[0], party_id: p[1], what: p[2], due_at: p[3], assignee_user_id: p[4], source: p[5], done_at: null, done_by: null, bell_day: null, created_at: new Date().toISOString() };

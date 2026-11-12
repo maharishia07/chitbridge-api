@@ -292,7 +292,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "why": "not reached: answered 422"
    },
    "foreign_id_404": {
     "pass": true
@@ -5093,7 +5093,8 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 422"
    }
   },
   "PATCH /api/supplies/:id": {
@@ -5102,7 +5103,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "why": "not reached: answered 400"
    },
    "foreign_id_404": {
     "pass": true

@@ -6,7 +6,7 @@
  *   show                                     what this installation is: its role, whether it holds the network key, the key's fingerprint (public)
  *   fingerprint                              the master's network public key (PEM) and its fingerprint: what a joining installation pins and compares
  *   next-handle <scope>                      the next free root handle for a scope (in, au, ae … or a 2-6 letter slug): cb<scope><nn>-root
- *   register <key> <domain> [--country AU] [--root-handle cbau01-root] [--root-bridge CB…]   add a member's row (remote, with its endpoint)
+ *   register <key> <domain> [--country AU] [--root-handle cbau01-root] [--root-bridge CB…] [--update]   add a member's row (remote, with its endpoint); a key already taken is refused (NET_KEY_TAKEN) unless an active member and --update
  *   issue <key> [--minutes N]                issue a certificate (default 30 days; SIT uses 10 minutes to prove a lapse)
  *   suspend <key> [--reason words]           its certificates stop counting at the next pull; its own shops and data are untouched
  *   reinstate <key>                          the opposite of suspend (a revoked one stays revoked)
@@ -69,7 +69,7 @@ const VERBS = {
       label: flag(args, 'label'),
       root_handle: flag(args, 'root-handle'),
       root_bridge_id: flag(args, 'root-bridge')
-    });
+    }, { update: args.includes('--update') });
   },
   async issue(args) {
     const minutes = Number(flag(args, 'minutes'));

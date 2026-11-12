@@ -7423,6 +7423,12 @@
               "type": "string"
             }
           },
+          "dropped_why": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
           "rows": {},
           "note": {
             "type": "string"
@@ -17469,7 +17475,7 @@
           "edits": [
             {
               "line_id": "22222222-2222-4222-8222-222222222222",
-              "assignee_actor_id": "44444444-4444-4444-8444-444444444444",
+              "assignee_actor_id": "00000000-0000-4000-8000-00000000c0a1",
               "task": "Pack",
               "due_date": "2026-10-05"
             }
@@ -19550,7 +19556,16 @@
             "type": "boolean"
           },
           "number_check": {},
-          "one_sided": {}
+          "one_sided": {},
+          "ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "says": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       },
@@ -25013,8 +25028,8 @@
       "example": {
         "url": "/api/integrations/streams",
         "body": {
-          "order": "kit@pc",
-          "stock": null
+          "order": null,
+          "stock": false
         }
       }
     },

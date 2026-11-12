@@ -245,8 +245,6 @@ app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }))
 const authFirst = require('./middleware/auth-first');
 app.use(authFirst.parsers);
 
-// E01 · every request has a deadline (REQUEST_TIMEOUT_MS, default 30 s) → 503 REQUEST_TIMEOUT; the SSE stream is exempt (lib/limits.js)
-app.use(require('./lib/limits').requestTimeout);
 // PLT-85 / SPD-45 · over API_MAX_INFLIGHT requests inside the api the answer is 503 SERVER_BUSY + Retry-After at the door, before any claim or write (lib/limits.js admit)
 app.use(require('./lib/limits').admit);
 // E07 · the request in scope for the database layer (slow-query lines carry its id) — after the parsers, whose stream callbacks drop the context
@@ -355,6 +353,9 @@ app.use('/api/assist', assistLimiter);
 app.use(authFirst.authThenParse);
 /* API-15 (BH-3): a NUL byte in the path, query or body is refused 400 here, once — Postgres cannot store it (22021) and each route would answer 500 */
 app.use(require('./lib/input-hygiene').refuseNul);
+// E01 · every request has a deadline (REQUEST_TIMEOUT_MS, default 30 s) → 503 REQUEST_TIMEOUT; the SSE stream is exempt (lib/limits.js)
+// PLT-70 · ⚠️ STARTED AFTER THE BODY IS READ (the global parsers above, authThenParse here): a slow till uploading an 8 MB bill must not spend its 30 s on the upload, or its retry would time out the same way, forever
+app.use(require('./lib/limits').requestTimeout);
 
 // ── Idempotency (offline outbox, Phase 2) ─────────────────────
 // Opt-in per request (Idempotency-Key header) + self-healing (no-op until b109 is run). Placed before the routers so a

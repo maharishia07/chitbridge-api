@@ -23130,6 +23130,34 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "folder-filter-invalid",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid filter",
+      "code": "FILTER_INVALID",
+      "message": "date_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "field": "date_to",
+      "type": "https://chitbridge.com/problems/filter_invalid",
+      "title": "Invalid filter",
+      "status": 400,
+      "detail": "date_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Invalid filter",
+      "code": "FILTER_INVALID",
+      "message": "date_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "field": "date_to",
+      "type": "https://chitbridge.com/problems/filter_invalid",
+      "title": "Invalid filter",
+      "status": 400,
+      "detail": "date_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -23152,6 +23180,34 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "inbox-filter-invalid",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid filter",
+      "code": "FILTER_INVALID",
+      "message": "date_from is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "field": "date_from",
+      "type": "https://chitbridge.com/problems/filter_invalid",
+      "title": "Invalid filter",
+      "status": 400,
+      "detail": "date_from is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Invalid filter",
+      "code": "FILTER_INVALID",
+      "message": "date_from is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "field": "date_from",
+      "type": "https://chitbridge.com/problems/filter_invalid",
+      "title": "Invalid filter",
+      "status": 400,
+      "detail": "date_from is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -23410,6 +23466,34 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "sent-filter-invalid",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid filter",
+      "code": "FILTER_INVALID",
+      "message": "assigned_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "field": "assigned_to",
+      "type": "https://chitbridge.com/problems/filter_invalid",
+      "title": "Invalid filter",
+      "status": 400,
+      "detail": "assigned_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Invalid filter",
+      "code": "FILTER_INVALID",
+      "message": "assigned_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "field": "assigned_to",
+      "type": "https://chitbridge.com/problems/filter_invalid",
+      "title": "Invalid filter",
+      "status": 400,
+      "detail": "assigned_to is not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.",
+      "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -49407,18 +49491,6 @@
      }
     },
     {
-     "scenario": "get-name-beyond-latin-1-cannot-be-sent",
-     "status": 500,
-     "body_keys": {
-      "error": "Fetch failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Fetch failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
      "scenario": "get-id-not-a-uuid",
      "status": 500,
      "body_keys": {
@@ -50792,30 +50864,6 @@
      "fixture": {
       "error": "validation",
       "message": "a movement of nothing records nothing"
-     }
-    },
-    {
-     "scenario": "issue-not-a-number",
-     "status": 400,
-     "body_keys": {
-      "error": "validation",
-      "message": "a movement of nothing records nothing"
-     },
-     "fixture": {
-      "error": "validation",
-      "message": "a movement of nothing records nothing"
-     }
-    },
-    {
-     "scenario": "issue-negative",
-     "status": 400,
-     "body_keys": {
-      "error": "validation",
-      "message": "issued takes stock out; give the quantity as a positive number"
-     },
-     "fixture": {
-      "error": "validation",
-      "message": "issued takes stock out; give the quantity as a positive number"
      }
     },
     {

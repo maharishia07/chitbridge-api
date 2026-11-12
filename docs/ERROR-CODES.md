@@ -61,6 +61,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
 | CHILD_NOT_FOUND | 404 | Business not found | We could not find that business. | Check its handle and try again. | network | 2026-10-23 |
 | CHIT_AMOUNT_TOO_LARGE | 400 | Amount too large | A total, quantity or price is larger than a chit can hold, so nothing was saved. | Lower the amount or split it into smaller chits; the sentence names the most a chit can hold. | chits | 2026-11-09 |
+| BAD_LINE_ID | 400 | Invalid line id | A line's own id is not an id, or two lines share one, so nothing was saved. | Leave line_id out and one is made, or send the one the chit gave. | chits | 2026-11-12 |
+| FILTER_INVALID | 400 | Invalid filter | A date or a person in the list's filter is not a value it can use. | Use a real day (2026-11-12) for a date and a person's id for assigned_to. | chits | 2026-11-12 |
+| RETENTION_TOO_LONG | 400 | Kept too long | A chit cannot be kept for more than a hundred years. | Choose an earlier expiry date. | chits | 2026-11-12 |
+| CTP_UNRESOLVABLE | 503 | Could not reach the other side | Where one of the chit's parties is hosted could not be read just now, so nothing was written. | Try again in a moment. | ctp | 2026-11-12 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | The reading arrived but its chit could not be delivered. | The device keeps the event and sends it again. | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | That contact is on more than one account. | Choose the account you want. | signin | 2026-10-22 |
@@ -311,6 +315,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_PRICE_MISSING | 409 | No brand price | The brand has no price for that product. | Ask the brand to suggest a price. | network-offers | 2026-10-23 |
 | NETWORK_REFUSED | 409 | Network step refused | The network cannot take that step as it stands. | Read the sentence shown and fix it. | network-offers | 2026-10-23 |
 | NETWORK_REMOTE_NOT_YET | 409 | Business on another installation | That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved. | Add them as a supplier for now; connecting across installations is coming. | network | 2026-11-07 |
+| NET_KEY_TAKEN | 409 | Installation key already taken | That installation key is already in the member registry (hosted here, retired, or an active member), so it was not overwritten. Nothing was changed. | Pick a new key, or add --update to change an active member. | network | 2026-11-12 |
 | NETWORK_REQUEST_INVALID | 400 | Network request not valid | That request is not valid: the sentence says what to change. | Fix what the sentence says and send again. | network-offers | 2026-10-23 |
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
@@ -443,6 +448,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
+| STREAM_OWNER_UNKNOWN | 422 | Not a connector of this shop | That is not a connector of this shop. | Pick a connector from the list, or leave the stream unowned. | integrations | 2026-11-12 |
 | SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies arrive after the next update. Supplies cannot be recorded or listed yet. | Ask the operator to run the update, then try again. | supplies | 2026-11-07 |
 | SUPPLY_BILL_DIFFERS | 409 | Bill already recorded | This bill number is already recorded for that supplier with different lines. | Record a correction, or use a new bill number. | supplies | 2026-10-31 |
 | SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |

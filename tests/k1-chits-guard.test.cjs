@@ -68,7 +68,7 @@ const ROUTES = [
   ['PUT', ':c/use', {}], ['PUT', ':c/status', { status: 'accepted' }], ['PUT', ':c/void', { reason: 'wrong chit' }], ['PUT', ':c/priority', { priority: 'high' }],
   ['PUT', ':c/priority-flag', { priority: true }], ['PUT', ':c/star', {}], ['PUT', ':c/disputes/:d/resolve', { resolution_note: 'done' }],
   ['POST', ':c/amend', { edits: [{ line_id: LINE, quantity: 1 }] }], ['POST', ':c/reprice', {}], ['POST', ':c/assign-lines', { edits: [{ line_id: LINE, assignee_id: LINE }] }],
-  ['POST', ':c/deliver-lines', { rows: [{ line_id: LINE, quantity: 1 }] }], ['POST', ':c/costs', { rows: [{ kind: 'fuel', amount: 5 }] }],
+  ['POST', ':c/deliver-lines', { rows: [{ line_id: LINE, quantity: 1 }] }], ['POST', ':c/costs', { rows: [{ kind: 'fuel', amount: 5, currency: 'AUD' }] }],
   ['POST', ':c/books-request', {}], ['POST', ':c/messages', { message_text: 'hello', thread_type: 'external' }],
   ['POST', ':c/disputes', { category: 'quality', reason: 'The goods were short by two boxes' }], ['POST', ':c/raida', { kind: 'risk', body: 'a risk' }],
   ['POST', ':c/archive', {}], ['POST', ':c/unarchive', {}], ['POST', ':c/restore', {}], ['POST', ':c/unread', {}],

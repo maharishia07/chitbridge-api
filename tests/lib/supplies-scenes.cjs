@@ -22,6 +22,9 @@ const EDITED = { supply_item_id: ITEM, name: 'Floor cleaner 5L', unit: 'bottle',
 const BALANCE = { qty: '10', value: '100', avg_cost: '10', unit: 'bottle' };
 
 /** the tools a scene is built from: the harness's own stand-ins */
+/** every statement a refused-shape scene reaches the database with: it must stay empty (a 422 writes nothing) */
+const SHAPE_STATEMENTS = [];
+
 function extras(tools) {
   const { STAFF, SECRET_SQL, answering, raising, firstOf } = tools;
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
@@ -57,7 +60,8 @@ function extras(tools) {
     X('add-not-created', 'POST ' + at(), 400, { body: { name: 'Floor cleaner' } }),
     X('add-made', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', unit: 'bottle', note: 'for the shop floor' }, setup: { sqlRows: byName(KEPT) } }),
     X('add-made-and-counted', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', unit: 'bottle', sku: 'FC-1', keep_stock: true }, setup: { sqlRows: byName(KEPT) } }),
-    X('add-keep-stock-not-true', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', keep_stock: 'yes' }, setup: { sqlRows: byName(EXPENSED) } }),
+    /* C11 10a: a flag that is not true or false is refused (it was read as false, silently) */
+    X('add-keep-stock-not-true', 'POST ' + at(), 422, { body: { name: 'Floor cleaner', keep_stock: 'yes' }, setup: { sqlRows: byName(EXPENSED) }, after: true }),
     X('add-unknown-key-refused', 'POST ' + at(), 422, { body: { name: 'Floor cleaner', price: 99, visible: true }, setup: { sqlRows: byName(EXPENSED) } }),
     X('add-not-ready', 'POST ' + at(), 503, { body: { name: 'Floor cleaner' }, setup: { sqlRows: raising(/INSERT INTO supply_item/, '42P01') } }),
     X('add-fails', 'POST ' + at(), 500, { body: { name: 'Floor cleaner' }, setup: { sqlRows: raising(/INSERT INTO supply_item/, '23505') } }),
@@ -67,6 +71,7 @@ function extras(tools) {
   const edits = [
     X('edit-saved', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: { name: 'Floor cleaner 5L' }, setup: { sqlRows: edited } }),
     X('edit-retired', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: { retired: true }, setup: { sqlRows: edited } }),
+    X('edit-name-is-spaces', 'PATCH ' + at('/:id'), 400, { url: at('/' + ITEM), body: { name: '   ' }, after: true }), /* C11 10a: spaces alone were a 500 (supply_item_name_chk); the add door's words */
     X('edit-nothing-sent', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: {}, setup: { sqlRows: edited } }),
     X('edit-unknown-key-refused', 'PATCH ' + at('/:id'), 422, { url: at('/' + ITEM), body: { price: 99 }, setup: { sqlRows: edited } }),
     X('edit-not-found', 'PATCH ' + at('/:id'), 404, { url: at('/' + UNKNOWN_ITEM), body: { name: 'x' } }),
@@ -100,16 +105,26 @@ function extras(tools) {
     X('buy-counted-line-fails-leaks-nothing', 'POST ' + at('/purchase'), 500, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40 }), setup: { sqlRows: firstOf(manyRows(KEPT), (sql) => { if (/stock_balance/.test(sql)) throw new Error(SECRET_SQL); return null; }) } })
   ];
 
-  /* K-1 (B2): text no column can hold. Every one of these answered 500 before: the database refuses a NUL byte (22021), the route's catch had no word for it */
+  /* K-1 (B2), C11 10a: text no column can hold. Every one of these answered 500 before, then 400 from the store; the bounds of the schema now refuse a control character first (422, the field named): the database refuses a NUL byte (22021), the route's catch had no word for it */
   const unstorable = [
-    X('add-name-with-a-nul-byte', 'POST ' + at(), 400, { body: { name: 'Floor\u0000cleaner' }, after: true }),
-    X('add-unit-with-a-nul-byte', 'POST ' + at(), 400, { body: { name: 'Floor cleaner', unit: 'bo\u0000ttle' }, after: true }),
-    X('edit-name-with-a-nul-byte', 'PATCH ' + at('/:id'), 400, { url: at('/' + ITEM), body: { name: 'Floor\u0000cleaner' }, after: true }),
-    X('buy-line-name-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: lines({ name: 'Floor\u0000cleaner', qty: 1 }), after: true }),
-    X('buy-supplier-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL-1', from: 'Corner\u0000Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
-    X('buy-reference-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL\u00001', from: 'Corner Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
-    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true }),
+    X('add-name-with-a-nul-byte', 'POST ' + at(), 422, { body: { name: 'Floor\u0000cleaner' }, after: true }),
+    X('add-unit-with-a-nul-byte', 'POST ' + at(), 422, { body: { name: 'Floor cleaner', unit: 'bo\u0000ttle' }, after: true }),
+    X('edit-name-with-a-nul-byte', 'PATCH ' + at('/:id'), 422, { url: at('/' + ITEM), body: { name: 'Floor\u0000cleaner' }, after: true }),
+    X('buy-line-name-with-a-nul-byte', 'POST ' + at('/purchase'), 422, { body: lines({ name: 'Floor\u0000cleaner', qty: 1 }), after: true }),
+    X('buy-supplier-with-a-nul-byte', 'POST ' + at('/purchase'), 422, { body: { ref: 'BILL-1', from: 'Corner\u0000Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
+    X('buy-reference-with-a-nul-byte', 'POST ' + at('/purchase'), 422, { body: { ref: 'BILL\u00001', from: 'Corner Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
+    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true }),
     X('issue-unknown-key-refused', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: 1, price: 99 } }),
+  ];
+
+  /* C11 10a (12 Nov): a figure past its column, text that is no day, a day past tomorrow, a blank name: each 422, the field named, nothing written (the stand-in db is never asked: no sqlRows) */
+  const shapes = [
+    X('buy-qty-past-the-column', 'POST ' + at('/purchase'), 422, { body: lines({ name: 'Floor cleaner', qty: 1e308, cost: 40 }), after: true, setup: { sqlRows: (sql) => { if (!/idempotency_key/.test(sql)) SHAPE_STATEMENTS.push(sql); return null; } } }),
+    X('buy-cost-past-the-ceiling', 'POST ' + at('/purchase'), 422, { body: lines({ name: 'Floor cleaner', qty: 1, cost: 1e20 }), after: true, setup: { sqlRows: (sql) => { if (!/idempotency_key/.test(sql)) SHAPE_STATEMENTS.push(sql); return null; } } }),
+    X('buy-day-is-garbage', 'POST ' + at('/purchase'), 422, { body: { ref: 'BILL-1', at: 'garbage', lines: [{ name: 'Floor cleaner', qty: 1 }] }, after: true, setup: { sqlRows: (sql) => { if (!/idempotency_key/.test(sql)) SHAPE_STATEMENTS.push(sql); return null; } } }),
+    X('buy-day-in-2099', 'POST ' + at('/purchase'), 422, { body: { ref: 'BILL-1', at: '2099-01-01', lines: [{ name: 'Floor cleaner', qty: 1 }] }, after: true, setup: { sqlRows: (sql) => { if (!/idempotency_key/.test(sql)) SHAPE_STATEMENTS.push(sql); return null; } } }),
+    X('issue-qty-past-the-column', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: 1e308 }, after: true, setup: { sqlRows: (sql) => { if (!/idempotency_key/.test(sql)) SHAPE_STATEMENTS.push(sql); return null; } } }),
+    X('edit-name-blank', 'PATCH ' + at('/:id'), 422, { url: at('/' + ITEM), body: { name: '' }, after: true, setup: { sqlRows: (sql) => { if (!/idempotency_key/.test(sql)) SHAPE_STATEMENTS.push(sql); return null; } } }),
   ];
 
   const issues = [
@@ -118,15 +133,15 @@ function extras(tools) {
     X('issue-no-such-supply', 'POST ' + at('/:id/issue'), 404, { url: at('/' + UNKNOWN_ITEM + '/issue'), body: { qty: 2 } }),
     X('issue-expensed-supply', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: looked(EXPENSED) } }),
     X('issue-nothing', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: {}, setup: { sqlRows: looked(KEPT) } }),
-    X('issue-not-a-number', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 'lots' }, setup: { sqlRows: looked(KEPT) } }),
-    X('issue-negative', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: -3 }, setup: { sqlRows: looked(KEPT) } }),
+    X('issue-not-a-number', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: 'lots' }, setup: { sqlRows: looked(KEPT) }, after: true }), /* C11 10a: 400 before, now the schema's 422 */
+    X('issue-negative', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: -3 }, setup: { sqlRows: looked(KEPT) }, after: true }),
     X('issue-unit-differs-from-the-balance', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: firstOf(looked(Object.assign({}, KEPT, { unit: 'carton' })), stock()) } }),
     X('issue-fails', 'POST ' + at('/:id/issue'), 500, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: raising(/FROM supply_item/, '23505') } }),
     X('issue-table-missing-is-a-500', 'POST ' + at('/:id/issue'), 500, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: sqlState('42P01') } }),
     X('issue-fails-leaks-nothing', 'POST ' + at('/:id/issue'), 500, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: () => { throw new Error(SECRET_SQL); } } })
   ];
 
-  return [].concat(reads, adds, edits, buys, unstorable, issues);
+  return [].concat(reads, adds, edits, buys, unstorable, shapes, issues);
 }
 
 /**
@@ -142,4 +157,4 @@ const ownedBy = (owner, planted) => (sql, params) => {
   return null;
 };
 
-module.exports = { extras, ownedBy, ITEM, UNKNOWN_ITEM, STRANGER_ID, BALANCE };
+module.exports = { extras, ownedBy, ITEM, UNKNOWN_ITEM, STRANGER_ID, BALANCE, SHAPE_STATEMENTS };

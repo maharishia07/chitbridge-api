@@ -18,9 +18,11 @@ const t = (name, cond, extra) => {
 
 let runner = null;   /* (text, params) → { rows } — the stub records, the real one queries */
 const calls = [];
+/* ORD-80: the team check asks who of the named ids is on the shop's team; this test is about the merge-patch, so everyone named is on it (tests/connect-10d-input-shape.test.cjs refuses a stranger) */
+const answer = (text, params) => (/FROM identities WHERE identity_id = ANY/.test(text) ? { rows: params[0].map((identity_id) => ({ identity_id })) } : runner(text, params));
 require.cache[require.resolve(API + '/db')] = { exports: {
-  withEntity: async (id, fn) => fn({ query: (text, params) => runner(text, params) }),
-  onEntity:   async (id, db, fn) => fn({ query: (text, params) => runner(text, params) }),
+  withEntity: async (id, fn) => fn({ query: async (text, params) => answer(text, params) }),
+  onEntity:   async (id, db, fn) => fn({ query: async (text, params) => answer(text, params) }),
   query:      async () => ({ rows: [] }),
 } };
 const { assign, current } = require(API + '/lib/assign');

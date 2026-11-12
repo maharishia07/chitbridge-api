@@ -151,7 +151,7 @@ function extras(tools) {
   ];
   const reads = [
     read('get-not-held', 404, null),
-    read('get-name-beyond-latin-1-cannot-be-sent', 500, fileRow({ name: 'रसीद.pdf', mime: 'application/pdf' })),
+    read('get-name-beyond-latin-1-is-sent', 200, fileRow({ name: 'रसीद.pdf', mime: 'application/pdf' })),
     read('get-staff-reads-the-shops-copy', 200, fileRow(), { setup: { who: STAFF, sqlRows: attRows({ caller: SHOP_ID, files: [{ id: ATT, entity: SHOP_ID, row: fileRow() }] }, sqlError) } }),
     read('get-id-not-a-uuid', 500, null, { url: AT + '/nope' }),
     read('get-library-throws-leaks-nothing', 500, null, { patch: { storage: { getBlob: async () => { throw new Error(SECRET_SQL); } } } }),

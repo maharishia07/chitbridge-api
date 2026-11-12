@@ -23,7 +23,7 @@
 const { waiting } = require('../lib/not-migrated');
 const express = require('express');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { contract, words, notMigrated, faultOf } = require('../lib/supplies-contract'); // the contract (each route's operation), the words of a refusal and of a fault
+const { contract, words, notMigrated, faultOf, atTooLate, issueRefOf } = require('../lib/supplies-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
@@ -86,11 +86,17 @@ router.patch('/:id', auth, ...contract.checked('PATCH /:id'), async (req, res) =
   try {
     const row = await supplies.update(ctx(req), String(req.params.id), req.body || {}, withEntity);
     if (!row) return problem(req, res, { status: 404, ...words.notFound() });
+    if (row.error) return problem(req, res, { status: 400, ...words.refused(row.error) });
     res.json({ message: 'Saved', supply: row });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not save the supply'));
   }
 });
+
+/** C11 10a: a purchase dated past tomorrow on the shop's clock is a 422 naming `at`, before anything is written (a schema cannot read the clock) */
+function dayNotAhead(req, res, next) {
+  return atTooLate((req.body || {}).at) ? problem(req, res, { status: 422, ...words.dayTooLate('at') }) : next();
+}
 
 /** WX-P2P-04 (2026-10-13): the toast read "1 line(s) recorded · 1 counted · 0 expensed on receipt" — never "(s)", never a zero that is
    fine (SYSTEM rule 1: only a failing thing earns words); what happened, in a shopkeeper's words. OPS-72: a line already on the shelf is said, and then "0 counted" is the truth */
@@ -116,7 +122,7 @@ function purchaseSays(out) {
  * ⚠️ EVERY LINE IS RECORDED AND COSTED. Only the ones the shop keeps stock of move a balance — the rest are
  * expensed on receipt. Nothing is ignored: money left the business, and there may be input credit to claim.
  */
-router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), async (req, res) => {
+router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), dayNotAhead, async (req, res) => {
   try {
     const out = await supplies.purchase(ctx(req), req.body || {}, withEntity, { actor_id: req.identity && req.identity.identity_id });
     if (out.error) return problem(req, res, { status: 400, ...words.refused(out.error) });
@@ -133,7 +139,7 @@ router.post('/:id/issue', auth, ...contract.checked('POST /:id/issue'), async (r
   try {
     const r = await supplies.issue(ctx(req), String(req.params.id), (req.body || {}).qty, withEntity, {
       actor_id: req.identity && req.identity.identity_id,
-      ref: (req.body || {}).ref
+      ref: issueRefOf((req.body || {}).ref, req.get('Idempotency-Key'))
     });
     if (r.notFound) return problem(req, res, { status: 404, ...words.notFound() });
     if (r.error) return problem(req, res, { status: 400, ...words.refused(r.error) });
