@@ -13,11 +13,11 @@ of file each thing is; this says what already does the job.
 | 132 | `rows` | `crm.js` | still in them: |
 | 125 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
-| 116 | `read` | `books-cashflow.js` | Trips: |
+| 117 | `read` | `books-cashflow.js` | Trips: |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
-| 85 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 80 | `next` | `dayopen.js` | the next thing to do — |
 | 78 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -79,7 +79,7 @@ of file each thing is; this says what already does the job.
 | 35 | `shell` | `pick.js` |  |
 | 36 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
-| 33 | `changes` | `books-store.js` |  |
+| 34 | `changes` | `books-store.js` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `note` | `dbwatch.js` |  |
 | 33 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
@@ -96,7 +96,7 @@ of file each thing is; this says what already does the job.
 | 31 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
-| 30 | `mine` | `crm.js` | `opt.removedOk`: |
+| 31 | `mine` | `crm.js` | `opt.removedOk`: |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |

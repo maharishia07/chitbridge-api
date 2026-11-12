@@ -15,6 +15,8 @@ const express = require('express');
 const COLUMN = 'bfla_role_check';
 /** who asks: the lower role and the role the gate needs, per role tag of lib/owner.js and lib/access.js */
 const PEOPLE = {
+  /* ACC-229: the reader gate (owner, or a whole-entity login that may see money): a viewer (not whole-entity) is the lower role; the entity itself passes without a DB read */
+  reader: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'entity' } },
   owner: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' }, needed: { identity_type: 'entity' } },
   editor: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' } }
 };

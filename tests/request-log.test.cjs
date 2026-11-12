@@ -1,5 +1,6 @@
 'use strict';
 /**
+ * CARD  28-platform-and-operations/logging-and-observability-db-watch
  * E07 · REQUEST ID + STRUCTURED LOG + SLOW-QUERY LOG — every log line is JSON; a request id travels response ↔ log;
  * a slow statement logs ONE line with the request's id and a fingerprint — no SQL text, anywhere.
  *

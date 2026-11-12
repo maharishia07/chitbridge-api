@@ -36,7 +36,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ASSIST_UPSTREAM | 502 | Assistant busy | The assistant is busy right now. | Try again in a moment. | assist | 2026-10-23 |
 | AUTO_TOKEN | varies | Auto token | This sign-in is no longer valid. | Sign in again. | auth | 2026-10-22 |
 | A_INVARIANT | 422 | Rule would be loosened | That would loosen a rule the platform has set. | Only tighten the setting, never loosen it. | governance | 2026-10-23 |
-| BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
+| BAD_FLAG | 400 | Flag not true or false | That answer must be true or false. | Send true or false. | api | 2026-10-23 |
 | BAD_FORM | 400 | Return form not offered | That return is not one we build. Ask for GSTR-1 or GSTR-3B. | Pick GSTR-1 or GSTR-3B and try again. | tax | 2026-11-09 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
@@ -76,6 +76,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COMBO_REFUSED | 400 | Combo refused | This combo cannot be saved as it stands. | Read the sentence shown and fix it. | combo-templates | 2026-10-23 |
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
+| BOOKS_RETURN_READ_NOT_ALLOWED | 403 | Returns not readable | Only the owner or the shop's auditor may read the returns. | Ask the owner. | books | 2026-11-13 |
 | CONFIRM_REMOVE | 400 | Confirm remove | Removing a person cannot be undone, so it needs your confirmation. | Confirm the removal to go on. | actors | 2026-10-22 |
 | CONFORMANCE | 422 | Rule not met | That does not meet the platform's rules. | Change it to fit the rules, then try again. | governance | 2026-10-23 |
 | CONNECTION_BAD_REQUEST | 400 | Cannot connect to yourself | You cannot connect to your own business. | Choose another business. | network | 2026-10-23 |
@@ -519,6 +520,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_BAD_REQUEST | 400 | Chit request not accepted | That chit request could not be done. | Read the message, fix what it names and try again. | chits | 2026-10-23 |
 | CHIT_CANNOT_WITHDRAW | 409 | Cannot withdraw | This chit cannot be withdrawn from where it is. | Raise a dispute on it if something is wrong. | chits | 2026-10-23 |
 | CHIT_CONFLICT | 409 | Chit not in that state | The chit is not in a state that allows that. | Look at the chit again, then try once more. | chits | 2026-10-23 |
+| CHIT_HAS_CREDIT_NOTE | 409 | Cannot withdraw | This bill has a credit note against it, so it cannot be cancelled yet. | Cancel the credit note first, then cancel the bill. | chits | 2026-11-13 |
 | CHIT_INVALID | 400 | Chit details not valid | Something on the chit is missing or not valid. | Read the list of fields it names, fix them and try again. | chits | 2026-10-23 |
 | CHIT_NOT_A_BILL | 409 | Not a bill | Only a bill you received says what its goods are for. | Open a bill you received. | chits | 2026-10-23 |
 | CHIT_NOT_MIGRATED | 503 | Chits update still to run | This part of chits is not ready on this server yet. | Try again after the next update. | chits | 2026-10-23 |

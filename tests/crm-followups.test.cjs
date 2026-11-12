@@ -1,4 +1,5 @@
 /**
+ * CARD  11-crm-and-marketing/follow-ups
  * CB CRM, Phase 4 — /api/crm/followups CRUD with party_followup STUBBED (b276 is a draft Athi runs): add · list (mine / everyone, open / done)
  * · done · snooze · reopen · reassign (owner or assignee only) · delete · "late" in the SHOP's day · and the 503 before the table exists.
  * Offline (tests/support/crm-stub.cjs). Run: node tests/crm-followups.test.cjs

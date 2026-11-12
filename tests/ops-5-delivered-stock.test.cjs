@@ -20,7 +20,7 @@ const L1 = '33333333-3333-4333-8333-333333333331',
   L2 = '33333333-3333-4333-8333-333333333332';
 const ITEM = '44444444-4444-4444-8444-444444444444';
 
-const world = { deliveries: [], receipts: [], use: { bill: 'resale' }, lines: [], seq: 0, order: null };
+const world = { sent: [], deliveries: [], receipts: [], use: { bill: 'resale' }, lines: [], seq: 0, order: null };
 const receiptRow = (against, qty, no) => ({ chit_id: 'R-' + no, purpose: 'receipt', created_at: '2026-10-31', business_json: { client_ref: no, against: { chit_id: against } }, line_items: [{ line_id: L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }] });
 const ledger = new Map(); /* the stock index (entity|ref|line_ref|reason|lot) -> qty, in memory */
 const onHand = () => [...ledger.values()].reduce((a, q) => a + q, 0);
@@ -40,6 +40,7 @@ function fakeDb() {
   return {
     query: async (text, p) => {
       const t = String(text).replace(/\s+/g, ' ');
+      if (world.useRow && /SELECT business_json->'use' AS use FROM chit_header/.test(t)) return { rows: [{ use: world.useRow }] };
       if (/FROM chit_line WHERE/.test(t)) return { rows: world.lines.map((x) => ({ line_id: x.line_id })) };
       if (/FROM identities/.test(t)) return { rows: [{ display_name: 'Shop' }] };
       if (/^INSERT INTO chit_line_delivery/.test(t)) {
@@ -58,7 +59,18 @@ function fakeDb() {
       if (/chit_line_event/.test(t)) return { rows: [{ copies: 2 }] };
       if (/FROM chit_line_delivery/.test(t)) return { rows: world.deliveries.filter((d) => d.kind === 'deliver') };
       if (/FROM chit_header WHERE entity_id/.test(t)) return { rows: world.receipts };
-      if (/h.business_json #>> '{against,chit_id}' = ANY/.test(t)) return { rows: world.receipts.filter((r) => p[1].includes(r.business_json.against.chit_id)) };
+      /* OPS-99: the receipts raised EARLIER against the same document (not this one, created before it) */
+      /* the earlier-receipts read, answered as the SQL does: (created_at, chit_id) order with a missing stamp = the latest; a cancelled / rejected receipt drops only when the statement says so */
+      if (/h.business_json #>> '{against,chit_id}' = [$]2/.test(t) && /'infinity'/.test(t) && !/= ANY/.test(t)) {
+        const at = (v) => (v == null ? Infinity : v), me = at(p[3]);
+        const ties = /h.chit_id::text < [$]3/.test(t); /* no tie term in the statement = equal stamps are not earlier, as SQL would answer */
+        const dropsWithdrawn = /cs.current_status IN \('cancelled', 'rejected'\)/.test(t);
+        return { rows: world.sent.filter((r) => r.business_json.against.chit_id === p[1] && !(dropsWithdrawn && r.withdrawn) && (at(r.created_at) < me || (ties && at(r.created_at) === me && String(r.chit_id) < p[2]))) };
+      }
+      if (/h.business_json #>> '{against,chit_id}' = ANY/.test(t)) { /* a cancelled / rejected receipt drops only when the statement says so */
+        const dropsWithdrawn = /cs.current_status IN [(]'cancelled', 'rejected'[)]/.test(t);
+        return { rows: world.receipts.filter((r) => p[1].includes(r.business_json.against.chit_id) && !(dropsWithdrawn && r.withdrawn)) };
+      }
       if (/FROM chit_header h/.test(t)) return { rows: [copy()] };
       if (/FROM catalogue_items/.test(t)) return { rows: [{ item_id: ITEM, item_data: { name: 'Basmati Rice', unit: 'kg', price: 90 }, updated_at: null }] };
       return { rows: [], rowCount: 0 };
@@ -97,7 +109,7 @@ const eq = (a, b, msg) => {
   checks++;
 };
 function reset(over) {
-  Object.assign(world, { deliveries: [], receipts: [], use: { bill: 'resale' }, seq: 0, order: null, lines: [{ line_id: L1, name: 'Basmati Rice', qty: 80 }] }, over || {});
+  Object.assign(world, { sent: [], deliveries: [], receipts: [], use: { bill: 'resale' }, seq: 0, order: null, lines: [{ line_id: L1, name: 'Basmati Rice', qty: 80 }] }, over || {});
   ledger.clear();
 }
 const count = (rows, who) => deliverline.record(SHOP, CHIT, rows, who || { actor_id: 'a', actor_name: 'A', private: true });
@@ -205,6 +217,78 @@ const codes = (r) => ((r && r.stock && r.stock.skipped) || []).map((s) => s.code
   world.receipts = [receiptRow(OTHER_PO, 50, 'GRN9')];
   await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'p6' }]);
   eq(onHand(), 50, 'OPS-75 a receipt for another order does not net this bill');
+
+  /* OPS-99: partial billing. The bill's counted-in goods are used up once: bill counted in 60, receipts 40 then 60 -> stock 100, not 60 */
+  const partial = async (no, qty, at) => {
+    const chit = { chit_id: 'RP' + no, purpose: 'receipt', created_at: at, business_json: { client_ref: 'GRN-P' + no, against: { chit_id: CHIT } }, line_items: [{ line_id: L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }] };
+    const reply = await stockFromChit.postFor(SHOP, chit, dbStub.withEntity, {});
+    world.sent.push(chit);
+    return reply;
+  };
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'q1' }]);
+  const r1 = await partial(1, 40, 1), r2 = await partial(2, 60, 2);
+  eq([r1.moved, r2.moved, onHand()], [0, 1, 100], 'OPS-99 bill counted in 60, receipts 40 + 60: the second posts only 40, stock 100 (was 60 of 100)');
+  eq((await partial(2, 60, 2)).moved, 0, 'OPS-99 the second receipt sent again posts nothing twice');
+  eq([(await partial(1, 40, 1)).moved, onHand()], [0, 100], 'OPS-99 the first receipt replayed after the second still posts nothing (only EARLIER receipts count)');
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'q2' }]);
+  await partial(1, 100, 1);
+  eq(onHand(), 100, 'OPS-99 bill 60, one receipt of 100: only the remainder 40 is posted, stock 100');
+  eq([(await partial(2, 30, 2)).moved, onHand()], [1, 130], 'OPS-99 bill 60, receipts 100 then 30: the bill is already used up, the 30 posts in full, stock 130');
+  reset();
+  await count([{ line_id: L1, quantity: 100, unit: 'kg', client_ref: 'q3' }]);
+  await partial(1, 40, 1);
+  await partial(2, 60, 2);
+  eq(onHand(), 100, 'OPS-99 bill counted in 100, receipts 40 + 60: all netted, stock 100 (the order that already held)');
+
+  /* OPS-99 review fixes (cb-accounting): the order of "earlier" is total, a cancelled receipt nets nothing, earlier receipts are read as this one is. Bill counted in 60, goods 60/kg. */
+  const rcpt = (id, qty, at, over) => ({ chit_id: id, purpose: 'receipt', created_at: at, business_json: { client_ref: 'G-' + id, against: { chit_id: CHIT } }, line_items: [{ line_id: (over && over.line) || L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }], withdrawn: !!(over && over.withdrawn) });
+  const raise = async (chit) => {
+    const reply = await stockFromChit.postFor(SHOP, chit, dbStub.withEntity, {});
+    if (!world.sent.includes(chit)) world.sent.push(chit);
+    return reply;
+  };
+  /* 1 · the same created_at: exactly one is earlier (by chit_id), so 40 + 60 against 60 counted in still gives 100 (both ignoring each other gave 60) */
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'r1' }]);
+  const ra = rcpt('RA', 40, 5), rb = rcpt('RB', 60, 5);
+  await raise(ra);
+  await raise(rb);
+  eq(onHand(), 100, 'OPS-99 equal created_at, bill 60, receipts 40 + 60: the one with the higher chit_id is the later, stock 100');
+  eq([(await raise(ra)).moved, onHand()], [0, 100], 'OPS-99 equal created_at: the lower chit_id replayed after the other still posts nothing');
+  /* 2 · no created_at: null is the latest, tie on chit_id (two nulls: 40 + 60 -> 100, not 80); a null stamp counts the stamped receipts as earlier */
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'r2' }]);
+  await raise(rcpt('RA', 40, null));
+  await raise(rcpt('RB', 60, null));
+  eq(onHand(), 100, 'OPS-99 two receipts with no created_at: ordered by chit_id, stock 100 (each counting the other gave 80)');
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'r3' }]);
+  await raise(rcpt('RA', 40, 1));
+  await raise(rcpt('RB', 60, null));
+  eq(onHand(), 100, 'OPS-99 a receipt with no created_at is the latest: it nets after the stamped one, stock 100');
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'r3b' }]);
+  await raise(rcpt('RB', 60, null));
+  eq([(await raise(rcpt('RA', 40, 1))).moved, onHand()], [0, 60], 'OPS-99 a stamped receipt does not count a receipt with no created_at as earlier');
+  /* 3 · a cancelled earlier receipt nets nothing: bill 60 counted in, A (100) cancelled, B (100) alone posts the remainder 40 */
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'r4' }]);
+  world.sent.push(rcpt('RX', 100, 1, { withdrawn: true }));
+  eq([(await raise(rcpt('RY', 100, 2))).moved, onHand()], [1, 100], 'OPS-99 a cancelled earlier receipt nets nothing: B nets the bill 60 and posts 40, stock 100');
+  /* 4 · earlier receipts read as this one is: the buyer said A's line (L2) is for own use, so it put nothing on the shelf and nets nothing */
+  reset();
+  await count([{ line_id: L1, quantity: 60, unit: 'kg', client_ref: 'r5' }]);
+  world.useRow = { bill: 'resale', lines: { [L2]: 'use' } };
+  world.sent.push(rcpt('RU', 40, 1, { line: L2 }));
+  eq([(await raise(rcpt('RV', 60, 2))).moved, onHand()], [0, 60], 'OPS-99 an earlier receipt line marked own use nets nothing: the later one nets the whole 60, stock 60');
+  world.useRow = null;
+  /* 5 · the receipt-first order (OPS-75 receivedQuantities): a cancelled receipt of 50 put nothing on the shelf, so the bill counted in afterwards posts all 50 */
+  reset({ order: PO });
+  world.receipts = [Object.assign(receiptRow(PO, 50, 'GRNX'), { withdrawn: true })];
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'r6' }]);
+  eq(onHand(), 50, 'OPS-99 a cancelled receipt is not netted off the bill counted in afterwards: stock 50, not 0');
 
   console.log(checks + ' checks');
 })().catch((e) => {

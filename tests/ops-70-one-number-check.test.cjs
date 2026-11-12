@@ -8,6 +8,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/supplies.js and lib/supply-store.js over a stand-in db and a stand-in lib/stock-store.
  * FLOW      stand-in db + stock + auth → real router on an express app → request over http → recorded · failed · says · what the ledger was asked to post
  * CARD      16-finance/supply-store
+ * CARD  12-suppliers-and-procurement/supplies-things-i-buy-to-use
  * MIN contract — each bad number is a failed[] line with its words and 0 postings; each good line posts qty and rate exactly; "at no cost" appears only where a line cost nothing.
  * ENV       OPS70_STORE / OPS70_ROUTE point at a broken copy (tests/ops-70-one-number-check-mutation.test.cjs proves this test goes red on it).
  * TRACE     lib/supply-store.js numbersOf ← this test

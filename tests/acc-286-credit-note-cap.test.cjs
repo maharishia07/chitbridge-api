@@ -121,7 +121,7 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
     (text.match(/\$\d(::\w+(\[\])?)?/g) || []).forEach((use) => { (types[use.slice(0, 2)] = types[use.slice(0, 2)] || new Set()).add(use.slice(2)); });
     return Object.values(types).every((set) => set.size === 1 || (set.size === 2 && set.has('')));
   });
-  ok('SQL shape · two statements, every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 2 && typed.every(Boolean), JSON.stringify(typed));
+  ok('SQL shape · three statements (the bill, the earlier notes, and the own-bill read of ACC-265 for the cancel guard), every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 3 && typed.every(Boolean), JSON.stringify(typed));
 
   /* a note that is NOT judged says so on the answer (sendState.creditCap → credit_cap), and a failed read is a refusal in words, never a bare 500 */
   const stateOf = (extra) => Object.assign({ sender_id: SHOP, chit_id: 'c0000000-0000-4000-8000-0000000000aa', purpose: 'credit_note', currency_code: 'INR', is_draft: false, business_json: { till: { id: 'C1' }, against: { bill_no: 'B-9' }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } }, extra || {});

@@ -201,7 +201,8 @@
    "output_allowlist": true
   },
   "GET /api/books/returns": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "GET /api/books/status": {
    "output_allowlist": true
@@ -1659,8 +1660,8 @@
    "output_allowlist": true
   },
   "POST /api/till/enrol": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/till/flags": {
    "output_allowlist": true

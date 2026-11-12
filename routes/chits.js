@@ -2964,6 +2964,11 @@ async function sendBooks(sendState, req, res) {
   }
 }
 
+/** ⭐ OPS-6: present only when a receipt line carried no product of mine and so moved no stock → { stock_not_posted: [{ line_ref, particulars, code, why }] }, {} when every line moved stock (or the chit is no receipt) */
+function stockNotPostedOf(sendState) {
+  const unstocked = require('../lib/stock-from-chit').unstockedLines({ purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items });
+  return unstocked.length ? { stock_not_posted: unstocked } : {};
+}
 /** the answer, then the counter's place in its series */
 async function sendAnswer(sendState, req, res) {
   const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = sendState;
@@ -2986,8 +2991,8 @@ async function sendAnswer(sendState, req, res) {
     cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
     credit_cap: sendState.creditCap,
-    /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence */
-    ...lineShape.answerOf(sendState.ignored)
+    /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */
+    ...lineShape.answerOf(sendState.ignored), ...stockNotPostedOf(sendState)
   }));
 
   /**
@@ -5315,7 +5320,7 @@ function withdrawFailure(req, res, err) {
 }
 /** the answer of PUT /status: a refusal of the rail as a Problem (its old body kept), else the 200 of a move or of the no-op of a status already held; true when the status really moved */
 function answerMoved(req, res, moved) {
-  if (moved.code >= 400) problem(req, res, { status: moved.code, ...said(moved.body, codeOfStatus(moved.code)) });
+  if (moved.code >= 400) problem(req, res, { status: moved.code, ...said(moved.body, moved.body.why === 'has_credit_note' ? 'CHIT_HAS_CREDIT_NOTE' : codeOfStatus(moved.code)) }); /* ACC-265: the same registered code as the void door */
   else res.json(moved.body);
   return !!moved.moved;
 }
@@ -6650,15 +6655,16 @@ async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
   return told;
 }
 
-/** the problem a refused withdrawal says: RAIL-216 money is on the invoice (409 CHIT_CONFLICT, why paid — a credit note, not a withdrawal) · a level the rail refused (403) · a status that cannot be withdrawn (409, what happened · what it means · what to do; `why` is the code a screen branches on, never this sentence) */
-function withdrawRefusalSpec(g) {
-  if (g.why === 'paid') return { status: 409, ...said({ ...railStatus.paidSaid(), from: g.from }, 'CHIT_CONFLICT') };
-  if (g.why !== 'wrong_step') return railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] }));
-  return railSaid(railActions.refusalOf(g, 409, {
+/** the problem a refused withdrawal says: RAIL-216 money is on the invoice (409 CHIT_CONFLICT, why paid — a credit note, not a withdrawal) · ACC-265 a live credit note stands against the bill (409 CHIT_HAS_CREDIT_NOTE) · a level the rail refused (403) · a status that cannot be withdrawn (409, what happened · what it means · what to do; `why` is the code a screen branches on, never this sentence) */
+function withdrawRefusalSpec(refusal) {
+  if (refusal.why === 'paid') return { status: 409, ...said({ ...railStatus.paidSaid(), from: refusal.from }, 'CHIT_CONFLICT') };
+  if (refusal.why === 'has_credit_note') return { status: 409, ...said({ ...railStatus.creditNoteSaid(refusal.notes), from: refusal.from }, 'CHIT_HAS_CREDIT_NOTE') };
+  if (refusal.why !== 'wrong_step') return railSaid(railActions.refusalOf(refusal, 403, { error: 'Not permitted', message: railActions.WHY[refusal.why] }));
+  return railSaid(railActions.refusalOf(refusal, 409, {
     error: 'Cannot withdraw',
-    message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
-    from: g.from,
-    allowed_transitions: g.allowed
+    message: `This chit is already ${refusal.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
+    from: refusal.from,
+    allowed_transitions: refusal.allowed
   }));
 }
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
@@ -6927,6 +6933,7 @@ module.exports.refOf = refOf; /* PLT-70: lib/limits asks the one reader whether 
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
+module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
