@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 3,
+  "meets": 628,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -826,7 +826,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 258,
+   "line": 260,
    "hash": "86df410a8511ad98",
    "does": "",
    "errors": {
@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1808,
+   "line": 1811,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1958,
+   "line": 1961,
    "hash": "473a54f775b12c84",
    "does": "",
    "errors": {
@@ -3202,7 +3202,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 617,
+   "line": 619,
    "hash": "ac97e40e210c820c",
    "does": "",
    "errors": {
@@ -3344,7 +3344,9 @@
    "declared": [
     500
    ],
-   "notes": [],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -3388,7 +3390,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 490,
+   "line": 492,
    "hash": "4800ee1d9af92ecc",
    "does": "",
    "errors": {
@@ -3482,7 +3484,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 502,
+   "line": 504,
    "hash": "748b83451499c0b2",
    "does": "",
    "errors": {
@@ -3578,7 +3580,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 584,
+   "line": 586,
    "hash": "eb2cb4eb1a353c68",
    "does": "",
    "errors": {
@@ -3673,7 +3675,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 631,
+   "line": 633,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3772,7 +3774,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 550,
+   "line": 552,
    "hash": "1bf6dc5f485082e6",
    "does": "",
    "errors": {
@@ -3861,7 +3863,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 568,
+   "line": 570,
    "hash": "c6cf6f259a29b007",
    "does": "",
    "errors": {
@@ -4004,7 +4006,9 @@
    "declared": [
     500
    ],
-   "notes": [],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -4048,7 +4052,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 717,
+   "line": 719,
    "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
@@ -11847,7 +11851,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 63,
+   "line": 65,
    "hash": "d066c4975f3d38a9",
    "does": "",
    "errors": {
@@ -22066,7 +22070,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1994,
+   "line": 1997,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22272,7 +22276,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2109,
+   "line": 2112,
    "hash": "90e163f95d15ad4a",
    "does": "",
    "errors": {
@@ -22371,7 +22375,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1853,
+   "line": 1856,
    "hash": "6552c50215b46546",
    "does": "",
    "errors": {
@@ -29042,7 +29046,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 106,
+   "line": 108,
    "hash": "4cd3bd5191856987",
    "does": "",
    "errors": {
@@ -32369,7 +32373,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 663,
+   "line": 665,
    "hash": "e2ec4b3294857387",
    "does": "",
    "errors": {
@@ -42787,7 +42791,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 80,
+   "line": 82,
    "hash": "3111294cdf4c538b",
    "does": "",
    "errors": {
@@ -42799,9 +42803,7 @@
     ],
     "codes": []
    },
-   "reads": [
-    "combo_templates"
-   ],
+   "reads": [],
    "writes": [
     "combo_templates"
    ],
@@ -42887,7 +42889,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 214,
+   "line": 216,
    "hash": "b461b339dcb523ca",
    "does": "",
    "errors": {
@@ -52267,7 +52269,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1893,
+   "line": 1896,
    "hash": "572f4a7f9b435cdb",
    "does": "",
    "errors": {
@@ -52486,7 +52488,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1703,
-   "hash": "a768421e9f8b3239",
+   "hash": "6cfbfb5aa148ed87",
    "does": "",
    "errors": {
     "count": 0,
@@ -52559,10 +52561,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (connector feed), proof in api-tolerant-doors; 13 columns pass on regenerated evidence",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6cfbfb5aa148ed87"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -53111,7 +53114,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2229,
+   "line": 2232,
    "hash": "e2f2e8d4155f6bb6",
    "does": "",
    "errors": {
@@ -61779,12 +61782,13 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 398,
-   "hash": "e8f1198436967af4",
+   "line": 399,
+   "hash": "6fc1d5f11eceb28a",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      403,
      422,
@@ -61833,6 +61837,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     422,
@@ -61857,10 +61862,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1155 (independent review: CAT-277 gate re-sign, owner-only 403 OWNER_ONLY via lib/owner ownerOnly, no web caller, bite proven, bfla evidence regenerated, 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6fc1d5f11eceb28a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -61882,7 +61888,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 460,
+   "line": 462,
    "hash": "0a70997c357d3b62",
    "does": "",
    "errors": {
@@ -61979,7 +61985,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 528,
+   "line": 530,
    "hash": "5899c1359da94cf9",
    "does": "",
    "errors": {
@@ -64278,8 +64284,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1748,
-   "hash": "fc5e543be6478abb",
+   "line": 1749,
+   "hash": "2fe0788b33fdb51d",
    "does": "",
    "errors": {
     "count": 0,
@@ -64349,10 +64355,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2fe0788b33fdb51d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -64380,7 +64387,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1778,
+   "line": 1781,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {
