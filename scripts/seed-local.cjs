@@ -22,20 +22,22 @@ const API = (process.env.API_BASE || 'http://127.0.0.1:3100').replace(/\/$/, '')
 /* CB_LOCAL_PGPORT (toolset/local-stack.sh): a second throwaway stack on another port; still only 127.0.0.1, still only this database name */
 const LOCAL_DB_URL = 'postgres://postgres:cblocal@127.0.0.1:' + (process.env.CB_LOCAL_PGPORT || '55432') + '/cb_local';
 /* the ONE allow-list (tests/lib/run-target.cjs): local, or a named SIT box this runs ON; production never. */
+const RUN_TARGET = require('../tests/lib/run-target.cjs'), VERDICT = RUN_TARGET.judge(API, process.env.DATABASE_URL || LOCAL_DB_URL, process.env);
 {
-  const verdict = require('../tests/lib/run-target.cjs').judge(API, process.env.DATABASE_URL || LOCAL_DB_URL, process.env);
+  const verdict = VERDICT;
   if (!verdict.ok) {
     const apiSide = !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API) && !process.env.CB_SIT_BOX;
     console.error(apiSide ? 'REFUSED: seed-local only seeds an api on this machine or a named SIT box, not ' + API + ' (' + verdict.why + ')' : 'REFUSED: seed-local only works against the local test database or a named SIT box (' + verdict.why + ')');
     process.exit(3);
   }
 }
-const SHOP = { email: 'mayur@local.test', name: 'Mayur Restaurant' };
+const SIGN_IN = RUN_TARGET.signIn(VERDICT, process.env);   /* local: dev codes + @local.test; a SIT box: today's tester code + the tester e-mail domain */
+const SHOP = { email: 'mayur@' + SIGN_IN.emailDomain, name: 'Mayur Restaurant' };
 const STAFF = { name: 'Asha Cashier', key: 'asha01', pin: '2468' };
-const CUSTOMER = { email: 'priya@local.test', name: 'Priya Customer' };
+const CUSTOMER = { email: 'priya@' + SIGN_IN.emailDomain, name: 'Priya Customer' };
 const SUPPLIER = 'Sri Ganesh Provisions';
-const ENTITY_OTP = '123456',
-  CUSTOMER_OTP = '123123';
+const ENTITY_OTP = SIGN_IN.entityOtp,   /* local: lib/dev-otp.js fixed codes; a SIT box: today's tester code (run-target.signIn) */
+  CUSTOMER_OTP = SIGN_IN.customerOtp;
 const MENU = [
   ['Masala Dosa', 'plate', 90, 'Dosa'],
   ['Plain Dosa', 'plate', 70, 'Dosa'],
@@ -328,8 +330,8 @@ async function demoOpeningStock({ token, ids, stamp }) {
  *  Returns { token, bridge } (the run hands the partner's bridge on); no tag = the same one partner as before. */
 async function demoSupplierShop({ token }, { tag } = {}) {
   const supplier = tag
-    ? { email: 'ganesh-' + tag + '@local.test', display_name: SUPPLIER + ' ' + tag, user_id: 'sg-' + tag }
-    : { email: 'ganesh@local.test', display_name: SUPPLIER, user_id: 'sri-ganesh' };
+    ? { email: 'ganesh-' + tag + '@' + SIGN_IN.emailDomain, display_name: SUPPLIER + ' ' + tag, user_id: 'sg-' + tag }
+    : { email: 'ganesh@' + SIGN_IN.emailDomain, display_name: SUPPLIER, user_id: 'sri-ganesh' };
   expectOk(await j('/api/entities/register', { method: 'POST', body: supplier }), 'supplier register');
   const signedIn = expectOk(await j('/api/entities/verify', { method: 'POST', body: { email: supplier.email, otp: ENTITY_OTP } }), 'supplier verify');
   /* a shop that sends a bill states its country first (NO_COUNTRY otherwise: the demo month's supplier bill was skipped for this); its tax is not assumed */
