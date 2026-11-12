@@ -16573,7 +16573,7 @@ async function priceWrite(i, v){
   var finer = priceFinerWords(v);
   if (finer) return { ok:false, why: finer };
   var was = Number(i.price) || 0;
-  if (v === was) return { ok:true };                 /* nothing to do, and saying so is not an error */
+  if (v === was && !(await hasParkedFor('/api/till/price', { item_id: i.item_id }))) return { ok:true };   /* nothing to do — unless a refused copy waits: re-saving replaces it */
   return await cloudFirst({
     what: i.name + ' — price ' + money(was) + ' → ' + money(v),
     path: '/api/till/price', body: { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null },
@@ -24414,8 +24414,10 @@ async function closeReadinessNow(){
   var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (e) { cbQuiet('closeReadinessNow:2', e); }
   var sale = bills.filter(isIssuedRow);
   return { sent: sale.filter(function(b){ return b._sent; }).length, total: sale.length,
-           waiting: q.length, inHand: (PARKED || []).length };
+           waiting: sendableRows(q).length, parked: q.filter(isParkedRow).length, inHand: (PARKED || []).length };
 }
+/** the close sheet's line for refused changes: said apart from the bills, and said NOT to hold the close back ([] when there are none) */
+function parkedLine(count){ return count ? ['! ' + count + ' change' + (count === 1 ? ' needs' : 's need') + ' fixing — they do not stop the close (🩺 → Needs fixing)'] : []; }
 /** ⭐ the hub menu's own "Close this counter" — through the same live-figures sheet the day card uses, never closeCounter()'s own bare sure() (Phase 4.5) */
 function closeFromMenu(){ sureSheet('close'); }
 async function closeCounter(already){
@@ -24436,7 +24438,7 @@ async function closeCounter(already){
     var lines = ['Billing stops until someone opens it again. Nothing is lost.', '',
       (rd.sent === rd.total ? '✓' : '!') + ' Bills sent to the shop — ' + rd.sent + ' of ' + rd.total,
       (rd.waiting ? '!' : '✓') + ' Waiting to send — ' + (rd.waiting || 'none'),
-      (rd.inHand ? '!' : '✓') + ' Bills in hand — ' + (rd.inHand || 'none')];
+      (rd.inHand ? '!' : '✓') + ' Bills in hand — ' + (rd.inHand || 'none')].concat(parkedLine(rd.parked));
     var okWord = rd.waiting ? ('Send ' + rd.waiting + ' first, then close') : 'Close the counter';
     if (!await sure(lines.join('\n'), okWord, 'Close this counter?', 'Not now')) return;
   }
@@ -24469,7 +24471,7 @@ async function closeCounter(already){
     /* ⚠️ PROVE it — every reason the books could still be short, each named */
     var why = [];
     var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) { why.push('the waiting list could not be read'); }
-    if (q.length) why.push(q.length + ' bill(s) still waiting to send');
+    var sendQ = sendableRows(q); if (sendQ.length) why.push(sendQ.length + ' bill(s) still waiting to send');   /* a parked change is not a bill: it never holds the close */
     var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) { why.push('the bill list could not be read'); }
     var aside = bills.filter(function(b){ return b && b._aside && !b._sent; }).length;
     if (aside) why.push(aside + ' bill(s) set aside and not sent');
@@ -24526,6 +24528,11 @@ function parkedItem(row){
 }
 /** the same change again: one path, one item, one offer — so a corrected save replaces its refused copy */
 function parkKey(path, body){ return path + '|' + String((body && body.item_id) || '') + '|' + String((body && body.offer_id) || ''); }
+/** is a refused copy of this very change waiting? (same path, item and offer) */
+async function hasParkedFor(path, body){
+  var key = parkKey(path, body);
+  return ((await DB.all('queue')) || []).some(function(row){ return isParkedRow(row) && row.tillPost && parkKey(row.tillPost.path, row.tillPost.body) === key; });
+}
 /** a corrected save lands: forget the refused copy of the same change, so the list never shows a fixed problem */
 async function unparkSame(path, body){
   try {
@@ -24541,13 +24548,32 @@ function parkedAlert(addCard){
   addCard('parked', 'time', parkedWords(), 'The shop refused them, so sending again would not help. Nothing is lost.',
     '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-parked" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');
 }
+/** a customer's points write (/api/till/reward) — the one parked row that is about a person, not an item */
+function isRewardRow(row){ return !!(row && row.tillPost && String(row.tillPost.path).indexOf('/api/till/reward') === 0); }
+/** the bill number a parked points row belongs to (its queue key is '<bill no>/reward') */
+function rewardBillNo(row){ return String((row.tillPost && row.tillPost.body && row.tillPost.body.ref) || String(row.no).replace('/reward', '')); }
+/** points that could not be recorded, in words: the bill, then the shop's own sentence */
+function parkedRewardWords(row){ return 'Points for bill ' + rewardBillNo(row) + ' could not be recorded: ' + (row._why || 'the shop refused them') + ' Nothing was sent again.'; }
+/** what the row is about, in words: the change as the owner made it, the points' bill, or the item */
+function parkedName(row){
+  var item = parkedItem(row);
+  return isRewardRow(row) ? 'Points for bill ' + rewardBillNo(row) : (row.says || (item && item.name) || 'A change to the shop');
+}
+/** the customer a parked points row is for, from the holder it carries ({scheme: identity|phone, value}) — null when this counter does not know them */
+function parkedCustomer(row){
+  var holder = isRewardRow(row) && row.tillPost.body && row.tillPost.body.holder;
+  if (!holder || !holder.value) return null;
+  var digits = function(text){ return String(text || '').replace(/[^0-9]/g, ''); };
+  return ((S && S.customers) || []).filter(function(cust){
+    return holder.scheme === 'identity' ? String(cust.identity_id) === String(holder.value) : (digits(cust.phone) && digits(cust.phone).slice(-10) === digits(holder.value).slice(-10));   /* the last ten digits: the holder carries the country code, the shelf may not */
+  })[0] || null;
+}
 /** one parked row in words: what the change was, what the shop said, and the two things a person can do — Fix (open the item) and Drop */
 function parkedRowHTML(row){
-  var item = parkedItem(row), name = row.says || (item && item.name) || 'A change to the shop';
-  var no = esc(row.no);
-  return '<div class="t warnrow" data-testid="till-parked-row-' + no + '"><span>' + esc(name) + '</span><span>'
-    + esc('The shop would not take it: ' + (row._why || 'it was refused') + ' Nothing was sent again.')
-    + (item ? ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP010" data-testid="till-parked-fix-' + no + '" onclick="parkedFix(\'' + no + '\')">Fix</button>' : '')
+  var item = parkedItem(row), no = esc(row.no), reward = isRewardRow(row);
+  return '<div class="t warnrow" data-testid="till-parked-row-' + no + '"><span>' + esc(parkedName(row)) + '</span><span>'
+    + esc(reward ? parkedRewardWords(row) : 'The shop would not take it: ' + (row._why || 'it was refused') + ' Nothing was sent again.')
+    + (item || parkedCustomer(row) ? ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP010" data-testid="till-parked-fix-' + no + '" onclick="parkedFix(\'' + no + '\')">Fix</button>' : '')
     + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP011" data-testid="till-parked-drop-' + no + '" onclick="parkedDrop(\'' + no + '\')">Drop</button>'
     + '</span></div>';
 }
@@ -24565,20 +24591,40 @@ async function parkedRowOf(no){
 }
 /** Fix: close this panel, open the item in Maintain with its card — the person types the corrected change and saves it the usual way */
 async function parkedFix(no){
-  var item = parkedItem(await parkedRowOf(no));
+  var row = await parkedRowOf(no), item = parkedItem(row);
+  if (!item && parkedCustomer(row)) return parkedFixCustomer(row);
   if (!item) { toastLine('That item is no longer in this counter’s catalogue — drop the change.'); return; }
   document.getElementById('billsdlg').close();
   setMode('maintain'); CARD_ID = item.item_id; pendClear(); paintCard(); paintHits();
   toastLine(item.name + ' is open. Change it and save — the old refused change is replaced.');
 }
+/** Fix for a points row: close the panel and put that customer in the bill's customer boxes, so the cashier sees who it is and can look them up or correct their number */
+function parkedFixCustomer(row){
+  var cust = parkedCustomer(row);
+  document.getElementById('billsdlg').close();
+  setMode('sell');
+  document.getElementById('cname').value = cust.name || ''; document.getElementById('cphone').value = cust.phone || '';
+  toastLine(cust.name + ' is in the customer box. Points for bill ' + rewardBillNo(row) + ' were refused — check their details, then drop the old points write.');
+}
+/**
+ * who may DROP a refused change: with an owner PIN on this counter, the owner's PIN (ownerPinAsk). With NO owner PIN set, a signed-in owner or manager
+ * (the till's one role check, rateMay → cbRateMay) may drop it after the deliberate confirm — and the words say which it was. Anyone else: said, not hidden.
+ */
+async function dropApproval(){
+  var book = pinBook(), hasPin = Object.keys(book).some(function(key){ return book[key] && book[key].kind === 'entity'; });
+  if (hasPin) return ownerPinAsk('Dropping a refused change is the owner’s decision.', 'Drop a refused change');
+  var verdict = rateMay();
+  if (verdict.ok) { toastLine('No owner PIN is set on this counter, so the signed-in owner or manager dropped it.'); return { by: WHO ? { id: WHO.id, name: WHO.name } : null, role: true }; }
+  say('This counter has no owner PIN, and only a signed-in owner or manager can drop a refused change.\n\n' + (verdict.why || 'Ask the owner.'));
+  return null;
+}
 /** Drop: a deliberate confirm that says what it reaches, then the owner's PIN — the counter may have applied the change here already, so it reads the shop again */
 async function parkedDrop(no){
   var row = await parkedRowOf(no); if (!row) return;
-  var ok = await sure('Drop this change?\n\n' + (row.says || 'A change to the shop') + '\n\nThe shop refused it, so it never reached any counter, the storefront or the books. '
+  var ok = await sure('Drop this change?\n\n' + parkedName(row) + '\n\nThe shop refused it, so it never reached any counter, the storefront or the books. '
     + 'Dropping forgets it here; nothing else changes.', 'Yes, drop it', 'Drop a refused change');
   if (!ok) return;
-  var owner = await ownerPinAsk('Dropping a refused change is the owner’s decision.', 'Drop a refused change');
-  if (!owner) return;
+  if (!await dropApproval()) return;
   try {
     await DB.del('queue', no); await queueTally(); paintStatus();
     toastLine('Dropped. This counter reads the shop again so it shows what the shop has.');
@@ -25448,11 +25494,11 @@ async function releaseQueue(){
   if (back) did.push('put ' + back + ' unconfirmed bill(s) back in the queue');
 
   /* 3 · and try, now, with the reason kept if it refuses */
-  var before = ((await DB.all('queue')) || []).length;
+  var before = sendableRows(await DB.all('queue')).length;
   if (!(HOST && HOST.key)) did.push('this counter has no key, so nothing could be sent — pair it from the shop');
   else if (!lineUp()) did.push('there is no line to the shop, so nothing could be sent — it will go on its own when the line is back');
   else { try { await HOST.drain(); } catch (e) { cbQuiet('releaseQueue:3', e); } }
-  var after = ((await DB.all('queue')) || []).length;
+  var after = sendableRows(await DB.all('queue')).length;
   if (before && before > after) did.push('sent ' + (before - after) + ' bill(s)');
   else if (before && HOST && HOST.key && lineUp()) {
     did.push('tried ' + before + ' bill(s) and none went — ' + ((HOST.last && HOST.last.why) || 'no reason was given'));
@@ -26686,7 +26732,7 @@ async function coldStart(already){
    * already flagged as not having arrived. Both are counted, and either one stops the wipe.
    */
   var left = 0, aside = 0;
-  try { left = ((await DB.all('queue')) || []).length; } catch (_) { left = -1; }
+  try { left = sendableRows(await DB.all('queue')).length; } catch (_) { left = -1; }
   try { aside = ((await DB.all('bills')) || []).filter(function(b){ return b && b._aside && !b._sent; }).length; } catch (_) { aside = -1; }
   if (left !== 0 || aside !== 0) {
     busyDone();
@@ -26725,7 +26771,7 @@ async function sendNow(){
   if (!HOST || typeof HOST.drain !== 'function') {
     toastLine('This counter cannot send from here — the counter program does that by itself.'); return;
   }
-  var before = ((await DB.all('queue')) || []).length;
+  var before = sendableRows(await DB.all('queue')).length;
   /**
    * ⚠⚠ A HAND ON THE BUTTON BEATS THE LADDER — see drain(). A person pressing Send now has almost always
    * just changed something (re-paired the counter, fixed the line, called the shop), so the reason every row
@@ -26743,7 +26789,7 @@ async function sendNow(){
     else toastLine(((HOST.last && HOST.last.why) ? HOST.last.why + ' ' : '') + 'The bills are safe on this PC.');
     return;
   }
-  var after = ((await DB.all('queue')) || []).length;
+  var after = sendableRows(await DB.all('queue')).length;
   await load();
   await openBills(true);
   if (after === 0) toastLine(before === 1 ? 'The bill has reached the shop.' : 'All ' + before + ' bills have reached the shop.');

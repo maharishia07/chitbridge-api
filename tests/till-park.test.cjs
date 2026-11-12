@@ -118,9 +118,12 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
   const helperCtx = (extra) => {
     const DB = fakeDB(), toasts = [], ctx = Object.assign({ DB, S: { items: [{ item_id: ITEM, name: 'Rice' }] }, console, JSON, String, Array, Object, toasts, QUEUED: { parked: 1 },
       esc: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'), cbQuiet: () => {}, queueTally: async () => {}, paintStatus: () => {},
-      toastLine: (t) => toasts.push(t), openStuck: () => {}, refreshNow: () => {}, sure: async () => true, ownerPinAsk: async () => ({ by: { id: 'o' } }) }, extra || {});
+      toastLine: (t) => toasts.push(t), openStuck: () => {}, refreshNow: () => {}, sure: async () => true, ownerPinAsk: async () => ({ by: { id: 'o' } }),
+      pinBook: () => ({ o: { kind: 'entity' } }), rateMay: () => ({ ok: false, why: 'Ask the owner.' }), say: (m) => toasts.push('SAY ' + m), WHO: { id: 'w1', name: 'Asha' }, modes: [], fields: {}, setMode: (m) => ctx0.modes.push(m),
+      document: { getElementById: (id) => id === 'billsdlg' ? { close() {} } : (ctx0.fields[id] = ctx0.fields[id] || { value: '' }) }, pendClear() {}, paintCard() {}, paintHits() {}, CARD_ID: null }, extra || {});
+    const ctx0 = ctx;
     vm.createContext(ctx);
-    vm.runInContext('function isParkedRow(row){ return !!(row && row._parked); }\n' + ['parkedWords', 'parkedItem', 'parkKey', 'unparkSame', 'parkedRowHTML', 'parkedSectionHTML', 'parkedRowOf', 'parkedDrop'].map(lift).join(''), ctx);
+    vm.runInContext('function isParkedRow(row){ return !!(row && row._parked); }\n' + ['parkedWords', 'parkedItem', 'parkKey', 'unparkSame', 'hasParkedFor', 'isRewardRow', 'rewardBillNo', 'parkedRewardWords', 'parkedName', 'parkedCustomer', 'parkedRowHTML', 'parkedSectionHTML', 'parkedRowOf', 'parkedFix', 'parkedFixCustomer', 'dropApproval', 'parkedDrop'].map(lift).join(''), ctx);
     return { ctx, DB, toasts };
   };
   const parkedRow = (no, extra) => Object.assign({ no, at: 'x', says: 'Rice — price 10 → 10.999', tillPost: { path: '/api/till/price', body: { item_id: ITEM, price: 10.999 } }, _why: PRICE_SENTENCE, _parked: { at: 1, status: 400, code: 'PRICE_DECIMALS', why: PRICE_SENTENCE } }, extra || {});
@@ -140,6 +143,50 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       DB.stores.queue['OP/8'] = parkedRow('OP/8');
       await vm.runInContext('parkedDrop', ctx)('OP/8');
       assert.strictEqual(!DB.stores.queue['OP/8'], gone, 'confirm ' + sure + ' pin ' + !!pin + ' -> gone ' + !DB.stores.queue['OP/8']);
+    }
+  });
+  await it('Drop with NO owner PIN: a signed-in owner or manager may, after the confirm, and the words say so; anyone else is told why (row stays)', async () => {
+    const noPin = { pinBook: () => ({}) };
+    let c = helperCtx(Object.assign({ rateMay: () => ({ ok: true, why: '' }) }, noPin));
+    c.DB.stores.queue['OP/20'] = parkedRow('OP/20');
+    await vm.runInContext('parkedDrop', c.ctx)('OP/20');
+    assert.ok(!c.DB.stores.queue['OP/20'], 'a manager could not drop'); assert.ok(c.toasts.some((t) => /owner or manager dropped it/.test(t)), c.toasts.join('|'));
+    c = helperCtx(Object.assign({ rateMay: () => ({ ok: false, why: 'Ask the owner.' }) }, noPin));
+    c.DB.stores.queue['OP/21'] = parkedRow('OP/21');
+    await vm.runInContext('parkedDrop', c.ctx)('OP/21');
+    assert.ok(c.DB.stores.queue['OP/21'], 'a cashier dropped it'); assert.ok(c.toasts.some((t) => /SAY .*only a signed-in owner or manager/.test(t)), c.toasts.join('|'));
+    c = helperCtx({ rateMay: () => ({ ok: true, why: '' }), ownerPinAsk: async () => null });   // an owner PIN IS set: the PIN rules, a manager role is not enough
+    c.DB.stores.queue['OP/22'] = parkedRow('OP/22');
+    await vm.runInContext('parkedDrop', c.ctx)('OP/22');
+    assert.ok(c.DB.stores.queue['OP/22'], 'the role bypassed a set owner PIN');
+  });
+  await it('a parked REWARD row says "Points for bill N could not be recorded: <sentence>" and Fix puts that customer in the customer box', async () => {
+    const reward = (extra) => Object.assign({ no: 'C1/9/reward', at: 'x', tillPost: { path: '/api/till/reward', body: { ref: 'C1/9', holder: { scheme: 'phone', value: '+919812345678' }, spend: 0 } }, _why: 'That customer is not on this shop.', _parked: { at: 1, status: 404 } }, extra || {});
+    const c = helperCtx({ S: { items: [], customers: [{ identity_id: 'i1', name: 'Kumar', phone: '98123 45678' }] } });
+    const html = vm.runInContext('parkedSectionHTML', c.ctx)([reward()]);
+    assert.ok(html.includes('Points for bill C1/9 could not be recorded: That customer is not on this shop.'), html);
+    assert.ok(/till-parked-fix-C1\/9\/reward/.test(html), 'no Fix for a known customer');
+    c.DB.stores.queue['C1/9/reward'] = reward();
+    await vm.runInContext('parkedFix', c.ctx)('C1/9/reward');
+    assert.deepStrictEqual(c.ctx.modes, ['sell']); assert.strictEqual(c.ctx.fields.cname.value, 'Kumar'); assert.strictEqual(c.ctx.fields.cphone.value, '98123 45678');
+    c.ctx.S = { items: [], customers: [] };
+    assert.ok(!/till-parked-fix/.test(vm.runInContext('parkedSectionHTML', c.ctx)([reward()])), 'Fix offered for a customer this counter does not know');
+  });
+  await it('a parked reward row is parked by the drain like any change (404), and a parked change never counts in the close sheet\'s waiting, the close check, Send now or the wipe', async () => {
+    const { host, DB } = counter(() => [404, { code: 'NOT_FOUND', message: 'No such customer.' }]);
+    DB.stores.queue['C1/9/reward'] = change('C1/9/reward', '/api/till/reward', { ref: 'C1/9', holder: { scheme: 'phone', value: '+9198' }, spend: 0 });
+    await host.drain({ force: true });
+    assert.ok(DB.stores.queue['C1/9/reward']._parked, 'a reward row refused 404 was not parked');
+    const ctx = { DB, PARKED: [], rowIsMine: () => true, isIssuedRow: () => false, cbQuiet() {} };
+    vm.createContext(ctx);
+    vm.runInContext('function isParkedRow(row){ return !!(row && row._parked); }\n' + lift('sendableRows') + lift('closeReadinessNow') + lift('parkedLine'), ctx);
+    DB.stores.bills = {};
+    const rd = await vm.runInContext('closeReadinessNow()', ctx);
+    assert.strictEqual(rd.waiting, 0); assert.strictEqual(rd.parked, 1);
+    assert.strictEqual(vm.runInContext('parkedLine', ctx)(0).length, 0); assert.ok(/1 change needs fixing — they do not stop the close/.test(vm.runInContext('parkedLine', ctx)(1)[0]));
+    for (const fn of ['closeCounter', 'sendNow', 'coldStart']) {
+      const at = PAGE.indexOf('\nasync function ' + fn + '('), body = PAGE.slice(at, PAGE.indexOf('\n}\n', at));
+      assert.ok(/sendableRows/.test(body), fn + ' still counts the raw queue');
     }
   });
   await it('a corrected save of the same change replaces its parked copy (same path + item), and leaves another item\'s parked change alone', async () => {
@@ -192,6 +239,17 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     assert.deepStrictEqual(r.written, [21.99, 110], 'INR +10% wrote ' + JSON.stringify(r.written));
     r = await run('KWD', '-5%', [1.2]);
     assert.deepStrictEqual(r.written, [1.14], 'KWD -5% wrote ' + JSON.stringify(r.written));
+  });
+  await it('re-saving the SAME price while a refused copy waits sends it again (replacing the parked copy); with none waiting it is still "nothing to do"', async () => {
+    const sent = [], mk = (rows) => { const c = priceCtx('INR', { money: String, WHO: null, CHANGED: { price: [] }, DB: Object.assign(fakeDB(), {}), cloudFirst: async (o) => { sent.push(o.body.price); return { ok: true }; } });
+      rows.forEach((r) => { c.DB.stores.queue[r.no] = r; });
+      vm.runInContext(['isParkedRow', 'parkKey', 'hasParkedFor', 'priceWrite'].map((n) => n === 'isParkedRow' ? 'function isParkedRow(row){ return !!(row && row._parked); }\n' : lift(n)).join(''), c); return c; };
+    let c = mk([]);
+    let out = await vm.runInContext('priceWrite', c)({ item_id: ITEM, name: 'Rice', price: 10 }, 10);
+    assert.deepStrictEqual([out.ok, sent.length], [true, 0], 'sent with nothing parked');
+    c = mk([parkedRow('OP/30', { tillPost: { path: '/api/till/price', body: { item_id: ITEM, price: 10 } } })]);
+    out = await vm.runInContext('priceWrite', c)({ item_id: ITEM, name: 'Rice', price: 10 }, 10);
+    assert.deepStrictEqual(sent, [10], 'the same price was not sent again');
   });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);
