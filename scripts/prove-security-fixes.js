@@ -122,10 +122,12 @@ const rungFor = (rd, std, doc) => {
   // ── S1 — a PUBLIC simulator "lead" token must NOT authenticate a platform route (auth bypass → AI spend). ──
   const lead = await api('POST', '/api/simulator/lead', { body: { name: 'attacker', email: 'a' + ts + '@x.com' } });
   const simTok = lead.j && lead.j.token;
-  chk('S1 · simulator issues a lead token', !!simTok, 'got token=' + !!simTok);
-  const bypass = await api('POST', '/api/governance/ai-draft', { token: simTok, body: { skill_id: 'hs-code', context: { product: { description: 'x' } } } });
+  /* SEC-132: a sealed box (production, uat, staging...) gates the simulator off: /api/simulator/lead is then the unknown-path 404, which is the stronger answer (no lead token to try) */
+  const gated = lead.status === 404;
+  chk(gated ? 'S1 · the simulator is gated off here (SEC-132): /api/simulator/lead is the unknown-path 404' : 'S1 · simulator issues a lead token', gated || !!simTok, 'status ' + lead.status + ' token=' + !!simTok);
+  const bypass = gated ? { status: 401 } : await api('POST', '/api/governance/ai-draft', { token: simTok, body: { skill_id: 'hs-code', context: { product: { description: 'x' } } } });
   chk('S1 · sim_lead token CANNOT call /ai-draft (401, no AI spend)', bypass.status === 401, 'status ' + bypass.status);
-  const bypass2 = await api('GET', '/api/governance/ai-usage', { token: simTok });
+  const bypass2 = gated ? { status: 401 } : await api('GET', '/api/governance/ai-usage', { token: simTok });
   chk('S1 · sim_lead token rejected on any authed route (401)', bypass2.status === 401, 'status ' + bypass2.status);
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);

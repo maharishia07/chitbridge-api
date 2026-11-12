@@ -66,6 +66,11 @@ it('SEC-115 precision: a chit table named in a row mapper or comment is not a re
   assert.ok(READS_CHITS.test("router.get('/x', async () => query('SELECT 1 FROM chit_status WHERE chit_id = $1'))"), 'FROM chit_status missed');
   assert.ok(READS_CHITS.test("router.get('/x', async () => query('SELECT 1 '+ ' FROM public.chit_header h JOIN chit_detail d ON true'))"), 'a multi-line FROM / JOIN missed');
 });
+it('GET /api/notifications reads chits only inside the caller ENTITY (SQL binds cs.entity_id = $1 and sl.entity_id = $1); WHICH co-assist of that entity sees which chit is AI-15, still open', () => {
+  const src = fs.readFileSync(path.join(ROUTES, 'notifications.js'), 'utf8');
+  assert.ok(/cs\.entity_id = \$1 AND cs\.deleted_at IS NULL/.test(src) && /sl\.entity_id = \$1 OR sl\.action IN/.test(src), 'the feed lost its entity bound');
+  assert.ok(!/seesWholeEntity/.test(src), 'the feed now asks seesWholeEntity: this guard line and the AI-15 line must be updated');
+});
 it('RATCHET: chit read routes that skip seesWholeEntity ≤ ' + BASELINE_SKIPPING + ' (may fall, never grow)', () =>
   assert.ok(skipping.length <= BASELINE_SKIPPING, skipping.length + ' now skip it — a new chit read route must ask lib/access seesWholeEntity'));
 it('the scan still finds the chit routes (a scan that finds nothing proves nothing)', () => assert.ok(rows.length >= 30, 'found ' + rows.length));
