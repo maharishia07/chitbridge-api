@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 3,
-  "meets": 628,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -26605,11 +26605,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2f6ccb3bf69814d1"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07, re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -27901,11 +27900,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cb196c32797a4f71"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3), re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-mis-trend.js",
     "till.html"
@@ -28200,11 +28198,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "59d8c4b986462709"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3), re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
