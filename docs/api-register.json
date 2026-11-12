@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -59125,11 +59125,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1fe1075f4203d0d0"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1170 stage2: handler and contract re-read; offer-item answers 409 OFFER_CLASH (registered, sentence), 400, 404 in the one error shape, 200 shape unchanged (moveAnswer extract), non-uuid item id still 404 (check moved inside the move); additive only; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
