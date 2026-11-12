@@ -53165,7 +53165,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-11-12 batch margin re-sign (S): CAT-124 F1 moves category+item write into one transaction (writeCitedItems); input, answer, codes unchanged; handler re-read for the 13 columns",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1170 stage2: handler and contract re-read after the hash moved; the answer's message now says when a list's photos were not copied (same field, no new key), one error shape, statuses in the contract, additive only; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -59119,7 +59119,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1170 stage2: handler and contract re-read; offer-item answers 409 OFFER_CLASH (registered, sentence), 400, 404 in the one error shape, 200 shape unchanged (moveAnswer extract), non-uuid item id still 404 (check moved inside the move); additive only; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",

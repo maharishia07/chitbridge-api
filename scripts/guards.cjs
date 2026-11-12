@@ -433,6 +433,7 @@ const GUARDS = [
   'api-problem-chits.test.cjs', // API-4 sweep, chits: every refusal of routes/chits.js is a Problem with its old keys frozen; no 5xx says its cause; the schemas agree with the validator chains they replaced
   'api-problem-finance.test.cjs', // API-4 sweep, folders, Home facts and pricing: every refusal of routes/folders.js, routes/facts.js and routes/pricing.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-offers.test.cjs', // CAT-220: POST /api/offers/evaluate and /explain at the route: the discount and its reason in words, an expired or not-yet-started offer skipped, the shop's own shelf, a key not scoped 403
+  'cat-m9c-till-doors.test.cjs', // M9c (CAT-223/230/207): the counter adds a product to a live offer only if it does not clash (409), ids that are no uuid are refused, the starter list is adopted without image
   'api-problem-pricing.test.cjs', // CAT-221: POST /api/pricing/price at the route: the tier price at each quantity, below the first break the list price, fixed and range, an unpriced line null never 0
   'cat-m9a-stamp-throws.test.cjs', // M9a follow-up: a price finer than the currency found at the stamp is a 400 (adopt writes nothing half; assist/mint answer it), no-currency sentence
   'cat-m9a-product-doors.test.cjs', // M9a (CAT-308/281/231/310/232/246): a price finer than the currency is refused (PRICE_DECIMALS), rate/unit/ceiling at the product door, combo price ceiling, availability strict, source_key cap

@@ -78,7 +78,7 @@ of file each thing is; this says what already does the job.
 | 35 | `closeModal` | `app.html` |  |
 | 35 | `shell` | `pick.js` |  |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
-| 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
+| 34 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `changes` | `books-store.js` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `note` | `dbwatch.js` |  |

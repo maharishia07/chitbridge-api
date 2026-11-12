@@ -2196,6 +2196,21 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
  *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
  *   languages   which synonym packs       skip_existing  default true
  */
+/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) → { kept, dropped: how many rows lost one } */
+function withoutServerOwned(items) {
+  const kept = [];
+  let dropped = 0;
+  for (const item of items) {
+    const copy = Object.assign({}, item);
+    const owned = catcols.SERVER_OWNED.filter((key) => key in copy);
+    for (const key of owned) delete copy[key];
+    dropped += owned.length ? 1 : 0;
+    kept.push(copy);
+  }
+  return { kept, dropped };
+}
+/** CAT-207: the starter list's pictures are not copied (a picture is minted by the server from an upload, never taken from a link in a row): said in words, never silently */
+const photosNote = (dropped) => (dropped ? ' · the list’s photos were not copied: add each from the product’s Media' : '');
 /** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
  *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
  *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
@@ -2271,7 +2286,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    items = await dropForeignListPrices(items, req);
+    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = stripped.kept; /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
     if (Array.isArray(b.names) && b.names.length) {
       /* R57: list prices out first, then the page's own */
       const priceBy = new Map();
@@ -2349,7 +2364,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
         (n === 1 ? '' : 's') +
         ' added' +
         (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') +
-        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') +
+        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + photosNote(stripped.dropped) +
         '.'
     });
   } catch (e) {
