@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 1,
+  "meets": 630,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -52014,10 +52014,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1156 (independent review: CMP-42 staff door writes source staff and actor id, refuses self/reply in words, shopper door the one writer of self; web caller sends no source; bite proven; 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "34d34aa046bc2f5c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "shop-privacy.js"
    ],
