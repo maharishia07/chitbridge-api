@@ -219,7 +219,7 @@ router.post(
       /* ── OFF THE RAIL: a name, and an id minted for it. ─────────────────────────────────────────────────── */
       if (!bridge) {
         /* CRM-226/230/231: ONE transaction — the shop's mint lock first (lib/local-identity, the autocommit pool would release it at once), then mint, the live-or-deleted check and the list row.
-           CRM-247: a NAME that matches a DELETED supplier brings that supplier back (lib/party-live restore) instead of answering "already in your list". */
+           CRM-247: a NAME that matches a DELETED supplier brings that supplier back (lib/party-restore) instead of answering "already in your list". */
         const added = await withEntity(owner, async (db) => addLocalSupplier(db, owner, localName, { kind, category, nickname, notes, preferred }));
         if (added.local.error) return problem(req, res, mintRefusal(added.local));
         if (added.dup) return problem(req, res, { status: 409, ...words.listed(localName + ' is already in your supplier list') });
