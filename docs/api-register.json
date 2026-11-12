@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 3,
-  "meets": 628,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -10492,11 +10492,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8dafbdfc875c70c5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js"
@@ -10602,11 +10601,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "158440f72b9764bf"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -11404,11 +11402,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "28854d3230999418"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
