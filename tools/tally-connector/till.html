@@ -22596,14 +22596,18 @@ function dayCheckPaint(chk){
   el.innerHTML = html;
   el.hidden = false;
 }
+/** the shop's last two days of this counter's bills, or null when the shop cannot say (offline, refused) */
+async function historyOrNull(){
+  try { return await HOST.history(2, tillId()); } catch (e) { cbQuiet('historyOrNull:1', e); return null; }
+}
 /**
  * ⭐ FX-CT1 — READ THE DAY AGAIN: this counter's bills the server holds and this device does not are written into the device's
  * store, as SENT and VERIFIED (they came from the server — they are never queued, so never sent twice). F4 (refresh) does the
  * same after it reads the shop, so "read the shop again" also brings the day back to a wiped browser.
  */
-async function dayReread(reopen){
+async function dayReread(reopen){ if (frozenStop('re-reading the day')) return 0;
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return 0;
-  var h; try { h = await HOST.history(2, tillId()); } catch (_) { h = null; }
+  var h = await historyOrNull();
   if (!h || h.offline || !Array.isArray(h.bills)) { if (reopen) toastLine('Could not reach the server — try again when the line is back.'); return 0; }
   var have = {}; try { ((await DB.all('bills')) || []).forEach(function(b){ if (b && b.no) have[String(b.no)] = 1; }); } catch (e) { cbQuiet('dayReread:1', e); }
   var day = dayKeyOf(Date.now()), n = 0;

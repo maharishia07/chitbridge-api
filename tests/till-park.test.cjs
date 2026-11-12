@@ -409,8 +409,16 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     await vm.runInContext('sendNow()', ctx);
     assert.strictEqual(reads, 0, 'sendNow read the queue while frozen'); assert.ok(/sending was stopped/.test(said[0]), said[0]);
   });
+  await it('dayReread while frozen says the frozen words and stops: never "Nothing new on the server", no history call, nothing re-read', async () => {
+    const said = []; let called = 0;
+    const ctx = { dbFrozen: () => true, busyDone() {}, sure: (m) => { said.push(m); return Promise.resolve(false); }, location: { reload() {} }, HOST: { history: async () => { called++; return { bills: [] }; }, cred: () => 'k' }, tillId: () => 'C1', toastLine: (t) => said.push('TOAST ' + t), Array, Object, Date, DB: { all: async () => { throw new Error('read while frozen'); } } };
+    vm.createContext(ctx);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + ['askReload', 'frozenStop', 'historyOrNull', 'dayReread'].map(lift).join(''), ctx);
+    assert.strictEqual(await vm.runInContext('dayReread(true)', ctx), 0);
+    assert.strictEqual(called, 0, 'it asked the shop for the day while frozen'); assert.ok(/re-reading the day was stopped/.test(said[0]) && !said.some((t) => /Nothing new/.test(t)), said.join('|'));
+  });
   await it('GUARD: every DB read inside a try/catch is sorted — gated (the function stops first), checked (the catch rethrows/paints frozen) or closed (fails closed, reason written); a new unsorted one fails here', async () => {
-    let esprima = null; try { esprima = require('esprima'); } catch (_) { console.log('       (esprima not installed: guard skipped)'); return; }
+    const esprima = require('esprima');   // already in the lock (4.0.1, via js-yaml); a missing parser FAILS this test, it never skips
     const html = PAGE, code = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)].map((x) => x[1]).join('\n');
     const ast = esprima.parseScript(code, { loc: true, range: true, tolerant: true }), found = {};
     const isFn = (node) => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(node.type);
@@ -435,13 +443,12 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     walk(ast, { fn: '(top)', handler: null, text: '' }, null);
     const GATE = /frozenStop\(|frozenDrain\(|dbFrozen\(\)/, CHECK = /throwIfFrozen|dbFrozen|frozenOr|paintFrozenInto|DB_FROZEN/;
     const SORTED = {   // fn: [kind, why]   gated = the function stops/branches on frozen first · checked = every catch rethrows or paints frozen · closed = an unreadable store already fails closed, said here
-      closeCounter: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
+      closeCounter: ['gated'], dayReread: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
       queueTally: ['gated'], queueLength: ['checked'], retainPaint: ['checked'], subListPaint: ['checked'], tillIssued: ['checked'],
       keepParked: ['closed', 'null = unreadable; every caller stops through keptUnread'],
       checkAbsorbed: ['closed', 'null = could not check; callers say so, nothing is decided from it'],
       dayMarkWithdrawn: ['closed', 'only marks bills withdrawn; its writes reject while frozen'],
-      dayReread: ['closed', 'its only consequence is DB writes, which reject while frozen'],
-      load: ['closed', 'boot only: a fresh page is never frozen'],
+            load: ['closed', 'boot only: a fresh page is never frozen'],
       moveOldStores: ['closed', 'the read feeds a log line; the moves are writes that reject while frozen'],
       openStuck: ['closed', 'the catch puts the frozen words on the panel, and the frozen notice leads it'],
       qReady: ['closed', 'resets waits only; nothing is decided from an empty read'],
@@ -455,6 +462,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter']
     };
     const bad = [];
+    if (Object.keys(found).length < 25) bad.push('the scan found only ' + Object.keys(found).length + ' functions with a DB read in a try/catch — the guard has gone blind');
     for (const fn of Object.keys(found)) {
       const entry = SORTED[fn];
       if (!entry) { bad.push(fn + ': a DB read in a try/catch that is not sorted (decides-from-empty / paints-empty / fails-closed?) — gate it, rethrow DB_FROZEN, or add it to SORTED with its reason'); continue; }
