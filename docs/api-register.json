@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 3,
-  "meets": 628,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -52557,11 +52557,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6cfbfb5aa148ed87"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1204 (independent review, not the builder: handler diff re-read, CAT-232 per-row refusal: a broken row is counted bad, rest of feed lands, no whole-batch 400, 200 body keys unchanged, tolerant door proof kept; new test 45 passed, 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -61858,11 +61857,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "72a08c43e4fe0b41"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1204 (independent review, not the builder: handler diff re-read, CAT-246 source_key over 200 characters answers 400 ASSIST_BAD_REQUEST (registered code, new inline 400 in contract, scene, legacy answer, error-tests row), missing key still 422, owner-only door unchanged, sole web caller catSourcePut shows the sentence; new test 45 passed, 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -64351,11 +64349,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2fe0788b33fdb51d"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1204 (independent review, not the builder: handler diff re-read, CAT-232 refusal before stamp answers 400 Bad availability with the shopkeeper sentence (same 400 family as the old badQuantity), no web caller sends a typed figure, caller-scoped door unchanged; new test 45 passed, 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
