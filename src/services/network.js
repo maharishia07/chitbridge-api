@@ -192,7 +192,8 @@ async function _askedParent({ parentId, parentHandle }, actor) {
 async function _askedChild({ childId, childHandle, childBridgeId }, parent, actor) {
   if (childId) return getById(childId);
   if (childHandle) return askableNodeOfHandle(childHandle);
-  if (childBridgeId) return _full(childBridgeId);
+  /* NET-76: a stub node of a remote shop is found first; a local shop with no node yet gets one; a remote one is refused before anything is written */
+  if (childBridgeId) return (await _full(childBridgeId)) || askableNodeOfHandle(childBridgeId);
   return String(parent.id) !== String(actor.id) ? actor : null;
 }
 /**

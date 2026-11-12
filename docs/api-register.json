@@ -49987,7 +49987,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 438,
+   "line": 439,
    "hash": "a4401816d7a77a5a",
    "does": "",
    "errors": {
@@ -50209,7 +50209,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 403,
-   "hash": "bfdcb3d04502a11d",
+   "hash": "1027ead797365984",
    "does": "",
    "errors": {
     "count": 3,
@@ -50291,7 +50291,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1181 stage2: NET-56 read in routes/network-offers.js withdraw: a second withdraw keeps the earlier end (net.earlierEnd) and the first withdrawn_at, a first withdraw unchanged; no new status, code or answer key, no refusal path touched; web caller netOfferWithdraw sends only at; 13 columns true; net-56 test green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
