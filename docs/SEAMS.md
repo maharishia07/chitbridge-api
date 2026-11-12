@@ -9,13 +9,13 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 161 | `list` | `amend.js` |  |
+| 160 | `list` | `amend.js` |  |
 | 132 | `rows` | `crm.js` | still in them: |
 | 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 103 | `answer` | `availability.js` | from March; then nearest. |
+| 102 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
 | 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 78 | `next` | `dayopen.js` | the next thing to do — |
@@ -43,16 +43,16 @@ of file each thing is; this says what already does the job.
 | 53 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 52 | `rows` | `cap-settings.js` |  |
 | 52 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 52 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 51 | `toast` | `accounts-shell.js` |  |
+| 51 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 48 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 46 | `read` | `cap-print.js` |  |
-| 45 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 44 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 44 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
-| 42 | `live` | `receivables.js` | the allocations that still count: |
+| 41 | `live` | `receivables.js` | the allocations that still count: |
 | 40 | `facts` | `bill-steps.js` | MY state_log — |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
@@ -94,11 +94,11 @@ of file each thing is; this says what already does the job.
 | 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 31 | `hold` | `orders.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
+| 30 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
-| 30 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `owner` | `books.js` |  |
 | 29 | `mine` | `crm.js` | `opt.removedOk`: |
@@ -109,10 +109,10 @@ of file each thing is; this says what already does the job.
 | 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 26 | `view` | `country-ready.js` |  |
+| 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
-| 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -121,13 +121,14 @@ of file each thing is; this says what already does the job.
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 23 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
+| 23 | `governance` | `home-facts.js` |  |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `keep` | `signin.js` | see. |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `says` | `adopt.js` |  |
 | 22 | `entries` | `books-store.js` |  |
-| 23 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
+| 22 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `model` | `chit-sheet.js` |  |
 | 21 | `cblog` | `core.js` | const __cblog = []; |
@@ -135,7 +136,6 @@ of file each thing is; this says what already does the job.
 | 21 | `reason` | `lab-kit.js` | W9: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
-| 22 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 21 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `next` | `cap-stock.js` | the next level: |
@@ -181,6 +181,7 @@ of file each thing is; this says what already does the job.
 | 16 | `series` | `gst-returns.js` | `paid_on`: |
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 16 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
+| 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 16 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
@@ -191,7 +192,6 @@ of file each thing is; this says what already does the job.
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
-| 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |

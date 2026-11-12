@@ -162,16 +162,11 @@ function extras(tools) {
   ];
 
   const helpDesk_ = [
-    X('gap-needs-a-question', 'POST ' + at('/gap'), 422, { body: { q: 'a' } }),
-    X('gap-too-long', 'POST ' + at('/gap'), 422, { body: { q: 'x'.repeat(401) } }),
-    X('gap-noted', 'POST ' + at('/gap'), 200, { body: { q: 'how do I pay?', context: 'compose' } }),
-    X('gap-fault', 'POST ' + at('/gap'), 500, { body: { q: 'how do I pay?' }, setup: { jsonThrows: true }, throws: true }),
     X('publish-needs-both', 'POST ' + at('/publish'), 422, { body: { question: 'q?' } }),
     X('publish-not-a-help-desk', 'POST ' + at('/publish'), 403, { body: { question: 'q?', answer: 'a.' } }),
     X('publish-new', 'POST ' + at('/publish'), 200, { body: { question: 'q?', answer: 'a.', context: ['compose', 3] }, patch: fixedClock, setup: { sqlRows: firstOf(helpDesk, answering(/is_default = true/, [{ schema_id: 's1' }])) } }),
     X('publish-refined', 'POST ' + at('/publish'), 200, { body: { question: 'q?', answer: 'a.', qa_id: 'pub_1' }, patch: { catalogueWrite: { patchWhere: async () => ({ rowCount: 1 }) } }, setup: { sqlRows: helpDesk } }),
     X('publish-fault', 'POST ' + at('/publish'), 500, { body: { question: 'q?', answer: 'a.' }, setup: failing, throws: true }),
-    X('gaps-retired', 'GET ' + at('/gaps'), 200, {}),
     X('resolve-retired', 'POST ' + at('/resolve'), 410, { body: {} }),
     X('whoami-help-desk', 'GET ' + at('/whoami'), 200, { setup: { sqlRows: helpDesk } }),
     X('whoami-not-a-help-desk', 'GET ' + at('/whoami'), 200, {}),

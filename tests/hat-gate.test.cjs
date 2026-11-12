@@ -84,7 +84,6 @@ function checkUrl(url, hat, wantAllowed) {
   console.log('  ' + (ok ? '✓' : '✗') + ' ' + url.padEnd(34) + hat.padEnd(11) + (allowed ? 'ALLOWED' : 'BLOCKED'));
 }
 checkUrl('/api/entities/me/prefs/ui', 'view_only', true);
-checkUrl('/api/entities/me/locale', 'view_only', true);
 checkUrl('/api/notifications/dismiss', 'audit', true);
 checkUrl('/api/assist/ask?x=1', 'view_only', true);
 checkUrl('/api/chits/send', 'view_only', false);

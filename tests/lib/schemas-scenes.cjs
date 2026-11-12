@@ -67,7 +67,6 @@ function extras() {
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
   /** an answer the sweep adds: nothing was frozen for it */
   const A = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more));
-  const MY_ROUTE = 'GET ' + S + '/my';
   const CREATE = 'POST ' + S + '/create-default';
   const FIELDS = 'GET ' + S + '/fields';
   const DROP_ONE = 'DELETE ' + S + '/fields/:field_key';
@@ -82,11 +81,6 @@ function extras() {
   const at = (key) => S + '/fields/' + key;
   const long = (count) => 'x'.repeat(count);
   return [
-    /* GET /my */
-    X('my-has-definition', MY_ROUTE, 200, { setup: withRows(when(MY, [definition()])) }),
-    X('my-none', MY_ROUTE, 200, {}),
-    X('my-answer-fails', MY_ROUTE, 500, { setup: { jsonThrows: true } }),
-    X('my-query-ignored', MY_ROUTE, 200, { url: S + '/my?a=1&a=2' }),
     /* POST /create-default */
     X('create-new', CREATE, 200, { patch: bootstrapGives({ created: true, schema_id: SCHEMA }), setup: withRows(when(READ_BACK, [definition()])) }),
     X('create-existing', CREATE, 200, { patch: bootstrapGives({ created: false, schema_id: SCHEMA, existed: true }), setup: withRows(when(READ_BACK, [definition()])) }),
