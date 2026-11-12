@@ -19997,7 +19997,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 134,
+   "line": 135,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -21487,7 +21487,7 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 45,
+   "line": 46,
    "hash": "d6cadbb3014b48c6",
    "does": "",
    "errors": {
@@ -21572,7 +21572,7 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 109,
+   "line": 101,
    "hash": "0fea4ab2374ff23d",
    "does": "",
    "errors": {
@@ -49886,7 +49886,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 54,
-   "hash": "9f9dfe1002e8b7e5",
+   "hash": "9f7a858a675d115d",
    "does": "",
    "errors": {
     "count": 1,
@@ -49963,7 +49963,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1151 (independent review after money critic: one line-door guard S.badLine/lineRefusal, BAD_LINE no longer a 500, outward keyed APIs only, no in-app web caller; tests 97 and line-door green, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52283,8 +52283,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 105,
-   "hash": "b443772f4998f191",
+   "line": 97,
+   "hash": "3f7f2d9aac0b844f",
    "does": "",
    "errors": {
     "count": 1,
@@ -52359,7 +52359,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1151 (independent review after money critic: one line-door guard S.badLine/lineRefusal, BAD_LINE no longer a 500, outward keyed APIs only, no in-app web caller; tests 97 and line-door green, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52384,8 +52384,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 106,
-   "hash": "7ffb40a2463ac7a9",
+   "line": 98,
+   "hash": "e31b0a0f18eaabfe",
    "does": "",
    "errors": {
     "count": 1,
@@ -52460,7 +52460,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 merged contract2: ctx cut to the closed typed key list (ctxOf), answer unchanged, no leak path; all 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1151 (independent review after money critic: one line-door guard S.badLine/lineRefusal, BAD_LINE no longer a 500, outward keyed APIs only, no in-app web caller; tests 97 and line-door green, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52486,7 +52486,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 58,
-   "hash": "054411c51914439a",
+   "hash": "2ca6c6765d0562a9",
    "does": "",
    "errors": {
     "count": 0,
@@ -52561,7 +52561,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1151 (independent review after money critic: one line-door guard S.badLine/lineRefusal, BAD_LINE no longer a 500, outward keyed APIs only, no in-app web caller; tests 97 and line-door green, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57464,7 +57464,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 185,
+   "line": 176,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -57568,8 +57568,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 148,
-   "hash": "f06e00970724f9d6",
+   "line": 138,
+   "hash": "c12f6f386551758a",
    "does": "",
    "errors": {
     "count": 0,
@@ -57642,7 +57642,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1151 (independent review after money critic: one line-door guard S.badLine/lineRefusal, BAD_LINE no longer a 500, outward keyed APIs only, no in-app web caller; tests 97 and line-door green, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
