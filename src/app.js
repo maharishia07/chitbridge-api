@@ -2,7 +2,7 @@
  * OWNER     cb-network
  * OWNS      the network feature app as one express app (routers mounted on /api/network)
  * FLOW      express app -> /api/network -> routes/network and src/routes/catalogue (archived) -> module.exports (app)
- * CALLED BY tests/catalogue.spec.js (require, jest); server.js:441 names it in a comment and does not require it
+ * CALLED BY tests/catalogue.spec.js and tests/network.spec.js (jest require); server.js does not require it
  * CARD      04-network/functions/network-storefront-network-store.md
  * RISK      plain
  */
