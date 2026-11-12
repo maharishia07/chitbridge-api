@@ -1731,7 +1731,7 @@
    ]
   },
   "PATCH /api/supplies/:id": {
-   "cases": 4,
+   "cases": 10,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3691,7 +3691,7 @@
    ]
   },
   "POST /api/supplies": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3699,7 +3699,7 @@
    ]
   },
   "POST /api/supplies/:id/issue": {
-   "cases": 4,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3707,7 +3707,7 @@
    ]
   },
   "POST /api/supplies/purchase": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
