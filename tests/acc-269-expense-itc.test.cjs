@@ -39,6 +39,8 @@ function loadWith(rows, posted, identity) {
 (async () => {
   console.log('\n== ACC-269: GSTR-3B 4A reads an expense chit\'s posted input tax ==\n');
   const T = require(path.join(API, 'lib', 'tax-lines'));
+  /* ACC-278: GSTR-3B is India's (gstrIndiaOnly refuses an AU/AE shop), so an AU/AE month's input credit is read from the ledger itself, not through the India form */
+  const ledgerItc = (led) => led.ledger.itc;
   const itc = (led) => T.gstr3b(led.ledger, led.me, led.bounds.period).itc_elg.itc_net;
   const e1 = expense(1, { input_tax: { cgst: 9, sgst: 9 } });
   const posted1 = { [id(1)]: { input_cgst: 900, input_sgst: 900 } };
@@ -73,7 +75,7 @@ function loadWith(rows, posted, identity) {
   for (const country of ['AU', 'AE']) {
     roleReads.length = 0;
     const away = await loadWith([expense(9, { input_tax: { gst: 15 } })], { [id(9)]: { gst_paid: 1500 } }, Object.assign({}, IDENTITY, { country })).ledgerFor(SHOP, month);
-    ok(country + ' shop: its expense is NOT read by this reader (BAS 1B / VAT201 read the posted ledger themselves): no read, ITC unchanged', roleReads.length === 0 && itc(away).camt === 0 && itc(away).iamt === 0, JSON.stringify(itc(away)));
+    ok(country + ' shop: its expense is NOT read by this reader (BAS 1B / VAT201 read the posted ledger themselves): no read, ITC unchanged', roleReads.length === 0 && ledgerItc(away).cgst === 0 && ledgerItc(away).igst === 0, JSON.stringify(ledgerItc(away)));
   }
 
   /* the blocked credit: ACC-230 posts a head the books do not carry as input to COST, so no input_* line exists -> held out of 4A */
