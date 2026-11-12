@@ -7,7 +7,7 @@
  *                    version is written; a product that is under no other offer still goes in (version 2); taking a product OUT is never asked
  *           CAT-230  (held by #1147, which this branch contains) POST /till/price, /till/rate and /till/offer-item with an id that is no uuid answer 404 (the unknown product's answer), never the database's cast as a 500;
  *                    stock and stock/bulk are held by the one fold of the product writer (#1147): one bad id in 500 does not fail the batch
- *           CAT-207  POST /products/lists/adopt hands the writer rows WITHOUT image (the picture links are the server's to mint), so the veg list is no longer refused whole
+ *           CAT-207  (photos: no media mint exists that takes a link, so the strip stays and the answer says so) POST /products/lists/adopt hands the writer rows WITHOUT image (the picture links are the server's to mint), so the veg list is no longer refused whole
  *           The stand-in database throws the cast error (22P02) when an id that is no uuid reaches a query, as Postgres does.
  * CALLED BY scripts/guards.cjs · CI. No database, no network (tests/lib/problem-world.cjs).
  * CARD      07-offers-pricing-and-combos/till-price-and-worth-an-offer
@@ -117,6 +117,7 @@ async function starterList() {
   const r = await ask('POST', '/api/products/lists/adopt', { list: 'veg' }, shelf);
   const rows = adopted || [];
   check('adopt veg → 200', r.status === 200, [r.status, r.json]);
+  check('…the answer says in words that the photos were not copied', /photos were not copied/.test(String(r.json && r.json.message)), r.json && r.json.message);
   check('…the writer was handed rows, none of them carrying image or media', rows.length > 0 && rows.every((one) => !('image' in one) && !('media' in one)), [rows.length, rows.filter((one) => 'image' in one).length]);
 }
 
