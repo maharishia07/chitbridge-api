@@ -22,6 +22,7 @@ const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: th
 const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
+const ownerOnly = require('../lib/owner').ownerOnly; // CAT-277: the one owner gate (a co-assist or a key is refused in words)
 const { query, withEntity, readBatch } = require('../db'); // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth = require('../middleware/auth'); // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb'); // server-side grounding (cacheable, tamper-proof)
@@ -394,7 +395,7 @@ function sourceRefusal(row, owner) {
   return require('../lib/platformroot').isRoot(String(owner)) ? null : words.sourceOfThePlatform();
 }
 
-router.put('/catalogue-source', auth, ...contract.checked('PUT /catalogue-source'), async (req, res) => {
+router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the catalogue source.'), ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};

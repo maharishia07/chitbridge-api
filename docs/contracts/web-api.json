@@ -3306,6 +3306,7 @@
   },
   "GET /api/till/summary": {
    "status": 200,
+   "note": "Day view only: with period=day a row with live:true includes today's bills not yet filed (a counter filed mid-day keeps its filed figure plus the later bills); live_capped says more bills may exist than were folded. Week, month and year rows are filed days only and never include today.",
    "example": {
     "period": "month",
     "rows": [
@@ -3341,17 +3342,20 @@
         "at": null,
         "source": [
          "2026-10-01"
-        ]
+        ],
+        "live": false
        }
       ],
       "source": [
        "2026-10-01"
-      ]
+      ],
+      "live": false
      }
     ],
     "counters": [
      "C1"
-    ]
+    ],
+    "live_capped": false
    },
    "optional": [],
    "free": [

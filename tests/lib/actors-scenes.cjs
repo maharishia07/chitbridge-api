@@ -222,6 +222,7 @@ function extras(tools) {
 
   /* ── change-pin, the PIN reset, the first-code re-issue ── */
   const NEW_PIN = { current_pin: PIN, new_pin: '7391', confirm_pin: '7391' };
+  const RESET_FLAGS = row(/SELECT policy_flags FROM identities/, { policy_flags: {} }); /* PPL-40: the reset ends the sessions first — the shop row that holds the device listing */
   const pins = [
     X('change-pin-nothing-sent', 'PUT ' + at('/change-pin'), 400, { body: {} }),
     X('change-pin-not-the-same', 'PUT ' + at('/change-pin'), 400, { body: { current_pin: PIN, new_pin: '7391', confirm_pin: '1111' } }),
@@ -231,19 +232,19 @@ function extras(tools) {
     X('change-pin-wrong-current', 'PUT ' + at('/change-pin'), 400, { body: Object.assign({}, NEW_PIN, { current_pin: '0000' }), setup: { who: STAFF, sqlRows: firstOf(row(/SELECT pin_hash, pin_attempts, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }), row(/SET pin_attempts = pin_attempts \+ 1/, { pin_attempts: 1, pin_locked_at: null })) } }),
     X('change-pin-made', 'PUT ' + at('/change-pin'), 200, { body: NEW_PIN, setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_attempts, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }) } }),
     X('change-pin-fails', 'PUT ' + at('/change-pin'), 500, { body: NEW_PIN, setup: { who: STAFF, sqlRows: failOn(/SELECT pin_hash/, 'XX000', SECRET_SQL) } }),
-    X('pin-reset-made', 'DELETE ' + at('/:id/pin'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-made-and-mailed', 'DELETE ' + at('/:id/pin'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
-    X('pin-reset-code-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
+    X('pin-reset-made', 'DELETE ' + at('/:id/pin'), 200, { setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
+    X('pin-reset-made-and-mailed', 'DELETE ' + at('/:id/pin'), 200, { patch: mailed, setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
+    X('pin-reset-code-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: showsCode, setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
     X('pin-reset-sealed-no-mailer', 'DELETE ' + at('/:id/pin'), 503, { patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
-    N('pin-reset-sealed-no-email-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
+    N('pin-reset-sealed-no-email-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: sealed(true), setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
     X('pin-reset-fails', 'DELETE ' + at('/:id/pin'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
-    X('otp-made', 'POST ' + at('/:id/otp'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-made-and-mailed', 'POST ' + at('/:id/otp'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
-    X('otp-code-shown', 'POST ' + at('/:id/otp'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
+    X('otp-made', 'POST ' + at('/:id/otp'), 200, { setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
+    X('otp-made-and-mailed', 'POST ' + at('/:id/otp'), 200, { patch: mailed, setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
+    X('otp-code-shown', 'POST ' + at('/:id/otp'), 200, { patch: showsCode, setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
     X('otp-sealed-no-mailer', 'POST ' + at('/:id/otp'), 503, { patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
-    N('otp-sealed-no-email-shown', 'POST ' + at('/:id/otp'), 200, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
+    N('otp-sealed-no-email-shown', 'POST ' + at('/:id/otp'), 200, { patch: sealed(true), setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
     X('otp-fails', 'POST ' + at('/:id/otp'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
-    X('otp-body-is-a-list', 'POST ' + at('/:id/otp'), 200, { body: [], setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } })
+    X('otp-body-is-a-list', 'POST ' + at('/:id/otp'), 200, { body: [], setup: { sqlRows: firstOf(RESET_FLAGS, row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } })
   ];
 
   /* ── GET /api/actors ── */

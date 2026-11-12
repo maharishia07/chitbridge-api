@@ -36084,6 +36084,20 @@
      }
     },
     {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     },
+     "fixture": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     }
+    },
+    {
      "scenario": "db-fails",
      "status": 500,
      "body_keys": {
@@ -44893,14 +44907,19 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "why": "Only the owner can change the catalogue source.",
+      "message": "Only the owner can change the catalogue source."
      },
      "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the catalogue source.",
+      "message": "Only the owner can change the catalogue source."
      }
     },
     {

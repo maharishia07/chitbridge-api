@@ -634,21 +634,32 @@ router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:
     problem(req, res, crmFault(e, req));
   }
 });
+/**
+ * who may: any login of the shop (a hat-gate refuses a viewer's write first). CMP-42: this door is STAFF writing down what a customer said, so the row says so —
+ * source 'staff' and the actor's id as its source_ref. 'self' (the customer's own answer, routes/privacy.js) and 'reply' (a STOP message, lib/optout.js) are written only by
+ * those paths; a body that names either is refused in words, never relabelled silently.
+ */
+const STAFF_SOURCE_WHY = 'A shop notes what a customer said as staff. The customer’s own answer comes from the customer, and a reply from the message.';
 router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
+    const sent = req.body && typeof req.body === 'object' ? req.body : {};
+    if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY);
+    const body = Object.assign({}, sent, { source: 'staff', source_ref: byOf(req) });
     const pref = await withEntity(owner, async (h) => {
       await mine(h, owner, id);
-      return PV.notePref(h, owner, id, req.body, byOf(req));
+      return PV.notePref(h, owner, id, body, byOf(req));
     });
     res.status(201).json({ pref });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
 });
+/** who may: the owner or an editor (CRM-40, decided 12 Nov: the register names people and their complaints, so need-to-know); a viewer or commenter gets 403 VIEW_ONLY in words */
 router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests'), async (req, res) => {
   try {
+    if (!isOwner(req) && !access.canEdit(req.identity)) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
     const owner = ctx(req);
     const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
     /* S34: the register's page and counts (lib/privacy requests), then who may answer */

@@ -44,9 +44,23 @@ t('thresholdWords: the pack\'s minor units in its money; null with no pack', wor
 /* ── tradeChecksFor ── */
 const ck = (c) => words.tradeChecksFor(c).map((x) => x.key + ':' + x.label).join();
 t('IN: address · phone · PAN on file · GSTIN', ck('IN') === 'address:Address proven,phone:Phone verified,pan:PAN on file,tax_id:GSTIN', ck('IN'));
-t('AU: address · phone · ABN (no PAN)', ck('AU') === 'address:Address proven,phone:Phone verified,tax_id:ABN', ck('AU'));
+t('AU: address · phone · ABN · ACN · GST registration (no PAN) — CMP-13', ck('AU') === 'address:Address proven,phone:Phone verified,tax_id:ABN,acn:ACN on file,gst_registration:GST registration', ck('AU'));
 t('AE: address · phone · TRN · Trade licence', ck('AE') === 'address:Address proven,phone:Phone verified,tax_id:TRN,trade_licence:Trade licence', ck('AE'));
 t('no pack: address · phone · Tax number', ck('') === 'address:Address proven,phone:Phone verified,tax_id:Tax number', ck(''));
+
+/* CMP-13: the AU header asks the ACN (held in the vault under the tag acn) and the shop's own GST registration, read from the pack's list, never a country branch */
+const header = require(path.join(API, 'lib', 'entity-header'));
+const auReady = (me, vault, taxRegistration) => header.build({ me: Object.assign({ country: 'AU', display_name: 'X', phone: '1', address: 'a', policy_flags: {} }, me), profile: {}, compliance: [], docs: { PHONE: { verified: true } }, vault, taxRegistration, now: new Date() }).trade_ready;
+const addrVault = (extra) => ({ sections: [{ rows: [{ tag: 'address', value: 'a', rung: 'verified' }].concat(extra || []) }] });
+const gstOf = (ready) => ready.checks.find((c) => c.key === 'gst_registration').done;
+const acnOf = (ready) => ready.checks.find((c) => c.key === 'acn');
+const asked = auReady({}, addrVault(), null), regd = auReady({ gstn: '51824753556' }, addrVault(), { registered: true }), notReg = auReady({}, addrVault(), { registered: false });
+t('CMP-13 AU header: owner answered REGISTERED (governance tax_registration) -> the GST check is done', gstOf(regd) === true, JSON.stringify(regd.checks));
+t('CMP-13 AU header: owner answered NOT registered -> the GST check is done too (never assumed, but an answer)', gstOf(notReg) === true, JSON.stringify(notReg.checks));
+t('CMP-13 AU header: unanswered (nothing said, no number) -> the GST check is NOT done', gstOf(asked) === false, JSON.stringify(asked.checks));
+t('CMP-13 AU header: the ACN is shown; absent it stays not done and never blocks (ABN + phone + address + answered -> done)', acnOf(regd) && acnOf(regd).done === false && regd.done === true, JSON.stringify(regd));
+t('CMP-13 AU header: ACN held in the vault -> acn done', acnOf(auReady({ gstn: '51824753556' }, addrVault([{ tag: 'acn', value: '004 085 616', rung: 'typed' }]), { registered: true })).done === true);
+t('IN header: no ACN or GST-registration check is asked', !header.build({ me: { country: 'IN', display_name: 'X', policy_flags: {} }, profile: {}, compliance: [], docs: {}, vault: null, now: new Date() }).trade_ready.checks.some((c) => c.key === 'acn' || c.key === 'gst_registration'));
 
 /* ── retentionWordsFor ── */
 t('AU / AE: the pack\'s 5 years in words', words.retentionWordsFor('AU').years === 5 && /5 years/.test(words.retentionWordsFor('AU').words) && words.retentionWordsFor('AE').years === 5);

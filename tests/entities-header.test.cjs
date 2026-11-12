@@ -104,7 +104,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const labelsOf = (r) => r.j.trade_ready.checks.map((c) => c.key + ':' + c.label).join();
     planted = base(); planted.me.country = 'AU'; planted.me.gstn = '51824753556'; planted.compliance = [];
     const au = await get();
-    t('AU shop: Address · Phone · ABN — no PAN, no GSTIN anywhere', labelsOf(au) === 'address:Address proven,phone:Phone verified,tax_id:ABN' && !/GSTIN|PAN/.test(JSON.stringify(au.j.trade_ready)), labelsOf(au));
+    t('AU shop: Address · Phone · ABN · ACN · GST registration (CMP-13) — no PAN, no GSTIN anywhere', labelsOf(au) === 'address:Address proven,phone:Phone verified,tax_id:ABN,acn:ACN on file,gst_registration:GST registration' && !/GSTIN|PAN/.test(JSON.stringify(au.j.trade_ready)), labelsOf(au));
     t('AU shop: the ABN on file -> tax_id done', ck(au, 'tax_id') === true);
     planted = base(); planted.me.country = 'AE'; planted.me.gstn = '100123456700003'; planted.compliance = [comp('AE-DED', 'trade_licence', 200)];
     const ae = await get();
