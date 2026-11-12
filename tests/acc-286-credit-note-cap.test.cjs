@@ -35,6 +35,7 @@ function world(billTotal, bills) {
       }
       /* the stand-in answers by the SQL's own parameter contract: $2 the bill's id (else $3 its number) */
       if (/ANY\(\$4::text\[\]\)/.test(sql)) return { rows: billRows.filter((item) => (params[1] ? item.chit_id === params[1] : item.bill_no === params[2])) };
+      if (/AS withdrawn FROM chit_header h WHERE/.test(sql)) return { rows: [{ withdrawn: false }] }; /* ACC-265b: the re-read under the lock */
       if (/DISTINCT ON/.test(sql)) { await new Promise((r) => setImmediate(r)); return { rows: committed.filter((n) => n.chit_id !== params[3] && (params[4] === null || n.client_ref !== params[4]) && (n.against_chit === params[1] || (params[2] && !n.against_chit && n.till_id === params[5] && n.against_no === params[2]))) }; }
       throw new Error('unexpected sql ' + sql.slice(0, 60));
     } };
@@ -121,7 +122,7 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
     (text.match(/\$\d(::\w+(\[\])?)?/g) || []).forEach((use) => { (types[use.slice(0, 2)] = types[use.slice(0, 2)] || new Set()).add(use.slice(2)); });
     return Object.values(types).every((set) => set.size === 1 || (set.size === 2 && set.has('')));
   });
-  ok('SQL shape · three statements (the bill, the earlier notes, and the own-bill read of ACC-265 for the cancel guard), every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 3 && typed.every(Boolean), JSON.stringify(typed));
+  ok('SQL shape · four statements (the bill, the earlier notes, the own-bill read of ACC-265 for the cancel guard, and the withdrawn re-read under the lock of ACC-265b), every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 4 && typed.every(Boolean), JSON.stringify(typed));
 
   /* a note that is NOT judged says so on the answer (sendState.creditCap → credit_cap), and a failed read is a refusal in words, never a bare 500 */
   const stateOf = (extra) => Object.assign({ sender_id: SHOP, chit_id: 'c0000000-0000-4000-8000-0000000000aa', purpose: 'credit_note', currency_code: 'INR', is_draft: false, business_json: { till: { id: 'C1' }, against: { bill_no: 'B-9' }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } }, extra || {});
