@@ -1727,7 +1727,8 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
           unknown++;
           continue;
         }
-        const rec = availability.stamp({ qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location });
+        const figure = { qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location };
+        const rec = availability.refusal(figure) ? null : availability.stamp(figure); /* CAT-232: a broken row is counted bad (this row only, the rest of the feed lands), never stored as a figure nobody sent */
         if (!rec) {
           count++;
           continue;
@@ -1748,6 +1749,8 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
 router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
   try {
     const entity_id = ctx(req);
+    const unclear = availability.refusal(req.body); /* CAT-232: say what stamp() would have quietly changed */
+    if (unclear) return problem(req, res, { status: 400, ...words.badAvailability(unclear) });
     const rec = availability.stamp(req.body);
     if (!rec) {
       return problem(req, res, { status: 400, ...words.badQuantity() });

@@ -108,6 +108,7 @@ function extras(tools) {
   const authoring = [
     X('source-needs-a-key', 'PUT ' + at('/catalogue-source'), 422, { body: {} }),
     X('source-a-list', 'PUT ' + at('/catalogue-source'), 422, { body: [1] }),
+    X('source-key-too-long', 'PUT ' + at('/catalogue-source'), 400, { body: { source_key: 'y'.repeat(201) } }) /* CAT-246: 200 is the most a key may hold */,
     X('source-of-another-brand', 'PUT ' + at('/catalogue-source'), 403, { body: { source_key: 'x@v1' }, setup: { sqlRows: answering(/SELECT owner_entity_id FROM catalogue_source/, [{ owner_entity_id: OTHER }]) } }),
     X('source-of-the-platform', 'PUT ' + at('/catalogue-source'), 403, { body: { source_key: 'x@v1' }, setup: Object.assign({ sqlRows: answering(/SELECT owner_entity_id FROM catalogue_source/, [{ owner_entity_id: null }]) }, asStranger) }),
     X('source-store-missing', 'PUT ' + at('/catalogue-source'), 503, { body: { source_key: 'x@v1' }, setup: { sqlRows: raising(/SELECT owner_entity_id FROM catalogue_source/, '42P01') } }),

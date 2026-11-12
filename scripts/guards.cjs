@@ -340,6 +340,8 @@ const GUARDS = [
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-221-unreadable-number.test.cjs', // ⭐ ACC-221 (+222): a figure the caller sent that is not a number (abc, NaN, Infinity, blank, null price) is NAMED and refused (BAD_QTY / BAD_PRICE / BAD_RATE, thrown as line_unreadable), never priced at 0 and said ok; engines num() follow-up
   'acc-265-cancel-credit-note.test.cjs', // ⭐ ACC-265: a sale with a live credit note against it is not cancelled (409 CHIT_HAS_CREDIT_NOTE at /void and PUT /status), asked after paid, under the cap's own lock and reader; real-Postgres run: acc-265-cancel-credit-note.realstack.cjs
+  'acc-265b-note-after-cancel.test.cjs', // ⭐ ACC-265b: a credit note against a cancelled or rejected bill is refused (409 BILL_WITHDRAWN, billOf's own withdrawn flag); a sale with a live note is not REJECTED either (rail WITHDRAWN list); real-Postgres: acc-265b-note-after-cancel.realstack.cjs
+  'acc-328-opening-twice.test.cjs', // ⭐ ACC-328/329: the same opening posted twice is 409 BOOKS_CONFLICT (a retry of the same ref still replays), a NEW opening dated in the future is 422; a reversal of an old future opening still works
   'acc-286-credit-note-cap.test.cjs', // ⭐ ACC-286: a counter credit note cannot credit more than its bill (409 CREDIT_NOTE_OVER_BILL), four in a row and ten at once, under the bill's lock
   'fin-77-parallel-payments.test.cjs', // ⭐ FIN-77: two full-due payments at once settle once (the duplicate question is asked under the party lock); IN and AU
   'acc-283-refund-gap.test.cjs', // ⭐ ACC-283: a refund that is not the credit note's total waits in words with gap_minor (AU A$69.00 for A$68.98); equal and credit-only refunds post
@@ -429,6 +431,7 @@ const GUARDS = [
   'api-4b-auth-problem.test.cjs', // API-4b: the sign-in 401 and the requireScope 403 of middleware/auth.js are a Problem (problem+json, registered code) with error/message/code/pending frozen and the same status; a good token still passes
   'api-problem-till.test.cjs', // API-4 sweep, till: every refusal of routes/till.js (the counter's 41 routes) is a Problem with its old keys frozen; the till's offline answers keep every key; no 5xx says its cause
   'reward-check.test.cjs', // CAT-272: the numbers of a reward programme, one case per rule
+  'cat-m9a-product-doors.test.cjs', // M9a re-landed without money (CAT-232/246/281/310): gst_rate 0..100, a unit is a word, price ceiling, combo price ceiling, availability refusal ('connector' accepted, stored unknown; per-row bad in the feed), source_key cap 200
   'cat-m9b-definition-doors.test.cjs', // M9b (CAT-272/273/333): reward numbers bounded, parallel definition saves lock + stale version 409, freeze list capped at 500 uuids
   'api-problem-books.test.cjs', // API-4 sweep, accounts and finance: every refusal of routes/books.js, routes/tax.js and routes/invoice.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-network-offers.test.cjs', // API-4 sweep, the network-offers doors (Lane B2, 4 Nov): every refusal of the 8 routes of routes/network-offers.js is a Problem with its old keys frozen; a key is refused 403; no 5xx says its cause; a failed member read keeps its 503
@@ -686,6 +689,7 @@ const GUARDS = [
   'pay-fix-renumber.test.cjs',
   'pay-fix-void.test.cjs',
   'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (also in NEEDS_ENGINES: runs over the books harness)
+  'rail-paid-reject.test.cjs', // RAIL-216 follow-up: a paid invoice is refused for rejected as for cancelled (the rail's own WITHDRAWN list)
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */

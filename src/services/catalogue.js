@@ -1,5 +1,5 @@
 /**
- * OWNS      the ARCHIVED cb_catalogue_item / cb_catalogue_category queries (the third catalogue model; src/routes/catalogue.js says why nothing calls them now)
+ * OWNS      the ARCHIVED cb_catalogue_item / cb_catalogue_category queries (the third catalogue model; the archived routes file is gone, MNT-52; nothing calls them)
  * CALLED BY nothing (left in place, unreferenced)
  * FLOW      a caller's body -> needMoney (CTRY-72: the shop's money or a 422 NO_MONEY, never the rupee) -> one insert
  * CARD      06-catalogue-pim/catalogue-read

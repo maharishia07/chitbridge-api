@@ -441,7 +441,7 @@ app.use('/api/combo-templates', comboTemplatesRouter); // b266 [OFFR-06] — per
 // (jest uses src/app.js; this exposes the same routers on the live server.js entry)
 app.use('/api/network', require('./src/routes/network'));
 // ARCHIVED 2026-08-06 — the cb_* catalogue routes. A network aggregates its members' catalogues and holds
-// none of its own; these served a third, unread catalogue model. See src/routes/catalogue.js and
+// none of its own; these served a third, unread catalogue model. See the former src/routes/catalogue.js (removed MNT-52) and
 // SPEC-network-storefront.md §6. cb_entity/cb_edge (the network TREE) stays mounted on the line above.
 // app.use('/api/network', require('./src/routes/catalogue'));
 
