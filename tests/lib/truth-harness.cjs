@@ -7,22 +7,23 @@
  * Lifted out of stock-truth (widen, never copy). A case whose expected result is the PRINCIPLE (not today's code) carries
  * `gap:` — a FAIL there is a RECORDED finding (RAIL-BACKLOG / toolset/known-failing.json), never a quiet fix inside the test.
  *
- * ⚠️ LOCAL ONLY: refuses any api that is not on this machine and any database that is not the local container. Writes go
+ * ⚠️ LOCAL OR A NAMED SIT BOX ONLY (tests/lib/run-target.cjs, the one allow-list): refuses production always, and any api/database not local or the named box's own. Writes go
  * through routes; the database is read with SELECT (a case that must ARM a precondition says so in its own words).
  * CARD 01-rail-core-the-chit/README
  */
 const API = (process.env.API_BASE || 'http://127.0.0.1:3100').replace(/\/$/, '');
 const DB = process.env.TRUTH_DB || process.env.STOCK_DB || 'postgres://postgres:cblocal@127.0.0.1:55432/cb_local';
-if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API)) { console.error('REFUSED: local api only, not ' + API); process.exit(3); }
-if (!/@(127\.0\.0\.1|localhost):55432\//.test(DB)) { console.error('REFUSED: local database only'); process.exit(3); }
+const TARGET = require('./run-target.cjs').assertTarget(API, DB, 'truth-harness');   /* the ONE allow-list: local, or a named SIT box the runner is ON; production never */
 
-const ENTITY_OTP = '123456', CUSTOMER_OTP = '123123';   /* lib/dev-otp.js */
+const ENTITY_OTP = TARGET.entityOtp, CUSTOMER_OTP = TARGET.customerOtp;   /* local: lib/dev-otp.js fixed codes; SIT box: today's tester code */
 const results = [];
+const LOG = require('./call-log.cjs');   /* what the run sent, for the SIT junit's endpoint rows */
 
 /** the doors (the seed's own j()); an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
   const once = method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {}; /* FIN-63: every write is one attempt with its own key (the books money doors require it) */
   const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once), body: body ? JSON.stringify(body) : undefined });
+  LOG.record(method, path, r.status);
   let b = null; try { b = await r.json(); } catch (_) { /* a reply with no JSON body (bytes, 204) is read as {} */ }
   return { status: r.status, b: b || {} };
 }
@@ -31,8 +32,10 @@ const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 
 /** the case runner: an expectation that fails is recorded with what was seen */
 async function kase(id, title, fn, gap) {
-  try { const seen = await fn(); results.push({ id, title, pass: true, seen: seen || '', gap }); console.log('  ok   ' + id + ' ' + title); }
-  catch (e) { results.push({ id, title, pass: false, seen: e.message, gap }); console.log('  FAIL ' + id + ' ' + title + (gap ? '  [gap: ' + gap + ']' : '') + '\n         ' + e.message); }
+  const from = LOG.calls.length; LOG.state.current = id;   /* the requests this case sends ride on its result (calls: METHOD + path + status), for the SIT junit's endpoint rows */
+  try { const seen = await fn(); results.push({ id, title, pass: true, seen: seen || '', gap, calls: LOG.since(from) }); console.log('  ok   ' + id + ' ' + title); }
+  catch (e) { results.push({ id, title, pass: false, seen: e.message, gap, calls: LOG.since(from) }); console.log('  FAIL ' + id + ' ' + title + (gap ? '  [gap: ' + gap + ']' : '') + '\n         ' + e.message); }
+  finally { LOG.state.current = null; }
 }
 function expect(cond, said) { if (!cond) throw new Error(said); }
 const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-6;
@@ -106,7 +109,7 @@ function invoice(no, rows, opts) {
  *  `opts.tax`: tax registration is NEVER assumed (DECISIONS 2026-10-29) — left out, the shop's tax stays UNKNOWN; a test that means "not registered"
  *  says so: freshShop(tag, label, { tax: { registered: false } }). (Today's route stores an absent tax as registered:false — SET-38, settings area.) */
 async function freshShop(tag, label, opts) {
-  const o = opts || {}, email = tag + '@local.test';
+  const o = opts || {}, email = tag + '@' + TARGET.emailDomain;
   ok(await j('/api/entities/register', { method: 'POST', body: { email, display_name: label + ' ' + tag, user_id: tag } }), 'register');
   const v = ok(await j('/api/entities/verify', { method: 'POST', body: { email, otp: ENTITY_OTP } }), 'verify (is DEV_OTP armed?)').b;
   const entity = (v.entity && (v.entity.identity_id || v.entity.entity_id)) || (v.identity && v.identity.identity_id);
@@ -130,4 +133,4 @@ function finish(label, jsonFile, extra) {
   process.exitCode = results.some((r) => !r.pass && !r.gap) ? 1 : 0;
 }
 
-module.exports = { API, DB, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, skip, expect, near, line, receipt, bill, billLine, creditNote, order, invoice, freshShop, finish };
+module.exports = { API, DB, TARGET, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, skip, expect, near, line, receipt, bill, billLine, creditNote, order, invoice, freshShop, finish };
