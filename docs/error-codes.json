@@ -785,6 +785,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_HAS_CREDIT_NOTE",
+   "status": "409",
+   "title": "Cannot withdraw",
+   "shopkeeper": "This bill has a credit note against it, so it cannot be cancelled yet.",
+   "hint": "Cancel the credit note first, then cancel the bill.",
+   "owner_area": "chits",
+   "since": "2026-11-13"
+  },
+  {
    "code": "CHIT_INVALID",
    "status": "400",
    "title": "Chit details not valid",

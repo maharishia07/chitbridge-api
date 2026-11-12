@@ -41875,7 +41875,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6821,
+   "line": 6822,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -62881,7 +62881,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6678,
+   "line": 6679,
    "hash": "bca9bf272f4bc0fc",
    "does": "",
    "errors": {
