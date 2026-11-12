@@ -1811,7 +1811,7 @@
    ]
   },
   "POST /api/assist/catalogue-adopt": {
-   "cases": 2,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2763,7 +2763,7 @@
    ]
   },
   "POST /api/crm/leads": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2899,7 +2899,7 @@
    ]
   },
   "POST /api/entities/verify": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3443,7 +3443,7 @@
    ]
   },
   "POST /api/quick-keys/groups": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3459,7 +3459,7 @@
    ]
   },
   "POST /api/relationships/customers": {
-   "cases": 2,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3475,7 +3475,7 @@
    ]
   },
   "POST /api/relationships/suppliers": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3667,7 +3667,7 @@
    ]
   },
   "POST /api/signin/verify": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3891,7 +3891,7 @@
    ]
   },
   "POST /api/till/offer-item": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3931,7 +3931,7 @@
    ]
   },
   "POST /api/till/quick-keys/screen-config": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4011,7 +4011,7 @@
    ]
   },
   "POST /api/till/shop": {
-   "cases": 2,
+   "cases": 13,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4019,7 +4019,7 @@
    ]
   },
   "POST /api/till/state": {
-   "cases": 2,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4315,7 +4315,7 @@
    ]
   },
   "PUT /api/quick-keys/screen-config/default": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

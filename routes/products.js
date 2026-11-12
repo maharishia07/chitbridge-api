@@ -196,6 +196,10 @@ const identity = require('../lib/identity'); // which line is this, and which pr
 const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
 /* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
+/** CAT-308: the row as it will be stored, stamped with the shop's money; a price finer than the currency throws its sentence (userMessage) unless the sheet leaves the stored price as it was */
+function stampRow(merged, currency, prior) {
+  return money.stampItem(merged, currency, prior ? prior.item_data : undefined);
+}
 function userSafeMessage(e) {
   return e.userMessage || safeErr(e);
 }
@@ -312,9 +316,10 @@ async function defaultSchemaId(entity_id) {
  */
 const { schemaFieldsOf, validateAgainst } = catwrite;
 
-async function validateItem(schema_id, item_data, stored) {
-  if (!schema_id) return null;
-  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
+async function validateItem(schema_id, item_data, stored, currency) {
+  const finer = currency ? money.priceDecimalsRefusal(item_data, currency, stored) : null; /* CAT-308 */
+  if (!schema_id) return finer;
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored) || finer;
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
@@ -686,7 +691,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
 
     const list = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
+      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id), currency); /* CAT-308: a price finer than the currency is this row's error too */
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
     if (list.length) {
@@ -700,7 +705,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
       catwrite.patchItems(
         db,
         entity_id,
-        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency) }))
+        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency, stored && stored.get(item.id)) }))
       )
     );
 
@@ -1367,7 +1372,7 @@ router.post(
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
           }
-          const stamped = money.stampItem(merged, currency);
+          const stamped = stampRow(merged, currency, prior);
           if (prior) {
             updates.push({ item_id: prior.item_id, replace: stamped });
             outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });
@@ -1568,7 +1573,7 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
   if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
   /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
   /* CAT-316: a changed status is recorded by itemstatus.stamp (who, when, until, replaced_by), as PUT /:id/status does; an unchanged echo is left as it came */
-  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency);
+  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency, read.stored);
   return { result: await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }) };
 }
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
@@ -1651,7 +1656,7 @@ async function writeRefusalOf(req, entity_id, item_data) {
   return editorNamesRate(req, [item_data]) ? rateRefusal() : null;
 }
 /** the problem body for a parked change the catalogue's validator refused: its sentence at 400 (as PATCH answers), another status (a price in the wrong currency) as the library's own refusal */
-const changeRefusal = (req, verdict) => (verdict.status === 400 ? { status: 400, ...words.declined('Invalid change', { error: verdict.message }) } : faultOf(verdict, req, 'Invalid change'));
+const changeRefusal = (req, verdict) => (verdict.status === 400 ? { status: 400, ...words.declined('Invalid change', { error: verdict.message, code: verdict.code }) } : faultOf(verdict, req, 'Invalid change'));
 router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1677,7 +1682,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
     const verdict = await catwrite.judgeItem(entity_id, next, cur.rows[0].item_data);
     if (verdict) return problem(req, res, changeRefusal(req, verdict));
     itemstatus.stampInto(next, decl.item_data, cur.rows[0].item_data, whoOf(req)); /* a status that cannot be stamped (a redundant with no replaced_by) is refused now; the stamp itself is cut when the change lands */
-    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id)));
+    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id), cur.rows[0].item_data));
     const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
     if (r.error === 'not_enabled') return problem(req, res, { status: 409, ...words.scheduleRefused(r) });
     if (r.error) return problem(req, res, { status: 400, ...words.scheduleRefused(r) });
@@ -1727,7 +1732,8 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
           unknown++;
           continue;
         }
-        const rec = availability.stamp({ qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location });
+        const figure = { qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location };
+        const rec = availability.stampChecked(figure).stamped; /* CAT-232: a broken row is counted bad (this row only), never stored as a figure nobody sent */
         if (!rec) {
           count++;
           continue;
@@ -1748,15 +1754,14 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
 router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const rec = availability.stamp(req.body);
-    if (!rec) {
-      return problem(req, res, { status: 400, ...words.badQuantity() });
-    }
+    const rec = availability.stampChecked(req.body); /* CAT-232: a figure stamp() would quietly change is refused, with the sentence */
+    if (rec.refused) return problem(req, res, { status: 400, ...words.badAvailability(rec.refused) });
+    if (!rec.stamped) return problem(req, res, { status: 400, ...words.badQuantity() });
     const r = await withEntity(entity_id, (db) =>
-      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec } }], { returning: 'item_id, item_data' })
+      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec.stamped } }], { returning: 'item_id, item_data' })
     );
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchItem() });
-    res.json({ message: 'Availability updated', availability: rec });
+    res.json({ message: 'Availability updated', availability: rec.stamped });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Availability update failed'));
   }
