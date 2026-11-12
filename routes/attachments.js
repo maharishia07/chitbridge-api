@@ -107,6 +107,17 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
   }
 });
 
+/**
+ * contentDisposition(name) → the filename part of a Content-Disposition value (RFC 6266 / 5987): an ASCII fallback in quotes, plus filename*=UTF-8'' percent-encoded when the name holds anything else.
+ * ⚠️ A header value outside Latin-1 makes Node throw (ERR_INVALID_CHAR). The other Content-Disposition writers build from server-made names and stay as they are.
+ */
+function contentDisposition(name) {
+  if (/^[ -~]*$/.test(name)) return 'filename="' + name + '"';
+  const fallback = name.replace(/[^ -~]/g, '_').replace(/%/g, '_');
+  const encoded = encodeURIComponent(name).replace(/['()*]/g, (mark) => '%' + mark.charCodeAt(0).toString(16).toUpperCase());
+  return 'filename="' + fallback + '"; filename*=UTF-8' + "''" + encoded;
+}
+
 // GET /api/attachments/:id — stream the bytes (on demand). Participant-checked.
 router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
   try {
@@ -123,9 +134,10 @@ router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
     const renderable = /^image\/(png|jpe?g|gif|webp|bmp)$/.test(rawMime) || rawMime === 'application/pdf';
     const safeMime = renderable ? rawMime : 'application/octet-stream';
     const safeName = (a.name || 'file').replace(/[\r\n"\\]/g, '');
+    const dispositionName = contentDisposition(safeName); /* RAIL-189: a name outside Latin-1 in a header made Node throw (500) */
     res.setHeader('Content-Type', safeMime);
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Disposition', `${renderable ? 'inline' : 'attachment'}; filename="${safeName}"`);
+    res.setHeader('Content-Disposition', `${renderable ? 'inline' : 'attachment'}; ${dispositionName}`);
     res.setHeader('Cache-Control', 'private, max-age=86400');
     res.send(a.data);
   } catch (err) {
@@ -135,4 +147,5 @@ router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
+router.contentDisposition = contentDisposition; /* RAIL-189: pinned by tests/c11-10b-rail-shape.test.cjs */
 module.exports = router;

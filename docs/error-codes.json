@@ -434,6 +434,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_LINE_ID",
+   "status": "400",
+   "title": "Invalid line id",
+   "shopkeeper": "A line's own id is not an id, or two lines share one, so nothing was saved.",
+   "hint": "Leave line_id out and one is made, or send the one the chit gave.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
+  },
+  {
    "code": "BAD_NAME",
    "status": "400",
    "title": "Bad name",
@@ -1667,6 +1676,15 @@
    "since": "2026-10-25"
   },
   {
+   "code": "CTP_UNRESOLVABLE",
+   "status": "503",
+   "title": "Could not reach the other side",
+   "shopkeeper": "Where one of the chit's parties is hosted could not be read just now, so nothing was written.",
+   "hint": "Try again in a moment.",
+   "owner_area": "ctp",
+   "since": "2026-11-12"
+  },
+  {
    "code": "CTP_VERSION_UNSUPPORTED",
    "status": "400",
    "title": "Version not read",
@@ -2061,6 +2079,15 @@
    "hint": "Open the connection to see where it stands.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "FILTER_INVALID",
+   "status": "400",
+   "title": "Invalid filter",
+   "shopkeeper": "A date or a person in the list's filter is not a value it can use.",
+   "hint": "Use a real day (2026-11-12) for a date and a person's id for assigned_to.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
   },
   {
    "code": "FOLDER_BAD_REQUEST",
@@ -4266,6 +4293,15 @@
    "hint": "Make it optional first, then remove it.",
    "owner_area": "schemas",
    "since": "2026-10-22"
+  },
+  {
+   "code": "RETENTION_TOO_LONG",
+   "status": "400",
+   "title": "Kept too long",
+   "shopkeeper": "A chit cannot be kept for more than a hundred years.",
+   "hint": "Choose an earlier expiry date.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
   },
   {
    "code": "RETURN_FROM_RAIL",

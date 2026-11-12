@@ -61,7 +61,10 @@ const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's ret
 const { sanitise } = require('../middleware/validate'); // S9: a request is checked against the route's own schema, by routeChecks (lib/chits-contract)
 const { problem, uuidParam, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, routeChecks: checked } = require('../lib/chits-contract');
-const { PRIORITIES, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
+const listFilters = require('../lib/list-filters'); // RAIL-135: the list filters that are cast in SQL, read first
+const disputeAlert = require('../lib/dispute-alert'); // RAIL-79: the sentence under a raised dispute
+const lineShape = require('../lib/line-shape'); // RAIL-177 · RAIL-81: a bad line_id is refused, a figure key the engine does not read is named
+const { PRIORITIES, RETENTION_MAX_DAYS, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
@@ -515,6 +518,7 @@ const SEND_STEPS = [
   sendTillClaim,
   sendReplay,
   sendTillGate,
+  sendLineShape,
   sendBody,
   sendSourceCarry,
   sendCredit,
@@ -899,6 +903,15 @@ function keepOnlySelfRecipients(body, keep) {
   else body.receivers = keep;
 }
 
+/**
+ * the shape of the lines, read before they are stamped. RAIL-177: a top-level line_id that is no uuid or is repeated is a 400 naming the line (the counter sends none: its ids sit in item_data).
+ * RAIL-81: a price or quantity under a name the engine does not read is NAMED in the answer (state.ignored), never refused: the counter's queue would retry a refusal for ever.
+ */
+async function sendLineShape(sendState, req, res) {
+  const badId = lineShape.refusalOf(req.body.line_items);
+  if (badId) return problem(req, res, { status: 400, ...said(badId, 'BAD_LINE_ID') });
+  sendState.ignored = lineShape.ignoredFigures(req.body.line_items);
+}
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
@@ -2014,6 +2027,11 @@ async function sendRetention(sendState, req, res) {
 // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
 //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
 //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
+/** RAIL-212: the refusal of an expiry past the hundred years a sender may ask a copy to be kept (thrown, answered 400 in words by lib/knownerr thrownRefusal) */
+function refuseTooLong(expiresAt) {
+  if (Date.parse(expiresAt) <= Date.now() + RETENTION_MAX_DAYS * 86400000) return;
+  throw Object.assign(new Error('A chit cannot be kept for more than a hundred years. Choose an earlier expiry date. Nothing was saved.'), { code: 'RETENTION_TOO_LONG', title: 'Kept too long', refused: true, status: 400 });
+}
 /** the retention / expiry the sender declares on the chit ({ expires_at, retention_days, source }), or null when none is asked */
 function declaredRetention(body) {
   const DEFAULT_RETENTION_DAYS = null; // governed default resolves from the cascade later
@@ -2024,6 +2042,7 @@ function declaredRetention(body) {
     days = null;
   if (typeof body.expires_at === 'string' && !isNaN(Date.parse(body.expires_at))) {
     expiresAt = new Date(body.expires_at).toISOString();
+    refuseTooLong(expiresAt);
     retentionSource = 'manual';
   } else if (retentionDays) {
     expiresAt = new Date(Date.now() + retentionDays * 86400000).toISOString();
@@ -2966,7 +2985,9 @@ async function sendAnswer(sendState, req, res) {
     /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
     cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
-    credit_cap: sendState.creditCap
+    credit_cap: sendState.creditCap,
+    /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence */
+    ...lineShape.answerOf(sendState.ignored)
   }));
 
   /**
@@ -3122,10 +3143,21 @@ function priorityFilter(req, params) {
   params.push(req.query.priority);
   return ` AND cs.priority_flag = $${params.length}`;
 }
+/**
+ * RAIL-135: the list filters that reach a cast (?assigned_to a uuid, ?date_from / ?date_to a day or an instant) are read BEFORE the query, so a bad one is a 400 naming it
+ * and not the database's 22P02 / 22007 answered 500. A day is books-period's one isCalendarDay; an instant is anything Date can read.
+ */
+function filtersReadable(req, res, next) {
+  const names = listFilters.unreadable(req.query);
+  if (!names.length) return next();
+  const message = names.join(' and ') + (names.length > 1 ? ' are' : ' is') + ' not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.';
+  return problem(req, res, { status: 400, ...said({ error: 'Invalid filter', code: 'FILTER_INVALID', message, field: names[0] }, 'FILTER_INVALID') });
+}
 /** ?fstatus → the chits whose status is in that bucket (⭐ W2-RAIL R2: the buckets are the ONE table, lib/rail-actions BUCKETS, read off the engine's transitions — never spelled here) */
 function statusBucketFilter(req, params) {
   if (!req.query.fstatus) return '';
-  const list = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
+  const asked = String(req.query.fstatus);
+  const list = Object.prototype.hasOwnProperty.call(railActions.BUCKETS, asked) ? railActions.BUCKETS[asked] : [asked]; /* RAIL-135: 'constructor' is not a bucket */
   const placeholders = list
     .map((item) => {
       params.push(item);
@@ -3165,7 +3197,7 @@ const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.se
 // prettier-ignore
 const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type });
 
-router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
+router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
@@ -3232,7 +3264,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
 
 // GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
-router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
+router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
@@ -3428,7 +3460,7 @@ async function cancelCols() {
   return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
-router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
+router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
@@ -5949,12 +5981,7 @@ router.post(
         parity_state: d.parity_state,
         target_display_name: d.target_display_name,
         raised_by_display_name: entityName,
-        alert:
-          d.mode === 'one_sided'
-            ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
-            : widened
-              ? 'This category notifies all parties — raised chit-wide.'
-              : 'Dispute raised with the selected party.',
+        alert: disputeAlert.said(d, widened),
         message: 'Dispute raised',
         ...ctpReturn.answerOf(crossed)
       });
@@ -6901,3 +6928,7 @@ module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-d
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
+module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
+module.exports.statusBucketFilter = statusBucketFilter;
+module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
+module.exports.declaredRetention = declaredRetention; /* RAIL-212 */
