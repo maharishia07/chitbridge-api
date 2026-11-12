@@ -5,7 +5,7 @@
  *   FIN-88  two opening rows for one customer both naming bill X1 -> 400 naming row 2 and row 1 (it posted both: the bill was owed twice)
  *           Rs 50,000.00 bill OB-1 opened, then a DIFFERENT opening naming OB-1 again for that customer -> 409 BOOKS_CONFLICT "Bill OB-1 ... ₹50,000 INR still due"
  *           the same bill ref for ANOTHER customer stays the engine's own 422 "belongs to one party" (already refused; unchanged)
- *   FIN-100 opening OB-1 Rs 50,000.00 sent twice with no client_ref -> the second answers 200 duplicate:true with the FIRST entry_no, ONE opening entry in the books
+ *   FIN-100 opening OB-1 Rs 50,000.00 sent twice with no client_ref -> the second is 409 BOOKS_CONFLICT (ACC-328's refuseOpeningTwice, one implementation), ONE opening entry in the books
  *           an opening with different rows on the same date (OB-2 Rs 20,000.00) is NOT a replay: a second entry (entry count 2)
  *           the same rows with a client_ref are keyed by the client_ref (own prefix), never by the content key
  *   FIN-92  loan L-1 Rs 10,000.00, an instalment with principal Rs 20,000.00 -> 422 "outstanding ₹10,000 INR" (it posted, leaving the loan at minus Rs 10,000.00)
@@ -70,14 +70,11 @@ const said = (r) => JSON.stringify(r.body);
     const one = await q('POST', '/opening', FIRST);
     const entriesBefore = openingEntries().length;
     const again = await q('POST', '/opening', FIRST);
-    ok('FIN-100: Rs 50,000.00 opening OB-1 sent twice with no client_ref -> the second is 200 duplicate:true with the first entry_no',
-      one.status === 200 && again.status === 200 && again.body.duplicate === true && again.body.entry_no === one.body.entry_no && openingEntries().length === entriesBefore, one.status + ' ' + said(one) + ' / ' + again.status + ' ' + said(again));
+    ok('FIN-100: Rs 50,000.00 opening OB-1 sent twice with no client_ref -> the second is 409 BOOKS_CONFLICT naming the first entry, ONE entry in the books',
+      one.status === 200 && again.status === 409 && again.body.code === 'BOOKS_CONFLICT' && said(again).indexOf(one.body.entry_no) >= 0 && openingEntries().length === entriesBefore, one.status + ' ' + said(one) + ' / ' + again.status + ' ' + said(again));
     const changed = await q('POST', '/opening', { date: '2026-04-01', rows: [bill('P-00001', 'OB-2', 2000000), equity(2000000)] });
-    ok('FIN-100: an opening with different rows on the same date (OB-2 Rs 20,000.00) is NOT a replay: a new entry',
+    ok('FIN-100: an opening with different rows on the same date (OB-2 Rs 20,000.00) is NOT a duplicate: a new entry',
       changed.status === 200 && !changed.body.duplicate && changed.body.entry_no !== one.body.entry_no && openingEntries().length === entriesBefore + 1, changed.status + ' ' + said(changed));
-    const keyed = openingEntries().map((x) => String(x.source_ref));
-    ok('FIN-100: the content key has its own prefix (opening-rows:) and a client_ref one keeps opening:',
-      keyed.filter((x) => /^opening-rows:[0-9a-f]{40}$/.test(x)).length === keyed.length, keyed.join(' '));
     const refd = { date: '2026-04-01', client_ref: 'mine-1', rows: [bill('P-00002', 'OB-9', 100000), equity(100000)] };
     const r1 = await q('POST', '/opening', refd), r2 = await q('POST', '/opening', refd);
     ok('FIN-100: with a client_ref the key is the client_ref (opening:mine-1), and its resend is a replay',
@@ -129,8 +126,8 @@ const said = (r) => JSON.stringify(r.body);
     const rowsAB = [bill('P-00001', 'OB-7', 300000), bill('P-00002', 'OB-8', 400000), equity(700000)];
     const inOrder = await q('POST', '/opening', { date: '2026-04-05', rows: rowsAB });
     const reordered = await q('POST', '/opening', { date: '2026-04-05', rows: [rowsAB[2], rowsAB[1], rowsAB[0]] });
-    ok('FIN-100: the same Rs 3,000.00 + Rs 4,000.00 rows sent in another order -> a replay of the first entry',
-      inOrder.status === 200 && reordered.status === 200 && reordered.body.duplicate === true && reordered.body.entry_no === inOrder.body.entry_no, inOrder.status + ' ' + said(inOrder) + ' / ' + said(reordered));
+    ok('FIN-100: the same Rs 3,000.00 + Rs 4,000.00 rows sent in another order -> 409 BOOKS_CONFLICT, not a second entry (refuseOpeningTwice sorts the row tuples)',
+      inOrder.status === 200 && reordered.status === 409 && reordered.body.code === 'BOOKS_CONFLICT' && openingEntries().filter((x) => x.entry_no === inOrder.body.entry_no).length === 1, inOrder.status + ' ' + said(inOrder) + ' / ' + said(reordered));
 
     /* FIN-92 · two instalments at once that together exceed the loan: one wins, one is refused */
     await q('POST', '/loans', { ref: 'R-1', lender: 'C', amount_minor: 1000000, into: 'bank', date: '2026-04-06' });
@@ -140,6 +137,14 @@ const said = (r) => JSON.stringify(r.body);
     const codes = pair.map((r) => r.status).sort();
     ok('FIN-92: two instalments of Rs 6,000.00 at once on a Rs 10,000.00 loan -> one 200 and one 422 "outstanding ₹4,000 INR"',
       codes[0] === 200 && codes[1] === 422 && pair.some((r) => r.status === 422 && /outstanding ₹4,000 INR/.test(said(r))), pair.map((r) => r.status + ' ' + said(r)).join(' / '));
+
+    /* FIN-92 · CUR-1: a loan held in another currency than the instalment is a mismatch, never converted (hand: loan USD 1,000.00, an INR instalment of 1.00 -> 422 "in USD, not INR") */
+    await q('POST', '/loans', { ref: 'U-1', lender: 'D', amount_minor: 100000, into: 'bank', date: '2026-04-07' });
+    const usdLoan = X.T.entries.find((x) => x.entity_id === SHOP && x.source_ref === 'loan:U-1');
+    X.T.lines.filter((l) => l.entry_id === usdLoan.entry_id).forEach((l) => { l.currency = 'USD'; });
+    const wrongCurrency = await q('POST', '/loans/U-1/emi', { principal_minor: 100, interest_minor: 0, client_ref: 'u1', date: '2026-05-07' });
+    ok('FIN-92 / CUR-1: an INR instalment on a USD loan -> 422 BOOKS_REFUSED "in USD, not INR", nothing posted',
+      wrongCurrency.status === 422 && wrongCurrency.body.code === 'BOOKS_REFUSED' && /in USD, not INR/.test(said(wrongCurrency)) && !X.T.entries.some((x) => x.source_ref === 'emi:U-1:u1'), wrongCurrency.status + ' ' + said(wrongCurrency));
 
     /* CAT-127 · a month pack is made from a locked month */
     const openPack = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 7 });
