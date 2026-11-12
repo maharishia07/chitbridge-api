@@ -47,8 +47,8 @@ of file each thing is; this says what already does the job.
 | 51 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
+| 50 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 50 | `count` | `money-check.js` | the count /health reads |
-| 49 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 46 | `read` | `cap-print.js` |  |
 | 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
