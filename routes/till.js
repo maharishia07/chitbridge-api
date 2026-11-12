@@ -3541,12 +3541,17 @@ const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, h.summa
 /** the moment a bill was rung (ms): its billed_at, else when the server got it */
 const rungAt = (row) => Date.parse((row.business_json || {}).billed_at || row.created_at);
 
+/** when the server received the bill (ms) - a bill rung offline before a filing but synced after it is NOT inside that filing */
+const receivedAt = (row) => new Date(row.created_at).getTime();
+
 /** a re-sent bill is the same bill: one per counter and bill number, the newest sighting kept (rows arrive newest first) */
 function distinctBills(rows) {
   const seen = new Set();
   return rows.filter((row) => {
     const business = row.business_json || {};
-    const sighting = tillKeyOf(business.till) + ' ' + business.bill_no;
+    /* ⚠️ keyed by the counter's ID. Two counters with NO id and the same number cannot be told apart from a re-send, so they are left alone (both counted) rather than collapsed */
+    if (!(business.till && business.till.id)) return true;
+    const sighting = business.till.id + ' ' + business.bill_no;
     if (seen.has(sighting)) return false;
     seen.add(sighting);
     return true;
@@ -3581,7 +3586,7 @@ function liveSummaries(todays, filed, today) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
     const filing = filedBy.get(till);
-    if (filing && !(rungAt(row) > Date.parse(filing.summarised_at))) continue; /* already inside the filed figure */
+    if (filing && !(receivedAt(row) > Date.parse(filing.summarised_at))) continue; /* already inside the filed figure: the filing summarised what had ARRIVED by then */
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }

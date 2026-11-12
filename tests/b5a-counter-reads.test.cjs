@@ -132,6 +132,25 @@ const totalsOf = (count, gross) => ({ count, returns: 0, gross, refunds: 0, redu
     assert.strictEqual(row.totals.count, 3);
     assert.strictEqual(row.live, true);
   });
+  await ok('CTR-195: mid-day cut is the server RECEIPT time - a bill rung before the filing but synced after it is folded', async () => {
+    const offline = bill('OFF', '2026-11-12T18:30:00Z', 70, 'C1', A); /* rung 18:30Z, before the 18:45Z filing ... */
+    offline.created_at = '2026-11-12T18:52:00Z'; /* ... but only received at 18:52Z */
+    BILL_ROWS = [X, offline];
+    FILED = [{ summarised_at: '2026-11-12T18:45:00Z', period: 'day', key: '2026-11-13', till: { id: 'C1', name: 'Counter C1' }, totals: totalsOf(1, 500) }];
+    const row = (await get('/summary?period=day')).rows[0];
+    assert.strictEqual(row.totals.gross, 570); /* 500 filed + 70 synced later; X (received before) not added twice */
+    assert.strictEqual(row.totals.count, 2);
+  });
+  await ok('CTR-195: two counters with NO id and the same bill number are both counted (not collapsed as a re-send)', async () => {
+    FILED = [];
+    const one = bill('N1', '2026-11-12T18:40:00Z', 30, null, A), two = bill('N1', '2026-11-12T18:41:00Z', 20, null, A);
+    one.business_json.till = { name: 'Left' }; two.business_json.till = { name: 'Right' };
+    one.chit_id = 'c-n-a'; two.chit_id = 'c-n-b';
+    BILL_ROWS = [one, two];
+    const row = (await get('/summary?period=day')).rows[0];
+    assert.strictEqual(row.totals.gross, 50);
+    assert.strictEqual(row.totals.count, 2);
+  });
   await ok('CTR-195: a re-sent bill (same counter, same number) is folded once', async () => {
     FILED = [];
     const again = bill('X', '2026-11-12T18:41:00Z', 500, 'C1', A); /* the re-send of X, a second chit */
