@@ -313,6 +313,9 @@ const EXTRAS = [
   X('inbox-cost-blind-asks-amount', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?sort=amount&amount_min=100&amount_max=9000', setup: { who: STAFF, sqlRows: answering(/SELECT ch.chit_id/, [INBOX_ROW(CANCEL)]) } }),
   X('sent-cost-blind', 'GET ' + C + '/sent', 200, { setup: { who: STAFF, sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [SENT_ROW(CANCEL)]) } }),
   X('folder-cost-blind', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=archive', setup: { who: STAFF, sqlRows: answering(/SELECT DISTINCT ON/, [FOLDER_ROW(CANCEL)]) } }),
+  X('inbox-filter-invalid', 'GET ' + C + '/inbox', 400, { url: C + '/inbox?date_from=2026-02-30' }),
+  X('sent-filter-invalid', 'GET ' + C + '/sent', 400, { url: C + '/sent?assigned_to=nobody' }),
+  X('folder-filter-invalid', 'GET ' + C + '/folder', 400, { url: C + '/folder?view=archive&date_to=junk' }),
   X('rollup-cost-blind', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state', setup: { who: STAFF, sqlRows: answeringAll([[/AS n$|::int AS n\s/m, [{ n: 1 }]], [/AS members/, [{ key: 'pending', chits: 2, total_value: '360.00', members: [{ total_value: '360', purpose: 'order', sender_entity_id: OTHER, all_recipients: CHIT_ROW.all_recipients, business_json: {} }] }]]]) } }),
   /* RAIL-147: the same cost-blind co-assist WRITES — on a bill received (a cost-side chit by its document kind) a price he sends is refused 403 COST_BLIND and nothing is written; a
      quantity-only amend is recorded with the stored price kept (the answer's line carries no price); a reprice is refused; the rule and the keys are tests/rail147-amend-cost-gate.test.cjs ── */

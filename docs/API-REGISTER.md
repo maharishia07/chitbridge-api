@@ -118,8 +118,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/chits/:id/children | chits | routes/chits-trace.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/:id/trace | chits | routes/chits-trace.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/chits/disputes/queue | chits | routes/chits.js:6249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
-| GET | /api/chits/folder | chits | routes/chits.js:3267 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
-| GET | /api/chits/inbox | chits | routes/chits.js:3463 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
+| GET | /api/chits/folder | chits | routes/chits.js:3267 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
+| GET | /api/chits/inbox | chits | routes/chits.js:3463 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
 | GET | /api/chits/pulse | chits | routes/chits.js:3650 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/raida/report | chits | routes/chits.js:4452 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/register/attachables | chits | routes/chits.js:4292 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -127,7 +127,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/chits/register/templates | chits | routes/chits.js:4344 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/register/walk/:from | chits | routes/chits.js:4409 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/rollup | chits | routes/chits.js:3362 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
-| GET | /api/chits/sent | chits | routes/chits.js:3200 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
+| GET | /api/chits/sent | chits | routes/chits.js:3200 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
 | GET | /api/chits/trace/batches | chits | routes/chits-trace.js:263 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/trace/by-batch | chits | routes/chits-trace.js:307 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/trace/networks | chits | routes/chits-trace.js:479 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
