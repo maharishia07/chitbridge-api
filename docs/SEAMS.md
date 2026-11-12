@@ -42,7 +42,7 @@ of file each thing is; this says what already does the job.
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 53 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 52 | `rows` | `cap-settings.js` |  |
-| 52 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 53 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 52 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 51 | `toast` | `accounts-shell.js` |  |
 | 50 | `again` | `signin-ui.js` |  |
