@@ -355,7 +355,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     const run = (src) => vm.runInContext(src, ctx);
     assert.strictEqual(run('queueCount()'), 1, 'a frozen counter counts as something NOT at the shop');
     const stuck = run('queueStuck()'); assert.deepStrictEqual([stuck.fix, stuck.act], ['Reload this counter', 'reloadCounter']);
-    assert.ok(/^Frozen — close the other counter tab, then reload this counter/.test(run('stuckLine(queueStuck())')), 'the status line does not say frozen');
+    assert.ok(/^Frozen — close the other counter tab and then reload this counter/.test(run('stuckLine(queueStuck())')), 'the status line does not say frozen');
     assert.ok(!/all sent|0 bill|reached the shop/i.test(run('stuckLine(queueStuck())')));
     const t = await run('queueTally()'); assert.strictEqual(t.frozen, true, 'queueTally does not say frozen'); assert.ok(run('QUEUED.frozen'));
     run('paintDayPill({ count: 0, total: 0 })'); assert.strictEqual(el('daypill').textContent, 'frozen — reload this counter', 'the day pill reads 0.00 while frozen');

@@ -24556,7 +24556,7 @@ async function keepParked(){
  * This tab therefore takes NO new bill or change until it is reloaded (DB.freeze: every write is refused with these words), keeps the refused changes
  * where a reload finds them (reviveKept), and offers the one way out: Reload this counter.
  */
-var BLOCKED_WORDS = 'Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab, then press Reload this counter. Until then this counter takes no new bills or changes — nothing is lost, and the changes the shop refused are kept.';
+var BLOCKED_WORDS = 'Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab and then press Reload this counter. Until then this counter takes no new bills or changes — nothing is lost, and the changes the shop refused are kept.';
 /** a read or write that came back DB_FROZEN must not be swallowed as "nothing there": rethrow it so the caller stops */
 function throwIfFrozen(err){ if (err && err.code === 'DB_FROZEN') throw err; }
 /** the one "Reload this counter" offer (a dialog, not a toast): yes reloads, "Not yet" leaves the banner and the frozen status line in place */
@@ -24597,7 +24597,7 @@ function mergedKept(name, kept){
 }
 /** is this counter frozen (a clear of the store was blocked and no reload yet)? every reader that would otherwise show EMPTY asks this first */
 function dbFrozen(){ return DB.isFrozen(); }
-var FROZEN_LINE = 'Frozen — close the other counter tab, then reload this counter. Nothing is being saved; the lists below are not the real ones.';
+var FROZEN_LINE = 'Frozen — close the other counter tab and then reload this counter. Nothing is being saved; the lists below are not the real ones.';
 /** the one way out of a frozen counter */
 function reloadCounter(){ location.reload(); }
 /** the frozen notice with its Reload button — the 🩺 panel's first block and the Bills list's only content while frozen ('' when not frozen) */
