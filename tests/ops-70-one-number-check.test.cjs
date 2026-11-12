@@ -88,14 +88,13 @@ const buy = (server, line) =>
     req.end(data);
   });
 
-/* a line refused: one failed[] entry for line 0 with these words, nothing recorded, nothing posted, nothing stamped */
-async function refused(server, label, line, words) {
+/* a line refused, ONE outcome per case: '422' = the route's contract refuses it at the door naming the field (a boolean, a negative cost); 'failed' = 200 with one failed[] entry for line 0 with these words (a number as text). Either way nothing recorded, posted or stamped. A slip to the other side fails. */
+async function refused(server, label, line, words, outcome) {
   const a = await buy(server, line);
   const f = (a.body.failed || [])[0] || {};
-  /* C11 10a: a boolean quantity and a negative cost are now refused by the route's contract (422 naming the field) before a line is read; a number as text is still a line in failed[] */
   const field = /^quantity/.test(words.source) ? 'lines.0.qty' : 'lines.0.cost';
-  const atDoor = a.status === 422 && a.body.field === field;
-  check(atDoor || (a.status === 200 && (a.body.failed || []).length === 1 && f.line === 0 && words.test(f.why || '')), label + ' → ' + (atDoor ? '422 names ' + field : 'failed[0] says "' + (f.why || '') + '" (status ' + a.status + ')'));
+  const good = outcome === '422' ? a.status === 422 && a.body.field === field : a.status === 200 && (a.body.failed || []).length === 1 && f.line === 0 && words.test(f.why || '');
+  check(good, label + ' → expected ' + outcome + ', got status ' + a.status + (a.body.field ? ' field ' + a.body.field : '') + (f.why ? ' failed[0] "' + f.why + '"' : ''));
   check(!(a.body.recorded || []).length && !posted.length && !stamped.length, label + ' → nothing recorded, posted or stamped');
 }
 
@@ -105,12 +104,12 @@ async function refused(server, label, line, words) {
   const COST = /cost.*number.*0 or more/i;
   for (const kind of ['Tape', 'kept Rice']) {
     const keep = kind.startsWith('kept') ? ' (counted)' : ' (expensed)';
-    await refused(server, 'qty true' + keep, { name: kind, qty: true, cost: 10 }, QTY);
-    await refused(server, 'qty "abc"' + keep, { name: kind, qty: 'abc', cost: 10 }, QTY);
-    await refused(server, 'cost -5' + keep, { name: kind, qty: 2, cost: -5 }, COST);
-    await refused(server, 'cost "abc"' + keep, { name: kind, qty: 2, cost: 'abc' }, COST);
-    await refused(server, 'cost true' + keep, { name: kind, qty: 2, cost: true }, COST);
-    await refused(server, 'cost "   " (spaces only)' + keep, { name: kind, qty: 2, cost: '   ' }, COST);
+    await refused(server, 'qty true' + keep, { name: kind, qty: true, cost: 10 }, QTY, '422');
+    await refused(server, 'qty "abc"' + keep, { name: kind, qty: 'abc', cost: 10 }, QTY, 'failed');
+    await refused(server, 'cost -5' + keep, { name: kind, qty: 2, cost: -5 }, COST, '422');
+    await refused(server, 'cost "abc"' + keep, { name: kind, qty: 2, cost: 'abc' }, COST, 'failed');
+    await refused(server, 'cost true' + keep, { name: kind, qty: 2, cost: true }, COST, '422');
+    await refused(server, 'cost "   " (spaces only)' + keep, { name: kind, qty: 2, cost: '   ' }, COST, 'failed');
   }
 
   /* hand-computed: 3 × 20 counted → the ledger is asked for qty 3 at rate 20, and the answer has no "no cost" */
