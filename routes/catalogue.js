@@ -2072,9 +2072,10 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   if (!ent.rows[0]) return { ok: false };
   const view = await publicViewFor(ent.rows[0], { viewer }).catch(logger.orElse('catalogue enquiryLimitCheck: failed — answered with nothing', null));
   /* ⭐ SEC-129: the SHOP being enquirable is not enough — THIS item must be one its storefront shows this viewer (private, over-cap, unavailable and network-only items are not), or a 201 versus a 404 tells a stranger the item id exists (the same rule as SEC-126) */
-  const listed = !!view && view.available !== false && (view.items || []).some((item) => String(item.item_id) === String(item_id));
-  return listed ? { ok: true, owner_id } : { ok: false };
+  return viewListsItem(view, item_id) ? { ok: true, owner_id } : { ok: false };
 };
+/** SEC-129: does this storefront view show this item (the shop is open to the viewer AND the item is one it lists)? */
+const viewListsItem = (view, item_id) => !!view && view.available !== false && (view.items || []).some((item) => String(item.item_id) === String(item_id));
 
 router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), async (req, res) => {
   try {
