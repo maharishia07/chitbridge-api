@@ -43,6 +43,16 @@ function statusOf(route, body) {
 
 const refused = (route, body) => statusOf(route, body) >= 400 && statusOf(route, body) < 500;
 
+function checkBooksRef() {
+  console.log('\n-- CON-123: a long voucher ref is kept (cut and logged by the handler), a ref that is not text is refused --');
+  const route = 'POST /api/integrations/books';
+  const chit = { chit_id: UUID };
+  ok('a 300-character ref is accepted at the door (the kit swallows a refusal, so the record must not be lost)', statusOf(route, Object.assign({ ref: 'v'.repeat(300) }, chit)) === 200);
+  ok('an object ref is refused', refused(route, Object.assign({ ref: { a: 1 } }, chit)));
+  const source = require('fs').readFileSync(path.join(ROOT, 'routes', 'integrations.js'), 'utf8');
+  ok('the handler cuts the ref to REF_MAX and logs that it did', /slice(0, REF_MAX)/.test(source) && /kept the first/.test(source));
+}
+
 function checkOfferText() {
   console.log('\n-- MKT-26: the text of a group offer is text --');
   const route = 'POST /api/crm/segments/:key/send';
@@ -127,6 +137,7 @@ async function checkLineAssignee() {
 }
 
 (async () => {
+  checkBooksRef();
   checkOfferText();
   checkShopperName();
   checkQuickKeyGroupCreate();

@@ -19236,7 +19236,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 993,
+   "line": 1001,
    "hash": "621e2f2f391396f3",
    "does": "",
    "errors": {
@@ -19332,7 +19332,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 843,
+   "line": 851,
    "hash": "457ba6a1ba37fd28",
    "does": "",
    "errors": {
@@ -19430,7 +19430,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 718,
+   "line": 726,
    "hash": "70de3a5a5b1f6993",
    "does": "",
    "errors": {
@@ -19528,7 +19528,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 971,
+   "line": 979,
    "hash": "af4a542c64bc4085",
    "does": "",
    "errors": {
@@ -19624,7 +19624,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 751,
+   "line": 759,
    "hash": "f97d3783abe3f0d1",
    "does": "",
    "errors": {
@@ -48734,7 +48734,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 950,
+   "line": 958,
    "hash": "aa16ade8f3f0dd21",
    "does": "",
    "errors": {
@@ -48829,8 +48829,8 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 672,
-   "hash": "317e052258268e92",
+   "line": 680,
+   "hash": "0672ad19cc37824b",
    "does": "",
    "errors": {
     "count": 1,
@@ -48906,7 +48906,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "317e052258268e92"
+    "stale_since": "0672ad19cc37824b"
    },
    "status": "partial",
    "callers": [],
@@ -48930,7 +48930,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 811,
+   "line": 819,
    "hash": "d86df23c95c37d1d",
    "does": "",
    "errors": {
@@ -49136,7 +49136,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1029,
+   "line": 1037,
    "hash": "6627938ea0d3c11c",
    "does": "",
    "errors": {
@@ -63948,7 +63948,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 776,
+   "line": 784,
    "hash": "2a1be8be966e3ef7",
    "does": "",
    "errors": {

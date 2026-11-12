@@ -669,6 +669,14 @@ router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async
  * — the kit's write-back after every push, onto MY copy of the chit (business_json.books[kind]); never a second voucher, only the record
  * of the one that went (or did not). A connector key with scope connector; the bell rings for the entity so an open Task repaints.
  */
+const REF_MAX = 120; /* the longest voucher reference kept; a longer one is cut and logged */
+/** the ref the record keeps: at most REF_MAX characters; a longer one is cut and the log says so (the kit swallows a refusal, so the shop would never learn it) */
+function refKept(body) {
+  if (body.ref == null) return null;
+  const ref = String(body.ref);
+  if (ref.length > REF_MAX) logger.warn('integrations POST /books: the kit sent a ref of ' + ref.length + ' characters; kept the first ' + REF_MAX, { chit_id: body.chit_id });
+  return ref.slice(0, REF_MAX);
+}
 router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, BOOKS_REFUSAL), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -676,7 +684,7 @@ router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS
     const kind = /^(order|receipt|purchase)$/.test(String(b.kind || '')) ? String(b.kind) : 'order';
     const rec = {
       system: String(b.system || 'books').slice(0, 40),
-      ref: b.ref != null ? String(b.ref).slice(0, 120) : null,
+      ref: refKept(b),
       outcome: /^(ok|failed|dry|skipped)$/.test(String(b.outcome || '')) ? String(b.outcome) : 'ok',
       why: b.why ? String(b.why).slice(0, 300) : null,
       at: b.at ? String(b.at).slice(0, 40) : new Date().toISOString(),
