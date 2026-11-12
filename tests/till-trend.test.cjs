@@ -56,7 +56,7 @@ const t = (label, got, want) => {
   t('n is clamped (years ≤ 10)', r.json.slots.length, 10);
 
   r = await g('period=month&limit=3');
-  t('without compare=1 the answer is the old one ({ period, rows, counters })', [r.status, Object.keys(r.json), r.json.rows.length], [200, ['period', 'rows', 'counters'], 3]);
+  t('without compare=1 the answer is the old one plus live_capped (B5a, day view) ({ period, rows, counters, live_capped })', [r.status, Object.keys(r.json), r.json.rows.length], [200, ['period', 'rows', 'counters', 'live_capped'], 3]);
 
   srv.stop();
   console.log('\n  ' + pass + ' checks · ' + fail + ' failed\n');
