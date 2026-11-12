@@ -10,13 +10,14 @@
   "POST /api/supplies/purchase",
   "POST /api/till/reward",
   "POST /api/till/reward/claim",
-  "POST /api/connectors/ingest",
   "POST /api/connectors/erp-ingest"
  ],
+ "money_reviewed_not_about": {"POST /api/connectors/ingest": "Athi 12 Nov 2026 (DECISIONS.md): not a money write. The value is a device reading; the chit carries total_value 0 and the value goes only into the subject and business_json. Backlog: no dedupe (a replayed reading mints a second chit)."},
  "money_reviewed_not": [
   "POST /api/books/payments/:id/propose",
   "POST /api/books/payments/preview",
-  "POST /api/invoice/build"
+  "POST /api/invoice/build",
+  "POST /api/connectors/ingest"
  ],
  "inbound": [
   "POST /api/capture/webhook/email",
@@ -194,7 +195,7 @@
    "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault of the route is never a 500 (a preview never red-boxes a form); KNOWN GAP, not closed: lib/raiseticket.js resolveDesk (line 150) turns a database fault into why with the raw code and message, and the route returns it in that 200, so the route stays partial until the raise-a-ticket owner gives that why one plain sentence"
   }
  ],
- "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). The list changes only with these proofs and never passes tolerant_outward_ceiling.",
+ "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). Athi 12 Nov 2026: the class may GROW for outward doors another system or a queued client calls (never for a door our own web calls); an unknown key is accepted and logged by name once (event unknown_key_accepted, middleware/validate.js noteUnknownKeys), never used. The list changes only with these proofs and never passes tolerant_outward_ceiling.",
  "tolerant_outward_ceiling": 26,
  "tolerant_outward": {
   "POST /api/pricing/price": {

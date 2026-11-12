@@ -1,0 +1,3507 @@
+{
+ "_doc": "SPD-17: round-trip cost WITH DATA. Per GET route the web calls: trips and p50/p95 ms at 0 / 1,000 / 10,000 extra rows per main table (tests/support/seed-volume.cjs, local scratch DB). p95_ceiling = p95 x 1.5 (at least +50 ms). grows:true = trips rise with rows (an SPD-n backlog line each). Lower with node tools/round-trips-volume.cjs --write; never raise without the reason in the commit.",
+ "levels": [
+  0,
+  10,
+  100
+ ],
+ "measured_on": "2026-11-12",
+ "unmeasured": [
+  "GET /api/catalogue/:bridge_id",
+  "GET /api/chits/:chit_id/disputes",
+  "GET /api/folders/groupsum",
+  "GET /api/invoice/:chit_id",
+  "GET /api/keys",
+  "GET /api/repeat",
+  "GET /api/repeat/:id",
+  "GET /api/tax/invoice/:chit_id"
+ ],
+ "not_exercised": [
+  "GET /api/actors/:id/tasks",
+  "GET /api/adopt/:chit_id",
+  "GET /api/attachments/:id",
+  "GET /api/books/accounts",
+  "GET /api/books/assets",
+  "GET /api/books/bank/rail",
+  "GET /api/books/bs",
+  "GET /api/books/cashflow",
+  "GET /api/books/cheques",
+  "GET /api/books/compare",
+  "GET /api/books/compare/:id",
+  "GET /api/books/compare/:id/csv",
+  "GET /api/books/daybook",
+  "GET /api/books/dues",
+  "GET /api/books/events",
+  "GET /api/books/fx-rates",
+  "GET /api/books/fx-revalue",
+  "GET /api/books/health",
+  "GET /api/books/ledger/:account",
+  "GET /api/books/move-in/imports",
+  "GET /api/books/packs",
+  "GET /api/books/packs/:id",
+  "GET /api/books/packs/:id/file",
+  "GET /api/books/party/:id/statement",
+  "GET /api/books/payments/:id/advice",
+  "GET /api/books/periods",
+  "GET /api/books/pl",
+  "GET /api/books/recurring",
+  "GET /api/books/returns",
+  "GET /api/books/terms",
+  "GET /api/books/todo",
+  "GET /api/books/trial-balance",
+  "GET /api/books/year/:fy/status",
+  "GET /api/capture/webhook/whatsapp",
+  "GET /api/catalogue/:bridge_id/my-orders",
+  "GET /api/catalogue/network/:bridge_id",
+  "GET /api/chits/:chit_id",
+  "GET /api/chits/:chit_id/diagnosis",
+  "GET /api/chits/:chit_id/messages",
+  "GET /api/chits/:chit_id/proposals",
+  "GET /api/chits/:chit_id/raida",
+  "GET /api/chits/:id/children",
+  "GET /api/chits/:id/trace",
+  "GET /api/chits/raida/report",
+  "GET /api/chits/register/attachables",
+  "GET /api/chits/register/subjects",
+  "GET /api/chits/register/templates",
+  "GET /api/chits/register/walk/:from",
+  "GET /api/chits/trace/by-batch",
+  "GET /api/connectors",
+  "GET /api/connectors/:actorId/connections",
+  "GET /api/connectors/:actorId/provisioning",
+  "GET /api/connectors/:actorId/receipts",
+  "GET /api/crm/parties/:id",
+  "GET /api/crm/parties/:id/contact-prefs",
+  "GET /api/crm/parties/:id/timeline",
+  "GET /api/definitions/:id",
+  "GET /api/entities/me",
+  "GET /api/entities/mis",
+  "GET /api/entities/populations",
+  "GET /api/entities/search",
+  "GET /api/events/stats",
+  "GET /api/events/stream",
+  "GET /api/facts/:card",
+  "GET /api/folders/:id/chits",
+  "GET /api/folders/:id/metrics",
+  "GET /api/folders/:id/rules",
+  "GET /api/forms/:key",
+  "GET /api/forms/instances/:id",
+  "GET /api/governance/boilerplate/:key",
+  "GET /api/governance/entities/:id",
+  "GET /api/governance/readiness/:bridge_id",
+  "GET /api/governance/source/:key",
+  "GET /api/integrations/download/:id",
+  "GET /api/integrations/kit/*",
+  "GET /api/integrations/stock/:handle",
+  "GET /api/network-design/availability",
+  "GET /api/network-design/stores",
+  "GET /api/network/entities/:id/connections",
+  "GET /api/network/entities/:id/subtree",
+  "GET /api/privacy/me",
+  "GET /api/products/:id/versions",
+  "GET /api/products/media/:item_id/:mid",
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue",
+  "GET /api/service/:chit_id",
+  "GET /api/tax/gstr",
+  "GET /api/till/engine/:name",
+  "GET /api/till/quick-keys/state",
+  "GET /api/till/reward",
+  "GET /api/work/:chit_id"
+ ],
+ "known_growers": {
+  "GET /api/catalogue/network/:bridge_id": {
+   "backlog": "NET-98",
+   "trips": 706,
+   "why": "live cost grows with the departments or stores (18 to 20 trips each); the stub cannot reach it"
+  },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "backlog": "NET-98",
+   "trips": 831,
+   "why": "live cost grows with the departments or stores (18 to 20 trips each); the stub cannot reach it"
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "backlog": "NET-98",
+   "trips": 26,
+   "why": "one read per department or store (rows stub 27 / 72 / 522)"
+  },
+  "GET /api/tax/gstr": {
+   "backlog": "SPD-48",
+   "trips": 2,
+   "why": "lib/tax-copy.js:600-607 awaits per bill inside the loop (one identities read per bill)"
+  },
+  "GET /api/tax/ledger": {
+   "backlog": "SPD-48",
+   "trips": 2,
+   "why": "same loop as gstr (lib/tax-copy.js:600-607)"
+  },
+  "GET /api/relationships/suppliers": {
+   "backlog": "SPD-49",
+   "trips": 4,
+   "why": "routes/relationships.js ~340 reads per supplier"
+  },
+  "GET /api/till/snapshot": {
+   "backlog": "SPD-50",
+   "trips": 17,
+   "why": "routes/till.js:1150 resolves each adopted item in its own read (small N)"
+  }
+ },
+ "stub_artefacts": {
+  "GET /api/products": "the generic stub row has no real item shape, so the per-row work the route does on it is not a real loop (reviewed in api PR 1139)"
+ },
+ "routes": {
+  "GET /.well-known/ctp.json": {
+   "0": {
+    "trips": 4
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/actors": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/actors/:id/tasks": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/actors/access-events": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/actors/check-login": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/actors/settings": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/adopt/:chit_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/assist/catalogue-mine": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/catalogue-sources": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/container/:id": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/erp-handoffs": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/gaps": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/penetration": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/questions": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/regions": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/resolve": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/standards": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/assist/whoami": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/attachments/:id": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/accounts": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/assets": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bank/rail": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bs": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/cashflow": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/cheques": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/compare": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/compare/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/compare/:id/csv": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/daybook": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/dues": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/events": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/fx-rates": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/fx-revalue": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/health": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/ledger/:account": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/move-in/imports": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/packs": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/packs/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/packs/:id/file": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/party/:id/statement": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/payments/:id/advice": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/periods": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/pl": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/recurring": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/returns": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/status": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books/terms": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/todo": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/trial-balance": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/year/:fy/status": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/capture/consolidate": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/capture/pending": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/capture/stores": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/capture/webhook/whatsapp": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/catalogue-face": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/catalogue/:bridge_id/my-orders": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/catalogue/enquiry": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/catalogue/enquiry/:item_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "0": {
+    "trips": 27
+   },
+   "10": {
+    "trips": 72
+   },
+   "100": {
+    "trips": 522
+   },
+   "grows": true,
+   "exercised": true
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/channels": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/channels/outbound": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/:chit_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 6
+   },
+   "100": {
+    "trips": 6
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/:chit_id/catalogue-overlay": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/:chit_id/costs": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/:chit_id/diagnosis": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/:chit_id/proposals": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/:chit_id/raida": {
+   "0": {
+    "trips": 4
+   },
+   "10": {
+    "trips": 5
+   },
+   "100": {
+    "trips": 5
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/:chit_id/use": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/:id/children": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/:id/trace": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/disputes/queue": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/folder": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/inbox": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/pulse": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/raida/report": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/register/attachables": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/register/subjects": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/register/templates": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/register/walk/:from": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/rollup": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/sent": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/trace/batches": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/trace/by-batch": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/chits/trace/networks": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/unread": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/combo-templates": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/connections/list": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/connections/pending": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/connectors": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/counters": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/crm/calls": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/crm/followups": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/crm/parties": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 5
+   },
+   "100": {
+    "trips": 5
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/crm/parties/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/crm/privacy-requests": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/crm/segments": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 5
+   },
+   "100": {
+    "trips": 5
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/ctp/.well-known/ctp.json": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/definitions": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/definitions/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/entities/constitutions": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/entitlements": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/header": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/me": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 6
+   },
+   "100": {
+    "trips": 6
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/mis": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/entities/policy": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/populations": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/entities/routing": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/routing/preview": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/search": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/entities/search/places": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/sides": {
+   "0": {
+    "trips": 15
+   },
+   "10": {
+    "trips": 15
+   },
+   "100": {
+    "trips": 15
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/entities/usage": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/events/stats": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/events/stream": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/facts/:card": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/facts/rail/chits": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/:id/chits": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/folders/:id/metrics": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/folders/:id/rules": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/folders/inventory": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/messages": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/mis": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/reconcile": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/rules": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/rules/vocabulary": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/folders/worklist": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/forms": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/forms/:key": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/forms/instances/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/forms/instances/all": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/ai-skills": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/ai-usage": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/boilerplate/:key": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/governance/commerce-standards": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/country-setup": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/entities/:id": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/governance/instruments": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/journey": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/lanes": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/profile": {
+   "0": {
+    "trips": 4
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/profile/path": {
+   "0": {
+    "trips": 8
+   },
+   "10": {
+    "trips": 8
+   },
+   "100": {
+    "trips": 8
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/profile/readiness": {
+   "0": {
+    "trips": 7
+   },
+   "10": {
+    "trips": 7
+   },
+   "100": {
+    "trips": 7
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/readiness": {
+   "0": {
+    "trips": 8
+   },
+   "10": {
+    "trips": 10
+   },
+   "100": {
+    "trips": 10
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/readiness/:bridge_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 12
+   },
+   "100": {
+    "trips": 12
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/governance/source/:key": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/governance/supplier-acceptance/:handle": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/track-record": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/governance/vault-schema": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/identity/documents": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/catalogue": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/docs/:id": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/download/:id": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/integrations/kit": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/kit/*": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/integrations/profile-map": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/reconcile": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/status": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/integrations/stock/:handle": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/integrations/streams": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/kyb/position": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/kyb/risk": {
+   "0": {
+    "trips": 9
+   },
+   "10": {
+    "trips": 11
+   },
+   "100": {
+    "trips": 11
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/kyb/yourself": {
+   "0": {
+    "trips": 15
+   },
+   "10": {
+    "trips": 17
+   },
+   "100": {
+    "trips": 17
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/marketing/came-back": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/network-design": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/network-design/availability": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/network-design/stores": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/network-offers": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/network/entities/:id/connections": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/network/entities/lookup": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/network/place": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/notifications": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/offers/kinds": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/offers/openapi.json": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/openapi.json": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/people": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/pricing/kinds": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/privacy/facts": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/privacy/me": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/products": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 22
+   },
+   "100": {
+    "trips": 202
+   },
+   "grows": true,
+   "exercised": true
+  },
+  "GET /api/products/:id/schedule": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/products/:id/versions": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/products/export.csv": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 5
+   },
+   "100": {
+    "trips": 5
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/products/lists": {
+   "0": {
+    "trips": 4
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/products/media/:item_id/:mid": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/products/starter-columns": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/products/template": {
+   "0": {
+    "trips": 4
+   },
+   "10": {
+    "trips": 5
+   },
+   "100": {
+    "trips": 5
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/products/workbook.xlsx": {
+   "0": {
+    "trips": 4
+   },
+   "10": {
+    "trips": 6
+   },
+   "100": {
+    "trips": 6
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/quick-keys/groups": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/quick-keys/screen-config/default": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/relationships/customers": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/relationships/customers/groups": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/relationships/scorecard": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/relationships/scorecard/:entity_id": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/relationships/suppliers": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 12
+   },
+   "100": {
+    "trips": 102
+   },
+   "grows": true,
+   "exercised": true
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 4
+   },
+   "100": {
+    "trips": 4
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/schemas/fields": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 5
+   },
+   "100": {
+    "trips": 5
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/schemas/my": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/service/:chit_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/signin/devices": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/signin/sessions": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/simulator/content": {
+   "0": {
+    "trips": 6
+   },
+   "10": {
+    "trips": 6
+   },
+   "100": {
+    "trips": 6
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/supplies": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/tax/gstr": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 12
+   },
+   "100": {
+    "trips": 102
+   },
+   "grows": true,
+   "exercised": false
+  },
+  "GET /api/tax/ledger": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 12
+   },
+   "100": {
+    "trips": 102
+   },
+   "grows": true,
+   "exercised": true
+  },
+  "GET /api/testing/cases": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/cases/gherkin": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/changes": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/cmdb": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/cmdb/:ci": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/coverage": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/engine": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/incidents": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/releases": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/reliability": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/report": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/requirements": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/results": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/runs": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/stale": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/trace": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/testing/vocabulary": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/bills": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/catalogue/blueprints": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/counters": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/engine/:name": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/till/match": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/quick-keys/groups": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/quick-keys/hidden": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/quick-keys/screen-config": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/quick-keys/state": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/till/reward": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/till/screens": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/snapshot": {
+   "0": {
+    "trips": 15
+   },
+   "10": {
+    "trips": 46
+   },
+   "100": {
+    "trips": 316
+   },
+   "grows": true,
+   "exercised": true
+  },
+  "GET /api/till/stock": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/summary": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/tasks": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/verify": {
+   "0": {
+    "trips": 3
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/till/worth-an-offer": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/work/:chit_id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/work/facts": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/work/list": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /health": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  }
+ }
+}
