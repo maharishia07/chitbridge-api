@@ -63,8 +63,9 @@ function fakeDb() {
       /* the earlier-receipts read, answered as the SQL does: (created_at, chit_id) order with a missing stamp = the latest; a cancelled / rejected receipt drops only when the statement says so */
       if (/h.business_json #>> '{against,chit_id}' = [$]2/.test(t) && /'infinity'/.test(t) && !/= ANY/.test(t)) {
         const at = (v) => (v == null ? Infinity : v), me = at(p[3]);
+        const ties = /h.chit_id::text < [$]3/.test(t); /* no tie term in the statement = equal stamps are not earlier, as SQL would answer */
         const dropsWithdrawn = /cs.current_status IN \('cancelled', 'rejected'\)/.test(t);
-        return { rows: world.sent.filter((r) => r.business_json.against.chit_id === p[1] && !(dropsWithdrawn && r.withdrawn) && (at(r.created_at) < me || (at(r.created_at) === me && String(r.chit_id) < p[2]))) };
+        return { rows: world.sent.filter((r) => r.business_json.against.chit_id === p[1] && !(dropsWithdrawn && r.withdrawn) && (at(r.created_at) < me || (ties && at(r.created_at) === me && String(r.chit_id) < p[2]))) };
       }
       if (/h.business_json #>> '{against,chit_id}' = ANY/.test(t)) return { rows: world.receipts.filter((r) => p[1].includes(r.business_json.against.chit_id)) };
       if (/FROM chit_header h/.test(t)) return { rows: [copy()] };
