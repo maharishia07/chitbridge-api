@@ -279,12 +279,26 @@ async function editRefusal(req, db, definition, rules) {
   return bad ? { bad } : null;
 }
 
+/**
+ * CAT-273: the definition row, LOCKED (FOR UPDATE) while this edit reads its version and writes the next: five parallel saves queue and get versions 2..6, where they all read 1 and the losers
+ * died on the version key (and were reported as a name clash). A save that names the version it was made on (expected_version) is refused, with the shelf's current one, when the shelf has moved on.
+ * → { missing } | { stale: current version, sent } | { row }
+ */
+async function lockDefinition(db, id, expectedVersion) {
+  const found = await db.query(`SELECT * FROM definition WHERE definition_id = $1 FOR UPDATE`, [id]);
+  if (!found.rows.length) return { missing: true };
+  const row = found.rows[0];
+  const moved = expectedVersion !== undefined && expectedVersion !== null && Number(expectedVersion) !== row.current_version;
+  return moved ? { stale: row.current_version, sent: expectedVersion } : { row };
+}
+
 /** answers what editRefusal found (a rate the caller may not set: 403; a rule without its value: 422); true when it answered */
 function answerEditRefusal(req, res, out) {
   if (out.unconfirmed) problem(req, res, { status: 428, ...words.liveUnconfirmed() });
   else if (out.rateRefused) rateRefused(req, res);
   else if (out.bad) problem(req, res, { status: 422, ...words.incomplete(out.bad) });
-  return !!(out.unconfirmed || out.rateRefused || out.bad);
+  else if (out.stale) problem(req, res, { status: 409, ...words.stale(out.stale, out.sent) });
+  return !!(out.unconfirmed || out.rateRefused || out.bad || out.stale);
 }
 
 /** CAT-211: a category born with a rate is refused for a caller who may not set one (a gate between the checks and the handler) */
@@ -386,12 +400,9 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
     const { name, note, status, expected_version } = req.body || {};
 
     const out = await withEntity(entity_id, async (db) => {
-      /* CAT-273: the row is LOCKED while this edit reads its version and writes the next: five parallel saves queue and get versions 2..6, where they all read 1 and the losers died on the version key (reported as a name clash) */
-      const cur = await db.query(`SELECT * FROM definition WHERE definition_id = $1 FOR UPDATE`, [req.params.id]);
-      if (!cur.rows.length) return { missing: true };
-      const d = cur.rows[0];
-      /* CAT-273: a save that says which version it was made on is refused when the shelf has moved on (the caller reloads), never written over it */
-      if (expected_version !== undefined && expected_version !== null && Number(expected_version) !== d.current_version) return { stale: d.current_version };
+      const locked = await lockDefinition(db, req.params.id, expected_version);
+      if (!locked.row) return locked;
+      const d = locked.row;
       /* a rate the caller may not set (CAT-211), or an edit that removes the value (refused like a create without one) */
       const refused = await editRefusal(req, db, d, rules);
       if (refused) return refused;
@@ -450,7 +461,6 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
     });
 
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
-    if (out.stale) return problem(req, res, { status: 409, ...words.stale(out.stale, expected_version) });
     if (out.unconfirmed) return problem(req, res, { status: 428, ...words.liveUnconfirmed() }); // UX-110: said here too so the route's own text names every status it answers (S15 status_codes)
     if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
@@ -552,13 +562,16 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
  * refusing here would block a chit citing terms that were live when the order was placed.
  */
 const FREEZE_MAX = 500;
+/** the ids a freeze names: text, blank entries (null, '') dropped — a null was once read as the text "null" */
+const freezeIds = (list) => (list || []).filter((entry) => entry !== null && entry !== undefined && entry !== '').map(String);
+/** CAT-333: a snapshot is for the few definitions one chit cites (10,000 ids reached the ::uuid[] cast: 500), each a uuid or a governed slab → the words of the refusal, or null */
+const freezeRefusal = (ids) => (ids.length > FREEZE_MAX ? words.tooManyIds(FREEZE_MAX) : ids.some((entry) => !UUID.test(entry) && !taxGov.isGovernedId(entry)) ? words.badIds() : null);
 router.post('/freeze', auth, ...checked('POST /freeze'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const ids = (req.body.definition_ids || []).filter((item) => item !== null && item !== undefined && item !== '').map(String); /* a blank entry is no id (null was read as the text "null") */
-    /* CAT-333: a snapshot is for the few definitions one chit cites; 10,000 ids reached the ::uuid[] cast and answered 500. An id that is neither a uuid nor a governed slab names nothing. */
-    if (ids.length > FREEZE_MAX) return problem(req, res, { status: 400, ...words.tooManyIds(FREEZE_MAX) });
-    if (ids.some((item) => !UUID.test(item) && !taxGov.isGovernedId(item))) return problem(req, res, { status: 400, ...words.badIds() });
+    const ids = freezeIds(req.body.definition_ids);
+    const tooMany = freezeRefusal(ids);
+    if (tooMany) return problem(req, res, { status: 400, ...tooMany });
     if (!ids.length) return res.json({ frozen: [], missing: [], frozen_at: null }); /* R2-13: one shape on both paths (laptop1, 24 Oct): frozen_at is null when nothing was frozen */
 
     /* ⚠️ A GOVERNED ID IS NOT A UUID and would make the cast below refuse the whole request. Split: the entity's
