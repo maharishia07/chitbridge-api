@@ -566,6 +566,9 @@ const GUARDS = [
   'legacy-token-refuse.test.cjs', // K-SEC PR A landing check: LEGACY_TOKEN_REFUSE off = a no-jti token passes (counted); on = 401 SESSION_UPGRADE; a listed session and the 60 s auto-raise token pass either way; customer mints counted apart
   'ppl-27-viewer-writes.test.cjs', // PPL-27 (Q42): a View-only/Comment-only login gets the free catalogue draft with intro null and 0 model calls; editor/owner 1; anonymous 0
   'api-csp.test.cjs', // K-SEC PR A (SEC-68): strict CSP on JSON and /.well-known (ctp.json still 200 JSON); the 5 old public pages untouched; POST /api/csp-report 204, shaped log only, own limiter, 8 KB cap
+  'prove-security-fixes-gated.test.cjs', // SEC-132 (C12): the live proof script still parses and its S1 step has the sealed-box (gated 404) branch
+  'sec-132-simulator-gate.test.cjs', // SEC-132 (C12): /api/simulator/* answers only off a sealed environment (or with SIMULATOR_ENABLED=1); sealed, it is exactly an unknown path
+  'sec-125b-db-boot-wait.test.cjs', // SEC-125b (C12): DB_BOOT_WAIT_MS goes through intFromEnv (typo / blank / negative = 15 s, 0 = do not wait)
   'scoped-access-count.test.cjs', // AI-15: ratchet on chit read routes that skip lib/access seesWholeEntity (43 on 21 Oct); all_task_visible still unread; why wiring waits for Athi
   'jwt-rotation.test.cjs', // E10: JWT_SECRET then JWT_SECRET_PREV through ONE verifier (lib/jwt-verify.js); PREV token = 200 logged rotated; neither = 401 TOKEN_INVALID; PREV unset = byte-for-byte today
   'iddocs-verify.test.cjs', // M18: phone/e-mail identity documents verified by a code (lib/otp.js engine); 5 wrong -> locked; PUT clears; an unverified contact is never used for recovery

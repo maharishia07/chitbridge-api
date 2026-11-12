@@ -24419,7 +24419,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#767 k13 output shape",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1172 stage2: re-read, hash unchanged (the gate is a router.use ahead of the routes, not in the hash), 13 columns pass; sealed environments (production, uat, staging, live, prod) answer these three exactly as an unknown path (the app's own no-such-route 404, no new code, no sentence naming the tour); unsealed answers unchanged",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -56385,7 +56385,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1172 stage2: re-read, hash unchanged (the gate is a router.use ahead of the routes, not in the hash), 13 columns pass; sealed environments (production, uat, staging, live, prod) answer these three exactly as an unknown path (the app's own no-such-route 404, no new code, no sentence naming the tour); unsealed answers unchanged",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -56476,7 +56476,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1172 stage2: re-read, hash unchanged (the gate is a router.use ahead of the routes, not in the hash), 13 columns pass; sealed environments (production, uat, staging, live, prod) answer these three exactly as an unknown path (the app's own no-such-route 404, no new code, no sentence naming the tour); unsealed answers unchanged",
         "lifecycle": "stable"
       },
       "status": "meets standard",

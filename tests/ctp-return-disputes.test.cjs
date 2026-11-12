@@ -67,6 +67,7 @@ const resetWorld = () => {
     disputes: [], // dispute ids held (by the acting copy)
     disputeRow: null, // what SELECT * FROM chit_disputes returns for the resolve route
     disputeRole: 'raiser',
+    disputeHolder: null, // SEC-127b: when set, ONLY this entity's copy of the dispute exists (a database with no row security: the SQL itself must name the shop)
     scope: 'targeted',
     roster: [] // chit_dispute_roster rows
   };
@@ -93,9 +94,9 @@ function rowsFor(sql, p) {
   if (/^SELECT dispute_id FROM chit_disputes/.test(s)) return [];
   if (/^SELECT ch\.auto_subject/.test(s)) return [{ auto_subject: 'PO', summary_json: {}, my_status: 'pending' }];
   if (/^SELECT \* FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2/.test(s)) return W.disputeRow ? [W.disputeRow] : [];
-  if (/^SELECT scope FROM chit_disputes/.test(s)) return [{ scope: W.scope }];
-  if (/^SELECT 1 FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2/.test(s)) return W.disputes.includes(p[0]) ? [{}] : [];
-  if (/^SELECT role, category FROM chit_disputes/.test(s)) return W.disputes.includes(p[0]) ? [{ role: W.disputeRole, category: 'quantity' }] : [];
+  if (/^SELECT scope FROM chit_disputes/.test(s)) return heldBy(s, p) ? [{ scope: W.scope }] : [];
+  if (/^SELECT 1 FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2/.test(s)) return W.disputes.includes(p[0]) && heldBy(s, p) ? [{}] : [];
+  if (/^SELECT role, category FROM chit_disputes/.test(s)) return W.disputes.includes(p[0]) && heldBy(s, p) ? [{ role: W.disputeRole, category: 'quantity' }] : [];
   if (/FROM chit_dispute_roster/.test(s)) {
     let rows = W.roster;
     if (/role='party' AND status='open'/.test(s)) rows = rows.filter((r) => r.role === 'party' && r.status === 'open');
@@ -113,6 +114,7 @@ function rowsFor(sql, p) {
   if (/^SELECT chit_message_deliver/.test(s)) return [{ created_at: new Date() }];
   return [];
 }
+const heldBy = (s, p) => !W.disputeHolder || !/entity_id = \$3/.test(s) || p[2] === W.disputeHolder; // a row-security-free table answers only for the shop the SQL names
 const q = async (sql, p) => {
   const rows = rowsFor(sql, p);
   return { rows, rowCount: rows.length };
@@ -363,6 +365,20 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
     assert.ok(again.ok && again.applied === false);
     assert.strictEqual(sqlOf(/SELECT chit_message_deliver/).length, 1);
     assert.strictEqual(W.out.length, 0, 'what arrives is not sent on');
+  });
+  await t('SEC-127b: the dispute lookups name the shop — a dispute only ANOTHER shop here holds is not ours (no row security needed to say so)', async () => {
+    resetWorld();
+    W.disputes = [DISPUTE];
+    W.disputeHolder = LOCAL2; /* same dispute id, a different shop's copy */
+    const reply = await apply({ kind: 'dispute_message', seq: 2, dispute_id: DISPUTE, message_id: MSG, message_text: 'We shipped 200', msg_type: 'info', sender_display_name: 'AU Pumps' });
+    assert.ok(!reply.ok && reply.status === 404 && reply.code === 'CTP_EVENT_NO_DISPUTE', 'a reply: ' + JSON.stringify(reply));
+    const resolve = await apply({ kind: 'dispute_resolve', seq: 3, dispute_id: DISPUTE, target: null, resolution_note: 'Credit note issued', category: 'quantity' });
+    assert.ok(!resolve.ok && resolve.status === 404 && resolve.code === 'CTP_EVENT_NO_DISPUTE', 'a resolve: ' + JSON.stringify(resolve));
+    const raise = await apply(raiseEv({}));
+    assert.ok(raise.ok && raise.applied, 'a raise is not "already held" because another shop holds that id: ' + JSON.stringify(raise));
+    W.disputeHolder = STUB; /* the positive control: the acting shop does hold it */
+    const own = await apply({ kind: 'dispute_message', seq: 2, dispute_id: DISPUTE, message_id: MSG, message_text: 'We shipped 200', msg_type: 'info', sender_display_name: 'AU Pumps' });
+    assert.ok(own.ok && own.applied, 'its own copy is found: ' + JSON.stringify(own));
   });
   await t('a resolve by the raiser’s side is recorded through the one writer as the remote raiser; a repeat is ignored; a non-raiser copy refuses', async () => {
     resetWorld();
