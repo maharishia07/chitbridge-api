@@ -353,7 +353,7 @@ function extras() {
     N('junk-group-nul', 'POST ' + C + '/groups', 400, { body: { name: 'Deal' + NUL + 'ers', add: [A.plain] }, setup: { junk: true } }),
     N('junk-group-drop-nul', 'DELETE ' + C + '/groups/:name', 400, { url: C + '/groups/Deal%00ers', setup: { junk: true } }),
     N('junk-segment-key-nul', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/group:Deal%00ers/send', body: { text: 'x', dry: true }, setup: { junk: true } }),
-    N('junk-send-text-nul', 'POST ' + C + '/segments/:key/send', 200, { url: C + '/segments/regular/send', body: { text: 'A new' + NUL + 'offer', dry: true }, setup: { junk: true } })
+    N('junk-send-text-nul', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'A new' + NUL + 'offer', dry: true }, setup: { junk: true } }) /* MKT-26: a NUL in the text is refused at the door now (B.text), dry or not */
   ];
 }
 

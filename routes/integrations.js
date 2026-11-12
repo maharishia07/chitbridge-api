@@ -26,7 +26,7 @@ const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · S
 const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 /* the contract (each route's OpenAPI operation) and the answers these routes gave before the standard — lib/integrations-contract.js */
-const { filterFor, KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
+const { filterFor, KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, BOOKS_REFUSAL, STREAM_OWNER_SAID, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
 const logger = require('../lib/logger');
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -454,7 +454,7 @@ router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), a
 });
 
 /* the checked-in connectors: ONE statement and row shape — lib/connector-rows.js (SET-35: the Home card reads it too); health stays routes/connectors' */
-const { KIT_ROWS, rowOut, connectorsOf } = require('../lib/connector-rows');
+const { KIT_ROWS, rowOut, connectorsOf, unknownKits } = require('../lib/connector-rows');
 
 router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(HEARTBEAT_OPERATION, KIT_REFUSAL()), async (req, res) => {
   try {
@@ -669,7 +669,7 @@ router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async
  * — the kit's write-back after every push, onto MY copy of the chit (business_json.books[kind]); never a second voucher, only the record
  * of the one that went (or did not). A connector key with scope connector; the bell rings for the entity so an open Task repaints.
  */
-router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, KIT_REFUSAL(CHIT_SAID)), async (req, res) => {
+router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, BOOKS_REFUSAL), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -757,12 +757,16 @@ router.get('/streams', auth, ...filterFor('/streams'), async (req, res) => {
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
+/** the owners a PUT /streams body hands streams to: every stream's value except the ones that leave it unowned (null, '' or false) */
+const namedOwners = (body) => STREAM_LIST.map((stream) => body[stream.id]).filter((owner) => owner !== undefined && owner !== null && owner !== '' && owner !== false);
 router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, res) => {
   try {
     if (!req.identity || req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.streamsKey, legacy: { error: 'Forbidden', message: SAID.streamsKey } });
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const policy = require('../lib/policy');
+    const strangers = await unknownKits(entity_id, namedOwners(b));
+    if (strangers.length) return problem(req, res, { status: 422, code: 'STREAM_OWNER_UNKNOWN', detail: STREAM_OWNER_SAID, legacy: { error: 'Not a connector', message: STREAM_OWNER_SAID } });
     const flags = await policy.get(entity_id);
     const next = Object.assign({}, flags.stream_owner || {});
     let touched = 0;

@@ -4601,6 +4601,15 @@
    "since": "2026-11-07"
   },
   {
+   "code": "STREAM_OWNER_UNKNOWN",
+   "status": "422",
+   "title": "Not a connector of this shop",
+   "shopkeeper": "That is not a connector of this shop.",
+   "hint": "Pick a connector from the list, or leave the stream unowned.",
+   "owner_area": "integrations",
+   "since": "2026-11-12"
+  },
+  {
    "code": "SUBMISSION_REJECTED",
    "status": "422/503",
    "title": "Form not accepted",

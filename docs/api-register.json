@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 5,
+  "meets": 626,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -19236,7 +19236,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 983,
+   "line": 987,
    "hash": "621e2f2f391396f3",
    "does": "",
    "errors": {
@@ -19332,7 +19332,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 833,
+   "line": 837,
    "hash": "457ba6a1ba37fd28",
    "does": "",
    "errors": {
@@ -19528,7 +19528,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 961,
+   "line": 965,
    "hash": "af4a542c64bc4085",
    "does": "",
    "errors": {
@@ -38478,7 +38478,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1181,
-   "hash": "622c83d3ce290ba1",
+   "hash": "3e69e940a86dcd21",
    "does": "",
    "errors": {
     "count": 3,
@@ -38557,10 +38557,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3e69e940a86dcd21"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38687,7 +38688,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1282,
-   "hash": "7d9d4681880be122",
+   "hash": "0e9d131e287ebb29",
    "does": "",
    "errors": {
     "count": 2,
@@ -38761,10 +38762,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text; was a seven-column sign-off of 2026-10-23, no handler change",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0e9d131e287ebb29"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -45385,7 +45387,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 723,
-   "hash": "405b8d8947bd2693",
+   "hash": "57a3696e9ad8ab93",
    "does": "",
    "errors": {
     "count": 0,
@@ -45455,10 +45457,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "57a3696e9ad8ab93"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-groups.js"
    ],
@@ -48731,7 +48734,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 940,
+   "line": 944,
    "hash": "aa16ade8f3f0dd21",
    "does": "",
    "errors": {
@@ -48827,7 +48830,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 672,
-   "hash": "e2e8bbb2e50fede2",
+   "hash": "317e052258268e92",
    "does": "",
    "errors": {
     "count": 1,
@@ -48901,10 +48904,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "317e052258268e92"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -48926,7 +48930,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 801,
+   "line": 805,
    "hash": "d86df23c95c37d1d",
    "does": "",
    "errors": {
@@ -49132,7 +49136,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1019,
+   "line": 1023,
    "hash": "6627938ea0d3c11c",
    "does": "",
    "errors": {
@@ -63944,11 +63948,11 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 760,
-   "hash": "9f7a6d4d41aa7697",
+   "line": 762,
+   "hash": "1422ace79e89fbf1",
    "does": "",
    "errors": {
-    "count": 3,
+    "count": 4,
     "statuses": [
      400,
      401,
@@ -63959,7 +63963,8 @@
     "codes": [
      "INTEGRATION_BAD_REQUEST",
      "KEY_CANNOT_DECIDE",
-     "NO_STREAM_NAMED"
+     "NO_STREAM_NAMED",
+     "STREAM_OWNER_UNKNOWN"
     ]
    },
    "reads": [],
@@ -64021,10 +64026,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1422ace79e89fbf1"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
