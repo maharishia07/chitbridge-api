@@ -73,6 +73,44 @@ const copyAt = (billed, extra) => Object.assign({ business_json: billed === unde
     await pg.end();
   }
 
+  /* ── 2b. the walk-in day windows (books-store counterBills / countersBilling) read the SAME bounded expression ──
+   *  run the REAL functions on the local Postgres over TEMP copies of chit_header / chit_detail (rolled back; nothing persists). */
+  const STORE = require(path.join(H.API, 'lib', 'books-store'));
+  let pw = null;
+  try {
+    const { Client } = require('pg');
+    pw = new Client({ connectionString: process.env.TRUTH_DB || 'postgres://postgres:cblocal@127.0.0.1:55432/cb_local', connectionTimeoutMillis: 3000 });
+    await pw.connect();
+  } catch (e) {
+    console.log('   SKIP (walk-in window SQL): no local Postgres — ' + e.message);
+    pw = null;
+  }
+  if (pw) {
+    const ENT = '33333333-3333-4333-8333-333333333333';
+    try {
+      await pw.query('BEGIN');
+      await pw.query("SET LOCAL TIME ZONE 'UTC'");
+      await pw.query('CREATE TEMP TABLE chit_header AS SELECT * FROM public.chit_header WITH NO DATA');
+      await pw.query('CREATE TEMP TABLE chit_detail AS SELECT * FROM public.chit_detail WITH NO DATA');
+      const put = (id, billed) => pw.query(
+        "INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, role, purpose, business_json, sent_at, created_at) VALUES ($1, $2, $2, 'Sent', 'order', $3::jsonb, $4::timestamptz, $4::timestamptz)",
+        [id, ENT, JSON.stringify({ bill_no: 'B-' + id, till: { id: 'C1' }, billed_at: billed }), SENT]);
+      await put('a0000000-0000-4000-8000-000000000001', '2030-03-15T10:00:00Z');
+      await put('a0000000-0000-4000-8000-000000000002', hour(1));
+      const ids = async (from, to) => (await STORE.counterBills(pw, ENT, 'C1', from, to)).map((r) => r.chit_id.slice(-1)).sort();
+      eq('walk-in day window 2026-11-13: the 2030 bill (sent today) is IN it, with the sane one', await ids('2026-11-13T00:00:00Z', '2026-11-14T00:00:00Z'), ['1', '2']);
+      eq('…and in NO 2030 window (the books already posted it on the send day)', await ids('2030-03-15T00:00:00Z', '2030-03-16T00:00:00Z'), []);
+      eq('countersBilling (nightly catch-up) names the till for the send day', await STORE.countersBilling(pw, ENT, '2026-11-13T00:00:00Z', '2026-11-14T00:00:00Z'), ['C1']);
+      eq('…and names nothing for 2030', await STORE.countersBilling(pw, ENT, '2030-03-15T00:00:00Z', '2030-03-16T00:00:00Z'), []);
+    } catch (e) {
+      ok('walk-in window SQL ran on the local Postgres', false, e.message);
+    } finally {
+      await pw.query('ROLLBACK').catch(() => {});
+      await pw.end();
+    }
+  }
+  ok('no raw billed_at cast is left in the two window readers', !/\(h\.business_json ->> 'billed_at'\)::timestamptz, h\.created_at/.test(require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8')));
+
   /* ── 3. classify: the books' day is the send day, said in the narration, and the verdict is still a post (never a refusal) ── */
   const X = H.load();
   if (!X.src.dir) {
