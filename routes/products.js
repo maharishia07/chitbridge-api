@@ -2194,6 +2194,13 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
 /** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
  *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
  *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
+/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) */
+const withoutServerOwned = (items) =>
+  items.map((item) => {
+    const copy = Object.assign({}, item);
+    for (const key of catcols.SERVER_OWNED) delete copy[key];
+    return copy;
+  });
 async function dropForeignListPrices(items, req) {
   const withoutListPrice = (item) => {
     const copy = Object.assign({}, item);
@@ -2266,7 +2273,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    items = await dropForeignListPrices(items, req);
+    items = withoutServerOwned(await dropForeignListPrices(items, req)); /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
     if (Array.isArray(b.names) && b.names.length) {
       /* R57: list prices out first, then the page's own */
       const priceBy = new Map();

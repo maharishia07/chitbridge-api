@@ -426,6 +426,7 @@ const GUARDS = [
   'api-problem-finance.test.cjs', // API-4 sweep, folders, Home facts and pricing: every refusal of routes/folders.js, routes/facts.js and routes/pricing.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-offers.test.cjs', // CAT-220: POST /api/offers/evaluate and /explain at the route: the discount and its reason in words, an expired or not-yet-started offer skipped, the shop's own shelf, a key not scoped 403
   'api-problem-pricing.test.cjs', // CAT-221: POST /api/pricing/price at the route: the tier price at each quantity, below the first break the list price, fixed and range, an unpriced line null never 0
+  'cat-m9c-till-doors.test.cjs', // M9c (CAT-223/230/207): the counter adds a product to a live offer only if it does not clash (409), ids that are no uuid are refused, the starter list is adopted without image
   'api-problem-till-price.test.cjs', // CAT-222: POST /api/till/price (what is written, was, now, refusals in words) and GET /api/till/worth-an-offer (each reason in words, urgency order, clamped window) at the route
   'cat-54-money-truth.test.cjs', // CAT-54: the money-truth matrix, hand-computed: tax-inclusive prices split out, one rounder per ISO 4217 minor unit, a split payment against the AU 5c cash step (cash only) and India's exact paisa
   'shop-actors.test.cjs', // SEC-103: actorOwned is true only for an actor of this shop; foreign, unknown and no-uuid are false, a database that is down is an error

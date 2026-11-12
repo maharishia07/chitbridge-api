@@ -20668,32 +20668,6 @@
      }
     },
     {
-     "scenario": "lists-adopt-a-row-with-a-picture",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid product",
-      "message": "1 item(s) were refused and nothing was written.",
-      "invalid": [
-       {
-        "index": 0,
-        "code": "SERVER_OWNED",
-        "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Invalid product",
-      "message": "1 item(s) were refused and nothing was written.",
-      "invalid": [
-       {
-        "index": 0,
-        "code": "SERVER_OWNED",
-        "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
-       }
-      ]
-     }
-    },
-    {
      "scenario": "lists-adopt-categories-fail",
      "status": 500,
      "body_keys": {

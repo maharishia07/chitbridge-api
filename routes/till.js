@@ -115,6 +115,7 @@ const crypto = require('crypto');
  * unpriced (external review §21). money.priceOf reads every stored shape and answers null for "no price" — never 0.
  */
 const { priceOf: amountOf } = require('../lib/money');
+const offerClash = require('../lib/offer-clash'); /* CAT-223: two live discounts on one shelf are refused at every live save */
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex').slice(0, 12);
@@ -2096,16 +2097,19 @@ function quietNote(row, quiet, today) {
   return { words: 'not sold for ' + since + ' day' + (since === 1 ? '' : 's'), urgency: Math.min(since, 90) / 3 };
 }
 
+const offerClashWords = (body) => require('../lib/definitions-contract').words.clash(body);
 router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /offer-item'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const input = offerItemInput(req.body);
     if (!input.offer_id || !input.item_id) return refuseBad(req, res, 'offer_id and item_id required');
 
+    if (!UUID_RE.test(input.item_id)) return problem(req, res, { status: 404, ...notFound() }); /* CAT-223/230: a product id is a uuid; a word would be written into the offer's item list and match nothing, ever */
     const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
 
     if (done.missing) return problem(req, res, { status: 404, ...notFound() });
     if (done.refused) return refuseBad(req, res, done.refused);
+    if (done.clash) return problem(req, res, { status: 409, ...offerClashWords(done.clash.body) }); /* CAT-223: the same refusal every other live save meets */
     shopChanged(entity_id, 'offer ' + (input.on ? 'added to' : 'removed from') + ' a product');
     /* API-8: the two answers of the library step, named where they are used: unchanged (nothing to write) or version (a new version written) */
     res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version }));
@@ -2138,6 +2142,11 @@ async function moveOfferItem(db, entity_id, input, identityId) {
 
   /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
   const newRules = Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) });
+  /* CAT-223: adding a product to a live offer is a live save: it is asked the same clash question (lib/offer-clash, the engine's rule) in this transaction. Taking one OUT never clashes. */
+  if (on) {
+    const clash = await offerClash.check(db, entity_id, { definition_id: offer_id, kind: 'offer', sub_kind: offer.sub_kind, name: offer.name, rules: newRules, status: 'live' });
+    if (clash) return { clash };
+  }
   const version = offer.current_version + 1;
   const byWhom = input.by ? String(input.by).slice(0, 60) : null;
   const note = (on ? 'Product added at the counter' : 'Product removed at the counter') + (byWhom ? ' by ' + byWhom : '');
@@ -2153,7 +2162,7 @@ async function moveOfferItem(db, entity_id, input, identityId) {
 /** the offer with its current rules: { offer }, or { refusal } when it is not there, not an offer ("an offer only" — this route must never edit another kind of definition) or not live */
 async function liveOffer(db, entity_id, offer_id) {
   const current = await db.query(
-    `SELECT d.definition_id, d.name, d.current_version, d.status, d.kind, v.rules
+    `SELECT d.definition_id, d.name, d.sub_kind, d.current_version, d.status, d.kind, v.rules
            FROM definition d
            LEFT JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
