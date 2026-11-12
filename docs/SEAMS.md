@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 132 | `rows` | `crm.js` | still in them: |
 | 125 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
-| 116 | `read` | `books-cashflow.js` | Trips: |
+| 117 | `read` | `books-cashflow.js` | Trips: |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
@@ -96,7 +96,7 @@ of file each thing is; this says what already does the job.
 | 31 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
-| 30 | `mine` | `crm.js` | `opt.removedOk`: |
+| 31 | `mine` | `crm.js` | `opt.removedOk`: |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |

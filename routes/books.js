@@ -44,7 +44,7 @@ function checked(route) {
   const operation = operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
 }
-const { isOwner } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
+const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1963,12 +1963,26 @@ router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports
    lib/access seesWholeEntity + lib/cost canRead); the server answers may + why, the screen greys with the sentence. ── */
 const PR = require('../lib/parallel-run');
 const COMPARE_NOT_READY = waiting('The books comparison', false, 'It was not run and nothing was posted.');
+/** the shop's auditor: a whole-entity login whose identity row says can_see_costs (lib/access + lib/cost, read from the DB — never the preset's own flag). ONE test for compare and the returns. */
+async function auditorMay(req, e) {
+  return require('../lib/access').seesWholeEntity(req.identity) && (await require('../lib/cost').canRead(req, e));
+}
 async function compareMay(req, e) {
   if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
   if (isOwner(req)) return { may: true, why: null };
-  if (require('../lib/access').seesWholeEntity(req.identity) && (await require('../lib/cost').canRead(req, e))) return { may: true, why: null };
+  if (await auditorMay(req, e)) return { may: true, why: null };
   return { may: false, why: "Only the owner or the shop's auditor may compare the books." };
 }
+/** ACC-229: who may READ the shop's own return (GET /returns) — the owner, or the shop's auditor (same test as compare). The Close and pay writes stay owner only. */
+const RETURN_READ_WORDS = "Only the owner or the shop's auditor may read the returns.";
+const returnReader = roleGate('reader', async (req, res, next) => {
+  try {
+    if (!req.api_key && (isOwner(req) || (await auditorMay(req, ctx(req))))) return next();
+    return problem(req, res, { status: 403, code: 'BOOKS_RETURN_READ_NOT_ALLOWED', detail: RETURN_READ_WORDS, legacy: { error: RETURN_READ_WORDS, message: RETURN_READ_WORDS } });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 async function comparer(req, res, next) {
   try {
     const m = await compareMay(req, ctx(req));
@@ -2481,11 +2495,11 @@ route('post', '/closing-stock', (req, e, setting, body, by) => P().closingStock(
 route('post', '/gst/close', (req, e, setting, body, by) => P().gstClose(e, setting, body, by));
 route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, body, by), [onceOnly]); /* FIN-63: a tax payment is a money write — one key per attempt */
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
- *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner only. Prepared, never lodged.
+ *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner, or the shop's auditor (ACC-229: whole-entity + can_see_costs, 403 BOOKS_RETURN_READ_NOT_ALLOWED). Prepared, never lodged.
  *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
 /* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
-router.get('/returns', auth, owner, on, ...checked('GET /returns'), async (req, res) => {
+router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async (req, res) => {
   try {
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
