@@ -23,7 +23,8 @@ const ROUTES = path.join(__dirname, '..', 'routes');
 
 /* the count on 2026-10-21 (api origin/main 6fa94519) matched the TEXT of a chit table: 43 routes. SEC-115 (2026-11-12): a read is a chit table after FROM or JOIN (or the work list), so a row mapper or a comment that
    merely names a column no longer counts: 34 real reads on origin/main 3eab0402. Still a floor: a handler that calls a helper defined elsewhere is not seen. */
-const BASELINE_SKIPPING = 34;
+/* 35 on api main c1700dc3 (12 Nov): api #1174 (B5a, CTR-195) made GET /api/till/summary read today's live bills; it reads inside withEntity (own shop only), WHICH person of the shop sees them is AI-15 (open) */
+const BASELINE_SKIPPING = 35;
 const READS_CHITS = /\b(FROM|JOIN)\s+(public\.)?chit_(header|status|detail|line|participants)\b|\bwork\.\w+\(/i;
 
 /** chitReadRoutes() → [{ file, path, scoped }] — every GET handler in routes/ that reads chits, and whether it asks the one check */
