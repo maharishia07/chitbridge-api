@@ -75,6 +75,25 @@ it('an edge to a node that does not exist is refused, by name', () => {
 it('a map tile pointing at a missing node is refused', () => { const r = good(); r.map[1].node = 'nope'; assert.ok(!cmdb.shape(r).ok); });
 it('a test result outside pass/fail/not run/blocked is refused', () => { const r = good(); r.tests[0].result = 'green'; assert.ok(!cmdb.shape(r).ok); });
 it('a record over 64 KB is refused, not cut', () => { const r = good(); r.summary = 'x'.repeat(590); r.relationships = Array(200).fill({ this: 'a', rel: 'b', that: 'y'.repeat(590) }); assert.ok(!cmdb.shape(r).ok); });
+console.log('\nTHE SKILL BLOCK (identity standard section 9) IS REFUSED, NOT TRIMMED\n');
+const skilled = () => ({ ...good(), skill: JSON.parse(fs.readFileSync(path.join(DIR, 'CAP-SKILL-PRINT.json'), 'utf8')).skill });
+it('a record with a well-formed skill block fits', () => { const v = cmdb.shape(skilled()); assert.ok(v.ok, v.why); });
+it('a skill kind that is not ai|output is refused, by name', () => { const r = skilled(); r.skill.kind = 'country'; const v = cmdb.shape(r); assert.ok(!v.ok && /ai\|output/.test(v.why), v.why); });
+it('a skill with no variants, or an empty axis, is refused', () => {
+  let r = skilled(); r.skill.variants = {}; assert.ok(!cmdb.shape(r).ok);
+  r = skilled(); r.skill.variants.paper = []; assert.ok(!cmdb.shape(r).ok);
+});
+it('a variant id listed twice, or not a plain code word, is refused', () => {
+  let r = skilled(); r.skill.variants.paper = ['80', '80']; assert.ok(!cmdb.shape(r).ok);
+  r = skilled(); r.skill.variants.paper = ['80 mm']; assert.ok(!cmdb.shape(r).ok);
+});
+it('a skill with no invoke point, no owner, no CAP home, no risk, or a made-up metering is refused', () => {
+  for (const [k, v] of [['invoke', null], ['owner', ''], ['home', 'print'], ['risk', ''], ['metering', 'free']]) {
+    const r = skilled(); r.skill[k] = v; assert.ok(!cmdb.shape(r).ok, k + ' passed');
+  }
+});
+it('a record with no skill block is unchanged (the block is optional)', () => assert.ok(cmdb.shape(good()).ok));
+
 
 console.log('\nTHE FLAGS — no way in, no way out, not useful\n');
 it('no entries → "no entry"; no exits → "no exit"; no tests → "no test"; tests never run → "never run"', () => {
