@@ -4630,7 +4630,7 @@ var DB = (function(){
   return {
     /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database, and the owner we
         are holding belongs to the shop we just left */
-    reopen: function(){ p = null; OWNER = null; },
+    reopen: function(){ OWNER = null; return this.release(); },   /* till-park: the old connection is CLOSED, not leaked — a leaked one would block every later delete of that shop's store */
     /** ⭐ till-park: close our connection so a deleteDatabase goes through at once (it was only ever "blocked" until the reload); the next call reopens */
     release: function(){ var opening = p; p = null; return opening ? opening.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.release:1', e); }) : Promise.resolve(); },
     lastErr: function(){ return lastErr; },
@@ -24492,7 +24492,7 @@ async function closeCounter(already){
       return;
     }
 
-    busyAt(0, 0, 'Telling ChitBridge…');
+    busyAt(0, 0, 'Telling ChitBridge…'); var kept = await keepParked(); if (keptUnread(kept, 'closing the counter')) return;   /* till-park: read BEFORE the shop is told, so an unreadable queue stops the close with nothing done */
     var series = null; try { series = await DB.get('series'); } catch (e) { cbQuiet('closeCounter:7', e); }
     var lastNo = lastSaleNo(bills, series);   /* TILL-FIX2 (L4): the last SALE by its series number, never a text sort */
     var r = await HOST.tillPost('/api/till/close', { last_no: lastNo, bills: bills.length,
@@ -24501,11 +24501,9 @@ async function closeCounter(already){
     if (!r || !r.ok) { busyDone(); say('ChitBridge did not accept the close: ' + ((r && r.why) || 'no answer') + '.\n\nNothing on this PC was cleared.'); return; }
 
     busyAt(0, 0, 'Clearing this PC…');
-    var name = tillStore(), kept = await keepParked(); await DB.release();   /* till-park: refused changes survive the clear */
-    try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); await restoreParked(name, kept); } catch (e) { cbQuiet('closeCounter:8', e); }
-    try { [tillGivenKey(), shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin'),
-           shopLs('cb_till_shop'), shopLs('cb_till_shopname')].forEach(function(k){ localStorage.removeItem(k); });
-          localStorage.removeItem('cb_till_id'); } catch (e) { cbQuiet('closeCounter:9', e); }
+    var name = tillStore();
+    if (await clearStoreKeeping(name, kept) !== 'done') return;   /* till-park: refused changes survive the clear; blocked/failed stops with words */
+    removeLocalKeys([tillGivenKey(), shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin'), shopLs('cb_till_shop'), shopLs('cb_till_shopname'), 'cb_till_id']);
     busyDone();
     await _askOpen({ title: 'Counter closed', cancelValue: true,
       message: 'Counter ' + (r.prefix || tillId()) + ' is closed on this PC' + (lastNo ? ' — its last bill was ' + lastNo : '') + '.\n\n'
@@ -24540,7 +24538,45 @@ function parkKey(path, body){ return path + '|' + String((body && body.item_id) 
  */
 async function keepParked(){
   try { return ((await DB.allRaw('queue')) || []).filter(function(row){ return isParkedRow(row) && rowIsMine(row); }); }
-  catch (e) { cbQuiet('keepParked:1', e); return []; }
+  catch (e) { cbQuiet('keepParked:1', e); return null; }   /* null = could not read: the caller STOPS with words (keptUnread), it never clears on a guess */
+}
+/** remove these localStorage keys, one by one — a key that will not go is logged, never fatal */
+function removeLocalKeys(keys){
+  keys.forEach(function(key){ try { localStorage.removeItem(key); } catch (e) { cbQuiet('removeLocalKeys:1', e); } });
+}
+/** every localStorage key this counter owns (cb_…), shop-scoped or not */
+function allCbKeys(){
+  var found = [];
+  try { for (var at = 0; at < localStorage.length; at++) { var key = localStorage.key(at); if (String(key).indexOf('cb_') === 0) found.push(key); } } catch (e) { cbQuiet('allCbKeys:1', e); }
+  return found;
+}
+/** the read failed (keepParked answered null): say so, stop. true = the caller must return and clear nothing */
+function keptUnread(kept, doing){
+  if (kept) return false;
+  busyDone();
+  say('The counter could not read the changes the shop refused, so ' + doing + ' was stopped and nothing was cleared. Try again; if it keeps happening, use 🩺 → Copy the report.');
+  return true;
+}
+/** write the kept rows back, retry ONCE (they are still in memory), and say in words if they still did not come back */
+async function restoreOrSay(name, rows){
+  var back = await restoreParked(name, rows);
+  if (back < rows.length) back = await restoreParked(name, rows);
+  if (back < rows.length) say('The ' + rows.length + ' change(s) the shop refused could not be put back after the clearing, and are lost from this PC. Make them again from the item if they still matter.');
+  return back;
+}
+/**
+ * delete one store WITHOUT losing the parked rows: our own connection is released first, the rows go back only when the delete has SUCCEEDED
+ * (a blocked delete restores nothing), and a store held open by another tab stops the clear with words. 'done' | 'stopped' (already said).
+ * ⚠️ A blocked request stays queued: when the other tab closes, its onsuccess still restores the rows in memory — they are not lost to a late delete.
+ */
+function clearStoreKeeping(name, kept){
+  return DB.release().then(function(){ return new Promise(function(res){
+    var rq = indexedDB.deleteDatabase(name), answered = false;
+    var answer = function(outcome){ if (!answered) { answered = true; res(outcome); } };
+    rq.onsuccess = function(){ restoreOrSay(name, kept).then(function(){ answer('done'); }); };
+    rq.onerror = function(){ busyDone(); say('This PC could not clear its copy of the counter (' + ((rq.error && rq.error.name) || 'the browser refused') + '), so nothing was cleared. Try again.'); answer('stopped'); };
+    rq.onblocked = function(){ busyDone(); say('Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab, then try again. The changes the shop refused are kept.'); answer('stopped'); };
+  }); });
 }
 function restoreParked(name, rows){
   if (!rows.length) return Promise.resolve(0);
@@ -25404,21 +25440,17 @@ async function wipeDevice(){
   }
 
   /* 2 · now everything goes */
-  busyShow('Clearing this device…'); var kept = await keepParked(), keptStore = tillStore(); await DB.release();   /* till-park: refused changes survive the wipe */
+  busyShow('Clearing this device…'); var kept = await keepParked(), keptStore = tillStore(); if (keptUnread(kept, 'clearing this device')) return;   /* till-park: refused changes survive the wipe */
   try {
     var names = [];
     if (indexedDB.databases) { var ds = await indexedDB.databases(); names = (ds || []).map(function(d){ return d.name; }); }
     else names = [tillStore()];
     for (var i = 0; i < names.length; i++) {
       if (!names[i]) continue;
-      await new Promise(function(res){ var rq = indexedDB.deleteDatabase(names[i]); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; });
-    } await restoreParked(keptStore, kept);
+      if (await clearStoreKeeping(names[i], names[i] === keptStore ? kept : []) !== 'done') return;
+    }
   } catch (e) { cbQuiet('wipeDevice:2', e); }
-  try {
-    var del = [];
-    for (var j = 0; j < localStorage.length; j++) { var k = localStorage.key(j); if (String(k).indexOf('cb_') === 0) del.push(k); }
-    del.forEach(function(k){ try { localStorage.removeItem(k); } catch (e) { cbQuiet('wipeDevice:3', e); } });
-  } catch (e) { cbQuiet('wipeDevice:4', e); }
+  removeLocalKeys(allCbKeys());
   try { if (window.caches) { var cs = await caches.keys(); for (var n = 0; n < cs.length; n++) await caches.delete(cs[n]); } } catch (e) { cbQuiet('wipeDevice:5', e); }
   location.reload();
 }
@@ -26774,16 +26806,10 @@ async function coldStart(already){
 
   /* 3 · now it is safe */
   busyAt(0, 0, 'Everything is safe. Clearing this counter…');
-  var name = tillStore(), kept = await keepParked(); await DB.release();   /* till-park: refused changes survive the clear */
-  try {
-    await new Promise(function(res){
-      var rq = indexedDB.deleteDatabase(name);
-      rq.onsuccess = res; rq.onerror = res; rq.onblocked = res;   /* blocked means another tab holds it; the reload clears that */
-    }); await restoreParked(name, kept);
-  } catch (e) { cbQuiet('coldStart:3', e); }
+  var name = tillStore(), kept = await keepParked(); if (keptUnread(kept, 'clearing this counter')) return;   /* till-park: refused changes survive the clear */
+  if (await clearStoreKeeping(name, kept) !== 'done') return;   /* blocked by another tab: stops with words */
   /* the shop's own settings on this device go too — they are part of the copy, not of the machine */
-  try { [shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin')]
-          .forEach(function(k){ localStorage.removeItem(k); }); } catch (e) { cbQuiet('coldStart:4', e); }
+  removeLocalKeys([shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin')]);
 
   /* ⚠️ the KEY and the device's own look and feel are deliberately kept — this is a fresh copy of the shop, not an unpairing */
   location.reload();
