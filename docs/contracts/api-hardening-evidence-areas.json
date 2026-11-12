@@ -56,9 +56,9 @@
    "output_allowlist": true
   },
   "DELETE /api/keys/:jti": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "DELETE /api/products/:id": {
    "output_allowlist": true
@@ -665,8 +665,8 @@
    "output_allowlist": true
   },
   "GET /api/signin/devices": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "GET /api/signin/sessions": {
    "output_allowlist": true
@@ -795,8 +795,8 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/profile": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/folders/:id": {
    "output_allowlist": true
@@ -1415,24 +1415,24 @@
    "foreign_id_404": true
   },
   "POST /api/network-offers/:id/release": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network-offers/:id/withdraw": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network-offers/catalogue/cancel": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network-offers/catalogue/price": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network-offers/catalogue/publish": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
@@ -1777,6 +1777,9 @@
    "output_allowlist": true,
    "bfla_role_check": true
   },
+  "PUT /api/assist/catalogue-source": {
+   "bfla_role_check": true
+  },
   "PUT /api/assist/region-override": {
    "foreign_id_404": true
   },
@@ -1834,8 +1837,8 @@
    "output_allowlist": true
   },
   "PUT /api/network-offers/policy": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PUT /api/products/:id/availability": {
    "output_allowlist": true,

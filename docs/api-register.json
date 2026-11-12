@@ -35,7 +35,7 @@
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 37,
+    "applies": 38,
     "failing": 0
    },
    "parameterised_query": {
@@ -3099,7 +3099,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 338,
+   "line": 339,
    "hash": "0c2c7c81bc7f741b",
    "does": "",
    "errors": {
@@ -3201,7 +3201,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 616,
+   "line": 617,
    "hash": "ac97e40e210c820c",
    "does": "",
    "errors": {
@@ -3296,7 +3296,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 191,
+   "line": 192,
    "hash": "23a86ac3e2eae4f4",
    "does": "",
    "errors": {
@@ -3387,7 +3387,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 489,
+   "line": 490,
    "hash": "4800ee1d9af92ecc",
    "does": "",
    "errors": {
@@ -3481,7 +3481,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 501,
+   "line": 502,
    "hash": "748b83451499c0b2",
    "does": "",
    "errors": {
@@ -3577,7 +3577,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 738,
+   "line": 739,
    "hash": "ce58ab833cb528f2",
    "does": "",
    "errors": {
@@ -3666,7 +3666,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 583,
+   "line": 584,
    "hash": "eb2cb4eb1a353c68",
    "does": "",
    "errors": {
@@ -3761,7 +3761,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 630,
+   "line": 631,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3860,7 +3860,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 549,
+   "line": 550,
    "hash": "1bf6dc5f485082e6",
    "does": "",
    "errors": {
@@ -3949,7 +3949,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 567,
+   "line": 568,
    "hash": "c6cf6f259a29b007",
    "does": "",
    "errors": {
@@ -4047,7 +4047,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 182,
+   "line": 183,
    "hash": "37abe18e7e11e8b6",
    "does": "",
    "errors": {
@@ -4136,7 +4136,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 748,
+   "line": 749,
    "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
@@ -32501,7 +32501,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 71,
+   "line": 72,
    "hash": "0fed4ed7dae69c10",
    "does": "",
    "errors": {
@@ -32608,7 +32608,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 259,
+   "line": 260,
    "hash": "89946324f32549b9",
    "does": "",
    "errors": {
@@ -32714,7 +32714,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 203,
+   "line": 204,
    "hash": "2cf1be4ee2eeae1f",
    "does": "",
    "errors": {
@@ -32816,7 +32816,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 127,
+   "line": 128,
    "hash": "425efdd67b8c7b70",
    "does": "",
    "errors": {
@@ -32916,7 +32916,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 666,
+   "line": 667,
    "hash": "f35cc44639c74477",
    "does": "",
    "errors": {
@@ -33005,7 +33005,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 683,
+   "line": 684,
    "hash": "e2ec4b3294857387",
    "does": "",
    "errors": {
@@ -62410,7 +62410,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 397,
+   "line": 398,
    "hash": "e8f1198436967af4",
    "does": "",
    "errors": {
@@ -62480,7 +62480,7 @@
     "rate_limited": true
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -62488,7 +62488,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1155 (independent review: CAT-277 gate re-sign, owner-only 403 OWNER_ONLY via lib/owner ownerOnly, no web caller, bite proven, bfla evidence regenerated, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -62513,7 +62513,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 459,
+   "line": 460,
    "hash": "0a70997c357d3b62",
    "does": "",
    "errors": {
@@ -62610,7 +62610,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 527,
+   "line": 528,
    "hash": "5899c1359da94cf9",
    "does": "",
    "errors": {
