@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 160 | `list` | `amend.js` |  |
+| 161 | `list` | `amend.js` |  |
 | 132 | `rows` | `crm.js` | still in them: |
 | 125 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
@@ -136,7 +136,7 @@ of file each thing is; this says what already does the job.
 | 21 | `reason` | `lab-kit.js` | W9: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
-| 21 | `allowed` | `trips.js` | let _idsFrom = null, |
+| 22 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `next` | `cap-stock.js` | the next level: |
 | 20 | `summary` | `catalogue-read.js` | A count a person can act on: |
@@ -166,7 +166,7 @@ of file each thing is; this says what already does the job.
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 17 | `head` | `list-ctl.js` |  |
 | 17 | `label` | `screen-id.js` |  |
-| 17 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
+| 18 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 17 | `series` | `gst-returns.js` | `paid_on`: |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 16 | `done` | `attach-ui.js` |  |
