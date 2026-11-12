@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -52014,11 +52014,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "34d34aa046bc2f5c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1156 stage2: handler re-read after the hash moved (CMP-42: the customer's own answer is now stored with source 'self'; no input, output, status or code change); one error shape, backward compatible; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "shop-privacy.js"
    ],
