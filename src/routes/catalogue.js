@@ -1,11 +1,3 @@
-/* src/routes/catalogue.js — ARCHIVED: the network has no catalogue of its own; exports an empty router
- * OWNER     cb-catalogue
- * OWNS      nothing live: the archived network catalogue route, kept as an empty router for src/app.js
- * FLOW      src/app.js mounts this router on /api/network -> no routes
- * CALLED BY src/app.js (mounts it on /api/network)
- * CARD      06-catalogue-pim/functions/catalogue-face.md
- * RISK      plain
- */
 // ── ARCHIVED 2026-08-06 · the network has no catalogue of its own ──────────────────────────────────────────────
 //
 // Athi: *"if something is not useful, that has to be removed or archived."* And then, describing the model:
