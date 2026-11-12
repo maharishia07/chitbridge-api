@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -24821,11 +24821,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "982fa58847fe59d3"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1180 stage2: C11 10c read: GET /tax/ledger gains the additive dropped_why key (fixed sentences 'Bill X: it could not be read.', no error text relayed), declared in api-output-shapes; an unreadable expense chit is named in dropped instead of losing every ITC in silence; no refusal path or status changed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
