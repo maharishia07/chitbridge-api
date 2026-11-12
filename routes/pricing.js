@@ -58,7 +58,8 @@ function partialTotal(out) {
 router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /price'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);
-    if (!lines.length) return problem(req, res, { status: 400, ...said('NO_LINES', 'validation', 'lines[] required: { item_id|code, qty, listPrice?, pricing? }') });
+    const refusal = S.lineRefusal(lines, {}, { status: 400, ...said('NO_LINES', 'validation', 'lines[] required: { item_id|code, qty, listPrice?, pricing? }') }); /* CTRY-134: the one line-door guard */
+    if (refusal) return problem(req, res, refusal);
     const needShelf = lines.some((item) => !item.pricing || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(auth.entityOf(req)) : null;
     const out = lines.map((item) => S.priceLine(item, sh ? sh.productOf(item) : null));

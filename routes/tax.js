@@ -132,23 +132,14 @@ function refuse(req, res, status, code, message, extra) {
   return problem(req, res, taxSaid(status, code, message, extra));
 }
 const nameOf = (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"';
-/** the first malformed line, said — qty above 0, a price that is not negative, a rate 0–100 */
-function badLine(lines) {
-  const unread = S.unreadSaid(lines, nameOf); /* ACC-221: a figure that is not a number is named first — never read as 0 */
-  if (unread) return unread;
-  for (const l of lines) {
-    if (!(l.qty > 0)) return ['BAD_QTY', 'Line ' + nameOf(l) + ' needs a quantity above 0.'];
-    if (l.listPrice != null && l.listPrice < 0) return ['BAD_PRICE', 'Line ' + nameOf(l) + ' has a price below 0.'];
-    if (l.gst_rate != null && (l.gst_rate < 0 || l.gst_rate > 100)) return ['BAD_RATE', 'Line ' + nameOf(l) + ' has a tax rate outside 0–100%.'];
-    if (l.listPrice == null && !l.item_id && !l.code) return ['NO_PRICE', 'Line ' + nameOf(l) + ' has no price and names no item to read one from.'];
-  }
-  return null;
-}
+/** the first malformed line, said: the one guard (S.badLine); compute needs a qty on every line and keeps its own chit ceiling (CHIT_AMOUNT_TOO_LARGE) */
+const badLine = (lines) => S.badLine(lines, { needQty: true, noPrice: 'shelf', bound: false });
 
 router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);
-    if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line.');
+    const refusal = S.lineRefusal(lines, {}, taxSaid(400, 'NO_LINES', 'Send at least one line.'));
+    if (refusal) return problem(req, res, refusal);
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
     res.json({

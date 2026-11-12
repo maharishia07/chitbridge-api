@@ -362,6 +362,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_BOUND",
+   "status": "400",
+   "title": "A line is too large",
+   "shopkeeper": "A line has a quantity, a price or a total above the most a line can hold.",
+   "hint": "Check the quantity and the price; send smaller figures.",
+   "owner_area": "tax",
+   "since": "2026-11-12"
+  },
+  {
    "code": "BAD_CHANNEL",
    "status": "400",
    "title": "Bad channel",
@@ -432,6 +441,15 @@
    "hint": "Use the buttons on the screen.",
    "owner_area": "crm",
    "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_LINE",
+   "status": "400",
+   "title": "A line is not a line",
+   "shopkeeper": "A line in the list is not an object (it is empty, a number or text).",
+   "hint": "Send each line as an object with a name, a quantity and a price.",
+   "owner_area": "tax",
+   "since": "2026-11-12"
   },
   {
    "code": "BAD_NAME",
@@ -4014,6 +4032,24 @@
    "hint": "Wait the seconds shown, then try again.",
    "owner_area": "server",
    "since": "2026-10-31"
+  },
+  {
+   "code": "RATE_NOT_ON_MENU",
+   "status": "422",
+   "title": "Tax rate not allowed",
+   "shopkeeper": "That tax rate is not one this country charges on the invoice date.",
+   "hint": "Pick one of the country's rates and send the invoice again.",
+   "owner_area": "tax",
+   "since": "2026-11-12"
+  },
+  {
+   "code": "RCM_NOT_BUILT",
+   "status": "422",
+   "title": "Reverse charge not built",
+   "shopkeeper": "Reverse charge is not built for this country yet, so this invoice cannot be made with it.",
+   "hint": "Send the invoice without reverse charge.",
+   "owner_area": "tax",
+   "since": "2026-11-12"
   },
   {
    "code": "READ_ONLY",

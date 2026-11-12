@@ -23,6 +23,7 @@ const {
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const auth = require('../middleware/auth');
+const services = require('../lib/services');
 const { withEntity } = require('../db');
 const eng = require('../lib/offers-engine').CBOffers;
 /** the schema check of one route (its own operation in lib/offers-contract.js), as a list to spread after the gates: a route that takes no input has none */
@@ -55,18 +56,8 @@ router.get('/kinds', (req, res) => {
   }
 });
 
-function normLines(body) {
-  return (Array.isArray(body.lines) ? body.lines : []).map((item, index) => ({
-    key: String(item.key != null ? item.key : index),
-    item_id: item.item_id || null,
-    sku: item.sku || null,
-    name: item.name || '',
-    qty: Number(item.qty != null ? item.qty : item.quantity) || 0,
-    unitPrice: Number(item.unitPrice != null ? item.unitPrice : item.price) || 0,
-    categories: Array.isArray(item.categories) ? item.categories.map(String) : [],
-    excluded: Array.isArray(item.excluded) ? item.excluded.map(String) : []
-  }));
-}
+/** ⭐ CTRY-134: the lines the engine reads, from the ONE line reader (S.normLines) — offers keep their own keys (unitPrice · sku · excluded), never their own guard */
+const offerLines = (rows) => rows.map((row) => ({ key: row.key, item_id: row.item_id, sku: row.code, name: row.name, qty: row.qty, unitPrice: row.listPrice, categories: row.categories, excluded: row.excluded }));
 async function ownOffers(req) {
   const entity_id = auth.entityOf(req);
   const catalogueView = require('../lib/catalogue-view');
@@ -76,9 +67,10 @@ async function ownOffers(req) {
 const answer = (explain) =>
   async function offersAnswer(req, res) {
     try {
-      const lines = normLines(req.body || {});
-      if (!lines.length)
-        return problem(req, res, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
+      const rows = services.normLines(req.body || {});
+      const refusal = services.lineRefusal(rows, { noPrice: 'must' }, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
+      if (refusal) return problem(req, res, refusal);
+      const lines = offerLines(rows);
       const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
       const ctx = Object.assign({ now: new Date(), currency: null }, ctxOf(req.body.ctx)); /* T2-NATDEF: the caller's stated money, never INR by name */
       /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */

@@ -42,6 +42,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
 | BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line. | Send a price of 0 or more, as a number, and a discount no larger than the line. | tax | 2026-10-23 |
 | BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote or on a chit being sent, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
+| BAD_LINE | 400 | A line is not a line | A line in the list is not an object (it is empty, a number or text). | Send each line as an object with a name, a quantity and a price. | tax | 2026-11-12 |
+| BAD_BOUND | 400 | A line is too large | A line has a quantity, a price or a total above the most a line can hold. | Check the quantity and the price; send smaller figures. | tax | 2026-11-12 |
 | BAD_RATE | 400 | Tax rate out of range or not a number | A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too). | Send a rate from 0 to 100 (cess 0 or more), as a number. | tax | 2026-10-23 |
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
@@ -596,6 +598,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
 | REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
 | BUYER_TAX_ID_BAD | 400 | Buyer tax number not accepted | The buyer's tax number on this bill does not check out for your country. | Check the buyer's number and send the bill again. | chits | 2026-10-30 |
+| RCM_NOT_BUILT | 422 | Reverse charge not built | Reverse charge is not built for this country yet, so this invoice cannot be made with it. | Send the invoice without reverse charge. | tax | 2026-11-12 |
+| RATE_NOT_ON_MENU | 422 | Tax rate not allowed | That tax rate is not one this country charges on the invoice date. | Pick one of the country's rates and send the invoice again. | tax | 2026-11-12 |
 | CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |
 <!-- codes:end -->

@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
-| 132 | `rows` | `crm.js` | still in them: |
+| 133 | `rows` | `crm.js` | still in them: |
 | 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
@@ -24,7 +24,7 @@ of file each thing is; this says what already does the job.
 | 75 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 70 | `list` | `cap-settings.js` |  |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
-| 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 68 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 67 | `entry` | `books-store.js` |  |
 | 67 | `failed` | `service.js` | what every catch answers: |
@@ -92,7 +92,7 @@ of file each thing is; this says what already does the job.
 | 31 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
-| 31 | `hold` | `orders.js` |  |
+| 32 | `hold` | `orders.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -111,7 +111,7 @@ of file each thing is; this says what already does the job.
 | 26 | `view` | `country-ready.js` |  |
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
-| 25 | `guard` | `amend.js` | would disturb what has gone out. |
+| 26 | `guard` | `amend.js` | would disturb what has gone out. |
 | 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |

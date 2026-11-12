@@ -15,7 +15,7 @@ const S = require('../lib/services');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
-const seller = { State: '27', Country: 'IN', Gstin: '27AAAAA0000A1Z5' }, buyer = { State: '27', Country: 'IN', Gstin: '27BBBBB0000B1Z5' };
+const seller = { State: '27', Country: 'IN', Gstin: '27AAAAA0000A1Z5' }, buyer = { State: '27', Country: 'IN', Gstin: '27AAACB2230M1ZW' };
 const line = (over) => Object.assign({ name: 'Tea', qty: 2, price: 100, gst_rate: 18 }, over);
 const BAD = ['abc', NaN, Infinity, '', ' ', true, {}];
 
@@ -56,7 +56,10 @@ ok('a valid line still prices: 2 x 100 + 18% = 236', good.ValDtls.TotInvVal === 
 
 /* 5 · the routes use the guard (a source read, so a deleted call goes red) */
 const rt = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tax.js'), 'utf8'), ri = fs.readFileSync(path.join(__dirname, '..', 'routes', 'invoice.js'), 'utf8');
-ok('routes/tax.js badLine asks unreadSaid, and returns it, before any other check', /function badLine\(lines\) \{\s*const unread = S\.unreadSaid\(lines, nameOf\)[^\n]*\n\s*if \(unread\) return unread;/.test(rt));
+/* CTRY-134: the guard moved to services.badLine, the one for every door; tax/compute still goes through it */
+const rs = fs.readFileSync(path.join(__dirname, '..', 'lib', 'services.js'), 'utf8');
+ok('services.badLine asks unreadSaid, and returns it, before any other check', /function badLine\(lines, opts\) \{[\s\S]*?const unread = unreadSaid\(lines, lineName\)[^\n]*\n\s*if \(unread\) return unread;/.test(rs));
+ok('routes/tax.js compute goes through S.badLine', /S\.badLine\(lines, \{ needQty: true/.test(rt));
 /* the invoice route has no check of its own: normLines marks the line, computeTax throws, and readFault answers the throw as a named 400 (a handler that already runs at its size limit gets no new branch) */
 const TC = require('../lib/tax-contract');
 const thrown = call(mapped({ unit_price: null, listPrice: null }));
@@ -70,7 +73,7 @@ for (const [field, v] of [['gst_rate', -5], ['gst_rate', 101], ['cess_rate', -1]
   const e = call(mapped({ [field]: v }));
   ok('computeTax refuses ' + field + ' = ' + v + ' (outside 0-100%)', e instanceof Error && e.code === 'line_unreadable' && e.said[0] === 'BAD_RATE' && (e.said[1].includes('outside 0') || e.said[1].includes('below 0')), String(e && e.message));
 }
-ok('rates 0 and 100 are still priced', [0, 100].every((v) => !(call(mapped({ gst_rate: v })) instanceof Error)));
+ok('rates 0 and 18 are still priced (100 is in range but off the menu: M2 refuses it, RATE_NOT_ON_MENU)', [0, 18].every((v) => !(call(mapped({ gst_rate: v })) instanceof Error)));
 
 /* 7 · review of #919: cess is uncapped (tobacco cess was above 100% to Jan 2026); a blank optional field is absent; a blank qty / price is not */
 const cess160 = call(mapped({ cess_rate: 160 }));
