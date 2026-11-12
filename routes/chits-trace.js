@@ -18,6 +18,7 @@ const trace = require('../lib/trace');
 const PAGE_LIMIT = require('../lib/page-limit');
 const { LIST_MAX, LIST_PAGE } = require('../lib/chits-input');
 
+const BATCH_ROWS = 200; /* the most trace chits GET /trace/batches reads */
 const entityId = (req) => auth.entityOf(req);
 /** a chit's parties as a list: all_recipients arrives as a list or as JSON text; text that does not parse is none */
 function recipientsOf(row, caller) {
@@ -86,7 +87,7 @@ router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) =>
     g.put(seed.rows[0], 0);
 
     if (dir === 'forward') {
-      await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
+      const cut = await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
       const { nodes, edges } = g;
       const nodeArr = [...nodes.values()];
       const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
@@ -107,13 +108,14 @@ router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) =>
         flagged,
         terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
         nodes: nodeArr,
-        edges
+        edges,
+        ...cut
       });
     }
 
     // backward: follow parents toward the origin (records every visible parent edge; advances along the first visible parent).
     const path = await traceBackward(g, id, MAX_DEPTH);
-    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges });
+    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges, ...(await cutBackward(g, path, MAX_DEPTH)) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Trace walk failed'));
   }
@@ -186,14 +188,7 @@ async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
   let frontier = [id],
     depth = 0;
   while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace'->'parents' ?| $1::text[]${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
-        net ? [frontier, net] : [frontier]
-      )
-    );
+    const r = await childRows(me, frontier, net);
     const next = [];
     for (const row of r.rows) {
       const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
@@ -206,6 +201,37 @@ async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
     frontier = next;
     depth++;
   }
+  return frontier.length ? cutForward(me, frontier, net, depth >= MAX_DEPTH ? 'depth' : 'nodes', depth >= MAX_DEPTH ? MAX_DEPTH : MAX_NODES) : {};
+}
+
+/** the chits one step downstream of the frontier (the walk's one read; `limit` for the cut check, which needs one row to know) */
+function childRows(me, frontier, net, limit) {
+  return withEntity(me, (db) =>
+    db.query(
+      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE summary_json->'trace'->'parents' ?| $1::text[]${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}${limit ? ' LIMIT ' + limit : ''}`,
+      net ? [frontier, net] : [frontier]
+    )
+  );
+}
+
+/**
+ * OPS-79: the walk stopped at a limit with chits still downstream of its frontier - the recall set is INCOMPLETE and the answer says so, with the reason, never a shorter list that reads as the whole.
+ * One probe row tells a chain that ends exactly at the limit (complete) from one that goes on. → { truncated: true, cap_note } or {}.
+ */
+async function cutForward(me, frontier, net, why, limit) {
+  const more = await childRows(me, frontier, net, 1);
+  if (!more.rows.length) return {};
+  const note = why === 'depth' ? 'the walk stopped after ' + limit + ' hops: more chits lie downstream, so this recall set is incomplete' : 'the walk stopped at ' + limit + ' chits: more lie downstream, so this recall set is incomplete';
+  return { truncated: true, cap_note: note };
+}
+
+/** OPS-79: the backward walk stopped at the depth limit with a parent still to read -> the same truncated + cap_note; {} when it reached an origin or a dead end */
+async function cutBackward(g, path, MAX_DEPTH) {
+  if (path.length - 1 < MAX_DEPTH) return {};
+  const last = g.nodes.get(path[path.length - 1]);
+  return last && last.parents && last.parents.length ? { truncated: true, cap_note: 'the walk stopped after ' + MAX_DEPTH + ' hops: provenance goes further back, so this path is incomplete' } : {};
 }
 
 /** the mass balance on every node — the walk's AND by-batch's (one rule; `kidsOf(n)` → its child nodes). Returns how many are RED. */
@@ -270,9 +296,11 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
          FROM chit_header
         WHERE summary_json->'trace' IS NOT NULL
         ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC
-        LIMIT 200`
+        LIMIT ${BATCH_ROWS + 1}`
       )
     );
+    const cut = r.rows.length > BATCH_ROWS; /* OPS-79: a 201st row proves the list was cut at 200 */
+    r.rows.length = Math.min(r.rows.length, BATCH_ROWS);
     const seen = new Set();
     const batches = [];
     for (const row of r.rows) {
@@ -293,7 +321,7 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
     const answer = PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
     /* S34: a batch is the literal built above; the pager's keys follow (capped and cap_note only when it cut the list) */
     // prettier-ignore
-    res.json({ count: batches.length, batches: answer.batches.map((x) => ({ chit_id: x.chit_id, product: x.product, qty: x.qty, unit: x.unit, is_origin: x.is_origin, network: x.network, sender_name: x.sender_name, to_name: x.to_name })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
+    res.json({ count: batches.length, batches: answer.batches.map((x) => ({ chit_id: x.chit_id, product: x.product, qty: x.qty, unit: x.unit, is_origin: x.is_origin, network: x.network, sender_name: x.sender_name, to_name: x.to_name })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, ...(cut ? { truncated: true, cap_note: answer.cap_note || 'only the newest ' + BATCH_ROWS + ' trace chits are listed; more exist' } : {}) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list batches'));
   }

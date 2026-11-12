@@ -3819,7 +3819,7 @@ const costView = require('../lib/cost-view'); /* RAIL-146c: what a cost-blind re
 const deliverline = require('../lib/deliverline');
 const select = require('../lib/select'); /* ⭐ the shared selector: one definition of "my chits", counterparty included */
 
-const { sideOf } = require('../lib/open-orders'); /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
+const { sideOf, CLOSED_STATES } = require('../lib/open-orders'); /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
 const TASKS_PAGE = 40,
   TASKS_MAX = 100; /* the counter's open-order tasks */
 router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
@@ -3859,7 +3859,8 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
     const days = Math.min(Math.max(parseInt(req.query.days || '90', 10) || 90, 1), 365);
     const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
     /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
-    const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
+    /* OPS-85: my counter bills never fill the 300 (own_bills:false) and a cancelled / rejected order is not awaited (status_not) - the same two clauses as lib/open-orders, at the database, before the cap */
+    const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300, own_bills: false, status_not: CLOSED_STATES });
     /* what this trade absorbs — the same numbers the counter was given in its snapshot */
     const flags = await policy.get(entity_id).catch(log.orElse('till GET /match: failed — answered with an empty set', {}));
     const tolerance = { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp), count_units: Number(flags.tol_count_units) || 0 };
@@ -4034,8 +4035,8 @@ function invoiceNo(invoice) {
 
 /** awaited · differs · open · agreed — see matchOrder */
 function matchVerdict(lines, differences, money_gap) {
-  if (lines.every((item) => item.received === 0)) return 'awaited';
-  if (differences) return 'differs';
+  if (lines.every((item) => item.received === 0 && !item.counted_in_another_unit)) return 'awaited';
+  if (differences || lines.some((item) => item.state === 'other_unit')) return 'differs';
   if (lines.some((item) => item.received < item.ordered)) return 'open';
   return money_gap != null && money_gap !== 0 ? 'differs' : 'agreed';
 }
@@ -4044,6 +4045,7 @@ function matchVerdict(lines, differences, money_gap) {
 function matchLine(item, progress, receipts, tolerance) {
   const ordered = Number(item.quantity) || 0;
   const received = receivedOf(progress, item);
+  const otherUnits = otherUnitsOf(progress, item);
   const diff = Math.round((received - ordered) * 1000) / 1000;
   /* ⭐ THE SAME TOLERANCE THE DOOR APPLIED (lib/lotfields, one definition for both ends). A difference this trade absorbs is
      not a difference to chase — and both figures still show, because tolerance decides what is worth a conversation, never
@@ -4059,7 +4061,8 @@ function matchLine(item, progress, receipts, tolerance) {
     difference: diff,
     reason: doorReason(item, receipts),
     absorbed,
-    state: lineState(diff, received, absorbed)
+    ...(otherUnits.length ? { counted_in_another_unit: true, other_units: otherUnits } : {}),
+    state: lineState(diff, received, absorbed, otherUnits.length > 0)
   };
 }
 
@@ -4069,8 +4072,18 @@ function receivedOf(progress, item) {
   return delivered && delivered.delivered != null ? Number(delivered.delivered) : 0;
 }
 
-/** agreed · awaited · short · excess */
-function lineState(diff, received, absorbed) {
+/**
+ * OPS-87: what was counted in a unit other than the ordered one - lib/deliverline keeps it beside the total (other_units), never summed into it,
+ * so the match says so instead of reading it as nothing received. → [{ unit, mine, theirs }], [] when none. No conversion is guessed: a person settles it.
+ */
+function otherUnitsOf(progress, item) {
+  const entry = progress && progress.get ? progress.get(item.line_id) : null;
+  return entry && Array.isArray(entry.other_units) ? entry.other_units : [];
+}
+
+/** agreed · awaited · short · excess · other_unit (goods counted in another unit: neither awaited nor settled) */
+function lineState(diff, received, absorbed, otherUnit) {
+  if (otherUnit && received === 0) return 'other_unit';
   if (diff === 0) return received > 0 ? 'agreed' : 'awaited';
   if (absorbed) return 'agreed';
   return diff < 0 ? 'short' : 'excess';
