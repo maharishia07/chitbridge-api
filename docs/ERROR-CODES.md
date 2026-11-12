@@ -520,6 +520,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_BAD_REQUEST | 400 | Chit request not accepted | That chit request could not be done. | Read the message, fix what it names and try again. | chits | 2026-10-23 |
 | CHIT_CANNOT_WITHDRAW | 409 | Cannot withdraw | This chit cannot be withdrawn from where it is. | Raise a dispute on it if something is wrong. | chits | 2026-10-23 |
 | CHIT_CONFLICT | 409 | Chit not in that state | The chit is not in a state that allows that. | Look at the chit again, then try once more. | chits | 2026-10-23 |
+| CHIT_HAS_CREDIT_NOTE | 409 | Cannot withdraw | This bill has a credit note against it, so it cannot be cancelled yet. | Cancel the credit note first, then cancel the bill. | chits | 2026-11-13 |
 | CHIT_INVALID | 400 | Chit details not valid | Something on the chit is missing or not valid. | Read the list of fields it names, fix them and try again. | chits | 2026-10-23 |
 | CHIT_NOT_A_BILL | 409 | Not a bill | Only a bill you received says what its goods are for. | Open a bill you received. | chits | 2026-10-23 |
 | CHIT_NOT_MIGRATED | 503 | Chits update still to run | This part of chits is not ready on this server yet. | Try again after the next update. | chits | 2026-10-23 |
