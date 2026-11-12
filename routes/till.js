@@ -115,6 +115,7 @@ const crypto = require('crypto');
  * unpriced (external review §21). money.priceOf reads every stored shape and answers null for "no price" — never 0.
  */
 const { priceOf: amountOf } = require('../lib/money');
+const offerClash = require('../lib/offer-clash'); /* CAT-223: two live discounts on one shelf are refused at every live save */
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex').slice(0, 12);
@@ -522,7 +523,7 @@ function suppliersRead(db, entity_id) {
   return db.query(
     `SELECT s.supplier_entity_id AS id, i.display_name AS name, s.nickname, i.gstn, i.country, to_jsonb(s)->>'party_no' AS party_no
            FROM supplier_list s JOIN identities i ON i.identity_id = s.supplier_entity_id
-          WHERE s.owner_entity_id = $1
+          WHERE s.owner_entity_id = $1 AND ${require('../lib/party-live').liveSql('s')}
           ORDER BY i.display_name
           LIMIT 2000`,
     [entity_id]
@@ -2106,6 +2107,14 @@ function quietNote(row, quiet, today, zone) {
   return { words: 'not sold for ' + since + ' day' + (since === 1 ? '' : 's'), urgency: Math.min(since, 90) / 3 };
 }
 
+/** the 200 of the offer-item move (API-8: the two answers of the library step: unchanged, nothing to write, or a new version) */
+const moveAnswer = (input, done) => Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version });
+/** what the offer-item move was refused for: { kind: missing | bad | clash, words } for the handler to answer under its own status (unknown offer or product 404 — an id that is no uuid names none —, a refused move 400, a clash with another live offer 409: CAT-223, the refusal every other live save meets) → refusal | null */
+function moveRefusal(done) {
+  if (done.missing) return { kind: 'missing', words: notFound() };
+  if (done.refused) return { kind: 'bad', words: said('TILL_BAD_REQUEST', 'validation', done.refused) };
+  return done.clash ? { kind: 'clash', words: require('../lib/definitions-contract').words.clash(done.clash.body) } : null;
+}
 router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /offer-item'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2114,11 +2123,13 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
 
     const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
 
-    if (done.missing) return problem(req, res, { status: 404, ...notFound() });
-    if (done.refused) return refuseBad(req, res, done.refused);
+    const refusal = moveRefusal(done);
+    if (refusal && refusal.kind === 'clash') return problem(req, res, { status: 409, ...refusal.words });
+    if (refusal && refusal.kind === 'bad') return problem(req, res, { status: 400, ...refusal.words });
+    if (refusal) return problem(req, res, { status: 404, ...refusal.words });
     shopChanged(entity_id, 'offer ' + (input.on ? 'added to' : 'removed from') + ' a product');
     /* API-8: the two answers of the library step, named where they are used: unchanged (nothing to write) or version (a new version written) */
-    res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version }));
+    res.json(moveAnswer(input, done));
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -2130,24 +2141,30 @@ function offerItemInput(body) {
   return { offer_id: String(given.offer_id || ''), item_id: String(given.item_id || ''), on: given.on === true || given.on === 'true', by: given.by };
 }
 
+/** the offer's rules with this product moved in or out of applies_to.item_ids → { newRules, unchanged }. ⭐ ONE KEY TOUCHED: everything else about the offer is carried across exactly as it was. */
+function movedRules(offerRules, item_id, on) {
+  const rules = objectOr(offerRules);
+  const applies = objectOr(rules.applies_to);
+  const list = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
+  const next = on ? (list.indexOf(item_id) >= 0 ? list : list.concat([item_id])) : list.filter((entry) => entry !== item_id);
+  const unchanged = next.length === list.length && next.every((entry, index) => entry === list[index]);
+  return { unchanged, newRules: Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) }) };
+}
 /**
  * read the live offer, and append a version of it with this product moved in or out of applies_to.item_ids.
  * → { missing } | { refused } | { ok, unchanged, name } | { ok, name, version }
  */
 async function moveOfferItem(db, entity_id, input, identityId) {
   const { offer_id, item_id, on } = input;
+  if (!UUID_RE.test(item_id)) return { missing: true }; /* CAT-223/230: a product id is a uuid; a word would be written into the offer's list and match nothing, ever */
   const found = await liveOffer(db, entity_id, offer_id);
   if (found.refusal) return found.refusal;
   const offer = found.offer;
-  const rules = objectOr(offer.rules);
-  const applies = objectOr(rules.applies_to);
-  const list = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
-  const next = on ? (list.indexOf(item_id) >= 0 ? list : list.concat([item_id])) : list.filter((entry) => entry !== item_id);
+  const { newRules, unchanged } = movedRules(offer.rules, item_id, on);
   /* nothing to record is not an error, and a version for it would be noise in the one history that must stay readable */
-  if (next.length === list.length && next.every((entry, index) => entry === list[index])) return { ok: true, unchanged: true, name: offer.name };
-
-  /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
-  const newRules = Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) });
+  if (unchanged) return { ok: true, unchanged: true, name: offer.name };
+  const clash = await addClash(db, entity_id, offer, newRules, on);
+  if (clash) return { clash };
   const version = offer.current_version + 1;
   const byWhom = input.by ? String(input.by).slice(0, 60) : null;
   const note = (on ? 'Product added at the counter' : 'Product removed at the counter') + (byWhom ? ' by ' + byWhom : '');
@@ -2160,10 +2177,16 @@ async function moveOfferItem(db, entity_id, input, identityId) {
   return { ok: true, name: offer.name, version };
 }
 
+/** CAT-223: adding a product to a live offer is a live save: asked the same clash question (lib/offer-clash, the engine's rule) in this transaction. Taking one OUT never clashes. → the clash or null */
+async function addClash(db, entity_id, offer, newRules, on) {
+  if (!on) return null;
+  return offerClash.check(db, entity_id, { definition_id: offer.definition_id, kind: 'offer', sub_kind: offer.sub_kind, name: offer.name, rules: newRules, status: 'live' });
+}
+
 /** the offer with its current rules: { offer }, or { refusal } when it is not there, not an offer ("an offer only" — this route must never edit another kind of definition) or not live */
 async function liveOffer(db, entity_id, offer_id) {
   const current = await db.query(
-    `SELECT d.definition_id, d.name, d.current_version, d.status, d.kind, v.rules
+    `SELECT d.definition_id, d.name, d.sub_kind, d.current_version, d.status, d.kind, v.rules
            FROM definition d
            LEFT JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version

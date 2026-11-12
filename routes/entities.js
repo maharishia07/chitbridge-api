@@ -100,17 +100,18 @@ function mailAlreadyOnFile(email) {
 }
 
 /**
- * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args) → true when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
+ * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args, res) → true, the answer already sent (the words of a new address; what the notice mail did decides them, SEC-148), when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
  * minted: sign-in cannot find it, but identities.email is one global unique). The caller then answers with the words a NEW address gets, sends no code and
  * makes nothing, so a stranger cannot tell a held address from a free one (OWASP: account enumeration). Any other error is thrown as before.
  */
-async function emailHeldByNoAccount(sql, args) {
+async function emailHeldByNoAccount(sql, args, res) {
   try {
     await query(sql, args);
     return false;
   } catch (e) {
     if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) {
-      await mailAlreadyOnFile(args[3]);
+      const sent = await mailAlreadyOnFile(args[3]);
+      res.json({ message: signin.sentWords(sent), email: args[3] });
       return true;
     }
     throw e;
@@ -169,7 +170,7 @@ async function registerNew(req, res) {
       more.map((_, index) => ', $' + (index + 8)).join('') +
       ')';
     const args = [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, guess?.country || null].concat(more.map(([, v]) => v));
-    if (await emailHeldByNoAccount(sql, args)) return res.json({ message: 'Verification code sent to your email', email });
+    if (await emailHeldByNoAccount(sql, args, res)) return; /* answered: the words of a new address, a failed send included (SEC-148) */
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
       try {
@@ -358,7 +359,7 @@ const prefSetRoute = (fixedKind) =>
     }
   };
 
-router.post('/register', signin.door('register'), ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+router.post('/register', signin.door('register'), signin.askAddressCap, ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
 router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the

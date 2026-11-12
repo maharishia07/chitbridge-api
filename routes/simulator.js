@@ -15,6 +15,15 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { contract, schemaOptions, words, faultOf, writeFaultOf } = require('../lib/simulator-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
+const devOtp = require('../lib/dev-otp'); // isSealed: the ONE definition of a production-like environment
+
+/**
+ * ⭐ SEC-132 (Athi, 12 Nov: gate the simulator; OWASP ASVS V14.3, no test or demo endpoints in production) · simulatorOn() — the tour's routes answer only OFF a sealed environment
+ * (production · uat · staging · live · prod), unless SIMULATOR_ENABLED=1 is set on purpose. Sealed and not enabled, the router steps aside and the request meets the app's own
+ * "no such route", so a stranger cannot tell the tour from any other missing path.
+ */
+const simulatorOn = () => !devOtp.isSealed() || /^(1|true)$/i.test(String(process.env.SIMULATOR_ENABLED || '').trim());
+router.use((req, res, next) => (simulatorOn() ? next() : next('router')));
 
 // Reuse the existing Resend sender, fully guarded: never throws, no-ops without config.
 // (Same pattern as routes/entities.js — notifications are best-effort, never block the request.)

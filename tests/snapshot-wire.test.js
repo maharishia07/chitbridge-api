@@ -1057,8 +1057,13 @@ it('⭐⭐ the till may move one product in or out of one live offer, and may no
   assert.ok(r.indexOf("offer.kind !== 'offer'") > 0, 'this route could edit a definition that is not an offer');
   assert.ok(r.indexOf("offer.status !== 'live'") > 0, 'a draft or retired offer can be changed from a till');
   /* ⚠️ and it must never gain the ability to reprice, rename or retire */
-  for (const forbidden of ['status =', 'name =', 'sub_kind', 'discount'])
-    assert.ok(r.indexOf(forbidden) < 0, 'the offer-item route can write ' + forbidden + ' — a till key must not');
+  /* CAT-223: the route READS sub_kind (the clash question needs the offer's kind); it must never WRITE it, so the write spellings are what is forbidden */
+  for (const forbidden of ['status =', 'name =', /sub_kind\s*=[^=]/, /SET[^`;]*sub_kind/, 'discount'])
+    assert.ok(typeof forbidden === 'string' ? r.indexOf(forbidden) < 0 : !forbidden.test(r), 'the offer-item route can write ' + forbidden + ' — a till key must not');
+  /* the only UPDATE of a definition in the till is the version pointer: current_version and updated_at, nothing else */
+  const tillSource = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const definitionUpdates = tillSource.match(/UPDATE definition SET[^`;]*/g) || [];
+  assert.ok(definitionUpdates.length >= 1 && definitionUpdates.every((sql) => /^UPDATE definition SET current_version = \$\d, updated_at = now\(\) WHERE/.test(sql)), 'a till UPDATE of definition touches more than current_version and updated_at: ' + definitionUpdates.join(' | '));
 });
 
 /**

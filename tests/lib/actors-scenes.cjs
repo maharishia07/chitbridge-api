@@ -117,6 +117,8 @@ function extras(tools) {
   const failOn = (pattern, code, message, more) => when(pattern, sqlState(code, message, more));
   /* the shop's person, found by any of the reads that name a person of this shop */
   const SOMEONE = row(/FROM identities\s+WHERE identity_id = \$1/, PERSON_ROW);
+  /* SEC-145: the one read that asks whether a refused e-mail is on THIS owner's own list (their sign-in or a person they added) */
+  const ON_MY_LIST = row(/SELECT 1 FROM identities WHERE LOWER\(email\) = LOWER\(\$1\)/, { '?column?': 1 });
   /* the key@Display Name door, made to reach its answer: the shop is found, the first code is right, the person row has no PIN yet; issueToken is the one thing a scene changes */
   const LOGIN_ROW = row(/FROM identities\s+WHERE actor_key = \$1/, Object.assign({}, PERSON_ROW, { pin_hash: null }));
   const signedIn = (issueToken) => ({ identityAuth: { findEntityByNameOrHandle: async () => ({ ok: true, entity: { identity_id: SHOP, display_name: 'Shop A' } }), verifyCredential: async () => ({ ok: true }), issueToken } });
@@ -196,7 +198,9 @@ function extras(tools) {
     X('create-mail-not-sent', 'POST ' + at(''), 200, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: ENTITY_ROW } }),
     X('create-sealed-no-mailer', 'POST ' + at(''), 503, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), patch: sealed(false), setup: { sqlRows: ENTITY_ROW } }),
     N('create-sealed-no-email-shown', 'POST ' + at(''), 200, { body: BODY_NEW, patch: sealed(true), setup: { sqlRows: ENTITY_ROW } }),
-    X('create-email-is-taken', 'POST ' + at(''), 409, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: firstOf(ENTITY_ROW, failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'identities_email_key' })) } }),
+    X('create-email-is-taken', 'POST ' + at(''), 409, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: firstOf(ENTITY_ROW, failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'identities_email_key' }), ON_MY_LIST) } }),
+    /* SEC-145: an e-mail held anywhere else on the platform gets the one sentence that names nobody (no frozen row: a new answer) */
+    N('create-email-held-elsewhere', 'POST ' + at(''), 409, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: firstOf(ENTITY_ROW, failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'identities_email_key' })) } }),
     X('create-key-is-taken-at-the-insert', 'POST ' + at(''), 409, { body: BODY_NEW, setup: { sqlRows: failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'uq_actor_key_per_entity' }) } }),
     X('create-insert-fails', 'POST ' + at(''), 500, { body: BODY_NEW, setup: { sqlRows: failOn(/INSERT INTO identities/, 'XX000', SECRET_SQL) } }),
     X('create-staff-is-refused', 'POST ' + at(''), 403, { body: BODY_NEW, setup: { who: STAFF } })
@@ -215,7 +219,8 @@ function extras(tools) {
     X('edit-level-moves-the-trail', 'PATCH ' + at('/:id'), 200, { body: { access_level: 'viewer', whole_entity: true, reason: ' re-grade ' }, patch: columnsThere, setup: { sqlRows: firstOf(row(/UPDATE identities SET access_level/, PATCH_LEVEL), row(/SELECT hat, can_see_costs, break_status/, Object.assign({}, PERSON_ROW, { access_level: 'editor', whole_entity: false }))) } }),
     X('edit-level-bare', 'PATCH ' + at('/:id'), 200, { body: { access_level: 'viewer', whole_entity: false }, patch: columnsThere, setup: { sqlRows: row(/UPDATE identities SET access_level/, PATCH_LEVEL_BARE) } }),
     X('edit-email-cleared', 'PATCH ' + at('/:id'), 200, { body: { email: '' }, setup: { sqlRows: row(/UPDATE identities SET email/, PATCH_BARE) } }),
-    X('edit-email-is-taken', 'PATCH ' + at('/:id'), 409, { body: { email: 'ravi@example.com' }, setup: { sqlRows: failOn(/UPDATE identities SET/, '23505', 'duplicate', { constraint: 'identities_email_key' }) } }),
+    X('edit-email-is-taken', 'PATCH ' + at('/:id'), 409, { body: { email: 'ravi@example.com' }, setup: { sqlRows: firstOf(failOn(/UPDATE identities SET/, '23505', 'duplicate', { constraint: 'identities_email_key' }), ON_MY_LIST) } }),
+    N('edit-email-held-elsewhere', 'PATCH ' + at('/:id'), 409, { body: { email: 'ravi@example.com' }, setup: { sqlRows: failOn(/UPDATE identities SET/, '23505', 'duplicate', { constraint: 'identities_email_key' }) } }),
     X('edit-fails', 'PATCH ' + at('/:id'), 500, { body: { display_name: 'Ravi Kumar' }, setup: { sqlRows: failOn(/UPDATE identities SET/, 'XX000', SECRET_SQL) } }),
     N('edit-body-is-a-list', 'PATCH ' + at('/:id'), 400, { body: [] })
   ];

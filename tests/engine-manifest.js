@@ -562,6 +562,8 @@ const INFRA_LIBS = [
      classifications for one file is how a rule quietly becomes plumbing. Removed 2026-09-09 after checking that
      nothing reads it here: inventory.cjs tests TIER before INFRA, so the file already reported engine.tier. */
   'definition-check.js',   // the value a definition kind cannot do without (the form's sentences, refused by the API too)
+  'reward-check.js',       // CAT-272: the numbers of a reward programme the earning engine would misread; the reward branch of definition-check
+  'party-restore.js',      // CRM-247: a deleted party's list rows un-hidden (the way back from removeParty), kept out of party-live so the till's DB-free groups reader stays DB-free
   'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
   'offers-live.js',        // the seller's live offers applied to a set of lines — the one function the storefront order AND the send path call

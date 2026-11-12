@@ -242,7 +242,8 @@ function extras(tools) {
     X('lists-adopt-unknown-list', 'POST ' + P + '/lists/adopt', 400, { body: { list: 'nope' } }),
     X('lists-adopt-nothing-selected', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'no such product', unit: 'kg' }] }, setup: withRows(money) }),
     X('lists-adopt-done', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'Tomato (country)', unit: 'kg', price: 40 }], status: 'available' }, setup: withRows(firstOf(money, answering(/INSERT INTO catalogue_items/, [ITEM()]))) }),
-    X('lists-adopt-a-row-with-a-picture', 'POST ' + P + '/lists/adopt', 400, { body: { list: 'veg', names: [{ name: 'Tomato', unit: 'kg' }] }, setup: withRows(money) }),
+    /* CAT-207: the list's picture links are stripped (they are the server's to mint), so a starter row is adopted, not refused whole */
+    X('lists-adopt-a-row-with-a-picture', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'Tomato', unit: 'kg' }] }, setup: withRows(firstOf(money, answering(/INSERT INTO catalogue_items/, [ITEM()]))), after: true }),
     X('lists-adopt-categories-fail', 'POST ' + P + '/lists/adopt', 500, { body: { list: 'veg' }, patch: { cats: { ensureCategories: boom } }, setup: withRows(money) }),
     X('lists-adopt-db-fails', 'POST ' + P + '/lists/adopt', 500, { body: { list: 'veg' }, setup: failing })
   ];

@@ -1811,6 +1811,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "DEFINITION_STALE",
+   "status": "409",
+   "title": "Changed by someone else",
+   "shopkeeper": "Someone saved this definition after you opened it, so your save was not written over theirs.",
+   "hint": "Open it again, check the new version and redo your change.",
+   "owner_area": "definitions",
+   "since": "2026-11-12"
+  },
+  {
    "code": "DEFINITION_TAKEOVER_NOT_LIVE",
    "status": "400",
    "title": "Slab cannot take over",
@@ -1944,6 +1953,15 @@
    "hint": "Use the person's own e-mail, or leave it empty.",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "EMAIL_UNAVAILABLE",
+   "status": "409",
+   "title": "E-mail not available",
+   "shopkeeper": "That e-mail cannot be used for this person.",
+   "hint": "Use the person's own e-mail, or leave it empty.",
+   "owner_area": "actors",
+   "since": "2026-11-12"
   },
   {
    "code": "EMPLOYEE_EMAIL_REQUIRED",

@@ -97,6 +97,15 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       const i = ok(await j('/api/crm/leads/import', { method: 'POST', token: A.token, body: { rows: [{ name: 'Import Twin', phone: '9876510077' }, { name: 'Import New', phone: '9876510078' }] } }), 'import').b;
       expect(i.added === 1 && i.skipped.length === 1 && i.rows[0].party_id === base.party_id && /already/i.test(i.skipped[0].why || '') && await count('9876510077') === 1, JSON.stringify({ added: i.added, skipped: i.skipped }).slice(0, 220));
     });
+    await kase('CR-06d', 'B10: five leads with the SAME phone sent at once (real Postgres) -> one 201, four 409, no 500, one party', async () => {
+      const rs = await Promise.all([1, 2, 3, 4, 5].map((n) => lead(A, 'Burst Phone ' + n, '9876520011')));
+      const made = rs.filter((x) => x.status === 201).length, refused = rs.filter((x) => x.status === 409).length;
+      expect(made === 1 && refused === 4 && await count('9876520011') === 1, 'statuses ' + rs.map((x) => x.status).join(',') + ' · parties with that phone ' + await count('9876520011'));
+    });
+    await kase('CR-06e', 'B10: five leads with the SAME name and different phones sent at once -> one 201, four 409, no 500', async () => {
+      const rs = await Promise.all([1, 2, 3, 4, 5].map((n) => lead(A, 'Burst Name', '98765200' + (20 + n))));
+      expect(rs.filter((x) => x.status === 201).length === 1 && rs.filter((x) => x.status === 409).length === 4, 'statuses ' + rs.map((x) => x.status).join(','));
+    });
     await kase('CR-06c', 'the same phone typed with +91 and spaces is the same party', async () => {
       const c = await lead(A, 'Format Twin', '+91 98765 10077');
       expect(c.status === 409 && await count('9876510077') === 1, 'lead ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 140) + ' · parties with that phone ' + await count('9876510077'));

@@ -128,6 +128,12 @@ const SHOP_ROW = (sql) => (/SELECT currency_code, country FROM identities/.test(
 const PROGRAMME = ['lib/reward-store.js', 'programme', async () => ({ name: 'Points', walk_in_earns: true })];
 const OFFER_ROW = (kind, status) => (sql) =>
   /FROM definition d/.test(sql) ? { rows: [{ definition_id: ITEM, name: 'Spring', current_version: 1, status, kind, rules: {} }], rowCount: 1 } : undefined;
+/** the offer being added to (5% off, nothing listed) and ANOTHER live offer at 10% on the same product: the engine's clash rule says no */
+const OFFER_CLASH_ROWS = (sql) => {
+  if (/d\.entity_id = \$1 AND d\.definition_id = \$2/.test(sql)) return { rows: [{ definition_id: ITEM, name: 'Five off', sub_kind: 'percent_off', current_version: 1, status: 'live', kind: 'offer', rules: { percent: 5, applies_to: { item_ids: [] } } }], rowCount: 1 };
+  if (/d\.kind = 'offer' AND d\.status = 'live'/.test(sql)) return { rows: [{ definition_id: '99999999-9999-4999-8999-999999999999', name: 'Rice 10% off', sub_kind: 'percent_off', rules: { percent: 10, applies_to: { item_ids: [ITEM2] } } }], rowCount: 1 };
+  return undefined;
+};
 const PARTY = (country) => ['lib/profile.js', 'invoiceParty', async () => ({ country })];
 /* F5 A1 · the rate door's worlds: a shop's registration row (regular charges, composition does not), and a shelf holding one slab but no product */
 const SLAB = '00000000-0000-4000-8000-0000000001d1'; /* a slab's definition id (the generated hardening case plays this recorded request: tools/api-contract-tests PATH_ID) */
@@ -213,6 +219,8 @@ const EXTRAS = [
   X('offer-not-there', 'POST /api/till/offer-item', 404, { body: { offer_id: ITEM, item_id: ITEM, on: true } }),
   X('not-an-offer', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('reward', 'live') } }),
   X('offer-not-live', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('offer', 'draft') } }),
+  /* M9c (CAT-223): adding a product to a live offer beside another live 10% offer on it is the 409 OFFER_CLASH every other live save meets; nothing is written (born after the sweep froze the old answers) */
+  X('offer-item-clashes-with-a-live-offer', 'POST /api/till/offer-item', 409, { body: { offer_id: ITEM, item_id: ITEM2, on: true }, setup: { sqlRows: OFFER_CLASH_ROWS } }),
   X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
   X('listen-body-not-an-object', 'POST /api/till/listen', 400, { body: ['AAAA'] }),
   X('listen-transcriber-breaks', 'POST /api/till/listen', 200, { body: { audio: 'AAAA' }, patch: [['lib/speech.js', 'transcribe', throwsLater]] }),
