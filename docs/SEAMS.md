@@ -14,19 +14,19 @@ of file each thing is; this says what already does the job.
 | 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
-| 113 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 102 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
 | 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 78 | `next` | `dayopen.js` | the next thing to do — |
+| 79 | `next` | `dayopen.js` | the next thing to do — |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 70 | `list` | `cap-settings.js` |  |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
+| 68 | `entry` | `books-store.js` |  |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 68 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 67 | `entry` | `books-store.js` |  |
 | 67 | `failed` | `service.js` | what every catch answers: |
 | 66 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 66 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
@@ -47,9 +47,9 @@ of file each thing is; this says what already does the job.
 | 51 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
+| 50 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 48 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 46 | `read` | `cap-print.js` |  |
 | 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
@@ -82,13 +82,13 @@ of file each thing is; this says what already does the job.
 | 33 | `changes` | `books-store.js` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `note` | `dbwatch.js` |  |
+| 33 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 32 | `lines` | `cart.js` |  |
 | 32 | `sentence` | `one-person.js` |  |
 | 32 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 32 | `refuse` | `books-pack.js` | const sha = (text) => |
-| 32 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 31 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
@@ -106,13 +106,13 @@ of file each thing is; this says what already does the job.
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `opts` | `cap-stock.js` |  |
+| 27 | `guard` | `amend.js` | would disturb what has gone out. |
 | 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 26 | `view` | `country-ready.js` |  |
 | 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
-| 25 | `guard` | `amend.js` | would disturb what has gone out. |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -164,6 +164,7 @@ of file each thing is; this says what already does the job.
 | 18 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
+| 17 | `head` | `list-ctl.js` |  |
 | 17 | `label` | `screen-id.js` |  |
 | 17 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
@@ -172,7 +173,6 @@ of file each thing is; this says what already does the job.
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `frame` | `cap-settings.js` |  |
 | 16 | `fmtMoney` | `helpers.js` |  |
-| 16 | `head` | `list-ctl.js` |  |
 | 16 | `resolve` | `page.js` |  |
 | 16 | `verdict` | `rail-thread.js` |  |
 | 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
