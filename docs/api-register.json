@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -27006,11 +27006,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4cc02b7049e1cf09"
+    "signed_off_by_date": "cb-api 2026-11-13 OPS-83 re-sign after merging main (OPS-87 other-unit rule kept; independent read of the merged route, builder did not sign): the answer gains received_with_tax and money_code (hidden from a blind reader: money_gap and received_with_tax are outside MATCH_KEEP, money_code is a word with no figure) (additive, no new input, no new status or code); money_gap now their-bill.check on carried figures; the register row reads 13 of 13",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-match.js",
     "till.html"
