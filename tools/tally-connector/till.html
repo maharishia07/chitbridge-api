@@ -4648,6 +4648,7 @@ var DB = (function(){
     get: function(k){ return fall('get', function(){ return tx('kv','readonly',function(s){ return s.get(k); }); }, function(){ return MEM.get('kv',k); })
                         .then(function(v){ return (k === 'owner' || k === 'rejected' || ownOK(v)) ? v : undefined; }); },
     freeze: function(words){ frozen = words; },
+    isFrozen: function(){ return !!frozen; },
     set: function(k,v){ if (k !== 'owner' && k !== 'rejected') v = ownRow(v);
                         return stopped() || fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
     put: function(store,row){ row = ownRow(row); return stopped() || fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
@@ -7221,7 +7222,7 @@ function paintStatus(){
    * must never be parsed as markup; the one case that needs an element is built here, escaped, deliberately.
    */
   var qn = document.getElementById('queuenote');
-  if (stuckNow && STATE.queued) {
+  if (stuckNow && queueCount()) {
     qn.innerHTML = esc(note)
       + ' <button class="daylink" data-testid="till-queue-fix" onclick="' + esc(stuckNow.act) + '()">'
       + esc(stuckNow.fix) + '</button>';
@@ -13670,7 +13671,7 @@ function paintDayPill(d){
     dp.textContent = CART.length ? ('this bill · ' + money(mine)) : 'nothing on this bill';
     dp.title = 'what is on the bill being rung — tap to see it';
   } else {
-    dp.textContent = 'today ' + (d.count||0) + ' · ' + money(d.total||0);
+    dp.textContent = dbFrozen() ? 'frozen — reload this counter' : 'today ' + (d.count||0) + ' · ' + money(d.total||0);
     dp.title = 'today’s bills — every sale taken at this counter today (F8)';
   }
 }
@@ -16161,7 +16162,7 @@ function changedKeep(){
  * label would be a second thing to keep true, and the first thing to drift.
  * ⚠️ A BILL IS NAMED FIRST AND SEPARATELY, always. It is the only one that is money somebody has already handed over.
  */
-var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0, parked: 0 };
+var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0, parked: 0, frozen: false };
 /**
  * ⭐ WHAT THIS COUNTER IS USING THAT THE SHOP HAS NOT GOT. Derived from the queue on every tally, never stored —
  * a row waiting IS the out-of-sync state, so it cannot outlive the thing it describes.
@@ -16172,7 +16173,7 @@ async function queueTally(){
   try { rows = (await DB.all('queue')) || []; } catch (_) { rows = []; }
   OUT_OF_SYNC = rows.filter(function(r){ return r && r.priority && r.says; })
                     .map(function(r){ return r.says; });
-  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0, parked: rows.filter(isParkedRow).length };
+  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0, parked: rows.filter(isParkedRow).length, frozen: dbFrozen() };
   rows = sendableRows(rows);   /* a parked change is not "waiting to reach the shop": it waits for a person (openStuck) */
   rows.forEach(function(r){
     /* ⚠️ POINTS ARE NOT 'A CHANGE'. To a shopkeeper a change is a price or a shelf flag — something they did to the
@@ -16364,6 +16365,7 @@ function blankWords(){
  * ⚠️ `fatal` is the one that matters: a dead line clears itself, a closed counter or a wrong key never will.
  */
 function queueStuck(){
+  if (dbFrozen()) return { fix: 'Reload this counter', act: 'reloadCounter', detail: BLOCKED_WORDS, code: 'DB_FROZEN' };
   var w = (STATE && STATE.queue_why) || null;
   if (!w || !w.fatal) return null;
   /**
@@ -16444,9 +16446,9 @@ function queueWords(){
    * not clear by waiting — the reason replaces the count, because the count is no longer the news.
    */
   var stuck = queueStuck();
-  if (stuck && STATE.queued) {
+  if (stuck && queueCount()) {
     /* ⚠️ THE ACTION, NOT THE ACCOUNT. What went wrong is in 🩺; what to do is here. */
-    return STATE.queued + ' bill' + (STATE.queued === 1 ? '' : 's') + ' still to send · ' + stuck.fix;
+    return stuckLine(stuck);
   }
   /**
    * ⚠️⚠️⚠️ NOTHING WAITING IS NOT THE SAME AS EVERYTHING ARRIVED ([TILL-119]). A counter with no key has an
@@ -24521,7 +24523,7 @@ async function closeCounter(already){
   }
 }
 /** ⭐ till-park: rows still to go plus rows a person must fix — what "is anything not at the shop?" counts */
-function queueCount(){ return (STATE.queued || 0) + (QUEUED.parked || 0); }
+function queueCount(){ return (STATE.queued || 0) + (QUEUED.parked || 0) + (dbFrozen() ? 1 : 0); }
 /** the sentence the status line and the alert card say; the server's own words are on each row in 🩺 */
 function parkedWords(){
   var count = QUEUED.parked || 0;
@@ -24550,6 +24552,28 @@ async function keepParked(){
  * where a reload finds them (reviveKept), and offers the one way out: Reload this counter.
  */
 var BLOCKED_WORDS = 'Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab, then press Reload this counter. Until then this counter takes no new bills or changes — nothing is lost, and the changes the shop refused are kept.';
+/** is this counter frozen (a clear of the store was blocked and no reload yet)? every reader that would otherwise show EMPTY asks this first */
+function dbFrozen(){ return DB.isFrozen(); }
+var FROZEN_LINE = 'Frozen — close the other counter tab, then reload this counter. Nothing is being saved; the lists below are not the real ones.';
+/** the one way out of a frozen counter */
+function reloadCounter(){ location.reload(); }
+/** the frozen notice with its Reload button — the 🩺 panel's first block and the Bills list's only content while frozen ('' when not frozen) */
+function frozenNoticeHTML(){
+  return dbFrozen() ? '<div class="nowbox warnrow" data-testid="till-frozen-notice">' + esc(BLOCKED_WORDS)
+    + ' <button class="pill" data-cbsid="CMP009" data-testid="till-frozen-reload" onclick="reloadCounter()"><b>Reload this counter</b></button></div>' : '';
+}
+/** the Bills dialog while frozen: the real list cannot be read, so it says so instead of showing an empty day */
+function frozenBillsView(){
+  document.getElementById('billstitle').textContent = 'Bills';
+  document.getElementById('billsbody').innerHTML = frozenNoticeHTML();
+  if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
+}
+/** the line the status bar and the alert card say while frozen, or the count line the fatal-refusal path always said */
+function stuckLine(stuck){
+  return dbFrozen() ? FROZEN_LINE : STATE.queued + ' bill' + (STATE.queued === 1 ? '' : 's') + ' still to send · ' + stuck.fix;
+}
+/** a ' · FROZEN' mark for the 🩺 report's header, '' when not frozen */
+function frozenMark(){ return dbFrozen() ? '  ·  FROZEN: a clear of the store was blocked; reload this counter' : ''; }
 function holdBlocked(name, kept){
   DB.freeze(BLOCKED_WORDS);
   try { ls.set('cb_kept_parked', JSON.stringify({ name: name, rows: kept })); } catch (e) { cbQuiet('holdBlocked:1', e); }
@@ -24633,6 +24657,7 @@ async function unparkSame(path, body){
 }
 /** the alert card for refused changes: what happened, and the one button that opens the list to fix them */
 function parkedAlert(addCard){
+  if (dbFrozen()) addCard('frozen', 'time', 'This counter is frozen', BLOCKED_WORDS, '<button class="pill" data-cbsid="CMP009" data-testid="till-alert-frozen" onclick="reloadCounter()"><b>Reload this counter</b></button>');
   if (!QUEUED.parked) return;
   addCard('parked', 'time', parkedWords(), 'The shop refused them, so sending again would not help. Nothing is lost.',
     '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-parked" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');
@@ -24925,7 +24950,7 @@ async function openStuck(){
   /* ⚠️ kept so the report that is SENT says the same thing the shopkeeper is looking at — two accounts of one
      counter, differing by a refresh, is how a support call goes wrong */
   STUCK_VERDICT = verdict;
-  h = parkedSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
+  h = frozenNoticeHTML() + parkedSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
     + '<div class="qbar" style="padding:8px 0">'
     + '<button class="pill" data-testid="till-stuck-release" onclick="releaseQueue()"><b>▶ Get my bills moving</b></button>'
     + '<button class="pill" data-testid="till-stuck-send" onclick="stuckSend()">📨 Tell ChitBridge</button>'
@@ -25022,7 +25047,7 @@ async function stuckReport(){
 
   L.push('CHITBRIDGE COUNTER — why a bill is stuck');
   L.push('taken ' + new Date().toISOString());
-  L.push('support code ' + stuckCode());
+  L.push('support code ' + stuckCode() + frozenMark());
   L.push('');
   L.push('COUNTER');
   L.push('  shop this database belongs to : ' + (owner || '(not set)'));
@@ -25660,11 +25685,14 @@ function hourRangeWords(hh){
   return mk(Number(hh)) + ' – ' + mk(Number(hh) + 1);
 }
 function billsClose(){ var d = document.getElementById('billsdlg'); if (d && d.open) { try { d.close(); } catch (e) { cbQuiet('billsClose:1', e); } } }
+/** today's bills from the host; none (not a throw) when the host cannot say */
+async function billsNow(){
+  try { return (HOST && HOST.bills) ? await HOST.bills() : []; } catch (e) { cbQuiet('billsNow:1', e); return []; }
+}
 async function openBills(keepOpen){
-  if (!keepOpen) BILLS_TAB = 'today';
+  if (!keepOpen) BILLS_TAB = 'today'; if (dbFrozen()) return frozenBillsView();
   if (BILLS_TAB === 'earlier') return paintEarlier();
-  var rows = [];
-  try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
+  var rows = await billsNow();
   /**
    * ⭐⭐⭐ EVERY BILL SAYS WHETHER IT HAS REACHED CHITBRIDGE. Athi, 2026-09-09: *"do we have a report of how many more to sync to
    * cloud? every bill created should have a marker on sync / not sync, so the user also can see, or force."*

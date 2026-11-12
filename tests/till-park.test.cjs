@@ -106,7 +106,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
   await it('a parked change is not "waiting to reach the shop": queueTally counts it apart and leaves STATE.queued to the rest', async () => {
     const DB = fakeDB(), ctx = { DB, STATE: { queued: 0 }, QUEUED: null, OUT_OF_SYNC: [] };
     vm.createContext(ctx);
-    vm.runInContext(liftVar('QUEUED') + lift('isParkedRow') + lift('sendableRows') + lift('queueTally'), ctx);
+    DB.isFrozen = () => false; vm.runInContext(liftVar('QUEUED') + lift('dbFrozen') + lift('isParkedRow') + lift('sendableRows') + lift('queueTally'), ctx);
     DB.stores.queue['OP/5'] = Object.assign(change('OP/5', '/api/till/price', { item_id: ITEM, price: 1 }), { _parked: { at: 1, status: 400 } });
     DB.stores.queue['OP/6'] = change('OP/6', '/api/till/stock', { item_id: ITEM, status: 'unavailable' });
     DB.stores.queue['C1/2'] = { no: 'C1/2', lines: [] };
@@ -337,6 +337,35 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     assert.deepStrictEqual(puts, [], 'revived into another shop\'s store'); assert.ok(store.cb_kept_parked, 'the note was dropped for another shop');
     base.tillStore = () => 'cb-till-x'; await vm.runInContext('reviveKept()', base);
     assert.deepStrictEqual(puts, ['OP/77']); assert.ok(!store.cb_kept_parked, 'the note was not forgotten'); await vm.runInContext('reviveKept()', base); assert.strictEqual(puts.length, 1, 'revived twice');
+  });
+  await it('WHILE FROZEN the counter never looks empty or all sent: queueWords/queueStuck/queueTally/the day pill/the 🩺 block/the alert card/the Bills list all say frozen and offer Reload this counter', async () => {
+    const els = {}, el = (id) => (els[id] = els[id] || { textContent: '', innerHTML: '', open: false, showModal() { this.open = true; } });
+    let frozen = true;
+    const ctx = { console, JSON, Array, Object, String, Number, STATE: { queued: 0 }, QUEUED: { parked: 0 }, DB: { isFrozen: () => frozen, all: async () => [] }, esc: (x) => String(x), money: String, CART: [], DAY_LAST: null,
+      document: { getElementById: el, body: { classList: { contains: () => false } } }, cbQuiet() {}, personOn: () => false, paired: () => true, queueBlock: () => null, OUT_OF_SYNC: [] };
+    vm.createContext(ctx);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + liftVar('FROZEN_LINE') + 'function isParkedRow(row){ return !!(row && row._parked); }\n' + liftVar('QUEUED')
+      + ['dbFrozen', 'stuckLine', 'frozenNoticeHTML', 'frozenBillsView', 'frozenMark', 'queueCount', 'queueStuck', 'sendableRows', 'queueTally', 'paintDayPill', 'parkedAlert'].map(lift).join('')
+      + 'function parkedWords(){ return "parked"; }\n', ctx);
+    const run = (src) => vm.runInContext(src, ctx);
+    assert.strictEqual(run('queueCount()'), 1, 'a frozen counter counts as something NOT at the shop');
+    const stuck = run('queueStuck()'); assert.deepStrictEqual([stuck.fix, stuck.act], ['Reload this counter', 'reloadCounter']);
+    assert.ok(/^Frozen — close the other counter tab, then reload this counter/.test(run('stuckLine(queueStuck())')), 'the status line does not say frozen');
+    assert.ok(!/all sent|0 bill|reached the shop/i.test(run('stuckLine(queueStuck())')));
+    const t = await run('queueTally()'); assert.strictEqual(t.frozen, true, 'queueTally does not say frozen'); assert.ok(run('QUEUED.frozen'));
+    run('paintDayPill({ count: 0, total: 0 })'); assert.strictEqual(el('daypill').textContent, 'frozen — reload this counter', 'the day pill reads 0.00 while frozen');
+    const notice = run('frozenNoticeHTML()'); assert.ok(/till-frozen-reload/.test(notice) && /Reload this counter/.test(notice) && /data-cbsid="CMP009"/.test(notice));
+    run('frozenBillsView()'); assert.ok(els.billsdlg.open && /Reload this counter/.test(els.billsbody.innerHTML), 'the Bills list shows an empty day while frozen');
+    assert.ok(/FROZEN/.test(run('frozenMark()')));
+    const cards = []; run('parkedAlert')((...a) => cards.push(a)); assert.ok(cards.some((c) => c[0] === 'frozen' && /Reload this counter/.test(c[4])), 'no alert card while frozen');
+    frozen = false;
+    assert.strictEqual(run('queueCount()'), 0); assert.strictEqual(run('frozenNoticeHTML()'), ''); assert.strictEqual(run('frozenMark()'), ''); assert.strictEqual(run('queueStuck()'), null);
+    run('paintDayPill({ count: 3, total: 40 })'); assert.strictEqual(el('daypill').textContent, 'today 3 · 40', 'the pill must be normal when not frozen');
+    // the status bar itself: paintStatus's button path and queueWords read the frozen answer, pinned in the source (the browser run shows the painted bar)
+    const ps = PAGE.slice(PAGE.indexOf('\nfunction paintStatus('), PAGE.indexOf('\n}\n', PAGE.indexOf('\nfunction paintStatus(')));
+    assert.ok(/stuckNow && queueCount\(\)/.test(ps) && /queueCount\(\) \? '  ·  ' \+ queueWords\(\)/.test(ps), 'paintStatus does not read the frozen state');
+    const qw = PAGE.slice(PAGE.indexOf('\nfunction queueWords('), PAGE.indexOf('\n}\n', PAGE.indexOf('\nfunction queueWords(')));
+    assert.ok(/stuck && queueCount\(\)/.test(qw) && /return stuckLine\(stuck\)/.test(qw), 'queueWords can still say "all sent" while frozen');
   });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);
