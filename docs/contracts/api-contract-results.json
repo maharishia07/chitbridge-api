@@ -4115,7 +4115,7 @@
    ]
   },
   "PUT /api/assist/catalogue-source": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
