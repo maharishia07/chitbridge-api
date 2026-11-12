@@ -47,7 +47,7 @@ of file each thing is; this says what already does the job.
 | 51 | `toast` | `accounts-shell.js` |  |
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
-| 50 | `count` | `money-check.js` | the count /health reads |
+| 51 | `count` | `money-check.js` | the count /health reads |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 48 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 46 | `read` | `cap-print.js` |  |
