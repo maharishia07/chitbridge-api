@@ -2191,17 +2191,19 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
  *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
  *   languages   which synonym packs       skip_existing  default true
  */
+/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) */
+function withoutServerOwned(items) {
+  const kept = [];
+  for (const item of items) {
+    const copy = Object.assign({}, item);
+    for (const key of catcols.SERVER_OWNED) delete copy[key];
+    kept.push(copy);
+  }
+  return kept;
+}
 /** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
  *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
  *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
-/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) */
-function withoutServerOwned(items) {
-  return items.map((item) => {
-    const copy = Object.assign({}, item);
-    for (const key of catcols.SERVER_OWNED) delete copy[key];
-    return copy;
-  });
-}
 async function dropForeignListPrices(items, req) {
   const withoutListPrice = (item) => {
     const copy = Object.assign({}, item);

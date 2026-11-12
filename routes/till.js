@@ -2109,7 +2109,8 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
     const input = offerItemInput(req.body);
     if (!input.offer_id || !input.item_id) return refuseBad(req, res, 'offer_id and item_id required');
 
-    const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
+    /* CAT-223/230: a product id is a uuid; a word would be written into the offer's list and match nothing, ever */
+    const done = UUID_RE.test(input.item_id) ? await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id)) : { missing: true };
 
     const refusal = moveRefusal(done);
     if (refusal) return problem(req, res, refusal);
@@ -2127,25 +2128,27 @@ function offerItemInput(body) {
   return { offer_id: String(given.offer_id || ''), item_id: String(given.item_id || ''), on: given.on === true || given.on === 'true', by: given.by };
 }
 
+/** the offer's rules with this product moved in or out of applies_to.item_ids → { newRules, unchanged }. ⭐ ONE KEY TOUCHED: everything else about the offer is carried across exactly as it was. */
+function movedRules(offerRules, item_id, on) {
+  const rules = objectOr(offerRules);
+  const applies = objectOr(rules.applies_to);
+  const list = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
+  const next = on ? (list.indexOf(item_id) >= 0 ? list : list.concat([item_id])) : list.filter((entry) => entry !== item_id);
+  const unchanged = next.length === list.length && next.every((entry, index) => entry === list[index]);
+  return { unchanged, newRules: Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) }) };
+}
 /**
  * read the live offer, and append a version of it with this product moved in or out of applies_to.item_ids.
  * → { missing } | { refused } | { ok, unchanged, name } | { ok, name, version }
  */
 async function moveOfferItem(db, entity_id, input, identityId) {
   const { offer_id, item_id, on } = input;
-  if (!UUID_RE.test(item_id)) return { missing: true }; /* CAT-223/230: a product id is a uuid; a word would be written into the offer's list and match nothing, ever */
   const found = await liveOffer(db, entity_id, offer_id);
   if (found.refusal) return found.refusal;
   const offer = found.offer;
-  const rules = objectOr(offer.rules);
-  const applies = objectOr(rules.applies_to);
-  const list = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
-  const next = on ? (list.indexOf(item_id) >= 0 ? list : list.concat([item_id])) : list.filter((entry) => entry !== item_id);
+  const { newRules, unchanged } = movedRules(offer.rules, item_id, on);
   /* nothing to record is not an error, and a version for it would be noise in the one history that must stay readable */
-  if (next.length === list.length && next.every((entry, index) => entry === list[index])) return { ok: true, unchanged: true, name: offer.name };
-
-  /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
-  const newRules = Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) });
+  if (unchanged) return { ok: true, unchanged: true, name: offer.name };
   const clash = await addClash(db, entity_id, offer, newRules, on);
   if (clash) return { clash };
   const version = offer.current_version + 1;
