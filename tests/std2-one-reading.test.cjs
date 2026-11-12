@@ -8,6 +8,7 @@
  *   M  money: books-store.saveSetting refuses an unstated money/year with the ONE sentence (NO_MONEY); no `|| 'INR'` / `|| 4` left in the briefed writers
  *   W  "this ChitBridge runs in" is typed once (country-setup.RUNS_IN)
  * Offline: no database (stubbed handle), no network.
+ * CARD      21-compliance-attestation-and-trade/commerce-standards-and-standards-page
  */
 const fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..'), WEB = path.join(API, '..', 'chitbridge-web');
