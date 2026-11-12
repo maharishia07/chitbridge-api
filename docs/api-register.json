@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 2,
-  "meets": 629,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -10280,11 +10280,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c351db25df2879a5"
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1205 re-sign (13 of 13 read in the register; routes/chits-trace.js diffed against the signed #1194 version: variable renames, stopOf lifted out, childRows probe flag, LIMIT 201 literal; behaviour and response shape unchanged: truncated, cap_note; error shape untouched)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-traceability.js"
    ],
@@ -11524,11 +11523,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "78cb044d14166bb2"
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1205 re-sign (13 of 13 read in the register; routes/chits-trace.js diffed against the signed #1194 version: variable renames, stopOf lifted out, childRows probe flag, LIMIT 201 literal; behaviour and response shape unchanged: truncated, cap_note; error shape untouched)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-traceability.js"
    ],
