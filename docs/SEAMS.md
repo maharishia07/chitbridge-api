@@ -63,7 +63,7 @@ of file each thing is; this says what already does the job.
 | 42 | `live` | `receivables.js` | the allocations that still count: |
 | 40 | `facts` | `bill-steps.js` | MY state_log — |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 40 | `gate` | `country-setup.js` | gate(h, entity): |
+| 41 | `gate` | `country-setup.js` | gate(h, entity): |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `host` | `chit-sheet.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
