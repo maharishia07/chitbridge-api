@@ -209,13 +209,13 @@ function stopOf(depth, MAX_DEPTH, MAX_NODES) {
   return depth >= MAX_DEPTH ? { reason: 'depth', limit: MAX_DEPTH } : { reason: 'nodes', limit: MAX_NODES };
 }
 
-/** the chits one step downstream of the frontier (the walk's one read; `limit` for the cut check, which needs one row to know) */
-function childRows(shopId, frontier, networkId, limit) {
+/** the chits one step downstream of the frontier (the walk's one read; `probe` for the cut check, which needs one row to know) */
+function childRows(shopId, frontier, networkId, probe) {
   return withEntity(shopId, (db) =>
     db.query(
       `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
-        WHERE summary_json->'trace'->'parents' ?| $1::text[]${networkId ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}${limit ? ' LIMIT ' + limit : ''}`,
+        WHERE summary_json->'trace'->'parents' ?| $1::text[]${networkId ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}${probe ? ' LIMIT 1' : ''}`,
       networkId ? [frontier, networkId] : [frontier]
     )
   );
@@ -227,7 +227,7 @@ function childRows(shopId, frontier, networkId, limit) {
  */
 async function cutForward(shopId, frontier, networkId, stop) {
   if (!frontier.length) return {};
-  const more = await childRows(shopId, frontier, networkId, 1);
+  const more = await childRows(shopId, frontier, networkId, true);
   if (!more.rows.length) return {};
   const note = stop.reason === 'depth' ? 'the walk stopped after ' + stop.limit + ' hops: more chits lie downstream, so this recall set is incomplete' : 'the walk stopped at ' + stop.limit + ' chits: more lie downstream, so this recall set is incomplete';
   return { truncated: true, cap_note: note };
@@ -302,7 +302,7 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
          FROM chit_header
         WHERE summary_json->'trace' IS NOT NULL
         ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC
-        LIMIT ${BATCH_ROWS + 1}`
+        LIMIT 201` /* BATCH_ROWS + 1: the 201st row proves the list was cut */
       )
     );
     const listCut = r.rows.length > BATCH_ROWS; /* OPS-79: a 201st row proves the list was cut at 200 */

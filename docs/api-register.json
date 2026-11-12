@@ -40,7 +40,7 @@
    },
    "parameterised_query": {
     "applies": 281,
-    "failing": 39
+    "failing": 38
    },
    "rate_limited": {
     "applies": 631,
@@ -11456,7 +11456,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
    "line": 295,
-   "hash": "ab2c34597423a5cd",
+   "hash": "78cb044d14166bb2",
    "does": "",
    "errors": {
     "count": 0,
@@ -11512,7 +11512,7 @@
    ],
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": false
    },
    "reported_applies": {
@@ -11526,7 +11526,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ab2c34597423a5cd"
+    "stale_since": "78cb044d14166bb2"
    },
    "status": "partial",
    "callers": [
