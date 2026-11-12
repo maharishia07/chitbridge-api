@@ -53,10 +53,12 @@ function badPrice(price) {
   if (price === undefined || price === null || price === '') return null;
   const n = Number(price);
   if (!Number.isFinite(n) || n < 0) return 'Price must be a number, and cannot be negative.';
+  if (n > MAX_NUMBER) return 'Price is too large (at most ' + MAX_NUMBER + ').'; /* CAT-310: the catalogue's one ceiling (a 500 at the numeric column before) */
   return null;
 }
 /** the price a request carries as a stored value: absent, null or '' is none yet (null), else the number */
 const priceOrNull = (price) => (price === undefined || price === null || price === '' ? null : Number(price));
+const { MAX_NUMBER } = require('../lib/catalogue-write');
 const COLS = 'id, name, definition, price, product_item_id, created_at, updated_at';
 
 // GET /api/combo-templates — the library, newest first
