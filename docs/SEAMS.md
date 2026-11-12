@@ -13,9 +13,9 @@ of file each thing is; this says what already does the job.
 | 132 | `rows` | `crm.js` | still in them: |
 | 125 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
-| 115 | `read` | `books-cashflow.js` | Trips: |
+| 116 | `read` | `books-cashflow.js` | Trips: |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 102 | `answer` | `availability.js` | from March; then nearest. |
+| 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
 | 85 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 80 | `next` | `dayopen.js` | the next thing to do — |
@@ -36,16 +36,16 @@ of file each thing is; this says what already does the job.
 | 62 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 61 | `items` | `books-store.js` | PERF1: |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 58 | `record` | `access-events.js` |  |
-| 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 59 | `record` | `access-events.js` |  |
+| 58 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 55 | `pack` | `books-store.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
-| 54 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 55 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 52 | `rows` | `cap-settings.js` |  |
 | 52 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 52 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 53 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 51 | `toast` | `accounts-shell.js` |  |
-| 51 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
+| 53 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 51 | `count` | `money-check.js` | the count /health reads |
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
@@ -64,7 +64,7 @@ of file each thing is; this says what already does the job.
 | 41 | `gate` | `country-setup.js` | gate(h, entity): |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 40 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
+| 42 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `host` | `chit-sheet.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
@@ -77,7 +77,7 @@ of file each thing is; this says what already does the job.
 | 36 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 35 | `closeModal` | `app.html` |  |
 | 35 | `shell` | `pick.js` |  |
-| 35 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
+| 36 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 33 | `changes` | `books-store.js` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
@@ -89,7 +89,7 @@ of file each thing is; this says what already does the job.
 | 32 | `sentence` | `one-person.js` |  |
 | 32 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 32 | `refuse` | `books-pack.js` | const sha = (text) => |
-| 32 | `hold` | `orders.js` |  |
+| 34 | `hold` | `orders.js` |  |
 | 31 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
@@ -194,7 +194,7 @@ of file each thing is; this says what already does the job.
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
-| 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
+| 16 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 14 | `link` | `chit-sheet.js` |  |
