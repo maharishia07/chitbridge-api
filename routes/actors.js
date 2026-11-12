@@ -38,6 +38,19 @@ const schema = require('../lib/schema'); // b173 — deploy-before-migration col
 const access = require('../lib/access'); // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
 const railActions = require('../lib/rail-actions'); // T1-RAIL — who is moving the copy (the rail's level ladder)
 const router = express.Router();
+/**
+ * ⭐ SEC-145 · emailWriteCap — a per-OWNER hourly budget on Add / Edit calls that carry an e-mail (ACTOR_EMAIL_WRITES_PER_HOUR, default 40), counted before the write, so an owner cannot walk a list of
+ * addresses through Add or Edit to see which are held on the platform. Over it: the one 429 RATE_LIMITED. Calls without an e-mail are never counted.
+ */
+const emailWriteCap = require('../lib/rate-limit').rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: require('../lib/limits').intFromEnv('ACTOR_EMAIL_WRITES_PER_HOUR', 40),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => 'owner:' + String((req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || 'nobody'),
+  skip: (req) => !(req.body && typeof req.body.email === 'string' && req.body.email.trim()),
+  message: { error: 'Too many tries', message: 'That is a lot of e-mail changes in an hour. Wait a while, then try again.' }
+});
 /* SEC2 · THE ONE owner gate on every people WRITE (lib/owner.js ownerOnly, the sentence lib/people.js already shows on the
    People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
 const people = require('../lib/people'); // PP-03b: stateOf, the one reader of on · away · off
@@ -45,6 +58,17 @@ const ownerWrite = require('../lib/owner').ownerOnly(people.OWNER_ONLY);
 /* PEOPLE-EMAIL (SEC2): identities.email is UNIQUE across every sign-in (000_baseline_part2.sql identities_email_key), so the
    owner's own address on a staff row collides. Said in words with a code — never "Key taken", never a 500 (the answer is words.emailTaken, lib/actors-contract.js). */
 const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(String(err.constraint || err.detail || '')));
+/**
+ * ⭐ SEC-145 · emailRefusal(entity_id, email) → the 409 spec for an e-mail the platform already holds. Two answers only: the honest words (EMAIL_TAKEN) when the address is on THIS owner's own
+ * list (their own sign-in or a person they added: they may know that), and ONE fixed sentence (EMAIL_UNAVAILABLE) for every other holder, so a signed-in owner cannot use Add or Edit to
+ * test whether an address has an account elsewhere. Both branches run the same one read, so the time says nothing either.
+ */
+async function emailRefusal(entity_id, email) {
+  const mine = await withEntity(entity_id, (shop) =>
+    shop.query('SELECT 1 FROM identities WHERE LOWER(email) = LOWER($1) AND (identity_id = $2 OR parent_entity_id = $2) LIMIT 1', [String(email || '').trim(), entity_id])
+  );
+  return { status: 409, ...(mine.rows.length ? words.emailTaken() : words.emailUnavailable()) };
+}
 
 /**
  * ── loginIdFor — THE LOGIN A CO-ASSIST ACTUALLY TYPES ──────────────────────────────────────────────────────
@@ -225,6 +249,7 @@ router.post(
   auth,
   ownerWrite,
   taskCapGuard,
+  emailWriteCap,
   [
     body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
@@ -428,7 +453,7 @@ router.post(
        * stamped into every line event they recorded. Returning a 500 with "please try again" invited a retry
        * that could never succeed and gave no way to learn why.
        */
-      if (emailTaken(err)) return problem(req, res, { status: 409, ...words.emailTaken() });
+      if (emailTaken(err)) return problem(req, res, await emailRefusal(auth.entityOf(req), req.body.email));
       if (err && err.code === '23505') return problem(req, res, { status: 409, ...words.keyHeld() });
       console.error('Create actor error:', err.message);
       problem(req, res, failed(err, req, 'Create failed'));
@@ -485,6 +510,7 @@ router.patch(
   auth,
   ownerWrite,
   taskCapGuard,
+  emailWriteCap,
   [
     body('display_name').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }),
     body('actor_role').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
@@ -653,7 +679,7 @@ router.patch(
         audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 }
       });
     } catch (err) {
-      if (emailTaken(err)) return problem(req, res, { status: 409, ...words.emailTaken() });
+      if (emailTaken(err)) return problem(req, res, await emailRefusal(auth.entityOf(req), req.body.email));
       console.error('Update actor error:', err.message);
       problem(req, res, failed(err, req, 'Update failed'));
     }
