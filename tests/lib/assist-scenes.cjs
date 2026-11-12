@@ -92,8 +92,6 @@ function extras(tools) {
 
   const adopt = [
     X('adopt-unknown-source', 'POST ' + at('/catalogue-adopt'), 404, { body: { source: 'nope@v1' } }),
-    /* M9a: a price finer than the shop's currency (AUD: 2 places) is a 400 PRICE_DECIMALS found at the stamp, not a 500 (born after the sweep froze the old answers) */
-    X('adopt-price-finer-than-currency', 'POST ' + at('/catalogue-adopt'), 400, { after: true, body: { commercials: { Tussar: { price: 10.999 } } }, setup: { sqlRows: answering(/FROM identities WHERE identity_id/, [{ currency_code: 'AUD', country: 'AU' }]) } }),
     X('adopt-done', 'POST ' + at('/catalogue-adopt'), 200, { body: { commercials: {} } }),
     X('adopt-hidden', 'POST ' + at('/catalogue-adopt'), 200, { body: { visible: false } }),
     X('adopt-store-missing', 'POST ' + at('/catalogue-adopt'), 503, { body: {}, setup: { sqlRows: raising(/INSERT INTO catalogue_adoption/, '42P01') } }),

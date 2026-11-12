@@ -3800,15 +3800,6 @@
    "since": "2026-10-22"
   },
   {
-   "code": "PRICE_DECIMALS",
-   "status": "400",
-   "title": "Price finer than the currency",
-   "shopkeeper": "A price has more decimal places than the shop's currency has (2 for AUD or INR, 0 for JPY, 3 for KWD). We never round a price for you.",
-   "hint": "Round the price to the currency's decimal places and send it again.",
-   "owner_area": "products",
-   "since": "2026-11-12"
-  },
-  {
    "code": "PRIVACY_NOT_MIGRATED",
    "status": "503",
    "title": "Privacy not set up",

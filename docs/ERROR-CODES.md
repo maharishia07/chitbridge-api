@@ -110,7 +110,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |
 | OTP_REQUIRED | 400 | Code needed | Enter the code your admin shared with you. | Type the code and sign in again. | signin | 2026-11-07 |
 | PIN_REQUIRED | 400 | PIN needed | Enter your 4 digit PIN to sign in. | Type your PIN and sign in again. | signin | 2026-11-07 |
-| PRICE_DECIMALS | 400 | Price finer than the currency | A price has more decimal places than the shop's currency has (2 for AUD or INR, 0 for JPY, 3 for KWD). We never round a price for you. | Round the price to the currency's decimal places and send it again. | products | 2026-11-12 |
 | PROPOSAL_BAD | 400 | Proposal not usable | That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take. | Read the sentence shown, fix it and try again. | rail | 2026-10-25 |
 | PROPOSAL_CLOSED | 409 | Proposal already decided | That proposal is already decided, so it cannot be decided again. | Look at the newest round. | rail | 2026-10-25 |
 | PROPOSAL_DOMESTIC | 409 | Not an RFQ | Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote. | Change this chit directly, or ask for a quote when you compose it. | rail | 2026-10-25 |

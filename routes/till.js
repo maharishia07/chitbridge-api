@@ -114,7 +114,7 @@ const crypto = require('crypto');
  * so a product imported with an empty price cell sold for ₹0.00 at the counter while the storefront refused it as
  * unpriced (external review §21). money.priceOf reads every stored shape and answers null for "no price" — never 0.
  */
-const { priceOf: amountOf, priceDecimalsRefusal, PRICE_DECIMALS } = require('../lib/money');
+const { priceOf: amountOf } = require('../lib/money');
 const offerClash = require('../lib/offer-clash'); /* CAT-223: two live discounts on one shelf are refused at every live save */
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
@@ -2217,9 +2217,6 @@ router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price')
     if (refused) return problem(req, res, { status: 403, ...relayed(refused) });
     const currency = await shopCurrency(entity_id);
     if (!currency) return problem(req, res, { status: 422, ...said('NO_MONEY', 'refused', countrySetup.MONEY_UNSTATED) });
-    /* CAT-308: a price finer than the shop's currency is refused in words (the counter shows it and does not queue it again), never rounded */
-    const finer = priceDecimalsRefusal({ price }, currency);
-    if (finer) return problem(req, res, { status: 400, ...said(PRICE_DECIMALS, 'validation', finer) });
     const changed = await withEntity(entity_id, (db) => writePrice(db, entity_id, item_id, price, currency, by));
     if (!changed) return problem(req, res, { status: 404, ...notFound() });
     shopChanged(entity_id, 'price changed');

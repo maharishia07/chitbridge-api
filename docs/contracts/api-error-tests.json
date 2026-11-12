@@ -1700,7 +1700,6 @@
   503
  ],
  "POST /api/assist/catalogue-adopt": [
-  400,
   401,
   404,
   500,

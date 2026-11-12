@@ -36,12 +36,6 @@ const { query, withEntity } = require('../db');
 const adopt = require('../lib/adopt');
 const govresolve = require('../lib/govresolve'); /* VERT-13: THE resolver of the shop's trade */
 const { mintProduct } = require('../lib/mint-product');
-const money = require('../lib/money');
-const regional = require('../lib/regional');
-/** CAT-308: stamps each accepted line's price in the shop's money, which throws the 400 PRICE_DECIMALS (answered by failed) for one finer than the currency; nothing is kept */
-function assertFinePrices(wanted, currency) {
-  for (const accepted of wanted) money.stampItem({ price: accepted.price == null ? null : Number(accepted.price) }, currency);
-}
 const cost = require('../lib/cost');
 const { words, failed, contract } = require('../lib/adopt-contract'); // the contract (each route's operation) and the words of a refusal
 
@@ -201,7 +195,7 @@ router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req
     if (!chit) return problem(req, res, { status: 404, ...words.notFound() });
     const lines = chit.line_items || [];
     const from = await senderWithKind(entity_id, chit);
-    const me = await receiverOf(entity_id); assertFinePrices(wanted, await regional.currencyFor(entity_id)); /* CAT-308: every price is judged BEFORE the first line is written */
+    const me = await receiverOf(entity_id);
 
     const made = [],
       refused = [],
