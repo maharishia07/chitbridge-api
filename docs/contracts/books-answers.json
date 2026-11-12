@@ -1,5 +1,5 @@
 {
- "about": "The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs, tests/books-close-country.test.cjs and tests/move-in-country-gate.test.cjs (every answer branch of the period routes, the ledger-off writer included, and the two move-in doors). PRODUCED, never typed, on 2026-11-09 with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/move-in-country-gate.test.cjs --capture movein.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json movein.json . Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). The three recording tests compare the keys they answer now with this file and fail until it is rebuilt.",
+ "about": "The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs, tests/books-close-country.test.cjs and tests/move-in-country-gate.test.cjs (every answer branch of the period routes, the ledger-off writer included, and the two move-in doors). PRODUCED, never typed, on 2026-11-11 with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/move-in-country-gate.test.cjs --capture movein.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json movein.json . Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). The three recording tests compare the keys they answer now with this file and fail until it is rebuilt.",
  "answers": {
   "GET /api/books/assets|period-004": {
    "route": "GET /api/books/assets",
@@ -17,7 +17,7 @@
       "cost_minor": 4200000,
       "currency": "INR",
       "put_to_use": "2026-04-18",
-      "source_entry_id": "00000000-0000-4000-8000-000000000113",
+      "source_entry_id": "00000000-0000-4000-8000-000000000117",
       "source_chit_id": null,
       "accumulated_minor": 0,
       "last_dep_fy": null,
@@ -60,7 +60,7 @@
       "cost_minor": 4200000,
       "currency": "INR",
       "put_to_use": "2026-04-18",
-      "source_entry_id": "00000000-0000-4000-8000-000000000113",
+      "source_entry_id": "00000000-0000-4000-8000-000000000117",
       "source_chit_id": null,
       "accumulated_minor": 1680000,
       "last_dep_fy": "2026-27",
@@ -310,7 +310,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000126",
+    "entry_id": "00000000-0000-4000-8000-000000000130",
     "entry_no": "JV/2026-27/000007",
     "posting_date": "2026-10-01",
     "doc_date": "2026-10-01",
@@ -327,7 +327,7 @@
    "body": {
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000126",
+    "entry_id": "00000000-0000-4000-8000-000000000130",
     "entry_no": "JV/2026-27/000007",
     "posting_date": "2026-10-01"
    }
@@ -350,7 +350,7 @@
     "kind": "outstanding",
     "reverses_on": "2026-10-01",
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000125",
+    "entry_id": "00000000-0000-4000-8000-000000000129",
     "entry_no": "MJ/2026-27/000005",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -370,7 +370,7 @@
     "reverses_on": "2026-10-01",
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000125",
+    "entry_id": "00000000-0000-4000-8000-000000000129",
     "entry_no": "MJ/2026-27/000005",
     "posting_date": "2026-09-30"
    }
@@ -384,7 +384,7 @@
     "kind": "prepaid",
     "reverses_on": "2026-10-01",
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000127",
+    "entry_id": "00000000-0000-4000-8000-000000000131",
     "entry_no": "MJ/2026-27/000006",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -415,7 +415,7 @@
     "kind": "outstanding",
     "reverses_on": "2026-12-01",
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000243",
+    "entry_id": "00000000-0000-4000-8000-000000000251",
     "entry_no": "MJ/2026-27/000009",
     "posting_date": "2026-11-30",
     "doc_date": "2026-11-30",
@@ -431,7 +431,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000115",
+    "entry_id": "00000000-0000-4000-8000-000000000119",
     "entry_no": "MJ/2027-28/000001",
     "posting_date": "2027-04-05",
     "doc_date": "2027-04-05",
@@ -447,12 +447,12 @@
      "cost_minor": 4200000,
      "currency": "INR",
      "put_to_use": "2026-04-18",
-     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_entry_id": "00000000-0000-4000-8000-000000000117",
      "source_chit_id": null,
      "accumulated_minor": 1680000,
      "last_dep_fy": "2026-27",
      "disposed_on": "2027-04-05",
-     "disposal_entry_id": "00000000-0000-4000-8000-000000000115",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000119",
      "proceeds_minor": 2000000,
      "created_by": "11111111-1111-4111-8111-111111111111",
      "wdv_minor": 0
@@ -474,16 +474,16 @@
      "cost_minor": 4200000,
      "currency": "INR",
      "put_to_use": "2026-04-18",
-     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_entry_id": "00000000-0000-4000-8000-000000000117",
      "source_chit_id": null,
      "accumulated_minor": 1680000,
      "last_dep_fy": "2026-27",
      "disposed_on": "2027-04-05",
-     "disposal_entry_id": "00000000-0000-4000-8000-000000000115",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000119",
      "proceeds_minor": 2000000,
      "created_by": "11111111-1111-4111-8111-111111111111"
     },
-    "entry_id": "00000000-0000-4000-8000-000000000115"
+    "entry_id": "00000000-0000-4000-8000-000000000119"
    }
   },
   "POST /api/books/assets/:id/dispose|period-048": {
@@ -492,7 +492,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000241",
+    "entry_id": "00000000-0000-4000-8000-000000000249",
     "entry_no": "MJ/2027-28/000001",
     "posting_date": "2027-04-05",
     "doc_date": "2027-04-05",
@@ -508,12 +508,12 @@
      "cost_minor": 10000,
      "currency": "INR",
      "put_to_use": "2026-10-01",
-     "source_entry_id": "00000000-0000-4000-8000-000000000239",
+     "source_entry_id": "00000000-0000-4000-8000-000000000247",
      "source_chit_id": "as2",
      "accumulated_minor": 4000,
      "last_dep_fy": "2026-27",
      "disposed_on": "2027-04-05",
-     "disposal_entry_id": "00000000-0000-4000-8000-000000000241",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000249",
      "proceeds_minor": 5000,
      "created_by": "22222222-2222-4222-8222-222222222222",
      "wdv_minor": 0
@@ -535,7 +535,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000113",
+    "entry_id": "00000000-0000-4000-8000-000000000117",
     "entry_no": "MJ/2026-27/000001",
     "posting_date": "2026-04-18",
     "doc_date": "2026-04-18",
@@ -551,7 +551,7 @@
      "cost_minor": 4200000,
      "currency": "INR",
      "put_to_use": "2026-04-18",
-     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_entry_id": "00000000-0000-4000-8000-000000000117",
      "source_chit_id": null,
      "accumulated_minor": 0,
      "last_dep_fy": null,
@@ -570,7 +570,7 @@
    "body": {
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000113",
+    "entry_id": "00000000-0000-4000-8000-000000000117",
     "entry_no": "MJ/2026-27/000001",
     "posting_date": "2026-04-18",
     "asset": {
@@ -581,7 +581,7 @@
      "cost_minor": 4200000,
      "currency": "INR",
      "put_to_use": "2026-04-18",
-     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_entry_id": "00000000-0000-4000-8000-000000000117",
      "source_chit_id": null,
      "accumulated_minor": 0,
      "last_dep_fy": null,
@@ -608,7 +608,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000242",
+    "entry_id": "00000000-0000-4000-8000-000000000250",
     "entry_no": "MJ/2026-27/000008",
     "posting_date": "2026-12-03",
     "doc_date": "2026-12-03",
@@ -624,7 +624,7 @@
      "cost_minor": 900000,
      "currency": "INR",
      "put_to_use": "2026-12-03",
-     "source_entry_id": "00000000-0000-4000-8000-000000000242",
+     "source_entry_id": "00000000-0000-4000-8000-000000000250",
      "source_chit_id": null,
      "accumulated_minor": 0,
      "last_dep_fy": null,
@@ -642,7 +642,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000247",
+    "entry_id": "00000000-0000-4000-8000-000000000255",
     "entry_no": "MJ/2027-28/000002",
     "posting_date": "2027-06-01",
     "doc_date": "2027-06-01",
@@ -658,7 +658,7 @@
      "cost_minor": 5000000,
      "currency": "INR",
      "put_to_use": "2027-06-01",
-     "source_entry_id": "00000000-0000-4000-8000-000000000247",
+     "source_entry_id": "00000000-0000-4000-8000-000000000255",
      "source_chit_id": null,
      "accumulated_minor": 0,
      "last_dep_fy": null,
@@ -677,7 +677,7 @@
    "body": {
     "book_minor": 0,
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000117",
+    "entry_id": "00000000-0000-4000-8000-000000000121",
     "entry_no": "JV/2026-27/000002",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -695,7 +695,7 @@
     "book_minor": 5000000,
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000117",
+    "entry_id": "00000000-0000-4000-8000-000000000121",
     "entry_no": "JV/2026-27/000002",
     "posting_date": "2026-09-30"
    }
@@ -707,7 +707,7 @@
    "body": {
     "book_minor": 5000000,
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000118",
+    "entry_id": "00000000-0000-4000-8000-000000000122",
     "entry_no": "JV/2026-27/000003",
     "posting_date": "2026-10-31",
     "doc_date": "2026-10-31",
@@ -729,7 +729,7 @@
      "movements": 2
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000119",
+    "entry_id": "00000000-0000-4000-8000-000000000123",
     "entry_no": "JV/2026-27/000004",
     "posting_date": "2026-10-31",
     "doc_date": "2026-10-31",
@@ -751,7 +751,7 @@
      "movements": 5
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000120",
+    "entry_id": "00000000-0000-4000-8000-000000000124",
     "entry_no": "JV/2026-27/000005",
     "posting_date": "2026-11-30",
     "doc_date": "2026-11-30",
@@ -777,7 +777,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000128",
+    "entry_id": "00000000-0000-4000-8000-000000000132",
     "entry_no": "MJ/2026-27/000007",
     "posting_date": "2026-09-15",
     "doc_date": "2026-09-15",
@@ -794,7 +794,7 @@
    "body": {
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000128",
+    "entry_id": "00000000-0000-4000-8000-000000000132",
     "entry_no": "MJ/2026-27/000007",
     "posting_date": "2026-09-15"
    }
@@ -833,7 +833,7 @@
       "amount": 16800
      }
     ],
-    "entry_id": "00000000-0000-4000-8000-000000000114",
+    "entry_id": "00000000-0000-4000-8000-000000000118",
     "entry_no": "JV/2026-27/000001",
     "posting_date": "2027-03-31",
     "doc_date": "2027-03-31",
@@ -850,7 +850,7 @@
    "body": {
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000114",
+    "entry_id": "00000000-0000-4000-8000-000000000118",
     "entry_no": "JV/2026-27/000001",
     "posting_date": "2027-03-31",
     "fy": "2026-27",
@@ -898,7 +898,7 @@
       "amount": 40
      }
     ],
-    "entry_id": "00000000-0000-4000-8000-000000000240",
+    "entry_id": "00000000-0000-4000-8000-000000000248",
     "entry_no": "JV/2026-27/000001",
     "posting_date": "2027-03-31",
     "doc_date": "2027-03-31",
@@ -956,7 +956,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "accounts_added": 110,
+    "accounts_added": 114,
     "fiscal_year": "2027-28",
     "parties_numbered": null
    }
@@ -982,6 +982,10 @@
      "gst_minor": 0
     },
     "pay_total_minor": 7000,
+    "owed_before_payments_minor": {
+     "gst_minor": 7000
+    },
+    "owed_before_payments_total_minor": 7000,
     "form": "BAS",
     "heads": [
      "gst"
@@ -997,6 +1001,14 @@
     "ref_label": "Payment reference number",
     "ref_hint": "The payment reference number on the BAS",
     "carried_word": "GST refund due from the ATO",
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "gst_minor": 7000
+    },
+    "still_to_pay_total_minor": 7000,
+    "excess_paid_minor": {
+     "gst_minor": 0
+    },
     "ok": true,
     "entry_id": "00000000-0000-4000-8000-000000000104",
     "entry_no": "JV/2026-27/000001",
@@ -1029,7 +1041,13 @@
    "body": {
     "period": "2026-Q1",
     "date": "2026-09-30",
-    "utilised": [],
+    "utilised": [
+     {
+      "from": "gst",
+      "against": "gst",
+      "amount_minor": 3000
+     }
+    ],
     "payable_minor": {
      "gst_minor": 7000
     },
@@ -1037,6 +1055,10 @@
      "gst_minor": 0
     },
     "pay_total_minor": 7000,
+    "owed_before_payments_minor": {
+     "gst_minor": 7000
+    },
+    "owed_before_payments_total_minor": 7000,
     "form": "BAS",
     "heads": [
      "gst"
@@ -1052,6 +1074,14 @@
     "ref_label": "Payment reference number",
     "ref_hint": "The payment reference number on the BAS",
     "carried_word": "GST refund due from the ATO",
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "gst_minor": 7000
+    },
+    "still_to_pay_total_minor": 7000,
+    "excess_paid_minor": {
+     "gst_minor": 0
+    },
     "ok": true,
     "duplicate": true,
     "entry_id": "00000000-0000-4000-8000-000000000104",
@@ -1085,6 +1115,10 @@
     "cash_minor": {
      "vat": 4000
     },
+    "owed_before_payments_minor": {
+     "vat_minor": 2000
+    },
+    "owed_before_payments_total_minor": 4000,
     "form": "VAT201",
     "heads": [
      "vat"
@@ -1102,6 +1136,14 @@
     "ref_label": "Payment reference",
     "ref_hint": "The EmaraTax payment reference",
     "carried_word": "VAT recoverable from the FTA",
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "vat_minor": 2000
+    },
+    "still_to_pay_total_minor": 4000,
+    "excess_paid_minor": {
+     "vat_minor": 0
+    },
     "ok": true,
     "entry_id": "00000000-0000-4000-8000-000000000213",
     "entry_no": "JV/2026/000001",
@@ -1160,8 +1202,29 @@
      "cess_minor": 0
     },
     "pay_total_minor": 9000,
+    "owed_before_payments_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 9000,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 9000,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_id": "00000000-0000-4000-8000-000000000125",
     "entry_no": "JV/2026-27/000006",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -1185,7 +1248,18 @@
     "fy": "2026-27",
     "period": 6,
     "date": "2026-09-30",
-    "utilised": [],
+    "utilised": [
+     {
+      "from": "cgst",
+      "against": "cgst",
+      "amount_minor": 4500
+     },
+     {
+      "from": "sgst",
+      "against": "sgst",
+      "amount_minor": 4500
+     }
+    ],
     "payable_minor": {
      "cgst_minor": 4500,
      "sgst_minor": 4500,
@@ -1199,9 +1273,30 @@
      "cess_minor": 0
     },
     "pay_total_minor": 9000,
+    "owed_before_payments_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 9000,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 9000,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_id": "00000000-0000-4000-8000-000000000125",
     "entry_no": "JV/2026-27/000006"
    }
   },
@@ -1213,7 +1308,18 @@
     "fy": "2026-27",
     "period": 6,
     "date": "2026-09-30",
-    "utilised": [],
+    "utilised": [
+     {
+      "from": "cgst",
+      "against": "cgst",
+      "amount_minor": 4500
+     },
+     {
+      "from": "sgst",
+      "against": "sgst",
+      "amount_minor": 4500
+     }
+    ],
     "payable_minor": {
      "cgst_minor": 4500,
      "sgst_minor": 4500,
@@ -1227,9 +1333,36 @@
      "cess_minor": 0
     },
     "pay_total_minor": 9000,
+    "owed_before_payments_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 9000,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 0,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "paid_since_close_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_id": "00000000-0000-4000-8000-000000000125",
     "entry_no": "JV/2026-27/000006"
    }
   },
@@ -1266,6 +1399,27 @@
      "cess_minor": 0
     },
     "pay_total_minor": 9000,
+    "owed_before_payments_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 9000,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 9000,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": false,
     "off": true
    }
@@ -1303,8 +1457,29 @@
      "cess_minor": 0
     },
     "pay_total_minor": 9000,
+    "owed_before_payments_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 9000,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 9000,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000246",
+    "entry_id": "00000000-0000-4000-8000-000000000254",
     "entry_no": "JV/2026-27/000008",
     "posting_date": "2027-03-31",
     "doc_date": "2027-03-31",
@@ -1342,6 +1517,27 @@
      "cess_minor": 0
     },
     "pay_total_minor": 0,
+    "owed_before_payments_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 0,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 0,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
     "nothing_to_set_off": true,
     "locked": [
@@ -1374,6 +1570,27 @@
      "cess_minor": 0
     },
     "pay_total_minor": 0,
+    "owed_before_payments_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 0,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 0,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
     "duplicate": true,
     "nothing_to_set_off": true
@@ -1451,7 +1668,7 @@
      "sgst": 4500
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_id": "00000000-0000-4000-8000-000000000126",
     "entry_no": "MJ/2026-27/000002",
     "posting_date": "2026-10-02",
     "doc_date": "2026-10-02",
@@ -1475,7 +1692,7 @@
     "ok": true,
     "duplicate": true,
     "replayed": true,
-    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_id": "00000000-0000-4000-8000-000000000126",
     "entry_no": "MJ/2026-27/000002",
     "posting_date": "2026-10-02"
    }
@@ -1500,7 +1717,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000124",
+    "entry_id": "00000000-0000-4000-8000-000000000128",
     "entry_no": "MJ/2026-27/000004",
     "posting_date": "2026-07-10",
     "doc_date": "2026-07-10",
@@ -1517,7 +1734,7 @@
    "body": {
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000124",
+    "entry_id": "00000000-0000-4000-8000-000000000128",
     "entry_no": "MJ/2026-27/000004",
     "posting_date": "2026-07-10"
    }
@@ -1537,7 +1754,7 @@
    "type": "application/json",
    "body": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000123",
+    "entry_id": "00000000-0000-4000-8000-000000000127",
     "entry_no": "MJ/2026-27/000003",
     "posting_date": "2026-06-10",
     "doc_date": "2026-06-10",
@@ -1554,7 +1771,7 @@
    "body": {
     "ok": true,
     "duplicate": true,
-    "entry_id": "00000000-0000-4000-8000-000000000123",
+    "entry_id": "00000000-0000-4000-8000-000000000127",
     "entry_no": "MJ/2026-27/000003",
     "posting_date": "2026-06-10"
    }

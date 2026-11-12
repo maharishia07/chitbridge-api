@@ -395,7 +395,7 @@
       "cost_minor": 4200000,
       "currency": "INR",
       "put_to_use": "2026-04-18",
-      "source_entry_id": "00000000-0000-4000-8000-000000000117",
+      "source_entry_id": "00000000-0000-4000-8000-000000000121",
       "source_chit_id": null,
       "accumulated_minor": 0,
       "last_dep_fy": null,
@@ -726,7 +726,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "1d5fd059-ea57-4719-9bd0-62cae9d4ddec",
+      "snapshot_id": "5c0d3fdb-d2e3-46fd-b681-b4b7bfb03fab",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -736,7 +736,7 @@
        "bs"
       ],
       "lines": 22,
-      "created_at": "2026-09-29T10:00:51.000Z"
+      "created_at": "2026-09-29T10:01:02.000Z"
      }
     ]
    },
@@ -748,7 +748,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "1d5fd059-ea57-4719-9bd0-62cae9d4ddec",
+     "snapshot_id": "5c0d3fdb-d2e3-46fd-b681-b4b7bfb03fab",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -785,7 +785,7 @@
         "why": "The totals are ₹50,000.00 apart — the lines below say where.",
         "entries": [
          {
-          "entry_id": "00000000-0000-4000-8000-000000000116",
+          "entry_id": "00000000-0000-4000-8000-000000000120",
           "entry_no": "JV/2026-27/000001",
           "date": "2026-09-30",
           "amount_minor": 5000000,
@@ -839,7 +839,7 @@
         "why": "The totals are ₹49,600.00 apart — the lines below say where.",
         "entries": [
          {
-          "entry_id": "00000000-0000-4000-8000-000000000116",
+          "entry_id": "00000000-0000-4000-8000-000000000120",
           "entry_no": "JV/2026-27/000001",
           "date": "2026-09-30",
           "amount_minor": -5000000,
@@ -900,7 +900,7 @@
         "why": "The totals are ₹92,310.00 apart — the lines below say where.",
         "entries": [
          {
-          "entry_id": "00000000-0000-4000-8000-000000000113",
+          "entry_id": "00000000-0000-4000-8000-000000000117",
           "entry_no": "MJ/2026-27/000001",
           "date": "2026-09-30",
           "amount_minor": 120000,
@@ -977,16 +977,16 @@
     "to": "2026-10-31",
     "entries": [
      {
-      "entry_id": "00000000-0000-4000-8000-000000000111",
+      "entry_id": "00000000-0000-4000-8000-000000000115",
       "entry_no": "SV/2026-27/000001",
       "posting_date": "2026-09-05",
       "doc_date": "2026-09-05",
       "event_type": "sale_bill",
       "narration": "Sale",
       "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
-      "reverses_entry_id": "00000000-0000-4000-8000-000000000114",
+      "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
-      "reversed_by_id": "00000000-0000-4000-8000-000000000115",
+      "reversed_by_id": "00000000-0000-4000-8000-000000000119",
       "source": {
        "chit_id": null,
        "ref": null,
@@ -1146,13 +1146,6 @@
         }
        ]
       },
-      "foreign": [
-       {
-        "currency": "USD",
-        "balance_minor": 100000,
-        "carried_minor": 8325000
-       }
-      ],
       "interest_minor": null,
       "interest_state": "not_set",
       "early": null,
@@ -1165,7 +1158,14 @@
        "worst": "d90_plus",
        "no_terms_minor": 0,
        "terms": "ok"
-      }
+      },
+      "foreign": [
+       {
+        "currency": "USD",
+        "balance_minor": 100000,
+        "carried_minor": 8325000
+       }
+      ]
      }
     ],
     "total_minor": 59000,
@@ -1327,7 +1327,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:27.000Z"
+      "created_at": "2026-09-29T10:01:47.000Z"
      }
     ]
    },
@@ -1366,7 +1366,7 @@
     "missing": [],
     "gain_minor": 75000,
     "posted": {
-     "entry_id": "00000000-0000-4000-8000-000000000361",
+     "entry_id": "00000000-0000-4000-8000-000000000365",
      "entry_no": "MJ/2027-28/000003"
     }
    },
@@ -1456,10 +1456,10 @@
       "doc_date": "2026-09-05",
       "what": "Sale",
       "ref": "SV/2026-27/000001",
-      "entry_id": "00000000-0000-4000-8000-000000000111",
+      "entry_id": "00000000-0000-4000-8000-000000000115",
       "entry_no": "SV/2026-27/000001",
       "event_type": "sale_bill",
-      "reverses_entry_id": "00000000-0000-4000-8000-000000000114",
+      "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
       "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
       "source": {
@@ -1521,13 +1521,13 @@
       "dr_minor": 0,
       "cr_minor": 59000,
       "running_minor": -59000,
-      "entry_id": "00000000-0000-4000-8000-000000000112",
+      "entry_id": "00000000-0000-4000-8000-000000000116",
       "entry_no": "PV/2026-27/000001",
       "event_type": "purchase_bill",
-      "reverses_entry_id": "00000000-0000-4000-8000-000000000125",
+      "reverses_entry_id": "00000000-0000-4000-8000-000000000129",
       "reversed_by": "MJ/2026-27/000008",
       "reversed_why": "Paid twice",
-      "payment_id": "00000000-0000-4000-8000-000000000124",
+      "payment_id": "00000000-0000-4000-8000-000000000128",
       "unapplied_minor": 0,
       "advice": {
        "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
@@ -1543,7 +1543,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "payment_id": "00000000-0000-4000-8000-000000000124",
+    "payment_id": "00000000-0000-4000-8000-000000000128",
     "party": {
      "party_id": "33333333-3333-4333-8333-333333333333",
      "name": "Kumar Traders",
@@ -1576,7 +1576,7 @@
      ],
      "purpose": "general",
      "manual_subject": "Payment advice PY/2026-27/000001",
-     "client_ref": "advice:pay:00000000-0000-4000-8000-000000000124",
+     "client_ref": "advice:pay:00000000-0000-4000-8000-000000000128",
      "line_items": [
       {
        "particulars": "Bill c0000000-0000-4000-8000-00000000000b",
@@ -1596,7 +1596,7 @@
       "currency": "INR",
       "payment_advice": {
        "action": "paid",
-       "adviser_payment_id": "00000000-0000-4000-8000-000000000124",
+       "adviser_payment_id": "00000000-0000-4000-8000-000000000128",
        "adviser_entry_no": "PY/2026-27/000001",
        "amount": 200,
        "amount_minor": 20000,
@@ -1772,7 +1772,7 @@
     "periods": [
      {
       "period": "2025-Q1",
-      "label": "2025-26 Q1 (Jul–Sep 2025)",
+      "label": "FY26 Q1 (Jul–Sep 2025)",
       "frequency": "quarterly",
       "start": "2025-07-01",
       "end": "2025-09-30",
@@ -1784,7 +1784,7 @@
     ],
     "period": {
      "period": "2026-Q1",
-     "label": "2026-27 Q1 (Jul–Sep 2026)",
+     "label": "FY27 Q1 (Jul–Sep 2026)",
      "frequency": "quarterly",
      "start": "2026-07-01",
      "end": "2026-09-30",
@@ -1815,7 +1815,7 @@
     "refund_minor": 4000,
     "net_minor": -4000,
     "notes": [
-     "GST-exclusive (the ledgers hold all GST paid in one account)"
+     "Basis: non-cash (accrual): GST in the period of the invoice or the payment, whichever comes first"
     ],
     "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)",
     "needs": "stagger",
@@ -1904,7 +1904,7 @@
        "fy": "2026-27",
        "due": "2026-11-20",
        "overdue": false,
-       "owed_minor": 18000,
+       "owed_minor": 9000,
        "recurring_id": "66666666-6666-4666-8666-000000000001",
        "name": "Early rent",
        "auto": false,
@@ -1994,14 +1994,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-10-19T10:32:40.466Z",
+      "created_at": "2026-11-06T21:07:46.887Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-10-19T10:32:40.466Z"
+       "at": "2026-11-06T21:07:46.887Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -2030,11 +2030,11 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-10-23",
+      "due_day": "2026-11-10",
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-22T10:32:37.603Z",
+      "last_at": "2026-11-09T21:07:44.674Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2067,7 +2067,7 @@
       "why": null
      }
     },
-    "shop_day": "2026-10-24"
+    "shop_day": "2026-11-11"
    },
    "optional": []
   },
@@ -2082,13 +2082,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-23T10:32:37.569Z",
-      "due_day": "2026-10-23",
+      "due_at": "2026-11-10T21:07:44.647Z",
+      "due_day": "2026-11-10",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-24T10:32:37.570Z",
+      "created_at": "2026-11-11T21:07:44.648Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2099,7 +2099,7 @@
     "limit": 2,
     "late": 1,
     "today": 0,
-    "shop_day": "2026-10-24",
+    "shop_day": "2026-11-11",
     "may": {
      "write": {
       "may": true,
@@ -2547,7 +2547,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-22T10:32:37.057Z",
+      "due_at": "2026-11-09T21:07:44.539Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2765,9 +2765,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-10-19T10:32:40.466Z",
+      "sent_at": "2026-11-06T21:07:46.887Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-10-20T10:32:40.467Z",
+      "first_bill_at": "2026-11-07T21:07:46.888Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -2792,7 +2792,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-10-20T10:32:40.467Z",
+        "at": "2026-11-07T21:07:46.888Z",
         "value": 480,
         "currency": "INR"
        }
@@ -3021,7 +3021,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+      "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3163,7 +3163,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3310,7 +3310,7 @@
     "period": "month",
     "rows": [
      {
-      "key": "2026-09",
+      "key": "2026-10",
       "totals": {
        "count": 4,
        "returns": 0,
@@ -3340,12 +3340,12 @@
         },
         "at": null,
         "source": [
-         "2026-09-01"
+         "2026-10-01"
         ]
        }
       ],
       "source": [
-       "2026-09-01"
+       "2026-10-01"
       ]
      }
     ],
@@ -3368,18 +3368,18 @@
     "fy_start_month": 7,
     "slots": [
      {
-      "key": "2025-11",
+      "key": "2025-12",
       "gross_minor": 110000,
       "total_minor": 110000,
       "bills": 4,
       "coverage": {
-       "expected": 30,
-       "seen": 30,
+       "expected": 31,
+       "seen": 31,
        "short": false,
        "partial": false
       },
       "last_year": {
-       "key": "2024-11",
+       "key": "2024-12",
        "gross_minor": 100000,
        "short": false
       },
@@ -3436,7 +3436,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-24T09:32:38.107Z",
+    "created_at": "2026-11-11T20:07:45.037Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -3658,7 +3658,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-24T09:32:38.107Z",
+      "created_at": "2026-11-11T20:07:45.037Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -3743,11 +3743,11 @@
    "status": 200,
    "example": {
     "ok": true,
-    "payment_id": "00000000-0000-4000-8000-000000000124",
+    "payment_id": "00000000-0000-4000-8000-000000000128",
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-24T10:32:41.431Z"
+     "shared_at": "2026-11-11T21:07:47.711Z"
     }
    },
    "optional": []
@@ -3806,13 +3806,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-23T10:32:37.569Z",
-     "due_day": "2026-10-23",
+     "due_at": "2026-11-10T21:07:44.647Z",
+     "due_day": "2026-11-10",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-24T10:32:37.574Z",
-     "created_at": "2026-10-24T10:32:37.570Z",
+     "done_at": "2026-11-11T21:07:44.652Z",
+     "created_at": "2026-11-11T21:07:44.648Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3827,7 +3827,7 @@
     "kind": "outstanding",
     "reverses_on": "2026-10-01",
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000113",
+    "entry_id": "00000000-0000-4000-8000-000000000117",
     "entry_no": "MJ/2026-27/000001",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -3842,7 +3842,7 @@
    "status": 200,
    "example": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_id": "00000000-0000-4000-8000-000000000125",
     "entry_no": "JV/2026-27/000003",
     "posting_date": "2026-10-01",
     "doc_date": "2026-10-01",
@@ -3857,7 +3857,7 @@
    "status": 200,
    "example": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000117",
+    "entry_id": "00000000-0000-4000-8000-000000000121",
     "entry_no": "MJ/2026-27/000004",
     "posting_date": "2026-04-18",
     "doc_date": "2026-04-18",
@@ -3873,7 +3873,7 @@
      "cost_minor": 4200000,
      "currency": "INR",
      "put_to_use": "2026-04-18",
-     "source_entry_id": "00000000-0000-4000-8000-000000000117",
+     "source_entry_id": "00000000-0000-4000-8000-000000000121",
      "source_chit_id": null,
      "accumulated_minor": 0,
      "last_dep_fy": null,
@@ -3898,7 +3898,7 @@
    "status": 200,
    "example": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000119",
+    "entry_id": "00000000-0000-4000-8000-000000000123",
     "entry_no": "MJ/2027-28/000001",
     "posting_date": "2027-04-05",
     "doc_date": "2027-04-05",
@@ -3914,12 +3914,12 @@
      "cost_minor": 4200000,
      "currency": "INR",
      "put_to_use": "2026-04-18",
-     "source_entry_id": "00000000-0000-4000-8000-000000000117",
+     "source_entry_id": "00000000-0000-4000-8000-000000000121",
      "source_chit_id": null,
      "accumulated_minor": 1680000,
      "last_dep_fy": "2026-27",
      "disposed_on": "2027-04-05",
-     "disposal_entry_id": "00000000-0000-4000-8000-000000000119",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000123",
      "proceeds_minor": 2000000,
      "created_by": "11111111-1111-4111-8111-111111111111",
      "wdv_minor": 0
@@ -3932,7 +3932,7 @@
    "example": {
     "book_minor": 0,
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000116",
+    "entry_id": "00000000-0000-4000-8000-000000000120",
     "entry_no": "JV/2026-27/000001",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -4035,7 +4035,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "1d5fd059-ea57-4719-9bd0-62cae9d4ddec",
+    "snapshot_id": "5c0d3fdb-d2e3-46fd-b681-b4b7bfb03fab",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4086,7 +4086,7 @@
       "amount": 16800
      }
     ],
-    "entry_id": "00000000-0000-4000-8000-000000000118",
+    "entry_id": "00000000-0000-4000-8000-000000000122",
     "entry_no": "JV/2026-27/000002",
     "posting_date": "2027-03-31",
     "doc_date": "2027-03-31",
@@ -4117,7 +4117,7 @@
    "status": 200,
    "example": {
     "ok": true,
-    "accounts_added": 110,
+    "accounts_added": 114,
     "fiscal_year": "2027-28",
     "parties_numbered": null
    },
@@ -4128,12 +4128,12 @@
    "note": "needs { reason } - the Day book sheet must send one",
    "example": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000115",
+    "entry_id": "00000000-0000-4000-8000-000000000119",
     "entry_no": "MJ/2026-27/000003",
     "posting_date": "2026-10-02",
     "moved": false,
     "reverses": "MJ/2026-27/000002",
-    "reverses_entry_id": "00000000-0000-4000-8000-000000000114",
+    "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
     "items": 0,
     "reopened": [
      {
@@ -4151,7 +4151,7 @@
     "error": "Already reversed",
     "message": "This entry was already reversed by MJ/2026-27/000008.",
     "entry_no": "MJ/2026-27/000008",
-    "entry_id": "00000000-0000-4000-8000-000000000130",
+    "entry_id": "00000000-0000-4000-8000-000000000134",
     "type": "https://chitbridge.com/problems/already_reversed",
     "title": "Already reversed",
     "status": 409,
@@ -4167,7 +4167,7 @@
    "example": {
     "kind": "expense",
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000114",
+    "entry_id": "00000000-0000-4000-8000-000000000118",
     "entry_no": "MJ/2026-27/000002",
     "posting_date": "2026-10-02",
     "doc_date": "2026-10-02",
@@ -4190,7 +4190,7 @@
      "source": "manual",
      "source_ref": null,
      "entered_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-09-29T10:01:26.000Z"
+     "created_at": "2026-09-29T10:01:46.000Z"
     }
    },
    "optional": []
@@ -4215,7 +4215,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:27.000Z"
+      "created_at": "2026-09-29T10:01:47.000Z"
      }
     ]
    },
@@ -4259,8 +4259,29 @@
      "cess_minor": 0
     },
     "pay_total_minor": 9000,
+    "owed_before_payments_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "owed_before_payments_total_minor": 9000,
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "still_to_pay_total_minor": 9000,
+    "excess_paid_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_id": "00000000-0000-4000-8000-000000000126",
     "entry_no": "JV/2026-27/000004",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -4274,6 +4295,12 @@
       "period": 6
      }
     ],
+    "paid_since_close_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
     "duplicate": true,
     "rcm_minor": {
      "cgst": 25000,
@@ -4299,6 +4326,7 @@
     "moved",
     "note",
     "nothing_to_set_off",
+    "paid_since_close_minor",
     "posting_date",
     "rcm_minor"
    ]
@@ -4324,13 +4352,18 @@
      "vat_minor": 0
     },
     "pay_total_minor": 6000,
+    "owed_before_payments_minor": {
+     "gst_minor": 6000,
+     "vat_minor": 4000
+    },
+    "owed_before_payments_total_minor": 6000,
     "form": "BAS",
     "heads": [
      "gst"
     ],
     "return_period": {
      "period": "2026-Q1",
-     "label": "2026-27 Q1 (Jul–Sep 2026)",
+     "label": "FY27 Q1 (Jul–Sep 2026)",
      "frequency": "quarterly",
      "start": "2026-07-01",
      "end": "2026-09-30",
@@ -4341,8 +4374,18 @@
     "ref_label": "Payment reference number",
     "ref_hint": "The payment reference number on the BAS",
     "carried_word": "GST refund due from the ATO",
+    "paid_before_close_minor": {},
+    "still_to_pay_minor": {
+     "gst_minor": 6000,
+     "vat_minor": 4000
+    },
+    "still_to_pay_total_minor": 6000,
+    "excess_paid_minor": {
+     "gst_minor": 0,
+     "vat_minor": 0
+    },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000241",
+    "entry_id": "00000000-0000-4000-8000-000000000245",
     "entry_no": "JV/2026-27/000001",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -4367,11 +4410,17 @@
     "carried_minor.gst_minor",
     "carried_minor.vat_minor",
     "cash_minor",
+    "excess_paid_minor.gst_minor",
+    "excess_paid_minor.vat_minor",
+    "owed_before_payments_minor.gst_minor",
+    "owed_before_payments_minor.vat_minor",
     "payable_minor.gst_minor",
     "payable_minor.vat_minor",
     "rcm_minor",
     "return_period.due_rule",
-    "return_period.stagger"
+    "return_period.stagger",
+    "still_to_pay_minor.gst_minor",
+    "still_to_pay_minor.vat_minor"
    ]
   },
   "POST /api/books/gst/pay": {
@@ -4384,7 +4433,7 @@
      "sgst": 4500
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000123",
+    "entry_id": "00000000-0000-4000-8000-000000000127",
     "entry_no": "MJ/2026-27/000006",
     "posting_date": "2026-10-02",
     "doc_date": "2026-10-02",
@@ -4412,7 +4461,7 @@
      "vat": 4000
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000242",
+    "entry_id": "00000000-0000-4000-8000-000000000246",
     "entry_no": "MJ/2026-27/000001",
     "posting_date": "2026-10-15",
     "doc_date": "2026-10-15",
@@ -4429,6 +4478,15 @@
     "paid_minor.vat",
     "rcm_paid_minor"
    ]
+  },
+  "POST /api/books/money-check/resolve": {
+   "status": 200,
+   "example": {
+    "resolved": true,
+    "how": "confirmed",
+    "duplicate": false
+   },
+   "optional": []
   },
   "POST /api/books/move-in/import": {
    "status": 200,
@@ -4504,7 +4562,7 @@
     "import_id": null,
     "entry": {
      "entry_no": "JV/2026-27/000002",
-     "entry_id": "00000000-0000-4000-8000-000000000249",
+     "entry_id": "00000000-0000-4000-8000-000000000253",
      "posting_date": "2026-10-01",
      "suspense_minor": -570000,
      "duplicate": false
@@ -4572,6 +4630,18 @@
       "Expense Claims": "No",
       "Enable Payments": "No",
       "Balance": "",
+      "*ItemCode": "BEANS1",
+      "ItemName": "Coffee beans 1kg",
+      "PurchasesDescription": "Coffee beans",
+      "PurchasesUnitPrice": "18.50",
+      "PurchasesAccount": "300",
+      "PurchasesTaxRate": "GST on Expenses",
+      "SalesDescription": "Coffee beans 1kg",
+      "SalesUnitPrice": "30.00",
+      "SalesAccount": "200",
+      "SalesTaxRate": "GST on Income",
+      "InventoryAssetAccount": "630",
+      "CostOfGoodsSoldAccount": "300",
       "Account": "Business Bank Account (090)",
       "Debit": "15,230.50",
       "Credit": "",
@@ -4585,17 +4655,29 @@
    },
    "optional": [
     "sample[].*Code",
+    "sample[].*ItemCode",
     "sample[].*Name",
     "sample[].*Tax Code",
     "sample[].*Type",
     "sample[].Account",
     "sample[].Balance",
+    "sample[].CostOfGoodsSoldAccount",
     "sample[].Credit",
     "sample[].Dashboard",
     "sample[].Debit",
     "sample[].Description",
     "sample[].Enable Payments",
     "sample[].Expense Claims",
+    "sample[].InventoryAssetAccount",
+    "sample[].ItemName",
+    "sample[].PurchasesAccount",
+    "sample[].PurchasesDescription",
+    "sample[].PurchasesTaxRate",
+    "sample[].PurchasesUnitPrice",
+    "sample[].SalesAccount",
+    "sample[].SalesDescription",
+    "sample[].SalesTaxRate",
+    "sample[].SalesUnitPrice",
     "sample[].YTD Credit",
     "sample[].YTD Debit"
    ],
@@ -4634,14 +4716,21 @@
       "action": "merge",
       "why": "A ledger named \"Business bank account\" exists (1500) — keeps Xero code 090.",
       "data": {
-       "account_id": "00000000-0000-4000-8000-000000000176",
+       "account_id": "00000000-0000-4000-8000-000000000180",
        "code": "1500",
        "source_code": "090",
        "note": "default tax BAS Excluded = no GST — not kept",
        "name": "Business Savings Account",
        "group_code": "G1500",
-       "group_id": "00000000-0000-4000-8000-000000000149",
+       "group_id": "00000000-0000-4000-8000-000000000153",
        "group_name": "Bank Accounts",
+       "candidates": [
+        {
+         "code": "1400",
+         "name": "Cash on hand"
+        }
+       ],
+       "suggest": "6090",
        "rec": {
         "name": "Coffee beans 1kg",
         "code": "BEANS1",
@@ -4683,6 +4772,7 @@
     "control",
     "rows[].code",
     "rows[].data.account_id",
+    "rows[].data.candidates",
     "rows[].data.code",
     "rows[].data.cr_minor",
     "rows[].data.dr_minor",
@@ -4694,6 +4784,7 @@
     "rows[].data.notes",
     "rows[].data.rec",
     "rows[].data.source_code",
+    "rows[].data.suggest",
     "tax_codes",
     "totals"
    ],
@@ -4723,13 +4814,13 @@
    "example": {
     "ok": true,
     "payment": {
-     "payment_id": "00000000-0000-4000-8000-000000000124",
+     "payment_id": "00000000-0000-4000-8000-000000000128",
      "status": "recorded",
      "duplicate": false
     },
     "posted": {
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000125",
+     "entry_id": "00000000-0000-4000-8000-000000000129",
      "entry_no": "PY/2026-27/000001",
      "posting_date": "2026-10-12",
      "doc_date": "2026-10-12",
@@ -4764,7 +4855,7 @@
      "balance_words": "you owe ₹390"
     },
     "advice": {
-     "payment_id": "00000000-0000-4000-8000-000000000124",
+     "payment_id": "00000000-0000-4000-8000-000000000128",
      "party": {
       "party_id": "33333333-3333-4333-8333-333333333333",
       "name": "Kumar Traders",
@@ -4797,7 +4888,7 @@
       ],
       "purpose": "general",
       "manual_subject": "Payment advice PY/2026-27/000001",
-      "client_ref": "advice:pay:00000000-0000-4000-8000-000000000124",
+      "client_ref": "advice:pay:00000000-0000-4000-8000-000000000128",
       "line_items": [
        {
         "particulars": "Bill c0000000-0000-4000-8000-00000000000b",
@@ -4817,7 +4908,7 @@
        "currency": "INR",
        "payment_advice": {
         "action": "paid",
-        "adviser_payment_id": "00000000-0000-4000-8000-000000000124",
+        "adviser_payment_id": "00000000-0000-4000-8000-000000000128",
         "adviser_entry_no": "PY/2026-27/000001",
         "amount": 200,
         "amount_minor": 20000,
@@ -5007,7 +5098,7 @@
     "posted": {
      "kind": "expense",
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000131",
+     "entry_id": "00000000-0000-4000-8000-000000000135",
      "entry_no": "MJ/2027-28/000002",
      "posting_date": "2027-04-01",
      "doc_date": "2027-04-01",
@@ -5135,13 +5226,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-23T10:32:37.569Z",
-     "due_day": "2026-10-23",
+     "due_at": "2026-11-10T21:07:44.647Z",
+     "due_day": "2026-11-10",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-24T10:32:37.570Z",
+     "created_at": "2026-11-11T21:07:44.648Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -5299,9 +5390,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-24T10:32:37.568Z",
+     "at": "2026-11-11T21:07:44.647Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-24T10:32:37.568Z"
+     "created_at": "2026-11-11T21:07:44.647Z"
     }
    },
    "optional": []
@@ -5316,9 +5407,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-24T10:32:37.606Z",
+     "at": "2026-11-11T21:07:44.676Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-24T10:32:37.606Z"
+     "created_at": "2026-11-11T21:07:44.676Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -5327,13 +5418,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-27T00:00:00.000Z",
-     "due_day": "2026-10-27",
+     "due_at": "2026-11-14T00:00:00.000Z",
+     "due_day": "2026-11-14",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-24T10:32:37.606Z",
+     "created_at": "2026-11-11T21:07:44.676Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -5407,7 +5498,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "09050f12-c8f8-4eaa-bffe-300419b2b228",
+    "send_ref": "61ea6e7c-2eac-43e6-ba5c-e9f794035969",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
@@ -5473,7 +5564,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5577,7 +5668,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5662,7 +5753,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5754,7 +5845,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5842,7 +5933,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "c058882b-1265-41c5-9920-8ff05f504093",
+     "agreement_id": "bb8fcbc7-dac8-405f-9f14-1467c4f643cb",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5920,7 +6011,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6027,7 +6118,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6119,7 +6210,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "68d8a6fa-ec45-4bd6-b78d-917f1385e95b",
+     "agreement_id": "5769440f-9f40-4acd-a338-294fccd3577f",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6210,7 +6301,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6302,7 +6393,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6409,7 +6500,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
+     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6607,32 +6698,6 @@
         "amount_minor": 26600
        }
       ],
-      "heads": [
-       {
-        "level": "total",
-        "currency": "INR",
-        "minor": {
-         "CgstVal": 0,
-         "SgstVal": 0,
-         "IgstVal": 0,
-         "CesVal": 0,
-         "TaxVal": 0
-        }
-       },
-       {
-        "level": "slab",
-        "rate": 0,
-        "base_minor": 0,
-        "currency": "INR",
-        "minor": {
-         "CgstVal": 0,
-         "SgstVal": 0,
-         "IgstVal": 0,
-         "CesVal": 0,
-         "TaxVal": 0
-        }
-       }
-      ],
       "lines": [
        {
         "line": 0,
@@ -6641,6 +6706,21 @@
         "taxable_minor": 20000,
         "tax_minor": 3600,
         "total_minor": 23600
+       }
+      ],
+      "heads": [
+       {
+        "level": "total",
+        "currency": "INR",
+        "minor": {
+         "CgstVal": 1800,
+         "SgstVal": 1800,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "TaxVal": 0
+        },
+        "rate": 0,
+        "base_minor": 3000
        }
       ]
      }
@@ -6724,32 +6804,6 @@
          "amount_minor": 26600
         }
        ],
-       "heads": [
-        {
-         "level": "total",
-         "currency": "INR",
-         "minor": {
-          "CgstVal": 0,
-          "SgstVal": 0,
-          "IgstVal": 0,
-          "CesVal": 0,
-          "TaxVal": 0
-         }
-        },
-        {
-         "level": "slab",
-         "rate": 0,
-         "base_minor": 0,
-         "currency": "INR",
-         "minor": {
-          "CgstVal": 0,
-          "SgstVal": 0,
-          "IgstVal": 0,
-          "CesVal": 0,
-          "TaxVal": 0
-         }
-        }
-       ],
        "lines": [
         {
          "line": 0,
@@ -6758,6 +6812,21 @@
          "taxable_minor": 20000,
          "tax_minor": 3600,
          "total_minor": 23600
+        }
+       ],
+       "heads": [
+        {
+         "level": "total",
+         "currency": "INR",
+         "minor": {
+          "CgstVal": 1800,
+          "SgstVal": 1800,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "TaxVal": 0
+         },
+         "rate": 0,
+         "base_minor": 3000
         }
        ]
       },
@@ -6780,7 +6849,11 @@
    "optional": [
     "buyer.Pos",
     "invoice.SellerDtls.State",
+    "invoice._cb.bridge.heads[].base_minor",
+    "invoice._cb.bridge.heads[].rate",
     "invoice._cb.slabs[].TaxVal",
+    "money.bridge.heads[].base_minor",
+    "money.bridge.heads[].rate",
     "money.by_rate.0",
     "money.by_rate.10",
     "money.by_rate.18",
@@ -6795,10 +6868,10 @@
     "code": "BAD_QTY",
     "message": "Line \"A\" needs a quantity above 0.",
     "type": "https://chitbridge.com/problems/bad_qty",
-    "title": "Quantity not above zero",
+    "title": "Quantity not above zero or not a number",
     "status": 400,
     "detail": "Line \"A\" needs a quantity above 0.",
-    "hint": "Send a quantity above 0 on every line.",
+    "hint": "Send a quantity above 0 on every line, as a number.",
     "request_id": null
    },
    "optional": []
@@ -6816,15 +6889,6 @@
     "detail": "Line \"NOPE\" names an item this shop does not sell.",
     "hint": "Check the item id or code.",
     "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/books/money-check/resolve": {
-   "status": 200,
-   "example": {
-    "resolved": true,
-    "how": "confirmed",
-    "duplicate": false
    },
    "optional": []
   }
