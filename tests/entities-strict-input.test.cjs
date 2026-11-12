@@ -28,7 +28,6 @@ const CASES = [
   /* round 2 (8 Nov 2026): the keys are the web's own (avatar.js sends the eight ui keys, locale.js the ten locale keys, cap-admin the policy flags the server lists) */
   ['PATCH /api/entities/policy', 'routes/entities.js', [{ gst_registration: 'regular' }, { system_folders: true }]],
   ['PATCH /api/entities/me/prefs/:kind', 'routes/entities.js', [{ theme: 'slate', fs: 'xl', motion: 'reduce', stripes: '', edition: 'a', font: 'serif', weight: 'bold', kural: 'on' }, { lang: 'ta', langs: 'ta,en', region: 'IN', locale: 'ta-IN', nu: '', hc: '', ca: '', fw: '', tz: 'Asia/Kolkata', workdays: '1,2,3' }]],
-  ['PATCH /api/entities/me/locale', 'routes/entities.js', [{ lang: 'en', tz: 'Asia/Kolkata', workdays: '1,2,3,4,5,6' }]],
   ['PATCH /api/entities/me/exposure', 'routes/entities.js', [{ tax: true }, { offers: false, stock: true }]],
   ['PATCH /api/entities/profile', 'routes/entities.js', [{ business_status: 'active' }, { ui_prefs: { product_rows: 3 } }, { display_name: 'Shop', gstn: '27AAAAA0000A1Z5', address: 'x', user_id: 'shop1', catalogue_visibility: 'all', storefront_access: 'open' }]],
   ['PATCH /api/entities/:id/erase', 'routes/entities.js', [{}]],
@@ -76,7 +75,7 @@ for (const [route, file, bodies] of CASES) {
   const bad = bodies.map((body) => answerTo(operation, body, route)).filter((got) => got.status !== 200);
   ok(route + ': ' + bodies.length + ' real caller body(ies) still accepted', !bad.length, JSON.stringify(bad));
   /* the two preference doors share ONE handler (prefSetRoute): their keys are compared with PREF_SETS below, not read from a route body */
-  if (route.includes('/me/prefs/') || route.includes('/me/locale')) continue;
+  if (route.includes('/me/prefs/')) continue;
   /* every key the handler reads is declared */
   const [method, apiPath] = route.split(' ');
   const L = linesOf(file);

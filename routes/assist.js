@@ -657,27 +657,6 @@ router.get('/questions', ...contract.checked('GET /questions'), async (req, res)
   }
 });
 
-// POST /api/assist/gap — DEPRECATED under B1 RLS (2026-07-04). It used to write a DRAFT into the HELP entity's
-// catalogue (entity_id = help) from an outside/anonymous caller — a cross-entity write the owner-only rule now
-// forbids ("nobody writes another entity's catalogue"). The sanctioned capture is a CHIT to the help desk: the web
-// client's "Send to help desk" (askHelpDesk → POST /chits/send) lands the question in GOV-01-Help's Task inbox,
-// where it is answered and Published to the KB. Kept as a no-op ack (so the old fire-and-forget caller doesn't
-// error) that only LOGS the unanswered question as an analytics signal — it writes nothing.
-router.post('/gap', ...contract.checked('POST /gap'), async (req, res) => {
-  try {
-    const question = req.body && typeof req.body.q === 'string' ? req.body.q.trim() : '';
-    const context = req.body && typeof req.body.context === 'string' ? req.body.context.slice(0, 64) : '';
-    if (!question || question.length < 3) return problem(req, res, { status: 422, ...words.questionNeeded() });
-    if (question.length > 400) return problem(req, res, { status: 422, ...words.questionTooLong() });
-    // No catalogue write. Real capture is the chit flow (Send to help desk → a chit in GOV-01-Help's Task inbox).
-    log.info('assist gap (deprecated — capture is now the chit flow)', { id: req.id, context, len: question.length });
-    res.json({ ok: true, noted: true, via: 'chit' });
-  } catch (err) {
-    log.error('assist/gap failed', { id: req.id, err: err.message });
-    problem(req, res, failed(err, req, FAULTS.gap));
-  }
-});
-
 // POST /api/assist/publish — the help desk publishes a resolved Q&A to ITS catalogue => the projection trigger
 // serves it live. Auth; the caller MUST be the Help entity itself (only it edits its own knowledge base).
 router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, res) => {
@@ -731,17 +710,6 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
 });
 
 // ── Review / triage (#3) — auth-gated (TODO: tighten to owner_scope='platform' before production) ──
-
-// GET /api/assist/gaps — DEPRECATED under B1 RLS. The gap-review flow is superseded by chit→Task: questions arrive
-// as CHITS in GOV-01-Help's Task inbox (not as catalogue drafts), so there are no catalogue "gaps" to list. Returns
-// empty and reads nothing (the cross-read of the help catalogue is no longer needed).
-router.get('/gaps', auth, ...contract.checked('GET /gaps'), async (req, res) => {
-  try {
-    res.json({ ok: true, data: [], deprecated: true });
-  } catch (err) {
-    problem(req, res, failed(err, req, FAULTS.plain));
-  }
-});
 
 // GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
 // (generalises off the hardcoded 'GOV-01-Help' name). Never throws.

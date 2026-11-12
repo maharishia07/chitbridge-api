@@ -1,5 +1,5 @@
 // routes/schemas.js — Schema engine basic
-// OWNS      the seven routes of the catalogue's schema engine: the shop's definition, its columns (read, remove, retype, reorder) and the definition's visibility
+// OWNS      the six routes of the catalogue's schema engine: the shop's definition, its columns (read, remove, retype, reorder) and the definition's visibility
 // CALLED BY server.js (mounted at /api/schemas); the web catalogue setup (cap-catsetup.js, cap-catalogue.js) and the demo scripts
 // FLOW      auth -> schema check (lib/schemas-contract.js) -> lib/catalogue-columns + lib/column-rules -> entity_schemas / schema_fields
 //           a refusal -> problem(req, res, { status, ...words.x() } | fault(e, req, label)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
@@ -27,25 +27,6 @@ async function attrsReady() {
 
 /* K-1: field_key is TEXT (no uuid guard), but a NUL byte names no column and Postgres refuses it in text (22021 → 500): answered as the unknown column it is, before any query (the one text guard) */
 router.param('field_key', textParam(() => ({ status: 404, ...words.noSuchColumn() }))); // lib/problem textParam (K-1 Q2), with this file's frozen 404 words
-
-// GET /api/schemas/my — does entity have a schema?
-router.get('/my', auth, ...checked('GET /my'), async (req, res) => {
-  try {
-    const entity_id = req.identity.identity_id;
-    const nestedSchema = await query(
-      `SELECT es.*, json_agg(sf ORDER BY sf.display_order) as fields
-       FROM entity_schemas es
-       LEFT JOIN schema_fields sf ON sf.schema_id = es.schema_id
-       WHERE es.entity_id = $1 AND es.status = 'active' AND es.is_default = true
-       GROUP BY es.schema_id`,
-      [entity_id]
-    );
-    res.json({ schema: nestedSchema.rows[0] || null });
-  } catch (err) {
-    console.error('Schema fetch error:', err.message);
-    problem(req, res, fault(err, req, 'Failed to get schema'));
-  }
-});
 
 // POST /api/schemas/create-default — create Product Qty Price schema
 router.post('/create-default', auth, ...checked('POST /create-default'), async (req, res) => {

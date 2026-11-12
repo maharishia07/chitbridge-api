@@ -123,7 +123,7 @@ async function run() {
         }
         if (q.startsWith('INSERT INTO catalogue_items')) {
           const [eid, schema_id, item_data] = params;
-          const row = { item_id: 'p' + (pseq++), entity_id: eid, schema_id, item_data: JSON.parse(item_data), is_active: true };
+          const row = { item_id: '90000000-0000-4000-8000-' + String(pseq++).padStart(12, '0'), entity_id: eid, schema_id, item_data: JSON.parse(item_data), is_active: true };
           PRODUCTS.push(row);
           return { rows: [row] };
         }

@@ -173,15 +173,7 @@ async function testConnections() {
     fail('A → C connection request', reqAC.data.message);
   }
 
-  // B checks pending requests
-  const pending = await api('GET', '/api/connections/pending', null, state.tokens.B);
-  if (pending.status === 200 && pending.data.count >= 1) {
-    pass('B sees pending request from A', `${pending.data.count} pending`);
-  } else {
-    fail('B pending requests check');
-  }
-
-  // B accepts A
+  // B accepts A (the pending/list reads were retired 2026-11-12; the id comes from the request answer)
   const acceptAB = await api('PUT', `/api/connections/${state.connections.AB}/respond`,
     { action: 'accept' }, state.tokens.B);
   if (acceptAB.status === 200) {
@@ -191,24 +183,12 @@ async function testConnections() {
   }
 
   // C accepts A
-  const pendingC = await api('GET', '/api/connections/pending', null, state.tokens.C);
-  if (pendingC.data.requests && pendingC.data.requests.length > 0) {
-    const connId = pendingC.data.requests[0].connection_id;
-    const acceptAC = await api('PUT', `/api/connections/${connId}/respond`,
-      { action: 'accept' }, state.tokens.C);
-    if (acceptAC.status === 200) {
-      pass('C accepts connection from A');
-    } else {
-      fail('C accepts A', acceptAC.data.message);
-    }
-  }
-
-  // Verify A has 2 connections
-  const connList = await api('GET', '/api/connections/list', null, state.tokens.A);
-  if (connList.status === 200 && connList.data.count === 2) {
-    pass('A has 2 accepted connections');
+  const acceptAC = await api('PUT', `/api/connections/${state.connections.AC}/respond`,
+    { action: 'accept' }, state.tokens.C);
+  if (acceptAC.status === 200) {
+    pass('C accepts connection from A');
   } else {
-    fail('A connections count', `Expected 2, got ${connList.data.count}`);
+    fail('C accepts A', acceptAC.data.message);
   }
 }
 
