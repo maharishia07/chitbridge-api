@@ -1,0 +1,45 @@
+{
+ "ci": "CAP-SKILL-PRINT",
+ "title": "Skill · print (output)",
+ "type": "Skill",
+ "system": "ChitBridge web app",
+ "summary": "The print output skill: a bill, receipt or packing slip painted on a chosen paper. READ-ONLY RECORD (identity standard section 9, Athi 12 Nov): it names what the code does today, it routes nothing. Three painters exist today, not one: bill-print.html render() (the settings preview and the print test), the till's printDoc (browser print window) and tools/tally-connector/printer.js (ESC/POS to a thermal printer). Variant ids below are the ids those files name.",
+ "source": "hand",
+ "skill": {
+  "kind": "output",
+  "version": 1,
+  "variants": {
+   "paper": ["80", "58", "a4"],
+   "bill_kind": ["cash", "supply", "tax"],
+   "till_paper": ["80", "58"],
+   "till_doc": ["cash", "supply", "tax", "receipt", "despatch"]
+  },
+  "invoke": { "file": "public/bill-print.html", "fn": "render" },
+  "owner": "cb-counter",
+  "home": "CAP-PRINT",
+  "gated_by": null,
+  "risk": "A wrong slip prints a wrong tax word or total on paper a customer keeps; the print step must never block the sale (the till says so in a comment, tools/tally-connector/till.js, no written rule yet).",
+  "metering": "none"
+ },
+ "entries": [
+  { "id": "e1", "t": "CB Settings - Print setup (public/app/cap-print.js)", "s": "the shop picks the paper and the head lines", "d": "paper 80 | 58 | a4 held as the vault signature row 'paper'" },
+  { "id": "e2", "t": "Till slip (till.html printDoc / HOST.print)", "s": "a finished bill is printed", "d": "paper 80 | 58 on the till's own printer setting" }
+ ],
+ "process": [
+  { "id": "p1", "t": "bill-print.html render()", "s": "the one painter of the settings preview and the print test", "d": "show() calls render() only when the pack has tax words (CTRY-72)" }
+ ],
+ "exits": [
+  { "id": "x1", "t": "a slip on paper or in the preview frame", "s": "nothing is sent to the server", "d": "bill-print.html talks to no server" }
+ ],
+ "edges": [["e1", "p1"], ["p1", "x1"], ["e2", "x1"]],
+ "relationships": [
+  { "this": "CAP-SKILL-PRINT", "rel": "invoked by", "that": "public/app/cap-print.js (preview frame, postMessage to bill-print.html)" },
+  { "this": "CAP-SKILL-PRINT", "rel": "same variant ids as", "that": "tools/tally-connector/till.html set_paper and printer.js doc kinds (tests/skill-print.test.cjs)" }
+ ],
+ "tests": [
+  { "file": "tests/skill-print.test.cjs", "kind": "guard", "proves": "the variant ids here, in cap-print.js, bill-print.html, the till page and printer.js are the same sets", "result": "not run" }
+ ],
+ "changes": [
+  { "ref": "2026-11-12", "what": "first read-only record of the print skill (identity standard section 9 census slice)" }
+ ]
+}
