@@ -17,7 +17,7 @@ const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
 const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
   const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
 function create() {
-  const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
+  const T = { loanLocks: new Map(), setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
               outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
   fakeDb.T = T;   /* the terms reads (finance-terms.customerTerms) answer from THIS store's parties + T.shopTerms */
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
@@ -253,6 +253,14 @@ function create() {
     /* C3: the advisory lock has no memory shape — a test that needs the race stands in its own (tests/pay-fix twoClients) */
     async lockParty() {},
     async lockOpening() {} /* ACC-328: the same — the race is proved on real Postgres (tests/acc-328-opening-twice.realstack.cjs) */,
+    /* FIN-92: a per-loan queue; the holder lets go when its withEntity (books-harness) ends — what a Postgres advisory xact lock does at commit */
+    async lockLoan(db, e, ref) {
+      const key = e + '|loan|' + ref, before = T.loanLocks.get(key) || Promise.resolve();
+      let release; const mine = new Promise((resolve) => { release = resolve; });
+      T.loanLocks.set(key, before.then(() => mine));
+      await before;
+      if (db && db.heldLocks) db.heldLocks.push(release); else release();
+    },
     async lockTaxHeads() {} /* ACC-275: the same — the race is proved on real Postgres (tests/acc-275-gst-replay-truth.realstack.cjs) */,
     async loanOutstanding(db, e, ref, roles) {
       const mine = T.entries.filter((x) => x.entity_id === e && (x.source_ref === 'loan:' + ref || (String(x.source_ref || '').indexOf('emi:' + ref + ':') === 0 && String(x.source_ref).slice(('emi:' + ref + ':').length).indexOf(':') < 0)) && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));

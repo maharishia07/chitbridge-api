@@ -125,6 +125,22 @@ const said = (r) => JSON.stringify(r.body);
     const colon = await q('POST', '/loans/L/emi', { principal_minor: 100, interest_minor: 0, client_ref: 'a:b', date: '2026-06-05' });
     ok('FIN-92: an instalment reference holding a colon -> 400 (the loan ref is read back before the last colon)', colon.status === 400, colon.status + ' ' + said(colon));
 
+    /* FIN-100 · the same document with its rows in another order is the same document */
+    const rowsAB = [bill('P-00001', 'OB-7', 300000), bill('P-00002', 'OB-8', 400000), equity(700000)];
+    const inOrder = await q('POST', '/opening', { date: '2026-04-05', rows: rowsAB });
+    const reordered = await q('POST', '/opening', { date: '2026-04-05', rows: [rowsAB[2], rowsAB[1], rowsAB[0]] });
+    ok('FIN-100: the same Rs 3,000.00 + Rs 4,000.00 rows sent in another order -> a replay of the first entry',
+      inOrder.status === 200 && reordered.status === 200 && reordered.body.duplicate === true && reordered.body.entry_no === inOrder.body.entry_no, inOrder.status + ' ' + said(inOrder) + ' / ' + said(reordered));
+
+    /* FIN-92 · two instalments at once that together exceed the loan: one wins, one is refused */
+    await q('POST', '/loans', { ref: 'R-1', lender: 'C', amount_minor: 1000000, into: 'bank', date: '2026-04-06' });
+    const readOwed = X.store.loanOutstanding; /* latency after the read, so the loser of a race reads the same balance as the winner (a race test needs it) */
+    X.store.loanOutstanding = async (...args) => { const answer = await readOwed(...args); await new Promise((resolve) => setTimeout(resolve, 20)); return answer; };
+    const pair = await Promise.all(['x1', 'x2'].map((cref) => q('POST', '/loans/R-1/emi', { principal_minor: 600000, interest_minor: 0, client_ref: cref, date: '2026-05-06' })));
+    const codes = pair.map((r) => r.status).sort();
+    ok('FIN-92: two instalments of Rs 6,000.00 at once on a Rs 10,000.00 loan -> one 200 and one 422 "outstanding ₹4,000 INR"',
+      codes[0] === 200 && codes[1] === 422 && pair.some((r) => r.status === 422 && /outstanding ₹4,000 INR/.test(said(r))), pair.map((r) => r.status + ' ' + said(r)).join(' / '));
+
     /* CAT-127 · a month pack is made from a locked month */
     const openPack = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 7 });
     ok('CAT-127: a month pack for an OPEN month -> 409 BOOKS_CONFLICT in words, no pack row',
