@@ -336,6 +336,8 @@ const GUARDS = [
   'fin-77-parallel-payments.test.cjs', // ⭐ FIN-77: two full-due payments at once settle once (the duplicate question is asked under the party lock); IN and AU
   'acc-283-refund-gap.test.cjs', // ⭐ ACC-283: a refund that is not the credit note's total waits in words with gap_minor (AU A$69.00 for A$68.98); equal and credit-only refunds post
   'acc-272-unknown-registration.test.cjs', // ⭐ ACC-272: POST /api/tax/compute and /api/invoice/build ask a shop with no tax number that never said it is registered (409 TAX_REGISTRATION_UNKNOWN, the till's own code), never price it at no tax; confirmed unregistered still 0%
+  'acc-282-compute-refuses-bad-lines.test.cjs', // ⭐ ACC-282: a discount (with offers) above its line is 400 BAD_PRICE and a runaway amount 400 CHIT_AMOUNT_TOO_LARGE on /api/tax/compute and /api/invoice/build
+  'acc-311-journal-whole-minor.test.cjs', // ⭐ ACC-311: a manual journal entry with a fractional or over-ceiling minor amount is refused 422 BOOKS_REFUSED, nothing posted
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
   'acc-200-cash-rounding.test.cjs', // ⭐ ACC-200: a counter bill's payment gap posts as round-off only inside the books pack's cash step (AU 5c on cash); none = exact, so an IN bill 50p short waits, named
   'books-recurring.test.cjs', // ⭐ b281 draft: recurring entries — 503 until migrated, proposed by default, a re-run never posts twice, the daily sweep reverses a due accrual once

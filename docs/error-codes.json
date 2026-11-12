@@ -473,8 +473,8 @@
    "code": "BAD_PRICE",
    "status": "400",
    "title": "Price below zero or not a number",
-   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number.",
-   "hint": "Send a price of 0 or more, as a number.",
+   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line.",
+   "hint": "Send a price of 0 or more, as a number, and a discount no larger than the line.",
    "owner_area": "tax",
    "since": "2026-10-23"
   },
