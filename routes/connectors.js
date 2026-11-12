@@ -24,7 +24,7 @@ const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution 
 const { body, param } = require('express-validator');
 const { validateAsProblem, sanitise } = require('../middleware/validate');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { words, failed, ingestRefusal, checked, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract');
+const { words, failed, ingestRefusal, checked, INGEST_NOTES, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract');
 const { claimReceipt, finishReceipt } = require('../lib/erp-receipt'); // CON-ERP-IDEM: the receipt's key, claim and re-claim // API-4: the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
@@ -413,9 +413,9 @@ async function emitSignalChit({
         }
       });
     } catch (e) {
-      folderErr = (e && e.message) || String(e);
-      console.warn('[connectors] folder auto-file failed:', folderErr);
-    } // best-effort, but LOUD + surfaced
+      folderErr = INGEST_NOTES.folderNotFiled;
+      log.warn('connectors.ingest: the signal chit was raised but not filed in its folder', { why: String((e && e.message) || e).slice(0, 200) });
+    } // best-effort, but LOUD (a code in the answer, the cause in the log: CON-159)
   }
   // ASSIGN the received (Task) copy to the resolved default-assignee → the signal is OWNED + on someone's radar,
   // not just filed away (the visibility fix). Best-effort; skipped if none resolved or the assignee isn't an active
@@ -631,8 +631,8 @@ router.post(
                 });
               }
             } catch (e) {
-              proof_err = (e && e.message) || String(e);
-              console.warn('[connectors] proof attach failed:', proof_err);
+              proof_err = INGEST_NOTES.proofNotKept;
+              log.warn('connectors.ingest: the signal chit was raised but its proof was not kept', { why: String((e && e.message) || e).slice(0, 200) });
             }
           }
         } catch (e) {
