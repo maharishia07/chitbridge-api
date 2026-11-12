@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 712,
+   "line": 714,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -13351,8 +13351,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 650,
-   "hash": "136ea55e4853f93d",
+   "line": 651,
+   "hash": "4d599620da61bcc0",
    "does": "",
    "errors": {
     "count": 0,
@@ -13422,7 +13422,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1152 (independent review: CRM-40 owner+editor only, viewer 403 VIEW_ONLY, single door, bite proven, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -13451,7 +13451,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 691,
+   "line": 693,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -45102,7 +45102,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 701,
+   "line": 703,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45827,7 +45827,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 660,
+   "line": 662,
    "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
@@ -45929,7 +45929,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 674,
+   "line": 676,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46033,7 +46033,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 723,
+   "line": 725,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
