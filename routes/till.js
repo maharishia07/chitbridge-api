@@ -523,7 +523,7 @@ function suppliersRead(db, entity_id) {
   return db.query(
     `SELECT s.supplier_entity_id AS id, i.display_name AS name, s.nickname, i.gstn, i.country, to_jsonb(s)->>'party_no' AS party_no
            FROM supplier_list s JOIN identities i ON i.identity_id = s.supplier_entity_id
-          WHERE s.owner_entity_id = $1
+          WHERE s.owner_entity_id = $1 AND ${require('../lib/party-live').liveSql('s')}
           ORDER BY i.display_name
           LIMIT 2000`,
     [entity_id]

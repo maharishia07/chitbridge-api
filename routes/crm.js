@@ -56,6 +56,7 @@ const { isOwner, may: ownerMay } = require('../lib/owner');
 const access = require('../lib/access');
 const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
+const { restoredAnswer } = require('../lib/party-live'); // CRM-247: the answer's keys when a deleted party was brought back
 const M = require('../lib/memberships');
 const PV = require('../lib/privacy');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
@@ -482,11 +483,12 @@ router.post('/leads', auth, noKey, ...checked('POST /leads'), async (req, res) =
       const local = a.local,
         party_no = a.party_no;
       const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
-      return { local, party_no, since: crm.iso(m.at) };
+      return { local, party_no, since: crm.iso(m.at), restored: !!a.restored };
     });
     /* S34: the new lead's keys named here, in the order they always went */
     res.status(201).json({
-      party: { party_id: out.local.identity_id, display_name: out.local.display_name, party_no: out.party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: out.since } }
+      party: { party_id: out.local.identity_id, display_name: out.local.display_name, party_no: out.party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: out.since } },
+      ...restoredAnswer(out.restored, out.local.display_name)
     });
   } catch (e) {
     problem(req, res, crmFault(e, req));
@@ -585,7 +587,7 @@ router.post('/walk-ins/add', auth, noKey, ...checked('POST /walk-ins/add'), asyn
     /* ⭐⭐ CRM-MINT1: the five writes (mint · contact · list row · number · the points) are ONE transaction — a points claim that
        fails no longer leaves a customer added without their points */
     const inTx = (h) => (_entity, fn) => fn(h); /* the reward store's withEntity, answered by the transaction already open */
-    const { local, party_no, claimed } = await withEntity(owner, async (h) => {
+    const { local, party_no, claimed, restored } = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone: from.value, via: 'manual' });
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
       if (a.exists) throw bad(L.existsWords(a, 'That customer is already on your list.'), 409, 'EXISTS');
@@ -599,11 +601,12 @@ router.post('/walk-ins/add', auth, noKey, ...checked('POST /walk-ins/add'), asyn
         const c = await RS.claim(owner, from, to, 'claim:' + digits + ':' + a.local.identity_id, prog, inTx(h));
         if (c.ok) got = c.points;
       }
-      return { local: a.local, party_no: a.party_no, claimed: got };
+      return { local: a.local, party_no: a.party_no, claimed: got, restored: !!a.restored };
     });
     res.status(201).json({
       party: { party_id: local.identity_id, user_id: local.user_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false },
-      points_claimed: claimed
+      points_claimed: claimed,
+      ...restoredAnswer(restored, local.display_name)
     });
   } catch (e) {
     problem(req, res, crmFault(e, req));

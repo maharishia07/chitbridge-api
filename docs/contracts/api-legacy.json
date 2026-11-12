@@ -56167,6 +56167,148 @@
       "error": "Add customer failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "customer-name-not-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "name"
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "name"
+     }
+    },
+    {
+     "scenario": "customer-tax-id-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "gstin",
+        "message": "gstin must NOT have more than 20 characters."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "gstin must NOT have more than 20 characters.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "gstin",
+      "errors": [
+       {
+        "field": "gstin",
+        "code": "WRONG_VALUE",
+        "detail": "gstin must NOT have more than 20 characters."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "gstin",
+        "message": "gstin must NOT have more than 20 characters."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "gstin must NOT have more than 20 characters.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "gstin",
+      "errors": [
+       {
+        "field": "gstin",
+        "code": "WRONG_VALUE",
+        "detail": "gstin must NOT have more than 20 characters."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "customer-tax-id-shape",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "The business minting this has no User ID to hang the name from.",
+      "type": "https://chitbridge.com/problems/rel_name_refused",
+      "title": "Name not accepted",
+      "status": 400,
+      "code": "REL_NAME_REFUSED",
+      "detail": "The business minting this has no User ID to hang the name from.",
+      "hint": "Type a plain name, not an email, and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "The business minting this has no User ID to hang the name from.",
+      "type": "https://chitbridge.com/problems/rel_name_refused",
+      "title": "Name not accepted",
+      "status": 400,
+      "code": "REL_NAME_REFUSED",
+      "detail": "The business minting this has no User ID to hang the name from.",
+      "hint": "Type a plain name, not an email, and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "customer-tax-id-wrong-for-stated-country",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "The PAN inside the GSTIN (characters 3–12) has no valid holder type at place 6 — P person, C company, F firm, H HUF, T trust, A association, B body of individuals, L local authority, J juridical person, G government.",
+      "type": "https://chitbridge.com/problems/rel_party_invalid",
+      "title": "Party detail not accepted",
+      "status": 400,
+      "code": "REL_PARTY_INVALID",
+      "detail": "The PAN inside the GSTIN (characters 3–12) has no valid holder type at place 6 — P person, C company, F firm, H HUF, T trust, A association, B body of individuals, L local authority, J juridical person, G government.",
+      "hint": "Read the line shown, correct it and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "The PAN inside the GSTIN (characters 3–12) has no valid holder type at place 6 — P person, C company, F firm, H HUF, T trust, A association, B body of individuals, L local authority, J juridical person, G government.",
+      "type": "https://chitbridge.com/problems/rel_party_invalid",
+      "title": "Party detail not accepted",
+      "status": 400,
+      "code": "REL_PARTY_INVALID",
+      "detail": "The PAN inside the GSTIN (characters 3–12) has no valid holder type at place 6 — P person, C company, F firm, H HUF, T trust, A association, B body of individuals, L local authority, J juridical person, G government.",
+      "hint": "Read the line shown, correct it and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -56258,6 +56400,32 @@
      "fixture": {
       "error": "Set groups failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "groups-set-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "message": "Send the groups as a list of names, for example [\"dealers\"].",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Send the groups as a list of names, for example [\"dealers\"].",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "message": "Send the groups as a list of names, for example [\"dealers\"].",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Send the groups as a list of names, for example [\"dealers\"].",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
      }
     }
    ]

@@ -32,7 +32,7 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
   });
   await ita('normalise: the same phone twice keeps the first (row numbers are the file\'s); the same name twice with no phone too', async () => {
     const rs = CL.normalise([{ name: 'A', phone: '98400 12321' }, { name: 'B', phone: '+91-98400-12321' }, { name: 'C', phone: '9840012321' }, { name: 'c' }, { name: 'A', phone: '9840099999' }, { name: 'D' }, { name: ' d ' }]);
-    assert.strictEqual(rs[1].why, null, '"+91…" is not the same digits as "98400…" — the helper does not guess a country code');
+    assert.strictEqual(rs[1].why, 'Same phone as row 1', 'CRM-243: "+91-98400-12321" and "98400 12321" end in the same 9 digits (stores.phoneMatchKey), so the file names the row instead of adding one number twice');
     assert.strictEqual(rs[2].why, 'Same phone as row 1'); assert.strictEqual(rs[3].why, null, 'a row skipped for its phone does not claim its name'); assert.strictEqual(rs[4].why, 'Same name as row 1');
     assert.strictEqual(rs[6].why, 'Same name as row 6');
   });
@@ -69,7 +69,7 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
     if (/^SELECT i\.identity_id, i\.display_name, i\.user_id, regexp_replace/.test(sql)) {
       const prefix = p[3].replace('%', '');
       const all = D.cust.filter((r) => r.owner === p[0]).map((r) => Object.assign({ _cust: true }, r)).concat(D.sup.filter((r) => r.owner === p[0]).map((r) => Object.assign({ _sup: true }, r)));
-      const hit = all.filter((r) => p[1].indexOf(digits(r.otp_contact)) >= 0 || p[1].indexOf(digits(r.phone)) >= 0 || (r.user_id.startsWith(prefix) && p[2].indexOf(r.display_name.toLowerCase()) >= 0));
+      const hit = all.filter((r) => p[1].indexOf(digits(r.otp_contact).slice(-9)) >= 0 || p[1].indexOf(digits(r.phone).slice(-9)) >= 0 || (r.user_id.startsWith(prefix) && p[2].indexOf(r.display_name.toLowerCase()) >= 0));
       return { rows: hit.map((r) => ({ identity_id: r.party_id, display_name: r.display_name, user_id: r.user_id, d1: digits(r.otp_contact), d2: digits(r.phone), minted: r.user_id.startsWith(prefix),
         on_customer: !!r._cust, added_via: r._cust ? r.added_via : null, txn_count: r._cust ? r.txn_count : 0, supplier: !!r._sup })) };
     }
@@ -98,7 +98,7 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
   require(path.join(API, 'lib/party-fields')).ensureNos = async (h, owner, list) => { numbered.push(list.length); return new Map(list.map((id, i) => [id, 'P-0010' + i])); };
   const FILE = [
     { name: 'Ravi Jewellers', phone: '+91 98400 12321', email: 'ravi@x.in', business: 'Ravi & Co', city: 'Madurai', source: 'Expo', note: 'Stall 4' },   /* add */
-    { name: 'Regular Raj', phone: '98400 00001' },        /* a trader — same digits as "+919840000001"? no: the helper keeps what was typed → a new party */
+    { name: 'Regular Raj', phone: '98400 00099' },        /* another number than the trader's -> a new party (CRM-243: the same last 9 digits as the trader's would now be named and skipped) */
     { name: 'Anyone', phone: '+91 9840000001' },          /* the trader's phone → Already a customer */
     { name: 'Lata Again', phone: '+919840000002' },       /* a lead's phone → Already a lead */
     { name: 'Mani New', phone: '+919840000003' },         /* a manual party, no trade → merge */
