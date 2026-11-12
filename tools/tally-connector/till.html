@@ -24679,7 +24679,8 @@ async function restoreOrSay(name, rows){
  */
 function clearStoreKeeping(name, kept){
   return DB.release().then(function(){ return new Promise(function(res){
-    var rq = indexedDB.deleteDatabase(name), answered = false;
+    var answered = false;
+    var rq = indexedDB.deleteDatabase(name);
     var answer = function(outcome){ if (!answered) { answered = true; res(outcome); } };
     rq.onsuccess = function(){ restoreOrSay(name, kept).then(function(){ answer('done'); }); };
     rq.onerror = function(){ busyDone(); say('This PC could not clear its copy of the counter (' + ((rq.error && rq.error.name) || 'the browser refused') + '), so nothing was cleared. Try again.'); answer('stopped'); };
