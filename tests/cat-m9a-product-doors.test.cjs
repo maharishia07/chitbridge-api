@@ -155,6 +155,24 @@ async function elsewhere() {
   check('source "wizard" → 400 (it became unknown)', r.status === 400 && /source must be one of/.test(words(r)), r.json);
   r = await avail({ qty: 6, as_of: '2026-11-01T00:00:00Z', source: 'erp' });
   check('qty 6, as_of 1 Nov 2026, source erp → 200 (control)', r.status === 200 && r.json.availability && r.json.availability.qty === 6, r.json);
+  const DEF = [{ name: 'Pick', options: [{ name: 'Idli' }] }];
+  r = await ask('POST', '/api/combo-templates', { name: 'Meal', definition: DEF, price: 10.999 }, shelf(AUD));
+  check('combo save price 10.999 AUD → 400 COMBO_PRICE_INVALID (it would be refused at its push)', r.status === 400 && code(r) === 'COMBO_PRICE_INVALID' && /at most 2 decimal places in AUD/.test(words(r)), r.json);
+  const stored = (price) => firstOf(AUD, answering(/SELECT name, definition, price, product_item_id FROM combo_templates/, [{ name: 'Meal', definition: DEF, price, product_item_id: null }]), answering(/UPDATE combo_templates/, [{ id: PARTY, name: 'Meal2', definition: DEF, price }]));
+  r = await ask('PATCH', '/api/combo-templates/' + PARTY, { name: 'Meal2' }, stored(10.999));
+  check('combo rename with the stored legacy price 10.999 (not sent) → 200', r.status === 200, r.json);
+  r = await ask('PATCH', '/api/combo-templates/' + PARTY, { price: 10.999 }, stored(10.999));
+  check('combo PATCH sending the SAME 10.999 → 200 (unchanged legacy)', r.status === 200, r.json);
+  r = await ask('PATCH', '/api/combo-templates/' + PARTY, { price: 11.999 }, stored(10.999));
+  check('combo PATCH changing it to 11.999 → 400', r.status === 400 && code(r) === 'COMBO_PRICE_INVALID', r.json);
+  /* a feed in UTC+10: an offset-less local time up to 14 hours ahead of our clock is not "the future"; one that states Z or is days ahead is */
+  const hoursAhead = (hours, suffix) => new Date(Date.now() + hours * 3600000).toISOString().slice(0, 19) + (suffix || '');
+  r = await avail({ qty: 5, as_of: hoursAhead(9) });
+  check('UTC+10 feed: offset-less as_of 9 hours ahead of our clock → 200', r.status === 200, r.json);
+  r = await avail({ qty: 5, as_of: hoursAhead(9, 'Z') });
+  check('…the same moment stated as UTC (Z) IS in the future → 400', r.status === 400 && /cannot be in the future/.test(words(r)), r.json);
+  r = await avail({ qty: 5, as_of: hoursAhead(20) });
+  check('…offset-less 20 hours ahead → 400 (past even UTC+14)', r.status === 400, r.json);
   const feed = firstOf(AUD, answering(/FROM catalogue_items WHERE entity_id/, [{ item_id: PARTY, code: null, sku: null }]), answering(/UPDATE catalogue_items/, [row({})]));
   r = await ask('POST', P + '/availability/bulk', { items: [{ item_id: PARTY, qty: true }, { item_id: PARTY, qty: 3 }] }, feed);
   check('feed: the row with qty true is counted bad, the row with qty 3 is written (per row)', r.status === 200 && r.json.bad === 1 && r.json.written === 1, r.json);
