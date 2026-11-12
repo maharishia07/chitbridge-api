@@ -761,6 +761,18 @@ function codeRefusal(actor) {
   return null;
 }
 
+/**
+ * PPL-40 · A RESET IS A SIGN-OUT. A person whose code or PIN is reset may have lost the phone or the secret — the reset is the owner's answer —
+ * so every phone and browser session they opened is unlisted in the same act (lib/person-session closeBy, the one writer switch-off already uses),
+ * and what a request in between cached is forgotten. Their next entry is the new code. Counter keys stay: a key is the shop's, not the person's secret.
+ * The answer does not move (no new key). Runs only after the reset was allowed (mayIssue), before the new code is written.
+ */
+async function endSessionsOnReset(entity_id, actor_id) {
+  const ended = await personSession.closeBy((fn) => withEntity(entity_id, fn), entity_id, actor_id);
+  ended.jtis.forEach(personSession.forget);
+  return ended.ended;
+}
+
 // ── DELETE /api/actors/:id/pin ──────────────────────────────
 // Admin clears actor PIN — forces new PIN setup on next OTP login
 router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async (req, res) => {
@@ -785,6 +797,7 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
     const toEmail = await actorEmail(actor_id);
     const refused = await empCode.mayIssue(toEmail, { entity_id, identity_id: actor_id });
     if (refused) return problem(req, res, words.fromLibrary(refused));
+    await endSessionsOnReset(entity_id, actor_id); // PPL-40
     const { otp, expires } = await empCode.issue(db, actor_id, {
       entity_id,
       by: req.identity.identity_id,
@@ -926,6 +939,7 @@ router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (re
     const toEmail = await actorEmail(actor_id);
     const refused = await empCode.mayIssue(toEmail, { entity_id, identity_id: actor_id });
     if (refused) return problem(req, res, words.fromLibrary(refused));
+    await endSessionsOnReset(entity_id, actor_id); // PPL-40
     const { otp, expires } = await empCode.issue(db, actor_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
 
     res.json({
