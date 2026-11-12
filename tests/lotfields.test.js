@@ -143,7 +143,7 @@ it('what it parses is what lotOf will store, unchanged', () => {
 
 console.log('— how much difference is not a dispute —');
 
-const TOL = { weight_bp: 50, count_units: 0 };
+const TOL = { weight_bp: 50, count_units: 0 };      /* half a percent on weighed goods; nothing on packed */
 it('a bill by gm, kilo or mg is weighed: it gets the weight tolerance, not the count one (engines #125; routes/till.js matchLine)', () => {
   for (const u of ['gm', 'grams', 'kilo', 'kilos', 'mg']) assert.strictEqual(lot.weighed(u), true, u);
   assert.strictEqual(lot.withinTolerance(-300, 100000, 'gm', { weight_bp: 50, count_units: 0 }), true, '300 gm short of 100 kg is inside half a percent');
@@ -153,7 +153,7 @@ it('an impossible expiry is refused in words at the door, and read as unknown by
   assert.match(lot.check({ batch: 'B', expiry: '2028-13-45' }, lot.packFor('pharmacy'), '2026-11-12').refuse, /not a real date/);
   assert.strictEqual(gs1.expiryState({ expiry: '2028-13-45' }, '2026-11-12'), 'unknown');
   assert.strictEqual(gs1.lotOf({ expiry: '2028-13-45' }), null);
-});      /* half a percent on weighed goods; nothing on packed */
+});
 
 it('⭐ a lorry of rice short by two kilos in a tonne is absorbed', () => {
   assert.strictEqual(lot.withinTolerance(-2, 1000, 'kg', TOL), true);

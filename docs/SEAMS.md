@@ -184,7 +184,6 @@ of file each thing is; this says what already does the job.
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 16 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 16 | `where` | `istest.js` | READING is_test is fine and stays — |
-| 16 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 16 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 16 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
@@ -195,6 +194,7 @@ of file each thing is; this says what already does the job.
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
+| 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `group` | `cart.js` | A heading's control adds ONE of each — |

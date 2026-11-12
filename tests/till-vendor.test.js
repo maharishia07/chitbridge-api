@@ -896,7 +896,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
    */
   /* bank-recon (engines v1.28+, adopted by the web at v1.44.1 in BR1) reads the pack registry at load: engine/tax.js bundles regulation
      and the packs, as engine/tax.js does ahead of it on accounts.html */
-  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'] };
+  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'lots.js': ['gs1.js', 'qty.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
   for (const name of files) {
