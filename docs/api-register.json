@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 1,
+  "meets": 630,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -44361,7 +44361,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 406,
-   "hash": "a8a53cba6b45d665",
+   "hash": "55f0aa2002023d15",
    "does": "",
    "errors": {
     "count": 0,
@@ -44434,10 +44434,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "55f0aa2002023d15"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js",
