@@ -29,7 +29,7 @@ const BOX_ENVS = ['staging', 'uat'];
 const DEFAULT_SERVERS = path.join(__dirname, '..', '..', '..', 'PM', 'SIT-SERVERS.json');
 
 const noSlash = (s) => String(s || '').replace(/\/$/, '');
-const localDb = (env) => new RegExp('@(127\\.0\\.0\\.1|localhost):(55432' + (env.CB_LOCAL_PGPORT ? '|' + String(env.CB_LOCAL_PGPORT).replace(/\D/g, '') : '') + ')/cb_local(\\?|$)');
+const localDb = (env) => new RegExp('@(127\\.0\\.0\\.1|localhost):(55432' + (env.CB_LOCAL_PGPORT ? '|' + String(env.CB_LOCAL_PGPORT).replace(/\D/g, '') : '') + ')/(cb_local|cb_s41)(\\?|$)'); /* cb_s41 = the CI service database on :55432 (ci.yml S41 job); the old harness check accepted any database name on the local port */
 
 /** the SIT servers a runner may be on: master or member with an api_base (not the small member, not the load generator) */
 function sitBoxes(file) {
