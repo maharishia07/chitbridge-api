@@ -287,7 +287,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
   await it('clearStoreKeeping: restores only after onsuccess; a BLOCKED delete restores nothing yet, says to close the other counter tab and stops; a late success still restores; an error stops with words', async () => {
     for (const mode of ['success', 'blocked', 'error']) {
       const said = [], restored = [], req = {};
-      const ctx = { DB: { release: async () => {} }, busyDone() {}, say: (m) => said.push(m), restoreOrSay: async (name, rows) => { restored.push(name); return rows.length; }, indexedDB: { deleteDatabase: () => req } };
+      const ctx = { DB: { release: async () => {} }, busyDone() {}, say: (m) => said.push(m), restoreOrSay: async (name, rows) => { restored.push(name); return rows.length; }, indexedDB: { deleteDatabase: () => req }, holdBlocked: (name, rows) => said.push('HOLD ' + name + ' ' + rows.length) };
       vm.createContext(ctx); vm.runInContext(lift('clearStoreKeeping'), ctx);
       const pending = vm.runInContext('clearStoreKeeping', ctx)('store-1', [{ no: 'a' }]);
       await new Promise((r) => setImmediate(r));
@@ -299,11 +299,44 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       if (mode === 'error') assert.deepStrictEqual([out, restored.length, /could not clear its copy of the counter \(UnknownError\)/.test(said[0])], ['stopped', 0, true], said.join('|'));
       if (mode === 'blocked') {
         assert.deepStrictEqual([out, restored.length], ['stopped', 0], 'blocked restored before the delete finished');
-        assert.ok(/Close the other counter tab/.test(said[0]), said[0]);
+        assert.deepStrictEqual(said, ['HOLD store-1 1'], 'a blocked delete must hold the counter (holdBlocked), got ' + said.join('|'));
         req.onsuccess(); await new Promise((r) => setImmediate(r));
         assert.strictEqual(restored.length, 1, 'a late success did not restore the kept rows');
       }
     }
+  });
+  await it('AFTER A BLOCKED CLEAR the counter takes nothing new: every DB write (bill, queue row, number series, delete) is refused with the Reload-this-counter words, reads still work, and nothing was written', async () => {
+    const wrote = [], ctx = { console, Promise, Error, JSON, Object, MEM: { on: false, get: async () => undefined, put: async (...a) => { wrote.push(a); }, del: async () => { wrote.push('del'); }, all: async () => [] },
+      ownRow: (x) => x, ownOK: () => true, cbQuiet() {}, tillStore: () => 'cb-till-x', tillStoresMake() {}, OWNER: null,
+      indexedDB: { open: () => { const rq = {}; setImmediate(() => { wrote.push('open'); rq.onerror && rq.onerror(); }); return rq; } } };
+    vm.createContext(ctx);
+    const at = PAGE.indexOf('\nvar DB = (function(){');
+    vm.runInContext(liftVar('BLOCKED_WORDS') + PAGE.slice(at, PAGE.indexOf('\n})();\n', at) + 7), ctx);
+    const DB = vm.runInContext('DB', ctx);
+    DB.freeze(vm.runInContext('BLOCKED_WORDS', ctx));
+    for (const [name, call] of [['put bill', () => DB.put('bills', { no: 'C1/1' })], ['put queue', () => DB.put('queue', { no: 'C1/1' })], ['set series', () => DB.set('series', { next: 2 })], ['del', () => DB.del('queue', 'x')]]) {
+      let said = ''; try { await call(); } catch (e) { said = e.message; }
+      assert.ok(/Reload this counter/.test(said) && /no new bills or changes/.test(said), name + ' was not refused with words: ' + said);
+    }
+    assert.strictEqual(await DB.get('series'), undefined, 'a read after the block must answer at once, empty (the store cannot be opened behind the queued delete)');
+    assert.deepStrictEqual([(await DB.all('bills')).length, (await DB.allRaw('queue')).length], [0, 0]);
+    assert.deepStrictEqual(wrote, [], 'something was written after the block: ' + JSON.stringify(wrote));
+  });
+  await it('holdBlocked freezes the DB, saves the kept rows where a reload finds them and offers Reload this counter; reviveKept (after the reload) puts them back once, only into the same store', async () => {
+    const store = {}, puts = [], asked = [], reloads = [];
+    const base = { DB: { freeze: (w) => { base.frozen = w; }, put: async (st, row) => { puts.push(row.no); }, }, ls: { set: (k, v) => { store[k] = v; }, get: (k, d) => (k in store ? store[k] : d) }, cbQuiet() {}, tillStore: () => 'cb-till-x',
+      sure: (...a) => { asked.push(a.slice(1, 4)); return Promise.resolve(true); }, location: { reload: () => reloads.push(1) },
+      removeLocalKeys: (keys) => keys.forEach((k) => { delete store[k]; }), queueTally: async () => {}, paintStatus() {}, JSON, Array };
+    vm.createContext(base);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + lift('holdBlocked') + lift('reviveKept'), base);
+    vm.runInContext('holdBlocked', base)('cb-till-x', [{ no: 'OP/77' }]);
+    await new Promise((r) => setImmediate(r));
+    assert.ok(/Reload this counter/.test(base.frozen), 'DB not frozen'); assert.deepStrictEqual(asked[0], ['Reload this counter', 'Close the other counter tab', 'Not yet']); assert.strictEqual(reloads.length, 1, 'Reload this counter did nothing');
+    assert.ok(store.cb_kept_parked && JSON.parse(store.cb_kept_parked).rows[0].no === 'OP/77', 'the kept rows were not saved for the reload');
+    base.tillStore = () => 'cb-till-OTHER'; await vm.runInContext('reviveKept()', base);
+    assert.deepStrictEqual(puts, [], 'revived into another shop\'s store'); assert.ok(store.cb_kept_parked, 'the note was dropped for another shop');
+    base.tillStore = () => 'cb-till-x'; await vm.runInContext('reviveKept()', base);
+    assert.deepStrictEqual(puts, ['OP/77']); assert.ok(!store.cb_kept_parked, 'the note was not forgotten'); await vm.runInContext('reviveKept()', base); assert.strictEqual(puts.length, 1, 'revived twice');
   });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);

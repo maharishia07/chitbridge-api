@@ -4598,6 +4598,9 @@ function tillStoresMake(db){
 }
 var DB = (function(){
   var p = null;
+  /* ⭐ till-park: set when a clear of the store was BLOCKED by another tab — that delete stays queued and will empty the store whenever the tab closes, so until a reload nothing may be written */
+  var frozen = null;
+  var stopped = function(){ return frozen ? Promise.reject(new Error(frozen)) : null; };
   /* ⭐ why the database last refused — read by the 🩺 panel. A local, so nothing outside can half-assign it. */
   var lastErr = null;
   function open(){
@@ -4611,7 +4614,7 @@ var DB = (function(){
   }
   /* ⚠️ RESOLVE WITH THE REQUEST'S RESULT, NEVER THE REQUEST. A missing key gives result === undefined, and handing back the IDBRequest
      instead made the caller store a request object — "IDBRequest object could not be cloned", and no bill at all ([TILL-01]). */
-  function tx(store, mode, fn){ return open().then(function(db){ return new Promise(function(res, rej){
+  function tx(store, mode, fn){ if (frozen && mode === 'readonly') return Promise.resolve(undefined); return open().then(   /* till-park: frozen = reads answer EMPTY at once (the store cannot be opened behind the queued delete — a read would hang for ever) */function(db){ return new Promise(function(res, rej){
     var t = db.transaction(store, mode), s = t.objectStore(store); var rq = fn(s);
     t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); }; t.onerror = function(){ rej(t.error); }; }); }); }
   /* every call falls back to localStorage if IndexedDB refuses — the till keeps billing on a device that will not give us a database */
@@ -4644,10 +4647,11 @@ var DB = (function(){
      */
     get: function(k){ return fall('get', function(){ return tx('kv','readonly',function(s){ return s.get(k); }); }, function(){ return MEM.get('kv',k); })
                         .then(function(v){ return (k === 'owner' || k === 'rejected' || ownOK(v)) ? v : undefined; }); },
+    freeze: function(words){ frozen = words; },
     set: function(k,v){ if (k !== 'owner' && k !== 'rejected') v = ownRow(v);
-                        return fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
-    put: function(store,row){ row = ownRow(row); return fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
-    del: function(store,key){ return fall('del', function(){ return tx(store,'readwrite',function(s){ return s.delete(key); }); }, function(){ return MEM.del(store,key); }); },
+                        return stopped() || fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
+    put: function(store,row){ row = ownRow(row); return stopped() || fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
+    del: function(store,key){ return stopped() || fall('del', function(){ return tx(store,'readwrite',function(s){ return s.delete(key); }); }, function(){ return MEM.del(store,key); }); },
     /* ⚠️ a row belonging to another shop is never handed back — not to the bill list, not to the drain, not to the day totals */
     all: function(store){ return fall('all', function(){ return tx(store,'readonly',function(s){ return s.getAll(); }); }, function(){ return MEM.all(store); })
                             .then(function(rows){ return (rows || []).filter(ownOK); }); },
@@ -6893,7 +6897,7 @@ async function load(){
     /* ⚠️⚠️ AND THE PARKED BILLS — the FOURTH list caught by this exact timing (2026-09-28, found building S1b).
        parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
        and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
-    try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); } catch (e) { cbQuiet('load:2', e); }
+    try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); reviveKept(); } catch (e) { cbQuiet('load:2', e); }
     /* ⭐ remembered for the next start-up's first lines (M1) — device-wide, it names a slot, never a key */
     try { var st0 = tillStore(); if (st0 !== 'cb-till') localStorage.setItem('cb_till_lastslot', st0); else localStorage.removeItem('cb_till_lastslot'); } catch (e) { cbQuiet('load:3', e); }
     /* ⭐ the auto-lock clock starts HERE — its minutes are the shop's, readable only once the key is known, and a
@@ -24540,6 +24544,27 @@ async function keepParked(){
   try { return ((await DB.allRaw('queue')) || []).filter(function(row){ return isParkedRow(row) && rowIsMine(row); }); }
   catch (e) { cbQuiet('keepParked:1', e); return null; }   /* null = could not read: the caller STOPS with words (keptUnread), it never clears on a guess */
 }
+/**
+ * ⭐ till-park: a delete that another tab blocks STAYS QUEUED and will empty this store whenever that tab closes — so a bill written in between would be lost.
+ * This tab therefore takes NO new bill or change until it is reloaded (DB.freeze: every write is refused with these words), keeps the refused changes
+ * where a reload finds them (reviveKept), and offers the one way out: Reload this counter.
+ */
+var BLOCKED_WORDS = 'Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab, then press Reload this counter. Until then this counter takes no new bills or changes — nothing is lost, and the changes the shop refused are kept.';
+function holdBlocked(name, kept){
+  DB.freeze(BLOCKED_WORDS);
+  try { ls.set('cb_kept_parked', JSON.stringify({ name: name, rows: kept })); } catch (e) { cbQuiet('holdBlocked:1', e); }
+  sure(BLOCKED_WORDS, 'Reload this counter', 'Close the other counter tab', 'Not yet').then(function(yes){ if (yes) location.reload(); });
+}
+/** the first thing a reload does after a blocked clear: put the saved parked rows into this shop's (now clean) store, once, then forget the note */
+async function reviveKept(){
+  var note = null;
+  try { note = JSON.parse(ls.get('cb_kept_parked', 'null')); } catch (e) { cbQuiet('reviveKept:1', e); }
+  if (!note || note.name !== tillStore() || !Array.isArray(note.rows)) return;
+  try {
+    for (var at = 0; at < note.rows.length; at++) await DB.put('queue', note.rows[at]);
+    removeLocalKeys(['cb_kept_parked']); await queueTally(); paintStatus();
+  } catch (e) { cbQuiet('reviveKept:2', e); }
+}
 /** remove these localStorage keys, one by one — a key that will not go is logged, never fatal */
 function removeLocalKeys(keys){
   keys.forEach(function(key){ try { localStorage.removeItem(key); } catch (e) { cbQuiet('removeLocalKeys:1', e); } });
@@ -24575,7 +24600,7 @@ function clearStoreKeeping(name, kept){
     var answer = function(outcome){ if (!answered) { answered = true; res(outcome); } };
     rq.onsuccess = function(){ restoreOrSay(name, kept).then(function(){ answer('done'); }); };
     rq.onerror = function(){ busyDone(); say('This PC could not clear its copy of the counter (' + ((rq.error && rq.error.name) || 'the browser refused') + '), so nothing was cleared. Try again.'); answer('stopped'); };
-    rq.onblocked = function(){ busyDone(); say('Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab, then try again. The changes the shop refused are kept.'); answer('stopped'); };
+    rq.onblocked = function(){ busyDone(); holdBlocked(name, kept); answer('stopped'); };
   }); });
 }
 function restoreParked(name, rows){
