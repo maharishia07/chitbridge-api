@@ -158,7 +158,7 @@ const costOfPrice = (price) => Math.round(price * 0.4); /* a restaurant's food c
 async function demoSetCountry({ token }, { tax: taxRegistration = { registered: false } } = {}) {
   const current = expectOk(await j('/api/governance/country-setup', { token }), 'read country').b;
   if (current.done && current.country && current.country.code === 'IN') return step('country IN · INR · FY from April (already set)');
-  const india = { country: 'IN', currency: 'INR', fy_start_month: 4, tax: taxRegistration };
+  const india = Object.assign({ country: 'IN', currency: 'INR', fy_start_month: 4 }, taxRegistration ? { tax: taxRegistration } : {}); /* tax: null (left UNKNOWN) is sent as NO key: the route refuses a null tax answer (COUNTRY_SETUP_BAD, seen on sit-grund 12 Nov) */
   expectOk(await j('/api/governance/country-setup', { method: 'PUT', token, body: india }), 'set country');
   step('country IN · INR · FY from April');
 }
