@@ -45,7 +45,8 @@ function extras(tools) {
   const foundSelf = row(/WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/, { identity_id: SHOP, display_name: 'Shop A', user_id: 'shop-a', bridge_id: 'AAAA2222' });
   const onRail = row(/FROM identities i WHERE i\.identity_id = \$2/, { display_name: 'Shop B', status: 'active', user_id: 'shop-b', on_rail: true, same_world: true });
   const offRail = row(/FROM identities i WHERE i\.identity_id = \$2/, { display_name: 'Shop B', status: 'inactive', user_id: 'shop-b', on_rail: false, same_world: true });
-  const alreadySupplier = row(/SELECT 1 FROM supplier_list WHERE owner_entity_id = \$1 AND supplier_entity_id = \$2/, { '?column?': 1 });
+  const alreadySupplier = row(/AS hidden FROM supplier_list sl WHERE sl\.owner_entity_id = \$1 AND sl\.supplier_entity_id = \$2/, { hidden: false });
+  const removedSupplier = row(/AS hidden FROM supplier_list sl WHERE sl\.owner_entity_id = \$1 AND sl\.supplier_entity_id = \$2/, { hidden: true }); /* CRM-247: on the list, but removed */
   const addedCustomer = row(/INSERT INTO customer_list/, { customer_list_id: LIST_C });
   const phoneHolder = row(/SELECT i\.identity_id, i\.display_name, i\.user_id FROM customer_list cl/, { identity_id: CUSTP, display_name: 'Chola Auto Care', user_id: '~shop-a.cus-0001' });
   const SUP_ROW = { supplier_list_id: LIST_S, category: 'tea', nickname: 'Tea man', preferred: true, notes: null, created_at: '2026-10-01T00:00:00.000Z', supply_kind: 'resale', on_rail: false, bridge_id: 'BBBB3333', user_id: '~shop-a.sup-0001', display_name: 'Corner Hardware', supplier_entity_id: SUPP, gstn: null, country: 'IN', policy_flags: {}, supplier_money: 'INR', has_catalogue: false };
@@ -68,6 +69,7 @@ function extras(tools) {
     X('supplier-local-added', 'POST ' + at('/suppliers'), 200, { body: { name: 'Corner Hardware', category: 'tools', nickname: 'Corner', notes: 'cash', preferred: true, supply_kind: 'own_use' }, setup: { sqlRows: firstOf(ownHandle, minted('Corner Hardware', 'sup')) } }),
     X('supplier-local-added-plain', 'POST ' + at('/suppliers'), 200, { body: { name: 'Plain Traders' }, setup: { sqlRows: firstOf(ownHandle, minted('Plain Traders', 'sup')) } }),
     X('supplier-local-already-there', 'POST ' + at('/suppliers'), 409, { body: { name: 'Corner Hardware' }, setup: { sqlRows: firstOf(ownHandle, minted('Corner Hardware', 'sup'), alreadySupplier) } }),
+    X('supplier-local-restored', 'POST ' + at('/suppliers'), 200, { body: { name: 'Corner Hardware' }, setup: { sqlRows: firstOf(ownHandle, minted('Corner Hardware', 'sup'), removedSupplier) } }), /* CRM-247: a removed supplier comes back, says so, nothing is inserted */
     X('supplier-local-name-is-an-email', 'POST ' + at('/suppliers'), 400, { body: { name: 'corner@shop.com' } }),
     X('supplier-local-id-busy', 'POST ' + at('/suppliers'), 409, { body: { name: 'Corner Hardware' }, setup: { sqlRows: firstOf(ownHandle, raising(/INSERT INTO identities/, '23505')) } }),
     X('supplier-local-has-no-handle', 'POST ' + at('/suppliers'), 400, { body: { name: 'Corner Hardware' }, setup: { sqlRows: firstOf(row(/SELECT user_id, bridge_id FROM identities WHERE identity_id/, { user_id: null, bridge_id: null })) } }),
@@ -212,6 +214,10 @@ function extras(tools) {
     X('customer-minted-handle', 'POST ' + at('/customers'), 404, { body: { handle: '~acme.cus-0001' } }),
     X('customer-phone-bad', 'POST ' + at('/customers'), 400, { body: { name: 'Chola Auto Care', phone: '12' } }),
     X('customer-local-name-is-an-email', 'POST ' + at('/customers'), 400, { body: { name: 'chola@shop.com' } }),
+    X('customer-name-not-text', 'POST ' + at('/customers'), 400, { body: { name: { first: 'Chola' } } }), /* CRM-251: never minted as "[object Object]" */
+    X('customer-tax-id-too-long', 'POST ' + at('/customers'), 400, { body: { name: 'Chola Auto Care', gstin: 'A'.repeat(300) } }), /* CRM-244: the column holds 15 */
+    X('customer-tax-id-shape', 'POST ' + at('/customers'), 400, { body: { name: 'Chola Auto Care', gstin: 'AB<script>' } }),
+    X('customer-tax-id-wrong-for-stated-country', 'POST ' + at('/customers'), 400, { body: { name: 'Chola Auto Care', gstin: '29ABCDE1234F1Z0', country: 'IN' } }), /* the pack's check runs only for a STATED country */
     X('customer-local-added', 'POST ' + at('/customers'), 200, { body: { name: 'Chola Auto Care', phone: '9876543210', gstin: ' 29abcde1234f1z5 ' }, setup: { sqlRows: localCustomer('Chola Auto Care') } }),
     X('customer-local-added-by-name', 'POST ' + at('/customers'), 200, { body: { name: 'Walk In' }, setup: { sqlRows: localCustomer('Walk In') } }),
     X('customer-local-name-on-the-list', 'POST ' + at('/customers'), 409, { body: { name: 'Chola Auto Care' }, setup: { sqlRows: firstOf(ownHandle, minted('Chola Auto Care', 'cus')) } }),
@@ -235,6 +241,7 @@ function extras(tools) {
     X('groups-set-unknown', 'POST ' + at('/customers/:id/groups'), 404, { url: gUrl, body: { groups: ['dealers'] } }),
     X('groups-set', 'POST ' + at('/customers/:id/groups'), 200, { url: gUrl, body: { groups: ['dealers', ' Wholesale  ', 'bad!name'] }, setup: { sqlRows: heldBy(SHOP, LIST_C) } }),
     X('groups-set-none-sent', 'POST ' + at('/customers/:id/groups'), 200, { url: gUrl, body: {}, setup: { sqlRows: heldBy(SHOP, LIST_C) } }),
+    X('groups-set-not-a-list', 'POST ' + at('/customers/:id/groups'), 400, { url: gUrl, body: { groups: 'dealers' }, setup: { sqlRows: heldBy(SHOP, LIST_C) } }), /* CRM-233: the customer's groups stay as they were */
     X('groups-set-not-migrated', 'POST ' + at('/customers/:id/groups'), 409, { url: gUrl, body: { groups: ['dealers'] }, setup: { sqlRows: sqlState('42703', 'column "groups" does not exist') } }),
     X('groups-set-fails', 'POST ' + at('/customers/:id/groups'), 500, { url: gUrl, body: { groups: ['dealers'] }, setup: failing }),
     N('groups-set-body-a-list', 'POST ' + at('/customers/:id/groups'), 400, { url: gUrl, body: [] })
