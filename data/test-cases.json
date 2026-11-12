@@ -108630,6 +108630,81 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-09T00:21:00.089Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-278-gstr3b-no-gstin.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-278: A GSTR-3B FOR A SHOP WITH NO (OR A SHORT) GSTIN IS REFUSED IN THE ENGINE'S OWN WORDS, NOT ANSWERED 200 WITH ZEROS.",
+   "claim": "ACC-278: A GSTR-3B FOR A SHOP WITH NO (OR A SHORT) GSTIN IS REFUSED IN THE ENGINE'S OWN WORDS, NOT ANSWERED 200 WITH ZEROS.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 75 lines. Run: node chitbridge-api/tests/acc-278-gstr3b-no-gstin.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-301-note-issued-basis.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-301: A CREDIT / DEBIT NOTE IS PRICED ON THE BASIS ITS INVOICE WAS ISSUED ON, NOT ON THE SELLER'S LIVE price_includes_tax FLAG.",
+   "claim": "ACC-301: A CREDIT / DEBIT NOTE IS PRICED ON THE BASIS ITS INVOICE WAS ISSUED ON, NOT ON THE SELLER'S LIVE price_includes_tax FLAG.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 131 lines. Run: node chitbridge-api/tests/acc-301-note-issued-basis.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-330-billed-at-future.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-330: A COUNTER BILL WHOSE CLOCK IS YEARS AHEAD POSTS ON THE SEND DAY, IN THE BOOKS AND IN THE GST MONTH.",
+   "claim": "ACC-330: A COUNTER BILL WHOSE CLOCK IS YEARS AHEAD POSTS ON THE SEND DAY, IN THE BOOKS AND IN THE GST MONTH.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 162 lines. Run: node chitbridge-api/tests/acc-330-billed-at-future.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
   }
  ]
 }
