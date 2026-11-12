@@ -15780,7 +15780,10 @@
           "fy_start_month": {
             "type": "number"
           },
-          "slots": {}
+          "slots": {},
+          "live_capped": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },
