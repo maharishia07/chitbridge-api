@@ -56,7 +56,10 @@ ok('a valid line still prices: 2 x 100 + 18% = 236', good.ValDtls.TotInvVal === 
 
 /* 5 · the routes use the guard (a source read, so a deleted call goes red) */
 const rt = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tax.js'), 'utf8'), ri = fs.readFileSync(path.join(__dirname, '..', 'routes', 'invoice.js'), 'utf8');
-ok('routes/tax.js badLine asks unreadSaid, and returns it, before any other check', /function badLine\(lines\) \{\s*const unread = S\.unreadSaid\(lines, nameOf\)[^\n]*\n\s*if \(unread\) return unread;/.test(rt));
+/* CTRY-134: the guard moved to services.badLine, the one for every door; tax/compute still goes through it */
+const rs = fs.readFileSync(path.join(__dirname, '..', 'lib', 'services.js'), 'utf8');
+ok('services.badLine asks unreadSaid, and returns it, before any other check', /function badLine\(lines, opts\) \{[\s\S]*?const unread = unreadSaid\(lines, lineName\)[^\n]*\n\s*if \(unread\) return unread;/.test(rs));
+ok('routes/tax.js compute goes through S.badLine', /S\.badLine\(lines, \{ needQty: true/.test(rt));
 /* the invoice route has no check of its own: normLines marks the line, computeTax throws, and readFault answers the throw as a named 400 (a handler that already runs at its size limit gets no new branch) */
 const TC = require('../lib/tax-contract');
 const thrown = call(mapped({ unit_price: null, listPrice: null }));

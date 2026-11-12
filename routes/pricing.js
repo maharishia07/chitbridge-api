@@ -19,6 +19,7 @@ const { said, SCHEMAS, operationFor, pathsOf } = require('../lib/pricing-contrac
 const router = express.Router();
 const auth = require('../middleware/auth');
 const S = require('../lib/services');
+const { taxSaid } = require('../lib/tax-contract'); // CTRY-134: the line-door refusal, in the tax service's one shape
 /** the schema check of one route (its own operation in lib/pricing-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = operationFor(route);
@@ -59,6 +60,8 @@ router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /pric
   try {
     const lines = S.normLines(req.body);
     if (!lines.length) return problem(req, res, { status: 400, ...said('NO_LINES', 'validation', 'lines[] required: { item_id|code, qty, listPrice?, pricing? }') });
+    const bad = S.badLine(lines);
+    if (bad) return problem(req, res, taxSaid(400, bad[0], bad[1]));
     const needShelf = lines.some((item) => !item.pricing || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(auth.entityOf(req)) : null;
     const out = lines.map((item) => S.priceLine(item, sh ? sh.productOf(item) : null));
