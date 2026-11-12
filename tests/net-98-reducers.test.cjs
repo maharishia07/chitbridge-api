@@ -119,15 +119,19 @@ const REDUCERS = [
   ['gateOfRow', 'catalogue-view.js'], ['offersOfRows', 'catalogue-view.js'], ['categoriesOfRows', 'catalogue-view.js'], ['fromRow', 'policy.js'],
   ['foldSheet', 'stock-store.js'], ['flagsOfRows', 'stocked.js'], ['containersOfRows', 'container.js'], ['sourceFromRow', 'catalogue-build.js'], ['shelfFromRows', 'tax-shelf.js']
 ];
+/** the source with block and line comments removed, so a name in a doc comment is not a call site */
+function withoutComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1');
+}
 const libs = fs.readdirSync(LIB).filter((f) => f.endsWith('.js'));
 for (const [name, home] of REDUCERS) {
   ok('guard: ' + name + ' is defined once (in ' + home + ') and its own read calls it', () => {
     const def = new RegExp('(?:^|\\n)\\s*(?:async\\s+)?function\\s+' + name + '\\s*\\(|(?:const|let|var)\\s+' + name + '\\s*=');
     const homes = libs.filter((f) => def.test(fs.readFileSync(path.join(LIB, f), 'utf8')));
     assert.deepStrictEqual(homes, [home], name + ' must have exactly one definition under lib/ (found in: ' + homes.join(', ') + ')');
-    const src = fs.readFileSync(path.join(LIB, home), 'utf8');
-    const calls = src.split(new RegExp('\\b' + name + '\\s*\\(')).length - 1;
-    assert.ok(calls >= 2, name + ' is defined but its own lib never calls it (the old path must run the reducer too)');
+    const code = withoutComments(fs.readFileSync(path.join(LIB, home), 'utf8')).replace(def, '');
+    const calls = code.split(new RegExp('\\b' + name + '\\s*\\(')).length - 1;
+    assert.ok(calls >= 1, name + ' is defined but no CODE in its own lib calls it (a doc comment does not count): the old path must run the reducer, not hold a copy of its logic');
   });
 }
 console.log('net-98-reducers: ' + n + ' passed');

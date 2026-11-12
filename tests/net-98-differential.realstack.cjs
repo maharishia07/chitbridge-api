@@ -54,11 +54,17 @@ async function seedMember(c, n) {
   await c.query(`INSERT INTO entity_schemas (schema_id, entity_id, schema_name, schema_type, status, is_default, visibility) VALUES ($1, $2, 'Products', 'product', 'active', true, 'public')`, [uid(5, n), e]);
   const kinds = v === 'retired' ? 4 : 3;
   for (let k = 0; k < kinds; k++) {
-    const extra = k === 2 && v !== 'qty-zero' ? { status: 'unavailable' } : k === 1 && v === 'qty-zero' ? { track_stock: true } : {};
+    const extra = k === 2 && v !== 'qty-zero' ? { status: 'unavailable' } : v === 'offers-tax' ? (k === 0 ? { tax_slab: DEF(n, 2) } : { gst_rate: 12 }) : {};
     await c.query(`INSERT INTO catalogue_items (item_id, entity_id, schema_id, item_data, is_active, created_at) VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
       [ITEM(n, k), e, uid(5, n), JSON.stringify(ITEM_BASE(n, k, extra)), !(v === 'retired' && k === 3), new RealDate(Date.UTC(2026, 9, 1, 12, k + 1)).toISOString()]);
   }
-  if (v === 'qty-zero') await c.query(`INSERT INTO stock_balance (entity_id, item_id, location, qty, value, avg_cost, unit, last_at, moves, lot, item_kind) VALUES ($1, $2, 'main', 0, 0, 0, 'pc', '2026-10-30T00:00:00Z', 1, '', 'catalogue')`, [e, ITEM(n, 1)]);
+  if (v === 'qty-zero') {
+    /* item 1: a counted ZERO (hidden by qty_zero_hides); item 0: stock over two lots (foldSheet sums and sorts them, the ledger fills avail) */
+    const bal = `INSERT INTO stock_balance (entity_id, item_id, location, qty, value, avg_cost, unit, last_at, moves, lot, item_kind, expires_at) VALUES ($1, $2, 'default', $3, $4, 1, 'pc', '2026-10-30T00:00:00Z', 1, $5, 'catalogue', $6)`;
+    await c.query(bal, [e, ITEM(n, 1), 0, 0, '', null]);
+    await c.query(bal, [e, ITEM(n, 0), 2, 20, 'L2', '2026-12-01']);
+    await c.query(bal, [e, ITEM(n, 0), 3, 30, 'L1', '2026-11-15']);
+  }
   if (v === 'offers-tax') {
     await c.query(`INSERT INTO definition (definition_id, entity_id, kind, sub_kind, name, status, current_version) VALUES ($1,$2,'category',NULL,'Cat0','live',1), ($3,$2,'offer','percent_off','Ten off','live',1), ($4,$2,'tax',NULL,'GST 5','live',1)`, [DEF(n, 0), e, DEF(n, 1), DEF(n, 2)]);
     await c.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules) VALUES ($1,1,$4,'{}'::jsonb), ($2,1,$4,'{"percent":10}'::jsonb), ($3,1,$4,'{"rate":5,"id":"gst-5"}'::jsonb)`, [DEF(n, 0), DEF(n, 1), DEF(n, 2), e]);

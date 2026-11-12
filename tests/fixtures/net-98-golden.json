@@ -1245,29 +1245,6 @@
       "created_at": "2026-10-01T12:03:00.000Z"
      },
      {
-      "item_id": "98020061-0000-4000-8000-000000000000",
-      "item_data": {
-       "name": "Item 6.1",
-       "unit": "pc",
-       "price": {
-        "amount": 20,
-        "currency": "INR"
-       },
-       "category": "Cat1",
-       "track_stock": true,
-       "exposure": {
-        "tax": true,
-        "offers": true,
-        "stock": true,
-        "synonyms": false,
-        "hsn": false,
-        "description": true,
-        "media": true
-       }
-      },
-      "created_at": "2026-10-01T12:02:00.000Z"
-     },
-     {
       "item_id": "98020060-0000-4000-8000-000000000000",
       "item_data": {
        "name": "Item 6.0",
@@ -1277,6 +1254,11 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
        "exposure": {
         "tax": true,
         "offers": true,
@@ -1328,44 +1310,6 @@
       "created_at": "2026-10-01T12:03:00.000Z"
      },
      {
-      "line_id": "item:98020061-0000-4000-8000-000000000000",
-      "item_id": "98020061-0000-4000-8000-000000000000",
-      "origin": "own",
-      "source_key": null,
-      "owner_entity_id": null,
-      "edit_scope": "all",
-      "i_own_source": false,
-      "fields": {
-       "name": "Item 6.1",
-       "unit": "pc",
-       "price": {
-        "amount": 20,
-        "currency": "INR"
-       },
-       "category": "Cat1",
-       "track_stock": true,
-       "exposure": {
-        "tax": true,
-        "offers": true,
-        "stock": true,
-        "synonyms": false,
-        "hsn": false,
-        "description": true,
-        "media": true
-       }
-      },
-      "provenance": {
-       "name": "own",
-       "unit": "own",
-       "price": "own",
-       "category": "own",
-       "track_stock": "own",
-       "exposure": "own"
-      },
-      "detail": null,
-      "created_at": "2026-10-01T12:02:00.000Z"
-     },
-     {
       "line_id": "item:98020060-0000-4000-8000-000000000000",
       "item_id": "98020060-0000-4000-8000-000000000000",
       "origin": "own",
@@ -1381,6 +1325,11 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
        "exposure": {
         "tax": true,
         "offers": true,
@@ -1396,6 +1345,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "avail": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -1404,12 +1354,12 @@
     ],
     "unpriced_hidden": 0,
     "unavailable_hidden": 0,
-    "qty_zero_hidden": 0,
+    "qty_zero_hidden": 1,
     "catalogue_summary": {
-     "total": 3,
-     "own": 3,
+     "total": 2,
+     "own": 2,
      "referenced": 0,
-     "fully_mine": 3,
+     "fully_mine": 2,
      "overlay_only": 0,
      "i_own_source": 0,
      "sources": []
@@ -1518,6 +1468,7 @@
         "currency": "INR"
        },
        "category": "Cat1",
+       "gst_rate": 12,
        "exposure": {
         "tax": true,
         "offers": true,
@@ -1528,7 +1479,13 @@
         "media": true
        }
       },
-      "created_at": "2026-10-01T12:02:00.000Z"
+      "created_at": "2026-10-01T12:02:00.000Z",
+      "tax": {
+       "rate": 12,
+       "cess": 0,
+       "name": null,
+       "scheme": "GST"
+      }
      },
      {
       "item_id": "98020070-0000-4000-8000-000000000000",
@@ -1540,6 +1497,7 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "tax_slab": "98030072-0000-4000-8000-000000000000",
        "exposure": {
         "tax": true,
         "offers": true,
@@ -1550,7 +1508,13 @@
         "media": true
        }
       },
-      "created_at": "2026-10-01T12:01:00.000Z"
+      "created_at": "2026-10-01T12:01:00.000Z",
+      "tax": {
+       "rate": 5,
+       "cess": 0,
+       "name": "GST 5",
+       "scheme": "GST"
+      }
      }
     ],
     "lines": [
@@ -1570,6 +1534,7 @@
         "currency": "INR"
        },
        "category": "Cat1",
+       "gst_rate": 12,
        "exposure": {
         "tax": true,
         "offers": true,
@@ -1585,6 +1550,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "gst_rate": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -1606,6 +1572,7 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "tax_slab": "98030072-0000-4000-8000-000000000000",
        "exposure": {
         "tax": true,
         "offers": true,
@@ -1621,6 +1588,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "tax_slab": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -3481,29 +3449,6 @@
       "created_at": "2026-10-01T12:03:00.000Z"
      },
      {
-      "item_id": "98020191-0000-4000-8000-000000000000",
-      "item_data": {
-       "name": "Item 19.1",
-       "unit": "pc",
-       "price": {
-        "amount": 20,
-        "currency": "INR"
-       },
-       "category": "Cat1",
-       "track_stock": true,
-       "exposure": {
-        "tax": true,
-        "offers": true,
-        "stock": true,
-        "synonyms": false,
-        "hsn": false,
-        "description": true,
-        "media": true
-       }
-      },
-      "created_at": "2026-10-01T12:02:00.000Z"
-     },
-     {
       "item_id": "98020190-0000-4000-8000-000000000000",
       "item_data": {
        "name": "Item 19.0",
@@ -3513,6 +3458,11 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
        "exposure": {
         "tax": true,
         "offers": true,
@@ -3564,44 +3514,6 @@
       "created_at": "2026-10-01T12:03:00.000Z"
      },
      {
-      "line_id": "item:98020191-0000-4000-8000-000000000000",
-      "item_id": "98020191-0000-4000-8000-000000000000",
-      "origin": "own",
-      "source_key": null,
-      "owner_entity_id": null,
-      "edit_scope": "all",
-      "i_own_source": false,
-      "fields": {
-       "name": "Item 19.1",
-       "unit": "pc",
-       "price": {
-        "amount": 20,
-        "currency": "INR"
-       },
-       "category": "Cat1",
-       "track_stock": true,
-       "exposure": {
-        "tax": true,
-        "offers": true,
-        "stock": true,
-        "synonyms": false,
-        "hsn": false,
-        "description": true,
-        "media": true
-       }
-      },
-      "provenance": {
-       "name": "own",
-       "unit": "own",
-       "price": "own",
-       "category": "own",
-       "track_stock": "own",
-       "exposure": "own"
-      },
-      "detail": null,
-      "created_at": "2026-10-01T12:02:00.000Z"
-     },
-     {
       "line_id": "item:98020190-0000-4000-8000-000000000000",
       "item_id": "98020190-0000-4000-8000-000000000000",
       "origin": "own",
@@ -3617,6 +3529,11 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
        "exposure": {
         "tax": true,
         "offers": true,
@@ -3632,6 +3549,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "avail": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -3640,12 +3558,12 @@
     ],
     "unpriced_hidden": 0,
     "unavailable_hidden": 0,
-    "qty_zero_hidden": 0,
+    "qty_zero_hidden": 1,
     "catalogue_summary": {
-     "total": 3,
-     "own": 3,
+     "total": 2,
+     "own": 2,
      "referenced": 0,
-     "fully_mine": 3,
+     "fully_mine": 2,
      "overlay_only": 0,
      "i_own_source": 0,
      "sources": []
@@ -3754,6 +3672,7 @@
         "currency": "INR"
        },
        "category": "Cat1",
+       "gst_rate": 12,
        "exposure": {
         "tax": true,
         "offers": true,
@@ -3764,7 +3683,13 @@
         "media": true
        }
       },
-      "created_at": "2026-10-01T12:02:00.000Z"
+      "created_at": "2026-10-01T12:02:00.000Z",
+      "tax": {
+       "rate": 12,
+       "cess": 0,
+       "name": null,
+       "scheme": "GST"
+      }
      },
      {
       "item_id": "98020200-0000-4000-8000-000000000000",
@@ -3776,6 +3701,7 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "tax_slab": "98030202-0000-4000-8000-000000000000",
        "exposure": {
         "tax": true,
         "offers": true,
@@ -3786,7 +3712,13 @@
         "media": true
        }
       },
-      "created_at": "2026-10-01T12:01:00.000Z"
+      "created_at": "2026-10-01T12:01:00.000Z",
+      "tax": {
+       "rate": 5,
+       "cess": 0,
+       "name": "GST 5",
+       "scheme": "GST"
+      }
      }
     ],
     "lines": [
@@ -3806,6 +3738,7 @@
         "currency": "INR"
        },
        "category": "Cat1",
+       "gst_rate": 12,
        "exposure": {
         "tax": true,
         "offers": true,
@@ -3821,6 +3754,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "gst_rate": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -3842,6 +3776,7 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "tax_slab": "98030202-0000-4000-8000-000000000000",
        "exposure": {
         "tax": true,
         "offers": true,
@@ -3857,6 +3792,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "tax_slab": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -5717,29 +5653,6 @@
       "created_at": "2026-10-01T12:03:00.000Z"
      },
      {
-      "item_id": "98020321-0000-4000-8000-000000000000",
-      "item_data": {
-       "name": "Item 32.1",
-       "unit": "pc",
-       "price": {
-        "amount": 20,
-        "currency": "INR"
-       },
-       "category": "Cat1",
-       "track_stock": true,
-       "exposure": {
-        "tax": true,
-        "offers": true,
-        "stock": true,
-        "synonyms": false,
-        "hsn": false,
-        "description": true,
-        "media": true
-       }
-      },
-      "created_at": "2026-10-01T12:02:00.000Z"
-     },
-     {
       "item_id": "98020320-0000-4000-8000-000000000000",
       "item_data": {
        "name": "Item 32.0",
@@ -5749,6 +5662,11 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
        "exposure": {
         "tax": true,
         "offers": true,
@@ -5800,44 +5718,6 @@
       "created_at": "2026-10-01T12:03:00.000Z"
      },
      {
-      "line_id": "item:98020321-0000-4000-8000-000000000000",
-      "item_id": "98020321-0000-4000-8000-000000000000",
-      "origin": "own",
-      "source_key": null,
-      "owner_entity_id": null,
-      "edit_scope": "all",
-      "i_own_source": false,
-      "fields": {
-       "name": "Item 32.1",
-       "unit": "pc",
-       "price": {
-        "amount": 20,
-        "currency": "INR"
-       },
-       "category": "Cat1",
-       "track_stock": true,
-       "exposure": {
-        "tax": true,
-        "offers": true,
-        "stock": true,
-        "synonyms": false,
-        "hsn": false,
-        "description": true,
-        "media": true
-       }
-      },
-      "provenance": {
-       "name": "own",
-       "unit": "own",
-       "price": "own",
-       "category": "own",
-       "track_stock": "own",
-       "exposure": "own"
-      },
-      "detail": null,
-      "created_at": "2026-10-01T12:02:00.000Z"
-     },
-     {
       "line_id": "item:98020320-0000-4000-8000-000000000000",
       "item_id": "98020320-0000-4000-8000-000000000000",
       "origin": "own",
@@ -5853,6 +5733,11 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
        "exposure": {
         "tax": true,
         "offers": true,
@@ -5868,6 +5753,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "avail": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -5876,12 +5762,12 @@
     ],
     "unpriced_hidden": 0,
     "unavailable_hidden": 0,
-    "qty_zero_hidden": 0,
+    "qty_zero_hidden": 1,
     "catalogue_summary": {
-     "total": 3,
-     "own": 3,
+     "total": 2,
+     "own": 2,
      "referenced": 0,
-     "fully_mine": 3,
+     "fully_mine": 2,
      "overlay_only": 0,
      "i_own_source": 0,
      "sources": []
@@ -5990,6 +5876,7 @@
         "currency": "INR"
        },
        "category": "Cat1",
+       "gst_rate": 12,
        "exposure": {
         "tax": true,
         "offers": true,
@@ -6000,7 +5887,13 @@
         "media": true
        }
       },
-      "created_at": "2026-10-01T12:02:00.000Z"
+      "created_at": "2026-10-01T12:02:00.000Z",
+      "tax": {
+       "rate": 12,
+       "cess": 0,
+       "name": null,
+       "scheme": "GST"
+      }
      },
      {
       "item_id": "98020330-0000-4000-8000-000000000000",
@@ -6012,6 +5905,7 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "tax_slab": "98030332-0000-4000-8000-000000000000",
        "exposure": {
         "tax": true,
         "offers": true,
@@ -6022,7 +5916,13 @@
         "media": true
        }
       },
-      "created_at": "2026-10-01T12:01:00.000Z"
+      "created_at": "2026-10-01T12:01:00.000Z",
+      "tax": {
+       "rate": 5,
+       "cess": 0,
+       "name": "GST 5",
+       "scheme": "GST"
+      }
      }
     ],
     "lines": [
@@ -6042,6 +5942,7 @@
         "currency": "INR"
        },
        "category": "Cat1",
+       "gst_rate": 12,
        "exposure": {
         "tax": true,
         "offers": true,
@@ -6057,6 +5958,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "gst_rate": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -6078,6 +5980,7 @@
         "currency": "INR"
        },
        "category": "Cat0",
+       "tax_slab": "98030332-0000-4000-8000-000000000000",
        "exposure": {
         "tax": true,
         "offers": true,
@@ -6093,6 +5996,7 @@
        "unit": "own",
        "price": "own",
        "category": "own",
+       "tax_slab": "own",
        "exposure": "own"
       },
       "detail": null,
@@ -7297,7 +7201,7 @@
      "name": "Member 6",
      "currency_code": "INR",
      "order_method": "cart",
-     "count": 3,
+     "count": 2,
      "categories": [
       {
        "name": "Cat0",
@@ -7317,21 +7221,6 @@
          "name": "Item 6.0",
          "unit": "pc",
          "price": 10,
-         "currency": "INR",
-         "variant": "",
-         "product": null
-        }
-       ]
-      },
-      {
-       "name": "Cat1",
-       "count": 1,
-       "items": [
-        {
-         "item_id": "98020061-0000-4000-8000-000000000000",
-         "name": "Item 6.1",
-         "unit": "pc",
-         "price": 20,
          "currency": "INR",
          "variant": "",
          "product": null
@@ -7696,7 +7585,7 @@
      "name": "Member 19",
      "currency_code": "INR",
      "order_method": "cart",
-     "count": 3,
+     "count": 2,
      "categories": [
       {
        "name": "Cat0",
@@ -7716,21 +7605,6 @@
          "name": "Item 19.0",
          "unit": "pc",
          "price": 10,
-         "currency": "INR",
-         "variant": "",
-         "product": null
-        }
-       ]
-      },
-      {
-       "name": "Cat1",
-       "count": 1,
-       "items": [
-        {
-         "item_id": "98020191-0000-4000-8000-000000000000",
-         "name": "Item 19.1",
-         "unit": "pc",
-         "price": 20,
          "currency": "INR",
          "variant": "",
          "product": null
@@ -8095,7 +7969,7 @@
      "name": "Member 32",
      "currency_code": "INR",
      "order_method": "cart",
-     "count": 3,
+     "count": 2,
      "categories": [
       {
        "name": "Cat0",
@@ -8115,21 +7989,6 @@
          "name": "Item 32.0",
          "unit": "pc",
          "price": 10,
-         "currency": "INR",
-         "variant": "",
-         "product": null
-        }
-       ]
-      },
-      {
-       "name": "Cat1",
-       "count": 1,
-       "items": [
-        {
-         "item_id": "98020321-0000-4000-8000-000000000000",
-         "name": "Item 32.1",
-         "unit": "pc",
-         "price": 20,
          "currency": "INR",
          "variant": "",
          "product": null
@@ -8377,7 +8236,7 @@
     "Cat1",
     "Cat0"
    ],
-   "count": 61,
+   "count": 58,
    "currencies": [
     "INR"
    ]
