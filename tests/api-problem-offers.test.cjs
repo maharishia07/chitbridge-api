@@ -11,6 +11,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in sign-in and database (tests/lib/problem-world.cjs).
  * FLOW      scenario (body + who signs in + the shop's offer rows) → real route → status + body → the words the person reads
  * CARD      07-offers-pricing-and-combos/offers-engine-as-service
+ * CARD  07-offers-pricing-and-combos/offers-engine-public-service
  * Run: node tests/api-problem-offers.test.cjs
  */
 'use strict';

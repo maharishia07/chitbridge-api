@@ -1,4 +1,5 @@
 /**
+ * CARD  16-finance/terms-and-credit
  * finance-terms.test.cjs — CB FINANCE · TERMS (F2): shop default + per-party override (resolver), the limit check, one change event per
  * changed key, the routes before b298 has run (words, not a 500), and b298 itself (no new table, RLS stated, no policy to add).
  * Needs the books engines for the route half. Run: node tests/finance-terms.test.cjs

@@ -1,4 +1,5 @@
 /**
+ * CARD  03-disputes-service-and-register/disputes-per-party-confidential
  * tests/dispute-scoping.test.cjs — A DISPUTE IS SEEN ONLY BY THE PARTIES ON ITS ROSTER (N02, MASTER-BUILD-2026-10 row 4).
  *
  * Written against TODAY's routes/chits.js dispute routes, BEFORE any extraction, so the extraction has a fence to land inside.

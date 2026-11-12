@@ -1,5 +1,6 @@
 'use strict';
 /**
+ * CARD  03-disputes-service-and-register/service-request-sla-pause
  * prove-sla.js — the service clock, and the argument it exists to settle.
  *
  * ⚠️ THE LOAD-BEARING TEST IS THE DISPUTED PAUSE. Anyone can add up elapsed time. The assertion that matters is

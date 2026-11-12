@@ -10,6 +10,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in sign-in and database (tests/lib/problem-world.cjs); the shelf read is stood in at lib/services.
  * FLOW      scenario (lines + who signs in + the shelf's product) → real route → status + body → the unit price, its reason and its bands
  * CARD      28-platform-and-operations/pricing-service
+ * CARD  07-offers-pricing-and-combos/pricing-structure-price-lists
  * Run: node tests/api-problem-pricing.test.cjs
  */
 'use strict';

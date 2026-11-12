@@ -4,6 +4,8 @@
  * CALLED BY scripts/guards.cjs (the offline list) · run: node tests/ai-box.test.cjs
  * FLOW      AI proposes (a draft, never a write) → a person confirms → only then a row. Text from data cannot act.
  * CARD      25-ai-cb-assist-and-support-desks
+ * CARD  25-ai-cb-assist-and-support-desks/ai-security
+ * CARD  25-ai-cb-assist-and-support-desks/message-order-extraction
  *
  * OFFLINE ONLY. NO model key exists here: a placeholder ('stub-not-a-key') is set on process.env for the run and put back,
  * and globalThis.fetch is replaced by a canned Messages-API reply and put back. Any URL that is not api.anthropic.com THROWS;

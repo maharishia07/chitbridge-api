@@ -1,4 +1,5 @@
 /**
+ * CARD  05-ctp-and-cross-installation/discovery-well-known-ctp-json-address-bridge-id
  * tests/ctp-manifest.test.cjs — WHO THE MANIFEST SAYS WE ARE (RAIL-140 a).
  *
  * RAIL-140 (b): only a manifest whose reads both answered may be cached, and `note` is a fixed sentence.
