@@ -100,3 +100,20 @@ test('IN: 12% is off the menu since 22 Sep 2025 → refused (it used to build)',
   assert.equal(r.status, 422, JSON.stringify(r.body));
   assert.equal(r.body.code, 'RATE_NOT_ON_MENU');
 });
+
+/* the module itself (lib/pack-door.js): each rule alone, the refusal paths, and fail-closed for a seller the pack cannot place */
+const door = require('../lib/pack-door');
+const rated = (rate) => [{ name: 'Pie', gst_rate: rate }];
+test('pack-door: AU rate 10 is on the menu, 5 is refused with the pack\'s sentence', () => {
+  assert.deepEqual(door.askPack({ Country: 'AU' }, {}, rated(10), false), []);
+  assert.throws(() => door.askPack({ Country: 'AU' }, {}, rated(5), false), (e) => e.said[0] === 'RATE_NOT_ON_MENU' && e.status === 422 && /5% is not on the menu/.test(e.said[1]));
+});
+test('pack-door: reverse charge refused for AU and AE, passes for IN', () => {
+  for (const country of ['AU', 'AE']) assert.throws(() => door.askPack({ Country: country }, {}, [], true), (e) => e.said[0] === 'RCM_NOT_BUILT' && e.status === 422);
+  assert.deepEqual(door.askPack({ Country: 'IN' }, {}, rated(18), true), []);
+});
+test('pack-door: no country or no pack asks nothing (the engine refuses those); a bad buyer id is 400', () => {
+  assert.deepEqual(door.askPack({}, {}, rated(99), true), []);
+  assert.deepEqual(door.askPack({ Country: 'HU' }, {}, rated(99), true), []);
+  assert.throws(() => door.askPack({ Country: 'AU' }, { Gstin: '12345678901' }, rated(10), false), (e) => e.said[0] === 'BUYER_TAX_ID_BAD' && e.status === 400);
+});
