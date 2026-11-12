@@ -562,6 +562,7 @@ const GUARDS = [
   'settings-owner-gate.test.cjs', // T3-SETTINGS: ONE owner gate (lib/owner.gate) on every counters write - a co-assist 403 OWNER_ONLY, db never asked; GET /counters + GET /entities/policy say may/why with the refusal's own sentence
   'chit-crossing.test.cjs', // LEAN-PLAN §8 #3: lib/chit-crossing (lifted with moveStatus) - definer vs legacy fallback, 9-arg retry only when no line was named
   'chits-files.test.cjs', // LEAN-PLAN §8 #4: tools/chits-files.cjs is the ONE list of chits files; no test or script reads routes/chits.js by a literal path
+  'money-deadline.test.cjs', // PLT-70: the money doors keep the request deadline: 503 at the deadline, the late write commits once, the keyed retry replays; bulk routes keep none
   'timeout-idempotency.test.cjs', // PLT-69: a keyed request past REQUEST_TIMEOUT_MS gets its 503 (problem shape); retry = 409 while it runs, the stored answer after; the handler runs once
   'plt85-admission.test.cjs', // PLT-85 / SPD-45: over API_MAX_INFLIGHT the answer is 503 SERVER_BUSY + Retry-After before any handler; aborted requests give their place back once; a busy pool at the idempotency claim never runs the handler on memory
   'stuck-close.test.cjs', // round 2: a counter sale / summary chit sent to its own shop closes when the books hold it - through moveStatus, only an open own copy

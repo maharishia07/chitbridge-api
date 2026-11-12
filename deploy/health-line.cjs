@@ -1,4 +1,5 @@
 // deploy/health-line.cjs — OWNS the ONE dated health line for PM/STATUS.md (PM-120 + HLT-1). CALLED BY cb-health (daily), by hand.
+// HLT-6: the line also carries money_mismatch (routes/health.js, ACC-206); red above 0, "n/a" when the deployed build predates the field. This script only prints; cb-health appends the line to PM/STATUS.md.
 // FLOW: gather {health, mainSha, ci, stock} -> validate (fail loudly) -> format ONE line. Read-only: no sign-in, no writes except --write.
 //   node deploy/health-line.cjs --fixture deploy/fixtures/health-line.ok.json     offline: prints the line
 //   API_BASE=https://api… node deploy/health-line.cjs [--stock stock.json]       live: GET /health + `gh run list`; exit 1 if anything is red
@@ -43,11 +44,14 @@ function formatLine(d, date) {
   if (green < REPOS.length) red.push('CI not green');
   if (h.audit_lost > 0) red.push('audit_lost ' + h.audit_lost);
   const stock = d.stock ? 'stock drift ' + d.stock.drift + ' · no-movement ' + d.stock.chits_without_movement : 'stock n/a (query pending)';
+  /* HLT-6: ACC-206 money_mismatch from /health. Absent (a build from before the field) stays unknown: "n/a", never 0 */
+  const mm = Number.isInteger(h.money_mismatch) && h.money_mismatch >= 0 ? h.money_mismatch : null;
+  if (mm > 0) red.push('money_mismatch ' + mm);
   if (d.stock && (d.stock.drift > 0 || d.stock.chits_without_movement > 0)) red.push('stock drift');
   const line = date + ' · api ' + (apiOk ? 'prod ok' : 'RED ' + h.environment + '/' + h.db) + (h.db_ms != null ? ' db ' + h.db_ms + 'ms' : '') +
     ' commit=' + (onMain ? 'main' : 'BEHIND(' + String(h.commit || '-').slice(0, 7) + '→' + d.mainSha.api.slice(0, 7) + ')') +
     ' · web ' + (d.web || 'unchecked') +
-    ' · CI ' + green + '/' + REPOS.length + ' green · audit_lost ' + h.audit_lost + ' · ' + stock;
+    ' · CI ' + green + '/' + REPOS.length + ' green · audit_lost ' + h.audit_lost + ' · money_mismatch ' + (mm === null ? 'n/a' : mm) + ' · ' + stock;
   return { line, red };
 }
 

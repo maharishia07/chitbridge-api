@@ -346,6 +346,7 @@ function requireKey(reader) {
 
 module.exports.addsStatuses = ADDS_STATUSES;
 module.exports.requireKey = requireKey;
+module.exports.KEY_MAX_LENGTH = KEY_MAX_LENGTH;
 module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;
