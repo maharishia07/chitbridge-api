@@ -76,6 +76,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COMBO_REFUSED | 400 | Combo refused | This combo cannot be saved as it stands. | Read the sentence shown and fix it. | combo-templates | 2026-10-23 |
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
+| BOOKS_RETURN_READ_NOT_ALLOWED | 403 | Returns not readable | Only the owner or the shop's auditor may read the returns. | Ask the owner. | books | 2026-11-13 |
 | CONFIRM_REMOVE | 400 | Confirm remove | Removing a person cannot be undone, so it needs your confirmation. | Confirm the removal to go on. | actors | 2026-10-22 |
 | CONFORMANCE | 422 | Rule not met | That does not meet the platform's rules. | Change it to fit the rules, then try again. | governance | 2026-10-23 |
 | CONNECTION_BAD_REQUEST | 400 | Cannot connect to yourself | You cannot connect to your own business. | Choose another business. | network | 2026-10-23 |
