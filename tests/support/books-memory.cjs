@@ -252,6 +252,7 @@ function create() {
     async paymentsSince(db, e, party, direction, since) { return clone(T.payments.filter((p) => p.entity_id === e && p.party_id === party && p.direction === direction && String(p.created_at || '') >= String(since)).reverse()); },
     /* C3: the advisory lock has no memory shape — a test that needs the race stands in its own (tests/pay-fix twoClients) */
     async lockParty() {},
+    async lockOpening() {} /* ACC-328: the same — the race is proved on real Postgres (tests/acc-328-opening-twice.realstack.cjs) */,
     async lockTaxHeads() {} /* ACC-275: the same — the race is proved on real Postgres (tests/acc-275-gst-replay-truth.realstack.cjs) */,
     async entryDebitsByRole(db, e, entryId) {
       const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};

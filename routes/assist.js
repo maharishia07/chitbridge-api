@@ -395,12 +395,15 @@ function sourceRefusal(row, owner) {
   return require('../lib/platformroot').isRoot(String(owner)) ? null : words.sourceOfThePlatform();
 }
 
+const SOURCE_KEY_MAX = 200;
+/** the problem spec when the key is missing (422) or longer than a label should be (400, CAT-246: a 60k-character one was stored with 200), else null */
+const keyRefusal = (key) => (!key ? { status: 422, ...words.sourceKeyNeeded() } : key.length > SOURCE_KEY_MAX ? { status: 400, ...words.sourceKeyTooLong(SOURCE_KEY_MAX) } : null);
 router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the catalogue source.'), ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
     const source_key = typeof b.source_key === 'string' && b.source_key.trim() ? b.source_key.trim() : '';
-    if (!source_key) return problem(req, res, { status: 422, ...words.sourceKeyNeeded() });
+    if (keyRefusal(source_key)) return problem(req, res, keyRefusal(source_key));
     let exists;
     try {
       exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]);
