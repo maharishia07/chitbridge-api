@@ -104,6 +104,7 @@ const catalogueMintLimiter = rateLimit({
   message: { error: 'Too many requests', message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' }
 }); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
+const theirBill = require('../lib/their-bill'); /* ⭐ the ONE comparison of a supplier's bill with what was counted (FX-F10W2): the match's money gap asks it, never its own subtraction */
 const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
 const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
@@ -3868,7 +3869,8 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
 
     const { withEntity: nestedWithEntity } = require('../db');
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it, and RAIL-146c every rate and total: cost, so owner / can_see_costs / the paired key only; a blind reader's order goes through lib/cost-view MATCH_KEEP, its side from costSideOf */
-    const orders = await nestedWithEntity(entity_id, async (db) => matchSeen(db, entity_id, heads, blind, await matchOrders(db, entity_id, heads, days, tolerance)));
+    const currency = await shopCurrency(entity_id); /* the money of the figures the match compares (their bill carries its own: a different one is refused, never converted) */
+    const orders = await nestedWithEntity(entity_id, async (db) => matchSeen(db, entity_id, heads, blind, await matchOrders(db, entity_id, heads, days, tolerance, currency)));
     const paged = pageLimit.pageOut('orders', orders, pageLimit.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
     res.json({ days, count: orders.length, orders: paged.orders, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note, cost_params_ignored: costView.ignoredField(ignored) }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
@@ -3884,7 +3886,7 @@ async function matchSeen(db, entity_id, heads, blind, orders) {
 }
 
 /** every purchase order beside what was received and what was invoiced, read on one transaction handle */
-async function matchOrders(db, entity_id, heads, days, tolerance) {
+async function matchOrders(db, entity_id, heads, days, tolerance, currency) {
   const { byId, receiptsFor, invoices } = await matchDocuments(db, entity_id, heads, days);
   const orders = [];
   for (const head of heads) {
@@ -3893,7 +3895,7 @@ async function matchOrders(db, entity_id, heads, days, tolerance) {
     if (business.bill_no) continue; /* a counter sale is not a purchase order */
     if (sideOf(head, business) !== 'buy') continue; /* the match is about what we BUY */
     const progress = await deliverline.progress(entity_id, head.chit_id, db).catch(log.orElse('till GET /match: failed — answered with nothing', null));
-    const order = matchOrder(head, detail, business, progress, receiptsFor.get(String(head.chit_id)) || [], invoices, tolerance);
+    const order = matchOrder(head, detail, business, progress, receiptsFor.get(String(head.chit_id)) || [], invoices, tolerance, currency);
     if (order) orders.push(order);
   }
   return orders;
@@ -3953,6 +3955,7 @@ function receiptOf(row, business) {
     no: business.doc_no || null,
     at: business.doc_at || row.created_at,
     their_bill: business.their_bill || null,
+    input_tax: business.input_tax || null /* what the door counted, taxable + tax per received line (the tax engine's, at the counter) — the match's "ours" */,
     goods: business.goods == null ? null : Number(business.goods),
     extras: business.extras == null ? null : Number(business.extras),
     landed: business.landed_total == null ? null : Number(business.landed_total),
@@ -3968,26 +3971,28 @@ function receiptOf(row, business) {
  *   agreed    everything arrived as ordered, and the money agrees
  *   differs   something does not agree, and the line says what
  */
-function matchOrder(head, detail, business, progress, receipts, invoices, tolerance) {
+function matchOrder(head, detail, business, progress, receipts, invoices, tolerance, currency) {
   const lines = (Array.isArray(detail.line_items) ? detail.line_items : []).map((item) => matchLine(item, progress, receipts, tolerance));
   if (!lines.length) return null;
   const invoice = theirInvoice(head, receipts, invoices);
   const ordered_total = roundMoney(lines.reduce((total, item) => total + item.ordered * (item.rate || 0), 0));
   const received_total = roundMoney(lines.reduce((total, item) => total + item.received * (item.rate || 0), 0));
   const differences = lines.filter((item) => item.difference !== 0 && !item.absorbed).length;
-  const money_gap = invoice.total == null ? null : roundMoney(received_total - invoice.total);
+  const money = matchMoney(invoice, receipts, currency);
   return {
     chit_id: head.chit_id,
     at: head.created_at,
     ...orderParty(head, business),
     lines,
     differences,
-    verdict: matchVerdict(lines, differences, money_gap),
+    verdict: matchVerdict(lines, differences, money.code),
     ordered_total,
     received_total,
     invoiced_total: invoice.total,
     invoiced_from: invoice.from,
-    money_gap,
+    money_gap: money.gap,
+    received_with_tax: money.received_with_tax,
+    money_code: money.code,
     receipts: receipts.map((item) => ({
       chit_id: item.chit_id,
       no: item.no,
@@ -4008,7 +4013,7 @@ function orderParty(head, business) {
 }
 
 /**
- * their invoice: the chit THIS counterparty sent that bills THIS order, else the figure keyed off their paper bill at the door → { total, from } (both null when there is none).
+ * their invoice: the chit THIS counterparty sent that bills THIS order, else the figure keyed off their paper bill at the door → { total, from, currency } (null when there is none; currency only when the invoice states one).
  * ⭐ OPS-82: a bill belongs to an order by what it names, never by being the first from the same supplier. The link is the one the books read
  * (business_json.order.from = the order's chit id, lib/books-hooks receiptFacts; lib/open-orders billNames). Two bills naming the order is two candidates:
  * the match picks neither, names both in `from`, and the figure stays unknown. A bill whose total_value is not stated is an unknown figure, never 0.
@@ -4018,13 +4023,63 @@ function theirInvoice(head, receipts, invoices) {
     && String(((invoice.business_json || {}).order || {}).from || '') === String(head.chit_id));
   if (billing.length > 1) return { total: null, from: 'several invoices name this order: ' + billing.map(invoiceNo).join(', ') };
   if (billing.length) {
-    const stated = counterBill.pickOf(billing[0]).total;
-    if (stated != null) return { total: Number(stated), from: 'their invoice' };
+    const picked = counterBill.pickOf(billing[0]);
+    if (!picked.agree) return { total: null, from: 'the copies of their invoice carry different totals', currency: null }; /* pickOf agree:false = no settled figure: unknown, never one of them */
+    if (picked.total != null) return { total: Number(picked.total), from: 'their invoice', currency: invoiceCurrency(billing[0]) };
   }
-  const keyed = receipts
-    .map((item) => (item.their_bill && item.their_bill.total != null ? Number(item.their_bill.total) : null))
-    .filter((value) => value != null);
-  return keyed.length ? { total: keyed.reduce((first, second) => first + second, 0), from: 'their bill, keyed at the door' } : { total: null, from: null };
+  const keyed = keyedBills(receipts);
+  return keyed.length ? { total: keyed.reduce((first, second) => first + second, 0), from: 'their bill, keyed at the door', currency: null } : { total: null, from: null, currency: null };
+}
+
+/** the supplier's bills as keyed at the door, each number counted ONCE: one paper bill keyed on two partial receipts is one bill, not two */
+function keyedBills(receipts) {
+  const seen = new Set();
+  return receipts
+    .map((item) => item.their_bill)
+    .filter((bill) => bill && bill.total != null && bill.total !== '' && isFinite(Number(bill.total)))
+    .filter((bill) => {
+      const no = String(bill.no == null ? '' : bill.no).trim();
+      if (!no) return true;
+      if (seen.has(no)) return false;
+      seen.add(no);
+      return true;
+    })
+    .map((bill) => Number(bill.total));
+}
+
+/** the money an invoice chit states its figures in (business_json.currency, else summary_json.currency_code), upper-case, or null when it states none */
+function invoiceCurrency(invoice) {
+  const stated = (invoice.business_json || {}).currency || (invoice.summary_json || {}).currency_code;
+  return stated ? String(stated).trim().toUpperCase() || null : null;
+}
+
+/** one carried figure as a number, or null when it is absent or not a number (null stays unknown, never 0) */
+const carriedFigure = (value) => (value == null || value === '' || !isFinite(Number(value)) ? null : Number(value));
+
+/** what the door counted, taxable and tax summed over the order's receipts from their carried input_tax; null when there is no receipt or ANY receipt carries no figure */
+function receivedTax(receipts) {
+  if (!receipts.length) return null;
+  const parts = receipts.map((item) => ({ taxable: carriedFigure((item.input_tax || {}).taxable), tax: carriedFigure((item.input_tax || {}).tax) }));
+  if (parts.some((part) => part.taxable == null || part.tax == null)) return null;
+  return { taxable: parts.reduce((sum, part) => sum + part.taxable, 0), tax: parts.reduce((sum, part) => sum + part.tax, 0) };
+}
+
+/**
+ * ⭐ THE MATCH'S MONEY (OPS-83): what was counted WITH tax against what they charge, through the one comparison lib/their-bill.check (FX-F10W2) — total against total,
+ * both CARRIED (the door's input_tax, their invoice's stated total), nothing recomputed here. → { received_with_tax, gap, code }
+ *   gap   received − invoiced in the shop's money (their-bill's gap, sign flipped; never -0), null whenever a side is unknown
+ *   code  their-bill's code (agrees · round_off · apart · no_total · no_engine) plus the two this caller refuses BEFORE asking it:
+ *         'currency_mismatch' (their invoice is in another money: never converted, never compared) and 'no_tax_figure' (a receipt carries no input_tax: the check would
+ *         read it as 0 and call the bill apart)
+ */
+function matchMoney(invoice, receipts, currency) {
+  const ours = receivedTax(receipts);
+  const received_with_tax = ours ? theirBill.check({ taxable: ours.taxable, tax: ours.tax, currency }).ours : null;
+  if (invoice.total == null) return { received_with_tax, gap: null, code: 'no_total' };
+  if (invoice.currency && currency && invoice.currency !== String(currency).toUpperCase()) return { received_with_tax, gap: null, code: 'currency_mismatch' };
+  if (!ours) return { received_with_tax, gap: null, code: 'no_tax_figure' };
+  const verdict = theirBill.check({ total: invoice.total, taxable: ours.taxable, tax: ours.tax, currency });
+  return { received_with_tax, gap: verdict.gap == null ? null : verdict.gap === 0 ? 0 : -verdict.gap, code: verdict.code };
 }
 
 /** the number an invoice chit carries: the same reading as lib/books-hooks receiptFacts, else its chit id */
@@ -4034,11 +4089,11 @@ function invoiceNo(invoice) {
 }
 
 /** awaited · differs · open · agreed — see matchOrder */
-function matchVerdict(lines, differences, money_gap) {
+function matchVerdict(lines, differences, money_code) {
   if (lines.every((item) => item.received === 0 && !item.counted_in_another_unit)) return 'awaited';
   if (differences || lines.some((item) => item.state === 'other_unit')) return 'differs';
   if (lines.some((item) => item.received < item.ordered)) return 'open';
-  return money_gap != null && money_gap !== 0 ? 'differs' : 'agreed';
+  return money_code === 'apart' || money_code === 'currency_mismatch' ? 'differs' : 'agreed'; /* a round-off or an unknown figure is not a difference */
 }
 
 /** one ordered line beside what was received: the difference, the reason the door gave, and whether this trade absorbs it */
@@ -4260,3 +4315,4 @@ router.get('/engine/:name', auth, ...checked('GET /engine/:name'), (req, res) =>
 router.openapi = { paths: pathsOf(), schemas: {} };
 
 module.exports = router;
+module.exports.matchMoney = matchMoney; /* OPS-83: tests/ops83-match-money.test.cjs asks the answer itself (JSON would hide a -0) */

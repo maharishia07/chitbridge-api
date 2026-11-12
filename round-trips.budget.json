@@ -2138,8 +2138,8 @@
     },
     "GET /api/till/match": {
       "file": "till.js",
-      "trips": 3,
-      "wire": 11,
+      "trips": 4,
+      "wire": 12,
       "fired": true,
       "status": 200
     },

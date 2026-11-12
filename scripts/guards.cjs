@@ -329,6 +329,9 @@ const GUARDS = [
   'books-fixes.test.cjs', // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
   'books-dates-tz.test.cjs', // ⭐⭐ a date read back from Postgres is the same date under Asia/Kolkata and UTC (it runs itself in both)
   'books-period.test.cjs', // ⭐⭐ v1.14–v1.16: asset register (b280 draft), depreciation, closing stock, GST close + challan, loans, accruals, contra — the engine's lines, once, locked, owner-only
+  'acc-278-gstr3b-no-gstin.test.cjs', // ACC-278: GSTR-3B for a shop with no/short GSTIN is refused in the engine's own words (asked with no documents, no copied regex), India-only first; parallel run says could-not-read
+  'acc-330-billed-at-future.test.cjs', // ACC-330: a till billed_at more than 24 h ahead of the send posts on the send day (books day AND GST month, the SQL run on the local Postgres), with a note, never refused
+  'acc-301-note-issued-basis.test.cjs', // ACC-301: a credit/debit note on an issued invoice is priced on the basis the invoice was issued on (_cb.price_includes_tax, else derived from its lines, else refused), never the seller's live flag
   'acc-224-period-of-record.test.cjs', // ACC-224: a late bill of a locked month is in the return of the month the books hold it in, named a prior-period item; each month's return = the books
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
@@ -893,6 +896,7 @@ const GUARDS = [
   'not-migrated.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS the proof that lib/not-migrated.js words a "waiting for the update" answer in plain words with its required "meanwhile", and 
   'ops-81-one-payable.test.cjs', // U1 (8 Nov, was run by no CI job): OPS-81 · A SUPPLIER BILL POSTS ONE PAYABLE, WHICHEVER PAPER ARRIVES FIRST.
   'ops82-match-invoice.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ops82-match-invoice.test.cjs — OPS-82: GET /api/till/match attaches to each purchase order the supplier invoice that BILLS i
+  'ops83-match-money.test.cjs', // OPS-83: tests/ops83-match-money.test.cjs — GET /api/till/match compares tax-in with tax-in through lib/their-bill.check on carried figures (received_with_tax, money_code); pins the till-written order.from (OPS-124)
   'pack-words.test.cjs', // U1 (8 Nov, was run by no CI job): AU-WORDS (2026-10-15): the words a screen says for a shop's country come from ONE reader (lib/pack-words), per pack.
   'plt86c-bills-inflight-503.test.cjs', // U1 (8 Nov, was run by no CI job): PLT-86c: a database connection killed under GET /api/till/bills answers 503 DB_CONNECTION_LOST.
   'prove-session.test.cjs', // U1 (8 Nov, was run by no CI job): tests/prove-session.test.cjs — tools/tally-connector/prove.js session(): every write is ONE attempt with its OWN Idempotency-Key.

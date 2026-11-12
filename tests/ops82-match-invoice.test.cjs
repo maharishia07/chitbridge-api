@@ -31,7 +31,10 @@ const po = (id, qty) => ({ head: { chit_id: id, created_at: '2026-10-25T10:00:00
   detail: { line_items: [{ line_id: U(id.slice(-2) * 1 + 100), particulars: 'Rice', quantity: qty, unit: 'kg', price: 100 }], business_json: { side: 'buy' } } });
 const inv = (n, sender, total, order, bill) => ({ chit_id: U(n), created_at: '2026-10-26T10:00:00Z', sender_entity_id: sender, summary_json: total === undefined ? {} : { total_value: total },
   business_json: Object.assign({}, bill ? { bill_no: bill } : {}, order ? { order: { from: order } } : {}), line_items: [] });
+/* OPS-83: the door's carried figure (input_tax, before tax + tax) is what the match compares an invoice with — each order was received in full, tax 0 */
+const rcpt = (n, order, taxable) => ({ chit_id: U(n), created_at: '2026-10-25T12:00:00Z', business_json: { against: { chit_id: order }, input_tax: { taxable, tax: 0 } }, line_items: [] });
 let ORDERS = [], INVOICES = [];
+const RECEIPTS = [rcpt(61, PO1, 1000), rcpt(62, PO2, 250)];
 const POS = { [PO1]: po(PO1, 10), [PO2]: po(PO2, 2.5) }; /* po-1 worth 1000, po-2 worth 250 */
 
 const mock = (rel, exports) => { require.cache[require.resolve(API + rel)] = { id: rel, filename: rel, loaded: true, exports }; };
@@ -40,7 +43,7 @@ mock('/middleware/auth', Object.assign((req, res, next) => { req.identity = { id
 const dbq = async (sql, params) => {
   const text = String(sql).replace(/\s+/g, ' ');
   if (/can_see_costs FROM identities/.test(text)) return { rows: [{ can_see_costs: true }] };
-  if (/h[.]purpose = 'receipt'/.test(text)) return { rows: [] };
+  if (/h[.]purpose = 'receipt'/.test(text)) return { rows: RECEIPTS };
   if (/h[.]direction = 'received' AND h[.]purpose = 'invoice'/.test(text)) return { rows: INVOICES };
   if (/FROM chit_header h LEFT JOIN chit_detail d/.test(text)) return { rows: params[1].filter((id) => POS[id]).map((id) => Object.assign({ chit_id: id }, POS[id].detail)) };
   return { rows: [] };
