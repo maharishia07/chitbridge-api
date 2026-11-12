@@ -85,8 +85,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 766,
-   "hash": "1496623347f83909",
+   "line": 778,
+   "hash": "fe362f9825c34528",
    "does": "",
    "errors": {
     "count": 0,
@@ -160,7 +160,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1154 (independent review: PPL-40 reset ends listed sessions via the one closeBy writer before the new code, owner-only door unchanged, bite proven, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -2505,7 +2505,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 813,
+   "line": 826,
    "hash": "d244d298c4147b45",
    "does": "",
    "errors": {
@@ -2613,7 +2613,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1635,
+   "line": 1649,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2711,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1824,
+   "line": 1838,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2897,7 +2897,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1506,
+   "line": 1520,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -31903,8 +31903,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 904,
-   "hash": "96cd3d3a4301dedd",
+   "line": 917,
+   "hash": "88c05cc1b9fd315d",
    "does": "",
    "errors": {
     "count": 0,
@@ -31978,7 +31978,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1154 (independent review: PPL-40 reset ends listed sessions via the one closeBy writer before the new code, owner-only door unchanged, bite proven, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -32101,7 +32101,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 809,
+   "line": 822,
    "hash": "4a792d6a3f9ffc26",
    "does": "",
    "errors": {
@@ -61665,7 +61665,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1598,
+   "line": 1612,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61773,7 +61773,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 980,
+   "line": 994,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61883,7 +61883,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1733,
+   "line": 1747,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61985,7 +61985,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1332,
+   "line": 1346,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -62096,7 +62096,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1194,
+   "line": 1208,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -62305,7 +62305,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1527,
+   "line": 1541,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {
