@@ -2835,7 +2835,7 @@
    ]
   },
   "POST /api/crm/walk-ins/add": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3459,7 +3459,7 @@
    ]
   },
   "POST /api/relationships/customers": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
