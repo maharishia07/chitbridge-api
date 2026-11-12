@@ -90,6 +90,11 @@ const send = (port, bill, pieces, gapMs) => new Promise((resolve) => {
   r = await send(port, BILL, 1, 0);
   ok(r.status === 200 && r.body && r.body.duplicate === true && r.body.chit_id === CHIT && r.body.client_ref === 'B-1', '(2) the retry with the same client_ref gets duplicate:true with the chit that exists (got ' + r.status + ' ' + JSON.stringify(r.body) + ')');
   ok(inserts === 0, '(2) no second chit and no second journal line were written (inserts=' + inserts + ')');
+  /* (2b) an UNKEYED send (the web compose path: no client_ref, no Idempotency-Key) has no replay, so it gets no deadline and no 503 */
+  ownBill.byRef = async () => { await wait(700); return null; };
+  const slowUnkeyed = Object.assign({}, BILL); delete slowUnkeyed.client_ref;
+  r = await send(port, slowUnkeyed, 1, 0);
+  ok(r.status !== 503 && !(r.body && r.body.code === 'REQUEST_TIMEOUT'), '(2b) a slow send with neither client_ref nor Idempotency-Key gets no 503 (got ' + r.status + ')');
   ownBill.byRef = original;
   srv.close();
 
