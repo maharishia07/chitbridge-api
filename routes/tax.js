@@ -48,7 +48,7 @@ router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async
 router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   try {
     const me = ctx(req);
-    const { bounds, me: meParty, ledger, dropped } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
     res.json({
       month: bounds.month,
       period: bounds.period,
@@ -64,6 +64,7 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
       not_in_books: T.notInBooksOf(ledger), // ACC-270: counter bills the books hold no entry for, with words
       expense_no_tax: T.expenseNoTaxOf(ledger), // ACC-269: till expenses with no ITC claimed (GST not stated / not in the books), with words
       dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
+      dropped_why: droppedWhy || [], // ACC-302: the words for each (the same words the GSTR 422 shows)
       rows: ledger.rows.map((item) => ({
         chit_id: item.chit_id,
         subject: item.subject,

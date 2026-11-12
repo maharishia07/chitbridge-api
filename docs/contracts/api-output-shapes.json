@@ -7423,6 +7423,12 @@
               "type": "string"
             }
           },
+          "dropped_why": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
           "rows": {},
           "note": {
             "type": "string"
