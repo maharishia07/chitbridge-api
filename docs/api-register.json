@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -20484,11 +20484,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b259205974030f54"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1157 stage2: handler and contract re-read after the hash moved (searchWholeNetwork extract; NET-53 closed shops now left out of the answer rows, owned by cb-network, answer shape and statuses unchanged); one error shape, additive/narrowing only, no key renamed; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network-member.js"
    ],
