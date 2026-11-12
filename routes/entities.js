@@ -187,24 +187,6 @@ async function registerNew(req, res) {
 }
 
 /**
- * PATCH /entities/me/locale — store the PERSON's localisation choice (b165).
- *
- * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
- * status. This edits how one human reads the screen. Folding a personal preference into the business profile
- * would mean a co-assist could not change their own language without write access to their employer's record,
- * and that an owner changing the firm's address would be touching the same object as their clerk's numerals.
- *
- * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
- * caller can write is their own. There is no id parameter to get wrong.
- *
- * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. Every value here ends up inside an Intl constructor or a
- * BCP 47 -u- extension, and BCP 47 admits thousands of valid tags — a whitelist of the nine the screen currently
- * offers would reject the tenth the day someone needs it, and would drift out of step with CLDR every release.
- * So the shape is checked syntactically and the MEANING is checked by asking Intl to build the tag. If ICU can
- * format with it, it is a real subtag; if it throws, it is not. Adopting the standard's own validator beats
- * maintaining our opinion of what the standard contains.
- */
-/**
  * PATCH /entities/me/prefs/:kind — store one of the PERSON's own preference sets (b165 locale · b166 ui).
  *
  * ⚠️ ONE HANDLER, TWO COLUMNS — generalised rather than copied. Two near-identical prefs endpoints would drift
@@ -338,7 +320,7 @@ function prefPatch(set, payload) {
  * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
  */
 const prefSetOf = (kind) => (Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null);
-/** the kind a preference door writes: the shipped PATCH /me/locale is always 'locale', PATCH /me/prefs/:kind takes it from the path */
+/** the kind a preference door writes: PATCH /me/prefs/:kind takes it from the path (the old PATCH /me/locale door was retired 2026-11-12) */
 const prefKindOf = (fixedKind, req) => fixedKind || String(req.params.kind || '');
 /**
  * prefSetRoute(fixedKind) — the handler of the two preference doors, ONE function under two names.
@@ -891,11 +873,6 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
     problem(req, res, failed(err, req, 'Read failed'));
   }
 });
-
-/* ⚠️ THE SHIPPED PATH, KEPT. Clients deployed before this refactor call /me/locale, and a browser holding a
-   cached app.html will keep calling it after the API updates. Removing it would turn a tidy-up into an outage
-   for exactly as long as those caches live. */
-router.patch('/me/locale', auth, ...checked('PATCH /me/locale'), prefSetRoute('locale'));
 
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
 /**

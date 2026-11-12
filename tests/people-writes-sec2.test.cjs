@@ -107,7 +107,7 @@ const call = (method, url, body) => new Promise((resolve, reject) => { if (!KEEP
 
 /* every route routes/actors.js answers, with a body each validator accepts */
 const READS = [['GET', '/'], ['GET', '/?status=all'], ['GET', '/settings'], ['GET', '/' + BALA + '/tasks'], ['GET', '/access-events'],
-  ['POST', '/suggest-key', { display_name: 'Bala Kumar' }], ['POST', '/check-key', { actor_key: 'bala' }]];
+  ['POST', '/suggest-key', { display_name: 'Bala Kumar' }]];
 const WRITES_PEOPLE = [
   ['POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'Bala@Shop.TEST' }],
   ['PATCH', '/' + BALA, { display_name: 'Bala K' }],

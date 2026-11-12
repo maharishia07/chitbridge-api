@@ -733,30 +733,6 @@
     }
    ]
   },
-  "POST /api/assist/gap": {
-   "state": "unreached",
-   "group": "no-header",
-   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
-   "url": "/api/assist/gap",
-   "calls": [
-    {
-     "status": 200,
-     "trips": null
-    },
-    {
-     "status": 200,
-     "trips": null
-    },
-    {
-     "status": 200,
-     "trips": null
-    },
-    {
-     "status": 200,
-     "trips": null
-    }
-   ]
-  },
   "POST /api/books/accruals": {
    "state": "measured",
    "trips": 4,

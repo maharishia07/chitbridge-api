@@ -493,6 +493,9 @@ app.use('/api/adopt', require('./routes/adopt'));
 // ── Health check ─────────────────────────────────────────────
 app.use('/health', require('./routes/health')); // GET /health — the uptime probe (moved to routes/health.js, byte for byte)
 
+/* API-25 · every router that did not check a uuid path id itself gets the one guard (lib/id-guard.js): a malformed id is a 404, never the database's 22P02 as a 500 */
+require('./lib/id-guard').guardRouters(app);
+
 // ── 404 handler ──────────────────────────────────────────────
 /* API-STANDARD S3: the one writer (lib/problem.js); the legacy keys are frozen exactly as this route answered before (docs/contracts/api-legacy.json) */
 app.use((req, res) => {

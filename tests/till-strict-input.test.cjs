@@ -61,7 +61,7 @@ const NOT_FIELDS = new Set(['length', 'map', 'filter', 'slice', 'trim', 'toStrin
 LIVE.forEach((route) => {
   const keys = handlerKeys(route);
   if (!keys) return ok('POST /api/till' + route + ' handler found in routes/till.js', false);
-  const declared = new Set(row(route).body || []);
+  const declared = new Set([].concat(Array.isArray(row(route).body) ? row(route).body : Object.keys(row(route).body || {})));
   const unread = [...keys].filter((key) => !NOT_FIELDS.has(key) && !declared.has(key));
   ok('POST /api/till' + route + ' handler reads only declared keys', unread.length === 0, 'read but not declared: ' + unread.join(', '));
 });

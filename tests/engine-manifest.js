@@ -366,6 +366,8 @@ const INFRA_LIBS = [
   /* the ONE sentence for a part that waits for a database update (503 not migrated): wording only, no rule (API-STANDARD S8a) */
   'not-migrated.js',
   'input-hygiene.js',
+  /* API-25: the router-level guard for a uuid path id (404 in the one error shape); transport shape, no business rule (12 Nov 2026) */
+  'id-guard.js',
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
   'limits.js',

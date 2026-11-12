@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 638,
-  "no_does": 628,
+  "routes": 631,
+  "no_does": 621,
   "not_started": 0,
   "partial": 0,
-  "meets": 638,
+  "meets": 631,
   "columns": {
    "strict_input": {
-    "applies": 324,
+    "applies": 321,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 638,
+    "applies": 631,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 638,
+    "applies": 631,
     "failing": 0
    }
   },
@@ -39,16 +39,16 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 285,
-    "failing": 39
+    "applies": 281,
+    "failing": 38
    },
    "rate_limited": {
-    "applies": 638,
-    "failing": 479
+    "applies": 631,
+    "failing": 474
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 146
+  "output_allowlist_from_recordings": 144
  },
  "machine_columns": [
   "schema_in",
@@ -85,7 +85,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 766,
+   "line": 731,
    "hash": "1496623347f83909",
    "does": "",
    "errors": {
@@ -2397,7 +2397,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 191,
+   "line": 172,
    "hash": "680c9ed819105397",
    "does": "",
    "errors": {
@@ -2505,7 +2505,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 813,
+   "line": 778,
    "hash": "d244d298c4147b45",
    "does": "",
    "errors": {
@@ -2613,7 +2613,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1635,
+   "line": 1600,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2711,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1824,
+   "line": 1789,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2806,7 +2806,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 700,
+   "line": 665,
    "hash": "da8032c1771607db",
    "does": "",
    "errors": {
@@ -2897,7 +2897,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1506,
+   "line": 1471,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -3571,95 +3571,6 @@
    }
   },
   {
-   "key": "GET /api/assist/gaps",
-   "method": "GET",
-   "path": "/api/assist/gaps",
-   "owner_area": "assist",
-   "owner_agent": "cb-ai",
-   "file": "routes/assist.js",
-   "line": 738,
-   "hash": "ce58ab833cb528f2",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": false,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 0,
-    "wire": 0,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "GET /api/assist/penetration",
    "method": "GET",
    "path": "/api/assist/penetration",
@@ -4136,7 +4047,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 748,
+   "line": 716,
    "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
@@ -9004,7 +8915,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handler re-read after its hash moved (images capped at 10 before the paid model call; aiFault relays no provider text); 13 columns true; web has no caller of the door",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12015,196 +11926,6 @@
    }
   },
   {
-   "key": "GET /api/connections/list",
-   "method": "GET",
-   "path": "/api/connections/list",
-   "owner_area": "connections",
-   "owner_agent": "cb-network",
-   "file": "routes/connections.js",
-   "line": 202,
-   "hash": "4780f03abda19cbb",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [
-    "connections"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "output_allowlist_basis": "recordings",
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": false
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 1,
-    "wire": 1,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "GET /api/connections/pending",
-   "method": "GET",
-   "path": "/api/connections/pending",
-   "owner_area": "connections",
-   "owner_agent": "cb-network",
-   "file": "routes/connections.js",
-   "line": 102,
-   "hash": "0ad481921407a179",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [
-    "connections"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "output_allowlist_basis": "recordings",
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": false
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 1,
-    "wire": 1,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "GET /api/connectors",
    "method": "GET",
    "path": "/api/connectors",
@@ -13860,7 +13581,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 390,
+   "line": 372,
    "hash": "40fdcd90b8ecda55",
    "does": "",
    "errors": {
@@ -13954,7 +13675,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2442,
+   "line": 2419,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14050,7 +13771,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 501,
+   "line": 483,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -14144,7 +13865,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 528,
+   "line": 510,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -14264,7 +13985,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 885,
+   "line": 867,
    "hash": "f12cd611fc9dc327",
    "does": "",
    "errors": {
@@ -14362,7 +14083,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1757,
+   "line": 1734,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14467,7 +14188,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 472,
+   "line": 454,
    "hash": "0485b6f18b7c36fc",
    "does": "",
    "errors": {
@@ -14569,7 +14290,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1643,
+   "line": 1620,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14670,7 +14391,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1507,
+   "line": 1484,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14769,7 +14490,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1491,
+   "line": 1468,
    "hash": "daf7f3e6e7033f84",
    "does": "",
    "errors": {
@@ -14867,7 +14588,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 422,
+   "line": 404,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -14967,7 +14688,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 439,
+   "line": 421,
    "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
@@ -15056,7 +14777,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 517,
+   "line": 499,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -15150,7 +14871,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1314,
+   "line": 1291,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -24225,7 +23946,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 93,
+   "line": 74,
    "hash": "1b9b89daa7151131",
    "does": "",
    "errors": {
@@ -24312,99 +24033,6 @@
      "cap-catalogue.js 5/13",
      "cap-catsetup.js 5/14"
     ]
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "GET /api/schemas/my",
-   "method": "GET",
-   "path": "/api/schemas/my",
-   "owner_area": "schemas",
-   "owner_agent": "cb-capability",
-   "file": "routes/schemas.js",
-   "line": 32,
-   "hash": "b15cb6ab536ce729",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [
-    "entity_schemas",
-    "schema_fields"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": false
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 1,
-    "wire": 1,
-    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -29061,7 +28689,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 518,
+   "line": 483,
    "hash": "8374bddd65efb2b4",
    "does": "",
    "errors": {
@@ -29816,7 +29444,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1284,
+   "line": 1261,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -29918,7 +29546,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 858,
+   "line": 840,
    "hash": "efa0652b1d0f4de7",
    "does": "",
    "errors": {
@@ -30012,107 +29640,13 @@
    }
   },
   {
-   "key": "PATCH /api/entities/me/locale",
-   "method": "PATCH",
-   "path": "/api/entities/me/locale",
-   "owner_area": "entities",
-   "owner_agent": "cb-network",
-   "file": "routes/entities.js",
-   "line": 898,
-   "hash": "8c7f8667671d7623",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [
-    "identities"
-   ],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": false,
-    "rate_limited": false
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 1,
-    "wire": 1,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "PATCH /api/entities/me/prefs/:kind",
    "method": "PATCH",
    "path": "/api/entities/me/prefs/:kind",
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 852,
+   "line": 834,
    "hash": "667cb4fea86280f3",
    "does": "",
    "errors": {
@@ -30214,7 +29748,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 483,
+   "line": 465,
    "hash": "8eabcd83c4aa4b87",
    "does": "",
    "errors": {
@@ -30322,7 +29856,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 983,
+   "line": 960,
    "hash": "ca5638cd28bcf812",
    "does": "",
    "errors": {
@@ -31186,7 +30720,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 308,
+   "line": 289,
    "hash": "f592129d9f9cb22b",
    "does": "",
    "errors": {
@@ -31292,7 +30826,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 249,
+   "line": 230,
    "hash": "9389f29f5f100aba",
    "does": "",
    "errors": {
@@ -31396,7 +30930,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 409,
+   "line": 390,
    "hash": "6a6e1ccd21d59062",
    "does": "",
    "errors": {
@@ -31792,7 +31326,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 258,
+   "line": 223,
    "hash": "1b8f501b8d6311c4",
    "does": "",
    "errors": {
@@ -31901,7 +31435,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 904,
+   "line": 869,
    "hash": "96cd3d3a4301dedd",
    "does": "",
    "errors": {
@@ -31999,107 +31533,13 @@
    }
   },
   {
-   "key": "POST /api/actors/check-key",
-   "method": "POST",
-   "path": "/api/actors/check-key",
-   "owner_area": "actors",
-   "owner_agent": "cb-people",
-   "file": "routes/actors.js",
-   "line": 224,
-   "hash": "ae084b0e0058d439",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [
-    "identities"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": false
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": false,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 0,
-    "wire": 0,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "POST /api/actors/login",
    "method": "POST",
    "path": "/api/actors/login",
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 809,
+   "line": 774,
    "hash": "4a792d6a3f9ffc26",
    "does": "",
    "errors": {
@@ -32196,7 +31636,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 703,
+   "line": 668,
    "hash": "f2986ed556baa6a3",
    "does": "",
    "errors": {
@@ -32607,7 +32047,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 259,
-   "hash": "89946324f32549b9",
+   "hash": "aae646ea7a30fe67",
    "does": "",
    "errors": {
     "count": 0,
@@ -32683,7 +32123,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -32908,102 +32348,13 @@
    }
   },
   {
-   "key": "POST /api/assist/gap",
-   "method": "POST",
-   "path": "/api/assist/gap",
-   "owner_area": "assist",
-   "owner_agent": "cb-ai",
-   "file": "routes/assist.js",
-   "line": 666,
-   "hash": "f35cc44639c74477",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     422,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": true
-   },
-   "reported_applies": {
-    "bfla_role_check": false,
-    "parameterised_query": false,
-    "rate_limited": true
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 0,
-    "wire": 0,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "POST /api/assist/publish",
    "method": "POST",
    "path": "/api/assist/publish",
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 683,
+   "line": 662,
    "hash": "e2ec4b3294857387",
    "does": "",
    "errors": {
@@ -33112,7 +32463,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
    "line": 79,
-   "hash": "07ac7405642c8930",
+   "hash": "7fa22d81e90e3f57",
    "does": "",
    "errors": {
     "count": 0,
@@ -33188,7 +32539,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39645,7 +38996,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 2009,
-   "hash": "fb327e3e6d43c1cf",
+   "hash": "04d82b7cd22d9b8a",
    "does": "",
    "errors": {
     "count": 0,
@@ -42000,7 +41351,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4528,
-   "hash": "0065084284fd1df2",
+   "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
     "count": 0,
@@ -42070,7 +41421,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42911,7 +42262,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4284,
-   "hash": "1899c9cfdf06ac32",
+   "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
     "count": 0,
@@ -42982,7 +42333,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43630,7 +42981,7 @@
    "owner_area": "connections",
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
-   "line": 26,
+   "line": 23,
    "hash": "3d6ff5c3055c8d28",
    "does": "",
    "errors": {
@@ -45205,7 +44556,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 463,
-   "hash": "5de81a35731a3e0b",
+   "hash": "93803f66febd072d",
    "does": "",
    "errors": {
     "count": 0,
@@ -45281,7 +44632,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46777,7 +46128,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1731,
+   "line": 1708,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -46881,7 +46232,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 379,
+   "line": 361,
    "hash": "074b9e21d7b86242",
    "does": "",
    "errors": {
@@ -46989,8 +46340,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 380,
-   "hash": "fe7072cdd634a673",
+   "line": 362,
+   "hash": "e8ded17dee03496c",
    "does": "",
    "errors": {
     "count": 0,
@@ -47059,7 +46410,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52484,7 +51835,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 58,
-   "hash": "054411c51914439a",
+   "hash": "5735055939a80b80",
    "does": "",
    "errors": {
     "count": 0,
@@ -52559,7 +51910,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1105 stage2 tolerant-by-design",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54047,7 +53398,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/quick-keys.js",
    "line": 61,
-   "hash": "1fec8f975fe8c6f9",
+   "hash": "2e825a454d88c8ab",
    "does": "",
    "errors": {
     "count": 0,
@@ -54118,7 +53469,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54245,7 +53596,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 854,
-   "hash": "3f50c6474a55bc42",
+   "hash": "286f0f8591d46002",
    "does": "",
    "errors": {
     "count": 0,
@@ -54322,7 +53673,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54458,7 +53809,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 149,
-   "hash": "61a8c3db14666976",
+   "hash": "c04e1aeca1b01906",
    "does": "",
    "errors": {
     "count": 0,
@@ -54534,7 +53885,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55731,7 +55082,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 51,
+   "line": 32,
    "hash": "3ff0b50aa54cfba7",
    "does": "",
    "errors": {
@@ -56862,7 +56213,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 962,
-   "hash": "1405487d7309082d",
+   "hash": "cc9b07d8bcc06ba5",
    "does": "",
    "errors": {
     "count": 0,
@@ -56939,7 +56290,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -59692,7 +59043,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2099,
-   "hash": "247f38ec08cf16aa",
+   "hash": "f28b925c4faeddf6",
    "does": "",
    "errors": {
     "count": 0,
@@ -59768,7 +59119,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -60215,7 +59566,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1919,
-   "hash": "45ed4c4ba28822dd",
+   "hash": "287b7d754f2e98df",
    "does": "",
    "errors": {
     "count": 0,
@@ -60285,7 +59636,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 contract/till-strict 4ab88e89 strict_input: handler and contract re-read; body keys equal the keys the handler reads, no till sends this door (till.html, agent till.js, history checked), refusal is 400 TILL_BAD_REQUEST problem+legacy via schemaValidate, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -61252,7 +60603,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3083,
-   "hash": "cb54f167d22e1630",
+   "hash": "3609a57a2f557a8d",
    "does": "",
    "errors": {
     "count": 0,
@@ -61326,7 +60677,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -61356,7 +60707,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1694,
-   "hash": "45a5375daea12e4d",
+   "hash": "cb1e23a403e6324f",
    "does": "",
    "errors": {
     "count": 0,
@@ -61426,7 +60777,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -61663,7 +61014,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1598,
+   "line": 1563,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61771,7 +61122,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 980,
+   "line": 945,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61881,7 +61232,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1733,
+   "line": 1698,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61983,7 +61334,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1332,
+   "line": 1297,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -62094,7 +61445,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1194,
+   "line": 1159,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -62200,7 +61551,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 707,
+   "line": 672,
    "hash": "2cc704f2d6675973",
    "does": "",
    "errors": {
@@ -62303,7 +61654,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1527,
+   "line": 1492,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {
@@ -63618,7 +62969,7 @@
    "owner_area": "connections",
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
-   "line": 124,
+   "line": 102,
    "hash": "dcfed7864c08486f",
    "does": "",
    "errors": {
@@ -63843,7 +63194,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1698,
+   "line": 1675,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63949,7 +63300,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1617,
+   "line": 1594,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
@@ -65113,7 +64464,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/quick-keys.js",
    "line": 135,
-   "hash": "7ff641dccc3e9005",
+   "hash": "bfba5022c74d6d89",
    "does": "",
    "errors": {
     "count": 0,
@@ -65184,7 +64535,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",

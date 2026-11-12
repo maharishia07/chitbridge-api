@@ -218,41 +218,6 @@ router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withM
   }
 });
 
-// ── POST /api/actors/check-key ───────────────────────────────
-// Check if specific key is available
-// Called when admin overrides suggestion
-router.post(
-  '/check-key',
-  auth,
-  [
-    body('actor_key')
-      .trim()
-      .isLength({ min: 4, max: 12 })
-      .matches(/^[a-z0-9]+$/)
-      .withMessage('Lowercase letters and numbers only — 4 to 12 characters')
-  ],
-  validateAsProblem,
-  ...checked('POST /check-key'),
-  async (req, res) => {
-    try {
-      const entity_id = req.identity.identity_id;
-      const actor_key = req.body.actor_key.toLowerCase().trim();
-      const available = await isKeyAvailable(actor_key, entity_id);
-      /* ⚠️ The MESSAGE matters as much as the field: it is the string a person reads while deciding on a key,
-         so showing the display name here teaches the wrong handle just as effectively. Resolved once. */
-      const login = available ? await loginIdFor(actor_key, req) : null;
-      res.json({
-        actor_key,
-        available,
-        login_format: login,
-        message: available ? `${login} is available` : `${actor_key} is already taken under this entity`
-      });
-    } catch (err) {
-      problem(req, res, failed(err, req, 'Check failed'));
-    }
-  }
-);
-
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
 router.post(

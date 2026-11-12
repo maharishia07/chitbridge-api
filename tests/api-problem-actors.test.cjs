@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * api-problem-actors.test.cjs — API-4 sweep, the people: every answer of routes/actors.js (20 routes: add · edit · switch off · PIN and first code · cover and break · tasks and routing · settings).
+ * api-problem-actors.test.cjs — API-4 sweep, the people: every answer of routes/actors.js (19 routes: add · edit · switch off · PIN and first code · cover and break · tasks and routing · settings).
  *
  * OWNS      the proof that each refusal of the actors routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses
@@ -141,7 +141,7 @@ function checkContractShape(routes) {
   const operations = Object.keys(contract.OPERATIONS);
   const swept = Object.keys(routes);
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 20 operations for the 20 routes (the three sign-in aliases since the 7 Nov pass)', operations.length === 20 && Object.keys(routes).length === 20, [operations.length, Object.keys(routes).length]);
+  check('the contract holds 19 operations for the 19 routes (the three sign-in aliases since the 7 Nov pass)', operations.length === 19 && Object.keys(routes).length === 19, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that is an object (a list is the schema\'s 400); the first-code re-issue takes any, as before', bodies.every((key) => key === 'POST /api/actors/:id/otp' || contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));

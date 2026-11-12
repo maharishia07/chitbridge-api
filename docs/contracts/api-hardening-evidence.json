@@ -46,10 +46,6 @@
   "GET /api/entities/me/can-see-costs": {
    "output_allowlist": true
   },
-  "PATCH /api/entities/me/locale": {
-   "strict_input": true,
-   "output_allowlist": true
-  },
   "PATCH /api/entities/profile": {
    "strict_input": true,
    "output_allowlist": true
@@ -635,10 +631,6 @@
    "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
-   "strict_input": true,
-   "output_allowlist": true
-  },
-  "POST /api/actors/check-key": {
    "strict_input": true,
    "output_allowlist": true
   },
@@ -1229,15 +1221,8 @@
   "GET /api/assist/questions": {
    "output_allowlist": true
   },
-  "POST /api/assist/gap": {
-   "strict_input": true,
-   "output_allowlist": true
-  },
   "POST /api/assist/publish": {
    "strict_input": true,
-   "output_allowlist": true
-  },
-  "GET /api/assist/gaps": {
    "output_allowlist": true
   },
   "GET /api/assist/whoami": {
