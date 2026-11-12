@@ -4321,6 +4321,33 @@ function qWaitWords(row, at){
   return s2 < 60 ? ('next try in ' + s2 + 's') : ('next try in ' + Math.round(s2 / 60) + 'm');
 }
 /**
+ * ⭐ PARKED, NOT LOOPED (till-park, 12 Nov): a queued CHANGE (a price, a shelf flag, an offer on an item) that the shop answers
+ * with a FINAL refusal can never succeed by trying again, so the drain stops trying it, keeps it, and says why — a person fixes
+ * it or drops it (openStuck → "Needs fixing"). Final = 400 · 404 · 409 · 422; 401 / 403 stop the WHOLE queue (a key problem, not
+ * this row's), 408 · 429 · 5xx are transient, and the one 409 that means "wait for the bill" (WAITS_FOR_BILL) keeps waiting.
+ * ⚠️ A BILL IS NEVER PARKED HERE: a sale is money already taken, it keeps its backoff ladder and its "set aside" button.
+ */
+var FINAL_REFUSALS = [400, 404, 409, 422];
+function isParkedRow(row){ return !!(row && row._parked); }
+function parksOn(row, status, code){
+  return !!(row && row.tillPost) && FINAL_REFUSALS.indexOf(status) >= 0 && code !== WAITS_FOR_BILL;
+}
+/** the rows a drain may try: a parked row waits for a person, whatever Send now says */
+function sendableRows(rows){ return (rows || []).filter(function(row){ return !isParkedRow(row); }); }
+/**
+ * ⭐ the shop refused a queued row: stamp it with the refusal and the server's own sentence, then either PARK it (a change refused for good: no retry
+ * time, it waits for a person) or put it on the ladder (R2: 2s, 4s, 8s … to five minutes, then five minutes for ever — a bill always does, see qBackoff).
+ * Answers the sentence the drain reports.
+ */
+async function refusedRow(row, status, said, code){
+  row._status = status; row._code = code; row._why = said || ('the shop answered ' + status);
+  row._tries = (Number(row._tries) || 0) + 1; row._at = Date.now();
+  row._nextAt = row._at + qBackoff(row._tries);
+  if (parksOn(row, status, code)) { delete row._nextAt; row._parked = { at: row._at, status: status, code: code || null, why: row._why }; }
+  try { await DB.put('queue', row); } catch (e) { cbQuiet('drain:4', e); }
+  return (row._parked ? 'A change was refused and set aside for you to fix: ' : 'Bill ' + row.no + ': ') + row._why;
+}
+/**
  * ⚠⚠ A CHANGED WORLD CLEARS THE WAIT. The ladder answers "this keeps failing for the same reason"; the
  * moment the reason can have changed — the line came back, the counter was re-paired, a person pressed Send
  * now — the wait is stale and holding forty reconnected bills back for five minutes each would be the fault
@@ -5788,7 +5815,7 @@ var CloudHost = {
     /* ⚠️ hoisted, because the finally below reports them and DB.all can throw before the loop begins */
     var why = null, tried = 0, sent = 0, code = null;
     try {
-      var rows = (await DB.all('queue')) || [];
+      var rows = sendableRows(await DB.all('queue'));
       /**
        * ⭐⭐ A CATALOGUE CHANGE GOES FIRST. Athi: *"when the net is up, it is the first thing to be done."* And it
        * is not merely politeness — while it waits, this counter is selling at a price ChitBridge does not have,
@@ -5894,7 +5921,7 @@ var CloudHost = {
             /**
              * ⚠️ THE SERVER'S OWN WORDS, kept on the row. A 400 means this payload will never be accepted, and
              * before today it was retried every 20 seconds for ever with nothing on screen. It is still retried —
-             * a 500 is transient and a bill is somebody's money, so nothing here parks or drops it — but the
+             * a 500 is transient and a bill is somebody's money, so a BILL is never parked or dropped here (a CHANGE refused for good is parked — refusedRow, till-park) — but the
              * reason now travels with the bill and reaches the screen.
              */
             var said = '', code = '';
@@ -5909,12 +5936,9 @@ var CloudHost = {
               var moved = await renumberBill(bill, said, rows);   /* H5: a row it moved leaves `rows`, so its old copy is never written back */
               if (moved) { if (!why) why = 'Bill ' + moved.from + ' shared a number with another counter — recorded as ' + moved.to + '.'; continue; }
             }
-            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status); bill._code = code;
-            bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
-            /* ⭐ R2's ladder — 2s, 4s, 8s … to five minutes, then five minutes for ever. See qBackoff(). */
-            bill._nextAt = bill._at + qBackoff(bill._tries);
-            try { await DB.put('queue', bill); } catch (e) { cbQuiet('drain:4', e); }
-            if (!why) why = 'Bill ' + bill.no + ': ' + bill._why;
+            /* ⭐ till-park: a change the shop refused for good is PARKED; every other row (a bill always) climbs the ladder — see refusedRow() */
+            var stamped = await refusedRow(bill, r.status, said, code);
+            if (!why) why = stamped;
           }
         } catch (e) {
           /* the line went mid-request; the queue keeps everything. Say WHICH failure it was. */
@@ -7175,7 +7199,7 @@ function paintStatus(){
                     : 'This shop is registered as ' + esc(tx0.reg) + ', so no ' + schemeWord() + ' is charged.'))
     /* ⚠️ THE SAME WORDS WHEREVER IT APPEARS. An unregistered shop took a different branch and got the short form, "1 bill(s)
        waiting" — waiting for what? A shopkeeper should not learn two phrasings for one fact because of how they are registered. */
-    + (STATE.queued ? '  ·  ' + queueWords() : '');
+    + (queueCount() ? '  ·  ' + queueWords() : '');
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
   /**
    * ⚠️⚠️ LAST, SO NOTHING CAN OVERWRITE IT. This was written first and then quietly clobbered by the no-GST line and the missing
@@ -8523,7 +8547,7 @@ function menuAlerts(){
         '<button class="pill" data-testid="till-alert-send" onclick="fromMenu(sendNow)">Send now</button>'
         + '<button class="pill" data-testid="till-alert-stuck" onclick="fromMenu(openHealth)">Counter health</button>');
     }
-  } catch (e) { cbQuiet('menuAlerts:5', e); }
+  } catch (e) { cbQuiet('menuAlerts:5', e); } parkedAlert(add);
   try { if (typeof dayStatus === 'function' && dayStatus().state === 'new')
     add('day', 'time', 'The day has not been opened',
       'Selling works without it, but the drawer is not counted and the day has no start time.',
@@ -15028,14 +15052,14 @@ async function pickedPrice(){
   var m = /^([+-])?\s*([0-9]+(?:\.[0-9]+)?)\s*(%?)$/.exec(raw);
   if (!m) { toastLine('I could not read "' + raw + '". Try 66, or +10%, or -2.50.'); return; }
   var sign = m[1], amt = Number(m[2]), pct = m[3] === '%';
-  if (pct && !sign) { toastLine('A percentage needs a direction — +10% or -10%.'); return; }
+  if (bulkRefused(pct, sign, amt)) return;   /* a typed price or step finer than the currency is refused as typed; a percentage's RESULT is rounded below */
   /* ⚠️ the list price is what a structure works from, so that is the figure a revision moves */
   var plan = items.map(function(i){
     var was = Number(i.price) || 0, now;
     if (!sign) now = amt;
     else if (pct) now = was * (1 + (sign === '-' ? -amt : amt) / 100);
     else now = was + (sign === '-' ? -amt : amt);
-    return { i: i, was: was, now: r2(now) };
+    return { i: i, was: was, now: priceToGrain(now) };
   });
   /* ⚠️ a price at or below zero is not a discount, it is a bill that pays the customer */
   var bad = plan.filter(function(p){ return !(p.now > 0); });
@@ -16128,7 +16152,7 @@ function changedKeep(){
  * label would be a second thing to keep true, and the first thing to drift.
  * ⚠️ A BILL IS NAMED FIRST AND SEPARATELY, always. It is the only one that is money somebody has already handed over.
  */
-var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0 };
+var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0, parked: 0 };
 /**
  * ⭐ WHAT THIS COUNTER IS USING THAT THE SHOP HAS NOT GOT. Derived from the queue on every tally, never stored —
  * a row waiting IS the out-of-sync state, so it cannot outlive the thing it describes.
@@ -16139,7 +16163,8 @@ async function queueTally(){
   try { rows = (await DB.all('queue')) || []; } catch (_) { rows = []; }
   OUT_OF_SYNC = rows.filter(function(r){ return r && r.priority && r.says; })
                     .map(function(r){ return r.says; });
-  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0 };
+  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0, parked: rows.filter(isParkedRow).length };
+  rows = sendableRows(rows);   /* a parked change is not "waiting to reach the shop": it waits for a person (openStuck) */
   rows.forEach(function(r){
     /* ⚠️ POINTS ARE NOT 'A CHANGE'. To a shopkeeper a change is a price or a shelf flag — something they did to the
        shop. A reward waiting is a promise made to a person who has already walked out, and the two do not deserve
@@ -16421,7 +16446,7 @@ function queueWords(){
    * where the question is whether the day's money is safe. [[feedback-silence-is-the-bug]]
    */
   if (!paired()) return 'this counter is not connected to a shop yet';
-  if (!STATE.queued) return 'everything has reached the shop';
+  if (!STATE.queued) return QUEUED.parked ? parkedWords() : 'everything has reached the shop';
   var bits = [];
   var n = function(c, one, many){ if (c) bits.push(c + ' ' + (c === 1 ? one : many)); };
   n(QUEUED.bills, 'bill', 'bills');
@@ -16499,7 +16524,7 @@ async function stockApply(i, now){
  */
 async function cloudFirst(o){
   var r = await HOST.tillPost(o.path, o.body, { noQueue: true });
-  if (r && r.ok && !r.queued) { await o.apply(); return { ok: true }; }
+  if (r && r.ok && !r.queued) { await o.apply(); await unparkSame(o.path, o.body); return { ok: true }; }
 
   if (r && r.final) { say(o.what + '\n\nChitBridge refused it: ' + r.why + '\n\nNothing has been changed here.',
                           'Not changed'); return { ok: false, why: r.why }; }
@@ -16512,7 +16537,7 @@ async function cloudFirst(o){
     'Change it here anyway', 'ChitBridge has not been told');
   if (!yes) return { ok: false, why: why, refused: true };
 
-  await o.apply();
+  await o.apply(); await unparkSame(o.path, o.body);
   /* ⭐ AT THE FRONT OF THE QUEUE. "When the net is up, it is the first thing to be done" — drain sorts on this. */
   await DB.put('queue', { no: 'OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7),
                           at: new Date().toISOString(), priority: 1, says: o.what,
@@ -16522,10 +16547,31 @@ async function cloudFirst(o){
 }
 
 /** the price pane: whatever was tapped, with a box for the new number */
+/**
+ * ⭐ till-park (api CAT-308 PRICE_DECIMALS): a price finer than the shop currency's minor unit is REFUSED here, before it is sent, in the
+ * api's own sentence (lib/money.js priceDecimalsRefusal) — never rounded silently. The grain is CBMoney.decimals(currency), the one table:
+ * INR 2, JPY 0, KWD 3. Float noise (19.990000000000002) passes, as it does on the server. '' = fine.
+ */
+function priceFinerWords(price){
+  var currency = shopCur(), typed = Number(price);
+  if (!currency || !window.CBMoney || !isFinite(typed) || Math.abs(typed - CBMoney.round(typed, currency)) < 1e-9) return '';
+  var places = CBMoney.decimals(currency);
+  return 'Price can have at most ' + places + (places === 1 ? ' decimal place' : ' decimal places') + ' in ' + String(currency).toUpperCase() + ' (not ' + typed + '). Round it and send it again.';
+}
+/** a computed price (a percentage, a bulk step) rounded to the shop currency's own decimals, half away from zero (the money engine's rule) */
+function priceToGrain(price){ var currency = shopCur(); return (currency && window.CBMoney) ? CBMoney.round(Number(price) || 0, currency) : r2(price); }
+/** the bulk price box refused before anything is sent: a percentage with no direction, or a typed price or step finer than the currency (a percentage's RESULT is rounded, not refused) */
+function bulkRefused(isPercent, sign, typed){
+  var said = (isPercent && !sign) ? 'A percentage needs a direction — +10% or -10%.' : (isPercent ? '' : priceFinerWords(typed) && priceFinerWords(typed) + ' Nothing was changed.');
+  if (said) toastLine(said);
+  return !!said;
+}
 /** ⭐ ONE PRICE WRITE, called from the Maintenance panel. It keeps the old price, who changed it and when. */
 async function priceWrite(i, v){
   if (!i) return null;
   if (!isFinite(v) || v < 0) return { ok:false, why:'that is not a price' };
+  var finer = priceFinerWords(v);
+  if (finer) return { ok:false, why: finer };
   var was = Number(i.price) || 0;
   if (v === was) return { ok:true };                 /* nothing to do, and saying so is not an error */
   return await cloudFirst({
@@ -20312,7 +20358,7 @@ function watchTick(){
 async function waitingNow(){
   try {
     if (typeof DB !== 'undefined' && DB && DB.all) {
-      var q = (await DB.all('queue')) || [];
+      var q = sendableRows(await DB.all('queue'));   /* till-park: a refused change waits for a person, not for the line */
       var at = q.map(function(r){ return r.at || (r.bill && r.bill.at) || null; })
                 .filter(Boolean).sort();
       return { total:q.length, oldest:at[0] || null };
@@ -24465,6 +24511,81 @@ async function closeCounter(already){
     say('The counter was not closed: ' + ((e && e.message) || 'something went wrong') + '. Nothing on this PC was cleared.');
   }
 }
+/** ⭐ till-park: rows still to go plus rows a person must fix — what "is anything not at the shop?" counts */
+function queueCount(){ return (STATE.queued || 0) + (QUEUED.parked || 0); }
+/** the sentence the status line and the alert card say; the server's own words are on each row in 🩺 */
+function parkedWords(){
+  var count = QUEUED.parked || 0;
+  return count + ' change' + (count === 1 ? ' was' : 's were') + ' refused by the shop and need fixing';
+}
+/** the item a parked change is about, from the catalogue this counter holds — null when it is gone (or the change names no item) */
+function parkedItem(row){
+  var id = row && row.tillPost && row.tillPost.body && row.tillPost.body.item_id;
+  if (!id) return null;
+  return ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(id); })[0] || null;
+}
+/** the same change again: one path, one item, one offer — so a corrected save replaces its refused copy */
+function parkKey(path, body){ return path + '|' + String((body && body.item_id) || '') + '|' + String((body && body.offer_id) || ''); }
+/** a corrected save lands: forget the refused copy of the same change, so the list never shows a fixed problem */
+async function unparkSame(path, body){
+  try {
+    var key = parkKey(path, body), rows = (await DB.all('queue')) || [];
+    for (var i = 0; i < rows.length; i++)
+      if (isParkedRow(rows[i]) && rows[i].tillPost && parkKey(rows[i].tillPost.path, rows[i].tillPost.body) === key) await DB.del('queue', rows[i].no);
+    await queueTally();
+  } catch (e) { cbQuiet('unparkSame:1', e); }
+}
+/** the alert card for refused changes: what happened, and the one button that opens the list to fix them */
+function parkedAlert(addCard){
+  if (!QUEUED.parked) return;
+  addCard('parked', 'time', parkedWords(), 'The shop refused them, so sending again would not help. Nothing is lost.',
+    '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-parked" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');
+}
+/** one parked row in words: what the change was, what the shop said, and the two things a person can do — Fix (open the item) and Drop */
+function parkedRowHTML(row){
+  var item = parkedItem(row), name = row.says || (item && item.name) || 'A change to the shop';
+  var no = esc(row.no);
+  return '<div class="t warnrow" data-testid="till-parked-row-' + no + '"><span>' + esc(name) + '</span><span>'
+    + esc('The shop would not take it: ' + (row._why || 'it was refused') + ' Nothing was sent again.')
+    + (item ? ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP010" data-testid="till-parked-fix-' + no + '" onclick="parkedFix(\'' + no + '\')">Fix</button>' : '')
+    + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP011" data-testid="till-parked-drop-' + no + '" onclick="parkedDrop(\'' + no + '\')">Drop</button>'
+    + '</span></div>';
+}
+/** the "Needs fixing" block, FIRST in the why-is-a-bill-stuck panel: refused changes wait for a person, everything below it is about the line */
+function parkedSectionHTML(rows){
+  var parked = rows.filter(isParkedRow);
+  if (!parked.length) return '';
+  return '<div class="sec" data-testid="till-parked-head">Needs fixing — the shop refused ' + parked.length + ' change' + (parked.length === 1 ? '' : 's') + '</div>'
+    + parked.map(parkedRowHTML).join('')
+    + '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Fix opens the item so you can change it again. Drop forgets the change: '
+    + 'only the owner can, and this counter then reads the shop again so both agree.</div>';
+}
+async function parkedRowOf(no){
+  return ((await DB.all('queue')) || []).filter(function(x){ return x && String(x.no) === String(no) && isParkedRow(x); })[0] || null;
+}
+/** Fix: close this panel, open the item in Maintain with its card — the person types the corrected change and saves it the usual way */
+async function parkedFix(no){
+  var item = parkedItem(await parkedRowOf(no));
+  if (!item) { toastLine('That item is no longer in this counter’s catalogue — drop the change.'); return; }
+  document.getElementById('billsdlg').close();
+  setMode('maintain'); CARD_ID = item.item_id; pendClear(); paintCard(); paintHits();
+  toastLine(item.name + ' is open. Change it and save — the old refused change is replaced.');
+}
+/** Drop: a deliberate confirm that says what it reaches, then the owner's PIN — the counter may have applied the change here already, so it reads the shop again */
+async function parkedDrop(no){
+  var row = await parkedRowOf(no); if (!row) return;
+  var ok = await sure('Drop this change?\n\n' + (row.says || 'A change to the shop') + '\n\nThe shop refused it, so it never reached any counter, the storefront or the books. '
+    + 'Dropping forgets it here; nothing else changes.', 'Yes, drop it', 'Drop a refused change');
+  if (!ok) return;
+  var owner = await ownerPinAsk('Dropping a refused change is the owner’s decision.', 'Drop a refused change');
+  if (!owner) return;
+  try {
+    await DB.del('queue', no); await queueTally(); paintStatus();
+    toastLine('Dropped. This counter reads the shop again so it shows what the shop has.');
+    try { refreshNow(); } catch (e) { cbQuiet('parkedDrop:1', e); }
+  } catch (e) { toastLine('Could not drop it: ' + ((e && e.message) || 'unknown')); }
+  openStuck();
+}
 /**
  * ⭐⭐ SET ASIDE — THE WAY OUT OF A ROW THAT WILL NEVER GO. Athi, 2026-09-16: *"it is all stuck, the screen says
  * sent but it is not reaching the task — how do I remove the stuck rows?"*
@@ -24647,7 +24768,7 @@ async function openStuck(){
      be sent" right above "All sent · 7 working". The key line is for a counter with neither (CloudHost.cred() is the one answer). */
   else if (!(HOST && (HOST.key || (typeof HOST.cred === 'function' && HOST.cred())))) verdict = 'Nobody is signed in on this counter, so nothing can be sent. Sign in, or pair it from the shop.';
   else if (!lineUp()) verdict = 'No line to the shop. The bills are safe here and go as soon as it returns.';
-  else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
+  else if (sendableRows(qMine).length) verdict = sendableRows(qMine).length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
   /**
    * ⚠️⚠️ AN EMPTY QUEUE IN *THIS* COPY IS NOT AN EMPTY COUNTER. Pairing again starts a new database named after
    * the new key, so the previous copy — and anything still queued in it — is abandoned where nothing looks. This
@@ -24669,7 +24790,7 @@ async function openStuck(){
   /* ⚠️ kept so the report that is SENT says the same thing the shopkeeper is looking at — two accounts of one
      counter, differing by a refresh, is how a support call goes wrong */
   STUCK_VERDICT = verdict;
-  h = '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
+  h = parkedSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
     + '<div class="qbar" style="padding:8px 0">'
     + '<button class="pill" data-testid="till-stuck-release" onclick="releaseQueue()"><b>▶ Get my bills moving</b></button>'
     + '<button class="pill" data-testid="till-stuck-send" onclick="stuckSend()">📨 Tell ChitBridge</button>'
@@ -24805,7 +24926,7 @@ async function stuckReport(){
   if (!qM.length) L.push('  nothing of this shop\'s is queued');
   qM.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
     .slice(0, 20).forEach(function(q){
-      L.push('  ' + (q.no || '(unnumbered)') + '  tries=' + (q._tries || 0)
+      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : '') + '  tries=' + (q._tries || 0)
         + '  status=' + (q._status || '—') + '  ' + (qWaitWords(q) || 'due now') + '  '
         + (q._why || 'not refused — not yet attempted'));
     });

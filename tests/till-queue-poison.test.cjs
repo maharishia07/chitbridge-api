@@ -59,7 +59,7 @@ function counterOn(port) {
     isSaleRow: () => false, renumberBill: async () => null, stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     fetchBy: async (url, init) => fetch(url, init) };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + lift('qBackoff') + lift('qDue') + lift('qSoonest') + liftVar('WAITS_FOR_BILL') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + lift('qBackoff') + lift('qDue') + lift('qSoonest') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + lift('isParkedRow') + lift('parksOn') + lift('sendableRows') + lift('refusedRow') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'till-key'; host.api = 'http://127.0.0.1:' + port;
   host.cred = () => 'till-key'; host.auth = (extra) => Object.assign({ Authorization: 'Bearer till-key' }, extra || {}); host.idemHeaders = (p, b, extra) => extra;
@@ -80,7 +80,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     queueRow('B2/stock', '2026-11-10T09:01:00Z', '/api/till/stock', { item_id: ITEM, status: 'unavailable', by: null }),
     queueRow('C3/flags', '2026-11-10T09:02:00Z', '/api/till/flags', { item_id: ITEM, screen: true })];
   try {
-    await it('a refused queued row (junk value, 400) is parked with the server\'s words and a retry time; the rows behind it go and are deleted', async () => {
+    await it('a refused queued CHANGE (junk value, 400) is PARKED (till-park) with the server\'s words and no retry time; the rows behind it go and are deleted', async () => {
       const { host, DB } = counterOn(port);
       [poison(), ...behind()].forEach((r) => { DB.stores.queue[r.no] = r; });
       await host.drain({ force: true });
@@ -90,21 +90,22 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       assert.strictEqual(row._status, 400, 'status ' + row._status);
       assert.strictEqual(row._code, 'TILL_BAD_REQUEST');
       assert.ok(row._why && /holder/.test(row._why), 'the row does not carry the server\'s words: ' + row._why);
-      assert.ok(row._nextAt > Date.now(), 'no later retry time (it would be hammered)');
+      assert.ok(row._parked && row._parked.status === 400 && row._parked.why === row._why, 'not marked parked: ' + JSON.stringify(row._parked));
+      assert.strictEqual(row._nextAt, undefined, 'a parked row has no retry time: it waits for a person');
       assert.strictEqual(row._tries, 1);
       assert.ok(row.tillPost && row.tillPost.body.holder === 'a phone number', 'the row itself was changed or dropped');
     });
-    await it('the parked row is skipped by the next un-forced drain (not hammered); the rows queued after it still go', async () => {
+    await it('the parked row is skipped by the next drain, even a FORCED one (Send now); the rows queued after it still go', async () => {
       const { host, DB } = counterOn(port);
       DB.stores.queue['A1/reward'] = poison();
       await host.drain({ force: true });
       const tries = DB.stores.queue['A1/reward']._tries;
       behind().forEach((r) => { DB.stores.queue[r.no] = r; });
-      await host.drain();
+      await host.drain({ force: true });
       assert.deepStrictEqual(Object.keys(DB.stores.queue), ['A1/reward'], 'queue: ' + JSON.stringify(Object.keys(DB.stores.queue)));
-      assert.strictEqual(DB.stores.queue['A1/reward']._tries, tries, 'tried again before its time');
+      assert.strictEqual(DB.stores.queue['A1/reward']._tries, tries, 'a parked row was tried again');
     });
-    await it('a refused bill (junk value in a known key of POST /api/chits/send) is parked, never deleted, and does not stop the rows behind it', async () => {
+    await it('a refused BILL-side row (junk value in a known key of POST /api/chits/send) keeps the backoff ladder (till-park never parks a bill), is never deleted, and does not stop the rows behind it', async () => {
       const { host, DB } = counterOn(port);
       DB.stores.queue['S1'] = { no: 'S1', at: '2026-11-10T08:00:00Z', chitBody: { purpose: 'invoice', self_copy: 'everyone', recipients: [{ self: true }] } };
       behind().forEach((r) => { DB.stores.queue[r.no] = r; });
@@ -112,6 +113,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       assert.deepStrictEqual(Object.keys(DB.stores.queue), ['S1'], 'queue: ' + JSON.stringify(Object.keys(DB.stores.queue)));
       assert.strictEqual(DB.stores.queue['S1']._status, 400);
       assert.ok(DB.stores.queue['S1']._why, 'no words kept');
+      assert.ok(!DB.stores.queue['S1']._parked && DB.stores.queue['S1']._nextAt > Date.now(), 'a bill must retry on the ladder, not be parked');
     });
     await it('the door never refuses a junk value with 401 or 403 (the drain stops the WHOLE queue on those, unless the code is TILL_SEND_REFUSED)', async () => {
       const bodies = [['/api/till/flags', { item_id: { a: 1 } }], ['/api/till/stock', { item_id: ITEM, status: 5 }], ['/api/till/stock/bulk', { item_ids: 'x' }], ['/api/till/reward', { ref: 'A1', holder: 'x' }],
