@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
-| 131 | `rows` | `crm.js` | still in them: |
+| 132 | `rows` | `crm.js` | still in them: |
 | 123 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
