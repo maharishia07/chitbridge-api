@@ -138,6 +138,17 @@ const get = (port, p) => new Promise((ok, bad) => http.get({ host: '127.0.0.1', 
   await answer([lines[0]]);
   t('a receipt of my own products carries no stock_not_posted key', said.stock_not_posted === undefined, true);
 
+  console.log('\n══ cost-blind reader: the two OPS fields survive prune(), money still drops ══\n');
+  const cv = require(API + '/lib/cost-view');
+  const mw = { chit_id: 'c', lines: [{ line_id: 'l', name: 'Rice', ordered: 10, price: 60, other_units: [{ unit: 'piece', mine: 12, theirs: 0, price: 60, amount_minor: 600 }] }], verdict: 'open' };
+  const cutM = cv.prune(mw, cv.MATCH_KEEP);
+  t('match: other_units keeps unit / mine / theirs for a cost-blind reader', mw.lines[0].other_units, [{ unit: 'piece', mine: 12, theirs: 0 }]);
+  t('match: a planted price and amount_minor drop (line price + 2 in other_units = 3 removed)', [cutM, mw.lines[0].price], [3, undefined]);
+  const a2 = { chit_id: 'c', stock_not_posted: [{ line_ref: 'L2', particulars: 'Freight', code: 'no_product', why: 'no product of mine', price: 60, amount: 100 }] };
+  const cutA = cv.prune(a2, cv.SEND_ANSWER_KEEP);
+  t('send answer: stock_not_posted keeps line_ref / particulars / code / why', a2.stock_not_posted, [{ line_ref: 'L2', particulars: 'Freight', code: 'no_product', why: 'no product of mine' }]);
+  t('send answer: a planted price and amount in a not-posted line drop (2 removed)', cutA, 2);
+
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
   console.log(pass + ' checks');
   process.exit(fail ? 1 : 0);
