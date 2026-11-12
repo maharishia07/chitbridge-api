@@ -1598,32 +1598,6 @@
         "url": "/api/assist/erp-handoffs"
       }
     },
-    "GET /api/assist/gaps": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "ok",
-          "data",
-          "deprecated"
-        ],
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          },
-          "data": {},
-          "deprecated": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 5,
-      "open": [],
-      "example": {
-        "url": "/api/assist/gaps"
-      }
-    },
     "GET /api/assist/penetration": {
       "status": "200",
       "schema": {
@@ -5241,180 +5215,6 @@
         "url": "/api/chits/unread"
       }
     },
-    "GET /api/connections/list": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "count",
-          "connections",
-          "total",
-          "page",
-          "limit"
-        ],
-        "properties": {
-          "count": {
-            "type": "number"
-          },
-          "connections": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "connection_id",
-                "from_entity_id",
-                "from_display_name",
-                "from_bridge_id",
-                "to_entity_id",
-                "to_display_name",
-                "to_bridge_id",
-                "status",
-                "note",
-                "created_at"
-              ],
-              "properties": {
-                "connection_id": {
-                  "type": "string"
-                },
-                "from_entity_id": {
-                  "type": "string"
-                },
-                "from_display_name": {
-                  "type": "string"
-                },
-                "from_bridge_id": {
-                  "type": "string"
-                },
-                "to_entity_id": {
-                  "type": "string"
-                },
-                "to_display_name": {
-                  "type": "string"
-                },
-                "to_bridge_id": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string"
-                },
-                "note": {
-                  "type": "string"
-                },
-                "created_at": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "x-closed-by": "recordings"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          }
-        },
-        "additionalProperties": false,
-        "x-closed-by": "recordings"
-      },
-      "observed": 4,
-      "open": [],
-      "closed_by": "recordings",
-      "example": {
-        "url": "/api/connections/list?limit=1"
-      }
-    },
-    "GET /api/connections/pending": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "count",
-          "requests",
-          "total",
-          "page",
-          "limit"
-        ],
-        "properties": {
-          "count": {
-            "type": "number"
-          },
-          "requests": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "connection_id",
-                "from_entity_id",
-                "from_display_name",
-                "from_bridge_id",
-                "to_entity_id",
-                "to_display_name",
-                "to_bridge_id",
-                "status",
-                "note",
-                "created_at"
-              ],
-              "properties": {
-                "connection_id": {
-                  "type": "string"
-                },
-                "from_entity_id": {
-                  "type": "string"
-                },
-                "from_display_name": {
-                  "type": "string"
-                },
-                "from_bridge_id": {
-                  "type": "string"
-                },
-                "to_entity_id": {
-                  "type": "string"
-                },
-                "to_display_name": {
-                  "type": "string"
-                },
-                "to_bridge_id": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string"
-                },
-                "note": {
-                  "type": "string"
-                },
-                "created_at": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "x-closed-by": "recordings"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          }
-        },
-        "additionalProperties": false,
-        "x-closed-by": "recordings"
-      },
-      "observed": 4,
-      "open": [],
-      "closed_by": "recordings",
-      "example": {
-        "url": "/api/connections/pending"
-      }
-    },
     "GET /api/counters": {
       "status": "200",
       "schema": {
@@ -7897,50 +7697,6 @@
           "done": true
         }
       }
-    },
-    "PATCH /api/entities/me/locale": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "ok"
-        ],
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "prefs": {
-            "type": "object"
-          },
-          "locale_prefs": {
-            "type": "object"
-          },
-          "ui_prefs": {
-            "type": "object"
-          },
-          "pending": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 4,
-      "open": [
-        {
-          "path": "prefs",
-          "reason": "the preference sets stored on the caller own row: keys named by the PREF_SETS lists, merged with what the column already holds"
-        }
-      ],
-      "example": {
-        "url": "/api/entities/me/locale",
-        "body": {
-          "lang": "ta"
-        }
-      },
-      "basis": "hand: the handler literal is { ok, kind, prefs, [set.column] } with the column locale_prefs or ui_prefs (routes/entities.js PREF_SETS), and { ok:false, pending:true } before the column exists; the recorded values are user data, left open"
     },
     "PATCH /api/entities/me/prefs/:kind": {
       "status": "200",
@@ -14301,34 +14057,6 @@
         "url": "/api/schemas/fields"
       }
     },
-    "GET /api/schemas/my": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "schema"
-        ],
-        "properties": {
-          "schema": {
-            "type": [
-              "object",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 4,
-      "open": [
-        {
-          "path": "schema",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/schemas/my"
-      }
-    },
     "GET /api/simulator/content": {
       "status": "200",
       "schema": {
@@ -17595,38 +17323,6 @@
         "body": {
           "standard": "food-safety@v1",
           "payload": {}
-        }
-      }
-    },
-    "POST /api/assist/gap": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "ok",
-          "noted",
-          "via"
-        ],
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          },
-          "noted": {
-            "type": "boolean"
-          },
-          "via": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 1,
-      "open": [],
-      "example": {
-        "url": "/api/assist/gap",
-        "body": {
-          "q": "how do I pay?",
-          "context": "compose"
         }
       }
     },
@@ -38239,44 +37935,6 @@
         }
       }
     },
-    "POST /api/actors/check-key": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "actor_key",
-          "available",
-          "login_format",
-          "message"
-        ],
-        "properties": {
-          "actor_key": {
-            "type": "string"
-          },
-          "available": {
-            "type": "boolean"
-          },
-          "login_format": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 2,
-      "open": [],
-      "example": {
-        "url": "/api/actors/check-key",
-        "body": {
-          "actor_key": "ravik"
-        }
-      }
-    },
     "POST /api/actors/suggest-key": {
       "status": "200",
       "schema": {
@@ -46221,7 +45879,6 @@
     "GET /api/relationships/customers/:id/rewards": "open at recent[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "not closed: the answer is the remote seller's object (lib/remote-catalogue) or the whole catalogue view passed through, so its root keys are not written in the handler",
-    "GET /api/schemas/my": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",

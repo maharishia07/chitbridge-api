@@ -149,11 +149,6 @@
    "reason": "the ci is a configuration-item name the builder writes; an unknown name is created, so it never answers 404"
   },
   {
-   "route": "GET /api/assist/gaps",
-   "status": 500,
-   "reason": "deprecated route that reads nothing and cannot fail"
-  },
-  {
    "route": "GET /api/assist/whoami",
    "status": 500,
    "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"

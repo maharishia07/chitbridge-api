@@ -153,7 +153,6 @@ module.exports = {
     'POST /api/offers/explain': { body: () => ({ lines: [{ name: 'lt-item', qty: 2, unitPrice: 100 }], offers: [], ctx: { currency: 'INR' } }) },
     'POST /api/pricing/price': { make: async (api) => ({ body: { lines: [{ item_id: await itemId(api), qty: 1, listPrice: 100 }] } }) },
     'POST /api/tax/rate': { make: async (api) => ({ body: { lines: [{ item_id: await itemId(api), qty: 1, price: 100, name: 'lt-item' }] } }) },
-    'POST /api/assist/gap': { body: () => ({ q: 'lt- how do I count stock?' }) },
     'PUT /api/assist/catalogue-source': { body: () => ({ source_key: 'royale-play@v1' }) },
     'PUT /api/assist/region-override': { make: async (api) => { const containerId = 'lt/' + randomHex(); await must(api, 'PUT', '/api/assist/container', { container_id: containerId, name: 'lt-container' }); return { body: { container_id: containerId, region: 'IN' } }; } },
     'GET /api/assist/container/:id': { make: async (api) => { const containerId = 'lt/' + randomHex(); await must(api, 'PUT', '/api/assist/container', { container_id: containerId, name: 'lt-container' }); return { params: { id: encodeURIComponent(containerId) } }; } },

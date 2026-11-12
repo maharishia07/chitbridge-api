@@ -216,19 +216,13 @@ function extras(tools) {
     X('handshake-made', 'POST ' + CON + '/request', 200, { body: { to_entity_id: C, note: 'hi' }, setup: world() }),
     X('handshake-db-fails', 'POST ' + CON + '/request', 500, { body: { to_entity_id: C }, setup: failing }),
     N('handshake-body-a-list', 'POST ' + CON + '/request', 400, { body: [], setup: world() }),
-    X('pending-one', 'GET ' + CON + '/pending', 200, { setup: world(asked) }),
-    X('pending-a-page', 'GET ' + CON + '/pending', 200, { url: CON + '/pending?page=1&limit=1', setup: world(asked) }),
-    N('pending-limit-asked-twice', 'GET ' + CON + '/pending', 400, { url: CON + '/pending?limit=1&limit=2', setup: world(asked) }), /* B2: a handler-made refusal for the error tests */
     X('respond-needs-an-action', 'PUT ' + CON + '/:id/respond', 400, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'maybe' } }),
     X('respond-unknown', 'PUT ' + CON + '/:id/respond', 404, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: world() }),
     X('respond-unknown-key-refused', 'PUT ' + CON + '/:id/respond', 400, { url: CON + '/' + CONNECTION + '/respond', body: { colour: 'red', action: 'accept' }, setup: world(asked) }),
     X('respond-accepted', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: world(asked) }),
     X('respond-rejected', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'reject' }, setup: world(asked) }),
     X('respond-spaced-word', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: ' accept ' }, setup: world(asked) }),
-    X('respond-db-fails', 'PUT ' + CON + '/:id/respond', 500, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: failing }),
-    X('list-one', 'GET ' + CON + '/list', 200, { setup: world({ request: 'accepted' }) }),
-    X('list-a-page', 'GET ' + CON + '/list', 200, { url: CON + '/list?limit=1', setup: world({ request: 'accepted' }) }),
-    N('list-limit-asked-twice', 'GET ' + CON + '/list', 400, { url: CON + '/list?limit=1&limit=2', setup: world({ request: 'accepted' }) }) /* B2: a handler-made refusal for the error tests */
+    X('respond-db-fails', 'PUT ' + CON + '/:id/respond', 500, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: failing })
   ];
   return tree.concat(designed, handshake);
 }

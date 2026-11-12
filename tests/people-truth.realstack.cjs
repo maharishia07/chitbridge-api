@@ -114,8 +114,7 @@ const codeLeak = (body) => { const s = JSON.stringify(body); return /"(otp|otp_c
   await kase('PP-06', 'a sign-in id is unique per shop: the same key twice is refused, and it is free in another shop', async () => {
     const first = await addActor(A, 'Una Unique', 'h'), again = { display_name: 'Una Twin', actor_key: key('h'), access_level: 'editor' };
     const twin = await j('/api/actors', { method: 'POST', token: A.token, body: again });
-    const check = ok(await j('/api/actors/check-key', { method: 'POST', token: A.token, body: { actor_key: key('h') } }), 'check-key').b;
-    expect(twin.status === 400 && twin.b.code === 'ACTOR_KEY_TAKEN' && check.available === false, 'same key twice answered ' + twin.status + ' ' + JSON.stringify(twin.b).slice(0, 160) + ' · check-key ' + JSON.stringify(check));
+    expect(twin.status === 400 && twin.b.code === 'ACTOR_KEY_TAKEN, 'same key twice answered ' + twin.status + ' ' + JSON.stringify(twin.b).slice(0, 160));
     const B = await freshShop(RUN + 'b', 'People truth two');
     const other = ok(await j('/api/actors', { method: 'POST', token: B.token, body: again }), 'the same key in another shop').b;
     expect(other.actor.login_format !== first.actor.login_format, 'the two shops gave one sign-in id ' + other.actor.login_format);

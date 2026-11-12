@@ -59,9 +59,8 @@ const columns = async (shop) => ok(await j('/api/schemas/fields', { token: shop.
     const known = await j('/api/schemas/fields/grade', { method: 'PATCH', token: A.token, body: { field_name: 'Quality ' + RUN, required: false } });
     expect(extra.status === 400 && (extra.b.errors || []).some((one) => one.field === 'zz_unknown') && known.status === 200, JSON.stringify({ extra: extra.b, known: known.status }).slice(0, 240));
   });
-  await kase('SC-07', 'PATCH /visibility is stored and read back by GET /my; a value outside the three is refused in the old words', async () => {
-    ok(await j('/api/schemas/visibility', { method: 'PATCH', token: A.token, body: { visibility: 'restricted' } }), 'set');
-    const mine = ok(await j('/api/schemas/my', { token: A.token }), 'my').b.schema;
+  await kase('SC-07', 'PATCH /visibility is stored and answered back; a value outside the three is refused in the old words', async () => {
+    const mine = ok(await j('/api/schemas/visibility', { method: 'PATCH', token: A.token, body: { visibility: 'restricted' } }), 'set').b;
     const bad = await j('/api/schemas/visibility', { method: 'PATCH', token: A.token, body: { visibility: 'secret' } });
     expect(mine && mine.visibility === 'restricted' && bad.status === 400 && bad.b.error === 'Validation failed', JSON.stringify({ visibility: mine && mine.visibility, bad: bad.b }).slice(0, 200));
   });

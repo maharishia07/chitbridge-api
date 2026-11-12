@@ -133,14 +133,6 @@
     "pass": true
    }
   },
-  "PATCH /api/entities/me/locale": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": true
-   }
-  },
   "PATCH /api/entities/profile": {
    "strict_input": {
     "pass": true
@@ -227,12 +219,6 @@
     "why": "not reached: answered 400"
    }
   },
-  "GET /api/connections/pending": {
-   "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
-   }
-  },
   "PUT /api/connections/:id/respond": {
    "strict_input": {
     "pass": true
@@ -242,12 +228,6 @@
    },
    "foreign_id_404": {
     "pass": true
-   }
-  },
-  "GET /api/connections/list": {
-   "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "POST /api/chits/send": {
@@ -1647,12 +1627,6 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
-  "GET /api/schemas/my": {
-   "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
-   }
-  },
   "POST /api/schemas/create-default": {
    "strict_input": {
     "pass": true
@@ -1706,14 +1680,6 @@
    }
   },
   "POST /api/actors/suggest-key": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": true
-   }
-  },
-  "POST /api/actors/check-key": {
    "strict_input": {
     "pass": true
    },
@@ -3318,23 +3284,10 @@
     "pass": true
    }
   },
-  "POST /api/assist/gap": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": true
-   }
-  },
   "POST /api/assist/publish": {
    "strict_input": {
     "pass": true
    },
-   "output_allowlist": {
-    "pass": true
-   }
-  },
-  "GET /api/assist/gaps": {
    "output_allowlist": {
     "pass": true
    }

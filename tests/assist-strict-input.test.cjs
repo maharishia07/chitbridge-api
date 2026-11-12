@@ -31,7 +31,6 @@ const CASES = [
   ['PUT /api/assist/catalogue-source', 'routes/assist.js', [{ source_key: 'k', version: 1, for_vertical: 'v', title: 't', collection: 'c', schema: {}, items: [], commercials_fields: [], experience: {}, formatting: {} }]],
   ['PUT /api/assist/container', 'routes/assist.js', [{ container_id: 'royaleplay/tussar-1', name: 'Tussar', source_key: 'royale-play@v1', content: { story: 'v1' }, schema: { fields: ['name'] } }, { container_id: 'royaleplay/tussar-1', content: { story: 'v2' } }]],
   ['PUT /api/assist/region-override', 'routes/assist.js', [{ container_id: 'c', region: 'IN', overrides: {} }]],
-  ['POST /api/assist/gap', 'routes/assist.js', [{ q: 'how', context: 'catalogue' }]],
   ['POST /api/assist/publish', 'routes/assist.js', [{ question: 'q', answer: 'a', context: 'c' }, { question: 'q', answer: 'a', context: 'c', qa_id: 'id1' }]]
 ];
 const IGNORED_READS = new Set(['length', 'map', 'filter', 'slice', 'trim', 'toString', 'forEach', 'some', 'every', 'join', 'split', 'includes', 'hasOwnProperty']);

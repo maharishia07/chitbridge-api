@@ -277,14 +277,6 @@
       "status": 200,
       "extra": true
     },
-    "GET /api/assist/gaps": {
-      "file": "assist.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
     "GET /api/assist/penetration": {
       "file": "assist.js",
       "trips": 1,
@@ -954,22 +946,6 @@
       "file": "combo-templates.js",
       "trips": 1,
       "wire": 4,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/connections/list": {
-      "file": "connections.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/connections/pending": {
-      "file": "connections.js",
-      "trips": 1,
-      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1933,14 +1909,6 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06"
     },
-    "GET /api/schemas/my": {
-      "file": "schemas.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
     "GET /api/service/:chit_id": {
       "file": "service.js",
       "trips": 1,
@@ -2392,14 +2360,6 @@
       "fired": true,
       "status": 400
     },
-    "PATCH /api/entities/me/locale": {
-      "file": "entities.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
     "PATCH /api/entities/me/prefs/:kind": {
       "file": "entities.js",
       "trips": 0,
@@ -2533,14 +2493,6 @@
       "status": 404,
       "extra": true
     },
-    "POST /api/actors/check-key": {
-      "file": "actors.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 400,
-      "extra": true
-    },
     "POST /api/actors/login": {
       "file": "actors.js",
       "trips": 0,
@@ -2597,16 +2549,6 @@
       "wire": 0,
       "fired": true,
       "status": 422
-    },
-    "POST /api/assist/gap": {
-      "file": "assist.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "fixture_body": {
-        "q": "how do I pay a bill"
-      }
     },
     "POST /api/assist/publish": {
       "file": "assist.js",
