@@ -183,7 +183,6 @@ async function dateOnlyExpiry() {
 (async () => {
   console.log('\n══ CAT-222 · the till price move and worth-an-offer, at the route ══');
   lab.installStubs();
-  clock.set(PINNED);
   const app = express();
   app.use((req, res, next) => {
     req.id = 'req-test';
@@ -195,6 +194,7 @@ async function dateOnlyExpiry() {
   const server = app.listen(0);
   port = server.address().port;
   try {
+    clock.set(PINNED);
     await priceMoves();
     await priceRefusals();
     await worthAnOffer();
