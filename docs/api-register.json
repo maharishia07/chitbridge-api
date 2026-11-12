@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 4,
-  "meets": 627,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -31101,11 +31101,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "467e34ad571a57e8"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -56579,11 +56578,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "364fce06aaa4049b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
@@ -56682,11 +56680,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "471fc8c79f9c2f6f"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
@@ -56789,11 +56786,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a1f8fa3246544304"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
