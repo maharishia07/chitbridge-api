@@ -254,6 +254,12 @@ function create() {
     async lockParty() {},
     async lockOpening() {} /* ACC-328: the same — the race is proved on real Postgres (tests/acc-328-opening-twice.realstack.cjs) */,
     async lockTaxHeads() {} /* ACC-275: the same — the race is proved on real Postgres (tests/acc-275-gst-replay-truth.realstack.cjs) */,
+    async loanOutstanding(db, e, ref, roles) {
+      const mine = T.entries.filter((x) => x.entity_id === e && (x.source_ref === 'loan:' + ref || String(x.source_ref || '').indexOf('emi:' + ref + ':') === 0) && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
+      const lines = T.lines.filter((l) => mine.some((x) => x.entry_id === l.entry_id) && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
+      const currencies = Array.from(new Set(lines.map((l) => l.currency)));
+      return { minor: lines.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), currency: currencies.length > 1 ? '*mixed*' : currencies[0] || null };
+    },
     async entryDebitsByRole(db, e, entryId) {
       const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};
       rows.forEach((l) => { const role = (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; by[role] = by[role] || { role, dr_minor: 0, currency: l.currency }; by[role].dr_minor += l.dr_minor; });
