@@ -69,8 +69,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     r = await patch('/me/prefs/locale', { hc: 'h12' });
     t('a locale save keeps the keys it did not send', row.locale_prefs.lang === 'ta' && row.locale_prefs.nu === 'tamldec' && row.locale_prefs.hc === 'h12', JSON.stringify(row.locale_prefs));
     t("…and signin's langs_seen", same(row.locale_prefs.langs_seen, ['ta', 'en']));
-    r = await patch('/me/locale', { nu: '' });
-    t('the legacy /me/locale door merges too', !('nu' in row.locale_prefs) && row.locale_prefs.lang === 'ta');
+    r = await patch('/me/prefs/locale', { nu: '' });
+    t('an empty value erases that key and merges the rest', !('nu' in row.locale_prefs) && row.locale_prefs.lang === 'ta');
     t('ui_prefs untouched by a locale save', row.ui_prefs.theme === 'dark');
 
     /* CU3: timezone · workdays · reading font · bold reach the server (they were sent and dropped, or never sent) */

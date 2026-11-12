@@ -46,7 +46,6 @@ const WRITE_ALLOW = {
   'POST /api/assist': 'asking the assistant (public KB when anonymous); creates nothing on the rail',
   'POST /api/assist/conform': 'a deterministic check, returned not saved',
   'POST /api/assist/catalogue-structure': 'a proposed structure, returned not saved',
-  'POST /api/assist/gap': 'deprecated no-op: logs a line, writes nothing',
   /* customer-side logins (the shop\'s buyers), not co-assists */
   'POST /api/catalogue/network-store/:networkId/order': 'a buyer\'s order through the network store (customer token checked in the handler)',
   'POST /api/catalogue/:bridge_id/order/start': 'a buyer starts an order (OTP to their own phone/e-mail)',
@@ -61,7 +60,6 @@ const WRITE_ALLOW = {
   'PUT /api/actors/break': 'the caller\'s own break; naming someone else is owner-only (ownerWhenOther)',
   'POST /api/chits/:chit_id/messages': 'internal messaging for a commenter; the handler refuses an EXTERNAL thread for a read-only login',
   'PATCH /api/entities/me/prefs/:kind': 'the caller\'s own appearance/locale preference, not a record',
-  'PATCH /api/entities/me/locale': 'the caller\'s own locale, not a record',
   'PUT /api/identity/documents/:scheme': 'the caller\'s own identity document (the subject is always req.identity)',
   'POST /api/identity/documents/:scheme/code': 'the caller\'s own identity document code',
   'POST /api/identity/documents/:scheme/verify': 'the caller\'s own identity document check',

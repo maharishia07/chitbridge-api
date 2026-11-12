@@ -28671,38 +28671,6 @@
     }
    ]
   },
-  "GET /api/connections/list": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to get connections",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to get connections",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/connections/pending": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to get requests",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to get requests",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
   "GET /api/network-design": {
    "answers": [
     {
@@ -38799,46 +38767,6 @@
     }
    ]
   },
-  "PATCH /api/entities/me/locale": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to save",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to save",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "locale-bad-value",
-     "status": 400,
-     "body_keys": {
-      "error": "Bad preference",
-      "message": "lang is not a valid value"
-     },
-     "fixture": {
-      "error": "Bad preference",
-      "message": "lang is not a valid value"
-     }
-    },
-    {
-     "scenario": "locale-db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to save",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to save",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
   "PATCH /api/entities/me/prefs/:kind": {
    "answers": [
     {
@@ -42069,172 +41997,6 @@
     }
    ]
   },
-  "POST /api/actors/check-key": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "check-key-unusable",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "actor_key",
-        "message": "Invalid value"
-       },
-       {
-        "field": "actor_key",
-        "message": "Lowercase letters and numbers only — 4 to 12 characters"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "check-key-db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Check failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Check failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
   "POST /api/actors/suggest-key": {
    "answers": [
     {
@@ -45037,106 +44799,6 @@
     }
    ]
   },
-  "POST /api/assist/gap": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "gap-needs-a-question",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "gap-too-long",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Question is too long."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Question is too long."
-     }
-    },
-    {
-     "scenario": "gap-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Could not note the question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Could not note the question."
-     }
-    }
-   ]
-  },
   "POST /api/assist/publish": {
    "answers": [
     {
@@ -46628,34 +46290,6 @@
      },
      "fixture": {
       "error": "Failed to get fields",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/schemas/my": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to get schema",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to get schema",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "my-answer-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to get schema",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to get schema",
       "message": "Something went wrong — please try again."
      }
     }
@@ -49888,18 +49522,6 @@
      }
     },
     {
-     "scenario": "up-chit-text-not-a-uuid",
-     "status": 500,
-     "body_keys": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
      "scenario": "up-chit-of-another-shop",
      "status": 403,
      "body_keys": {
@@ -50007,66 +49629,6 @@
     },
     {
      "scenario": "up-answer-cannot-be-written",
-     "status": 500,
-     "body_keys": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "up-line-index-abc-is-nan",
-     "status": 500,
-     "body_keys": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "up-line-index-empty-text-is-nan",
-     "status": 500,
-     "body_keys": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "up-line-index-true-is-nan",
-     "status": 500,
-     "body_keys": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "up-line-index-too-big-for-an-integer",
-     "status": 500,
-     "body_keys": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Upload failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "up-message-text-not-a-uuid",
      "status": 500,
      "body_keys": {
       "error": "Upload failed",

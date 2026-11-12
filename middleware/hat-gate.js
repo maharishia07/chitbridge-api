@@ -49,7 +49,6 @@ const access = require('../lib/access'); // b173 — viewer / commenter / editor
  */
 const SELF_SCOPED = [
   ['/entities/me/prefs', 'their own locale and appearance — a display choice, not a record'],
-  ['/entities/me/locale', 'the same, under its pre-b166 name (PPL-27: a viewer keeps this)'],
   ['/actors/me', 'their own profile row'],
   /**
    * ⭐ A PERSON'S OWN IDENTITY DOCUMENTS ARE THEIRS, NOT THE BUSINESS'S. b174. Athi: *"which HE can submit here
