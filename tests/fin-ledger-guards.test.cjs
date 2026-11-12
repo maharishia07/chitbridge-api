@@ -105,6 +105,26 @@ const said = (r) => JSON.stringify(r.body);
     const interestOnly = await q('POST', '/loans/L-1/emi', { principal_minor: 0, interest_minor: 5000, client_ref: 'm3', date: '2026-06-02' });
     ok('FIN-92: an interest-only instalment (principal 0) is not held to the balance -> 200', interestOnly.status === 200, interestOnly.status + ' ' + said(interestOnly));
 
+    /* FIN-92 · a loan ref holding a colon is its own loan: L and L:2 on one account */
+    await q('POST', '/loans', { ref: 'L', lender: 'A', amount_minor: 1000000, into: 'bank', date: '2026-04-04' });
+    await q('POST', '/loans', { ref: 'L:2', lender: 'B', amount_minor: 700000, into: 'bank', date: '2026-04-04' });
+    const lPaid = await q('POST', '/loans/L/emi', { principal_minor: 1000000, interest_minor: 0, client_ref: 'p1', date: '2026-05-04' });
+    const l2Paid = await q('POST', '/loans/L:2/emi', { principal_minor: 200000, interest_minor: 0, client_ref: 'p1', date: '2026-05-04' });
+    const lMore = await q('POST', '/loans/L/emi', { principal_minor: 100, interest_minor: 0, client_ref: 'p2', date: '2026-06-04' });
+    ok('FIN-92: loans L and L:2 — L repaid Rs 10,000.00, Rs 1.00 more on L -> 422 outstanding ₹0 INR (the repayment of L:2 is not counted for L)', lPaid.status === 200 && l2Paid.status === 200 && lMore.status === 422 && /outstanding ₹0 INR/.test(said(lMore)), lPaid.status + ' ' + l2Paid.status + ' ' + lMore.status + ' ' + said(lMore));
+    const l2Over = await q('POST', '/loans/L:2/emi', { principal_minor: 500001, interest_minor: 0, client_ref: 'p2', date: '2026-06-04' });
+    const l2Rest = await q('POST', '/loans/L:2/emi', { principal_minor: 500000, interest_minor: 0, client_ref: 'p3', date: '2026-06-04' });
+    ok('FIN-92: L:2 (Rs 7,000.00, Rs 2,000.00 repaid) still owes Rs 5,000.00: Rs 5,000.01 -> 422 outstanding ₹5,000 INR, Rs 5,000.00 -> 200', l2Over.status === 422 && /outstanding ₹5,000 INR/.test(said(l2Over)) && l2Rest.status === 200, l2Over.status + ' ' + said(l2Over) + ' ' + l2Rest.status);
+    /* the bite of the prefix: M owes Rs 10,000.00 less Rs 8,000.00 = Rs 2,000.00 while M:2 repaid Rs 2,000.00 — a LIKE prefix would have taken that off M too and refused Rs 2,000.00 */
+    await q('POST', '/loans', { ref: 'M', lender: 'A', amount_minor: 1000000, into: 'bank', date: '2026-04-04' });
+    await q('POST', '/loans', { ref: 'M:2', lender: 'B', amount_minor: 700000, into: 'bank', date: '2026-04-04' });
+    await q('POST', '/loans/M/emi', { principal_minor: 800000, interest_minor: 0, client_ref: 'p1', date: '2026-05-04' });
+    await q('POST', '/loans/M:2/emi', { principal_minor: 200000, interest_minor: 0, client_ref: 'p1', date: '2026-05-04' });
+    const mRest = await q('POST', '/loans/M/emi', { principal_minor: 200000, interest_minor: 0, client_ref: 'p2', date: '2026-06-04' });
+    ok('FIN-92: M owes Rs 2,000.00 (M:2 repaid Rs 2,000.00 separately) -> principal Rs 2,000.00 on M is 200', mRest.status === 200, mRest.status + ' ' + said(mRest));
+    const colon = await q('POST', '/loans/L/emi', { principal_minor: 100, interest_minor: 0, client_ref: 'a:b', date: '2026-06-05' });
+    ok('FIN-92: an instalment reference holding a colon -> 400 (the loan ref is read back before the last colon)', colon.status === 400, colon.status + ' ' + said(colon));
+
     /* CAT-127 · a month pack is made from a locked month */
     const openPack = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 7 });
     ok('CAT-127: a month pack for an OPEN month -> 409 BOOKS_CONFLICT in words, no pack row',
