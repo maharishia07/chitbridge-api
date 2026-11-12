@@ -13,7 +13,9 @@ const H = require(path.join(__dirname, 'lib', 'truth-harness.cjs')), G = require
 (async () => {
   await H.j('/api/entities/register?x=1', { method: 'POST', body: {} });                       // outside any case: logged, belongs to no case
   await H.kase('C-1', 'two calls', async () => { await H.j('/api/chits/abc123'); await H.j('/api/chits/abc123'); await H.j('/api/chits/missing', { method: 'DELETE' }); });
-  await H.kase('C-2', 'a throw keeps the calls it made', async () => { await H.j('/api/books/x'); throw new Error('boom'); });
+  /* the deliberate throw prints kase's "FAIL" line, which scripts/guards.cjs reads as a red file (/\bFAIL\b/ on the output): keep that one line off the log */
+  const say = console.log; console.log = () => {};
+  try { await H.kase('C-2', 'a throw keeps the calls it made', async () => { await H.j('/api/books/x'); throw new Error('boom'); }); } finally { console.log = say; }
   const c1 = H.results.find((r) => r.id === 'C-1'), c2 = H.results.find((r) => r.id === 'C-2');
   ok(c1.calls.length === 2 && c1.calls[0].m === 'GET' && c1.calls[0].p === '/api/chits/abc123' && c1.calls[1].m === 'DELETE' && c1.calls[1].s === 404, 'a case with three requests (two the same) carries the distinct two: METHOD, path, status');
   ok(c2.pass === false && c2.calls.length === 1 && c2.calls[0].p === '/api/books/x', 'a failed case keeps the request it made before it threw');
