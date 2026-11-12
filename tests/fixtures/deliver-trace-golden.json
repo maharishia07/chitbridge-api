@@ -1153,7 +1153,7 @@
   "calls": [
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at FROM chit_header WHERE summary_json->'trace' IS NOT NULL ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC LIMIT 200",
+    "sql": "SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at FROM chit_header WHERE summary_json->'trace' IS NOT NULL ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC LIMIT 201",
     "params": null
    }
   ]
