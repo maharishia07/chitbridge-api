@@ -289,6 +289,14 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     const remote = devOtp();
     const a = remote.generateOTP('connector');
     t('anywhere else: a random 6-digit code, never a fixed one', /^\d{6}$/.test(a) && a !== require(path.join(API, 'lib', 'dev-otp')).DEFAULTS.connector);
+    say('\n8 · SEC-145: the per-owner cap on e-mail writes (last, it spends the owner hourly budget)');
+    WHO = OWNER; ON_MY_LIST = false; throwOn = null;
+    /* SEC-145: a per-owner hourly cap on Add/Edit calls that carry an e-mail, so the 409 cannot be walked down a list */
+    let capped = null, tries = 0;
+    while (!capped && tries < 60) { tries++; const r = await call('PATCH', '/' + BALA, { email: 'walk' + tries + '@other.test' }); if (r.status === 429) capped = r; }
+    t('SEC-145: after about 40 e-mail writes in an hour the owner gets the one 429 RATE_LIMITED (try ' + tries + ')', !!capped && capped.body.code === 'RATE_LIMITED' && tries > 5 && tries <= 45, capped && capped.raw);
+    const noEmail = await call('PATCH', '/' + BALA, { display_name: 'Bala K' });
+    t('SEC-145: a call WITHOUT an e-mail is never counted: still answered (not 429)', noEmail.status !== 429, noEmail.raw);
   } finally { server.close(); }
   say('\n' + (pass + fail) + ' checks · ' + fail + ' failed');
   process.exitCode = fail ? 1 : 0;

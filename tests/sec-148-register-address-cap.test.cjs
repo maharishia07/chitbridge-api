@@ -41,14 +41,15 @@ const app = express();
 app.use(express.json());
 app.use('/api/entities', require(path.join(API, 'routes', 'entities')));
 let base;
-const register = (email) => new Promise((resolve, reject) => {
-  const data = JSON.stringify({ email, display_name: 'Shop ' + Math.random().toString(36).slice(2, 6) });
+const registerBody = (body) => new Promise((resolve, reject) => {
+  const data = JSON.stringify(Object.assign({ display_name: 'Shop ' + Math.random().toString(36).slice(2, 6) }, body));
   const r = http.request(base + '/api/entities/register', { method: 'POST', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
     let s = ''; res.on('data', (c) => { s += c; });
     res.on('end', () => { let j = null; try { j = JSON.parse(s); } catch (_) { /* a non-JSON body shows in the failure text */ } resolve({ status: res.statusCode, body: j, raw: s.slice(0, 300) }); });
   });
   r.on('error', reject); r.write(data); r.end();
 });
+const register = (email) => registerBody({ email });
 const quiet = (fn) => async () => { const k = console.log; console.log = () => {}; try { return await fn(); } finally { console.log = k; } };
 
 (async () => {
@@ -68,6 +69,11 @@ const quiet = (fn) => async () => { const k = console.log; console.log = () => {
     t('a different address is not affected by that cap', other.status === 200, other.raw);
     const mixed = await quiet(() => register('  NEW@Shop.Test '))();
     t('the key ignores letter case and spaces: the same address typed in capitals is capped too', mixed.status === 429, mixed.raw);
+
+    /* the register door is also the owner's LOGIN (mode:'login'): after the cap is spent a login still goes through, six times over */
+    const logins = [];
+    for (let i = 0; i < 6; i++) logins.push((await quiet(() => registerBody({ email: 'new@shop.test', mode: 'login' }))()).status);
+    t('an owner who is capped for REGISTRATION can still log in (mode:login is never counted: 6 asks, none 429)', logins.every((status) => status !== 429), JSON.stringify(logins));
 
     console.log('— 2 · a mailer outage reads the same on both paths —');
     MAIL = { delivered: false };

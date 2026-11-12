@@ -330,7 +330,7 @@ async function storeCode(identity_id) {
  * (routes/entities.js, the "already on file" notice) both say it, so a mailer outage reads the same on both and the words cannot tell a held address from a free one.
  */
 /**
- * ⭐ SEC-148 · askAddressCap — the register door's PER-ADDRESS cap (the app-level authLimiter counts per IP, so many IPs could mail one address without end). One budget per typed
+ * ⭐ SEC-148 · askAddressCap — the register door's PER-ADDRESS cap (REGISTRATION only: mode:'login' is the owner's sign-in and is never counted) (the app-level authLimiter counts per IP, so many IPs could mail one address without end). One budget per typed
  * address, counted BEFORE anything is looked up, so a held address and a free one are capped alike and over the cap both answer the same 429 (OWASP ASVS V2.2 / V11 anti-automation;
  * the code mail and the "already on file" notice are the same send). REGISTER_PER_ADDRESS_MAX (default 5) per hour, in this process like the other limiters.
  */
@@ -340,7 +340,7 @@ const askAddressCap = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => 'addr:' + typedByAsk({ body: req.body || {} }).toLowerCase().slice(0, 200),
-  skip: (req) => !typedByAsk({ body: req.body || {} }),
+  skip: (req) => !typedByAsk({ body: req.body || {} }) || (req.body || {}).mode === 'login', /* the register door is also the owner's LOGIN (mode:'login'): never capped, only registration is */
   message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
 });
 const sentWords = (sent) =>

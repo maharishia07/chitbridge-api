@@ -2066,7 +2066,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
     const pub = await query('SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
     owner_id = pub.rows[0] && pub.rows[0].entity_id;
   }
-  if (!owner_id) return { ok: false };
+  if (!owner_id) return decoyEnquiryReads(viewer); /* SEC-129: an unknown item does the reads a hidden one does, so the time says nothing */
   if (owner_id === viewer) return { ok: true, owner_id }; // your own product
   const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
@@ -2074,6 +2074,12 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   /* ⭐ SEC-129: the SHOP being enquirable is not enough — THIS item must be one its storefront shows this viewer (private, over-cap, unavailable and network-only items are not), or a 201 versus a 404 tells a stranger the item id exists (the same rule as SEC-126) */
   return viewListsItem(view, item_id) ? { ok: true, owner_id } : { ok: false };
 };
+/** SEC-129 · decoyEnquiryReads(viewer) → { ok:false } after the same two reads (the shop row, then its public view) a hidden item of a real shop costs; the caller's own shop stands in, the result is thrown away */
+async function decoyEnquiryReads(viewer) {
+  const own = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [viewer]);
+  if (own.rows[0]) await publicViewFor(own.rows[0], { viewer }).catch(logger.orElse('catalogue enquiry decoy: the view failed — nothing to say', null));
+  return { ok: false };
+}
 /** SEC-129: does this storefront view show this item (the shop is open to the viewer AND the item is one it lists)? */
 const viewListsItem = (view, item_id) => !!view && view.available !== false && (view.items || []).some((item) => String(item.item_id) === String(item_id));
 

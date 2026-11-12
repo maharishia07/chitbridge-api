@@ -44,6 +44,7 @@ const HEADER = [
   { chit_id: C1, entity_id: S, direction: 'sent', sender_entity_id: S, purpose: 'order', current_status: 'delivered' },
   { chit_id: C1, entity_id: R, direction: 'received', sender_entity_id: S, purpose: 'order', current_status: 'pending' },
 ];
+let CTX = null;   // the shop a withEntity scope runs as (row security: a scoped read sees only its own items)
 let SF = 'login';   // the shop's storefront_access
 const SQL = [];
 
@@ -54,7 +55,7 @@ function rowsFor(sql, p) {
   if (/break_status/.test(s) && /FROM identities/.test(s)) { const a = ACTORS[p[0]]; return a ? [{ break_status: 'active', hat: a.hat, access_level: a.access_level, whole_entity: a.whole_entity }] : []; }
   if (/FROM chit_header h LEFT JOIN chit_detail/.test(s) && /h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return HEADER.filter((h) => h.chit_id === p[0] && h.entity_id === p[1]);
   if (/FROM identities WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) return p[0] === 'shop-s' ? [{ identity_id: S, display_name: 'Shop S', bridge_id: 'shop-s', currency_code: 'INR' }] : [];
-  if (/SELECT entity_id FROM catalogue_items WHERE item_id = \$1/.test(s)) return p[0] === ITEM || p[0] === HIDDEN_ITEM ? [{ entity_id: S }] : p[0] === MY_ITEM ? [{ entity_id: R }] : [];
+  if (/SELECT entity_id FROM catalogue_items WHERE item_id = \$1/.test(s)) { const owner = p[0] === ITEM || p[0] === HIDDEN_ITEM ? S : p[0] === MY_ITEM ? R : null; return owner && (!CTX || CTX === owner) ? [{ entity_id: owner }] : []; }
   if (/SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities/.test(s)) return [{ identity_id: p[0], bridge_id: 'shop-s' }];
   if (/enquiry_message_deliver/.test(s)) return [{ created_at: '2026-10-14T00:00:00.000Z' }];
   if (/FROM chit_messages WHERE entity_id = \$1 AND subject_type = 'product'/.test(s)) {
@@ -67,7 +68,7 @@ const tx = { query: q };
 const dbPath = require.resolve(path.join(API, 'db'));
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
-  withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
+  withEntity: async (id, fn) => { CTX = id; try { return await fn(tx); } finally { CTX = null; } }, withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
   readBatch: async () => ({}), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
 } };
 const sc = require(path.join(API, 'lib', 'schema'));
@@ -196,8 +197,12 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 200);
   await call('POST', '/api/catalogue/enquiry/' + MY_ITEM, tok(R, 'entity'), { message_text: 'testing my own item' });
   t('asking about my own item rings nothing', BELL.length === 0, JSON.stringify(BELL));
   /* SEC-129: an item the shop's storefront does not show answers EXACTLY what an item that does not exist answers (404, same body) — never a 201 that proves the id */
+  let mark = SQL.length;
   const hid = await call('POST', '/api/catalogue/enquiry/' + HIDDEN_ITEM, tok(R, 'entity'), { message_text: 'Do you have this?' });
+  const hidReads = SQL.slice(mark).length; mark = SQL.length;
   const nope = await call('POST', '/api/catalogue/enquiry/' + NO_ITEM, tok(R, 'entity'), { message_text: 'Do you have this?' });
+  const nopeReads = SQL.slice(mark).length;
+  t('SEC-129 timing: a hidden item and an unknown item do the same number of reads before the 404 (' + hidReads + ' vs ' + nopeReads + ')', hidReads === nopeReads && hidReads > 0, hidReads + ' vs ' + nopeReads);
   t('SEC-129: an item S does not show is 404 (not 201)', hid.status === 404, show(hid));
   t('SEC-129: …and the same status and body as an item that does not exist', nope.status === 404 && JSON.stringify(hid.body) === JSON.stringify(nope.body), show(hid) + ' vs ' + show(nope));
   r = await call('GET', '/api/catalogue/enquiry?page=1&limit=2', tok(S, 'entity'));

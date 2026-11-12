@@ -38,6 +38,19 @@ const schema = require('../lib/schema'); // b173 — deploy-before-migration col
 const access = require('../lib/access'); // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
 const railActions = require('../lib/rail-actions'); // T1-RAIL — who is moving the copy (the rail's level ladder)
 const router = express.Router();
+/**
+ * ⭐ SEC-145 · emailWriteCap — a per-OWNER hourly budget on Add / Edit calls that carry an e-mail (ACTOR_EMAIL_WRITES_PER_HOUR, default 40), counted before the write, so an owner cannot walk a list of
+ * addresses through Add or Edit to see which are held on the platform. Over it: the one 429 RATE_LIMITED. Calls without an e-mail are never counted.
+ */
+const emailWriteCap = require('../lib/rate-limit').rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: require('../lib/limits').intFromEnv('ACTOR_EMAIL_WRITES_PER_HOUR', 40),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => 'owner:' + String((req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || 'nobody'),
+  skip: (req) => !(req.body && typeof req.body.email === 'string' && req.body.email.trim()),
+  message: { error: 'Too many tries', message: 'That is a lot of e-mail changes in an hour. Wait a while, then try again.' }
+});
 /* SEC2 · THE ONE owner gate on every people WRITE (lib/owner.js ownerOnly, the sentence lib/people.js already shows on the
    People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
 const people = require('../lib/people'); // PP-03b: stateOf, the one reader of on · away · off
@@ -236,6 +249,7 @@ router.post(
   auth,
   ownerWrite,
   taskCapGuard,
+  emailWriteCap,
   [
     body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
@@ -496,6 +510,7 @@ router.patch(
   auth,
   ownerWrite,
   taskCapGuard,
+  emailWriteCap,
   [
     body('display_name').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }),
     body('actor_role').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
