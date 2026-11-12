@@ -127,6 +127,14 @@ function toBaseline(routes, levels) {
   return out;
 }
 
+/** The sentences one level earns against its baseline: trips above the baseline, p95 above its ceiling (offline levels carry no p95). */
+function judgeLevel(route, level, now, base) {
+  const problems = [];
+  if (now.trips > base.trips) problems.push(route + ' trips ' + now.trips + ' > baseline ' + base.trips + ' at ' + level + ' rows');
+  if (now.p95 > base.p95_ceiling) problems.push(route + ' p95 ' + now.p95 + ' ms > ceiling ' + base.p95_ceiling + ' ms at ' + level + ' rows');
+  return problems;
+}
+
 /** The sentences one route earns against its baseline row: growth that is new, trips above the baseline, p95 above its ceiling. */
 function judgeRoute(route, byLevel, baseRow, levels) {
   const problems = [];
@@ -134,13 +142,7 @@ function judgeRoute(route, byLevel, baseRow, levels) {
     problems.push('N+1? ' + route + ' trips grow with rows: ' + byLevel[belowTop(levels)].trips + ' at ' + belowTop(levels) + ' -> ' + byLevel[topLevel(levels)].trips + ' at ' + topLevel(levels));
   }
   if (!baseRow) return problems.concat('no volume baseline for ' + route + ' (run --write, say why)');
-  for (const level of levels) {
-    const base = baseRow[level]; const now = byLevel[level];
-    if (!base) continue;
-    if (now.trips > base.trips) problems.push(route + ' trips ' + now.trips + ' > baseline ' + base.trips + ' at ' + level + ' rows');
-    if (now.p95 > base.p95_ceiling) problems.push(route + ' p95 ' + now.p95 + ' ms > ceiling ' + base.p95_ceiling + ' ms at ' + level + ' rows');
-  }
-  return problems;
+  return problems.concat(levels.filter((level) => baseRow[level]).flatMap((level) => judgeLevel(route, level, byLevel[level], baseRow[level])));
 }
 
 /** The verdict against the committed baseline: a list of sentences, empty = pass. A route the baseline lists as unmeasured is not judged. */
@@ -172,13 +174,16 @@ function judgeKnown(known, budgetRoutes) {
   return out;
 }
 
+/** A ceiling that only falls: the smaller of the one already written and today's budget line (either may be absent). */
+const fallingCeiling = (written, line) => [written, line].filter((value) => typeof value === "number").reduce((lowest, value) => Math.min(lowest, value), Infinity);
+
 /** The ceilings of the known growers for --write: the budget line today, never above the ceiling already written. */
 function knownGrowers(existing, budgetRoutes) {
   const out = {};
   for (const route of Object.keys(KNOWN_GROWERS)) {
+    const written = existing && existing[route] ? existing[route].trips : null;
     const line = budgetRoutes[route] ? budgetRoutes[route].trips : null;
-    const was = existing && existing[route] && typeof existing[route].trips === 'number' ? existing[route].trips : null;
-    out[route] = { backlog: KNOWN_GROWERS[route], trips: was === null ? line : Math.min(was, line === null ? was : line), why: 'live cost grows with the departments or stores (18 to 20 trips each); the stub cannot reach it' };
+    out[route] = { backlog: KNOWN_GROWERS[route], trips: fallingCeiling(written, line), why: 'live cost grows with the departments or stores (18 to 20 trips each); the stub cannot reach it' };
   }
   return out;
 }
@@ -208,23 +213,38 @@ function writeBaseline(routes, unmeasured, levels) {
   console.log('\n  wrote ' + BASELINE);
 }
 
+/** The database run needs 2 GB of free RAM and its base copy; the offline stub needs neither. Measures every level, returns {level: routes}. */
+function measureAllLevels(levels) {
+  const freeGb = os.freemem() / 2 ** 30;
+  if (!STUB && freeGb < MIN_FREE_GB) throw new Error('REFUSED: ' + freeGb.toFixed(1) + ' GB of RAM free, need ' + MIN_FREE_GB + ' GB');
+  if (!STUB) prepareBase();
+  const perLevel = {};
+  for (const rows of levels) { console.log('\n  level ' + rows + (STUB ? ' rows per read (offline stub)' : ' extra rows per table')); perLevel[rows] = measureOneLevel(rows); }
+  return perLevel;
+}
+
+/** One level of either kind: the offline rows stub, or a seeded scratch database. */
+const measureOneLevel = (rows) => (STUB ? measureStubLevel(rows) : measureLevel(rows, Number(flagValue('--runs', 8))));
+
+/** The sentences this run earns against the committed baseline (and, offline, against the known growers' ceilings). Empty = pass. */
+function verdict(routes, levels) {
+  if (!fs.existsSync(BASELINE)) throw new Error('no baseline ' + path.basename(BASELINE) + ' yet: run with --write once and commit it');
+  const baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
+  const known = STUB ? judgeKnown(baseline.known_growers, JSON.parse(fs.readFileSync(BUDGET, 'utf8')).routes) : [];
+  return judge(routes, baseline, levels).concat(known);
+}
+
 /** Measure every level, print the top tens, then either write the baseline (--write) or judge against it (default). */
 function main() {
   if (hasFlag('--prepare')) { prepareBase(); return; }
-  const freeGb = os.freemem() / 2 ** 30;
-  if (!STUB && freeGb < MIN_FREE_GB) throw new Error('REFUSED: ' + freeGb.toFixed(1) + ' GB of RAM free, need ' + MIN_FREE_GB + ' GB');
   const levels = String(flagValue('--levels', DEFAULT_LEVELS.join(','))).split(',').map(Number);
-  if (!STUB) prepareBase();
-  const perLevel = {};
-  for (const rows of levels) { console.log('\n  level ' + rows + (STUB ? ' rows per read (offline stub)' : ' extra rows per table')); perLevel[rows] = STUB ? measureStubLevel(rows) : measureLevel(rows, Number(flagValue('--runs', 8))); }
+  const perLevel = measureAllLevels(levels);
   const { routes, unmeasured } = assemble(perLevel, levels);
   if (flagValue('--out')) fs.writeFileSync(flagValue('--out'), JSON.stringify({ routes, unmeasured }, null, 1));
   console.log('\n  ' + Object.keys(routes).length + ' GET routes measured at ' + levels.join(' / ') + ' rows · ' + unmeasured.length + ' answered 5xx or did not load (listed in the baseline)');
   topTen(routes, levels);
   if (hasFlag('--write')) { writeBaseline(routes, unmeasured, levels); return; }
-  if (!fs.existsSync(BASELINE)) throw new Error('no baseline ' + path.basename(BASELINE) + ' yet: run with --write once and commit it');
-  const baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
-  const problems = judge(routes, baseline, levels).concat(STUB ? judgeKnown(baseline.known_growers, JSON.parse(fs.readFileSync(BUDGET, 'utf8')).routes) : []);
+  const problems = verdict(routes, levels);
   problems.forEach((sentence) => console.log('  FAIL ' + sentence));
   console.log('\n  ' + (problems.length ? problems.length + ' failed' : 'all within the volume baseline') + '\n');
   process.exit(problems.length ? 1 : 0);
