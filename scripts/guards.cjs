@@ -32,6 +32,7 @@ const TESTS = path.join(__dirname, '..', 'tests');
 
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
+  'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
   'endpoint-usage.test.cjs', // janitor (23 Oct): the wide endpoint run: a comment is no call, a dynamic segment meets only a :param, a bucket follows its best evidence
   'till-vendor.test.js', // the counter and its vendored engines agree, byte for byte

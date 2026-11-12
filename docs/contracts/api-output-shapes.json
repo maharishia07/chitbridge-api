@@ -19535,7 +19535,16 @@
             "type": "boolean"
           },
           "number_check": {},
-          "one_sided": {}
+          "one_sided": {},
+          "ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "says": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       },

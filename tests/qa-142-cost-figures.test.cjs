@@ -96,14 +96,14 @@ const refusedWhere = (answer) => answer.status === 422 && answer.body.code === '
   ok('the refusal names the field amount and does not echo the figure back', /amount/.test(JSON.stringify(named.body.errors || named.body.field)) && !/9007199254740992/.test(JSON.stringify(named.body)), JSON.stringify(named.body));
 
   const TAKEN = [
-    ['9,999,999,999,999.99, the largest figure below the ceiling', '{"kind":"other","amount":9999999999999.99}'],
-    ['-9,999,999,999,999.99, a correction of that size', '{"kind":"other","amount":-9999999999999.99}'],
-    ['-50, a correction', '{"kind":"other","amount":-50}'],
-    ['0.01', '{"kind":"other","amount":0.01}'],
-    ['80 minutes at 150 an hour (no amount: it is derived)', '{"kind":"labour","minutes":80,"rate_per_hour":150}'],
+    ['9,999,999,999,999.99, the largest figure below the ceiling', '{"kind":"other","amount":9999999999999.99,"currency":"AUD"}'],
+    ['-9,999,999,999,999.99, a correction of that size', '{"kind":"other","amount":-9999999999999.99,"currency":"AUD"}'],
+    ['-50, a correction', '{"kind":"other","amount":-50,"currency":"AUD"}'],
+    ['0.01', '{"kind":"other","amount":0.01,"currency":"AUD"}'],
+    ['80 minutes at 150 an hour (no amount: it is derived)', '{"kind":"labour","minutes":80,"rate_per_hour":150,"currency":"AUD"}'],
     ['a fare with its note, currency and line', '{"kind":"transport","amount":50,"currency":"inr","note":"auto","line_id":"11111111-2222-4333-8444-555555555555"}'],
-    ['explicit nulls for minutes and rate_per_hour on a fare (the library reads null as absent)', '{"kind":"fare","amount":5,"minutes":null,"rate_per_hour":null}'],
-    ['minutes 2147483647', '{"kind":"labour","minutes":2147483647,"rate_per_hour":150}']
+    ['explicit nulls for minutes and rate_per_hour on a fare (the library reads null as absent)', '{"kind":"fare","amount":5,"minutes":null,"rate_per_hour":null,"currency":"AUD"}'],
+    ['minutes 2147483647', '{"kind":"labour","minutes":2147483647,"rate_per_hour":150,"currency":"AUD"}']
   ];
   for (const [what, row] of TAKEN) {
     const asBody = await post(row);
@@ -111,12 +111,12 @@ const refusedWhere = (answer) => answer.status === 422 && answer.body.code === '
     const inRows = await post('{"rows":[' + row + ']}');
     ok('inside rows: ' + what + ' → reaches the handler', inRows.status === 200 && inRows.body.reached === true, JSON.stringify(inRows));
   }
-  const both = await post('[{"kind":"fare","amount":50,"currency":"inr","note":"auto"},{"kind":"labour","minutes":80,"rate_per_hour":150}]');
+  const both = await post('[{"kind":"fare","amount":50,"currency":"inr","note":"auto"},{"kind":"labour","minutes":80,"rate_per_hour":150,"currency":"AUD"}]');
   ok('the two-row list the api tests send reaches the handler', both.status === 200 && both.body.reached === true, JSON.stringify(both));
   /* null list items were dropped by lib/cost.js (filter Boolean) and stay accepted; rows: null was a 400 from the handler and is now a 422 (not a row) */
-  const nullItem = await post('[null,{"kind":"fare","amount":5}]');
+  const nullItem = await post('[null,{"kind":"fare","amount":5,"currency":"AUD"}]');
   ok('a null item in a list body still reaches the handler (the library drops it)', nullItem.status === 200 && nullItem.body.reached === true, JSON.stringify(nullItem));
-  const nullInRows = await post('{"rows":[null,{"kind":"fare","amount":5}]}');
+  const nullInRows = await post('{"rows":[null,{"kind":"fare","amount":5,"currency":"AUD"}]}');
   ok('a null item inside rows still reaches the handler', nullInRows.status === 200 && nullInRows.body.reached === true, JSON.stringify(nullInRows));
   const rowsNull = await post('{"rows":null}');
   ok('rows: null is 422 (it was a 400 from the handler: not a row)', refusedWhere(rowsNull), JSON.stringify(rowsNull));
