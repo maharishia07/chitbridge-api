@@ -82,13 +82,13 @@ of file each thing is; this says what already does the job.
 | 33 | `changes` | `books-store.js` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `note` | `dbwatch.js` |  |
+| 33 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 32 | `lines` | `cart.js` |  |
 | 32 | `sentence` | `one-person.js` |  |
 | 32 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 32 | `refuse` | `books-pack.js` | const sha = (text) => |
-| 32 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 31 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 31 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
