@@ -145,6 +145,7 @@ const GUARDS = [
   'round-trips-all.test.cjs', // ⭐⭐ every route the web client calls has a round-trip budget (round-trips.budget.json) — fired offline, I19 (DB10)
   'live-trips-writer.test.cjs', // SPD-39: the live-count writer never lowers or raises a fired line, refuses an unbudgeted route, keeps the flags
   'live-trips-tool.test.cjs', // SPD-39: the live-trips harness restores sit-in when a run throws (fake client, offline)
+  'round-trips-volume.test.cjs', // ⭐ SPD-17: the verdict of the volume check (a new N+1 fails, trips and p95 never pass the baseline) on made-up numbers, no DB
   'read-batch-entity.test.cjs', // EFF-TRIPS: readBatch carries a statement per entity in ONE trip (the brands' released offers)
   'network-offers-shape.test.cjs', // EFF-TRIPS: GET /api/network-offers answers the pre-change shape row for row, in ≤ 4 trips (golden)
   'network-offers-visibility.test.cjs',
