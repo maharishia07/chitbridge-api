@@ -19,18 +19,17 @@
  */
 const zlib = require('zlib');
 const API = (process.env.API_BASE || 'http://127.0.0.1:3100').replace(/\/$/, '');
-if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API)) {
-  console.error('REFUSED: seed-local only seeds an api on this machine, not ' + API);
-  process.exit(3);
-}
-
 /* CB_LOCAL_PGPORT (toolset/local-stack.sh): a second throwaway stack on another port; still only 127.0.0.1, still only this database name */
 const LOCAL_DB_URL = 'postgres://postgres:cblocal@127.0.0.1:' + (process.env.CB_LOCAL_PGPORT || '55432') + '/cb_local';
-if (process.env.DATABASE_URL && process.env.DATABASE_URL !== LOCAL_DB_URL) {
-  console.error('REFUSED: seed-local only works against the local test database');
-  process.exit(3);
+/* the ONE allow-list (tests/lib/run-target.cjs): local, or a named SIT box this runs ON; production never. */
+{
+  const verdict = require('../tests/lib/run-target.cjs').judge(API, process.env.DATABASE_URL || LOCAL_DB_URL, process.env);
+  if (!verdict.ok) {
+    const apiSide = !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API) && !process.env.CB_SIT_BOX;
+    console.error(apiSide ? 'REFUSED: seed-local only seeds an api on this machine or a named SIT box, not ' + API + ' (' + verdict.why + ')' : 'REFUSED: seed-local only works against the local test database or a named SIT box (' + verdict.why + ')');
+    process.exit(3);
+  }
 }
-
 const SHOP = { email: 'mayur@local.test', name: 'Mayur Restaurant' };
 const STAFF = { name: 'Asha Cashier', key: 'asha01', pin: '2468' };
 const CUSTOMER = { email: 'priya@local.test', name: 'Priya Customer' };

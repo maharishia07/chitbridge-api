@@ -656,6 +656,7 @@ const GUARDS = [
   'rail-lab.test.cjs',
   'rcm-post.test.cjs',
   'register-spin-country.test.cjs',
+  'run-target.test.cjs', // QA 12 Nov: the one run-target allow-list (production refused, SIT boxes named)
   'schema-fingerprint.test.cjs',
   'sec4-server-gates.test.cjs',
   'seed-local-refusals.test.cjs',
