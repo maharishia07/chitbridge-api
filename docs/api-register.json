@@ -7045,7 +7045,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
+        "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, all pass; ACC-229: new gate returnReader (owner or whole-entity + can_see_costs auditor, same test as compare), 403 BOOKS_RETURN_READ_NOT_ALLOWED registered, 403 sentence changed with the same legacy keys error+message re-frozen, key-bearer still refused, POST gst/close stays owner only) 2026-11-13",
         "lifecycle": "stable"
       },
       "status": "meets standard",

@@ -6,7 +6,7 @@
  * every box is a READ of the posted books — BAS 1A − 1B equals the GST ledgers' net movement for the quarter, summed here from the journal lines themselves (the
  * brief's proof, on real postings) · a month outside the period does not count · Simpler BAS by default, the full BAS on request · every box names the ledgers it
  * counts (roles → the shop's chart) · VAT201 Boxes 1 · 9 · 14 from AED postings, the Emirate said, the FTA's boxes null and said · refusals in words (no stagger,
- * a bad Emirate) · owner only (a co-assist 403) · India 200 form:null RETURN_FROM_RAIL (TOUR-FIX1).
+ * a bad Emirate) · owner or the shop's auditor (ACC-229: the real can_see_costs path; a co-assist 403) · POST /gst/close stays owner only · India 200 form:null RETURN_FROM_RAIL (TOUR-FIX1).
  * Needs the books engines (the sibling ../chitbridge-engines/src at v1.39.0, or BOOKS_ENGINES_SRC). Run: node tests/books-returns.test.cjs
  * CARD      15-tax-and-country-packs/gst-returns-bas-vat
  */
@@ -24,7 +24,7 @@ const AU = 'aaaaaaaa-1111-4111-8111-111111111111', AE = 'eeeeeeee-1111-4111-8111
 const owner = (id, name) => ({ identity_id: id, identity_type: 'entity', display_name: name });
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: AU, identity_type: 'actor' };
 let WHO = owner(AU, 'Bondi Grocer');
-const authStub = Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
+const authStub = Object.assign((req, res, next) => { req.identity = WHO; if (WHO.via_key) req.api_key = WHO.via_key; next(); }, {
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
@@ -105,7 +105,28 @@ const call = (port, method, p, body) => new Promise((done) => {
   r = await q('GET', '/returns?period=2031-Q9');
   ok('an unknown period name falls back to the latest ended, never a 500', r.status === 200 && r.body.period.period === '2026-Q1');
   WHO = STAFF; r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
-  ok('OWNER ONLY: a co-assist is refused (403)', r.status === 403, String(r.status));
+  ok('a co-assist who is not whole-entity is refused (403, the return code, in words)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /owner or the shop's auditor may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body));
+
+  /* ── ACC-229: the shop's auditor READS the return. The REAL lib/cost.canRead runs: it reads identities.can_see_costs from the (stubbed) table, never a flag on the preset ── */
+  const owned = JSON.stringify([box(await q('GET', '/returns'), 'G1').amount_minor, box(await q('GET', '/returns'), '1A').amount_minor, box(await q('GET', '/returns'), '1B').amount_minor]);
+  const CAN = {}; const realQuery = X.db.query;
+  X.db.query = async (t, p) => /SELECT can_see_costs FROM identities WHERE identity_id = [$]1/.test(String(t)) ? { rows: p[0] in CAN ? [{ can_see_costs: CAN[p[0]] }] : [] } : realQuery(t, p);
+  const actor = (n, extra) => Object.assign({ identity_id: '5555555' + n + '-0000-4000-8000-000000000000', parent_entity_id: AU, identity_type: 'actor', whole_entity: true }, extra || {});
+  const AUDITOR = actor(1), REPORTS = actor(2), EDITOR = actor(3, { whole_entity: false, access_level: 'editor' }), VIEWER = actor(4, { whole_entity: false, access_level: 'viewer' }), NOROW = actor(5);
+  CAN[AUDITOR.identity_id] = true; CAN[REPORTS.identity_id] = false; CAN[EDITOR.identity_id] = true; CAN[VIEWER.identity_id] = false;   /* NOROW has no identity row: fails closed */
+  const as = async (who) => { WHO = who;  try { return await q('GET', '/returns'); } finally { WHO = owner(AU, 'Bondi Grocer'); } };
+  r = await as(AUDITOR);
+  ok('ACC-229 auditor (whole-entity + can_see_costs true): 200, the same return as the owner', r.status === 200 && JSON.stringify([box(r, 'G1').amount_minor, box(r, '1A').amount_minor, box(r, '1B').amount_minor]) === owned, String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+  eq('ACC-229 auditor sees BAS G1 33000 · 1A 3000 · 1B 5000 (hand-computed above)', [box(r, 'G1').amount_minor, box(r, '1A').amount_minor, box(r, '1B').amount_minor], [33000, 3000, 5000]);
+  for (const [name, who] of [['reports preset (whole-entity, can_see_costs false)', REPORTS], ['editor (not whole-entity, flag true)', EDITOR], ['viewer', VIEWER], ['whole-entity login with no identity row (fails closed)', NOROW]]) {
+    r = await as(who);
+    ok('ACC-229 ' + name + ': 403 BOOKS_RETURN_READ_NOT_ALLOWED in words', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+  }
+  WHO = Object.assign({}, owner(AU, 'Bondi Grocer'), { via_key: 'k' }); r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
+  ok('ACC-229 a key-bearer is refused (403)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED', String(r.status));
+  r = await as(AUDITOR); WHO = AUDITOR; const close = await q('POST', '/gst/close', { fy: '2026-27', period: '2026-Q1' }); WHO = owner(AU, 'Bondi Grocer');
+  ok('ACC-229 the auditor still cannot close or pay GST (POST /gst/close stays owner only: 403 OWNER_ONLY)', close.status === 403 && close.body.code === 'OWNER_ONLY', String(close.status) + ' ' + JSON.stringify(close.body).slice(0, 120));
+  X.db.query = realQuery;
 
   /* ── a UAE shop: the ledger on under the AE pack; a March day and an April purchase (stagger 1: Feb–Apr) ── */
   WHO = owner(AE, 'Deira Stores'); DAY = '2026-06-10';
