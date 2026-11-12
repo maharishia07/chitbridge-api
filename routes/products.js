@@ -2195,12 +2195,13 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
  *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
  *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
 /** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) */
-const withoutServerOwned = (items) =>
-  items.map((item) => {
+function withoutServerOwned(items) {
+  return items.map((item) => {
     const copy = Object.assign({}, item);
     for (const key of catcols.SERVER_OWNED) delete copy[key];
     return copy;
   });
+}
 async function dropForeignListPrices(items, req) {
   const withoutListPrice = (item) => {
     const copy = Object.assign({}, item);

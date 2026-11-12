@@ -2097,19 +2097,22 @@ function quietNote(row, quiet, today) {
   return { words: 'not sold for ' + since + ' day' + (since === 1 ? '' : 's'), urgency: Math.min(since, 90) / 3 };
 }
 
-const offerClashWords = (body) => require('../lib/definitions-contract').words.clash(body);
+/** what the offer-item move was refused for, as the parts problem() takes: unknown offer or product 404 (an id that is no uuid names none), a refused move 400, a clash with another live offer 409 (CAT-223: the refusal every other live save meets) → spec | null */
+function moveRefusal(done) {
+  if (done.missing) return { status: 404, ...notFound() };
+  if (done.refused) return { status: 400, ...said('TILL_BAD_REQUEST', 'validation', done.refused) };
+  return done.clash ? { status: 409, ...require('../lib/definitions-contract').words.clash(done.clash.body) } : null;
+}
 router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /offer-item'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const input = offerItemInput(req.body);
     if (!input.offer_id || !input.item_id) return refuseBad(req, res, 'offer_id and item_id required');
 
-    if (!UUID_RE.test(input.item_id)) return problem(req, res, { status: 404, ...notFound() }); /* CAT-223/230: a product id is a uuid; a word would be written into the offer's item list and match nothing, ever */
     const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
 
-    if (done.missing) return problem(req, res, { status: 404, ...notFound() });
-    if (done.refused) return refuseBad(req, res, done.refused);
-    if (done.clash) return problem(req, res, { status: 409, ...offerClashWords(done.clash.body) }); /* CAT-223: the same refusal every other live save meets */
+    const refusal = moveRefusal(done);
+    if (refusal) return problem(req, res, refusal);
     shopChanged(entity_id, 'offer ' + (input.on ? 'added to' : 'removed from') + ' a product');
     /* API-8: the two answers of the library step, named where they are used: unchanged (nothing to write) or version (a new version written) */
     res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version }));
@@ -2130,6 +2133,7 @@ function offerItemInput(body) {
  */
 async function moveOfferItem(db, entity_id, input, identityId) {
   const { offer_id, item_id, on } = input;
+  if (!UUID_RE.test(item_id)) return { missing: true }; /* CAT-223/230: a product id is a uuid; a word would be written into the offer's list and match nothing, ever */
   const found = await liveOffer(db, entity_id, offer_id);
   if (found.refusal) return found.refusal;
   const offer = found.offer;
@@ -2142,11 +2146,8 @@ async function moveOfferItem(db, entity_id, input, identityId) {
 
   /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
   const newRules = Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) });
-  /* CAT-223: adding a product to a live offer is a live save: it is asked the same clash question (lib/offer-clash, the engine's rule) in this transaction. Taking one OUT never clashes. */
-  if (on) {
-    const clash = await offerClash.check(db, entity_id, { definition_id: offer_id, kind: 'offer', sub_kind: offer.sub_kind, name: offer.name, rules: newRules, status: 'live' });
-    if (clash) return { clash };
-  }
+  const clash = await addClash(db, entity_id, offer, newRules, on);
+  if (clash) return { clash };
   const version = offer.current_version + 1;
   const byWhom = input.by ? String(input.by).slice(0, 60) : null;
   const note = (on ? 'Product added at the counter' : 'Product removed at the counter') + (byWhom ? ' by ' + byWhom : '');
@@ -2157,6 +2158,12 @@ async function moveOfferItem(db, entity_id, input, identityId) {
   );
   await db.query(`UPDATE definition SET current_version = $2, updated_at = now() WHERE definition_id = $1`, [offer_id, version]);
   return { ok: true, name: offer.name, version };
+}
+
+/** CAT-223: adding a product to a live offer is a live save: asked the same clash question (lib/offer-clash, the engine's rule) in this transaction. Taking one OUT never clashes. → the clash or null */
+async function addClash(db, entity_id, offer, newRules, on) {
+  if (!on) return null;
+  return offerClash.check(db, entity_id, { definition_id: offer.definition_id, kind: 'offer', sub_kind: offer.sub_kind, name: offer.name, rules: newRules, status: 'live' });
 }
 
 /** the offer with its current rules: { offer }, or { refusal } when it is not there, not an offer ("an offer only" — this route must never edit another kind of definition) or not live */
