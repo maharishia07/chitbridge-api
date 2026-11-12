@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -7045,11 +7045,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d11f85dc896848ec"
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, all pass; ACC-229: new gate returnReader (owner or whole-entity + can_see_costs auditor, same test as compare), 403 BOOKS_RETURN_READ_NOT_ALLOWED registered, 403 sentence changed with the same legacy keys error+message re-frozen, key-bearer still refused, POST gst/close stays owner only) 2026-11-13",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
