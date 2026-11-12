@@ -26538,7 +26538,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3536,
+   "line": 3540,
    "hash": "e394ff0b0e21e9d3",
    "does": "",
    "errors": {
@@ -26634,7 +26634,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3424,
+   "line": 3428,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -26826,7 +26826,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4130,
+   "line": 4134,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -26924,7 +26924,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3752,
+   "line": 3756,
    "hash": "917b5f2623190141",
    "does": "",
    "errors": {
@@ -27421,7 +27421,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2481,
+   "line": 2485,
    "hash": "b7945b493fc90536",
    "does": "",
    "errors": {
@@ -27522,7 +27522,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2832,
+   "line": 2836,
    "hash": "34ca27a7c7ac2723",
    "does": "",
    "errors": {
@@ -27731,7 +27731,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3262,
+   "line": 3266,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -27831,7 +27831,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3492,
+   "line": 3496,
    "hash": "7c470871e76779bc",
    "does": "",
    "errors": {
@@ -27931,7 +27931,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3722,
+   "line": 3726,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -28027,7 +28027,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3007,
+   "line": 3011,
    "hash": "8822f90ab44821bf",
    "does": "",
    "errors": {
@@ -58329,7 +58329,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4003,
+   "line": 4007,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -58431,7 +58431,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3336,
+   "line": 3340,
    "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
@@ -58737,7 +58737,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2727,
+   "line": 2731,
    "hash": "b5d1d38fbdf85c1f",
    "does": "",
    "errors": {
@@ -58944,7 +58944,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4064,
+   "line": 4068,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -59045,8 +59045,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2106,
-   "hash": "50b79b5a89adc6a5",
+   "line": 2108,
+   "hash": "1fe1075f4203d0d0",
    "does": "",
    "errors": {
     "count": 0,
@@ -59083,7 +59083,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -59127,7 +59127,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "50b79b5a89adc6a5"
+    "stale_since": "1fe1075f4203d0d0"
    },
    "status": "partial",
    "callers": [
@@ -59155,7 +59155,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2660,
+   "line": 2664,
    "hash": "fb7ee244234d4a45",
    "does": "",
    "errors": {
@@ -59257,7 +59257,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2769,
+   "line": 2773,
    "hash": "d548871784442c21",
    "does": "",
    "errors": {
@@ -59360,7 +59360,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2191,
+   "line": 2195,
    "hash": "dfb71adc25919b45",
    "does": "",
    "errors": {
@@ -59877,7 +59877,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2421,
+   "line": 2425,
    "hash": "ce2b954bd9af8e16",
    "does": "",
    "errors": {
@@ -59986,7 +59986,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2241,
+   "line": 2245,
    "hash": "dbafba055729b52d",
    "does": "",
    "errors": {
@@ -60087,7 +60087,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2955,
+   "line": 2959,
    "hash": "bce8298f80a6601e",
    "does": "",
    "errors": {
@@ -60187,7 +60187,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2521,
+   "line": 2525,
    "hash": "0a6e72f6afb69950",
    "does": "",
    "errors": {
@@ -60295,7 +60295,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2593,
+   "line": 2597,
    "hash": "a51c77c0c4211825",
    "does": "",
    "errors": {
@@ -60401,7 +60401,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2899,
+   "line": 2903,
    "hash": "e8dec48d423da49f",
    "does": "",
    "errors": {
@@ -60505,7 +60505,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2879,
+   "line": 2883,
    "hash": "5ff14e252baed951",
    "does": "",
    "errors": {
@@ -60609,7 +60609,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3105,
+   "line": 3109,
    "hash": "3609a57a2f557a8d",
    "does": "",
    "errors": {

@@ -2097,6 +2097,8 @@ function quietNote(row, quiet, today) {
   return { words: 'not sold for ' + since + ' day' + (since === 1 ? '' : 's'), urgency: Math.min(since, 90) / 3 };
 }
 
+/** the 200 of the offer-item move (API-8: the two answers of the library step: unchanged, nothing to write, or a new version) */
+const moveAnswer = (input, done) => Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version });
 /** what the offer-item move was refused for: { kind: missing | bad | clash, words } for the handler to answer under its own status (unknown offer or product 404 — an id that is no uuid names none —, a refused move 400, a clash with another live offer 409: CAT-223, the refusal every other live save meets) → refusal | null */
 function moveRefusal(done) {
   if (done.missing) return { kind: 'missing', words: notFound() };
@@ -2109,14 +2111,15 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
     const input = offerItemInput(req.body);
     if (!input.offer_id || !input.item_id) return refuseBad(req, res, 'offer_id and item_id required');
 
-    /* CAT-223/230: a product id is a uuid; a word would be written into the offer's list and match nothing, ever */
-    const done = UUID_RE.test(input.item_id) ? await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id)) : { missing: true };
+    const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
 
     const refusal = moveRefusal(done);
-    if (refusal) return problem(req, res, { status: refusal.kind === 'clash' ? 409 : refusal.kind === 'bad' ? 400 : 404, ...refusal.words }); /* the statuses stay visible here (the register reads them from the handler): 404 unknown, 400 refused, 409 clash */
+    if (refusal && refusal.kind === 'clash') return problem(req, res, { status: 409, ...refusal.words });
+    if (refusal && refusal.kind === 'bad') return problem(req, res, { status: 400, ...refusal.words });
+    if (refusal) return problem(req, res, { status: 404, ...refusal.words });
     shopChanged(entity_id, 'offer ' + (input.on ? 'added to' : 'removed from') + ' a product');
     /* API-8: the two answers of the library step, named where they are used: unchanged (nothing to write) or version (a new version written) */
-    res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version }));
+    res.json(moveAnswer(input, done));
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -2143,6 +2146,7 @@ function movedRules(offerRules, item_id, on) {
  */
 async function moveOfferItem(db, entity_id, input, identityId) {
   const { offer_id, item_id, on } = input;
+  if (!UUID_RE.test(item_id)) return { missing: true }; /* CAT-223/230: a product id is a uuid; a word would be written into the offer's list and match nothing, ever */
   const found = await liveOffer(db, entity_id, offer_id);
   if (found.refusal) return found.refusal;
   const offer = found.offer;
