@@ -119,6 +119,8 @@ function errorsOf(validator, value) {
 
 /* the keys already reported, so a tolerant door sent the same stray key every minute names it once per process, not once per request */
 const reportedKeys = new Set();
+const KEY_LOG_CAP = 2000;
+let capNoted = false;
 /**
  * API-43 / S33-T (Athi 12 Nov): a door that tolerates unknown keys ACCEPTS them and says so: one warning line naming the route and the key (never the value), once per process per key.
  * Only a body schema that lists its keys and does not close itself is read (a closed one refused the key already). This only logs: the key is not read, stored or answered.
@@ -128,7 +130,8 @@ function noteUnknownKeys(req, schema) {
   const route = req.method + ' ' + (req.baseUrl || '') + (req.route ? req.route.path : '');
   Object.keys(req.body).filter((key) => !Object.prototype.hasOwnProperty.call(schema.properties, key)).slice(0, 20).forEach((key) => {
     const name = route + '|' + key.slice(0, 80);
-    if (reportedKeys.size >= 2000 || reportedKeys.has(name)) return;
+    if (reportedKeys.has(name)) return;
+    if (reportedKeys.size >= KEY_LOG_CAP) { if (!capNoted) { capNoted = true; console.warn(JSON.stringify({ event: 'unknown_key_log_cap_reached', cap: KEY_LOG_CAP })); } return; } /* silence is the bug: past the cap, say so once */
     reportedKeys.add(name);
     console.warn(JSON.stringify({ event: 'unknown_key_accepted', route, key: key.slice(0, 80) }));
   });
@@ -191,4 +194,4 @@ const queryDay = (...names) =>
 const REGISTERED_FORMATS = { 'calendar-day': isCalendarDay, 'date-time-day': isDay };
 Object.keys(REGISTERED_FORMATS).forEach((name) => [bodyEngine, urlEngine].forEach((engine) => engine.addFormat(name, REGISTERED_FORMATS[name])));
 
-module.exports = { noteUnknownKeys, REGISTERED_FORMATS, urlEngine, queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+module.exports = { KEY_LOG_CAP, noteUnknownKeys, REGISTERED_FORMATS, urlEngine, queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };

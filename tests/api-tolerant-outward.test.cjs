@@ -83,3 +83,13 @@ test('the one schema middleware: a known key is validated, an unknown key is acc
     assert.strictEqual(lines.length, 1, 'a refused key is not logged as accepted');
   } finally { console.warn = realWarn; }
 });
+
+test('past the key-log cap, one "unknown_key_log_cap_reached" line is written per process, never silence (API-43)', () => {
+  const { schemaValidate, KEY_LOG_CAP } = require('../middleware/validate');
+  const mw = schemaValidate({ requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { qty: { type: 'integer' } } } } } } });
+  const lines = []; const realWarn = console.warn; console.warn = (line) => lines.push(String(line));
+  try {
+    for (let i = 0; i < KEY_LOG_CAP + 25; i++) mw({ method: 'POST', baseUrl: '/api/cap', route: { path: '/z' }, body: { ['zz_cap_' + i]: 1 }, query: {}, params: {} }, {}, () => {});
+    assert.strictEqual(lines.filter((line) => line.includes('unknown_key_log_cap_reached')).length, 1, 'exactly one cap line');
+  } finally { console.warn = realWarn; }
+});
