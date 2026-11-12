@@ -44907,14 +44907,19 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "why": "Only the owner can change the catalogue source.",
+      "message": "Only the owner can change the catalogue source."
      },
      "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the catalogue source.",
+      "message": "Only the owner can change the catalogue source."
      }
     },
     {
