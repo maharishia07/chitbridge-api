@@ -6,7 +6,7 @@
  *   qty 0 -> 400 BAD_QTY · price -5 -> 400 BAD_PRICE · qty 1e15 x price 1e15 -> 400 BAD_BOUND · lines [null, 7, "x"] -> 400 BAD_LINE (was a 500 TypeError)
  *   the edge of the one ceiling (1e12): 1e6 x 1e7 = 1e13 is refused; 1e6 x 1e5 = 1e11 is priced: total 100,000,000,000
  *   an ABSENT qty stays 1 on pricing/price (200, unit 10): only a GIVEN qty <= 0 is refused
- *   control: 2 x 10.00 at 10% -> 20.00 + 2.00 = 22.00 on invoice/build and tax/compute; offers: 2 x 10.00 with 10% off the line -> 18.00
+ *   control: 2 x 10.00 at 5% -> 20.00 + 1.00 = 21.00 (M2: 10% is off India's menu) on invoice/build and tax/compute; offers: 2 x 10.00 with 10% off the line -> 18.00
  * No DB, no network (tests/support/tax-stub.cjs). Run: node --test tests/line-door-one-guard.test.cjs
  */
 const test = require('node:test');
@@ -72,15 +72,15 @@ test('pricing/price: an ABSENT qty is not refused (it is priced as 1: unit 10)',
   assert.equal(r.body.lines[0].unit_price, 10);
 });
 test('offers/evaluate: a line with no price is 400 NO_PRICE (it was read as 0)', async () => refused(await call('/api/offers/evaluate', { lines: [{ name: 'Tea', qty: 2 }], offers: HALF }), 'NO_PRICE'));
-test('control: invoice/build 2 x 10.00 at 10% = 20.00 + 2.00 = 22.00', async () => {
-  const r = await call('/api/invoice/build', { lines: [{ name: 'Tea', qty: 2, price: 10, gst_rate: 10 }], priceIncludesTax: false });
+test('control: invoice/build 2 x 10.00 at 5% = 20.00 + 1.00 = 21.00', async () => {
+  const r = await call('/api/invoice/build', { lines: [{ name: 'Tea', qty: 2, price: 10, gst_rate: 5 }], priceIncludesTax: false });
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.equal(r.body.invoice.ValDtls.TotInvVal, 22);
+  assert.equal(r.body.invoice.ValDtls.TotInvVal, 21);
 });
-test('control: tax/compute says the same 22.00, and pricing/price 2 x 10.00 = 20.00', async () => {
-  const c = await call('/api/tax/compute', { lines: [{ name: 'Tea', qty: 2, price: 10, gst_rate: 10 }], priceIncludesTax: false });
+test('control: tax/compute says the same 21.00, and pricing/price 2 x 10.00 = 20.00', async () => {
+  const c = await call('/api/tax/compute', { lines: [{ name: 'Tea', qty: 2, price: 10, gst_rate: 5 }], priceIncludesTax: false });
   assert.equal(c.status, 200, JSON.stringify(c.body));
-  assert.equal(c.body.invoice.ValDtls.TotInvVal, 22);
+  assert.equal(c.body.invoice.ValDtls.TotInvVal, 21);
   const p = await call('/api/pricing/price', { lines: [{ name: 'Tea', qty: 2, price: 10 }] });
   assert.equal(p.body.total, 20);
 });

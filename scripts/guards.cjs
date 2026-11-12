@@ -818,6 +818,7 @@ const GUARDS = [
   'till-queue-poison.test.cjs', // S33-T: the counter's own drain parks a refused queued row (400) with the server's words and sends the rows behind it; a refused bill is never deleted
   'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
   'ctry-72-no-country-refusal.test.cjs', // CTRY-72: a shop with no country gets words, never the rupee (products lists money_why, tax slabs, legacy catalogue service)
+  'ctry-110-pack-door.test.cjs', // CTRY-110/111/112/136 (M2): the invoice door asks the pack - rate menu, reverse charge not built, buyer tax id
   'ctry-139-band-asof.test.cjs', // CTRY-139 (engines v1.86.0): the law-set price band is read as of the shop's day of the document
   'ctry-139-number-at.test.cjs', // CTRY-139: the number-at read of the adopted engine
   'ctry-139-till-band.test.cjs', // CTRY-139: the till's band, same as the api's

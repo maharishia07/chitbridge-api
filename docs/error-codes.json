@@ -4034,6 +4034,24 @@
    "since": "2026-10-31"
   },
   {
+   "code": "RATE_NOT_ON_MENU",
+   "status": "422",
+   "title": "Tax rate not allowed",
+   "shopkeeper": "That tax rate is not one this country charges on the invoice date.",
+   "hint": "Pick one of the country's rates and send the invoice again.",
+   "owner_area": "tax",
+   "since": "2026-11-12"
+  },
+  {
+   "code": "RCM_NOT_BUILT",
+   "status": "422",
+   "title": "Reverse charge not built",
+   "shopkeeper": "Reverse charge is not built for this country yet, so this invoice cannot be made with it.",
+   "hint": "Send the invoice without reverse charge.",
+   "owner_area": "tax",
+   "since": "2026-11-12"
+  },
+  {
    "code": "READ_ONLY",
    "status": "403",
    "title": "View only",
