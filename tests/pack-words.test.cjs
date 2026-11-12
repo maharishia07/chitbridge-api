@@ -44,9 +44,16 @@ t('thresholdWords: the pack\'s minor units in its money; null with no pack', wor
 /* ── tradeChecksFor ── */
 const ck = (c) => words.tradeChecksFor(c).map((x) => x.key + ':' + x.label).join();
 t('IN: address · phone · PAN on file · GSTIN', ck('IN') === 'address:Address proven,phone:Phone verified,pan:PAN on file,tax_id:GSTIN', ck('IN'));
-t('AU: address · phone · ABN (no PAN)', ck('AU') === 'address:Address proven,phone:Phone verified,tax_id:ABN', ck('AU'));
+t('AU: address · phone · ABN · ACN · GST registration (no PAN) — CMP-13', ck('AU') === 'address:Address proven,phone:Phone verified,tax_id:ABN,acn:ACN on file,gst_registration:GST registration', ck('AU'));
 t('AE: address · phone · TRN · Trade licence', ck('AE') === 'address:Address proven,phone:Phone verified,tax_id:TRN,trade_licence:Trade licence', ck('AE'));
 t('no pack: address · phone · Tax number', ck('') === 'address:Address proven,phone:Phone verified,tax_id:Tax number', ck(''));
+
+/* CMP-13: the AU header asks the ACN (held in the vault under the tag acn) and the shop's own GST registration, read from the pack's list, never a country branch */
+const header = require(path.join(API, 'lib', 'entity-header'));
+const auDone = (me, vault) => header.build({ me: Object.assign({ country: 'AU', display_name: 'X', policy_flags: {} }, me), profile: {}, compliance: [], docs: {}, vault, now: new Date() }).trade_ready.checks.filter((c) => c.done).map((c) => c.key).join();
+t('AU header: ACN held in the vault → acn done; gst_registration done only when the setting is regular', auDone({ policy_flags: { gst_registration: 'regular' } }, { sections: [{ rows: [{ tag: 'acn', value: '004 085 616', rung: 'typed' }] }] }) === 'acn,gst_registration', auDone({ policy_flags: { gst_registration: 'regular' } }, { sections: [{ rows: [{ tag: 'acn', value: '004 085 616', rung: 'typed' }] }] }));
+t('AU header: nothing held, not registered → neither the ACN nor the GST check is done', auDone({ policy_flags: { gst_registration: 'unregistered' } }, null) === '', auDone({ policy_flags: { gst_registration: 'unregistered' } }, null));
+t('IN header: no ACN or GST-registration check is asked', !header.build({ me: { country: 'IN', display_name: 'X', policy_flags: {} }, profile: {}, compliance: [], docs: {}, vault: null, now: new Date() }).trade_ready.checks.some((c) => c.key === 'acn' || c.key === 'gst_registration'));
 
 /* ── retentionWordsFor ── */
 t('AU / AE: the pack\'s 5 years in words', words.retentionWordsFor('AU').years === 5 && /5 years/.test(words.retentionWordsFor('AU').words) && words.retentionWordsFor('AE').years === 5);

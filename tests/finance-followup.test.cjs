@@ -192,6 +192,7 @@ async function partRoute(country) {
     t('row · DISP stays in its bucket AND in disputed_minor', [rowOf(got, 'DISP').follow_up.d31_60, rowOf(got, 'DISP').disputed_minor], [TEN, TEN]);
     t('row · OVER: nothing aged, balance −50000 (the unapplied rest), keys sum 0 = balance − unapplied', [rowOf(got, 'OVER').balance_minor, rowOf(got, 'OVER').follow_up.d0_30], [-50000, 0]);
     if (AU) {
+      t('FIN-65 · AU /dues ages in the AU pack months: bills 10, 40, 75 and 120 days late → lt_1m · m1_2 · m2_3 · gt_3m, one each (no Schedule III d90_plus)', rowOf(got, 'FOUR').buckets, { not_due: 0, lt_1m: TEN, m1_2: TEN, m2_3: TEN, gt_3m: TEN });
       t('AU · no credit days anywhere: aged from the bill date (50 late → d31_60), flagged, terms not_set', rowOf(got, 'NODUE_NONE').follow_up, fu({ d31_60: TEN }, 'd31_60', TEN));
       t('AU · the row\'s months buckets are the unchanged Schedule III set (the /dues pack gap is filed apart) and carry no day keys', [Object.keys(rowOf(got, 'FOUR').buckets).includes('d0_30'), Object.keys(rowOf(got, 'FOUR').buckets).length > 0], [false, true]);
     } else {

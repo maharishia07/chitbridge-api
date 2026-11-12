@@ -1900,7 +1900,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
       if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
       const nestedMid = require('crypto').randomUUID();
       const nestedOut = await withEntity(entity_id, async (db) => {
-        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [
+        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
           req.params.id,
           entity_id
         ]);
@@ -1934,7 +1934,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
     const key = objStore.objectKey(entity_id, mid);
     await objStore.put(key, buffer, mime || 'application/octet-stream');
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
         req.params.id,
         entity_id
       ]);
@@ -1959,7 +1959,7 @@ router.delete('/:id/media/:mid', auth, ...checked('DELETE /:id/media/:mid'), asy
   try {
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]);
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 FOR UPDATE`, [req.params.id, entity_id]);
       if (!cur.rows.length) return null;
       const d = Object.assign({}, cur.rows[0].item_data || {});
       const media = Array.isArray(d.media) ? d.media : [];
