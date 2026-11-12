@@ -14,19 +14,19 @@ of file each thing is; this says what already does the job.
 | 123 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
-| 113 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
 | 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 78 | `next` | `dayopen.js` | the next thing to do — |
+| 79 | `next` | `dayopen.js` | the next thing to do — |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 70 | `list` | `cap-settings.js` |  |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
+| 68 | `entry` | `books-store.js` |  |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 68 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 67 | `entry` | `books-store.js` |  |
 | 67 | `failed` | `service.js` | what every catch answers: |
 | 66 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 66 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
@@ -48,8 +48,8 @@ of file each thing is; this says what already does the job.
 | 50 | `again` | `signin-ui.js` |  |
 | 50 | `view` | `books-payables.js` | group: |
 | 50 | `count` | `money-check.js` | the count /health reads |
+| 49 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 48 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 46 | `read` | `cap-print.js` |  |
 | 45 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
@@ -106,12 +106,12 @@ of file each thing is; this says what already does the job.
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `opts` | `cap-stock.js` |  |
+| 27 | `guard` | `amend.js` | would disturb what has gone out. |
 | 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 26 | `view` | `country-ready.js` |  |
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
-| 25 | `guard` | `amend.js` | would disturb what has gone out. |
 | 25 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |
