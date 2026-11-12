@@ -41,7 +41,18 @@ const BUDGET = path.join(API, 'round-trips.budget.json');
 /* routes the offline stub cannot reach (a POST is never fired; a path that needs a real id answers 404) but whose live cost is known to grow with the
    data (live-trips, sit-au 2026-11-11: 18 to 20 trips per department or store). Each is a known grower with its backlog line: the ceiling is the
    route's budget line and only falls. NET-98 fixes the handlers and then lowers the ceiling here; nothing here changes a handler. */
-const KNOWN_GROWERS = { 'GET /api/catalogue/network/:bridge_id': 'NET-98', 'POST /api/catalogue/network-store/:networkId/order': 'NET-98' };
+const LIVE = 'live cost grows with the departments or stores (18 to 20 trips each); the stub cannot reach it';
+const KNOWN_GROWERS = {
+  'GET /api/catalogue/network/:bridge_id': { backlog: 'NET-98', why: LIVE },
+  'POST /api/catalogue/network-store/:networkId/order': { backlog: 'NET-98', why: LIVE },
+  'GET /api/catalogue/network-store/:networkId': { backlog: 'NET-98', why: 'one read per department or store (rows stub 27 / 72 / 522)' },
+  'GET /api/tax/gstr': { backlog: 'SPD-48', why: 'lib/tax-copy.js:600-607 awaits per bill inside the loop (one identities read per bill)' },
+  'GET /api/tax/ledger': { backlog: 'SPD-48', why: 'same loop as gstr (lib/tax-copy.js:600-607)' },
+  'GET /api/relationships/suppliers': { backlog: 'SPD-49', why: 'routes/relationships.js ~340 reads per supplier' },
+  'GET /api/till/snapshot': { backlog: 'SPD-50', why: 'routes/till.js:1150 resolves each adopted item in its own read (small N)' },
+};
+/* a route the generic-row stub makes grow but a real shop does not: NOT a backlog line, named so the check does not fail it; no ceiling */
+const STUB_ARTEFACTS = { 'GET /api/products': 'the generic stub row has no real item shape, so the per-row work the route does on it is not a real loop (reviewed in api PR 1139)' };
 const CONTAINER = process.env.CB_LOCAL_PGC || 'cb-local-pg';
 const PORT = process.env.CB_LOCAL_PGPORT || '55432';
 const VOLUME_URL = 'postgres://postgres:cblocal@127.0.0.1:' + PORT + '/cb_volume';
@@ -114,11 +125,17 @@ const belowTop = (levels) => String(levels[Math.max(0, levels.length - 2)]);
 const tripGrowth = (byLevel, levels) => byLevel[topLevel(levels)].trips - byLevel[belowTop(levels)].trips;
 const p95Ceiling = (p95Ms) => Math.round(Math.max(p95Ms * P95_FACTOR, p95Ms + P95_FLOOR_MS) * 10) / 10;
 
+/** True when the route answered 2xx or 3xx at every level. A 4xx means it stopped early: its trips are a floor, not its cost. */
+const exercised = (byLevel, levels) => levels.every((level) => byLevel[level].status < 400);
+
+/** The routes that answered 4xx at some level: listed in every report, never read as flat. */
+const notExercised = (routes, levels) => Object.keys(routes).filter((route) => !exercised(routes[route], levels)).sort();
+
 /** The committed shape: per route and level the baseline trips + p50/p95 and the p95 ceiling; `grows` marks a known grower. */
 function toBaseline(routes, levels) {
   const out = {};
   for (const route of Object.keys(routes).sort()) {
-    out[route] = { grows: tripGrowth(routes[route], levels) > 0 };
+    out[route] = { grows: tripGrowth(routes[route], levels) > 0, exercised: exercised(routes[route], levels) };
     for (const level of levels) {
       const measured = routes[route][level];
       out[route][level] = typeof measured.p95 === 'number' ? { trips: measured.trips, p50: measured.p50, p95: measured.p95, p95_ceiling: p95Ceiling(measured.p95) } : { trips: measured.trips };
@@ -142,13 +159,15 @@ function judgeRoute(route, byLevel, baseRow, levels) {
     problems.push('N+1? ' + route + ' trips grow with rows: ' + byLevel[belowTop(levels)].trips + ' at ' + belowTop(levels) + ' -> ' + byLevel[topLevel(levels)].trips + ' at ' + topLevel(levels));
   }
   if (!baseRow) return problems.concat('no volume baseline for ' + route + ' (run --write, say why)');
+  if (baseRow.exercised && !exercised(byLevel, levels)) problems.push(route + ' used to answer 2xx at every level and now answers ' + levels.map((level) => byLevel[level].status).join(' / ') + ' at ' + levels.join(' / ') + ' rows: its trips no longer mean anything');
   return problems.concat(levels.filter((level) => baseRow[level]).flatMap((level) => judgeLevel(route, level, byLevel[level], baseRow[level])));
 }
 
 /** The verdict against the committed baseline: a list of sentences, empty = pass. A route the baseline lists as unmeasured is not judged. */
-function judge(routes, baseline, levels) {
+function judge(routes, baseline, levels, unmeasured) {
   const skip = new Set(baseline.unmeasured || []);
-  return Object.keys(routes).filter((route) => !skip.has(route)).flatMap((route) => judgeRoute(route, routes[route], baseline.routes[route], levels));
+  const gone = (unmeasured || []).filter((route) => !skip.has(route) && baseline.routes[route]).map((route) => route + ' answered 5xx or did not load on this run, and the baseline measured it');
+  return gone.concat(Object.keys(routes).filter((route) => !skip.has(route)).flatMap((route) => judgeRoute(route, routes[route], baseline.routes[route], levels)));
 }
 
 /** The ratchet for --write: a number in the committed baseline may only fall. Returns the sentences for every number the new run would RAISE. */
@@ -183,9 +202,14 @@ function knownGrowers(existing, budgetRoutes) {
   for (const route of Object.keys(KNOWN_GROWERS)) {
     const written = existing && existing[route] ? existing[route].trips : null;
     const line = budgetRoutes[route] ? budgetRoutes[route].trips : null;
-    out[route] = { backlog: KNOWN_GROWERS[route], trips: fallingCeiling(written, line), why: 'live cost grows with the departments or stores (18 to 20 trips each); the stub cannot reach it' };
+    out[route] = { backlog: KNOWN_GROWERS[route].backlog, trips: fallingCeiling(written, line), why: KNOWN_GROWERS[route].why };
   }
   return out;
+}
+
+/** A NEW grower may not be baselined in silence: it must be named in KNOWN_GROWERS (with a backlog id) or STUB_ARTEFACTS (with the reason). */
+function unnamedGrowers(routes, levels) {
+  return Object.keys(routes).filter((route) => tripGrowth(routes[route], levels) > 0 && !(KNOWN_GROWERS[route] && KNOWN_GROWERS[route].backlog) && !STUB_ARTEFACTS[route]);
 }
 
 /** Top-10 tables for the report / the backlog: by trips added with rows, and by p95 at the top level. */
@@ -206,9 +230,11 @@ function writeBaseline(routes, unmeasured, levels) {
   const existing = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : null;
   const refused = raises(routes, existing && existing.routes, levels);
   if (refused.length) { refused.forEach((sentence) => console.log('  REFUSED ' + sentence)); throw new Error(refused.length + ' numbers would rise: fix the route, a baseline only falls'); }
+  const unnamed = unnamedGrowers(routes, levels);
+  if (unnamed.length) { unnamed.forEach((route) => console.log('  REFUSED new grower ' + route + ': name it in KNOWN_GROWERS with a backlog id (or in STUB_ARTEFACTS with the reason)')); throw new Error(unnamed.length + ' new growers are not named: open a backlog line, then name the route'); }
   const known = STUB ? knownGrowers(existing && existing.known_growers, JSON.parse(fs.readFileSync(BUDGET, 'utf8')).routes) : undefined;
   const doc = { _doc: 'SPD-17: round-trip cost WITH DATA. Per GET route the web calls: trips and p50/p95 ms at 0 / 1,000 / 10,000 extra rows per main table (tests/support/seed-volume.cjs, local scratch DB). p95_ceiling = p95 x ' + P95_FACTOR + ' (at least +' + P95_FLOOR_MS + ' ms). grows:true = trips rise with rows (an SPD-n backlog line each). Lower with node tools/round-trips-volume.cjs --write; never raise without the reason in the commit.',
-    levels, measured_on: new Date().toISOString().slice(0, 10), unmeasured, ...(known ? { known_growers: known } : {}), routes: toBaseline(routes, levels) };
+    levels, measured_on: new Date().toISOString().slice(0, 10), unmeasured, not_exercised: notExercised(routes, levels), ...(known ? { known_growers: known, stub_artefacts: STUB_ARTEFACTS } : {}), routes: toBaseline(routes, levels) };
   fs.writeFileSync(BASELINE, JSON.stringify(doc, null, 1) + '\n');
   console.log('\n  wrote ' + BASELINE);
 }
@@ -227,11 +253,11 @@ function measureAllLevels(levels) {
 const measureOneLevel = (rows) => (STUB ? measureStubLevel(rows) : measureLevel(rows, Number(flagValue('--runs', 8))));
 
 /** The sentences this run earns against the committed baseline (and, offline, against the known growers' ceilings). Empty = pass. */
-function verdict(routes, levels) {
+function verdict(routes, levels, unmeasured) {
   if (!fs.existsSync(BASELINE)) throw new Error('no baseline ' + path.basename(BASELINE) + ' yet: run with --write once and commit it');
   const baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
   const known = STUB ? judgeKnown(baseline.known_growers, JSON.parse(fs.readFileSync(BUDGET, 'utf8')).routes) : [];
-  return judge(routes, baseline, levels).concat(known);
+  return judge(routes, baseline, levels, unmeasured).concat(known);
 }
 
 /** Measure every level, print the top tens, then either write the baseline (--write) or judge against it (default). */
@@ -243,12 +269,15 @@ function main() {
   if (flagValue('--out')) fs.writeFileSync(flagValue('--out'), JSON.stringify({ routes, unmeasured }, null, 1));
   console.log('\n  ' + Object.keys(routes).length + ' GET routes measured at ' + levels.join(' / ') + ' rows · ' + unmeasured.length + ' answered 5xx or did not load (listed in the baseline)');
   topTen(routes, levels);
+  const floor = notExercised(routes, levels);
+  console.log('\n  NOT EXERCISED: ' + floor.length + ' of ' + Object.keys(routes).length + ' routes answered 4xx (they stopped early: their trips are a floor and their flat line proves nothing):');
+  floor.forEach((route) => console.log('    ' + route));
   if (hasFlag('--write')) { writeBaseline(routes, unmeasured, levels); return; }
-  const problems = verdict(routes, levels);
+  const problems = verdict(routes, levels, unmeasured);
   problems.forEach((sentence) => console.log('  FAIL ' + sentence));
   console.log('\n  ' + (problems.length ? problems.length + ' failed' : 'all within the volume baseline') + '\n');
   process.exit(problems.length ? 1 : 0);
 }
 
 if (require.main === module) { try { main(); } catch (err) { console.error(err.message); process.exit(1); } }
-module.exports = { assemble, toBaseline, judge, tripGrowth, p95Ceiling, raises, judgeKnown };
+module.exports = { notExercised, unnamedGrowers, assemble, toBaseline, judge, tripGrowth, p95Ceiling, raises, judgeKnown };

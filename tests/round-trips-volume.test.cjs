@@ -9,7 +9,7 @@ const { URL_OK } = require('./support/seed-volume.cjs');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { assemble, toBaseline, judge, tripGrowth, p95Ceiling, raises, judgeKnown } = require('../tools/round-trips-volume.cjs');
+const { assemble, toBaseline, judge, tripGrowth, p95Ceiling, raises, judgeKnown, notExercised, unnamedGrowers } = require('../tools/round-trips-volume.cjs');
 const API = path.join(__dirname, '..');
 
 let passed = 0, failed = 0;
@@ -54,6 +54,18 @@ check('known growers sit within their ceilings today', judgeKnown(base.known_gro
 check('a known grower whose budget line rises above its ceiling fails', judgeKnown({ 'GET /x': { backlog: 'NET-98', trips: 10 } }, { 'GET /x': { trips: 11 } }).length === 1);
 const raised = (trips) => raises({ 'GET /grower': { 0: level(5, 10), 1000: level(10, 40), 10000: level(trips, 200) } }, baseline.routes, LEVELS).length;
 check('a rewrite that would RAISE a baseline number is refused; a fall is fine', raised(60) === 0 && raised(61) === 1 && raised(50) === 0);
+
+/* ── silence is the bug: a new grower must be named; a route that stops being exercised must not read as flat ── */
+check('--write refuses a NEW grower that no backlog line names', unnamedGrowers({ 'GET /brand/new': grower }, LEVELS).join() === 'GET /brand/new');
+check('--write accepts a grower named in KNOWN_GROWERS with its backlog id, and a flat route', unnamedGrowers({ 'GET /api/tax/gstr': grower, 'GET /flat': flat }, LEVELS).length === 0);
+check('every grower in the committed baseline is named (known with a backlog id, or a stub artefact with its reason)', Object.keys(base.routes).filter((r) => base.routes[r].grows).every((r) => (base.known_growers[r] && base.known_growers[r].backlog) || (base.stub_artefacts && base.stub_artefacts[r])));
+check('the real growers carry their backlog line', base.known_growers['GET /api/tax/gstr'].backlog === 'SPD-48' && base.known_growers['GET /api/relationships/suppliers'].backlog === 'SPD-49' && base.known_growers['GET /api/till/snapshot'].backlog === 'SPD-50' && base.known_growers['GET /api/catalogue/network-store/:networkId'].backlog === 'NET-98');
+const answer4xx = { 0: Object.assign(level(1, 1), { status: 404 }), 1000: Object.assign(level(1, 1), { status: 404 }), 10000: Object.assign(level(1, 1), { status: 404 }) };
+check('a route that answers 4xx is listed as not exercised, a 2xx one is not', notExercised({ 'GET /a': answer4xx, 'GET /b': flat }, LEVELS).join() === 'GET /a');
+check('the baseline marks exercised per route', baseline.routes['GET /flat'].exercised === true && toBaseline({ 'GET /a': answer4xx }, LEVELS)['GET /a'].exercised === false);
+const nowGone = judge({ 'GET /flat': answer4xx }, baseline, LEVELS, []);
+check('a route that moves from 2xx to 4xx FAILS the check (its flat line no longer proves anything)', nowGone.some((sentence) => /GET \/flat used to answer 2xx/.test(sentence)));
+check('a route that newly answers 5xx FAILS the check, a known unmeasured one does not', judge({}, baseline, LEVELS, ['GET /flat']).some((sentence) => /GET \/flat answered 5xx/.test(sentence)) && judge({}, { routes: {}, unmeasured: ['GET /x'] }, LEVELS, ['GET /x']).length === 0);
 
 const fresh = spawnSync(process.execPath, [path.join(API, 'tools', 'round-trips-volume.cjs'), '--stub', '--check'], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 4 * 60 * 1000 });
 const failures = (fresh.stdout || '').split('\n').filter((line) => /FAIL /.test(line));
