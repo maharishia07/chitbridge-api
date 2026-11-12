@@ -45,6 +45,17 @@ const ownerWrite = require('../lib/owner').ownerOnly(people.OWNER_ONLY);
 /* PEOPLE-EMAIL (SEC2): identities.email is UNIQUE across every sign-in (000_baseline_part2.sql identities_email_key), so the
    owner's own address on a staff row collides. Said in words with a code — never "Key taken", never a 500 (the answer is words.emailTaken, lib/actors-contract.js). */
 const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(String(err.constraint || err.detail || '')));
+/**
+ * ⭐ SEC-145 · emailRefusal(entity_id, email) → the 409 spec for an e-mail the platform already holds. Two answers only: the honest words (EMAIL_TAKEN) when the address is on THIS owner's own
+ * list (their own sign-in or a person they added: they may know that), and ONE fixed sentence (EMAIL_UNAVAILABLE) for every other holder, so a signed-in owner cannot use Add or Edit to
+ * test whether an address has an account elsewhere. Both branches run the same one read, so the time says nothing either.
+ */
+async function emailRefusal(entity_id, email) {
+  const mine = await withEntity(entity_id, (shop) =>
+    shop.query('SELECT 1 FROM identities WHERE LOWER(email) = LOWER($1) AND (identity_id = $2 OR parent_entity_id = $2) LIMIT 1', [String(email || '').trim(), entity_id])
+  );
+  return { status: 409, ...(mine.rows.length ? words.emailTaken() : words.emailUnavailable()) };
+}
 
 /**
  * ── loginIdFor — THE LOGIN A CO-ASSIST ACTUALLY TYPES ──────────────────────────────────────────────────────
@@ -428,7 +439,7 @@ router.post(
        * stamped into every line event they recorded. Returning a 500 with "please try again" invited a retry
        * that could never succeed and gave no way to learn why.
        */
-      if (emailTaken(err)) return problem(req, res, { status: 409, ...words.emailTaken() });
+      if (emailTaken(err)) return problem(req, res, await emailRefusal(auth.entityOf(req), req.body.email));
       if (err && err.code === '23505') return problem(req, res, { status: 409, ...words.keyHeld() });
       console.error('Create actor error:', err.message);
       problem(req, res, failed(err, req, 'Create failed'));
@@ -653,7 +664,7 @@ router.patch(
         audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 }
       });
     } catch (err) {
-      if (emailTaken(err)) return problem(req, res, { status: 409, ...words.emailTaken() });
+      if (emailTaken(err)) return problem(req, res, await emailRefusal(auth.entityOf(req), req.body.email));
       console.error('Update actor error:', err.message);
       problem(req, res, failed(err, req, 'Update failed'));
     }

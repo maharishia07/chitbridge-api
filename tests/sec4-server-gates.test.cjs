@@ -33,6 +33,8 @@ const R = 'bbbbbbbb-0000-4000-8000-00000000000b';   // receives C1; asks about S
 const X = 'eeeeeeee-0000-4000-8000-00000000000e';   // holds nothing
 const C1 = '0000c417-0000-4000-8000-0000000000c1';
 const ITEM = '17e17e17-0000-4000-8000-000000000017', MY_ITEM = '17e17e17-0000-4000-8000-000000000018';
+const HIDDEN_ITEM = '17e17e17-0000-4000-8000-000000000019';   // S's item that S's storefront does NOT show (private / over the cap) — SEC-129
+const NO_ITEM = '17e17e17-0000-4000-8000-0000000000ff';       // nobody's
 const ACTORS = {
   'a-vw':  { parent: R, access_level: 'viewer', whole_entity: false, hat: 'view_only' },
   'a-cmt': { parent: R, access_level: 'commenter', whole_entity: false, hat: 'audit' },
@@ -52,7 +54,7 @@ function rowsFor(sql, p) {
   if (/break_status/.test(s) && /FROM identities/.test(s)) { const a = ACTORS[p[0]]; return a ? [{ break_status: 'active', hat: a.hat, access_level: a.access_level, whole_entity: a.whole_entity }] : []; }
   if (/FROM chit_header h LEFT JOIN chit_detail/.test(s) && /h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return HEADER.filter((h) => h.chit_id === p[0] && h.entity_id === p[1]);
   if (/FROM identities WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) return p[0] === 'shop-s' ? [{ identity_id: S, display_name: 'Shop S', bridge_id: 'shop-s', currency_code: 'INR' }] : [];
-  if (/SELECT entity_id FROM catalogue_items WHERE item_id = \$1/.test(s)) return p[0] === ITEM ? [{ entity_id: S }] : p[0] === MY_ITEM ? [{ entity_id: R }] : [];
+  if (/SELECT entity_id FROM catalogue_items WHERE item_id = \$1/.test(s)) return p[0] === ITEM || p[0] === HIDDEN_ITEM ? [{ entity_id: S }] : p[0] === MY_ITEM ? [{ entity_id: R }] : [];
   if (/SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities/.test(s)) return [{ identity_id: p[0], bridge_id: 'shop-s' }];
   if (/enquiry_message_deliver/.test(s)) return [{ created_at: '2026-10-14T00:00:00.000Z' }];
   if (/FROM chit_messages WHERE entity_id = \$1 AND subject_type = 'product'/.test(s)) {
@@ -193,6 +195,11 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 200);
   t('an internal note rings nothing', BELL.length === 0, JSON.stringify(BELL));
   await call('POST', '/api/catalogue/enquiry/' + MY_ITEM, tok(R, 'entity'), { message_text: 'testing my own item' });
   t('asking about my own item rings nothing', BELL.length === 0, JSON.stringify(BELL));
+  /* SEC-129: an item the shop's storefront does not show answers EXACTLY what an item that does not exist answers (404, same body) — never a 201 that proves the id */
+  const hid = await call('POST', '/api/catalogue/enquiry/' + HIDDEN_ITEM, tok(R, 'entity'), { message_text: 'Do you have this?' });
+  const nope = await call('POST', '/api/catalogue/enquiry/' + NO_ITEM, tok(R, 'entity'), { message_text: 'Do you have this?' });
+  t('SEC-129: an item S does not show is 404 (not 201)', hid.status === 404, show(hid));
+  t('SEC-129: …and the same status and body as an item that does not exist', nope.status === 404 && JSON.stringify(hid.body) === JSON.stringify(nope.body), show(hid) + ' vs ' + show(nope));
   r = await call('GET', '/api/catalogue/enquiry?page=1&limit=2', tok(S, 'entity'));
   t('GET /catalogue/enquiry → paged list: enquiries[] + top-level total · page · limit', r.status === 200 && Array.isArray(r.body.enquiries) && r.body.total === 3 && r.body.page === 1 && r.body.limit === 2, show(r));
   t('…not swallowed by /:bridge_id (no "Shop not found")', r.body.error === undefined);

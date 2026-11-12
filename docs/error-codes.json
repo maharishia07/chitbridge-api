@@ -1946,6 +1946,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "EMAIL_UNAVAILABLE",
+   "status": "409",
+   "title": "E-mail not available",
+   "shopkeeper": "That e-mail cannot be used for this person.",
+   "hint": "Use the person's own e-mail, or leave it empty.",
+   "owner_area": "actors",
+   "since": "2026-11-12"
+  },
+  {
    "code": "EMPLOYEE_EMAIL_REQUIRED",
    "status": "400",
    "title": "Employee email required",
