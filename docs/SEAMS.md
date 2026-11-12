@@ -34,7 +34,7 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
-| 60 | `items` | `books-store.js` | PERF1: |
+| 61 | `items` | `books-store.js` | PERF1: |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 57 | `record` | `access-events.js` |  |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -98,7 +98,7 @@ of file each thing is; this says what already does the job.
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
-| 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 30 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `owner` | `books.js` |  |
 | 29 | `mine` | `crm.js` | `opt.removedOk`: |
