@@ -67,7 +67,10 @@ function fakeDb() {
         const dropsWithdrawn = /cs.current_status IN \('cancelled', 'rejected'\)/.test(t);
         return { rows: world.sent.filter((r) => r.business_json.against.chit_id === p[1] && !(dropsWithdrawn && r.withdrawn) && (at(r.created_at) < me || (ties && at(r.created_at) === me && String(r.chit_id) < p[2]))) };
       }
-      if (/h.business_json #>> '{against,chit_id}' = ANY/.test(t)) return { rows: world.receipts.filter((r) => p[1].includes(r.business_json.against.chit_id)) };
+      if (/h.business_json #>> '{against,chit_id}' = ANY/.test(t)) { /* a cancelled / rejected receipt drops only when the statement says so */
+        const dropsWithdrawn = /cs.current_status IN [(]'cancelled', 'rejected'[)]/.test(t);
+        return { rows: world.receipts.filter((r) => p[1].includes(r.business_json.against.chit_id) && !(dropsWithdrawn && r.withdrawn)) };
+      }
       if (/FROM chit_header h/.test(t)) return { rows: [copy()] };
       if (/FROM catalogue_items/.test(t)) return { rows: [{ item_id: ITEM, item_data: { name: 'Basmati Rice', unit: 'kg', price: 90 }, updated_at: null }] };
       return { rows: [], rowCount: 0 };
@@ -281,6 +284,11 @@ const codes = (r) => ((r && r.stock && r.stock.skipped) || []).map((s) => s.code
   world.sent.push(rcpt('RU', 40, 1, { line: L2 }));
   eq([(await raise(rcpt('RV', 60, 2))).moved, onHand()], [0, 60], 'OPS-99 an earlier receipt line marked own use nets nothing: the later one nets the whole 60, stock 60');
   world.useRow = null;
+  /* 5 · the receipt-first order (OPS-75 receivedQuantities): a cancelled receipt of 50 put nothing on the shelf, so the bill counted in afterwards posts all 50 */
+  reset({ order: PO });
+  world.receipts = [Object.assign(receiptRow(PO, 50, 'GRNX'), { withdrawn: true })];
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'r6' }]);
+  eq(onHand(), 50, 'OPS-99 a cancelled receipt is not netted off the bill counted in afterwards: stock 50, not 0');
 
   console.log(checks + ' checks');
 })().catch((e) => {
