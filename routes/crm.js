@@ -408,13 +408,13 @@ router.post('/followups', auth, noKey, ...checked('POST /followups'), async (req
     const owner = ctx(req),
       b = req.body || {};
     if (!UUID.test(String(b.party_id || ''))) throw bad('Which party is it about?', 400, 'BAD_ID');
-    const f = await withEntity(owner, async (h) => {
+    const created = await withEntity(owner, async (h) => {
       await F.need(h);
       const on = await require('../lib/books-store').partyOn(h, owner, b.party_id);
       if (!on.customer && !on.supplier) throw bad(NOT_YOUR_PARTY, 404, 'NOT_FOUND');
       return F.create(h, owner, b, byOf(req));
     });
-    res.status(201).json({ followup: f });
+    res.status(201).json({ followup: created });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
