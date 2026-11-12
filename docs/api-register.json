@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 3,
-  "meets": 628,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -10280,11 +10280,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8f6e9d416382307d"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1194 OPS-79/85/87 re-sign (13 of 13 read in the register; new keys truncated, cap_note, counted_in_another_unit, other_units, state other_unit in FIELDS.md; error shape untouched; additive, backward compatible; reviewer did not build the PR)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-traceability.js"
    ],
@@ -11512,11 +11511,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3e089baa0604540a"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1194 OPS-79/85/87 re-sign (13 of 13 read in the register; new keys truncated, cap_note, counted_in_another_unit, other_units, state other_unit in FIELDS.md; error shape untouched; additive, backward compatible; reviewer did not build the PR)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-traceability.js"
    ],
@@ -26995,11 +26993,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "024c79c34623b554"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1194 OPS-79/85/87 re-sign (13 of 13 read in the register; new keys truncated, cap_note, counted_in_another_unit, other_units, state other_unit in FIELDS.md; error shape untouched; additive, backward compatible; reviewer did not build the PR)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-match.js",
     "till.html"
