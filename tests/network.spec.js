@@ -4,6 +4,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret-at-least-32-char
 const app = require("../src/app");           // export the Express app from app.js
 const { pool } = require("../src/db");
 // Network routes now require auth — attach a valid token to every request.
+// CARD  04-network/connections-and-invitations
 // identity_type:'entity' makes auth skip the actor DB revalidation, so no DB dependency for the token check.
 const TOKEN = "Bearer " + jwt.sign({ identity_id: "00000000-0000-0000-0000-000000000000", identity_type: "entity" }, process.env.JWT_SECRET, { expiresIn: "1h" });
 const _agent = supertest(app);

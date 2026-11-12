@@ -16,6 +16,7 @@
  * FLOW      route list (read from the router) x world (signed out, a failing db) + the named extras (tests/lib/simulator-scenes.cjs) → real route → body → Problem fields present · frozen legacy keys equal ·
  *           no leak · statuses tested → manifest; then the token, the mail, the oracle and the edges
  * CARD      qa/offline-guards
+ * CARD  11-crm-and-marketing/simulator
  *
  *   node tests/api-problem-simulator.test.cjs                    check
  *   node tests/api-problem-simulator.test.cjs --write            check, then record this file's rows of docs/contracts/api-error-tests.json

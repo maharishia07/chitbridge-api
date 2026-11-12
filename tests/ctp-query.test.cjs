@@ -1,4 +1,5 @@
 /**
+ * CARD  05-ctp-and-cross-installation/deliver-query-across-domains
  * ── ⭐⭐⭐ CTP QUERY — the READ verb, proven without a network ───────────────────────────────────────────────────
  *
  * Athi, 2026-09-16: *"catalogue pull I guess… the same resolves in cross platform also."*

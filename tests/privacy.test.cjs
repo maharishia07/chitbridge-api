@@ -1,4 +1,5 @@
 /**
+ * CARD  11-crm-and-marketing/consent-and-privacy-requests
  * CO1 privacy — contact consent (b306), the privacy-request register (b307) and the public facts, through the REAL router (routes/crm.js)
  * and the REAL lib/privacy.js, with the two tables STUBBED in memory (the migrations are drafts Athi runs). Offline (tests/support/crm-stub.cjs).
  * What it proves, each a Standards-register claim:

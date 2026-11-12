@@ -1,4 +1,5 @@
 /**
+ * CARD  18-identity-sign-in-and-access/sign-in
  * tests/signin-contact.test.cjs — M14 (DECISIONS 2026-10-08): SIGN IN WITH A MOBILE NUMBER OR AN E-MAIL; the .br / .cr grammar
  * is added BEHIND THE SCENES. The one lookup (lib/identity-auth.js findLoginIdentity) resolves a contact to the person behind it:
  *   · the account's own sign-in e-mail (owner)                      · a VERIFIED identity document, PHONE or EMAIL (owner, employee)
