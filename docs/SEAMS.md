@@ -10,8 +10,8 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
-| 131 | `rows` | `crm.js` | still in them: |
-| 123 | `words` | `variant.browser.js` |  |
+| 132 | `rows` | `crm.js` | still in them: |
+| 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -34,7 +34,7 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
-| 60 | `items` | `books-store.js` | PERF1: |
+| 61 | `items` | `books-store.js` | PERF1: |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 57 | `record` | `access-events.js` |  |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
-| 41 | `live` | `receivables.js` | the allocations that still count: |
+| 42 | `live` | `receivables.js` | the allocations that still count: |
 | 40 | `facts` | `bill-steps.js` | MY state_log — |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
@@ -98,7 +98,7 @@ of file each thing is; this says what already does the job.
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
-| 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 30 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `owner` | `books.js` |  |
 | 29 | `mine` | `crm.js` | `opt.removedOk`: |
@@ -112,7 +112,7 @@ of file each thing is; this says what already does the job.
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
-| 25 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -126,7 +126,7 @@ of file each thing is; this says what already does the job.
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `says` | `adopt.js` |  |
 | 22 | `entries` | `books-store.js` |  |
-| 22 | `governance` | `home-facts.js` |  |
+| 23 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `model` | `chit-sheet.js` |  |
@@ -135,7 +135,7 @@ of file each thing is; this says what already does the job.
 | 21 | `reason` | `lab-kit.js` | W9: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
-| 21 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 22 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 21 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `next` | `cap-stock.js` | the next level: |
@@ -191,7 +191,7 @@ of file each thing is; this says what already does the job.
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
-| 15 | `where` | `istest.js` | READING is_test is fine and stays — |
+| 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |

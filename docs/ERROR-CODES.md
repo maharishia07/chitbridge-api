@@ -40,7 +40,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_FORM | 400 | Return form not offered | That return is not one we build. Ask for GSTR-1 or GSTR-3B. | Pick GSTR-1 or GSTR-3B and try again. | tax | 2026-11-09 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
-| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number. | Send a price of 0 or more, as a number. | tax | 2026-10-23 |
+| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line. | Send a price of 0 or more, as a number, and a discount no larger than the line. | tax | 2026-10-23 |
 | BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote or on a chit being sent, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
 | BAD_RATE | 400 | Tax rate out of range or not a number | A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too). | Send a rate from 0 to 100 (cess 0 or more), as a number. | tax | 2026-10-23 |
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
@@ -77,6 +77,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTION_BAD_REQUEST | 400 | Cannot connect to yourself | You cannot connect to your own business. | Choose another business. | network | 2026-10-23 |
 | CONNECTION_EXISTS | 400 | Already connected | A connection with this business already exists. | Open your connections to see where it stands. | network | 2026-10-23 |
 | CONNECTOR_DEVICE_OFF | 409 | Connection switched off | This device connection is switched off. | Switch it on in the connector’s list. | connectors | 2026-10-23 |
+| CONNECTOR_FOLDER_NOT_FILED | 200 | Reading kept, folder not filed | The reading was kept, but it could not be put in its folder. | It is in your tasks; move it to the folder by hand. | connectors | 2026-11-12 |
 | CONNECTOR_HAS_DEVICES | 409 | Connector has devices | This connector still has devices attached. | Remove its devices first, then delete it. | connectors | 2026-10-23 |
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONNECTOR_IN_USE | 409 | Connector in use | This connector has raised records, so it cannot be deleted. | Switch its devices off instead. | connectors | 2026-10-23 |
@@ -84,6 +85,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTOR_NAME_MISMATCH | 400 | Gateway name does not match | The gateway name you typed does not match. | Type the name exactly as it is shown. | connectors | 2026-10-23 |
 | CONNECTOR_NOT_APPROVED | 403 | Connector not approved | This connector is waiting for approval. | Approve this PC in Settings, Integrations, Running connectors. | auth | 2026-10-31 |
 | CONNECTOR_NO_EMAIL | 400 | No email to send to | The business has no email address to send the code to. | Add an email address in Settings, then ask again. | connectors | 2026-10-23 |
+| CONNECTOR_PROOF_NOT_KEPT | 200 | Reading kept, picture not kept | The reading was kept, but its picture could not be saved. | The device may send the picture again. | connectors | 2026-11-12 |
 | CONNECTOR_WRONG_TYPE | 409 | Wrong kind of connector | This door is only for ERP connectors. | Devices send their readings to the device door. | connectors | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | We could not read their consent, so nothing was sent. | Try again in a moment. | whatsapp-out | 2026-10-22 |
 | CONTAINER_STORE_MISSING | 503 | Product containers not ready | The container model arrives after the next update. Nothing was saved. | Try again after the next update. | assist | 2026-11-07 |

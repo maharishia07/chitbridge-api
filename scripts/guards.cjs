@@ -145,6 +145,7 @@ const GUARDS = [
   'round-trips-all.test.cjs', // ⭐⭐ every route the web client calls has a round-trip budget (round-trips.budget.json) — fired offline, I19 (DB10)
   'live-trips-writer.test.cjs', // SPD-39: the live-count writer never lowers or raises a fired line, refuses an unbudgeted route, keeps the flags
   'live-trips-tool.test.cjs', // SPD-39: the live-trips harness restores sit-in when a run throws (fake client, offline)
+  'round-trips-volume.test.cjs', // ⭐ SPD-17: the verdict of the volume check (a new N+1 fails, trips and p95 never pass the baseline) on made-up numbers, no DB
   'read-batch-entity.test.cjs', // EFF-TRIPS: readBatch carries a statement per entity in ONE trip (the brands' released offers)
   'network-offers-shape.test.cjs', // EFF-TRIPS: GET /api/network-offers answers the pre-change shape row for row, in ≤ 4 trips (golden)
   'network-offers-visibility.test.cjs',
@@ -328,6 +329,7 @@ const GUARDS = [
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
+  'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
   'acc-331-currency-cells.test.cjs', // ⭐ CUR-1 (ACC-331/332): a bill's payment parts and lines and a journal's lines name the document's currency or none; 409 CURRENCY_MISMATCH naming the field
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-221-unreadable-number.test.cjs', // ⭐ ACC-221 (+222): a figure the caller sent that is not a number (abc, NaN, Infinity, blank, null price) is NAMED and refused (BAD_QTY / BAD_PRICE / BAD_RATE, thrown as line_unreadable), never priced at 0 and said ok; engines num() follow-up
@@ -335,6 +337,8 @@ const GUARDS = [
   'fin-77-parallel-payments.test.cjs', // ⭐ FIN-77: two full-due payments at once settle once (the duplicate question is asked under the party lock); IN and AU
   'acc-283-refund-gap.test.cjs', // ⭐ ACC-283: a refund that is not the credit note's total waits in words with gap_minor (AU A$69.00 for A$68.98); equal and credit-only refunds post
   'acc-272-unknown-registration.test.cjs', // ⭐ ACC-272: POST /api/tax/compute and /api/invoice/build ask a shop with no tax number that never said it is registered (409 TAX_REGISTRATION_UNKNOWN, the till's own code), never price it at no tax; confirmed unregistered still 0%
+  'acc-282-compute-refuses-bad-lines.test.cjs', // ⭐ ACC-282: a discount (with offers) above its line is 400 BAD_PRICE and a runaway amount 400 CHIT_AMOUNT_TOO_LARGE on /api/tax/compute and /api/invoice/build
+  'acc-311-journal-whole-minor.test.cjs', // ⭐ ACC-311: a manual journal entry with a fractional or over-ceiling minor amount is refused 422 BOOKS_REFUSED, nothing posted
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
   'acc-200-cash-rounding.test.cjs', // ⭐ ACC-200: a counter bill's payment gap posts as round-off only inside the books pack's cash step (AU 5c on cash); none = exact, so an IN bill 50p short waits, named
   'books-recurring.test.cjs', // ⭐ b281 draft: recurring entries — 503 until migrated, proposed by default, a re-run never posts twice, the daily sweep reverses a due accrual once
@@ -368,6 +372,7 @@ const GUARDS = [
   'assist-strict-input.test.cjs', // S33: CB Assist and catalogue-source write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'offers-products-strict-input.test.cjs', // S33: products and network-offers write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'connectors-strict-input.test.cjs', // S33: connector cockpit and integrations write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'connectors-ingest-not-money.test.cjs', // POST /api/connectors/ingest is a device reading, in money_reviewed_not and not in money_writes (Athi 12 Nov)
   'catalogue-strict-input.test.cjs', // S33: catalogue enquiry and photo-extract bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'books-replay.test.cjs', // FIN-63 step 2: the fingerprint and the replay rule of a repeated confirm (pure; window 2 min, latest live batch by item_id)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
@@ -675,6 +680,8 @@ const GUARDS = [
   'gs1.test.js', // QA wave 2: the GS1 check digit and the judgement around it
   'units-alias.test.js', // QA wave 2: a rename is never a conversion
   'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
+  'schedule-apply-claim.test.cjs', // NET-98 critic MUST 3: two readers at one due moment lay a parked patch once (claim: FOR UPDATE SKIP LOCKED + guarded stamp)
+  'net-98-reducers.test.cjs', // NET-98 S1: the pure reducers split out of the view's libs, one definition each (guard); the real-Postgres differential is net-98-differential.realstack.cjs (local stack)
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
   'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
   'regression-harness.test.cjs', // MNT (11 Nov): scripts/regression.js never claims a pass it did not see (HARNESS ERROR, PASS 0; non-party checks accept only 403/404); offline, no server
