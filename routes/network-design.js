@@ -50,6 +50,13 @@ async function withoutClosedShops(rows) {
   return closed.size ? rows.filter((item) => !closed.has(item.entity_id)) : rows;
 }
 
+/** NET-53: the one-query network search (network_search), minus the closed shops. The SQL function does not carry business_status (draft b833 would), so one read says which shops are closed. The result is returned only once filtered: a failure must leave the caller's answer unset. */
+async function searchWholeNetwork(bridgeId, text) {
+  const found = await query('SELECT * FROM network_search($1, $2, $3)', [bridgeId, searchable(text), SINGLE_LIMIT]);
+  found.rows = await withoutClosedShops(found.rows);
+  return found;
+}
+
 // GET /api/network-design — this entity's saved design (null if none yet).
 router.get('/', auth, async (req, res) => {
   try {
@@ -508,9 +515,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      const found = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, searchable(text), SINGLE_LIMIT]);
-      found.rows = await withoutClosedShops(found.rows); // assigned to `single` only once filtered: a failure above must leave it null
-      single = found; /* NET-53: the SQL function does not carry business_status (draft b833 would) — one read says which of these shops are closed; a failure falls back to the fan-out, which filters in its own read */
+      single = await searchWholeNetwork(meRow.bridge_id, text); // NET-53: closed shops are filtered out inside; a failure falls back to the fan-out, which filters in its own read
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.
@@ -606,8 +611,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
 
     const visible = ents.filter((item) => {
       const chosen = item.catalogue_visibility;
-      if (chosen !== 'public' && chosen !== 'network') return false; // private, or unset → absent
-      if (catalogueView.isClosed(item)) return false; // NET-53: a closed shop is not searched in its network
+      if ((chosen !== 'public' && chosen !== 'network') || catalogueView.isClosed(item)) return false; // private, unset or (NET-53) closed → absent
       // The operator cap still binds: a store capped to private is closed even if it chose otherwise.
       const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
       return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;

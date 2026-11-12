@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 1,
+  "meets": 630,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -20310,7 +20310,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 54,
+   "line": 61,
    "hash": "25a38d6265b84af6",
    "does": "",
    "errors": {
@@ -20409,8 +20409,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 451,
-   "hash": "9ebf8832d6f2eb6a",
+   "line": 458,
+   "hash": "b259205974030f54",
    "does": "",
    "errors": {
     "count": 0,
@@ -20484,10 +20484,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1157 (independent review: NET-53 closed shops dropped from fast path and fan-out by the one isClosed shared with gateOfRow, failed read falls back still filtered, no other door to network_search, bite proven, 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b259205974030f54"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-network-member.js"
    ],
@@ -20513,7 +20514,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 414,
+   "line": 421,
    "hash": "25df31a097bacda5",
    "does": "",
    "errors": {
@@ -49649,7 +49650,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 193,
+   "line": 200,
    "hash": "12c06e6fce741a91",
    "does": "",
    "errors": {
@@ -49765,7 +49766,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 291,
+   "line": 298,
    "hash": "401b2636a525219e",
    "does": "",
    "errors": {
@@ -49869,7 +49870,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 155,
+   "line": 162,
    "hash": "a3f9adfd80293c99",
    "does": "",
    "errors": {
@@ -64048,7 +64049,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 65,
+   "line": 72,
    "hash": "22e4af6d39bdd31a",
    "does": "",
    "errors": {
