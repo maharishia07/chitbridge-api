@@ -473,8 +473,8 @@
    "code": "BAD_PRICE",
    "status": "400",
    "title": "Price below zero or not a number",
-   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number.",
-   "hint": "Send a price of 0 or more, as a number.",
+   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line.",
+   "hint": "Send a price of 0 or more, as a number, and a discount no larger than the line.",
    "owner_area": "tax",
    "since": "2026-10-23"
   },
@@ -1028,6 +1028,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CONNECTOR_FOLDER_NOT_FILED",
+   "status": "200",
+   "title": "Reading kept, folder not filed",
+   "shopkeeper": "The reading was kept, but it could not be put in its folder.",
+   "hint": "It is in your tasks; move it to the folder by hand.",
+   "owner_area": "connectors",
+   "since": "2026-11-12"
+  },
+  {
    "code": "CONNECTOR_HAS_DEVICES",
    "status": "409",
    "title": "Connector has devices",
@@ -1089,6 +1098,15 @@
    "hint": "Add an email address in Settings, then ask again.",
    "owner_area": "connectors",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_PROOF_NOT_KEPT",
+   "status": "200",
+   "title": "Reading kept, picture not kept",
+   "shopkeeper": "The reading was kept, but its picture could not be saved.",
+   "hint": "The device may send the picture again.",
+   "owner_area": "connectors",
+   "since": "2026-11-12"
   },
   {
    "code": "CONNECTOR_WRONG_TYPE",

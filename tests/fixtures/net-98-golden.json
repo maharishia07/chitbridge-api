@@ -1,0 +1,8246 @@
+{
+ "m3": {
+  "members": {
+   "N98M000": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M000",
+     "display_name": "Member 0",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z0",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050000-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020001-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 0.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020000-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 0.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020001-0000-4000-8000-000000000000",
+      "item_id": "98020001-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 0.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020000-0000-4000-8000-000000000000",
+      "item_id": "98020000-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 0.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M001": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M003": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M003",
+     "display_name": "Member 3",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z3",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050003-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020031-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 3.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020030-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 3.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020031-0000-4000-8000-000000000000",
+      "item_id": "98020031-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 3.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020030-0000-4000-8000-000000000000",
+      "item_id": "98020030-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 3.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   }
+  },
+  "front": {
+   "network": {
+    "bridge_id": "N98M000",
+    "display_name": "Member 0"
+   },
+   "departments": [
+    {
+     "bridge_id": "N98M003",
+     "name": "Member 3",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020031-0000-4000-8000-000000000000",
+         "name": "Item 3.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020030-0000-4000-8000-000000000000",
+         "name": "Item 3.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "categories": [
+    "Cat1",
+    "Cat0"
+   ],
+   "count": 2,
+   "currencies": [
+    "INR"
+   ]
+  },
+  "count": 3
+ },
+ "m39": {
+  "members": {
+   "N98M000": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M000",
+     "display_name": "Member 0",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z0",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050000-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020001-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 0.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020000-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 0.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020001-0000-4000-8000-000000000000",
+      "item_id": "98020001-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 0.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020000-0000-4000-8000-000000000000",
+      "item_id": "98020000-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 0.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M001": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M002": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M003": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M003",
+     "display_name": "Member 3",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z3",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050003-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020031-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 3.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020030-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 3.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020031-0000-4000-8000-000000000000",
+      "item_id": "98020031-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 3.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020030-0000-4000-8000-000000000000",
+      "item_id": "98020030-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 3.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M004": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M004",
+     "display_name": "Member 4",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z4",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050004-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020041-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 4.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020040-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 4.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020041-0000-4000-8000-000000000000",
+      "item_id": "98020041-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 4.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020040-0000-4000-8000-000000000000",
+      "item_id": "98020040-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 4.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M005": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M006": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M006",
+     "display_name": "Member 6",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z6",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050006-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020062-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 6.2",
+       "unit": "pc",
+       "price": {
+        "amount": 30,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:03:00.000Z"
+     },
+     {
+      "item_id": "98020060-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 6.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020062-0000-4000-8000-000000000000",
+      "item_id": "98020062-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 6.2",
+       "unit": "pc",
+       "price": {
+        "amount": 30,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:03:00.000Z"
+     },
+     {
+      "line_id": "item:98020060-0000-4000-8000-000000000000",
+      "item_id": "98020060-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 6.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "avail": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 0,
+    "qty_zero_hidden": 1,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M007": {
+    "available": true,
+    "visibility": "public",
+    "categories": [
+     {
+      "id": "98030070-0000-4000-8000-000000000000",
+      "name": "Cat0",
+      "parent": null
+     }
+    ],
+    "shop": {
+     "bridge_id": "N98M007",
+     "display_name": "Member 7",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z7",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050007-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [
+     {
+      "percent": 10,
+      "id": "98030071-0000-4000-8000-000000000000",
+      "label": "Ten off",
+      "kind": "percent_off"
+     }
+    ],
+    "items": [
+     {
+      "item_id": "98020071-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 7.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "gst_rate": 12,
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z",
+      "tax": {
+       "rate": 12,
+       "cess": 0,
+       "name": null,
+       "scheme": "GST"
+      }
+     },
+     {
+      "item_id": "98020070-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 7.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "tax_slab": "98030072-0000-4000-8000-000000000000",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z",
+      "tax": {
+       "rate": 5,
+       "cess": 0,
+       "name": "GST 5",
+       "scheme": "GST"
+      }
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020071-0000-4000-8000-000000000000",
+      "item_id": "98020071-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 7.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "gst_rate": 12,
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "gst_rate": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020070-0000-4000-8000-000000000000",
+      "item_id": "98020070-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 7.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "tax_slab": "98030072-0000-4000-8000-000000000000",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "tax_slab": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M008": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M008",
+     "display_name": "Member 8",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": null,
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050008-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020081-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 8.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020080-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 8.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020081-0000-4000-8000-000000000000",
+      "item_id": "98020081-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 8.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020080-0000-4000-8000-000000000000",
+      "item_id": "98020080-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 8.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M009": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M009",
+     "display_name": "Member 9",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z9",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050009-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020091-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 9.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020090-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 9.0",
+       "unit": "pc",
+       "price": {
+        "amount": 99,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020091-0000-4000-8000-000000000000",
+      "item_id": "98020091-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 9.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020090-0000-4000-8000-000000000000",
+      "item_id": "98020090-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 9.0",
+       "unit": "pc",
+       "price": {
+        "amount": 99,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M010": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M010",
+     "display_name": "Member 10",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z0",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050010-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020101-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 10.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020100-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 10.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020101-0000-4000-8000-000000000000",
+      "item_id": "98020101-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 10.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020100-0000-4000-8000-000000000000",
+      "item_id": "98020100-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 10.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M011": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M011",
+     "display_name": "Member 11",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z1",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050011-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020111-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 11.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020110-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 11.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020111-0000-4000-8000-000000000000",
+      "item_id": "98020111-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 11.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020110-0000-4000-8000-000000000000",
+      "item_id": "98020110-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 11.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-brand",
+      "title": "Brand list",
+      "collection": "Brand",
+      "items": [],
+      "owner_entity_id": "98010000-0000-4000-8000-000000000000",
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M012": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M012",
+     "display_name": "Member 12",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z2",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050012-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020121-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 12.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020120-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 12.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020121-0000-4000-8000-000000000000",
+      "item_id": "98020121-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 12.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020120-0000-4000-8000-000000000000",
+      "item_id": "98020120-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 12.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M013": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M013",
+     "display_name": "Member 13",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z3",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050013-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020131-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 13.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020130-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 13.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020131-0000-4000-8000-000000000000",
+      "item_id": "98020131-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 13.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020130-0000-4000-8000-000000000000",
+      "item_id": "98020130-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 13.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M014": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M015": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M016": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M016",
+     "display_name": "Member 16",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z6",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050016-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020161-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 16.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020160-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 16.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020161-0000-4000-8000-000000000000",
+      "item_id": "98020161-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 16.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020160-0000-4000-8000-000000000000",
+      "item_id": "98020160-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 16.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M017": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M017",
+     "display_name": "Member 17",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z7",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050017-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020171-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 17.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020170-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 17.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020171-0000-4000-8000-000000000000",
+      "item_id": "98020171-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 17.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020170-0000-4000-8000-000000000000",
+      "item_id": "98020170-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 17.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M018": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M019": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M019",
+     "display_name": "Member 19",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z9",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050019-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020192-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 19.2",
+       "unit": "pc",
+       "price": {
+        "amount": 30,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:03:00.000Z"
+     },
+     {
+      "item_id": "98020190-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 19.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020192-0000-4000-8000-000000000000",
+      "item_id": "98020192-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 19.2",
+       "unit": "pc",
+       "price": {
+        "amount": 30,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:03:00.000Z"
+     },
+     {
+      "line_id": "item:98020190-0000-4000-8000-000000000000",
+      "item_id": "98020190-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 19.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "avail": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 0,
+    "qty_zero_hidden": 1,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M020": {
+    "available": true,
+    "visibility": "public",
+    "categories": [
+     {
+      "id": "98030200-0000-4000-8000-000000000000",
+      "name": "Cat0",
+      "parent": null
+     }
+    ],
+    "shop": {
+     "bridge_id": "N98M020",
+     "display_name": "Member 20",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z0",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050020-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [
+     {
+      "percent": 10,
+      "id": "98030201-0000-4000-8000-000000000000",
+      "label": "Ten off",
+      "kind": "percent_off"
+     }
+    ],
+    "items": [
+     {
+      "item_id": "98020201-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 20.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "gst_rate": 12,
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z",
+      "tax": {
+       "rate": 12,
+       "cess": 0,
+       "name": null,
+       "scheme": "GST"
+      }
+     },
+     {
+      "item_id": "98020200-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 20.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "tax_slab": "98030202-0000-4000-8000-000000000000",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z",
+      "tax": {
+       "rate": 5,
+       "cess": 0,
+       "name": "GST 5",
+       "scheme": "GST"
+      }
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020201-0000-4000-8000-000000000000",
+      "item_id": "98020201-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 20.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "gst_rate": 12,
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "gst_rate": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020200-0000-4000-8000-000000000000",
+      "item_id": "98020200-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 20.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "tax_slab": "98030202-0000-4000-8000-000000000000",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "tax_slab": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M021": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M021",
+     "display_name": "Member 21",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": null,
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050021-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020211-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 21.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020210-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 21.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020211-0000-4000-8000-000000000000",
+      "item_id": "98020211-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 21.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020210-0000-4000-8000-000000000000",
+      "item_id": "98020210-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 21.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M022": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M022",
+     "display_name": "Member 22",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z2",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050022-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020221-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 22.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020220-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 22.0",
+       "unit": "pc",
+       "price": {
+        "amount": 99,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020221-0000-4000-8000-000000000000",
+      "item_id": "98020221-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 22.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020220-0000-4000-8000-000000000000",
+      "item_id": "98020220-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 22.0",
+       "unit": "pc",
+       "price": {
+        "amount": 99,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M023": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M023",
+     "display_name": "Member 23",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z3",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050023-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020231-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 23.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020230-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 23.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020231-0000-4000-8000-000000000000",
+      "item_id": "98020231-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 23.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020230-0000-4000-8000-000000000000",
+      "item_id": "98020230-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 23.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M024": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M024",
+     "display_name": "Member 24",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z4",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050024-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020241-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 24.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020240-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 24.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020241-0000-4000-8000-000000000000",
+      "item_id": "98020241-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 24.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020240-0000-4000-8000-000000000000",
+      "item_id": "98020240-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 24.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-brand",
+      "title": "Brand list",
+      "collection": "Brand",
+      "items": [],
+      "owner_entity_id": "98010000-0000-4000-8000-000000000000",
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M025": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M025",
+     "display_name": "Member 25",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z5",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050025-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020251-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 25.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020250-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 25.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020251-0000-4000-8000-000000000000",
+      "item_id": "98020251-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 25.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020250-0000-4000-8000-000000000000",
+      "item_id": "98020250-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 25.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M026": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M026",
+     "display_name": "Member 26",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z6",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050026-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020261-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 26.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020260-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 26.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020261-0000-4000-8000-000000000000",
+      "item_id": "98020261-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 26.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020260-0000-4000-8000-000000000000",
+      "item_id": "98020260-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 26.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M027": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M028": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M029": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M029",
+     "display_name": "Member 29",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z9",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050029-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020291-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 29.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020290-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 29.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020291-0000-4000-8000-000000000000",
+      "item_id": "98020291-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 29.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020290-0000-4000-8000-000000000000",
+      "item_id": "98020290-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 29.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M030": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M030",
+     "display_name": "Member 30",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z0",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050030-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020301-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 30.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020300-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 30.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020301-0000-4000-8000-000000000000",
+      "item_id": "98020301-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 30.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020300-0000-4000-8000-000000000000",
+      "item_id": "98020300-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 30.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 2,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-shared",
+      "title": "Shared list",
+      "collection": "Shared",
+      "items": [],
+      "owner_entity_id": null,
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M031": {
+    "available": false,
+    "reason": "private"
+   },
+   "N98M032": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M032",
+     "display_name": "Member 32",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z2",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050032-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020322-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 32.2",
+       "unit": "pc",
+       "price": {
+        "amount": 30,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:03:00.000Z"
+     },
+     {
+      "item_id": "98020320-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 32.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020322-0000-4000-8000-000000000000",
+      "item_id": "98020322-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 32.2",
+       "unit": "pc",
+       "price": {
+        "amount": 30,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:03:00.000Z"
+     },
+     {
+      "line_id": "item:98020320-0000-4000-8000-000000000000",
+      "item_id": "98020320-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 32.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "avail": {
+        "qty": 5,
+        "source": "ledger",
+        "as_of": "2026-11-01T00:00:00.000Z"
+       },
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "avail": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 0,
+    "qty_zero_hidden": 1,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M033": {
+    "available": true,
+    "visibility": "public",
+    "categories": [
+     {
+      "id": "98030330-0000-4000-8000-000000000000",
+      "name": "Cat0",
+      "parent": null
+     }
+    ],
+    "shop": {
+     "bridge_id": "N98M033",
+     "display_name": "Member 33",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z3",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050033-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [
+     {
+      "percent": 10,
+      "id": "98030331-0000-4000-8000-000000000000",
+      "label": "Ten off",
+      "kind": "percent_off"
+     }
+    ],
+    "items": [
+     {
+      "item_id": "98020331-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 33.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "gst_rate": 12,
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z",
+      "tax": {
+       "rate": 12,
+       "cess": 0,
+       "name": null,
+       "scheme": "GST"
+      }
+     },
+     {
+      "item_id": "98020330-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 33.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "tax_slab": "98030332-0000-4000-8000-000000000000",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z",
+      "tax": {
+       "rate": 5,
+       "cess": 0,
+       "name": "GST 5",
+       "scheme": "GST"
+      }
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020331-0000-4000-8000-000000000000",
+      "item_id": "98020331-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 33.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "gst_rate": 12,
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "gst_rate": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020330-0000-4000-8000-000000000000",
+      "item_id": "98020330-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 33.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "tax_slab": "98030332-0000-4000-8000-000000000000",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "tax_slab": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M034": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M034",
+     "display_name": "Member 34",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": null,
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050034-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020341-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 34.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020340-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 34.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020341-0000-4000-8000-000000000000",
+      "item_id": "98020341-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 34.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020340-0000-4000-8000-000000000000",
+      "item_id": "98020340-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 34.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M035": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M035",
+     "display_name": "Member 35",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z5",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050035-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020351-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 35.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020350-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 35.0",
+       "unit": "pc",
+       "price": {
+        "amount": 99,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020351-0000-4000-8000-000000000000",
+      "item_id": "98020351-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 35.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020350-0000-4000-8000-000000000000",
+      "item_id": "98020350-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 35.0",
+       "unit": "pc",
+       "price": {
+        "amount": 99,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M036": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M036",
+     "display_name": "Member 36",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z6",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050036-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020361-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 36.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020360-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 36.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020361-0000-4000-8000-000000000000",
+      "item_id": "98020361-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 36.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020360-0000-4000-8000-000000000000",
+      "item_id": "98020360-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 36.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M037": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M037",
+     "display_name": "Member 37",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z7",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050037-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020371-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 37.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020370-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 37.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020371-0000-4000-8000-000000000000",
+      "item_id": "98020371-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 37.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020370-0000-4000-8000-000000000000",
+      "item_id": "98020370-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 37.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [
+     {
+      "source": "n98-brand",
+      "title": "Brand list",
+      "collection": "Brand",
+      "items": [],
+      "owner_entity_id": "98010000-0000-4000-8000-000000000000",
+      "experience": {},
+      "formatting": {}
+     }
+    ],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   },
+   "N98M038": {
+    "available": true,
+    "visibility": "public",
+    "categories": [],
+    "shop": {
+     "bridge_id": "N98M038",
+     "display_name": "Member 38",
+     "currency_code": "INR",
+     "money_why": null,
+     "gstn": "29ABCDE1234F1Z8",
+     "is_verified": false,
+     "logo_url": null,
+     "address": null,
+     "business_status": "open",
+     "storefront_access": "browse",
+     "upi_id": null,
+     "country": "IN",
+     "tax_id_word": "GSTIN",
+     "unit_rules": {},
+     "price_includes_tax": true,
+     "showcase": {
+      "template": null,
+      "sections": []
+     },
+     "viewer_groups": [],
+     "connector": null,
+     "order_input": {
+      "preset": "cart",
+      "pipeline": "commerce",
+      "showsPrice": true,
+      "negotiable": false,
+      "schema": {
+       "type": "object",
+       "properties": {
+        "quantity": {
+         "type": "number",
+         "exclusiveMinimum": 0,
+         "maximum": 100000
+        }
+       },
+       "required": [
+        "quantity"
+       ]
+      },
+      "documents": null
+     },
+     "order_method": "cart"
+    },
+    "schema": {
+     "schema_id": "98050038-0000-4000-8000-000000000000",
+     "schema_name": "Products"
+    },
+    "fields": [],
+    "offers": [],
+    "items": [
+     {
+      "item_id": "98020381-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 38.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "item_id": "98020380-0000-4000-8000-000000000000",
+      "item_data": {
+       "name": "Item 38.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "lines": [
+     {
+      "line_id": "item:98020381-0000-4000-8000-000000000000",
+      "item_id": "98020381-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 38.1",
+       "unit": "pc",
+       "price": {
+        "amount": 20,
+        "currency": "INR"
+       },
+       "category": "Cat1",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:02:00.000Z"
+     },
+     {
+      "line_id": "item:98020380-0000-4000-8000-000000000000",
+      "item_id": "98020380-0000-4000-8000-000000000000",
+      "origin": "own",
+      "source_key": null,
+      "owner_entity_id": null,
+      "edit_scope": "all",
+      "i_own_source": false,
+      "fields": {
+       "name": "Item 38.0",
+       "unit": "pc",
+       "price": {
+        "amount": 10,
+        "currency": "INR"
+       },
+       "category": "Cat0",
+       "exposure": {
+        "tax": true,
+        "offers": true,
+        "stock": true,
+        "synonyms": false,
+        "hsn": false,
+        "description": true,
+        "media": true
+       }
+      },
+      "provenance": {
+       "name": "own",
+       "unit": "own",
+       "price": "own",
+       "category": "own",
+       "exposure": "own"
+      },
+      "detail": null,
+      "created_at": "2026-10-01T12:01:00.000Z"
+     }
+    ],
+    "unpriced_hidden": 0,
+    "unavailable_hidden": 1,
+    "qty_zero_hidden": 0,
+    "catalogue_summary": {
+     "total": 2,
+     "own": 2,
+     "referenced": 0,
+     "fully_mine": 2,
+     "overlay_only": 0,
+     "i_own_source": 0,
+     "sources": []
+    },
+    "groups": [],
+    "finishes": [],
+    "_oi": {
+     "preset": "cart",
+     "pipeline": "commerce",
+     "showsPrice": true,
+     "negotiable": false,
+     "schema": {
+      "type": "object",
+      "properties": {
+       "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+       }
+      },
+      "required": [
+       "quantity"
+      ]
+     },
+     "documents": null,
+     "sources": null,
+     "errors": [],
+     "_raw": {}
+    }
+   }
+  },
+  "front": {
+   "network": {
+    "bridge_id": "N98M000",
+    "display_name": "Member 0"
+   },
+   "departments": [
+    {
+     "bridge_id": "N98M003",
+     "name": "Member 3",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020031-0000-4000-8000-000000000000",
+         "name": "Item 3.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020030-0000-4000-8000-000000000000",
+         "name": "Item 3.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M004",
+     "name": "Member 4",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020041-0000-4000-8000-000000000000",
+         "name": "Item 4.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020040-0000-4000-8000-000000000000",
+         "name": "Item 4.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M006",
+     "name": "Member 6",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat0",
+       "count": 2,
+       "items": [
+        {
+         "item_id": "98020062-0000-4000-8000-000000000000",
+         "name": "Item 6.2",
+         "unit": "pc",
+         "price": 30,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        },
+        {
+         "item_id": "98020060-0000-4000-8000-000000000000",
+         "name": "Item 6.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M007",
+     "name": "Member 7",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020071-0000-4000-8000-000000000000",
+         "name": "Item 7.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020070-0000-4000-8000-000000000000",
+         "name": "Item 7.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M008",
+     "name": "Member 8",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020081-0000-4000-8000-000000000000",
+         "name": "Item 8.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020080-0000-4000-8000-000000000000",
+         "name": "Item 8.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M009",
+     "name": "Member 9",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020091-0000-4000-8000-000000000000",
+         "name": "Item 9.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020090-0000-4000-8000-000000000000",
+         "name": "Item 9.0",
+         "unit": "pc",
+         "price": 99,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M010",
+     "name": "Member 10",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020101-0000-4000-8000-000000000000",
+         "name": "Item 10.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020100-0000-4000-8000-000000000000",
+         "name": "Item 10.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M011",
+     "name": "Member 11",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020111-0000-4000-8000-000000000000",
+         "name": "Item 11.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020110-0000-4000-8000-000000000000",
+         "name": "Item 11.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M012",
+     "name": "Member 12",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020121-0000-4000-8000-000000000000",
+         "name": "Item 12.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020120-0000-4000-8000-000000000000",
+         "name": "Item 12.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M013",
+     "name": "Member 13",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020131-0000-4000-8000-000000000000",
+         "name": "Item 13.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020130-0000-4000-8000-000000000000",
+         "name": "Item 13.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M016",
+     "name": "Member 16",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020161-0000-4000-8000-000000000000",
+         "name": "Item 16.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020160-0000-4000-8000-000000000000",
+         "name": "Item 16.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M017",
+     "name": "Member 17",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020171-0000-4000-8000-000000000000",
+         "name": "Item 17.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020170-0000-4000-8000-000000000000",
+         "name": "Item 17.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M019",
+     "name": "Member 19",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat0",
+       "count": 2,
+       "items": [
+        {
+         "item_id": "98020192-0000-4000-8000-000000000000",
+         "name": "Item 19.2",
+         "unit": "pc",
+         "price": 30,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        },
+        {
+         "item_id": "98020190-0000-4000-8000-000000000000",
+         "name": "Item 19.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M020",
+     "name": "Member 20",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020201-0000-4000-8000-000000000000",
+         "name": "Item 20.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020200-0000-4000-8000-000000000000",
+         "name": "Item 20.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M021",
+     "name": "Member 21",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020211-0000-4000-8000-000000000000",
+         "name": "Item 21.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020210-0000-4000-8000-000000000000",
+         "name": "Item 21.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M022",
+     "name": "Member 22",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020221-0000-4000-8000-000000000000",
+         "name": "Item 22.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020220-0000-4000-8000-000000000000",
+         "name": "Item 22.0",
+         "unit": "pc",
+         "price": 99,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M023",
+     "name": "Member 23",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020231-0000-4000-8000-000000000000",
+         "name": "Item 23.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020230-0000-4000-8000-000000000000",
+         "name": "Item 23.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M024",
+     "name": "Member 24",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020241-0000-4000-8000-000000000000",
+         "name": "Item 24.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020240-0000-4000-8000-000000000000",
+         "name": "Item 24.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M025",
+     "name": "Member 25",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020251-0000-4000-8000-000000000000",
+         "name": "Item 25.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020250-0000-4000-8000-000000000000",
+         "name": "Item 25.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M026",
+     "name": "Member 26",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020261-0000-4000-8000-000000000000",
+         "name": "Item 26.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020260-0000-4000-8000-000000000000",
+         "name": "Item 26.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M029",
+     "name": "Member 29",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020291-0000-4000-8000-000000000000",
+         "name": "Item 29.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020290-0000-4000-8000-000000000000",
+         "name": "Item 29.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M030",
+     "name": "Member 30",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020301-0000-4000-8000-000000000000",
+         "name": "Item 30.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020300-0000-4000-8000-000000000000",
+         "name": "Item 30.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M032",
+     "name": "Member 32",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat0",
+       "count": 2,
+       "items": [
+        {
+         "item_id": "98020322-0000-4000-8000-000000000000",
+         "name": "Item 32.2",
+         "unit": "pc",
+         "price": 30,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        },
+        {
+         "item_id": "98020320-0000-4000-8000-000000000000",
+         "name": "Item 32.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M033",
+     "name": "Member 33",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020331-0000-4000-8000-000000000000",
+         "name": "Item 33.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020330-0000-4000-8000-000000000000",
+         "name": "Item 33.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M034",
+     "name": "Member 34",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020341-0000-4000-8000-000000000000",
+         "name": "Item 34.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020340-0000-4000-8000-000000000000",
+         "name": "Item 34.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M035",
+     "name": "Member 35",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020351-0000-4000-8000-000000000000",
+         "name": "Item 35.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020350-0000-4000-8000-000000000000",
+         "name": "Item 35.0",
+         "unit": "pc",
+         "price": 99,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M036",
+     "name": "Member 36",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020361-0000-4000-8000-000000000000",
+         "name": "Item 36.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020360-0000-4000-8000-000000000000",
+         "name": "Item 36.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M037",
+     "name": "Member 37",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020371-0000-4000-8000-000000000000",
+         "name": "Item 37.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020370-0000-4000-8000-000000000000",
+         "name": "Item 37.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "bridge_id": "N98M038",
+     "name": "Member 38",
+     "currency_code": "INR",
+     "order_method": "cart",
+     "count": 2,
+     "categories": [
+      {
+       "name": "Cat1",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020381-0000-4000-8000-000000000000",
+         "name": "Item 38.1",
+         "unit": "pc",
+         "price": 20,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      },
+      {
+       "name": "Cat0",
+       "count": 1,
+       "items": [
+        {
+         "item_id": "98020380-0000-4000-8000-000000000000",
+         "name": "Item 38.0",
+         "unit": "pc",
+         "price": 10,
+         "currency": "INR",
+         "variant": "",
+         "product": null
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "categories": [
+    "Cat1",
+    "Cat0"
+   ],
+   "count": 58,
+   "currencies": [
+    "INR"
+   ]
+  },
+  "count": 39
+ }
+}
