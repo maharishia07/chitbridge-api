@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 712,
+   "line": 721,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -13351,7 +13351,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 650,
+   "line": 659,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -13451,7 +13451,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 691,
+   "line": 700,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -45102,7 +45102,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 701,
+   "line": 710,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45410,8 +45410,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 637,
-   "hash": "6fbedfc518079d24",
+   "line": 643,
+   "hash": "ec220e59bf3fda06",
    "does": "",
    "errors": {
     "count": 0,
@@ -45483,7 +45483,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1156 (independent review: CMP-42 staff door writes source staff and actor id, refuses self/reply in words, shopper door the one writer of self; web caller sends no source; bite proven; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -45827,7 +45827,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 660,
+   "line": 669,
    "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
@@ -45929,7 +45929,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 674,
+   "line": 683,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46033,7 +46033,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 723,
+   "line": 732,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -52587,7 +52587,7 @@
    "owner_agent": "cb-compliance",
    "file": "routes/privacy.js",
    "line": 72,
-   "hash": "333df34f3741d77d",
+   "hash": "34d34aa046bc2f5c",
    "does": "",
    "errors": {
     "count": 0,
@@ -52663,7 +52663,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1156 (independent review: CMP-42 staff door writes source staff and actor id, refuses self/reply in words, shopper door the one writer of self; web caller sends no source; bite proven; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
