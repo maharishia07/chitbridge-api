@@ -1808,8 +1808,7 @@
    "output_allowlist": true
   },
   "POST /api/supplies": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "PATCH /api/supplies/:id": {
    "strict_input": true,

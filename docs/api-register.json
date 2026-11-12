@@ -31028,7 +31028,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 85,
-   "hash": "11c5de3b07e9af43",
+   "hash": "467e34ad571a57e8",
    "does": "",
    "errors": {
     "count": 0,
@@ -31100,7 +31100,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56507,7 +56507,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 61,
-   "hash": "3b16aa55740768ab",
+   "hash": "364fce06aaa4049b",
    "does": "",
    "errors": {
     "count": 0,
@@ -56581,7 +56581,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56610,8 +56610,8 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 132,
-   "hash": "062ce99b9f77f313",
+   "line": 138,
+   "hash": "471fc8c79f9c2f6f",
    "does": "",
    "errors": {
     "count": 0,
@@ -56683,7 +56683,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: unknown or another shop id answers 404 NOT_FOUND like PATCH /:id; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56712,8 +56712,8 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 119,
-   "hash": "bd2e466d1f7552ff",
+   "line": 125,
+   "hash": "a1f8fa3246544304",
    "does": "",
    "errors": {
     "count": 0,
@@ -56789,7 +56789,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1178 stage2: C11 10a bounds read: schema 422 names the field (figure past its column, day past tomorrow, control character, non-flag, blank name), INVALID_INPUT registered, status_codes declare 422, issue ref from Idempotency-Key, answers unchanged; the 400-to-422 move of bad quantity/NUL text was decided by the C11 10a bounds sweep, old bodies for the two issue scenarios dropped from api-legacy with the status, web callers go through the generic table and do not test 400; 13 columns true, c11-10a test and api-problem-supplies green",
     "lifecycle": "stable"
    },
    "status": "meets standard",

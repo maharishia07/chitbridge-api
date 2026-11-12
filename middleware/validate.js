@@ -86,6 +86,7 @@ const BOUND_SENTENCES = {
   maximum: (field, params) => field + ' must be at most ' + params.limit + '.',
   exclusiveMaximum: (field, params) => field + ' must be less than ' + params.limit + '.',
   multipleOf: (field) => field + ' must be a whole number.',
+  minLength: (field, params) => (params.limit === 1 ? field + ' cannot be empty.' : field + ' must be at least ' + params.limit + ' characters.'),
   maxLength: (field, params) => field + ' must be at most ' + params.limit + ' characters.',
   maxItems: (field, params) => field + ' must have at most ' + params.limit + ' entries.',
   format: (field, params) => field + (params.format === 'calendar-day' || params.format === 'date-time-day' ? ' must be a real date.' : ' is not in the form expected.'),

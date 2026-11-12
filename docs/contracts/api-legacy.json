@@ -50795,30 +50795,6 @@
      }
     },
     {
-     "scenario": "issue-not-a-number",
-     "status": 400,
-     "body_keys": {
-      "error": "validation",
-      "message": "a movement of nothing records nothing"
-     },
-     "fixture": {
-      "error": "validation",
-      "message": "a movement of nothing records nothing"
-     }
-    },
-    {
-     "scenario": "issue-negative",
-     "status": 400,
-     "body_keys": {
-      "error": "validation",
-      "message": "issued takes stock out; give the quantity as a positive number"
-     },
-     "fixture": {
-      "error": "validation",
-      "message": "issued takes stock out; give the quantity as a positive number"
-     }
-    },
-    {
      "scenario": "issue-unit-differs-from-the-balance",
      "status": 400,
      "body_keys": {
