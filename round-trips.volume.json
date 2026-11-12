@@ -3232,13 +3232,13 @@
   },
   "GET /api/till/match": {
    "0": {
-    "trips": 3
+    "trips": 4
    },
    "10": {
-    "trips": 3
+    "trips": 4
    },
    "100": {
-    "trips": 3
+    "trips": 4
    },
    "grows": false,
    "exercised": true
