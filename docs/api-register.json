@@ -10417,11 +10417,12 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3267,
-   "hash": "6a189c2ff03d8cc2",
+   "hash": "8dafbdfc875c70c5",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -10450,8 +10451,8 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": true,
-    "status_codes": false,
+    "error_tests": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -10468,6 +10469,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -10492,7 +10494,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6a189c2ff03d8cc2"
+    "stale_since": "8dafbdfc875c70c5"
    },
    "status": "partial",
    "callers": [
@@ -10523,11 +10525,12 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3463,
-   "hash": "c15d4fcc923676a1",
+   "hash": "158440f72b9764bf",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -10558,8 +10561,8 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": true,
-    "status_codes": false,
+    "error_tests": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -10576,6 +10579,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -10600,7 +10604,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c15d4fcc923676a1"
+    "stale_since": "158440f72b9764bf"
    },
    "status": "partial",
    "callers": [
@@ -11319,11 +11323,12 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3200,
-   "hash": "ed9f6a38764b9e0e",
+   "hash": "28854d3230999418",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -11358,8 +11363,8 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": true,
-    "status_codes": false,
+    "error_tests": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -11376,6 +11381,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -11400,7 +11406,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ed9f6a38764b9e0e"
+    "stale_since": "28854d3230999418"
    },
    "status": "partial",
    "callers": [

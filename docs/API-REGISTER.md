@@ -118,8 +118,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/chits/:id/children | chits | routes/chits-trace.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/:id/trace | chits | routes/chits-trace.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/chits/disputes/queue | chits | routes/chits.js:6249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
-| GET | /api/chits/folder | chits | routes/chits.js:3267 | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
-| GET | /api/chits/inbox | chits | routes/chits.js:3463 | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
+| GET | /api/chits/folder | chits | routes/chits.js:3267 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
+| GET | /api/chits/inbox | chits | routes/chits.js:3463 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
 | GET | /api/chits/pulse | chits | routes/chits.js:3650 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/raida/report | chits | routes/chits.js:4452 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/register/attachables | chits | routes/chits.js:4292 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -127,7 +127,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/chits/register/templates | chits | routes/chits.js:4344 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/register/walk/:from | chits | routes/chits.js:4409 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/rollup | chits | routes/chits.js:3362 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
-| GET | /api/chits/sent | chits | routes/chits.js:3200 | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
+| GET | /api/chits/sent | chits | routes/chits.js:3200 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no |
 | GET | /api/chits/trace/batches | chits | routes/chits-trace.js:263 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/trace/by-batch | chits | routes/chits-trace.js:307 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/trace/networks | chits | routes/chits-trace.js:479 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -1746,13 +1746,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/chits/folder** · chits · cb-rail · partial
 - does: _not yet written_
-- errors: 1 code(s) [FILTER_INVALID] · statuses 401, 422, 500 · money y (derived)
+- errors: 1 code(s) [FILTER_INVALID] · statuses 400, 401, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 3 (wire 7; share app.html 3/108, cap-admin.js 3/109) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_messages, identities · writes (derived): - · callers: app.html, cap-admin.js · actions: -
 
 **GET /api/chits/inbox** · chits · cb-rail · partial
 - does: _not yet written_
-- errors: 1 code(s) [FILTER_INVALID] · statuses 401, 422, 500 · money y (derived)
+- errors: 1 code(s) [FILTER_INVALID] · statuses 400, 401, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 6; share app.html 2/108, authority-forms.html 2/30, cap-admin.js 2/109) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_messages, chit_status, identities, state_log · writes (derived): - · callers: app.html, authority-forms.html, cap-admin.js · actions: -
 
@@ -1800,7 +1800,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/chits/sent** · chits · cb-rail · partial
 - does: _not yet written_
-- errors: 1 code(s) [FILTER_INVALID] · statuses 401, 422, 500 · money y (derived)
+- errors: 1 code(s) [FILTER_INVALID] · statuses 400, 401, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 5; share app.html 1/108, authority-forms.html 1/30, cap-admin.js 1/109) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_disputes, chit_header, chit_status, identities, state_log · writes (derived): chit_reads, chit_status, state_log · callers: app.html, authority-forms.html, cap-admin.js, cap-bank.js, cap-connector.js, cap-crm-groups.js, cap-marketing.js, cap-mis.js, cap-repeat.js, rail-advice.js, screen-id.js, till.html · actions: -
 
