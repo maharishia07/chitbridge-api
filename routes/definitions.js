@@ -47,6 +47,7 @@ const { shopChanged } = require('../lib/shopchanged'); /* ⭐ an offer is what a
 /* The jurisdiction's tax slabs (region_layer, b201) — served beside the entity's own definitions, read-only. */
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape (CAT-333: the freeze list)
 const slabCites = require('../lib/slab-cites');
 const rateDoor = require('../lib/rate-door'); /* CAT-211: a category's rate (rules.default_slab) is owner or manager only, like every rate door */
 const offerClash = require('../lib/offer-clash'); /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
@@ -382,12 +383,15 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
     if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
     const entity_id = ctx(req);
     const rules = req.body && typeof req.body.rules === 'object' ? req.body.rules : null;
-    const { name, note, status } = req.body || {};
+    const { name, note, status, expected_version } = req.body || {};
 
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT * FROM definition WHERE definition_id = $1`, [req.params.id]);
+      /* CAT-273: the row is LOCKED while this edit reads its version and writes the next: five parallel saves queue and get versions 2..6, where they all read 1 and the losers died on the version key (reported as a name clash) */
+      const cur = await db.query(`SELECT * FROM definition WHERE definition_id = $1 FOR UPDATE`, [req.params.id]);
       if (!cur.rows.length) return { missing: true };
       const d = cur.rows[0];
+      /* CAT-273: a save that says which version it was made on is refused when the shelf has moved on (the caller reloads), never written over it */
+      if (expected_version !== undefined && expected_version !== null && Number(expected_version) !== d.current_version) return { stale: d.current_version };
       /* a rate the caller may not set (CAT-211), or an edit that removes the value (refused like a create without one) */
       const refused = await editRefusal(req, db, d, rules);
       if (refused) return refused;
@@ -446,6 +450,7 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
     });
 
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
+    if (out.stale) return problem(req, res, { status: 409, ...words.stale(out.stale, expected_version) });
     if (out.unconfirmed) return problem(req, res, { status: 428, ...words.liveUnconfirmed() }); // UX-110: said here too so the route's own text names every status it answers (S15 status_codes)
     if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
@@ -546,10 +551,14 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
  * ⚠️ A RETIRED DEFINITION STILL FREEZES. Retiring means "do not offer this any more", not "this never happened" —
  * refusing here would block a chit citing terms that were live when the order was placed.
  */
+const FREEZE_MAX = 500;
 router.post('/freeze', auth, ...checked('POST /freeze'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const ids = (req.body.definition_ids || []).map(String).filter(Boolean);
+    const ids = (req.body.definition_ids || []).filter((item) => item !== null && item !== undefined && item !== '').map(String); /* a blank entry is no id (null was read as the text "null") */
+    /* CAT-333: a snapshot is for the few definitions one chit cites; 10,000 ids reached the ::uuid[] cast and answered 500. An id that is neither a uuid nor a governed slab names nothing. */
+    if (ids.length > FREEZE_MAX) return problem(req, res, { status: 400, ...words.tooManyIds(FREEZE_MAX) });
+    if (ids.some((item) => !UUID.test(item) && !taxGov.isGovernedId(item))) return problem(req, res, { status: 400, ...words.badIds() });
     if (!ids.length) return res.json({ frozen: [], missing: [], frozen_at: null }); /* R2-13: one shape on both paths (laptop1, 24 Oct): frozen_at is null when nothing was frozen */
 
     /* ⚠️ A GOVERNED ID IS NOT A UUID and would make the cast below refuse the whole request. Split: the entity's
