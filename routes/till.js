@@ -2059,9 +2059,9 @@ async function shopZone(runner, entity_id) {
  */
 function dayOf(date, today, zone) {
   const shopClock = require('../lib/shop-clock');
-  const day = shopClock.bizDay(date, zone);
-  if (!day) return NaN; /* not a moment: the callers' `left <= days` / `since >= quiet` tests then say nothing, never a made-up number */
-  return Math.round((Date.parse(day + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000);
+  const shopDay = shopClock.bizDay(date, zone);
+  if (!shopDay) return NaN; /* not a moment: the callers' `left <= days` / `since >= quiet` tests then say nothing, never a made-up number */
+  return Math.round((Date.parse(shopDay + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000);
 }
 /* ⚠️ "expires in 1 days" is the kind of thing that makes a shopkeeper stop trusting the rest of the sentence */
 const plural = (count, word) => count + ' ' + word + (count === 1 ? '' : 's');
