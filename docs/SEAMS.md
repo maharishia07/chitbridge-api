@@ -189,7 +189,7 @@ of file each thing is; this says what already does the job.
 | 15 | `confirm` | `lab-kit.js` | opts: |
 | 15 | `offers` | `network-app.js` |  |
 | 15 | `post` | `books-manual.js` | POST /events — |
-| 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
+| 16 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
