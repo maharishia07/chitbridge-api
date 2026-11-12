@@ -2097,11 +2097,11 @@ function quietNote(row, quiet, today) {
   return { words: 'not sold for ' + since + ' day' + (since === 1 ? '' : 's'), urgency: Math.min(since, 90) / 3 };
 }
 
-/** what the offer-item move was refused for, as the parts problem() takes: unknown offer or product 404 (an id that is no uuid names none), a refused move 400, a clash with another live offer 409 (CAT-223: the refusal every other live save meets) → spec | null */
+/** what the offer-item move was refused for: { kind: missing | bad | clash, words } for the handler to answer under its own status (unknown offer or product 404 — an id that is no uuid names none —, a refused move 400, a clash with another live offer 409: CAT-223, the refusal every other live save meets) → refusal | null */
 function moveRefusal(done) {
-  if (done.missing) return { status: 404, ...notFound() };
-  if (done.refused) return { status: 400, ...said('TILL_BAD_REQUEST', 'validation', done.refused) };
-  return done.clash ? { status: 409, ...require('../lib/definitions-contract').words.clash(done.clash.body) } : null;
+  if (done.missing) return { kind: 'missing', words: notFound() };
+  if (done.refused) return { kind: 'bad', words: said('TILL_BAD_REQUEST', 'validation', done.refused) };
+  return done.clash ? { kind: 'clash', words: require('../lib/definitions-contract').words.clash(done.clash.body) } : null;
 }
 router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /offer-item'), async (req, res) => {
   try {
@@ -2113,7 +2113,7 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
     const done = UUID_RE.test(input.item_id) ? await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id)) : { missing: true };
 
     const refusal = moveRefusal(done);
-    if (refusal) return problem(req, res, refusal);
+    if (refusal) return problem(req, res, { status: refusal.kind === 'clash' ? 409 : refusal.kind === 'bad' ? 400 : 404, ...refusal.words }); /* the statuses stay visible here (the register reads them from the handler): 404 unknown, 400 refused, 409 clash */
     shopChanged(entity_id, 'offer ' + (input.on ? 'added to' : 'removed from') + ' a product');
     /* API-8: the two answers of the library step, named where they are used: unchanged (nothing to write) or version (a new version written) */
     res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version }));
