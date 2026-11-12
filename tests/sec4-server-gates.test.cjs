@@ -1,4 +1,5 @@
 /**
+ * CARD  10-online-shop-and-storefront-orders/enquiry-on-an-item
  * tests/sec4-server-gates.test.cjs — SEC4 · THE SERVER CHECKS WHAT THE PAGE GREYS (docs/critique/SEC4.md).
  *
  * The REAL middleware/auth.js, routes/chits.js, routes/catalogue.js and the adopted rail engine. Only the database (and the catalogue

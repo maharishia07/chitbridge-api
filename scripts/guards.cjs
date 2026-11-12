@@ -207,6 +207,8 @@ const GUARDS = [
   'root-link.test.cjs', // the values rootlink writes must be values the CHECK constraints accept
   'entity-kind.test.cjs', // every identity mint declares WHAT it is — a DELETE predicate depends on it
   'board-kinds.test.cjs', // the shared board carries CASES and CMDB records, nothing else — findings stay with the raiser
+  'qa-148-cmdb-noop-save.test.cjs', // QA-148: an identical CMDB save (any key order) writes no new version; a real change does
+  'skill-print.test.cjs', // ⭐ identity standard §9: the print skill record, cap-print.js, bill-print.html, the till page and printer.js name the SAME paper and document ids; a renamed id fails
   'cmdb.test.cjs', // ⭐⭐ the CMDB: every shipped record fits, a way in + out + tests, only a board writer writes
   'testing-board-writes.test.cjs', // ⭐⭐ SEC-SMALL: the six shared-board writes ask the gate first; results/incidents/evidence stay open; the platform root writes
   'testing-board-reads.test.cjs', // ⭐ SEC-122: a shop is refused the shared board's reads (403 NOT_BOARD_READER); the board account reads; the Test lab stays open
@@ -609,6 +611,7 @@ const GUARDS = [
   'party-live.test.cjs', // CRM-247/248: "deleted" is hidden_at, read in ONE place (lib/party-live): partyOn live/removed, an import never matches a deleted party's phone or merges into its name, refused like a stranger
   'b10-crm-mint.test.cjs', // B10 CRM-226/230/231/247: five adds at once take turns on the shop's mint lock (lib/xact-lock), a residual 23505 sits in a savepoint, a name that matches a deleted customer restores it
   'b10-crm-door.test.cjs', // B10 CRM-246/244/243/227/237: a held cheque stops remove, the tax id on the customer door is bounded (pack check only for a stated country), the import matches phones by their last 9 digits, due_at is a real day
+  'p2-crm-lane1.test.cjs', // P2 lane 1: PATCH followup done must be a JSON boolean (CRM-239, BAD_FLAG); the door pass tests of CRM-233/237/243/251 pinned
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
@@ -661,6 +664,8 @@ const GUARDS = [
   'rail-lab.test.cjs',
   'rcm-post.test.cjs',
   'register-spin-country.test.cjs',
+  'call-log.test.cjs', // QA 12 Nov: the harness logs METHOD + path + status per case; the SIT lifecycle and gorilla junits turn them into endpoint rows the map credits
+  'run-target.test.cjs', // QA 12 Nov: the one run-target allow-list (production refused, SIT boxes named)
   'schema-fingerprint.test.cjs',
   'sec4-server-gates.test.cjs',
   'seed-local-refusals.test.cjs',

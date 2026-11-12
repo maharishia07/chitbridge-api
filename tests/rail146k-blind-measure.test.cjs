@@ -8,6 +8,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes and libs over tests/support/work-stub.cjs.
  * FLOW      world (copies · roles · flag) → real route → body → whole-text scan → counts and the sale untouched
  * CARD      01-rail-core-the-chit/measure
+ * CARD  12-suppliers-and-procurement/scorecard
  *
  * Run: node tests/rail146k-blind-measure.test.cjs · MIN unit-per-rule · refusal-path · fail-closed
  */

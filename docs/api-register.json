@@ -1039,7 +1039,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 432,
+   "line": 434,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 726,
+   "line": 728,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1245,7 +1245,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 448,
+   "line": 450,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -12466,7 +12466,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 499,
+   "line": 501,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -12869,7 +12869,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 623,
+   "line": 625,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -13085,7 +13085,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 663,
+   "line": 665,
    "hash": "4d599620da61bcc0",
    "does": "",
    "errors": {
@@ -13185,7 +13185,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 705,
+   "line": 707,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -24962,7 +24962,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1694,
+   "line": 1696,
    "hash": "a062ac96f871111b",
    "does": "",
    "errors": {
@@ -25063,7 +25063,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3852,
+   "line": 3854,
    "hash": "8cf4e576115ef2fb",
    "does": "",
    "errors": {
@@ -25162,7 +25162,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1088,
+   "line": 1090,
    "hash": "b4d8b2a2ed26256c",
    "does": "",
    "errors": {
@@ -25266,7 +25266,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1112,
+   "line": 1114,
    "hash": "cb27ce34e66cddf0",
    "does": "",
    "errors": {
@@ -25373,7 +25373,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2768,
+   "line": 2770,
    "hash": "46e6f0f00dc7dd6a",
    "does": "",
    "errors": {
@@ -25572,7 +25572,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2406,
+   "line": 2408,
    "hash": "648b3631d4dd9f78",
    "does": "",
    "errors": {
@@ -25668,7 +25668,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 4099,
+   "line": 4101,
    "hash": "52497bb11fd4f7f5",
    "does": "",
    "errors": {
@@ -25767,7 +25767,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3587,
+   "line": 3589,
    "hash": "cde1efb7ead1d3ed",
    "does": "",
    "errors": {
@@ -25868,7 +25868,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2952,
+   "line": 2954,
    "hash": "9bca35743df8eeca",
    "does": "",
    "errors": {
@@ -25969,7 +25969,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2058,
+   "line": 2060,
    "hash": "e85095280e6bcaf9",
    "does": "",
    "errors": {
@@ -26065,7 +26065,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1464,
+   "line": 1466,
    "hash": "7a7c9c5b27829f86",
    "does": "",
    "errors": {
@@ -26166,7 +26166,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1516,
+   "line": 1518,
    "hash": "c2147cbd5b085bbb",
    "does": "",
    "errors": {
@@ -26267,7 +26267,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2707,
+   "line": 2709,
    "hash": "99f94adaaabe158a",
    "does": "",
    "errors": {
@@ -29356,7 +29356,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 422,
-   "hash": "236c464e6aa84b3e",
+   "hash": "33318eb6af2768b4",
    "does": "",
    "errors": {
     "count": 0,
@@ -29428,7 +29428,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1196 stage2 (re-sign after rename-only: local f to patched in the PATCH handler for the readability guard; behaviour identical, original #1189 review CRM-239 BAD_FLAG stands)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31137,7 +31137,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2517,
+   "line": 2519,
    "hash": "df4e141b1b0c06bd",
    "does": "",
    "errors": {
@@ -31238,7 +31238,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2137,
+   "line": 2139,
    "hash": "237a83a8f39b813c",
    "does": "",
    "errors": {
@@ -44467,7 +44467,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 715,
+   "line": 717,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -44571,7 +44571,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 464,
+   "line": 466,
    "hash": "e2e8be2381ec8bb2",
    "does": "",
    "errors": {
@@ -44677,7 +44677,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 533,
+   "line": 535,
    "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
@@ -44775,7 +44775,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 646,
+   "line": 648,
    "hash": "ec220e59bf3fda06",
    "does": "",
    "errors": {
@@ -44986,7 +44986,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 514,
+   "line": 516,
    "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
@@ -45086,7 +45086,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 546,
+   "line": 548,
    "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
@@ -45192,7 +45192,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 674,
+   "line": 676,
    "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
@@ -45294,7 +45294,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 688,
+   "line": 690,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -45398,7 +45398,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 737,
+   "line": 739,
    "hash": "57a3696e9ad8ab93",
    "does": "",
    "errors": {
@@ -45498,7 +45498,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 572,
+   "line": 574,
    "hash": "4bf9c5a4b74c017e",
    "does": "",
    "errors": {
@@ -57139,7 +57139,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1752,
+   "line": 1754,
    "hash": "fd3f809f9bb31d7e",
    "does": "",
    "errors": {
@@ -57444,7 +57444,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3778,
+   "line": 3780,
    "hash": "c371fe538a9aa0d2",
    "does": "",
    "errors": {
@@ -57542,7 +57542,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1152,
+   "line": 1154,
    "hash": "6d22cf4f5179ca5c",
    "does": "",
    "errors": {
@@ -57643,7 +57643,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2670,
+   "line": 2672,
    "hash": "df76c8bae9c24aa4",
    "does": "",
    "errors": {
@@ -57741,7 +57741,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2272,
+   "line": 2274,
    "hash": "f029e6e0ada3ffd3",
    "does": "",
    "errors": {
@@ -57843,7 +57843,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3917,
+   "line": 3919,
    "hash": "d09d4629cc3c54d0",
    "does": "",
    "errors": {
@@ -57942,7 +57942,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1863,
+   "line": 1865,
    "hash": "e0ca8ea923c8e9c1",
    "does": "",
    "errors": {
@@ -58045,7 +58045,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1435,
+   "line": 1437,
    "hash": "a43d32f3ef0358f7",
    "does": "",
    "errors": {
@@ -58146,7 +58146,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1613,
+   "line": 1615,
    "hash": "505771ada9129966",
    "does": "",
    "errors": {
@@ -64690,7 +64690,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1136,
+   "line": 1138,
    "hash": "0cb0f2c65965c8bf",
    "does": "",
    "errors": {

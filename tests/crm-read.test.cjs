@@ -1,4 +1,5 @@
 /**
+ * CARD  11-crm-and-marketing/parties-one-record-timeline-interactions
  * CB CRM, Phase 3 — the read model: GET /api/crm/parties · /parties/:id · /parties/:id/timeline. Offline (tests/support/crm-stub.cjs):
  * the real router and lib/crm over an in-memory stand-in for the database.
  *   · a party on BOTH lists is ONE row (two roles, one netted dues figure)        · a merged party is never listed; its id opens the survivor

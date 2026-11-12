@@ -1,4 +1,5 @@
 /**
+ * CARD  04-network/directory-and-search
  * tests/net-39-search.test.cjs — NET-39: FIND A BUSINESS (then a product) ON ANOTHER INSTALLATION. Here and There run the SAME function (lib/business-search.find).
  *
  *   A  the one search: Here a name finds every known shop (private too, NET-47; never a "~" party), There only LISTED shops (private, capped, closed are not answered); q < 2 characters is refused in words; limit 500 becomes 20;

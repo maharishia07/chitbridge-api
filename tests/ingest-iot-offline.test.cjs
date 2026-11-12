@@ -1,5 +1,6 @@
 'use strict';
 /**
+ * CARD  24-iot-and-devices/device-ingest
  * tests/ingest-iot-offline.test.cjs — TEST-INGEST-IOT: the connector ingest doors and the device key, offline (no database, no network).
  * Fills the gaps sec3-device-keys.test.cjs leaves; the stand-in database is the same style.
  *   A  the key: none → 401 NO_KEY · unknown → 401 KEY_UNKNOWN · inactive actor → 401 · each in words, nothing minted

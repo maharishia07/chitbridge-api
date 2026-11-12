@@ -84,6 +84,7 @@ async function hammer(pack) {
   const indexes = run.only !== null ? [run.only] : Array.from({ length: run.count }, (unused, index) => index);
   const failures = Object.fromEntries(pack.checks.map((rule) => [rule.id, []]));
   const started = Date.now();
+  const LOG = require('./call-log.cjs'), calls0 = LOG.calls.length;   /* every record's requests are the evidence of every check below */
   /* FAIL FAST: when the first records all throw, the pack's world is broken (a setup that never opens) — stop, rather than spend the CI
      job's whole time limit proving it 200 times (pack 2's first build waited 5 s per record until S41 was cancelled at 15 min) */
   const firstFew = Math.min(pack.stopAfter || 5, indexes.length);
@@ -113,6 +114,7 @@ async function hammer(pack) {
     }
   }
   const ms = Date.now() - started;
+  const calls = LOG.since(calls0);
   console.log('  gorilla ' + pack.label + ' · seed ' + run.seed + ' · ' + indexes.length + ' records · ' + ms + ' ms');
   for (const rule of pack.checks) {
     const broke = failures[rule.id];
@@ -130,7 +132,7 @@ async function hammer(pack) {
       return ms + ' ms';
     });
   }
-  const report = { label: pack.label, seed: run.seed, count: indexes.length, failures, ms, stopped };
+  const report = { label: pack.label, seed: run.seed, count: indexes.length, failures, ms, stopped, calls };
   const out = (pack.env || process.env).GORILLA_JSON;
   if (out) require('fs').writeFileSync(out, JSON.stringify(report, null, 2));
   return report;

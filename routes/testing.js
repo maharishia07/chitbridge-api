@@ -1023,7 +1023,8 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
     return { definition_id: identifier, version: 1, changed: true };
   }
   const id = cur.rows[0].definition_id;
-  if (JSON.stringify(cur.rows[0].rules || {}) === JSON.stringify(rules)) {
+  /* QA-148: the SAME content in any key order is no change (lib/canon sorts keys; JSON.stringify did not) */
+  if (canon.canon(cur.rows[0].rules || {}) === canon.canon(rules)) {
     return { definition_id: id, version: cur.rows[0].current_version, changed: false };
   }
   const next = Number(cur.rows[0].current_version) + 1;
@@ -1046,6 +1047,7 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
  * — a shared row is published to every shop, so writing one is not every shop's call.
  */
 const cmdb = require('../lib/cmdb');
+const canon = require('../lib/canon');
 const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
 
 /**
@@ -4135,6 +4137,7 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
 router._proj = _proj;
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
+router.upsertVersioned = upsertVersioned; /* QA-148: the one versioned write, reachable by tests/qa-148-cmdb-noop-save.test.cjs */
 module.exports = router;
 router.citedEntityOf = citedEntityOf;
 router.resultsEntityOf = resultsEntityOf; /* SEC-FIX3 — exported for tests/sec-fix3.test.cjs */
