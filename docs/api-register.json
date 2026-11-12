@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 5,
-  "meets": 626,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -38557,11 +38557,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3e69e940a86dcd21"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: AI-34 shopper name bounded to 255 (identities.display_name varchar(255)), null stays no name; a longer name was a database 500, now the standard 422 naming name; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38762,11 +38761,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0e9d131e287ebb29"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: AI-34 same shopper-name bound (shared SHOPPER_NAME), same 422; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -45457,11 +45455,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "57a3696e9ad8ab93"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: MKT-26 offer text must be text within TEXT_MAX (a number or object went out as \"5\"/[object Object]); a control character such as NUL is refused 400 at the door (400 declared, registered); null stays the handler NO_TEXT; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js"
    ],
@@ -48904,11 +48901,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0672ad19cc37824b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: CON-123 kind and outcome are the words the kit writes (400 with the failure sentence, chit_id keeps its old words); a ref over 120 is cut and logged, an object ref refused; answers unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -64026,11 +64022,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a1be8be966e3ef7"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1182 stage2: C11 10d read: CON-110 a stream owner must be a kit of this shop: new 422 STREAM_OWNER_UNKNOWN registered with a shopkeeper sentence, 422 declared, the id is not echoed, old 422 for a non-id kept; owner map logic lifted unchanged into ownersAfter; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
