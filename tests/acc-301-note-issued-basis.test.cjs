@@ -97,6 +97,25 @@ const withoutStamp = (invoice) => {
     LIVE_FLAG = 'no';
     await assert.rejects(() => proposals.priceMoney(ctxOf(null), [creditLine(5900)], 'INR', true), (e) => e.status === 503 && e.code === 'MONEY_NOT_COMPUTED' && /basis/.test(e.message));
   });
+  await t('no stamp, a TAXED line that fits neither basis (TotItemVal 118.01 on 100 + 18 tax) is REFUSED 503, never read as exclusive', async () => {
+    LIVE_FLAG = 'no';
+    const odd = withoutStamp(exclusive);
+    odd.ItemList[0].TotItemVal = Number(odd.ItemList[0].TotItemVal) + 0.01;
+    await assert.rejects(() => proposals.priceMoney(ctxOf(odd), [creditLine(5000)], 'INR', true), (e) => e.status === 503 && e.code === 'MONEY_NOT_COMPUTED');
+  });
+  await t('no stamp, two lines that DISAGREE (one inclusive-looking, one exclusive-looking) are REFUSED 503, never answered by the first', async () => {
+    LIVE_FLAG = 'no';
+    const mixed = withoutStamp(inclusive);
+    const second = JSON.parse(JSON.stringify(withoutStamp(exclusive).ItemList[0]));
+    mixed.ItemList.push(second);
+    await assert.rejects(() => proposals.priceMoney(ctxOf(mixed), [creditLine(5900)], 'INR', true), (e) => e.status === 503 && e.code === 'MONEY_NOT_COMPUTED');
+  });
+  await t('no stamp, a tax-free line next to a told one: the told one decides (the rate-0 line needs none)', async () => {
+    LIVE_FLAG = 'no';
+    const withFree = withoutStamp(inclusive);
+    withFree.ItemList.push(JSON.parse(JSON.stringify(withoutStamp(issuedOn(false, 500, 0)).ItemList[0])));
+    assert.equal(require('../lib/price-note').priceBasisOf(withFree), true);
+  });
   await t('a bill round that is NOT a note (provisional, unfrozen) still reads the live flag by design', async () => {
     LIVE_FLAG = 'yes';
     const asked = await noteTotals(ctxOf(exclusive), 5900, false);
