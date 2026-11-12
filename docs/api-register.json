@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 1,
-  "meets": 637,
+  "partial": 0,
+  "meets": 638,
   "columns": {
    "strict_input": {
     "applies": 324,
@@ -44446,13 +44446,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#1144 (CON-159): file_err and proof_err on the 200 now hold a registered code (CONNECTOR_FOLDER_NOT_FILED, CONNECTOR_PROOF_NOT_KEPT, shopkeeper sentences in ERROR-CODES.md) or null, never exception text; both keys kept, still null/non-null so a device testing presence works (cap-connector.js logs proof_err, lifecycle-test reads file_err only as a label); refusals are RFC 9457 with 400/401/403/404/409/503 declared, a failed chit is 503 not 200; tolerant-by-design exemption (S33-T) stands; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
