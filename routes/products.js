@@ -2281,8 +2281,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
-    items = stripped.kept;
+    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = stripped.kept; /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
     if (Array.isArray(b.names) && b.names.length) {
       /* R57: list prices out first, then the page's own */
       const priceBy = new Map();
@@ -2360,8 +2359,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
         (n === 1 ? '' : 's') +
         ' added' +
         (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') +
-        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') +
-        photosNote(stripped.dropped) +
+        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + photosNote(stripped.dropped) +
         '.'
     });
   } catch (e) {
