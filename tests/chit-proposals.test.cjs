@@ -706,7 +706,7 @@ const call = (method, url, id, body) =>
   const notesRows = (w) => Object.entries(w.header).filter(([k]) => k.includes(':')).map(([, v]) => v);
   const sealedMoney = (w, e) => JSON.stringify([w.header[e].business_json.invoice, w.header[e].summary_json, w.detail[e].total_value]);
   const issueInvoice = (w) => {
-    for (const e of [BUY, SELL].filter((id) => w.header[id])) w.header[e].business_json = Object.assign({}, w.header[e].business_json, { invoice: { stamped_by: 'Sydney Spice', ValDtls: { AssVal: 1100, TotInvVal: 1298 } }, bill_no: 'INV-7' });
+    for (const e of [BUY, SELL].filter((id) => w.header[id])) w.header[e].business_json = Object.assign({}, w.header[e].business_json, { invoice: { stamped_by: 'Sydney Spice', ValDtls: { AssVal: 1100, TotInvVal: 1298 }, _cb: { price_includes_tax: false } /* ACC-301: an issued invoice states the basis it was priced on (the engine stamps it); a note reads it */ }, bill_no: 'INV-7' });
     w.posted = [BUY, SELL].filter((id) => w.header[id]);
   };
   await t('RED→GREEN: a priced DECREASE on an issued invoice is accepted as ONE credit note: the invoice and its money are untouched on both copies, the lines move, the note carries the delta and `against`', async () => {
