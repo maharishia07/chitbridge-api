@@ -46,6 +46,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
+| BILL_WITHDRAWN | 409 | Bill already cancelled | That bill was cancelled, so a credit note cannot be raised against it. | The cancel already reversed the whole bill. Nothing more to do. | chits | 2026-11-13 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
@@ -520,7 +521,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_BAD_REQUEST | 400 | Chit request not accepted | That chit request could not be done. | Read the message, fix what it names and try again. | chits | 2026-10-23 |
 | CHIT_CANNOT_WITHDRAW | 409 | Cannot withdraw | This chit cannot be withdrawn from where it is. | Raise a dispute on it if something is wrong. | chits | 2026-10-23 |
 | CHIT_CONFLICT | 409 | Chit not in that state | The chit is not in a state that allows that. | Look at the chit again, then try once more. | chits | 2026-10-23 |
-| CHIT_HAS_CREDIT_NOTE | 409 | Cannot withdraw | This bill has a credit note against it, so it cannot be cancelled yet. | Cancel the credit note first, then cancel the bill. | chits | 2026-11-13 |
+| CHIT_HAS_CREDIT_NOTE | 409 | Cannot withdraw | This bill has a credit note against it, so it cannot be cancelled or rejected yet. | Cancel the credit note first, then the bill. | chits | 2026-11-13 |
 | CHIT_INVALID | 400 | Chit details not valid | Something on the chit is missing or not valid. | Read the list of fields it names, fix them and try again. | chits | 2026-10-23 |
 | CHIT_NOT_A_BILL | 409 | Not a bill | Only a bill you received says what its goods are for. | Open a bill you received. | chits | 2026-10-23 |
 | CHIT_NOT_MIGRATED | 503 | Chits update still to run | This part of chits is not ready on this server yet. | Try again after the next update. | chits | 2026-10-23 |
