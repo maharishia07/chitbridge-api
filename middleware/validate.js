@@ -117,6 +117,22 @@ function errorsOf(validator, value) {
     .filter((item) => !seen.has(item.field + item.code) && seen.add(item.field + item.code));
 }
 
+/* the keys already reported, so a tolerant door sent the same stray key every minute names it once per process, not once per request */
+const reportedKeys = new Set();
+/**
+ * API-43 / S33-T (Athi 12 Nov): a door that tolerates unknown keys ACCEPTS them and says so: one warning line naming the route and the key (never the value), once per process per key.
+ * Only a body schema that lists its keys and does not close itself is read (a closed one refused the key already). This only logs: the key is not read, stored or answered.
+ */
+function noteUnknownKeys(req, schema) {
+  if (!schema || schema.additionalProperties === false || !schema.properties || !req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return;
+  const route = req.method + ' ' + (req.baseUrl || '') + (req.route ? req.route.path : '');
+  Object.keys(req.body).filter((key) => !Object.prototype.hasOwnProperty.call(schema.properties, key)).slice(0, 20).forEach((key) => {
+    const name = route + '|' + key.slice(0, 80);
+    if (reportedKeys.size >= 2000 || reportedKeys.has(name)) return;
+    reportedKeys.add(name);
+    console.warn(JSON.stringify({ event: 'unknown_key_accepted', route, key: key.slice(0, 80) }));
+  });
+}
 /**
  * schemaValidate(operation, options?) — express middleware. operation = the route's OpenAPI operation (requestBody + parameters).
  * options.status/code/legacy keep an outward route on its old refusal (S2: 400 and its frozen body) until its next major; default is S4's 422 INVALID_INPUT.
@@ -130,7 +146,7 @@ function schemaValidate(operation, options) {
   const schemaValidated = function schemaValidated(req, res, next) {
     const urlFacts = Object.assign({}, req.query, req.params);
     const failures = (urlCheck ? errorsOf(urlCheck, urlFacts) : []).concat(bodyCheck ? errorsOf(bodyCheck, req.body === undefined ? {} : req.body) : []);
-    if (!failures.length) return next();
+    if (!failures.length) { noteUnknownKeys(req, bodyCheck && bodySchemaOf(operation)); return next(); }
     return problem(req, res, {
       status: choice.status || DEFAULT_REFUSAL.status,
       code: choice.code || DEFAULT_REFUSAL.code,
@@ -175,4 +191,4 @@ const queryDay = (...names) =>
 const REGISTERED_FORMATS = { 'calendar-day': isCalendarDay, 'date-time-day': isDay };
 Object.keys(REGISTERED_FORMATS).forEach((name) => [bodyEngine, urlEngine].forEach((engine) => engine.addFormat(name, REGISTERED_FORMATS[name])));
 
-module.exports = { REGISTERED_FORMATS, urlEngine, queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+module.exports = { noteUnknownKeys, REGISTERED_FORMATS, urlEngine, queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
