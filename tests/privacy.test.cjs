@@ -163,6 +163,12 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     assert.strictEqual(r.body.may_answer, true); assert.strictEqual(r.body.why, null);
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const c = await t.get('/privacy-requests'); t.as('E1'); assert.strictEqual(c.body.may_answer, false); assert.ok(/Only the owner/.test(c.body.why));
+    /* CRM-40: a viewer reads nothing (403 VIEW_ONLY, no register rows in the body); an editor co-assist above still reads it */
+    t.as('E1', { identity: { identity_id: 'V1', identity_type: 'actor', access_level: 'viewer', parent_entity_id: 'E1' } });
+    const v = await t.get('/privacy-requests'); t.as('E1');
+    assert.strictEqual(v.status, 403); assert.strictEqual(v.body.code, 'VIEW_ONLY'); assert.ok(!JSON.stringify(v.body).includes('Kavya'), 'the viewer was shown a requester');
+    t.as('E1', { identity: { identity_id: 'C1', identity_type: 'actor', access_level: 'commenter', parent_entity_id: 'E1' } });
+    assert.strictEqual((await t.get('/privacy-requests')).status, 403, 'a commenter cannot edit, so reads nothing'); t.as('E1');
   });
   await ita('a co-assist cannot answer (403, in words); the owner answers once; a second answer is 409', async () => {
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });

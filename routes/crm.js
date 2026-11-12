@@ -647,8 +647,10 @@ router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties
     problem(req, res, crmFault(e, req));
   }
 });
+/* CRM-40 (Athi 12 Nov, need-to-know: GDPR Art. 5(1)(f), ASVS V4): the register names who asked to see or erase their data, so the owner and an editor read it; a viewer does not */
 router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests'), async (req, res) => {
   try {
+    if (!isOwner(req) && !access.canEdit(req.identity)) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
     const owner = ctx(req);
     const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
     /* S34: the register's page and counts (lib/privacy requests), then who may answer */
