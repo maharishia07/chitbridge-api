@@ -1904,6 +1904,8 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
 async function moveInPlan(req, db) {
   const e = ctx(req),
     moveInRequest = moveInBody(req);
+  /* ⭐ ACC-329: the dry run refuses a future date as the import does (a trial balance or open bills post as an opening; lib/books openingDateGate) */
+  if (moveInRequest.kind === 'trial_balance' || moveInRequest.kind === 'open_bills') B.openingDateGate(req.books, moveInRequest.as_at);
   const rows = MI.cells(moveInRequest.kind, moveInRequest.parsed, moveInRequest.decisions);
   const world = await MI.world(db, e, moveInRequest.kind, req.books, { source: moveInRequest.source, side: moveInRequest.side, rows });
   const plan = MI.plan(moveInRequest.kind, {
