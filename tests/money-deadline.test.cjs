@@ -47,9 +47,9 @@ const ok = (c, m) => { if (c) { pass++; say('  ok  ' + m); } else { fail++; say(
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** POST the bill; the body is written in pieces, `gapMs` apart (a slow upload) */
-const send = (port, bill, pieces, gapMs) => new Promise((resolve) => {
+const send = (port, bill, pieces, gapMs, extra) => new Promise((resolve) => {
   const text = JSON.stringify(bill), size = Math.ceil(text.length / pieces);
-  const q = http.request({ host: '127.0.0.1', port, method: 'POST', path: '/api/chits/send', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer x' } }, (r) => {
+  const q = http.request({ host: '127.0.0.1', port, method: 'POST', path: '/api/chits/send', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer x', ...(extra || {}) } }, (r) => {
     let b = ''; r.on('data', (c) => { b += c; });
     r.on('end', () => { let j = null; try { j = JSON.parse(b); } catch (_) {} resolve({ status: r.statusCode, body: j }); });
   });
@@ -95,6 +95,11 @@ const send = (port, bill, pieces, gapMs) => new Promise((resolve) => {
   const slowUnkeyed = Object.assign({}, BILL); delete slowUnkeyed.client_ref;
   r = await send(port, slowUnkeyed, 1, 0);
   ok(r.status !== 503 && !(r.body && r.body.code === 'REQUEST_TIMEOUT'), '(2b) a slow send with neither client_ref nor Idempotency-Key gets no 503 (got ' + r.status + ')');
+  /* (2c) a client_ref that is not a usable bill number, or a key the middleware ignores, is no key: still no deadline */
+  const noDeadline = async (bill, header) => { const a = await send(port, bill, 1, 0, header); return a.status !== 503; };
+  ok(await noDeadline(Object.assign({}, slowUnkeyed, { client_ref: '   ' })), '(2c) a whitespace client_ref is unkeyed: no 503');
+  ok(await noDeadline(Object.assign({}, slowUnkeyed, { client_ref: 12345 })), '(2c) a numeric client_ref is unkeyed: no 503');
+  ok(await noDeadline(slowUnkeyed, { 'idempotency-key': 'k'.repeat(require(path.join(API, 'middleware', 'idempotency')).KEY_MAX_LENGTH + 1) }), '(2c) an oversized Idempotency-Key is unkeyed: no 503');
   ownBill.byRef = original;
   srv.close();
 
