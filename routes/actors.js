@@ -765,7 +765,7 @@ function codeRefusal(actor) {
  * PPL-40 · A RESET IS A SIGN-OUT. A person whose code or PIN is reset may have lost the phone or the secret — the reset is the owner's answer —
  * so every phone and browser session they opened is unlisted in the same act (lib/person-session closeBy, the one writer switch-off already uses),
  * and what a request in between cached is forgotten. Their next entry is the new code. Counter keys stay: a key is the shop's, not the person's secret.
- * The answer does not move (no new key). Runs only after the reset was allowed (mayIssue), before the new code is written.
+ * The answer body is unchanged (no new key). Runs only after the reset was allowed (mayIssue), before the new code is written.
  */
 async function endSessionsOnReset(entity_id, actor_id) {
   const ended = await personSession.closeBy((fn) => withEntity(entity_id, fn), entity_id, actor_id);
