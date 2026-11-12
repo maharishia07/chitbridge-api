@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -29356,7 +29356,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 422,
-   "hash": "115c3048fe2f6db9",
+   "hash": "33318eb6af2768b4",
    "does": "",
    "errors": {
     "count": 0,
@@ -29428,7 +29428,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1189 stage2 (re-sign; CRM-239 done non-boolean 400 BAD_FLAG, web sends only done:true)",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1196 stage2 (re-sign after rename-only: local f to patched in the PATCH handler for the readability guard; behaviour identical, original #1189 review CRM-239 BAD_FLAG stands)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -44361,7 +44361,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 406,
-   "hash": "55f0aa2002023d15",
+   "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
     "count": 0,
@@ -44434,11 +44434,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "55f0aa2002023d15"
+    "signed_off_by_date": "cb-api 2026-11-09 PR#1071 stage2b (independent review: deleted party answers as a stranger; privacy request kept by design; 13 columns read yes)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js",

@@ -408,13 +408,13 @@ router.post('/followups', auth, noKey, ...checked('POST /followups'), async (req
     const owner = ctx(req),
       b = req.body || {};
     if (!UUID.test(String(b.party_id || ''))) throw bad('Which party is it about?', 400, 'BAD_ID');
-    const created = await withEntity(owner, async (h) => {
+    const f = await withEntity(owner, async (h) => {
       await F.need(h);
       const on = await require('../lib/books-store').partyOn(h, owner, b.party_id);
       if (!on.customer && !on.supplier) throw bad(NOT_YOUR_PARTY, 404, 'NOT_FOUND');
       return F.create(h, owner, b, byOf(req));
     });
-    res.status(201).json({ followup: created });
+    res.status(201).json({ followup: f });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -425,8 +425,8 @@ router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), 
       id = idOf(req);
     /* CRM-239: done is a JSON true or false. "false" (a non-empty string) is truthy and closed the follow-up; refuse it in words, nothing changes (checked here, not in lib/crm-followups) */
     if (req.body && 'done' in req.body && typeof req.body.done !== 'boolean') throw bad('Send done as true or false.', 400, 'BAD_FLAG');
-    const f = await withEntity(owner, (h) => F.patch(h, owner, id, req.body, { by: byOf(req), isOwner: isOwner(req) }));
-    res.json({ followup: f });
+    const patched = await withEntity(owner, (h) => F.patch(h, owner, id, req.body, { by: byOf(req), isOwner: isOwner(req) }));
+    res.json({ followup: patched });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
