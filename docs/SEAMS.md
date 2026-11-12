@@ -68,7 +68,7 @@ of file each thing is; this says what already does the job.
 | 39 | `host` | `chit-sheet.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
-| 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
+| 39 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
 | 37 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
