@@ -2964,10 +2964,14 @@ async function sendBooks(sendState, req, res) {
   }
 }
 
+/** ⭐ OPS-6: present only when a receipt line carried no product of mine and so moved no stock → { stock_not_posted: [{ line_ref, particulars, code, why }] }, {} when every line moved stock (or the chit is no receipt) */
+function stockNotPostedOf(sendState) {
+  const unstocked = require('../lib/stock-from-chit').unstockedLines({ purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items });
+  return unstocked.length ? { stock_not_posted: unstocked } : {};
+}
 /** the answer, then the counter's place in its series */
 async function sendAnswer(sendState, req, res) {
   const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = sendState;
-  const unstocked = require('../lib/stock-from-chit').unstockedLines({ purpose: sendState.purpose, is_draft, business_json, line_items: sendState.line_items });
   res.json(costWrite.hideSendAnswer(sendState.sourceCarry, { /* RAIL-149: a blind sender who carried the draft money is not told it */
     message: is_draft ? 'Draft saved' : 'Chit sent successfully',
     chit_id,
@@ -2987,10 +2991,8 @@ async function sendAnswer(sendState, req, res) {
     cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
     credit_cap: sendState.creditCap,
-    /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence */
-    ...lineShape.answerOf(sendState.ignored),
-    /* ⭐ OPS-6: present only when a receipt line carried no product of mine and so moved no stock: [{ line_ref, particulars, code, why }] */
-    stock_not_posted: unstocked.length ? unstocked : undefined
+    /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */
+    ...lineShape.answerOf(sendState.ignored), ...stockNotPostedOf(sendState)
   }));
 
   /**

@@ -87,7 +87,7 @@ router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) =>
     g.put(seed.rows[0], 0);
 
     if (dir === 'forward') {
-      const cut = await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
+      const stopped = await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
       const { nodes, edges } = g;
       const nodeArr = [...nodes.values()];
       const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
@@ -109,7 +109,7 @@ router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) =>
         terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
         nodes: nodeArr,
         edges,
-        ...cut
+        ...stopped
       });
     }
 
@@ -201,17 +201,22 @@ async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
     frontier = next;
     depth++;
   }
-  return frontier.length ? cutForward(me, frontier, net, depth >= MAX_DEPTH ? 'depth' : 'nodes', depth >= MAX_DEPTH ? MAX_DEPTH : MAX_NODES) : {};
+  return cutForward(me, frontier, net, stopOf(depth, MAX_DEPTH, MAX_NODES));
+}
+
+/** OPS-79: which limit ended the walk - the depth (hops) when it ran out of hops, else the node count → { reason, limit } */
+function stopOf(depth, MAX_DEPTH, MAX_NODES) {
+  return depth >= MAX_DEPTH ? { reason: 'depth', limit: MAX_DEPTH } : { reason: 'nodes', limit: MAX_NODES };
 }
 
 /** the chits one step downstream of the frontier (the walk's one read; `limit` for the cut check, which needs one row to know) */
-function childRows(me, frontier, net, limit) {
-  return withEntity(me, (db) =>
+function childRows(shopId, frontier, networkId, limit) {
+  return withEntity(shopId, (db) =>
     db.query(
       `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
-        WHERE summary_json->'trace'->'parents' ?| $1::text[]${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}${limit ? ' LIMIT ' + limit : ''}`,
-      net ? [frontier, net] : [frontier]
+        WHERE summary_json->'trace'->'parents' ?| $1::text[]${networkId ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}${limit ? ' LIMIT ' + limit : ''}`,
+      networkId ? [frontier, networkId] : [frontier]
     )
   );
 }
@@ -220,17 +225,18 @@ function childRows(me, frontier, net, limit) {
  * OPS-79: the walk stopped at a limit with chits still downstream of its frontier - the recall set is INCOMPLETE and the answer says so, with the reason, never a shorter list that reads as the whole.
  * One probe row tells a chain that ends exactly at the limit (complete) from one that goes on. → { truncated: true, cap_note } or {}.
  */
-async function cutForward(me, frontier, net, why, limit) {
-  const more = await childRows(me, frontier, net, 1);
+async function cutForward(shopId, frontier, networkId, stop) {
+  if (!frontier.length) return {};
+  const more = await childRows(shopId, frontier, networkId, 1);
   if (!more.rows.length) return {};
-  const note = why === 'depth' ? 'the walk stopped after ' + limit + ' hops: more chits lie downstream, so this recall set is incomplete' : 'the walk stopped at ' + limit + ' chits: more lie downstream, so this recall set is incomplete';
+  const note = stop.reason === 'depth' ? 'the walk stopped after ' + stop.limit + ' hops: more chits lie downstream, so this recall set is incomplete' : 'the walk stopped at ' + stop.limit + ' chits: more lie downstream, so this recall set is incomplete';
   return { truncated: true, cap_note: note };
 }
 
 /** OPS-79: the backward walk stopped at the depth limit with a parent still to read -> the same truncated + cap_note; {} when it reached an origin or a dead end */
-async function cutBackward(g, path, MAX_DEPTH) {
+async function cutBackward(graph, path, MAX_DEPTH) {
   if (path.length - 1 < MAX_DEPTH) return {};
-  const last = g.nodes.get(path[path.length - 1]);
+  const last = graph.nodes.get(path[path.length - 1]);
   return last && last.parents && last.parents.length ? { truncated: true, cap_note: 'the walk stopped after ' + MAX_DEPTH + ' hops: provenance goes further back, so this path is incomplete' } : {};
 }
 
@@ -299,7 +305,7 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
         LIMIT ${BATCH_ROWS + 1}`
       )
     );
-    const cut = r.rows.length > BATCH_ROWS; /* OPS-79: a 201st row proves the list was cut at 200 */
+    const listCut = r.rows.length > BATCH_ROWS; /* OPS-79: a 201st row proves the list was cut at 200 */
     r.rows.length = Math.min(r.rows.length, BATCH_ROWS);
     const seen = new Set();
     const batches = [];
@@ -321,7 +327,7 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
     const answer = PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
     /* S34: a batch is the literal built above; the pager's keys follow (capped and cap_note only when it cut the list) */
     // prettier-ignore
-    res.json({ count: batches.length, batches: answer.batches.map((x) => ({ chit_id: x.chit_id, product: x.product, qty: x.qty, unit: x.unit, is_origin: x.is_origin, network: x.network, sender_name: x.sender_name, to_name: x.to_name })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, ...(cut ? { truncated: true, cap_note: answer.cap_note || 'only the newest ' + BATCH_ROWS + ' trace chits are listed; more exist' } : {}) });
+    res.json({ count: batches.length, batches: answer.batches.map((x) => ({ chit_id: x.chit_id, product: x.product, qty: x.qty, unit: x.unit, is_origin: x.is_origin, network: x.network, sender_name: x.sender_name, to_name: x.to_name })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, ...(listCut ? { truncated: true, cap_note: answer.cap_note || 'only the newest ' + BATCH_ROWS + ' trace chits are listed; more exist' } : {}) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list batches'));
   }
