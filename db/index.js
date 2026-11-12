@@ -89,7 +89,8 @@ async function createPool() {
 //
 // Also makes the old comment true: it claimed "queries will retry" but `pool` simply stayed undefined forever, so
 // a failed init was permanent until redeploy. A failed init now clears itself and the next query retries.
-const BOOT_WAIT_MS = Number(process.env.DB_BOOT_WAIT_MS || 15000);
+/* SEC-125b: through the one reader, so a typo or a blank is the 15 s default (and said once), never NaN or 0 — 0 stays a deliberate "do not wait" */
+const bootWaitMs = () => require('../lib/limits').intFromEnv('DB_BOOT_WAIT_MS', 15000, { min: 0 });
 const NOT_CONNECTED = 'Database not connected — check DATABASE_URL (and DB_POOLER_URL) in the environment';
 let pool;
 let initPromise = null;
@@ -120,7 +121,7 @@ async function ensurePool() {
   try {
     return await Promise.race([
       p,
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(NOT_CONNECTED)), BOOT_WAIT_MS); }),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(NOT_CONNECTED)), bootWaitMs()); }),
     ]);
   } catch (_) {
     throw new Error(NOT_CONNECTED);       // one canonical message, unchanged from before
@@ -382,4 +383,4 @@ const readBatch = async (entityId, actorId, statements) => {
   /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
   return at.map((i) => arr[2 + i]);
 };
-module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { bootWaitMs, query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };

@@ -21,9 +21,10 @@ const fs = require('fs');
 const path = require('path');
 const ROUTES = path.join(__dirname, '..', 'routes');
 
-/* the count on 2026-10-21 (api origin/main 6fa94519): 43 chit read routes, 0 of them call seesWholeEntity */
-const BASELINE_SKIPPING = 43;
-const READS_CHITS = /\bchit_(header|status|detail|line|participants)\b|\bwork\.\w+\(/;
+/* the count on 2026-10-21 (api origin/main 6fa94519) matched the TEXT of a chit table: 43 routes. SEC-115 (2026-11-12): a read is a chit table after FROM or JOIN (or the work list), so a row mapper or a comment that
+   merely names a column no longer counts: 34 real reads on origin/main 3eab0402. Still a floor: a handler that calls a helper defined elsewhere is not seen. */
+const BASELINE_SKIPPING = 34;
+const READS_CHITS = /\b(FROM|JOIN)\s+(public\.)?chit_(header|status|detail|line|participants)\b|\bwork\.\w+\(/i;
 
 /** chitReadRoutes() → [{ file, path, scoped }] — every GET handler in routes/ that reads chits, and whether it asks the one check */
 function chitReadRoutes() {
@@ -60,6 +61,11 @@ const skipping = rows.filter((r) => !r.scoped);
 const byFile = skipping.reduce((a, r) => ((a[r.file] = (a[r.file] || 0) + 1), a), {});
 console.log('  chit read routes: ' + rows.length + ' · skip seesWholeEntity: ' + skipping.length + ' · ' + JSON.stringify(byFile));
 
+it('SEC-115 precision: a chit table named in a row mapper or comment is not a read; one after FROM or JOIN is', () => {
+  assert.ok(!READS_CHITS.test("router.get('/x', (req, res) => { const p = row.chit_status; /* chit_header */ res.json(p); })"), 'a mapper naming the column counted');
+  assert.ok(READS_CHITS.test("router.get('/x', async () => query('SELECT 1 FROM chit_status WHERE chit_id = $1'))"), 'FROM chit_status missed');
+  assert.ok(READS_CHITS.test("router.get('/x', async () => query('SELECT 1 '+ ' FROM public.chit_header h JOIN chit_detail d ON true'))"), 'a multi-line FROM / JOIN missed');
+});
 it('RATCHET: chit read routes that skip seesWholeEntity ≤ ' + BASELINE_SKIPPING + ' (may fall, never grow)', () =>
   assert.ok(skipping.length <= BASELINE_SKIPPING, skipping.length + ' now skip it — a new chit read route must ask lib/access seesWholeEntity'));
 it('the scan still finds the chit routes (a scan that finds nothing proves nothing)', () => assert.ok(rows.length >= 30, 'found ' + rows.length));
