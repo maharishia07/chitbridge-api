@@ -18269,6 +18269,143 @@
           },
           "nothing_to_set_off": {
             "type": "boolean"
+          },
+          "owed_before_payments_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "paid_before_close_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "still_to_pay_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "excess_paid_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "paid_since_close_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "owed_before_payments_total_minor": {
+            "type": "number"
+          },
+          "still_to_pay_total_minor": {
+            "type": "number"
+          },
+          "surplus_entry_no": {
+            "type": "string"
+          },
+          "paid_note": {
+            "type": "string"
           }
         },
         "additionalProperties": false,

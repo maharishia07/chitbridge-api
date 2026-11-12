@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 4,
-  "meets": 627,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -18,11 +18,11 @@
    },
    "foreign_id_404": {
     "applies": 202,
-    "failing": 1
+    "failing": 0
    },
    "idempotent_money_write": {
-    "applies": 11,
-    "failing": 1
+    "applies": 10,
+    "failing": 0
    },
    "inbound_validated": {
     "applies": 6,
@@ -930,7 +930,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1012,
+   "line": 1014,
    "hash": "e5b9eacc9c599271",
    "does": "",
    "errors": {
@@ -11932,7 +11932,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 777,
+   "line": 779,
    "hash": "e7284e2a1727d98b",
    "does": "",
    "errors": {
@@ -12034,7 +12034,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 961,
+   "line": 963,
    "hash": "4574a239426bb2f1",
    "does": "",
    "errors": {
@@ -12138,7 +12138,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 801,
+   "line": 803,
    "hash": "c7ab8441a009fdac",
    "does": "",
    "errors": {
@@ -12242,7 +12242,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 717,
+   "line": 719,
    "hash": "11be9936f414911a",
    "does": "",
    "errors": {
@@ -20688,11 +20688,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "68e625302a030f40"
+    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#contract-last-rows: re-signed after NET-98 moved the store read into reads.storeSide (a seam, answer unchanged); all 13 machine columns read yes; no relayed error text, the 500 and 503 are faultOf sentences; no web caller broken",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -29136,7 +29135,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 982,
+   "line": 984,
    "hash": "ea0e27d69ed819ff",
    "does": "",
    "errors": {
@@ -34627,7 +34626,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "e0e55c0fbac21845",
+   "hash": "22808b3f1c7ff104",
    "does": "",
    "errors": {
     "count": 2,
@@ -34704,7 +34703,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1134 stage2 (ACC-336, head db5d0836): handler and contract re-read after the answer grew; new keys owed_before_payments_minor/_total_minor, still_to_pay_minor/_total_minor, paid_note are declared in api-output-shapes gst/close (closed, payable_minor and pay_total_minor kept as aliases, no key dropped), no new refusal code (PERIOD_NOT_ENDED, RCM_NETTING_NOT_BUILT, NOT_FOR_COUNTRY unchanged, advance refusal is a fixed sentence with BOOKS_REFUSED), tax_close replay answers stored figures in the same shape; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43084,7 +43083,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 192,
+   "line": 193,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -43187,7 +43186,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 921,
+   "line": 923,
    "hash": "45c59297489b4a7c",
    "does": "",
    "errors": {
@@ -43292,7 +43291,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 742,
+   "line": 744,
    "hash": "f427329066062d46",
    "does": "",
    "errors": {
@@ -43397,7 +43396,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 906,
+   "line": 908,
    "hash": "888a9edf8f9752b2",
    "does": "",
    "errors": {
@@ -43502,7 +43501,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 859,
+   "line": 861,
    "hash": "5c5dd3f7f0c7925f",
    "does": "",
    "errors": {
@@ -43606,7 +43605,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 674,
+   "line": 675,
    "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
@@ -43644,7 +43643,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -43687,13 +43686,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#contract-last-rows: first sign-off: statuses 409/422/503 of #1130 now declared on the route (declaresStatuses, no behaviour change); the 422/409/503 words are registered, a retry of one document is one receipt, no relayed error text; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "idempotent",
    "round_trips": {
@@ -43715,8 +43714,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 533,
-   "hash": "73701939f1a71a0e",
+   "line": 534,
+   "hash": "4e4ad9002d6b420e",
    "does": "",
    "errors": {
     "count": 0,
@@ -43742,7 +43741,7 @@
     "connector_connection",
     "identities"
    ],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -43760,7 +43759,7 @@
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -43768,7 +43767,7 @@
     "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": false,
-    "idempotent_money_write": true,
+    "idempotent_money_write": false,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -43798,13 +43797,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#1144 (CON-159): file_err and proof_err on the 200 now hold a registered code (CONNECTOR_FOLDER_NOT_FILED, CONNECTOR_PROOF_NOT_KEPT, shopkeeper sentences in ERROR-CODES.md) or null, never exception text; both keys kept, still null/non-null so a device testing presence works (cap-connector.js logs proof_err, lifecycle-test reads file_err only as a label); refusals are RFC 9457 with 400/401/403/404/409/503 declared, a failed chit is 503 not 200; tolerant-by-design exemption (S33-T) stands; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43826,7 +43825,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 834,
+   "line": 836,
    "hash": "5321fbf8637c444b",
    "does": "",
    "errors": {
@@ -50012,7 +50011,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -50048,13 +50047,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#contract-last-rows: first sign-off: an offer the shop cannot see is 404 NOT_FOUND (NET-98, #1129), a malformed id 400 OFFER_UNKNOWN, body strict; foreign_id_404 proved in the area test (another shop's offer id answers byte for byte as an unknown id) and mutation-proved; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "network-app.js"

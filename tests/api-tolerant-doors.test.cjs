@@ -84,7 +84,10 @@ const { world, check } = lab;
       };
       const plain = await run(door.good);
       check(door.route + ': a good body is accepted (not a 4xx/5xx)', (door.accept || ((res) => res.status > 0 && res.status < 400))(plain), [plain.status, plain.json]);
-      const extra = await run(Object.assign({}, door.good, CANARY));
+      const warned = []; const realWarn = console.warn; console.warn = (line) => warned.push(String(line));
+      const extra = await run(Object.assign({}, door.good, CANARY)).finally(() => { console.warn = realWarn; });
+      const logged = warned.filter((line) => line.includes('unknown_key_accepted') && line.includes('zz_unknown'));
+      if (!door.unlogged) check(door.route + ': the unknown key is accepted AND logged by name (event unknown_key_accepted), never its value', logged.length === 1 && !logged[0].includes('zz_unknown_canary_value'), warned);
       check(door.route + ': an unknown key (zz_unknown) is ignored: same status and answer', extra.status === plain.status && MASK(JSON.stringify(extra.json)) === MASK(JSON.stringify(plain.json)), [extra.status, extra.json, plain.json]);
       /* a record_as_body door that carries the record whole (PUT /cmdb/:ci: the body IS the record, lib/cmdb.js) keeps an unknown key INSIDE the one record statement; it is acted on nowhere else and never answered */
       const reached = seen.filter((text) => text.includes('zz_unknown') && !(door.carried && text.includes('zz_unknown_canary_value') && text.includes('Zz record')));
