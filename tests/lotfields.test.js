@@ -122,7 +122,8 @@ it('a two-digit year follows the GS1 rule, not a guess', () => {
 });
 
 it('day 00 means end of month, and is read as a real date rather than dropped', () => {
-  assert.strictEqual(gs1.parseElementString('17280300').expiry, '2028-03-01');
+  assert.strictEqual(gs1.parseElementString('17280300').expiry, '2028-03-31', 'GS1 General Specifications: DD=00 is the last day of the month');
+  assert.strictEqual(gs1.parseElementString('17280200').expiry, '2028-02-29');
 });
 
 it('⚠️ it never guesses: an ordinary barcode is not an element string', () => {
@@ -143,6 +144,16 @@ it('what it parses is what lotOf will store, unchanged', () => {
 console.log('— how much difference is not a dispute —');
 
 const TOL = { weight_bp: 50, count_units: 0 };      /* half a percent on weighed goods; nothing on packed */
+it('a bill by gm, kilo or mg is weighed: it gets the weight tolerance, not the count one (engines #125; routes/till.js matchLine)', () => {
+  for (const u of ['gm', 'grams', 'kilo', 'kilos', 'mg']) assert.strictEqual(lot.weighed(u), true, u);
+  assert.strictEqual(lot.withinTolerance(-300, 100000, 'gm', { weight_bp: 50, count_units: 0 }), true, '300 gm short of 100 kg is inside half a percent');
+  assert.strictEqual(lot.withinTolerance(-3, 100, 'pcs', { weight_bp: 50, count_units: 0 }), false, 'a count never gets the weight rule');
+});
+it('an impossible expiry is refused in words at the door, and read as unknown by the classifier', () => {
+  assert.match(lot.check({ batch: 'B', expiry: '2028-13-45' }, lot.packFor('pharmacy'), '2026-11-12').refuse, /not a real date/);
+  assert.strictEqual(gs1.expiryState({ expiry: '2028-13-45' }, '2026-11-12'), 'unknown');
+  assert.strictEqual(gs1.lotOf({ expiry: '2028-13-45' }), null);
+});
 
 it('⭐ a lorry of rice short by two kilos in a tonne is absorbed', () => {
   assert.strictEqual(lot.withinTolerance(-2, 1000, 'kg', TOL), true);
