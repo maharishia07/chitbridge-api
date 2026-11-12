@@ -757,8 +757,22 @@ router.get('/streams', auth, ...filterFor('/streams'), async (req, res) => {
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
-/** the owners a PUT /streams body hands streams to: every stream's value except the ones that leave it unowned (null, '' or false) */
-const namedOwners = (body) => STREAM_LIST.map((stream) => body[stream.id]).filter((owner) => owner !== undefined && owner !== null && owner !== '' && owner !== false);
+/** a value that leaves a stream unowned (null, '' or false) */
+const leavesUnowned = (value) => value === null || value === '' || value === false;
+/** the owners a PUT /streams body hands streams to: every named stream's value except the ones that leave it unowned */
+const namedOwners = (body) => STREAM_LIST.map((stream) => body[stream.id]).filter((owner) => owner !== undefined && !leavesUnowned(owner));
+/** the owner map after a PUT /streams body: the streams it names (an unowned value clears one), and how many it named */
+function ownersAfter(current, body) {
+  const next = Object.assign({}, current);
+  let touched = 0;
+  for (const stream of STREAM_LIST.map((item) => item.id)) {
+    if (!(stream in body)) continue;
+    touched++;
+    if (leavesUnowned(body[stream])) delete next[stream];
+    else next[stream] = String(body[stream]).slice(0, 120);
+  }
+  return { next, touched };
+}
 router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, res) => {
   try {
     if (!req.identity || req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.streamsKey, legacy: { error: 'Forbidden', message: SAID.streamsKey } });
@@ -768,15 +782,7 @@ router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, 
     const strangers = await unknownKits(entity_id, namedOwners(b));
     if (strangers.length) return problem(req, res, { status: 422, code: 'STREAM_OWNER_UNKNOWN', detail: STREAM_OWNER_SAID, legacy: { error: 'Not a connector', message: STREAM_OWNER_SAID } });
     const flags = await policy.get(entity_id);
-    const next = Object.assign({}, flags.stream_owner || {});
-    let touched = 0;
-    for (const st of STREAM_LIST.map((x) => x.id)) {
-      if (!(st in b)) continue;
-      const v = b[st];
-      touched++;
-      if (v === null || v === '' || v === false) delete next[st];
-      else next[st] = String(v).slice(0, 120);
-    }
+    const { next, touched } = ownersAfter(flags.stream_owner || {}, b);
     if (!touched) return problem(req, res, { status: 400, code: 'NO_STREAM_NAMED', detail: SAID.noStream, legacy: { error: 'validation', message: SAID.noStream } });
     const after = await policy.set(entity_id, { stream_owner: next });
     res.json({ ok: true, owner: after.stream_owner || {} });

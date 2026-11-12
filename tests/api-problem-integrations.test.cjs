@@ -255,6 +255,7 @@ const SUCCESS = [
   OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD }),
   /* the writers' success answers: a request that reaches each one's 200 is the example the generated output_allowlist case plays (S34) */
   OK('approve-connector', 'POST /api/integrations/:actor_id/approve', { actor: { identity_id: A1, site: 'PC', connector_config: { key_jti: 'j1' } } }, { url: I + '/' + A1 + '/approve', body: {} }),
+  OK('putstreams-clear', 'PUT /api/integrations/streams', {}, { body: { order: null, stock: false } }), /* CON-110: leaving a stream unowned needs no connector (and is the example the generated output case replays) */
   OK('putstreams-give', 'PUT /api/integrations/streams', { heldKit: true }, { body: { order: 'kit@pc', stock: null } }),
   OK('profile-write', 'POST /api/integrations/profile', { asKey: true, profileValues: HELD }, { body: { source: 'tally', fields: { legal_name: 'Acme Pvt Ltd', state: 'Delhi' } } })
 ];

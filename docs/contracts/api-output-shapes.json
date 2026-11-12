@@ -24998,8 +24998,8 @@
       "example": {
         "url": "/api/integrations/streams",
         "body": {
-          "order": "kit@pc",
-          "stock": null
+          "order": null,
+          "stock": false
         }
       }
     },
