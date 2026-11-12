@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 2,
+  "meets": 629,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -193,7 +193,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2422,
+   "line": 2441,
    "hash": "995d3386a23c0085",
    "does": "",
    "errors": {
@@ -2505,8 +2505,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 822,
-   "hash": "3cd9061ca816e45a",
+   "line": 821,
+   "hash": "f3b5356c80fe1afe",
    "does": "",
    "errors": {
     "count": 0,
@@ -2574,10 +2574,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder) 2026-11-13 PR#1236 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f3b5356c80fe1afe"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -2613,7 +2614,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1645,
+   "line": 1644,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2712,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1834,
+   "line": 1833,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2897,7 +2898,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1516,
+   "line": 1515,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -4245,7 +4246,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 324,
+   "line": 336,
    "hash": "8eaeaedd397a7084",
    "does": "",
    "errors": {
@@ -4351,7 +4352,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2473,
+   "line": 2492,
    "hash": "8b75d91ef31f4602",
    "does": "",
    "errors": {
@@ -4457,7 +4458,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1358,
+   "line": 1376,
    "hash": "80e95fa15dc3a719",
    "does": "",
    "errors": {
@@ -4572,7 +4573,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1080,
+   "line": 1092,
    "hash": "18214f6b305f2798",
    "does": "",
    "errors": {
@@ -4676,7 +4677,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 984,
+   "line": 996,
    "hash": "7c2da9eab40a0454",
    "does": "",
    "errors": {
@@ -4783,7 +4784,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1574,
+   "line": 1592,
    "hash": "29ab15b5384fcbde",
    "does": "",
    "errors": {
@@ -4894,7 +4895,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2003,
+   "line": 2022,
    "hash": "f419e5ec00191334",
    "does": "",
    "errors": {
@@ -5000,7 +5001,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2174,
+   "line": 2193,
    "hash": "012408655020a240",
    "does": "",
    "errors": {
@@ -5114,7 +5115,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2182,
+   "line": 2201,
    "hash": "7ca455cbd821c7a8",
    "does": "",
    "errors": {
@@ -5223,7 +5224,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 533,
+   "line": 545,
    "hash": "2daeb6cb953ee12c",
    "does": "",
    "errors": {
@@ -5333,8 +5334,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 821,
-   "hash": "315608c54cc7f650",
+   "line": 833,
+   "hash": "1e733e8c918ada78",
    "does": "",
    "errors": {
     "count": 3,
@@ -5421,7 +5422,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -5454,7 +5455,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1727,
+   "line": 1745,
    "hash": "0e14a98c10067c83",
    "does": "",
    "errors": {
@@ -5560,7 +5561,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2543,
+   "line": 2562,
    "hash": "c9bfdc8ac640cf30",
    "does": "",
    "errors": {
@@ -5669,7 +5670,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2590,
+   "line": 2609,
    "hash": "dc47d5ce7ab5a294",
    "does": "",
    "errors": {
@@ -5783,7 +5784,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 275,
+   "line": 287,
    "hash": "a2a71e15be56dd5f",
    "does": "",
    "errors": {
@@ -5895,7 +5896,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 606,
+   "line": 618,
    "hash": "66409c311c5aabfc",
    "does": "",
    "errors": {
@@ -6007,7 +6008,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1954,
+   "line": 1973,
    "hash": "775a71cd90a0f681",
    "does": "",
    "errors": {
@@ -6107,7 +6108,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2274,
+   "line": 2293,
    "hash": "8588a456a55569eb",
    "does": "",
    "errors": {
@@ -6212,7 +6213,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2312,
+   "line": 2331,
    "hash": "6f8afb2e64d5acc2",
    "does": "",
    "errors": {
@@ -6319,7 +6320,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2341,
+   "line": 2360,
    "hash": "5ae00d5c8173ec3d",
    "does": "",
    "errors": {
@@ -6424,7 +6425,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 684,
+   "line": 696,
    "hash": "3562c34153943e3a",
    "does": "",
    "errors": {
@@ -6542,7 +6543,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1332,
+   "line": 1350,
    "hash": "e3ab88fab430d12a",
    "does": "",
    "errors": {
@@ -6655,7 +6656,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2238,
+   "line": 2257,
    "hash": "f996cd645019e1ca",
    "does": "",
    "errors": {
@@ -6761,7 +6762,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1026,
+   "line": 1038,
    "hash": "69865c3857e8949b",
    "does": "",
    "errors": {
@@ -6864,7 +6865,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2394,
+   "line": 2413,
    "hash": "3531bce9d5ea96a8",
    "does": "",
    "errors": {
@@ -6968,7 +6969,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2504,
+   "line": 2523,
    "hash": "d11f85dc896848ec",
    "does": "",
    "errors": {
@@ -7074,7 +7075,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 163,
+   "line": 173,
    "hash": "ad9d9beff840f813",
    "does": "",
    "errors": {
@@ -7175,8 +7176,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 213,
-   "hash": "478b4e64d05fd2fa",
+   "line": 223,
+   "hash": "4b7533f9de3a68d2",
    "does": "",
    "errors": {
     "count": 2,
@@ -7253,7 +7254,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7284,7 +7285,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2451,
+   "line": 2470,
    "hash": "c62c1a4a50d4fa0b",
    "does": "",
    "errors": {
@@ -7359,10 +7360,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1238 stage2: re-read after ACC-342; the output shape now lists action as optional (kind, count, words stay required, every other key closed) because the new bills_not_in_books row has no button; the 11 earlier kinds still carry action, older web readers unchanged; recorded in tests/books-todo-unposted.test.cjs T7; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c62c1a4a50d4fa0b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "accounts.html",
     "cap-period.js"
@@ -7390,7 +7392,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1000,
+   "line": 1012,
    "hash": "14f2fbecc8a741fd",
    "does": "",
    "errors": {
@@ -7493,7 +7495,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2221,
+   "line": 2240,
    "hash": "ed20d7411dd0c93e",
    "does": "",
    "errors": {
@@ -28814,7 +28816,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1406,
+   "line": 1424,
    "hash": "448a4e239db6e38d",
    "does": "",
    "errors": {
@@ -28937,7 +28939,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2412,
+   "line": 2431,
    "hash": "da15e2c5df750548",
    "does": "",
    "errors": {
@@ -31449,7 +31451,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 913,
+   "line": 912,
    "hash": "88c05cc1b9fd315d",
    "does": "",
    "errors": {
@@ -32586,7 +32588,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 353,
+   "line": 365,
    "hash": "09ce0dbdbd76db8c",
    "does": "",
    "errors": {
@@ -33124,7 +33126,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 306,
+   "line": 318,
    "hash": "aabf384ec7ec5ff7",
    "does": "",
    "errors": {
@@ -33227,7 +33229,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1677,
+   "line": 1695,
    "hash": "6167ef775abb8f3b",
    "does": "",
    "errors": {
@@ -33445,7 +33447,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2024,
+   "line": 2043,
    "hash": "cf88afddb1ead2a6",
    "does": "",
    "errors": {
@@ -33553,7 +33555,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2041,
+   "line": 2060,
    "hash": "c5d5fa6c2a416807",
    "does": "",
    "errors": {
@@ -33876,7 +33878,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 174,
+   "line": 184,
    "hash": "0184f8490b3c9ecc",
    "does": "",
    "errors": {
@@ -33982,7 +33984,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1759,
+   "line": 1777,
    "hash": "642ac0ba6bec7bb8",
    "does": "",
    "errors": {
@@ -34095,7 +34097,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1786,
+   "line": 1804,
    "hash": "da97f92d366b4bc1",
    "does": "",
    "errors": {
@@ -34204,7 +34206,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1748,
+   "line": 1766,
    "hash": "7d637baaefe37588",
    "does": "",
    "errors": {
@@ -34311,7 +34313,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2563,
+   "line": 2582,
    "hash": "e3bbffd0a43845a4",
    "does": "",
    "errors": {
@@ -34418,7 +34420,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2572,
+   "line": 2591,
    "hash": "c185bb01296cb2ce",
    "does": "",
    "errors": {
@@ -34525,7 +34527,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2617,
+   "line": 2636,
    "hash": "8a8fe2f889e3128e",
    "does": "",
    "errors": {
@@ -35162,7 +35164,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1936,
+   "line": 1955,
    "hash": "e312a8dc229e0276",
    "does": "",
    "errors": {
@@ -35280,7 +35282,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1881,
+   "line": 1900,
    "hash": "5a3126bb70d7d509",
    "does": "",
    "errors": {
@@ -35386,7 +35388,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1926,
+   "line": 1945,
    "hash": "2a118fb7e3c1cec9",
    "does": "",
    "errors": {
@@ -35497,7 +35499,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1831,
+   "line": 1850,
    "hash": "325faf2a4d813cf7",
    "does": "",
    "errors": {
@@ -35611,7 +35613,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 313,
+   "line": 325,
    "hash": "c5cd3d070b6a04fc",
    "does": "",
    "errors": {
@@ -35717,7 +35719,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2296,
+   "line": 2315,
    "hash": "61e8d612485ebf8d",
    "does": "",
    "errors": {
@@ -35823,7 +35825,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2371,
+   "line": 2390,
    "hash": "f295ae85c796a7e7",
    "does": "",
    "errors": {
@@ -35936,7 +35938,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1700,
+   "line": 1718,
    "hash": "260df860493ec496",
    "does": "",
    "errors": {
@@ -36047,8 +36049,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1232,
-   "hash": "9a64aceb18529725",
+   "line": 1250,
+   "hash": "ba71659b802d820b",
    "does": "",
    "errors": {
     "count": 2,
@@ -36136,7 +36138,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#750 stage2",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -36165,7 +36167,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1529,
+   "line": 1547,
    "hash": "dc0a781ed49b1cd4",
    "does": "",
    "errors": {
@@ -36273,7 +36275,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1462,
+   "line": 1480,
    "hash": "b43593e9d78f2915",
    "does": "",
    "errors": {
@@ -36377,7 +36379,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1182,
+   "line": 1200,
    "hash": "955da4c294c0b894",
    "does": "",
    "errors": {
@@ -36488,7 +36490,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2193,
+   "line": 2212,
    "hash": "92a8304b6bb46be8",
    "does": "",
    "errors": {
@@ -36594,7 +36596,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1739,
+   "line": 1757,
    "hash": "36eb5b5b5a062279",
    "does": "",
    "errors": {
@@ -36700,7 +36702,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2402,
+   "line": 2421,
    "hash": "678cbb0c1ba116dc",
    "does": "",
    "errors": {
@@ -36806,7 +36808,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2432,
+   "line": 2451,
    "hash": "a9a8fedb79f55b44",
    "does": "",
    "errors": {
@@ -36912,7 +36914,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2441,
+   "line": 2460,
    "hash": "c51214ebf2d96a82",
    "does": "",
    "errors": {
@@ -37018,7 +37020,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 187,
+   "line": 197,
    "hash": "375eed95657abf0f",
    "does": "",
    "errors": {
@@ -37127,8 +37129,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 254,
-   "hash": "09fc6cf934662aac",
+   "line": 265,
+   "hash": "289b04ea281c1b12",
    "does": "",
    "errors": {
     "count": 3,
@@ -37210,7 +37212,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37241,8 +37243,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1799,
-   "hash": "2e07e6f1853975a0",
+   "line": 1817,
+   "hash": "99a4ca72d06c9b59",
    "does": "",
    "errors": {
     "count": 2,
@@ -37326,7 +37328,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1072 stage 2b FIN-78: refusal 409 BOOKS_CONFLICT read from the carried party balance under the party lock in the writing transaction, replay (client_ref) answers before it, sentence names amount and currency and leaks nothing, four contract places present; 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37351,7 +37353,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2206,
+   "line": 2225,
    "hash": "ecce20760c8f63c3",
    "does": "",
    "errors": {
@@ -61031,7 +61033,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1608,
+   "line": 1607,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61139,7 +61141,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 990,
+   "line": 989,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61249,7 +61251,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1743,
+   "line": 1742,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61351,7 +61353,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1342,
+   "line": 1341,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -61462,7 +61464,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1204,
+   "line": 1203,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -61671,7 +61673,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1537,
+   "line": 1536,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {

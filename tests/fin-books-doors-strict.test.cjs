@@ -5,7 +5,7 @@
  *   amount_minor true -> 400 (it was read as 1) · 100.5 -> 400 (it was rounded to 101) · "1e3" -> 400 (it was 1000) · 1000 -> 200 and posts 1000 minor = Rs 10.00
  *   direction "both" -> 400 (it was read as in) · "out" -> recorded out · direction left out stays in
  *   cheque.date 2026-02-30 -> 400 DATE_INVALID (it was dropped to no date) · the same payment with 2026-03-02 -> 200 cheque_received
- *   opening due_date 2026-13-01 -> 400 DATE_INVALID naming rows[0].due_date (it was dropped) · 2026-03-31 -> 200
+ *   opening due_date 2026-13-01, 2026-02-30, "soon", "12/01/2026" -> 400 DATE_INVALID naming rows[0].due_date (each was dropped) · 2026-03-31 -> 200
  *   terms party_id "x" -> 400 "Which party?" on GET and POST (it reached the database)
  *   a supplier paid Rs 10.00 then Rs 24.00 ahead (no bills) -> /dues row balance_minor 3400 and balance_words "they owe you Rs 34.00", the payment outcome's own words
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/fin-books-doors-strict.test.cjs
@@ -74,6 +74,10 @@ const serve = () => {
     const opening = (due) => q('POST', '/opening', { date: '2026-04-01', rows: [{ code: '1300', party_no: 'P-00001', dr_minor: 100, bill_ref: 'OLD-1', due_date: due }, { code: '3000', cr_minor: 100 }] });
     const badDue = await opening('2026-13-01');
     ok('opening due_date 2026-13-01 -> 400 DATE_INVALID naming the row', badDue.status === 400 && badDue.body.code === 'DATE_INVALID' && /due_date/.test(JSON.stringify(badDue.body)), badDue.status + ' ' + JSON.stringify(badDue.body));
+    for (const wrong of ['2026-02-30', 'soon', '12/01/2026']) { /* FIN-83: a given opening due_date that is not a real YYYY-MM-DD day is refused whole, never dropped */
+      const r = await opening(wrong);
+      ok('opening due_date ' + JSON.stringify(wrong) + ' -> 400 DATE_INVALID naming the row', r.status === 400 && r.body.code === 'DATE_INVALID' && /due_date/.test(JSON.stringify(r.body)), r.status + ' ' + JSON.stringify(r.body));
+    }
     const okDue = await opening('2026-03-31');
     ok('opening due_date 2026-03-31 -> 200', okDue.status === 200, okDue.status + ' ' + JSON.stringify(okDue.body));
 
