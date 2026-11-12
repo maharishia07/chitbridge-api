@@ -36084,6 +36084,20 @@
      }
     },
     {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     },
+     "fixture": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     }
+    },
+    {
      "scenario": "db-fails",
      "status": 500,
      "body_keys": {

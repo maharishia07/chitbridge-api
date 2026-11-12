@@ -164,6 +164,16 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const c = await t.get('/privacy-requests'); t.as('E1'); assert.strictEqual(c.body.may_answer, false); assert.ok(/Only the owner/.test(c.body.why));
   });
+  await ita('CRM-40 need-to-know: the register (names, complaints) is read by the owner and an editor; a viewer or commenter gets 403 VIEW_ONLY in words', async () => {
+    const asActor = (level) => t.as('E1', { identity: { identity_id: 'A2', parent_entity_id: 'E1', identity_type: 'actor', access_level: level } });
+    asActor('editor'); const ed = await t.get('/privacy-requests'); assert.strictEqual(ed.status, 200, 'an editor reads it'); assert.strictEqual(ed.body.may_answer, false);
+    for (const level of ['viewer', 'commenter']) {
+      asActor(level); const v = await t.get('/privacy-requests'); const vo = await t.get('/privacy-requests?open=1');
+      assert.strictEqual(v.status, 403, level + ' is refused'); assert.strictEqual(v.body.code, 'VIEW_ONLY'); assert.ok(/only view/.test(v.body.message || v.body.detail));
+      assert.strictEqual(vo.status, 403); assert.strictEqual(v.body.requests, undefined, 'no row leaves with the refusal');
+    }
+    t.as('E1'); assert.strictEqual((await t.get('/privacy-requests')).status, 200, 'the owner reads it');
+  });
   await ita('a co-assist cannot answer (403, in words); the owner answers once; a second answer is 409', async () => {
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const c = await t.post('/privacy-requests/' + rid + '/answer', { outcome: 'done', answer: 'Sent the record' }); t.as('E1');

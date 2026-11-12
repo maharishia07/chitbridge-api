@@ -647,8 +647,10 @@ router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties
     problem(req, res, crmFault(e, req));
   }
 });
+/** who may: the owner or an editor (CRM-40, decided 12 Nov: the register names people and their complaints, so need-to-know); a viewer or commenter gets 403 VIEW_ONLY in words */
 router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests'), async (req, res) => {
   try {
+    if (!isOwner(req) && !access.canEdit(req.identity)) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
     const owner = ctx(req);
     const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
     /* S34: the register's page and counts (lib/privacy requests), then who may answer */
