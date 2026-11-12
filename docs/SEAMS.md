@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
-| 85 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 80 | `next` | `dayopen.js` | the next thing to do — |
 | 78 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -79,7 +79,7 @@ of file each thing is; this says what already does the job.
 | 35 | `shell` | `pick.js` |  |
 | 36 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
-| 33 | `changes` | `books-store.js` |  |
+| 34 | `changes` | `books-store.js` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `note` | `dbwatch.js` |  |
 | 33 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
