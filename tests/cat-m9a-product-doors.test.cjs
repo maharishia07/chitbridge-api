@@ -6,7 +6,7 @@
  * OWNS      CAT-308  a price finer than the currency's minor unit is REFUSED (400 PRICE_DECIMALS), never rounded: AUD 10.999 no, 10.99 yes; JPY 10.5 no; KWD 10.999 yes (3 places);
  *           float noise 19.990000000000002 passes; an UNCHANGED legacy 10.999 still passes on an edit of another field; a bulk import fails PER ROW; POST /bulk names the row
  *           CAT-281  gst_rate 150 · unit 123 · price 1e20 are 400 at the product door (a name of 100,000 characters was already held, CAT-317)
- *           CAT-231  an absurd price at POST /api/products and PATCH is a 400 in words (the till door is m9c's)
+ *           CAT-231  an absurd price at POST /api/products and PATCH is a 400 in words and POST /api/till/price (finer than the currency is 400 PRICE_DECIMALS, shown at the counter, never queued)
  *           CAT-310  POST /api/combo-templates price 1e20 is 400 COMBO_PRICE_INVALID, not a 500
  *           CAT-232  PUT /api/products/:id/availability refuses qty true, an as_of that is no date, an as_of in the future, a source off the list
  *           CAT-246  PUT /api/assist/catalogue-source refuses a 60,000-character source_key
@@ -27,8 +27,8 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const lab = harness({
   here: HERE,
-  mounts: ['/api/products', '/api/combo-templates', '/api/assist'],
-  routeFiles: { '/api/products': 'routes/products.js', '/api/combo-templates': 'routes/combo-templates.js', '/api/assist': 'routes/assist.js' },
+  mounts: ['/api/products', '/api/combo-templates', '/api/assist', '/api/till'],
+  routeFiles: { '/api/till': 'routes/till.js', '/api/products': 'routes/products.js', '/api/combo-templates': 'routes/combo-templates.js', '/api/assist': 'routes/assist.js' },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json')
 });
 const { world, check } = lab;
@@ -162,6 +162,16 @@ async function elsewhere() {
   check('assist catalogue-source: a 60,000-character source_key → 400 (it was stored with 200)', r.status === 400 && /source_key is too long \(at most 200 characters\)/.test(words(r)), [r.status, words(r).slice(0, 100)]);
 }
 
+/** the counter's price move: the same rule, and the refusal is shown (400), not parked for the queue to send again */
+async function counter() {
+  console.log('\n── CAT-308 / CAT-231 · POST /till/price ──\n');
+  const stored = firstOf(AUD, answering(/SELECT item_data FROM catalogue_items/, [{ item_data: { name: 'Rice', price: { amount: 5, currency: 'AUD' } } }]));
+  let r = await ask('POST', '/api/till/price', { item_id: PARTY, price: 10.999 }, stored);
+  check('till AUD 10.999 → 400 PRICE_DECIMALS, nothing written', r.status === 400 && code(r) === 'PRICE_DECIMALS' && /at most 2 decimal places in AUD/.test(words(r)) && written.length === 0, [r.status, code(r), words(r)]);
+  r = await ask('POST', '/api/till/price', { item_id: PARTY, price: 1e20 }, stored);
+  check('till price 1e20 → 400 "too large" (CAT-231: held since CAT-317, kept)', r.status === 400 && /too large/.test(words(r)), r.json);
+}
+
 (async () => {
   console.log('\n══ M9a · the product and price doors are bounded ══');
   lab.installStubs();
@@ -174,12 +184,14 @@ async function elsewhere() {
   app.use('/api/products', require(path.join(HERE, 'routes', 'products.js')));
   app.use('/api/combo-templates', require(path.join(HERE, 'routes', 'combo-templates.js')));
   app.use('/api/assist', require(path.join(HERE, 'routes', 'assist.js')));
+  app.use('/api/till', require(path.join(HERE, 'routes', 'till.js')));
   const server = app.listen(0);
   port = server.address().port;
   try {
     await priceDecimals();
     await shapes();
     await elsewhere();
+    await counter();
   } finally {
     server.close();
   }
