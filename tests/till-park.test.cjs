@@ -251,6 +251,13 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     out = await vm.runInContext('priceWrite', c)({ item_id: ITEM, name: 'Rice', price: 10 }, 10);
     assert.deepStrictEqual(sent, [10], 'the same price was not sent again');
   });
+  await it('a store clear keeps refused changes: closeCounter, coldStart and wipeDevice read them BEFORE the delete and write them back AFTER it, on a released connection (the browser run proves the rows survive: e2e/till-park.cjs)', () => {
+    for (const fn of ['closeCounter', 'coldStart', 'wipeDevice']) {
+      const at = PAGE.indexOf('\nasync function ' + fn + '('), body = PAGE.slice(at, PAGE.indexOf('\n}\n', at));
+      const a = body.indexOf('await keepParked()'), r = body.indexOf('await DB.release()'), d = body.indexOf('deleteDatabase'), w = body.indexOf('await restoreParked(');
+      assert.ok(a > 0 && a < r && r < d && d < w, fn + ' order keep/release/delete/restore: ' + [a, r, d, w]);
+    }
+  });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);
 })();

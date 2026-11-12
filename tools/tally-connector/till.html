@@ -4590,6 +4590,12 @@ function rowIsMine(r){
 }
 function ownOK(r){ if (rowIsMine(r)) return true; FOREIGN++; return false; }
 
+/** the three stores every till database has (kv · bills · queue) — one place, so a database rebuilt after a clear (restoreParked) has the same shape */
+function tillStoresMake(db){
+  if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+  if (!db.objectStoreNames.contains('bills')) db.createObjectStore('bills', { keyPath:'no' });
+  if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { keyPath:'no' });
+}
 var DB = (function(){
   var p = null;
   /* ⭐ why the database last refused — read by the 🩺 panel. A local, so nothing outside can half-assign it. */
@@ -4598,10 +4604,7 @@ var DB = (function(){
     if (p) return p;
     p = new Promise(function(res, rej){
       var rq = indexedDB.open(tillStore(), 1);
-      rq.onupgradeneeded = function(){ var db = rq.result;
-        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
-        if (!db.objectStoreNames.contains('bills')) db.createObjectStore('bills', { keyPath:'no' });
-        if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { keyPath:'no' }); };
+      rq.onupgradeneeded = function(){ tillStoresMake(rq.result); };
       rq.onsuccess = function(){ res(rq.result); }; rq.onerror = function(){ rej(rq.error); };
     });
     return p;
@@ -4628,6 +4631,8 @@ var DB = (function(){
     /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database, and the owner we
         are holding belongs to the shop we just left */
     reopen: function(){ p = null; OWNER = null; },
+    /** ⭐ till-park: close our connection so a deleteDatabase goes through at once (it was only ever "blocked" until the reload); the next call reopens */
+    release: function(){ var opening = p; p = null; return opening ? opening.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.release:1', e); }) : Promise.resolve(); },
     lastErr: function(){ return lastErr; },
     /**
      * ⚠️ THE SAME GUARD ON THE KEY-VALUE SIDE. Athi, 2026-09-09: *"by mixing up, we are making TWO entities' data wrong. So this has
@@ -24496,8 +24501,8 @@ async function closeCounter(already){
     if (!r || !r.ok) { busyDone(); say('ChitBridge did not accept the close: ' + ((r && r.why) || 'no answer') + '.\n\nNothing on this PC was cleared.'); return; }
 
     busyAt(0, 0, 'Clearing this PC…');
-    var name = tillStore();
-    try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); } catch (e) { cbQuiet('closeCounter:8', e); }
+    var name = tillStore(), kept = await keepParked(); await DB.release();   /* till-park: refused changes survive the clear */
+    try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); await restoreParked(name, kept); } catch (e) { cbQuiet('closeCounter:8', e); }
     try { [tillGivenKey(), shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin'),
            shopLs('cb_till_shop'), shopLs('cb_till_shopname')].forEach(function(k){ localStorage.removeItem(k); });
           localStorage.removeItem('cb_till_id'); } catch (e) { cbQuiet('closeCounter:9', e); }
@@ -24528,6 +24533,29 @@ function parkedItem(row){
 }
 /** the same change again: one path, one item, one offer — so a corrected save replaces its refused copy */
 function parkKey(path, body){ return path + '|' + String((body && body.item_id) || '') + '|' + String((body && body.offer_id) || ''); }
+/**
+ * ⭐ till-park: a clear of the store (close the counter, cold start, wipe this device) must not destroy a refused change — it is the owner's decision to
+ * drop it, never a side effect. keepParked() reads this shop's parked rows BEFORE the delete; restoreParked() writes them back into a fresh store of the
+ * SAME name AFTER it (rows keep their shop stamp). Returns the rows kept / how many went back.
+ */
+async function keepParked(){
+  try { return ((await DB.allRaw('queue')) || []).filter(function(row){ return isParkedRow(row) && rowIsMine(row); }); }
+  catch (e) { cbQuiet('keepParked:1', e); return []; }
+}
+function restoreParked(name, rows){
+  if (!rows.length) return Promise.resolve(0);
+  return new Promise(function(res){
+    var open = indexedDB.open(name, 1);
+    open.onupgradeneeded = function(){ tillStoresMake(open.result); };
+    open.onerror = function(){ res(0); };
+    open.onsuccess = function(){
+      var db = open.result, trip = db.transaction('queue', 'readwrite');
+      rows.forEach(function(row){ trip.objectStore('queue').put(row); });
+      trip.oncomplete = function(){ db.close(); res(rows.length); };
+      trip.onerror = function(){ db.close(); res(0); };
+    };
+  });
+}
 /** is a refused copy of this very change waiting? (same path, item and offer) */
 async function hasParkedFor(path, body){
   var key = parkKey(path, body);
@@ -25346,7 +25374,7 @@ async function openStorage(){
  */
 async function wipeDevice(){
   var unsent = [];
-  try { unsent = (await DB.allRaw('queue')) || []; } catch (e) { cbQuiet('wipeDevice:1', e); }
+  try { unsent = sendableRows(await DB.allRaw('queue'));   /* till-park: a refused change is not a bill to save to a file */ } catch (e) { cbQuiet('wipeDevice:1', e); }
   var ok = await sure('Clear EVERYTHING this counter keeps on this device?\n\n'
     + 'Every shop\'s copy on this PC, all the settings, and the saved page.\n\n'
     + (unsent.length
@@ -25376,7 +25404,7 @@ async function wipeDevice(){
   }
 
   /* 2 · now everything goes */
-  busyShow('Clearing this device…');
+  busyShow('Clearing this device…'); var kept = await keepParked(), keptStore = tillStore(); await DB.release();   /* till-park: refused changes survive the wipe */
   try {
     var names = [];
     if (indexedDB.databases) { var ds = await indexedDB.databases(); names = (ds || []).map(function(d){ return d.name; }); }
@@ -25384,7 +25412,7 @@ async function wipeDevice(){
     for (var i = 0; i < names.length; i++) {
       if (!names[i]) continue;
       await new Promise(function(res){ var rq = indexedDB.deleteDatabase(names[i]); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; });
-    }
+    } await restoreParked(keptStore, kept);
   } catch (e) { cbQuiet('wipeDevice:2', e); }
   try {
     var del = [];
@@ -26746,12 +26774,12 @@ async function coldStart(already){
 
   /* 3 · now it is safe */
   busyAt(0, 0, 'Everything is safe. Clearing this counter…');
-  var name = tillStore();
+  var name = tillStore(), kept = await keepParked(); await DB.release();   /* till-park: refused changes survive the clear */
   try {
     await new Promise(function(res){
       var rq = indexedDB.deleteDatabase(name);
       rq.onsuccess = res; rq.onerror = res; rq.onblocked = res;   /* blocked means another tab holds it; the reload clears that */
-    });
+    }); await restoreParked(name, kept);
   } catch (e) { cbQuiet('coldStart:3', e); }
   /* the shop's own settings on this device go too — they are part of the copy, not of the machine */
   try { [shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin')]
