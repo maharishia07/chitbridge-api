@@ -1012,13 +1012,16 @@ async function sendCredit(sendState, req, res) {
   if (!req.body.is_draft && purpose === 'order' && isJsonObject(business_json)) {
     const financeTerms = require('../lib/finance-terms');
     const creditCheck = await financeTerms.creditSaleCheck(sender_id, business_json);
-    if (creditCheck.mismatch)
-      return problem(req, res, { status: 409, ...said({ error: 'Wrong currency', message: creditCheck.mismatch + ' Settle or post it first.' }, 'CURRENCY_MISMATCH') });
-    if (creditCheck.over) {
+    /* a currency mismatch sits behind the SAME owner override as OVER_LIMIT: a till-drained bill the owner allowed must pass, not retry for ever */
+    if (creditCheck.mismatch || creditCheck.over) {
       const allowedBy = financeTerms.overrideBy(req, business_json.credit_override);
-      if (!allowedBy)
-        return problem(req, res, { status: 409, ...said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT') });
-      financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
+      if (!allowedBy) {
+        const refusal = creditCheck.mismatch
+          ? said({ error: 'Wrong currency', message: creditCheck.mismatch + ' Settle or post it first.' }, 'CURRENCY_MISMATCH')
+          : said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT');
+        return problem(req, res, { status: 409, ...refusal });
+      }
+      if (creditCheck.over) financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
 }
@@ -6912,6 +6915,7 @@ router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-a
 module.exports = router;
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
+module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.cjs runs the credit gate with a mismatch and an owner override */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

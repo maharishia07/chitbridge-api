@@ -75,8 +75,30 @@ async function creditHalf() {
   waitingRows = [pending(3000, 'INR')];
   hooks.isOn = async () => null;
   ok('ledger off: no check, as before', (await T.creditSaleCheck('E1', bill(2000))).over === false);
+  await overrideHalf(T);
   const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
-  ok('/send answers a mismatch 409 CURRENCY_MISMATCH and stamps the client_ref BEFORE the check', /stampBillFacts\(business_json, client_ref, number_check\);\s*\n\s*if \(!req\.body\.is_draft && purpose === 'order'/.test(route) && /creditCheck\.mismatch[\s\S]{0,260}'CURRENCY_MISMATCH'/.test(route));
+  ok('/send stamps the client_ref BEFORE the check', route.indexOf('stampBillFacts(business_json, client_ref, number_check);') > 0 && route.indexOf('stampBillFacts(business_json, client_ref, number_check);') < route.indexOf("if (!req.body.is_draft && purpose === 'order'"));
+}
+
+/** the /send credit gate with a currency mismatch: 409 CURRENCY_MISMATCH without the owner's override, accepted with it (as OVER_LIMIT) */
+async function overrideHalf(T) {
+  console.log('\n── mismatch sits behind the owner override ──');
+  const chits = require(path.join(H.API, 'routes', 'chits'));
+  T.creditSaleCheck = async () => ({ over: false, mismatch: 'A bill waiting for the books: USD and INR cannot be combined.' });
+  const reply = () => ({ code: null, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; }, type() { return this; }, set() { return this; }, setHeader() { return this; } });
+  const send = async (override, till) => {
+    const res = reply();
+    const business_json = { currency: 'INR', customer: { entity_id: 'C1' }, payment: { parts: [{ how: 'On credit', amount: 2000 }] } };
+    if (override) business_json.credit_override = override;
+    await chits.sendCredit({ sender_id: SHOP, client_ref: 'D-1', number_check: null, purpose: 'order', business_json }, { body: {}, identity: { identity_id: 'U9', parent_entity_id: SHOP, identity_type: 'person' }, till }, res);
+    return { res, business_json };
+  };
+  const refused = await send(null, { kind: 'key', counter: true });
+  ok('a drained bill with a mismatch and NO override → 409 CURRENCY_MISMATCH', refused.res.code === 409 && refused.res.body && refused.res.body.code === 'CURRENCY_MISMATCH', JSON.stringify(refused.res.body));
+  const allowed = await send({ by: 'Owner' }, { kind: 'key', counter: true });
+  ok('the same bill with a valid owner override (counter key) → accepted, nothing answered, client_ref stamped', allowed.res.code === null && allowed.business_json.client_ref === 'D-1', String(allowed.res.code));
+  const unproven = await send({ by: 'Owner' }, { kind: 'key', counter: false });
+  ok('an override that is not a counter key or the owner is still refused', unproven.res.code === 409, String(unproven.res.code));
 }
 
 (async () => {
