@@ -12380,6 +12380,46 @@
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "offer-item-clashes-with-a-live-offer",
+     "status": 409,
+     "body_keys": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Rice 10% off\" on the same items. An item takes one discount at a time — pause \"Rice 10% off\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "99999999-9999-4999-8999-999999999999",
+        "name": "Rice 10% off",
+        "items": []
+       }
+      ],
+      "type": "https://chitbridge.com/problems/offer_clash",
+      "title": "Offer clash",
+      "status": 409,
+      "detail": "This offer overlaps \"Rice 10% off\" on the same items. An item takes one discount at a time — pause \"Rice 10% off\", or take those items out of this offer.",
+      "hint": "Pause the other offer, or take those items out of this one.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Rice 10% off\" on the same items. An item takes one discount at a time — pause \"Rice 10% off\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "99999999-9999-4999-8999-999999999999",
+        "name": "Rice 10% off",
+        "items": []
+       }
+      ],
+      "type": "https://chitbridge.com/problems/offer_clash",
+      "title": "Offer clash",
+      "status": 409,
+      "detail": "This offer overlaps \"Rice 10% off\" on the same items. An item takes one discount at a time — pause \"Rice 10% off\", or take those items out of this offer.",
+      "hint": "Pause the other offer, or take those items out of this one.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
