@@ -1348,7 +1348,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 488,
+   "line": 503,
    "hash": "e89a80ebaeec0b45",
    "does": "",
    "errors": {
@@ -13367,7 +13367,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 81,
+   "line": 82,
    "hash": "48582059120182f1",
    "does": "",
    "errors": {
@@ -13475,7 +13475,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 222,
+   "line": 223,
    "hash": "0d4a94f7e4529cb9",
    "does": "",
    "errors": {
@@ -45913,7 +45913,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 302,
+   "line": 317,
    "hash": "7cd7dd1fcd6963bc",
    "does": "",
    "errors": {
@@ -45994,7 +45994,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46029,8 +46029,8 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 549,
-   "hash": "0ecdb82b18aa5e62",
+   "line": 569,
+   "hash": "6d907423e3cd1c4a",
    "does": "",
    "errors": {
     "count": 0,
@@ -46101,7 +46101,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -63075,8 +63075,8 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 380,
-   "hash": "a98dacd9acb4fa31",
+   "line": 395,
+   "hash": "aa1c9e74cdd8811d",
    "does": "",
    "errors": {
     "count": 0,
@@ -63161,7 +63161,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
