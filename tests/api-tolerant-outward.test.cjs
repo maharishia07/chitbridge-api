@@ -66,3 +66,30 @@ test('a tolerant door meets only when every known key is typed (knownKeysTyped)'
   assert.strictEqual(register.knownKeysTyped(op({})), true, 'a door that reads no body key has nothing untyped');
   assert.strictEqual(register.knownKeysTyped(null), false, 'a door with no schema check is unchecked, not tolerant');
 });
+
+test('the one schema middleware: a known key is validated, an unknown key is accepted and logged by name once (never its value), a closed schema still refuses (API-43, Athi 12 Nov)', () => {
+  const { schemaValidate } = require('../middleware/validate');
+  const open = schemaValidate({ requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { qty: { type: 'integer' } } } } } } });
+  const closed = schemaValidate({ requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { qty: { type: 'integer' } }, additionalProperties: false } } } } });
+  const run = (mw, body) => { const out = { next: false, status: 0 }; const res = { status(code) { out.status = code; return this; }, type() { return this; }, set() { return this; }, setHeader() { return this; }, json() { return this; }, send() { return this; }, end() { return this; } }; mw({ method: 'POST', baseUrl: '/api/x', route: { path: '/y' }, body, query: {}, params: {}, id: 'r1', headers: {}, get: () => undefined }, res, () => { out.next = true; }); return out; };
+  const lines = []; const realWarn = console.warn; console.warn = (line) => lines.push(String(line));
+  try {
+    assert.strictEqual(run(open, { qty: 2, zz_stray: 'secret-value' }).next, true, 'an unknown key is accepted');
+    assert.strictEqual(run(open, { qty: 2, zz_stray: 'secret-value' }).next, true);
+    assert.strictEqual(lines.length, 1, 'named once per process');
+    assert.ok(lines[0].includes('unknown_key_accepted') && lines[0].includes('zz_stray') && lines[0].includes('POST /api/x/y') && !lines[0].includes('secret-value'), lines[0]);
+    assert.strictEqual(run(open, { qty: 'many' }).next, false, 'a wrong type on a known key is refused');
+    assert.strictEqual(run(closed, { qty: 2, zz_stray2: 1 }).next, false, 'a closed schema still refuses');
+    assert.strictEqual(lines.length, 1, 'a refused key is not logged as accepted');
+  } finally { console.warn = realWarn; }
+});
+
+test('past the key-log cap, one "unknown_key_log_cap_reached" line is written per process, never silence (API-43)', () => {
+  const { schemaValidate, KEY_LOG_CAP } = require('../middleware/validate');
+  const mw = schemaValidate({ requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { qty: { type: 'integer' } } } } } } });
+  const lines = []; const realWarn = console.warn; console.warn = (line) => lines.push(String(line));
+  try {
+    for (let i = 0; i < KEY_LOG_CAP + 25; i++) mw({ method: 'POST', baseUrl: '/api/cap', route: { path: '/z' }, body: { ['zz_cap_' + i]: 1 }, query: {}, params: {} }, {}, () => {});
+    assert.strictEqual(lines.filter((line) => line.includes('unknown_key_log_cap_reached')).length, 1, 'exactly one cap line');
+  } finally { console.warn = realWarn; }
+});
