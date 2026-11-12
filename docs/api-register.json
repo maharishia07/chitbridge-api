@@ -826,7 +826,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 262,
+   "line": 258,
    "hash": "86df410a8511ad98",
    "does": "",
    "errors": {
@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1813,
+   "line": 1808,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1963,
+   "line": 1958,
    "hash": "473a54f775b12c84",
    "does": "",
    "errors": {
@@ -1989,7 +1989,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1694,
+   "line": 1689,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -2996,7 +2996,7 @@
    "owner_area": "adopt",
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
-   "line": 157,
+   "line": 151,
    "hash": "f94b7cb156a834e9",
    "does": "",
    "errors": {
@@ -11835,7 +11835,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 65,
+   "line": 63,
    "hash": "d066c4975f3d38a9",
    "does": "",
    "errors": {
@@ -21846,7 +21846,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 721,
+   "line": 716,
    "hash": "c58e08fca2facb60",
    "does": "",
    "errors": {
@@ -21956,7 +21956,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1640,
+   "line": 1635,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22054,7 +22054,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1999,
+   "line": 1994,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22160,7 +22160,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1080,
+   "line": 1075,
    "hash": "699e33f654a66cd9",
    "does": "",
    "errors": {
@@ -22260,7 +22260,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2114,
+   "line": 2109,
    "hash": "90e163f95d15ad4a",
    "does": "",
    "errors": {
@@ -22359,7 +22359,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1858,
+   "line": 1853,
    "hash": "6552c50215b46546",
    "does": "",
    "errors": {
@@ -22461,7 +22461,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1411,
+   "line": 1406,
    "hash": "40bea3f52459651d",
    "does": "",
    "errors": {
@@ -22561,7 +22561,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1109,
+   "line": 1104,
    "hash": "450991b1787aac03",
    "does": "",
    "errors": {
@@ -22661,7 +22661,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1009,
+   "line": 1004,
    "hash": "36bec6618ba3d688",
    "does": "",
    "errors": {
@@ -26538,7 +26538,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3640,
+   "line": 3637,
    "hash": "2f6ccb3bf69814d1",
    "does": "",
    "errors": {
@@ -26634,7 +26634,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3438,
+   "line": 3435,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -26826,7 +26826,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4236,
+   "line": 4233,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -26924,7 +26924,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3858,
+   "line": 3855,
    "hash": "917b5f2623190141",
    "does": "",
    "errors": {
@@ -27421,7 +27421,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2495,
+   "line": 2492,
    "hash": "b7945b493fc90536",
    "does": "",
    "errors": {
@@ -27522,7 +27522,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2846,
+   "line": 2843,
    "hash": "34ca27a7c7ac2723",
    "does": "",
    "errors": {
@@ -27731,7 +27731,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3276,
+   "line": 3273,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -27831,7 +27831,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3506,
+   "line": 3503,
    "hash": "cb196c32797a4f71",
    "does": "",
    "errors": {
@@ -27931,7 +27931,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3828,
+   "line": 3825,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -28027,7 +28027,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3021,
+   "line": 3018,
    "hash": "8822f90ab44821bf",
    "does": "",
    "errors": {
@@ -29031,8 +29031,8 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 108,
-   "hash": "faba6333da5add30",
+   "line": 106,
+   "hash": "4cd3bd5191856987",
    "does": "",
    "errors": {
     "count": 1,
@@ -29106,7 +29106,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30175,7 +30175,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1581,
+   "line": 1576,
    "hash": "8c99bea11618f65b",
    "does": "",
    "errors": {
@@ -31836,8 +31836,8 @@
    "owner_area": "adopt",
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
-   "line": 194,
-   "hash": "a374656e55b7d2a1",
+   "line": 188,
+   "hash": "ba9d3c0418ef50fa",
    "does": "",
    "errors": {
     "count": 0,
@@ -31854,7 +31854,6 @@
     "catalogue_items",
     "chit_detail",
     "chit_header",
-    "identities",
     "supplier_list"
    ],
    "writes": [
@@ -31915,7 +31914,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -32052,12 +32051,11 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 260,
-   "hash": "5c518dc7f966982d",
+   "hash": "aae646ea7a30fe67",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
-     400,
      401,
      404,
      422,
@@ -32105,7 +32103,6 @@
     "trips_budgeted": true
    },
    "declared": [
-    400,
     401,
     404,
     422,
@@ -32130,7 +32127,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handler and contract re-read; the 400 PRICE_DECIMALS (registered, shopkeeper sentence, one error shape) is now a recorded error test; additive only; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42779,8 +42776,8 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 82,
-   "hash": "e324c072fea81d19",
+   "line": 80,
+   "hash": "3111294cdf4c538b",
    "does": "",
    "errors": {
     "count": 0,
@@ -42791,7 +42788,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "combo_templates"
+   ],
    "writes": [
     "combo_templates"
    ],
@@ -42848,7 +42847,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42877,7 +42876,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 218,
+   "line": 214,
    "hash": "b461b339dcb523ca",
    "does": "",
    "errors": {
@@ -52155,7 +52154,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 410,
+   "line": 405,
    "hash": "1bddfcabcbea24c6",
    "does": "",
    "errors": {
@@ -52259,7 +52258,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1898,
+   "line": 1893,
    "hash": "572f4a7f9b435cdb",
    "does": "",
    "errors": {
@@ -52366,8 +52365,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1660,
-   "hash": "8546d6c44f467a6f",
+   "line": 1655,
+   "hash": "185af50f007a0f0f",
    "does": "",
    "errors": {
     "count": 0,
@@ -52446,7 +52445,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-317 (the parked change is judged by the PATCH validator when parked and again when due; refusals are the existing 400 in its words, a stamp refusal 400, a due change refused is cancelled and logged); 400, 409 declared inline, scenes present; backward_compatible: same statuses as before, a bad parked change is refused at the door instead of failing silently when due; all 13 machine columns read yes",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52477,8 +52476,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1708,
-   "hash": "ebc416114dfdda09",
+   "line": 1703,
+   "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
     "count": 0,
@@ -52551,7 +52550,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; tolerant by design (connector feed), proof in api-tolerant-doors; 13 columns pass on regenerated evidence",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52580,7 +52579,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 475,
+   "line": 470,
    "hash": "c993fa7918b929b8",
    "does": "",
    "errors": {
@@ -52681,8 +52680,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 668,
-   "hash": "58678159eaac67a1",
+   "line": 663,
+   "hash": "a685f08236988712",
    "does": "",
    "errors": {
     "count": 0,
@@ -52756,7 +52755,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/323 (each item stamped like PUT /:id/status; the owner reads the stored rows so a status the row already holds is not a change; refusals are the existing 400 PRODUCT_BAD_REQUEST); 400 declared inline with a scene; backward_compatible: unchanged statuses, legacy words pass, only a bad new status word or number is refused; all 13 machine columns read yes",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52787,7 +52786,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 584,
+   "line": 579,
    "hash": "2dd38dbe13afdf0c",
    "does": "",
    "errors": {
@@ -52885,8 +52884,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1206,
-   "hash": "3d322f946b963e6c",
+   "line": 1201,
+   "hash": "5cb008903ecb7365",
    "does": "",
    "errors": {
     "count": 0,
@@ -52966,7 +52965,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1106: handler and contract re-read; STRICT, callers web cap-catalogue and till (noQueue), confirm boolean, sheet string or integer; 13 columns pass on regenerated evidence",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52999,7 +52998,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1133,
+   "line": 1128,
    "hash": "6a4c3d0eb3eacf96",
    "does": "",
    "errors": {
@@ -53103,7 +53102,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2234,
+   "line": 2229,
    "hash": "e2f2e8d4155f6bb6",
    "does": "",
    "errors": {
@@ -53202,7 +53201,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1422,
+   "line": 1417,
    "hash": "2eaff1d170a6af28",
    "does": "",
    "errors": {
@@ -53305,7 +53304,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 526,
+   "line": 521,
    "hash": "b194b999878fae7b",
    "does": "",
    "errors": {
@@ -58338,7 +58337,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4109,
+   "line": 4106,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -58440,7 +58439,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3350,
+   "line": 3347,
    "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
@@ -58746,7 +58745,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2741,
+   "line": 2738,
    "hash": "b5d1d38fbdf85c1f",
    "does": "",
    "errors": {
@@ -58953,7 +58952,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4170,
+   "line": 4167,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -59163,7 +59162,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2674,
+   "line": 2671,
    "hash": "fb7ee244234d4a45",
    "does": "",
    "errors": {
@@ -59265,7 +59264,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2783,
+   "line": 2780,
    "hash": "d548871784442c21",
    "does": "",
    "errors": {
@@ -59369,7 +59368,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2205,
-   "hash": "dfb71adc25919b45",
+   "hash": "8801009fddb9db3b",
    "does": "",
    "errors": {
     "count": 0,
@@ -59448,7 +59447,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -59885,7 +59884,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2435,
+   "line": 2432,
    "hash": "ce2b954bd9af8e16",
    "does": "",
    "errors": {
@@ -59994,7 +59993,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2255,
+   "line": 2252,
    "hash": "dbafba055729b52d",
    "does": "",
    "errors": {
@@ -60095,7 +60094,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2969,
+   "line": 2966,
    "hash": "bce8298f80a6601e",
    "does": "",
    "errors": {
@@ -60195,7 +60194,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2535,
+   "line": 2532,
    "hash": "0a6e72f6afb69950",
    "does": "",
    "errors": {
@@ -60303,7 +60302,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2607,
+   "line": 2604,
    "hash": "a51c77c0c4211825",
    "does": "",
    "errors": {
@@ -60409,7 +60408,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2913,
+   "line": 2910,
    "hash": "e8dec48d423da49f",
    "does": "",
    "errors": {
@@ -60513,7 +60512,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2893,
+   "line": 2890,
    "hash": "5ff14e252baed951",
    "does": "",
    "errors": {
@@ -60617,7 +60616,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3119,
+   "line": 3116,
    "hash": "3609a57a2f557a8d",
    "does": "",
    "errors": {
@@ -61775,7 +61774,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 398,
-   "hash": "10808b35258fdf3c",
+   "hash": "e8f1198436967af4",
    "does": "",
    "errors": {
     "count": 0,
@@ -61852,7 +61851,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1155 (independent review: CAT-277 gate re-sign, owner-only 403 OWNER_ONLY via lib/owner ownerOnly, no web caller, bite proven, bfla evidence regenerated, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64272,8 +64271,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1754,
-   "hash": "3c7d636b88dcfc9b",
+   "line": 1748,
+   "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
     "count": 0,
@@ -64343,7 +64342,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handlers and contract re-read after the hash moved (CAT-308 PRICE_DECIMALS 400 registered with its sentence and answered by the one problem writer, gst_rate/unit checks, availability inputs refused in words, source_key cap as 422 INVALID_INPUT); one error shape, statuses in the contract, additive only, no new required input; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64374,7 +64373,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1783,
+   "line": 1778,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {

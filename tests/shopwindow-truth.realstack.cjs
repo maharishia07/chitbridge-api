@@ -208,7 +208,7 @@ async function productOverrideKase(A) {
     const cm = ok(await j('/api/products', { method: 'POST', token: C.token, body: { item_data: { name: 'Dal', unit: 'piece', price: 80 } } }), 'product').b, D = { id: cm.item.item_id, name: 'Dal', unit: 'piece', price: 80 };
     ok(await j('/api/chits/send', { method: 'POST', token: C.token, body: receipt(RUN + '-CG', [[D, 20, 50]]) }), 'receipt'); await pause(1500);
     const own = await policy(C, { stream_owner: { stock: 'connector:truth' } });
-    ok(await j('/api/products/' + D.id + '/availability', { method: 'PUT', token: C.token, body: { qty: 50, source: 'erp' } }), 'stamp');
+    ok(await j('/api/products/' + D.id + '/availability', { method: 'PUT', token: C.token, body: { qty: 50, source: 'connector' } }), 'stamp');
     ok(await j('/api/chits/send', { method: 'POST', token: C.token, body: bill(RUN + '-cb', [[D, 2]]) }), 'sale'); await pause(1500);
     await kase('SW-04', 'a connector stamps 50 and the counter sells 2: the window and the Stock screen show ONE figure', async () => {
       const s = shown(await view(C), D.id), win = s && s.item_data.avail && s.item_data.avail.qty, st = await stmtQty(C, D.id);
