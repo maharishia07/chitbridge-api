@@ -92,7 +92,6 @@ function extras(tools) {
     up('up-needs-the-bytes', 400, { chit_id: CHIT, name: 'receipt.png' }),
     up('up-body-a-list', 400, []),
     up('up-chit-unknown', 403, withBody({ chit_id: UNKNOWN_CHIT })),
-    up('up-chit-text-not-a-uuid', 500, withBody({ chit_id: 'nope' })),
     up('up-chit-of-another-shop', 403, good, { headers: [headerFor(PEER_ID, ROSTER)] }),
     up('up-chit-held-by-another-shop-only', 403, good, { headers: [headerFor(STRANGER_ID, ROSTER)] }),
     up('up-empty-file', 400, withBody({ data_base64: 'data:text/plain;base64,' }), null),
@@ -103,10 +102,6 @@ function extras(tools) {
     up('up-first-copy-fails', 500, good, { failInsertAt: 1 }),
     up('up-second-copy-fails', 500, good, { failInsertAt: 2 }),
     up('up-answer-cannot-be-written', 500, good, null, { setup: { jsonThrows: true, sqlRows: attRows({ caller: SHOP_ID, headers: [headerFor(SHOP_ID, ROSTER)] }, sqlError) } }),
-    up('up-line-index-abc-is-nan', 500, withBody({ line_index: 'abc' })),
-    up('up-line-index-empty-text-is-nan', 500, withBody({ line_index: '' })),
-    up('up-line-index-true-is-nan', 500, withBody({ line_index: true })),
-    up('up-line-index-too-big-for-an-integer', 500, withBody({ line_index: 1e10 }))
   ];
 
   const fanout = [
@@ -126,13 +121,9 @@ function extras(tools) {
     up('up-empty-mime-is-octet-stream', 200, withBody({ mime: '' })),
     up('up-name-an-object-is-echoed-as-sent', 200, withBody({ name: { any: 'thing' } })),
     up('up-mime-a-number-is-echoed-as-sent', 200, withBody({ mime: 7 })),
-    up('up-bytes-a-number', 200, withBody({ data_base64: 246810 })),
     up('up-line-index-text-2', 200, withBody({ line_index: '2' })),
     up('up-line-index-zero', 200, withBody({ line_index: 0 })),
     up('up-line-index-null', 200, withBody({ line_index: null })),
-    up('up-line-index-fraction', 200, withBody({ line_index: 1.9 })),
-    up('up-line-index-text-prefix', 200, withBody({ line_index: '3abc' })),
-    up('up-line-index-negative', 200, withBody({ line_index: -4 }))
   ];
 
   /* message_id: looked up under RLS only (the caller's own copies); what it finds decides the audience */
@@ -141,7 +132,6 @@ function extras(tools) {
     up('up-message-internal-own', 200, withBody({ message_id: MSG_INTERNAL }), messageWorld([{ id: MSG_INTERNAL, entity: SHOP_ID, visibility: SHOP_ID }])),
     up('up-message-unknown', 200, withBody({ message_id: MSG_UNKNOWN }), messageWorld([])),
     up('up-message-of-another-shop-not-visible', 200, withBody({ message_id: MSG_PEER_INTERNAL }), messageWorld([{ id: MSG_PEER_INTERNAL, entity: PEER_ID, visibility: PEER_ID }])),
-    up('up-message-text-not-a-uuid', 500, withBody({ message_id: 'nope' }))
   ];
 
   const MIMES = [['png', 'image/png'], ['jpeg', 'image/jpeg'], ['jpg', 'image/jpg'], ['gif', 'image/gif'], ['webp', 'image/webp'], ['bmp', 'image/bmp'], ['pdf', 'application/pdf']];

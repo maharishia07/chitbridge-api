@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 // @type: contract
 /**
- * api-problem-schemas.test.cjs — API-4 sweep (stage 2), the catalogue's schema engine: every answer of routes/schemas.js (7 routes, mounted at /api/schemas).
+ * api-problem-schemas.test.cjs — API-4 sweep (stage 2), the catalogue's schema engine: every answer of routes/schemas.js (6 routes, mounted at /api/schemas).
  *
- * OWNS      the proof that each refusal of the seven routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
+ * OWNS      the proof that each refusal of the six routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), that a 2xx is never a Problem, that no answer of ANY status (a 200 and a
  *           4xx included) carries the text of a thrown error (POST /create-default used to relay its bootstrap's error text; since the 11 Nov 2026 closeout it answers the one safe sentence and
  *           the text goes to the log), the frozen 5xx bodies replayed, this file's rows of docs/contracts/api-error-tests.json, the "signed in as another
  *           shop" world on the two routes addressed by a column key (recorded in docs/contracts/api-hardening-evidence-areas.json), the old express-validator chains run beside the schemas
  *           that replaced them, and the Q18 rule (an unknown key in a body is refused by name; every key the web sends is accepted).
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file and the real libraries over the stand-in db and sign-in (tests/lib/problem-world.cjs, scenes in tests/lib/schemas-scenes.cjs).
- * FLOW      the seven routes x world (signed out, a failing db, an empty db, a bad id) + the named extras → real route → body → Problem fields present · frozen legacy keys equal · no leak
+ * FLOW      the six routes x world (signed out, a failing db, an empty db, a bad id) + the named extras → real route → body → Problem fields present · frozen legacy keys equal · no leak
  *           on any status · statuses tested → manifest; then the chains, the frozen 5xx, the leak register, the foreign-column world → evidence
  * CARD      07-catalogue-and-pricing/catalogue-setup
  *
@@ -32,7 +32,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/schemas';
-const ROUTE_COUNT = 7;
+const ROUTE_COUNT = 6;
 const MIN_SCENARIOS = 100;
 const MIN_FROZEN = 60;
 const MIN_FROZEN_5XX = 12;
@@ -45,7 +45,6 @@ const CREATE = 'POST ' + MOUNT + '/create-default';
 const PATCH_ONE = 'PATCH ' + MOUNT + '/fields/:field_key';
 const DROP_ONE = 'DELETE ' + MOUNT + '/fields/:field_key';
 const LABELS = {
-  [`GET ${MOUNT}/my`]: 'Failed to get schema',
   [CREATE]: 'Failed to create schema',
   [`GET ${MOUNT}/fields`]: 'Failed to get fields',
   [DROP_ONE]: 'Failed to remove the column',
@@ -121,7 +120,7 @@ function checkContractShape(routes, router) {
   console.log('\n-- the contract and the router agree --');
   const contract = contractModule();
   const published = router.openapi && router.openapi.paths ? Object.keys(router.openapi.paths) : [];
-  check('the router publishes its operations: router.openapi.paths names the routes (' + published.length + ' paths)', !!contract && published.length === 6, published);
+  check('the router publishes its operations: router.openapi.paths names the routes (' + published.length + ' paths)', !!contract && published.length === 5, published);
   if (!contract) return;
   const operations = Object.keys(contract.OPERATIONS);
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
@@ -270,7 +269,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   lab.installStubs();
   const router = require(path.join(HERE, 'routes', 'schemas.js'));
   const routes = lab.routesOf(router, MOUNT);
-  check('premise: the router holds the seven schema routes (' + Object.keys(routes).length + ')', Object.keys(routes).length === ROUTE_COUNT, Object.keys(routes));
+  check('premise: the router holds the six schema routes (' + Object.keys(routes).length + ')', Object.keys(routes).length === ROUTE_COUNT, Object.keys(routes));
   const server = lab.appOf([{ mount: MOUNT, router }]).listen(0);
   const port = server.address().port;
   const recording = {};

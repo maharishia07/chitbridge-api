@@ -3,13 +3,13 @@
 /**
  * ppl-26-actors-input.test.cjs — PPL-26 (BH-12): the shop's people settings and person edits refuse a wrongly typed value in words, never as a driver 500.
  *
- * OWNS      the proof that PUT /api/actors/settings, PATCH /api/actors/:id, POST /check-key, POST /suggest-key and PUT /:id/delegate answer 400 problem+json (code INVALID_INPUT, the field named)
+ * OWNS      the proof that PUT /api/actors/settings, PATCH /api/actors/:id, POST /suggest-key and PUT /:id/delegate answer 400 problem+json (code INVALID_INPUT, the field named)
  *           when a field holds a list or an object where a word, number or flag belongs, that an id in the address that is not a uuid answers 404 NOT_FOUND, that the database is never asked
  *           and nothing is written in either case, that none of Postgres's own words reach the answer, and that a valid call still succeeds.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/actors.js over a stand-in sign-in and a db that throws Postgres's own words.
  * FLOW      stub db + auth → real router on an express app → request over http → status · code · content type · queries asked · no leak
  * CARD      17-people-employees-hr-and-payroll/functions
- * MIN       the 5 routes of BH-12, each with its wrong-typed inputs, plus the valid calls
+ * MIN       the 4 routes of BH-12, each with its wrong-typed inputs, plus the valid calls
  */
 'use strict';
 const path = require('path');
@@ -99,7 +99,6 @@ async function refused(server, method, url, body, label, field) {
   for (const field of SETTINGS) for (const wrong of WRONG) await refused(server, 'PUT', '/api/actors/settings', { [field]: wrong }, 'PUT /settings ' + field + '=' + JSON.stringify(wrong), field);
   for (const field of PERSON_FIELDS) for (const wrong of WRONG) await refused(server, 'PATCH', '/api/actors/' + PERSON, { [field]: wrong }, 'PATCH /:id ' + field + '=' + JSON.stringify(wrong), field);
   for (const wrong of WRONG) {
-    await refused(server, 'POST', '/api/actors/check-key', { actor_key: wrong }, 'POST /check-key actor_key=' + JSON.stringify(wrong), 'actor_key');
     await refused(server, 'POST', '/api/actors/suggest-key', { display_name: wrong }, 'POST /suggest-key display_name=' + JSON.stringify(wrong), 'display_name');
     await refused(server, 'PUT', '/api/actors/' + PERSON + '/delegate', { delegate_actor_id: wrong }, 'PUT /:id/delegate delegate_actor_id=' + JSON.stringify(wrong), 'delegate_actor_id');
   }
@@ -115,8 +114,6 @@ async function refused(server, method, url, body, label, field) {
   check(okSettings.status === 200, 'PUT /settings with valid values → 200 (got ' + okSettings.status + ')');
   const okPatch = await ask(server, 'PATCH', '/api/actors/' + PERSON, { display_name: 'Ravi Kumar', phone: '+919800000000', max_tasks: 5, actor_role: null });
   check(okPatch.status === 200, 'PATCH /:id with valid values → 200 (got ' + okPatch.status + ' ' + okPatch.text.slice(0, 80) + ')');
-  const okKey = await ask(server, 'POST', '/api/actors/check-key', { actor_key: 'ravik' });
-  check(okKey.status === 200, 'POST /check-key with a valid key → 200 (got ' + okKey.status + ')');
   const okSuggest = await ask(server, 'POST', '/api/actors/suggest-key', { display_name: 'Ravi Kumar' });
   check(okSuggest.status === 200, 'POST /suggest-key with a name → 200 (got ' + okSuggest.status + ')');
   const okDelegate = await ask(server, 'PUT', '/api/actors/' + PERSON + '/delegate', { delegate_actor_id: null });
