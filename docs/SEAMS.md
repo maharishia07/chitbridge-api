@@ -9,15 +9,15 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 160 | `list` | `amend.js` |  |
+| 161 | `list` | `amend.js` |  |
 | 132 | `rows` | `crm.js` | still in them: |
 | 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 102 | `answer` | `availability.js` | from March; then nearest. |
-| 96 | `money` | `bill-privacy.js` |  |
-| 84 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 98 | `money` | `bill-privacy.js` |  |
+| 85 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 79 | `next` | `dayopen.js` | the next thing to do — |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -30,7 +30,7 @@ of file each thing is; this says what already does the job.
 | 67 | `failed` | `service.js` | what every catch answers: |
 | 66 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 66 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 64 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 65 | `refusal` | `availability.js` |  |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
@@ -142,6 +142,7 @@ of file each thing is; this says what already does the job.
 | 20 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 20 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
+| 20 | `move` | `rail.js` | Order = the order the server refused in: |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 19 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
@@ -150,10 +151,10 @@ of file each thing is; this says what already does the job.
 | 19 | `later` | `signin-ui.js` |  |
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 19 | `connectors` | `home-facts.js` | declare (said in words — |
-| 19 | `move` | `rail.js` | Order = the order the server refused in: |
 | 18 | `step` | `cart.js` |  |
 | 18 | `today` | `kural.js` |  |
 | 18 | `more` | `lab-kit.js` | idKey: |
+| 18 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 18 | `verify` | `bookpack.js` | manifest's own hash. |
 | 18 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 18 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
@@ -166,7 +167,6 @@ of file each thing is; this says what already does the job.
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 17 | `head` | `list-ctl.js` |  |
 | 17 | `label` | `screen-id.js` |  |
-| 17 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 16 | `done` | `attach-ui.js` |  |
 | 16 | `close` | `avatar.js` |  |
