@@ -20,7 +20,7 @@ test('a discount above its line is refused 400 BAD_PRICE, in words, with no figu
   const r = await post([{ name: 'Rice', qty: 1, price: 100, discount: 150, gst_rate: 18 }]);
   assert.equal(r.status, 400, JSON.stringify(r.body));
   assert.equal(r.body.code, 'BAD_PRICE');
-  assert.match(r.body.message || r.body.detail, /discount larger than the line/);
+  assert.match(r.body.message || r.body.detail, /discounts and offers together larger than the line/);
   assert.equal(r.body.invoice, undefined);
 });
 test('a discount equal to its line is allowed: assessable 0, total 0', async () => {
@@ -49,4 +49,12 @@ test('an ordinary line is unchanged: 2 x 100 + 18% = 236', async () => {
   const r = await post([{ name: 'Tea', qty: 2, price: 100, gst_rate: 18 }]);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.invoice.ValDtls.TotInvVal, 236);
+});
+test("invoice/build adds the line's own discount and a 50% offer: 60 + 50 on a 100 line is 400 BAD_PRICE", async () => {
+  SHOP.row = shopRow({ gstin: '33AAAAA0000A1Z5', name: 'Ponni Stores', country: 'IN', policy: { price_includes_tax: 'no' } }); SHOP.items = [];
+  const offers = [{ id: 'half', label: '50% off', kind: 'percent_off', percent: 50, scope: 'line' }];
+  const r = await X.call('POST', '/api/invoice/build', { lines: [{ name: 'Rice', qty: 1, price: 100, discount: 60, gst_rate: 18 }], offers });
+  assert.equal(r.status, 400, JSON.stringify(r.body));
+  assert.equal(r.body.code, 'BAD_PRICE');
+  assert.match(r.body.message || r.body.detail, /discounts and offers together larger than the line/);
 });
