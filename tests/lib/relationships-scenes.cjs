@@ -144,7 +144,7 @@ function extras(tools) {
   ];
 
   /* ── GET /suppliers/availability ── */
-  const mine = (over) => row(/FROM supplier_list sl\s+JOIN identities i ON i\.identity_id = sl\.supplier_entity_id\s+WHERE sl\.owner_entity_id = \$1\s+AND COALESCE/, Object.assign({}, SUP_ROW, { currency_code: 'INR', business_status: 'open' }, over));
+  const mine = (over) => row(/FROM supplier_list sl\s+JOIN identities i ON i\.identity_id = sl\.supplier_entity_id\s+WHERE sl\.owner_entity_id = \$1 AND to_jsonb\(sl\)[^\n]*\s+AND COALESCE/, Object.assign({}, SUP_ROW, { currency_code: 'INR', business_status: 'open' }, over));
   const view = (body) => ({ catalogueView: { buildPublicView: async () => body } });
   const availability = [
     X('availability-too-short', 'GET ' + at('/suppliers/availability'), 200, { url: at('/suppliers/availability?q=t') }),

@@ -1057,7 +1057,8 @@ it('⭐⭐ the till may move one product in or out of one live offer, and may no
   assert.ok(r.indexOf("offer.kind !== 'offer'") > 0, 'this route could edit a definition that is not an offer');
   assert.ok(r.indexOf("offer.status !== 'live'") > 0, 'a draft or retired offer can be changed from a till');
   /* ⚠️ and it must never gain the ability to reprice, rename or retire */
-  for (const forbidden of ['status =', 'name =', 'sub_kind', 'discount'])
+  /* CAT-223: the route READS sub_kind (the clash question needs the offer's kind); it must never WRITE it, so the write spellings are what is forbidden */
+  for (const forbidden of ['status =', 'name =', 'sub_kind =', 'SET sub_kind', 'discount'])
     assert.ok(r.indexOf(forbidden) < 0, 'the offer-item route can write ' + forbidden + ' — a till key must not');
 });
 

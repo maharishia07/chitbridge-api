@@ -17,6 +17,7 @@ const { make, row } = require('./support/crm-stub.cjs');
 const PF = require('../lib/party-fields');
 const CL = require('../lib/crm-leads');
 const PL = require('../lib/party-live');
+const PR = require('../lib/party-restore'); // restore lives beside party-live, not in it (the till's DB-free groups reader shares party-live)
 const t = make(), D = t.data;
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 let pass = 0;
@@ -99,7 +100,7 @@ D.pre = async (sql, p) => {
   await ita('party-live: hiddenSql is the mirror of liveSql (one spelling of hidden_at), and restore undoes removeParty on both lists', async () => {
     assert.strictEqual(PL.hiddenSql('cl'), "to_jsonb(cl)->>'hidden_at' IS NOT NULL");
     const seen = [];
-    const back = await PL.restore({ query: async (sql) => { seen.push(sql); return { rows: [{ one: 1 }] }; } }, 'o', 'p');
+    const back = await PR.restore({ query: async (sql) => { seen.push(sql); return { rows: [{ one: 1 }] }; } }, 'o', 'p');
     assert.strictEqual(back, 2);
     assert.ok(/UPDATE customer_list SET hidden_at = NULL/.test(seen[0]) && /UPDATE supplier_list SET hidden_at = NULL/.test(seen[1]));
   });

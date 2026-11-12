@@ -341,7 +341,7 @@ it('⚠️⚠️ every added_via the route writes is one the CHECK constraint pe
   const route = src('routes/relationships.js');
   const written = (route.match(/added_via\s*\)[\s\S]{0,400}?VALUES[\s\S]{0,200}?'([a-z_]+)'\)/g) || [])
     .map((s) => (s.match(/'([a-z_]+)'\)$/) || [])[1]).filter(Boolean);
-  assert.ok(written.length >= 2, 'expected both supplier inserts to name an added_via, found ' + written.length);
+  assert.ok(written.length >= 1, 'expected the supplier insert to name an added_via, found ' + written.length); /* CRM-247: the two inserts became the one listSupplier helper */
   written.forEach((v) => assert.ok(permitted.indexOf(v) >= 0,
     "added_via '" + v + "' is not permitted by the constraint (" + permitted.join(', ') + ') — this is a 500'));
 });

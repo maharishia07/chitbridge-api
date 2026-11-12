@@ -33,7 +33,8 @@ const customerGroups = require('../lib/customer-groups'); // the one segment exp
 const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields = require('../lib/party-fields');
-const { hiddenSql, restore, restoredAnswer } = require('../lib/party-live'); // CRM-247: a deleted party's one predicate, the way back, and the answer's words
+const { hiddenSql, restoredAnswer } = require('../lib/party-live');
+const { restore } = require('../lib/party-restore'); // CRM-247: a deleted party's one predicate, the way back, and the answer's words
 /** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
 function unknownKeyRefusal(body, allowed) {
   const unknown = Object.keys(body || {}).filter((item) => allowed.indexOf(item) < 0);

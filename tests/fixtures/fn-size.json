@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 142,
+  "long_functions": 140,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -86,9 +86,6 @@
     ],
     "lib/kyb.js": [
       "risk"
-    ],
-    "lib/local-identity.js": [
-      "mint"
     ],
     "lib/network-build-run.js": [
       "createNode",
@@ -249,7 +246,6 @@
     "routes/relationships.js": [
       "GET /suppliers/availability",
       "PATCH /suppliers/:id",
-      "POST /customers",
       "POST /suppliers"
     ],
     "routes/schemas.js": [
