@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -50277,11 +50277,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1027ead797365984"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1181 stage2: NET-56 read in routes/network-offers.js withdraw: a second withdraw keeps the earlier end (net.earlierEnd) and the first withdrawn_at, a first withdraw unchanged; no new status, code or answer key, no refusal path touched; web caller netOfferWithdraw sends only at; 13 columns true; net-56 test green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
