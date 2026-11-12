@@ -30,7 +30,7 @@ const CASES = [
   ['POST /api/channels/:id/revoke', 'routes/channels.js', [{}]],
   ['POST /api/keys', 'routes/keys.js', [{ name: 'k', scopes: ['till'] }, { name: 'ci', scopes: ['testing'], days: 30 }]],
   /* round 2 (8 Nov 2026): every caller was read in the web (attach-ui.js, app.html attUpload, the readiness screens, offer-lab-next.html, cap-categories/catsetup/definitions, cap-admin intStreamSet), the seed and the scripts */
-  ['POST /api/attachments', 'routes/attachments.js', [{ chit_id: 'c1', name: 'a.png', mime: 'image/png', data_base64: 'QQ==' }, { chit_id: 'c1', message_id: 'm1', line_index: 2, name: 'b.txt', data_base64: 'QQ==' }]],
+  ['POST /api/attachments', 'routes/attachments.js', [{ chit_id: '33333333-3333-4333-8333-333333333333', name: 'a.png', mime: 'image/png', data_base64: 'QQ==' }, { chit_id: '33333333-3333-4333-8333-333333333333', message_id: '88888888-8888-4888-8888-888888888888', line_index: 2, name: 'b.txt', data_base64: 'QQ==' }]],
   ['PUT /api/integrations/streams', 'routes/integrations.js', [{ stock: 'kit-pos' }, { order: null }, { party: false }]],
   ['POST /api/definitions', 'routes/definitions.js', [{ kind: 'offer', sub_kind: 'percent_off', name: 'n', note: '', status: 'draft', rules: { percent: 10 } }, { kind: 'category', sub_kind: null, name: 'c', rules: { parent: null, gpc: 'x' } }, { kind: 'offer', name: 'o', status: 'live', confirmed: true, rules: {} }]],
   ['PUT /api/definitions/:id', 'routes/definitions.js', [{ status: 'live' }, { status: 'live', confirmed: true }, { name: 'n', note: 'x', rules: { a: 1 } }, { rules: {}, status: 'draft' }]],
