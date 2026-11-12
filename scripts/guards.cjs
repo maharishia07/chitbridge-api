@@ -206,6 +206,7 @@ const GUARDS = [
   'root-link.test.cjs', // the values rootlink writes must be values the CHECK constraints accept
   'entity-kind.test.cjs', // every identity mint declares WHAT it is — a DELETE predicate depends on it
   'board-kinds.test.cjs', // the shared board carries CASES and CMDB records, nothing else — findings stay with the raiser
+  'qa-148-cmdb-noop-save.test.cjs', // QA-148: an identical CMDB save (any key order) writes no new version; a real change does
   'cmdb.test.cjs', // ⭐⭐ the CMDB: every shipped record fits, a way in + out + tests, only a board writer writes
   'testing-board-writes.test.cjs', // ⭐⭐ SEC-SMALL: the six shared-board writes ask the gate first; results/incidents/evidence stay open; the platform root writes
   'testing-board-reads.test.cjs', // ⭐ SEC-122: a shop is refused the shared board's reads (403 NOT_BOARD_READER); the board account reads; the Test lab stays open
