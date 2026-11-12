@@ -66,8 +66,8 @@ of file each thing is; this says what already does the job.
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `host` | `chit-sheet.js` |  |
-| 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
+| 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
@@ -96,12 +96,12 @@ of file each thing is; this says what already does the job.
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 30 | `account` | `home-facts.js` | OMITTED: |
+| 30 | `mine` | `crm.js` | `opt.removedOk`: |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `owner` | `books.js` |  |
-| 30 | `mine` | `crm.js` | `opt.removedOk`: |
 | 28 | `money` | `cart.js` |  |
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
@@ -204,8 +204,8 @@ of file each thing is; this says what already does the job.
 | 14 | `refuse_` | `bookpack.js` | an Error with status 422 — |
 | 14 | `payment` | `books-store.js` |  |
 | 14 | `minor` | `bounds.js` | B.minor({ column, signed }) → whole minor units (a fraction of a minor unit is refused), at least 0 unless a c |
+| 14 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
 | 14 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
-| 14 | `edit` | `person-session.js` |  |
