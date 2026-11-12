@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
-| 131 | `rows` | `crm.js` | still in them: |
+| 132 | `rows` | `crm.js` | still in them: |
 | 124 | `words` | `variant.browser.js` |  |
 | 116 | `withEntity` | `books-hooks.js` |  |
 | 115 | `read` | `books-cashflow.js` | Trips: |
@@ -112,7 +112,7 @@ of file each thing is; this says what already does the job.
 | 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
-| 25 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -126,7 +126,7 @@ of file each thing is; this says what already does the job.
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `says` | `adopt.js` |  |
 | 22 | `entries` | `books-store.js` |  |
-| 22 | `governance` | `home-facts.js` |  |
+| 23 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `model` | `chit-sheet.js` |  |
