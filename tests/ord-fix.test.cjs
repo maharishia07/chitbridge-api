@@ -24,6 +24,7 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const sent = [];
   const mkDb = (updateRows) => ({ query: async (sql, p) => { sent.push({ sql: one(sql), p });
     if (/^SELECT current_status/.test(one(sql))) return { rows: [{ current_status: 'accepted' }], rowCount: 1 };
+    if (/^SELECT h.chit_id/.test(one(sql))) return { rows: [], rowCount: 0 }; /* ACC-265b: the credit-note guard asks whether this chit is a bill of mine; this stand-in chit is not */
     return { rows: updateRows, rowCount: updateRows.length }; } });
   let g = await railStatus.statusGate(mkDb([{ chit_id: 'c' }]), 'e', 'c', 'rejected', { level: 'editor' });
   t('the winner writes (accepted → rejected)', g.ok && (await g.write()) === true);
