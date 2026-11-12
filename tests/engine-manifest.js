@@ -582,6 +582,7 @@ const ENGINE_OTHER = [
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
+  'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
   'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */

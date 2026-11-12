@@ -114,6 +114,25 @@ function makeRow() {
   t('an edit that changes nothing writes no new version', [same.status, stale.versions], [200, 1]);
   const gone = await call(port, 'PATCH', '/api/products/' + ITEM, { item_data: { name: 'x' }, merge: true }); /* still 200: row exists */
   t('a plain merge still answers the stored row', [gone.status, typeof gone.body.item], [200, 'object']);
+  /* CAT-238: the media doors read the row FOR UPDATE on their own transaction too: parallel video links and parallel removals each keep every other's work */
+  const link = (n) => call(port, 'POST', '/api/products/' + ITEM + '/media', { url: 'https://www.youtube.com/watch?v=abcdefghij' + n, name: 'clip ' + n });
+  let linked = 0, linkedOk = 0;
+  for (let i = 0; i < TRIALS; i++) {
+    ROW = makeRow();
+    const answers = await Promise.all([link(1), link(2), link(3)]);
+    linkedOk += answers.filter((a) => a.status === 200).length;
+    if (Array.isArray(ROW.data.media) && ROW.data.media.length === 3) linked++;
+  }
+  t('CAT-238: three video links posted together all answer 200', linkedOk, TRIALS * 3);
+  t('CAT-238: and every trial keeps all three (none lost to a parallel replace)', linked, TRIALS);
+  let kept = 0;
+  for (let i = 0; i < TRIALS; i++) {
+    ROW = makeRow();
+    ROW.data.media = [{ id: 'm1', kind: 'video' }, { id: 'm2', kind: 'video' }, { id: 'm3', kind: 'video' }];
+    await Promise.all([call(port, 'DELETE', '/api/products/' + ITEM + '/media/m1'), call(port, 'DELETE', '/api/products/' + ITEM + '/media/m2')]);
+    if (ROW.data.media.length === 1 && ROW.data.media[0].id === 'm3') kept++;
+  }
+  t('CAT-238: two removals together leave only the third entry, every trial', kept, TRIALS);
   server.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

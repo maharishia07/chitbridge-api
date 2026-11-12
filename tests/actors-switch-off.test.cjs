@@ -37,6 +37,7 @@ const stubDb = async (sql, params) => {
   if (/SET delegate_actor_id = NULL WHERE delegate_actor_id/.test(sql)) return { rows: [], rowCount: world.coverRows };
   if (/UPDATE entity_actor_settings SET default_assignee_actor_id = NULL/.test(sql)) return { rows: [], rowCount: world.defaultRows };
   if (/break_status = 'active'\s+AND hat IN/.test(sql)) return { rows: params[0] === COLLEAGUE ? [{ identity_id: COLLEAGUE, display_name: 'Asha' }] : [] };
+  if (/SELECT identity_id, display_name, actor_key, break_status FROM identities/.test(sql)) return { rows: params[1] === SHOP && params[0] === PERSON ? [world.person] : [] };
   if (/entity_actor_settings/.test(sql)) return { rows: [{ setting_id: 1, entity_id: SHOP, assignment_model: 'both', default_max_tasks: 10 }] };
   return { rows: [], rowCount: 0 };
 };
@@ -58,6 +59,14 @@ app.use('/api/actors', require(path.join(ROOT, 'routes', 'actors.js')));
 
 let failed = 0, checks = 0;
 const check = (ok, label, why) => { checks++; if (!ok) failed++; say((ok ? 'ok   ' : 'FAIL ') + label + (ok ? '' : ' · ' + JSON.stringify(why).slice(0, 300))); };
+const del = (server, id) => new Promise((resolve) => {
+  const req = http.request({ port: server.address().port, method: 'DELETE', path: '/api/actors/' + id + '/pin' }, (res) => {
+    let text = '';
+    res.on('data', (c) => (text += c));
+    res.on('end', () => resolve({ status: res.statusCode, text, body: (() => { try { return JSON.parse(text); } catch (e) { return {}; } })() }));
+  });
+  req.end();
+});
 const put = (server, id, body) => new Promise((resolve) => {
   const data = JSON.stringify(body);
   const req = http.request({ port: server.address().port, method: 'PUT', path: '/api/actors/' + id + '/status', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
@@ -117,6 +126,14 @@ const put = (server, id, body) => new Promise((resolve) => {
 
   a = await put(server, PERSON, { action: 'explode' });
   check(a.status === 400, 'an unknown action → 400 (got ' + a.status + ')', a.text);
+  /* PPL-18: the PIN-reset door hands no sign-in code to a person who cannot sign in (world.person is still 'deactivated' here) */
+  queries.length = 0;
+  a = await del(server, PERSON);
+  check(a.status === 400 && /switched off|switch/i.test(JSON.stringify(a.body)), 'PPL-18: DELETE /:id/pin on a switched-off person → 400 in words (got ' + a.status + ')', a.text);
+  check(!queries.some((q) => /otp|pin_hash|UPDATE identities|INSERT/i.test(q) && !/^s*SELECT/i.test(q)), 'PPL-18: and no code is minted, no PIN cleared (no write was asked)', queries);
+  world.person.break_status = 'removed';
+  a = await del(server, PERSON);
+  check(a.status === 404, 'PPL-18: a removed person → 404 (got ' + a.status + ')', a.text);
   server.close();
   say(checks + ' checks, ' + (failed ? failed + ' FAILED' : 'all passed'));
   process.exit(failed ? 1 : 0);

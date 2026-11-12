@@ -1886,7 +1886,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1958,
-   "hash": "4b7298a6835be858",
+   "hash": "473a54f775b12c84",
    "does": "",
    "errors": {
     "count": 0,
@@ -1960,7 +1960,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1150 (independent review: CAT-282 row lock on the caller's transaction / CAT-326 parked values count as held; tests green; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -2397,8 +2397,8 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 172,
-   "hash": "680c9ed819105397",
+   "line": 173,
+   "hash": "9d21c86f28662517",
    "does": "",
    "errors": {
     "count": 0,
@@ -2476,7 +2476,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1150 (independent review: CAT-282 row lock on the caller's transaction / CAT-326 parked values count as held; tests green; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -23948,7 +23948,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 74,
+   "line": 75,
    "hash": "1b9b89daa7151131",
    "does": "",
    "errors": {
@@ -30722,8 +30722,8 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 289,
-   "hash": "f592129d9f9cb22b",
+   "line": 290,
+   "hash": "07bbb15478e82a3c",
    "does": "",
    "errors": {
     "count": 0,
@@ -30799,7 +30799,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1150 (independent review: CAT-282 row lock on the caller's transaction / CAT-326 parked values count as held; tests green; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30828,7 +30828,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 230,
+   "line": 231,
    "hash": "9389f29f5f100aba",
    "does": "",
    "errors": {
@@ -30932,7 +30932,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 390,
+   "line": 391,
    "hash": "6a6e1ccd21d59062",
    "does": "",
    "errors": {
@@ -52254,7 +52254,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1893,
-   "hash": "ed53688af3eee973",
+   "hash": "572f4a7f9b435cdb",
    "does": "",
    "errors": {
     "count": 0,
@@ -52331,7 +52331,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1150 (independent review: CAT-282 row lock on the caller's transaction / CAT-326 parked values count as held; tests green; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55084,7 +55084,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 32,
+   "line": 33,
    "hash": "3ff0b50aa54cfba7",
    "does": "",
    "errors": {
