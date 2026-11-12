@@ -633,6 +633,7 @@ const GUARDS = [
   'ai-box.test.cjs',
   'ai-one-pipe.test.cjs',
   'assign-merge-patch.test.cjs',
+  'connect-10d-input-shape.test.cjs', // C11 batch 10d (12 Nov): a chit line goes to someone on the team (one reader with the follow-up door, nothing written for a stranger), an offer's text is text, a shopper name fits its column, a new quick-key group is typed like a changed one; 42 checks
   'auth-first-routes.test.cjs',
   'baseline-from-snapshot.test.cjs',
   'books-close-country.test.cjs',

@@ -57,7 +57,7 @@ const mock = (relative, exported) => {
 const SHOP = { identity_id: 'e1', identity_type: 'entity', owner_scope: 'entity' };
 const CHIT = '11111111-2222-3333-4444-555555555555';
 const SECRET_SQL = 'relation "identities" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: SHOP, asKey: false, scopes: ['connector'], dbFails: false, fsFails: false, packFails: false, policyFails: false, policyRefuses: false, profileFails: false, country: null, actor: null, kitRows: [], chits: [], since: null, handle: false, stockRows: [], flags: {}, profileValues: {} };
+const FRESH = { heldKit: false, realAuth: false, who: SHOP, asKey: false, scopes: ['connector'], dbFails: false, fsFails: false, packFails: false, policyFails: false, policyRefuses: false, profileFails: false, country: null, actor: null, kitRows: [], chits: [], since: null, handle: false, stockRows: [], flags: {}, profileValues: {} };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: the shop's country, the connector actor to approve, and nothing for every update (so a chit is "not found") */
@@ -65,7 +65,10 @@ function rowsFor(sql) {
   if (world.dbFails) throw new Error(SECRET_SQL);
   if (/SELECT country FROM identities/.test(sql)) return { rows: world.country ? [{ country: world.country }] : [], rowCount: 1 };
   if (/MIN\(created_at\) AS t FROM identities/.test(sql)) return { rows: [{ t: world.since }], rowCount: 1 };
-  if (/connector_type IS NOT NULL AND status = 'active'/.test(sql)) return { rows: world.kitRows, rowCount: world.kitRows.length };
+  if (/connector_type IS NOT NULL AND status = 'active'/.test(sql)) {
+    const kits = world.heldKit ? [KIT_ROW] : world.kitRows; /* CON-110: a stream is handed to a kit this shop holds */
+    return { rows: kits, rowCount: kits.length };
+  }
   if (/FROM chit_header ch/.test(sql)) return { rows: world.chits, rowCount: world.chits.length };
   if (/WHERE \(user_id = \$1 OR bridge_id = \$1\)/.test(sql)) return world.handle ? { rows: [{ identity_id: 'e1' }], rowCount: 1 } : { rows: [], rowCount: 0 };
   if (/FROM catalogue_items/.test(sql)) return { rows: world.stockRows, rowCount: world.stockRows.length };
@@ -156,6 +159,9 @@ const SCENARIOS = [
   { id: 'books-no-token', route: 'POST /api/integrations/books', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'books-wrong-scope', route: 'POST /api/integrations/books', status: 403, setup: { asKey: true, scopes: ['offers'] }, body: {}, inherited: true },
   { id: 'books-no-chit', route: 'POST /api/integrations/books', status: 400, body: { kind: 'order' } },
+  { id: 'books-unknown-outcome', route: 'POST /api/integrations/books', status: 400, body: { chit_id: CHIT, outcome: 'maybe' }, fresh: true },
+  { id: 'books-unknown-kind', route: 'POST /api/integrations/books', status: 400, body: { chit_id: CHIT, kind: 'zzz' }, fresh: true },
+  { id: 'books-ref-not-text', route: 'POST /api/integrations/books', status: 400, body: { chit_id: CHIT, ref: { a: 1 } }, fresh: true },
   { id: 'books-not-found', route: 'POST /api/integrations/books', status: 404, body: { chit_id: CHIT } },
   { id: 'books-db-fails', route: 'POST /api/integrations/books', status: 500, setup: { dbFails: true }, body: { chit_id: CHIT } },
   { id: 'status-no-token', route: 'GET /api/integrations/status', status: 401, setup: { realAuth: true }, inherited: true },
@@ -166,9 +172,11 @@ const SCENARIOS = [
   { id: 'putstreams-no-token', route: 'PUT /api/integrations/streams', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'putstreams-key-asks', route: 'PUT /api/integrations/streams', status: 403, setup: { asKey: true }, body: { order: 'kit@pc' } },
   { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: {} },
-  { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true }, body: { order: 'kit@pc' } },
+  { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true, heldKit: true }, body: { order: 'kit@pc' } },
+  { id: 'putstreams-unknown-owner', route: 'PUT /api/integrations/streams', status: 422, setup: { heldKit: true }, body: { order: 'nobody@nowhere' }, fresh: true },
+  { id: 'putstreams-owner-too-long', route: 'PUT /api/integrations/streams', status: 422, setup: { heldKit: true }, body: { order: 'k'.repeat(121) }, fresh: true },
   { id: 'putstreams-bad-body', route: 'PUT /api/integrations/streams', status: 422, body: { order: 12345 }, fresh: true },
-  { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true }, body: { order: 'kit@pc' } },
+  { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true, heldKit: true }, body: { order: 'kit@pc' } },
   { id: 'skip-no-token', route: 'POST /api/integrations/books/skip', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'skip-key-asks', route: 'POST /api/integrations/books/skip', status: 403, setup: { asKey: true }, body: { chit_id: CHIT } },
   { id: 'skip-no-chit', route: 'POST /api/integrations/books/skip', status: 400, body: {} },
@@ -247,7 +255,8 @@ const SUCCESS = [
   OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD }),
   /* the writers' success answers: a request that reaches each one's 200 is the example the generated output_allowlist case plays (S34) */
   OK('approve-connector', 'POST /api/integrations/:actor_id/approve', { actor: { identity_id: A1, site: 'PC', connector_config: { key_jti: 'j1' } } }, { url: I + '/' + A1 + '/approve', body: {} }),
-  OK('putstreams-give', 'PUT /api/integrations/streams', {}, { body: { order: 'kit@pc', stock: null } }),
+  OK('putstreams-clear', 'PUT /api/integrations/streams', {}, { body: { order: null, stock: false } }), /* CON-110: leaving a stream unowned needs no connector (and is the example the generated output case replays) */
+  OK('putstreams-give', 'PUT /api/integrations/streams', { heldKit: true }, { body: { order: 'kit@pc', stock: null } }),
   OK('profile-write', 'POST /api/integrations/profile', { asKey: true, profileValues: HELD }, { body: { source: 'tally', fields: { legal_name: 'Acme Pvt Ltd', state: 'Delhi' } } })
 ];
 

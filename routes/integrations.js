@@ -26,7 +26,7 @@ const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · S
 const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 /* the contract (each route's OpenAPI operation) and the answers these routes gave before the standard — lib/integrations-contract.js */
-const { filterFor, KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
+const { filterFor, KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, BOOKS_REFUSAL, STREAM_OWNER_SAID, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
 const logger = require('../lib/logger');
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -454,7 +454,7 @@ router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), a
 });
 
 /* the checked-in connectors: ONE statement and row shape — lib/connector-rows.js (SET-35: the Home card reads it too); health stays routes/connectors' */
-const { KIT_ROWS, rowOut, connectorsOf } = require('../lib/connector-rows');
+const { KIT_ROWS, rowOut, connectorsOf, unknownKits } = require('../lib/connector-rows');
 
 router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(HEARTBEAT_OPERATION, KIT_REFUSAL()), async (req, res) => {
   try {
@@ -669,14 +669,22 @@ router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async
  * — the kit's write-back after every push, onto MY copy of the chit (business_json.books[kind]); never a second voucher, only the record
  * of the one that went (or did not). A connector key with scope connector; the bell rings for the entity so an open Task repaints.
  */
-router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, KIT_REFUSAL(CHIT_SAID)), async (req, res) => {
+const REF_MAX = 120; /* the longest voucher reference kept; a longer one is cut and logged */
+/** the ref the record keeps: at most REF_MAX characters; a longer one is cut and the log says so (the kit swallows a refusal, so the shop would never learn it) */
+function refKept(body) {
+  if (body.ref == null) return null;
+  const ref = String(body.ref);
+  if (ref.length > REF_MAX) logger.warn('integrations POST /books: the kit sent a ref of ' + ref.length + ' characters; kept the first ' + REF_MAX, { chit_id: body.chit_id });
+  return ref.slice(0, REF_MAX);
+}
+router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, BOOKS_REFUSAL), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const kind = /^(order|receipt|purchase)$/.test(String(b.kind || '')) ? String(b.kind) : 'order';
     const rec = {
       system: String(b.system || 'books').slice(0, 40),
-      ref: b.ref != null ? String(b.ref).slice(0, 120) : null,
+      ref: refKept(b),
       outcome: /^(ok|failed|dry|skipped)$/.test(String(b.outcome || '')) ? String(b.outcome) : 'ok',
       why: b.why ? String(b.why).slice(0, 300) : null,
       at: b.at ? String(b.at).slice(0, 40) : new Date().toISOString(),
@@ -757,22 +765,32 @@ router.get('/streams', auth, ...filterFor('/streams'), async (req, res) => {
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
+/** a value that leaves a stream unowned (null, '' or false) */
+const leavesUnowned = (value) => value === null || value === '' || value === false;
+/** the owners a PUT /streams body hands streams to: every named stream's value except the ones that leave it unowned */
+const namedOwners = (body) => STREAM_LIST.map((stream) => body[stream.id]).filter((owner) => owner !== undefined && !leavesUnowned(owner));
+/** the owner map after a PUT /streams body: the streams it names (an unowned value clears one), and how many it named */
+function ownersAfter(current, body) {
+  const next = Object.assign({}, current);
+  let touched = 0;
+  for (const stream of STREAM_LIST.map((item) => item.id)) {
+    if (!(stream in body)) continue;
+    touched++;
+    if (leavesUnowned(body[stream])) delete next[stream];
+    else next[stream] = String(body[stream]).slice(0, 120);
+  }
+  return { next, touched };
+}
 router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, res) => {
   try {
     if (!req.identity || req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.streamsKey, legacy: { error: 'Forbidden', message: SAID.streamsKey } });
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const policy = require('../lib/policy');
+    const strangers = await unknownKits(entity_id, namedOwners(b));
+    if (strangers.length) return problem(req, res, { status: 422, code: 'STREAM_OWNER_UNKNOWN', detail: STREAM_OWNER_SAID, legacy: { error: 'Not a connector', message: STREAM_OWNER_SAID } });
     const flags = await policy.get(entity_id);
-    const next = Object.assign({}, flags.stream_owner || {});
-    let touched = 0;
-    for (const st of STREAM_LIST.map((x) => x.id)) {
-      if (!(st in b)) continue;
-      const v = b[st];
-      touched++;
-      if (v === null || v === '' || v === false) delete next[st];
-      else next[st] = String(v).slice(0, 120);
-    }
+    const { next, touched } = ownersAfter(flags.stream_owner || {}, b);
     if (!touched) return problem(req, res, { status: 400, code: 'NO_STREAM_NAMED', detail: SAID.noStream, legacy: { error: 'validation', message: SAID.noStream } });
     const after = await policy.set(entity_id, { stream_owner: next });
     res.json({ ok: true, owner: after.stream_owner || {} });

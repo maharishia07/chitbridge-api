@@ -2291,7 +2291,7 @@
    ]
   },
   "POST /api/catalogue/:bridge_id/order/start": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2307,7 +2307,7 @@
    ]
   },
   "POST /api/catalogue/:bridge_id/support/start": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2827,7 +2827,7 @@
    ]
   },
   "POST /api/crm/segments/:key/send": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3091,7 +3091,7 @@
    ]
   },
   "POST /api/integrations/books": {
-   "cases": 10,
+   "cases": 11,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

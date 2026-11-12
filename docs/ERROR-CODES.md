@@ -448,6 +448,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
+| STREAM_OWNER_UNKNOWN | 422 | Not a connector of this shop | That is not a connector of this shop. | Pick a connector from the list, or leave the stream unowned. | integrations | 2026-11-12 |
 | SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies arrive after the next update. Supplies cannot be recorded or listed yet. | Ask the operator to run the update, then try again. | supplies | 2026-11-07 |
 | SUPPLY_BILL_DIFFERS | 409 | Bill already recorded | This bill number is already recorded for that supplier with different lines. | Record a correction, or use a new bill number. | supplies | 2026-10-31 |
 | SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |
