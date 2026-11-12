@@ -178,11 +178,7 @@ function extras(tools) {
     X('suggest-made', 'POST ' + at('/suggest-key'), 200, { body: { display_name: 'Ravi Kumar' } }),
     X('suggest-one-word', 'POST ' + at('/suggest-key'), 200, { body: { display_name: 'Kavya' }, setup: { sqlRows: row(/SELECT user_id FROM identities/, { user_id: 'shop-a' }) } }),
     X('suggest-all-taken', 'POST ' + at('/suggest-key'), 200, { body: { display_name: 'Ravi Kumar' }, setup: { sqlRows: keyTaken } }),
-    X('suggest-db-fails', 'POST ' + at('/suggest-key'), 500, { body: { display_name: 'Ravi Kumar' }, setup: failing }),
-    X('check-key-free', 'POST ' + at('/check-key'), 200, { body: { actor_key: 'ravik' } }),
-    X('check-key-taken', 'POST ' + at('/check-key'), 200, { body: { actor_key: 'ravik' }, setup: { sqlRows: keyTaken } }),
-    X('check-key-unusable', 'POST ' + at('/check-key'), 400, { body: { actor_key: 'AB' } }),
-    X('check-key-db-fails', 'POST ' + at('/check-key'), 500, { body: { actor_key: 'ravik' }, setup: failing })
+    X('suggest-db-fails', 'POST ' + at('/suggest-key'), 500, { body: { display_name: 'Ravi Kumar' }, setup: failing })
   ];
 
   /* ── POST /api/actors: add a person ── */

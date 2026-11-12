@@ -722,22 +722,6 @@
     400
    ]
   },
-  "GET /api/connections/list": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "GET /api/connections/pending": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
   "GET /api/connectors": {
    "cases": 2,
    "failed": 0,
@@ -1642,14 +1626,6 @@
     400
    ]
   },
-  "PATCH /api/entities/me/locale": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
   "PATCH /api/entities/me/prefs/:kind": {
    "cases": 4,
    "failed": 0,
@@ -1794,14 +1770,6 @@
     400
    ]
   },
-  "POST /api/actors/check-key": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
   "POST /api/actors/login": {
    "cases": 2,
    "failed": 0,
@@ -1859,14 +1827,6 @@
    ]
   },
   "POST /api/assist/conform": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/assist/gap": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,

@@ -168,13 +168,6 @@ const DESIGN = (rootKey) => ({
     (b.invited || []).some((item) => item.handle === partnerRef),
     JSON.stringify(b.invited || [])
   );
-  const pending = await api('/api/connections/pending', { token: partner.token });
-  const reqs = (pending.json && (pending.json.requests || pending.json.pending || pending.json)) || [];
-  ok(
-    '★★ THE PARTNER MUST ACCEPT — it is sitting in their inbox, not in the network',
-    Array.isArray(reqs) && reqs.some((item) => item.from_bridge_id === op.bridge),
-    'pending: ' + (Array.isArray(reqs) ? reqs.length : '?')
-  );
 
   // ── 6 · THE STORE CAN LOG IN ─────────────────────────────────────────────────────────────────────────────
   step(6, 'the store signs in with its handle and code');
