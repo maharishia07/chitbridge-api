@@ -444,6 +444,7 @@ const GUARDS = [
   'repeat-supply-status.test.cjs', // REPEAT-500: the repeat store reads a copy's status from chit_status through lib/select.rows, never h.current_status
   'api-problem-orders.test.cjs', // API-4 sweep, orders and workflow: every refusal of routes/repeat-supply.js, routes/work.js and routes/counters.js is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'ord-73-repeat-input.test.cjs', // ORD-73 (BH-7): /api/repeat accept · counter · decline · skip answer 400 for a chit_id that is not a uuid (abc, true, -1, 1e21) and 404 for a bad agreement id, never 500 with driver text
+  'ord-b9-repeat-supply.test.cjs', // B9 (ORD-88..93): one live agreement per bill, a withdrawn or all-zero agreement ends with its cause, a passed start is refused at agree()
   'ops-74-supplies-id.test.cjs', // OPS-74: PATCH /api/supplies/:id and POST /:id/issue answer 404 NOT_FOUND for an id that is not a uuid, never 500 with driver text
   'ops-70-one-number-check.test.cjs', // OPS-70: a purchase line's quantity and cost go through one number check; a line at no cost is said so
   'ops-70-one-number-check-mutation.test.cjs', // OPS-70: breaking the store or the words turns the test red
