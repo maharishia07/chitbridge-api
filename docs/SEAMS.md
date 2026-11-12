@@ -53,7 +53,7 @@ of file each thing is; this says what already does the job.
 | 46 | `read` | `cap-print.js` |  |
 | 45 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 44 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 45 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 44 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `rules` | `docnumber.js` | the rule set for a country — |
@@ -61,7 +61,7 @@ of file each thing is; this says what already does the job.
 | 42 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 42 | `live` | `receivables.js` | the allocations that still count: |
-| 40 | `facts` | `bill-steps.js` | MY state_log — |
+| 42 | `facts` | `bill-steps.js` | MY state_log — |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
@@ -98,7 +98,7 @@ of file each thing is; this says what already does the job.
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
-| 30 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 31 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `owner` | `books.js` |  |
 | 29 | `mine` | `crm.js` | `opt.removedOk`: |
@@ -189,7 +189,7 @@ of file each thing is; this says what already does the job.
 | 15 | `confirm` | `lab-kit.js` | opts: |
 | 15 | `offers` | `network-app.js` |  |
 | 15 | `post` | `books-manual.js` | POST /events — |
-| 16 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
+| 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
