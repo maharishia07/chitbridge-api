@@ -828,6 +828,7 @@ const GUARDS = [
   'tax-registration.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'tax-scheme.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'tax-slab.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'tax-shop-day.test.js', // M3 12 Nov 2026: a slab's effective_from is judged on the shop's day (Mumbai 00:30 on 13 Nov = 19:00Z on 12 Nov)
   'till-bills-credit-note.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'till-line-answer.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'till-retain.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
