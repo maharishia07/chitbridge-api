@@ -22,12 +22,14 @@ function memory() {
     async get(h, e, id) { if (!m.migrated) gone(); const r = rows.find((x) => x.entity_id === e && x.agreement_id === id); return r ? rowOf(r) : null; },
     async insert(h, e, t) {
       if (!m.migrated) gone();
+      if (m.failInsert) { m.failInsert = false; throw new Error('insert failed'); }
       pg(t);
       rows.push(Object.assign({ entity_id: e, state: 'proposed', runs_done: 0, terms: {}, counter: null, skips: [], runs: {}, last_run_on: null, state_by: null, state_at: null, state_note: null, created_at: '2026-10-01T00:00:00Z', updated_at: null }, clone(t)));
       return m.store.get(h, e, t.agreement_id);
     },
     async update(h, e, id, p) { if (!m.migrated) gone(); pg(p); const r = rows.find((x) => x.entity_id === e && x.agreement_id === id); if (!r) return null; Object.assign(r, clone(p)); return rowOf(r); },
     async chit(h, e, chit_id) { if (m.postgres && !UUID.test(String(chit_id))) refuse('22P02'); const c = chits[chit_id + '|' + e]; return c ? Object.assign(clone(c), { status: c.status !== undefined ? c.status : c.current_status }) : null; },
+    async chitByRef(h, e, ref) { const s = sent.find((x) => x.entity === e && x.body.client_ref === ref); return s ? { chit_id: s.chit_id } : null; },
     async note(h, e, chit_id, who, action, detail) { notes.push({ entity: e, chit_id, action, detail }); },
     async zone() { return m.zone; },
     async dueShops() { if (!m.migrated) gone(); return [...new Set(rows.filter((r) => r.state === 'agreed').map((r) => r.entity_id))]; },
@@ -41,6 +43,11 @@ function memory() {
   };
   /** the stand-in send: answers a chit id; the same client_ref answers the FIRST chit (duplicate) — and HOLDS the chit on both sides */
   m.sendAs = async (entity, body, opts) => {
+    if (m.gate) {   /* the idempotency gate (middleware/idempotency.js): the key with the same body replays the first answer; with another body it is a 422 IDEMPOTENCY_CONFLICT */
+      const key = opts && opts.idempotency_key, seen = key && m.gate[entity + '|' + key], digest = JSON.stringify(body);
+      if (seen && seen.digest !== digest) return { ok: false, status: 422, body: { error: 'Idempotency conflict', code: 'IDEMPOTENCY_CONFLICT', message: 'This Idempotency-Key was already used with a different request.' } };
+      if (seen) return { ok: true, status: 200, body: seen.answer };
+    }
     const same = sent.find((s) => s.entity === entity && s.body.client_ref === body.client_ref);
     if (same) return { ok: true, status: 200, body: { ok: true, chit_id: same.chit_id, duplicate: true, client_ref: body.client_ref } };
     if (m.refuseSend) return { ok: false, status: 409, body: { error: m.refuseSend, message: m.refuseSend } };
@@ -49,7 +56,9 @@ function memory() {
     const to = body.recipients && body.recipients[0] && body.recipients[0].entity_id;
     m.hold(chit_id, entity, body.is_draft ? null : to, { purpose: body.purpose, role: body.is_draft ? 'Draft' : 'Act', line_items: body.line_items, business_json: body.business_json, manual_subject: body.manual_subject,
       summary_json: { currency_code: (body.business_json && body.business_json.currency) || 'INR', money: { gross: 1000, savings: 0, net: 1000, tax: 180, total: 1180, currency_code: 'INR', provisional: true } } });
-    return { ok: true, status: 200, body: { ok: true, chit_id } };
+    const answer = { ok: true, chit_id };
+    if (m.gate && opts && opts.idempotency_key) m.gate[entity + '|' + opts.idempotency_key] = { digest: JSON.stringify(body), answer };
+    return { ok: true, status: 200, body: answer };
   };
   return m;
 }

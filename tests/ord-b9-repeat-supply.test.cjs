@@ -48,8 +48,10 @@ const fails = async (fn) => { try { await fn(); return null; } catch (e) { retur
   const a2 = await agreed(bill());
   const eZero = await fails(() => R.counter(CUST, a2.agreement_id, a2.chit_id, ACTOR, { lines: [{ line_id: 'L1', quantity: 0 }, { line_id: 'L2', quantity: 0 }] }));
   ok('ORD-89: a counter with every line at 0 is refused (400, decline instead)', eZero && eZero.status === 400 && /decline/.test(eZero.message), eZero && eZero.message);
-  const c2 = await R.counter(CUST, a2.agreement_id, a2.chit_id, ACTOR, { lines: [{ line_id: 'L1', quantity: 0 }, { line_id: 'L2', quantity: 5 }] });
-  ok('ORD-89: one line at 0 is a valid counter', c2.state === 'countered');
+  const c2 = await R.counter(CUST, a2.agreement_id, a2.chit_id, ACTOR, { lines: [{ line_id: 'L1', quantity: 0 }] });   /* the way the web posts it: the changed line only */
+  ok('ORD-89: dropping ONE line (only that line posted, as the web does) is a valid counter', c2.state === 'countered');
+  const ag2 = await fails(() => R.agree(SHOP, a2.agreement_id, ACTOR));
+  ok('ORD-89: …and the seller can agree to it', ag2 === null, ag2 && ag2.message);
   const a3 = await agreed(bill());
   await R.counter(CUST, a3.agreement_id, a3.chit_id, ACTOR, { lines: [{ line_id: 'L1', quantity: 1 }] });
   rowOf(a3).counter.lines = [{ line_id: 'L1', quantity: 0 }, { line_id: 'L2', quantity: 0 }];
@@ -60,7 +62,7 @@ const fails = async (fn) => { try { await fn(); return null; } catch (e) { retur
   const before = mem.sent.length;
   const s4 = await R.sweep(SHOP, '2026-10-06');
   ok('ORD-89: runOne with no line left sends nothing, ends the agreement naming the cause, records the problem',
-    mem.sent.length === before && rowOf(a4).state === 'ended' && /Every line is at 0/.test(rowOf(a4).state_note) && s4.problems.some((p) => p.agreement_id === a4.agreement_id), JSON.stringify([rowOf(a4).state, rowOf(a4).state_note, s4.problems]));
+    !mem.sent.some((x) => x.body.client_ref.startsWith('rep:' + a4.agreement_id)) && rowOf(a4).state === 'ended' && /Every line is at 0/.test(rowOf(a4).state_note) && s4.problems.some((p) => p.agreement_id === a4.agreement_id), JSON.stringify([rowOf(a4).state, rowOf(a4).state_note, s4.problems]));
   ok('ORD-89: the next sweep does not retry it', (await R.sweep(SHOP, '2026-10-07')).problems.every((p) => p.agreement_id !== a4.agreement_id));
 
   /* ORD-90 */
@@ -84,6 +86,31 @@ const fails = async (fn) => { try { await fn(); return null; } catch (e) { retur
   await R.counter(CUST, a7.agreement_id, a7.chit_id, ACTOR, { every: 2 });
   const ok7 = await fails(() => R.agree(SHOP, a7.agreement_id, ACTOR));
   ok('ORD-93: a counter that only changes "every" (the start is the row\'s own) is still agreeable', ok7 === null, ok7 && ok7.message);
+
+  /* ORD-88 through the idempotency gate (same key + same body replays; same key + another body is a 422), and an orphan chit */
+  CLOCK.set('2026-10-05T06:00:00Z');
+  mem.gate = {};
+  const g1 = bill();
+  const ga = await make(g1);
+  const gb = await make(g1, { start_on: '2026-10-09' });   /* a second send, another schedule: the row answers first, nothing is sent */
+  ok('ORD-88: with the gate on, a second create answers the first agreement, one chit, no Idempotency words', gb.agreement_id === ga.agreement_id && mem.sent.filter((x) => x.body.client_ref === 'rep:' + g1 + ':1').length === 1);
+  const g2 = bill();
+  mem.failInsert = true;
+  const eIns = await fails(() => make(g2));
+  ok('ORD-88: a failed row insert after the send leaves the orphan chit', eIns && mem.rows.every((r) => r.source_chit_id !== g2) && mem.sent.some((x) => x.body.client_ref === 'rep:' + g2 + ':1'));
+  const gAdopt = await fails(() => make(g2, { start_on: '2026-10-09' }));   /* the retry has another body: the gate says conflict, the orphan is found by its ref */
+  const adopted = mem.rows.filter((r) => r.source_chit_id === g2);
+  ok('ORD-88: the retry ADOPTS the orphan chit (row inserted for it), not refused for ever and not read as "Idempotency-Key was already used"',
+    gAdopt === null && adopted.length === 1 && adopted[0].chit_id === mem.sent.find((x) => x.body.client_ref === 'rep:' + g2 + ':1').chit_id && mem.sent.filter((x) => x.body.client_ref === 'rep:' + g2 + ':1').length === 1, gAdopt && gAdopt.message);
+  mem.gate = null;
+
+  /* ORD-90 / 89: lines not read are not "all zero" */
+  const a8 = await agreed(bill());
+  mem.chits[a8.chit_id + '|' + SHOP].line_items = [];
+  const before8 = mem.sent.length;
+  const s8 = await R.sweep(SHOP, '2026-10-06');
+  ok('an unreadable line list is a problem in words; the agreement is NOT ended and nothing is sent',
+    mem.sent.length === before8 && rowOf(a8).state === 'agreed' && s8.problems.some((p) => p.agreement_id === a8.agreement_id && /could not be read/.test(p.why)), JSON.stringify([rowOf(a8).state, s8.problems]));
 
   console.log('\n   ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
