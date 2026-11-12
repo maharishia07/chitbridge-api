@@ -10,6 +10,7 @@
  * ../db is stubbed: every statement is recorded and answers from `answer`, so nothing needs Postgres.
  * CARD      01-rail-core-the-chit/line-model
  */
+const LINE_UUID = '44444444-4444-4444-8444-444444444444'; /* ORD-78: an assignment names a line by its uuid */
 const path = require('path');
 
 const calls = [];
@@ -110,9 +111,9 @@ const got = (line_id, ordered, dq, o) => ev(line_id, ordered, Object.assign({ de
   t('R25 a state that is not open or done is refused, not stored as open', (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, state: 'finished' }])) === 'state must be open or done');
   t('R25 open and done pass, in any case', (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, state: 'DONE' }])) === '' && (await asg([{ line_id: LINE_UUID, assignee_actor_id: null, state: 'open' }])) === '');
   calls.length = 0;
-  answer = () => ({ rows: [{ line_id: 'l1' }] });
+  answer = () => ({ rows: [{ line_id: LINE_UUID }] });
   await assign.assign(ME, 'c1', [{
-    line_id: 'l1', assignee_actor_id: null, assignee_name: 'N'.repeat(200), task: 'T'.repeat(200), note: 'x'.repeat(500), assignee_type: 'robot',
+    line_id: LINE_UUID, assignee_actor_id: null, assignee_name: 'N'.repeat(200), task: 'T'.repeat(200), note: 'x'.repeat(500), assignee_type: 'robot',
   }], {});
   const p = (calls.find((c) => /INSERT INTO chit_line_assignment/.test(c.sql)) || {}).params || [];
   t('R22 null assignee_actor_id is written as null (taken off the person)', p[3] === null);
