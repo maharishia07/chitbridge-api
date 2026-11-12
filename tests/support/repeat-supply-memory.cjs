@@ -27,7 +27,7 @@ function memory() {
       return m.store.get(h, e, t.agreement_id);
     },
     async update(h, e, id, p) { if (!m.migrated) gone(); pg(p); const r = rows.find((x) => x.entity_id === e && x.agreement_id === id); if (!r) return null; Object.assign(r, clone(p)); return rowOf(r); },
-    async chit(h, e, chit_id) { if (m.postgres && !UUID.test(String(chit_id))) refuse('22P02'); const c = chits[chit_id + '|' + e]; return c ? clone(c) : null; },
+    async chit(h, e, chit_id) { if (m.postgres && !UUID.test(String(chit_id))) refuse('22P02'); const c = chits[chit_id + '|' + e]; return c ? Object.assign(clone(c), { status: c.status !== undefined ? c.status : c.current_status }) : null; },
     async note(h, e, chit_id, who, action, detail) { notes.push({ entity: e, chit_id, action, detail }); },
     async zone() { return m.zone; },
     async dueShops() { if (!m.migrated) gone(); return [...new Set(rows.filter((r) => r.state === 'agreed').map((r) => r.entity_id))]; },
