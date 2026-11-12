@@ -54,12 +54,12 @@ function fakeDB() {
 
 function counterOn(port) {
   const DB = fakeDB();
-  const ctx = { console, setTimeout, clearTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error, DB, OWNER: null, FOREIGN: 0, STATE: { queued: 0 }, DEADLINE: 20000,
+  const ctx = { console, setTimeout, clearTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error, DB, OWNER: null, FOREIGN: 0, STATE: { queued: 0 }, DEADLINE: 20000, dbFrozen: () => false, FROZEN_LINE: 'frozen',
     lineUp: () => true, cbQuiet: () => {}, queueTally: async () => {}, paintStatus: () => {}, personOn: () => false, drainSoon: () => {}, ls: { set() {}, get: (k, d) => d },
     isSaleRow: () => false, renumberBill: async () => null, stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     fetchBy: async (url, init) => fetch(url, init) };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + lift('qBackoff') + lift('qDue') + lift('qSoonest') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + lift('isParkedRow') + lift('parksOn') + lift('sendableRows') + lift('refusedRow') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + lift('qBackoff') + lift('qDue') + lift('qSoonest') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + lift('isParkedRow') + lift('parksOn') + lift('sendableRows') + lift('refusedRow') + lift('frozenDrain') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'till-key'; host.api = 'http://127.0.0.1:' + port;
   host.cred = () => 'till-key'; host.auth = (extra) => Object.assign({ Authorization: 'Bearer till-key' }, extra || {}); host.idemHeaders = (p, b, extra) => extra;

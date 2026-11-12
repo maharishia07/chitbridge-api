@@ -5374,7 +5374,7 @@ var CloudHost = {
    * ⚠️ The MERGE happens here, on the copy we already hold — and a removal is applied before an add, so a row that was deleted and
    * re-created in the same window ends up present rather than missing.
    */
-  async refresh(){
+  async refresh(){ if (dbFrozen()) return { ok:false, code:'DB_FROZEN', why: FROZEN_LINE };   /* the claim and the owner check read the store: frozen = no refresh */
     if (!this.cred()) return { ok:false, need:'key' };
     /**
      * ⚠️⚠️ READ THE OWNER FROM DISK EVERY TIME, never from the variable. Caching it was wrong in BOTH directions and [TILL-06]
@@ -5391,7 +5391,7 @@ var CloudHost = {
     var r = await fetchBy(this.api + '/api/till/snapshot' + (since ? since + '&' : '?') + claim,
                           { headers: this.auth() }, SLOW);
     /* ⭐ M08: the server's CODE travels with the refusal — refreshFailed() picks the words from it, not from the status */
-    if (!r.ok) { var rc = null; try { rc = (await r.json()).code || null; } catch (_) { rc = null; } return { ok:false, status:r.status, code: rc }; }
+    if (!r.ok) return { ok:false, status:r.status, code: (await this.refusalOf(r)).code };
     /**
      * ⭐⭐ COUNTED AS IT ARRIVES. Athi, 2026-09-09: *"when we try to reload, no message is appearing — an image of the progress
      * would be good."* Ten thousand products is about five megabytes, which on a shop line is several seconds of a screen doing
@@ -5813,6 +5813,7 @@ var CloudHost = {
      * nothing and both write. One counter can no longer send them together — two counters still can.
      * See C:\dev\BACKLOG.md, 🔴 gated on Athi because it is DDL.
      */
+    if (frozenDrain(this)) return;   /* till-park: frozen = every read rejects, so there is nothing to send FROM */
     if (this._busy) {
       if (this._busyAt && (Date.now() - this._busyAt) > DEADLINE + 15000) {
         this._busy = false;                    /* it cannot still be running; a stuck flag must not be permanent */
@@ -6126,6 +6127,7 @@ async function tillGivenOK(){
   return await tillIssued();
 }
 async function tillStopped(){
+  if (frozenStop('taking this bill')) return true;
   if (BREAK) { paintLock(); return true; }         /* ☕ nobody is at the counter */
   if (typeof LOCK !== 'undefined' && LOCK) { paintLock(); return true; }   /* 🔒 nobody has signed in to it */
   if (!(await tillGivenOK())) {
@@ -6144,7 +6146,7 @@ async function tillStopped(){
   return true;
 }
 async function tillIssued(){
-  try { var s = await DB.get('series'); return !!(s && Number(s.next) > 1); } catch (_) { return false; }
+  try { var s = await DB.get('series'); return !!(s && Number(s.next) > 1); } catch (e) { throwIfFrozen(e); return false; }   /* frozen: NEVER "not issued" — the claim would tell the shop this counter is new */
 }
 /**
  * ⭐ A SNAPSHOT IN PARTS IS READ TO ITS END (SEC-SMALL item 5, 2026-10-14). routes/till.js carries at most `limit` items in one
@@ -8731,7 +8733,7 @@ async function retainSave(k, v){
 }
 async function retainPaint(){
   var el = document.getElementById('set_keep_say'); if (!el) return;
-  try { el.textContent = retainPlan((await DB.all('bills')) || []).say; } catch (_) { el.textContent = ''; }
+  try { el.textContent = retainPlan((await DB.all('bills')) || []).say; } catch (_) { el.textContent = frozenOr(''); }
 }
 async function retainAtClose(){
   try {
@@ -24557,6 +24559,24 @@ function throwIfFrozen(err){ if (err && err.code === 'DB_FROZEN') throw err; }
 function askReload(words, title){
   sure(words, 'Reload this counter', title, 'Not yet').then(function(yes){ if (yes) location.reload(); });
 }
+/** a painter's own "nothing here" word, unless the counter is frozen — then the frozen line (an unreadable store must never read as an empty one) */
+function frozenOr(text){ return dbFrozen() ? FROZEN_LINE : text; }
+/** paint the frozen notice into a box and say so (true) — the lists that would otherwise print "Nothing yet" */
+function paintFrozenInto(box){
+  if (!dbFrozen()) return false;
+  box.innerHTML = frozenNoticeHTML();
+  return true;
+}
+/** the sender's turn while frozen: record why nothing was tried (HOST.last, what 🩺 reads) and stop — true = the drain returns */
+function frozenDrain(host){
+  if (!dbFrozen()) return false;
+  host.last = { at: Date.now(), tried: 0, sent: 0, why: FROZEN_LINE, code: 'DB_FROZEN' };
+  return true;
+}
+/** how many rows are still to send (a parked change is not one); frozen rethrows — an unreadable queue is never "0 left" */
+async function queueLength(){
+  try { return sendableRows(await DB.all('queue')).length; } catch (e) { cbQuiet('queueLength:1', e); throwIfFrozen(e); return 0; }
+}
 /** a frozen counter cannot decide anything from a read (every read rejects): say so with the Reload offer and stop. true = the caller returns, nothing was done */
 function frozenStop(doing){
   if (!dbFrozen()) return false;
@@ -25349,7 +25369,7 @@ function keyedBrowser(){ return !onAgent() && !!(typeof CloudHost !== 'undefined
  * ⚠️ Nothing is deleted from the old store until the row is safely written into this one, and `client_ref` makes
  * a second send harmless — so the failure mode is a duplicate attempt, never a lost sale.
  */
-async function rescueOrphans(){
+async function rescueOrphans(){ if (frozenStop('bringing the bills in')) return;
   var mineNow = String(OWNER || (await DB.ownerRaw()) || '');
   if (!mineNow) { toastLine('This counter does not know which shop it is yet. Read the shop again first.'); return; }
   var others = await otherCounters();
@@ -25383,7 +25403,7 @@ async function rescueOrphans(){
   /* ⭐ a brought-in bill that SAYS sent is checked now — an absorbed one is renumbered and sent (option a) */
   var chk = null;
   try { chk = await checkAbsorbed(true); } catch (e) { cbQuiet('rescueOrphans:3', e); }
-  var left = 0; try { left = ((await DB.all('queue')) || []).length; } catch (e) { cbQuiet('rescueOrphans:4', e); }
+  var left = await queueLength();
   say('Brought in ' + moved + ' bill(s), ' + queued + ' of them still to send.\n\n'
     + (chk && chk.fixed ? chk.fixed + ' bill(s) had said "sent" without reaching the shop — they are being sent now'
         + (chk.renumbered && chk.renumbered.length ? ', under new numbers (the printed number is kept on each)' : '') + '.\n\n' : '')
@@ -25397,7 +25417,7 @@ async function rescueOrphans(){
  * ⭐⭐ THE STORAGE PANEL. Reached from 🩺, because "what is this counter keeping" is only ever asked by somebody
  * already asking why it is behaving strangely.
  */
-async function openStorage(){
+async function openStorage(){ if (frozenStop('looking at the storage')) return;
   var m = await storageMap();
   var line = function(k, v, warn){
     return '<div class="t' + (warn ? ' warnrow' : '') + '"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
@@ -25424,22 +25444,16 @@ async function openStorage(){
       + '<div class="u" data-testid="till-keep-say" style="padding:2px 0 8px">' + esc(plan.say) + '</div>'
       + '<div class="u" style="padding-bottom:8px">Anything not yet sent stays here whatever these say — it is the shop’s only copy.</div>';
   } catch (e) { cbQuiet('openStorage:1', e); }
-  if (m.quota) {
-    var pct = m.quota.granted ? Math.round(m.quota.used / m.quota.granted * 100) : 0;
-    h += '<div class="sec">What the browser has given this counter</div>'
-      + line('Used', kb(m.quota.used) + ' of ' + kb(m.quota.granted) + '  (' + pct + '%)', pct > 85);
-  }
+  h += quotaRowsHTML(m.quota, line);
   /**
    * ⚠️⚠️ NAMING THE OTHER STORES WAS NOT ENOUGH — it is what is INSIDE them that strands a sale. "another shop on
    * this device" read as housekeeping; "2 queued, NOT SENT, this shop" is the thing somebody has to act on.
    */
   var others = await otherCounters();
   var mineNow = String(OWNER || '');
-  var stranded = others.reduce(function(a, s){
-    return a + ((!s.moved && String(s.owner || '') === mineNow) ? s.queue : 0); }, 0);
+  var stranded = leftBehind(others, mineNow, 'queue');
   /* ⚠️ and bills that SAY sent — see the note in openStuck(); an absorbed sale reads exactly like a good one */
-  var leftBills = others.reduce(function(a, s){
-    return a + ((!s.moved && String(s.owner || '') === mineNow) ? s.bills : 0); }, 0);
+  var leftBills = leftBehind(others, mineNow, 'bills');
   h += '<div class="sec">Counters on this device — one copy per pairing, not per shop</div>'
     + line(tillStore() + '  ← in use now',
         m.rows ? (m.rows.bills + ' bill(s), ' + m.rows.queue + ' queued') : '—');
@@ -25477,6 +25491,16 @@ async function openStorage(){
   document.getElementById('billstitle').textContent = 'What this counter is keeping';
   document.getElementById('billsbody').innerHTML = h;
   if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
+}
+/** how many bills (or queued rows) THIS shop left in earlier copies of the counter on this device — the moved copies do not count */
+function leftBehind(others, mineNow, what){
+  return others.reduce(function(sum, store){ return sum + ((!store.moved && String(store.owner || '') === mineNow) ? store[what] : 0); }, 0);
+}
+/** the 'what the browser has given this counter' rows ('' when the browser will not say) */
+function quotaRowsHTML(quota, line){
+  if (!quota) return '';
+  var pct = quota.granted ? Math.round(quota.used / quota.granted * 100) : 0;
+  return '<div class="sec">What the browser has given this counter</div>' + line('Used', kb(quota.used) + ' of ' + kb(quota.granted) + '  (' + pct + '%)', pct > 85);
 }
 /**
  * ── ⚠️⚠️⚠️ CLEAR EVERYTHING — THE LAST RESORT, AND IT SAVES THE SALES FIRST ─────────────────────────────────
@@ -25543,6 +25567,7 @@ async function wipeDevice(){
  * stay, and the refusal here says which of them is missing rather than "could not send".
  */
 async function stuckSend(){
+  if (frozenStop('sending the report (use Copy the report instead)')) return;
   if (!(HOST && HOST.key)) { toastLine('This counter is not signed in, so nothing can reach the shop. Use 📋 Copy the report.'); return; }
   if (!lineUp()) { toastLine('No line to the shop, so it cannot be sent. Use 💾 Save it as a file.'); return; }
   var owner = null, rawQ = [], rawB = [];
@@ -25605,7 +25630,7 @@ async function stuckSave(){
  * go from here); everything of this shop's is put BACK in the queue and tried. Nothing is deleted, nothing is
  * re-stamped, and if it still will not go the report is one press away.
  */
-async function releaseQueue(){
+async function releaseQueue(){ if (frozenStop('moving the bills')) return;
   var owner = await DB.ownerRaw();
   var mine = rowIsMine;   /* ⚠️ the filter's own rule — never a second copy of it, see rowIsMine() */
   var did = [];
@@ -26553,7 +26578,7 @@ async function subListPaint(){
    * be found, so this reads the local store directly, same as everything else about a subscription in v1 —
    * see chitOfSubscription()'s own comment on why fulfillment is local too. Safe here specifically because
    * subCanIssue() (gating the whole feature) is only ever true on CloudHost, which is what DB is scoped to. */
-  var bills = []; try { bills = (await DB.all('bills')) || []; } catch (e) { cbQuiet('subListPaint:1', e); }
+  var bills = []; try { bills = (await DB.all('bills')) || []; } catch (e) { cbQuiet('subListPaint:1', e); if (paintFrozenInto(box)) return; }
   var subs = bills.filter(function(b){ return b && b.kind === 'subscription'; })
     .sort(function(a, b){ return String(b.at || '').localeCompare(String(a.at || '')); });
   if (!subs.length) { box.innerHTML = '<p class="u" data-testid="till-sub-empty">Nothing yet. “New subscription/AMC” below starts one.</p>'; return; }
@@ -26904,7 +26929,7 @@ async function coldStart(already){
  * ⭐ PUSH THEM NOW. The queue drains by itself, but "by itself" is not something a person closing a till can watch. Same drain,
  * asked for on purpose, and it reports back either way — a button that appears to do nothing is worse than no button.
  */
-async function sendNow(){
+async function sendNow(){ if (frozenStop('sending')) return;
   if (!lineUp()) { toastLine('Still no line to the shop — the bills are safe here and will go as soon as it returns.'); return; }
   /* ⚠️ NEVER ASSUME THE HOST HAS ONE. It threw on the desktop counter for as long as this button has existed —
      an unhandled rejection, no toast, nothing on screen. A missing capability must be said, not thrown. */

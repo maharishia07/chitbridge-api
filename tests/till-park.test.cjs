@@ -43,13 +43,13 @@ function fakeDB() {
     put: async (s, row) => { stores[s][row.no] = clone(row); }, del: async (s, k) => { delete stores[s][k]; },
     all: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])), allRaw: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])) };
 }
-const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow'];
+const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain'];
 const PRICE_SENTENCE = 'Price can have at most 2 decimal places in INR (not 10.999). Round it and send it again.';
 
 /** a counter whose wire answers from `answer(url)` -> [status, body]; `calls` lists every url it was asked */
 function counter(answer) {
   const DB = fakeDB(), calls = [];
-  const ctx = { console, setTimeout, clearTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error, DB, OWNER: null, FOREIGN: 0, STATE: { queued: 0 }, DEADLINE: 20000,
+  const ctx = { console, setTimeout, clearTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error, DB, OWNER: null, FOREIGN: 0, STATE: { queued: 0 }, DEADLINE: 20000, dbFrozen: () => false, FROZEN_LINE: 'frozen',
     lineUp: () => true, cbQuiet: () => {}, queueTally: async () => {}, paintStatus: () => {}, personOn: () => false, drainSoon: () => {}, ls: { set() {}, get: (k, d) => d },
     isSaleRow: (b) => !!(b && !b.tillPost && Array.isArray(b.lines)), renumberBill: async () => null, stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     fetchBy: async (url) => { calls.push(url); const [status, body] = answer(url); return { ok: status >= 200 && status < 300, status, json: async () => body, clone() { return this; } }; } };
@@ -387,6 +387,84 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       const at = PAGE.indexOf('\nasync function ' + fn + '('), body = PAGE.slice(at, PAGE.indexOf('\n}\n', at)), gate = body.indexOf('frozenStop(');
       assert.ok(gate > 0 && gate < body.indexOf('await ') || (gate > 0 && body.slice(0, gate).indexOf('await ') < 0), fn + ' reads before it checks frozen');
     }
+  });
+  await it('item 1: tillIssued never answers "not issued" for a frozen store (it rethrows), so tillClaimQuery cannot send issued=0 to the shop; tillStopped stops a bill with the frozen words', async () => {
+    const froze = () => { const e = new Error('frozen'); e.code = 'DB_FROZEN'; return e; };
+    const said = [];
+    const ctx = { DB: { get: async () => { throw froze(); } }, tillId: () => 'C1', engineQueryOf: () => '', engineVersionsLoad: async () => ({}), encodeURIComponent, Number, Error, dbFrozen: () => true, busyDone() {}, sure: (m) => { said.push(m); return Promise.resolve(false); }, location: { reload() {} }, BREAK: false, LOCK: false };
+    vm.createContext(ctx);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + ['throwIfFrozen', 'askReload', 'frozenStop', 'tillIssued', 'tillClaimQuery', 'tillStopped'].map(lift).join(''), ctx);
+    let err = null, claim = null; try { claim = await vm.runInContext('tillClaimQuery()', ctx); } catch (e) { err = e; }
+    assert.ok(err && err.code === 'DB_FROZEN' && claim === null, 'tillClaimQuery answered ' + claim + ' instead of stopping');
+    ctx.dbFrozen = () => true;
+    assert.strictEqual(await vm.runInContext('tillStopped()', ctx), true, 'a bill may be taken while frozen'); assert.ok(/taking this bill was stopped/.test(said[0]), said[0]);
+    ctx.DB.get = async () => { throw new Error('plain read failure'); };   // a NON-frozen failure keeps the old answer (false = not issued) — only frozen changed
+    assert.strictEqual(await vm.runInContext('tillIssued()', ctx), false);
+  });
+  await it('item 3: sendNow while frozen stops with the frozen words before ANY read (no unhandled rejection from the bare DB.all)', async () => {
+    const said = []; let reads = 0;
+    const ctx = { DB: { all: async () => { reads++; const e = new Error('frozen'); e.code = 'DB_FROZEN'; throw e; } }, dbFrozen: () => true, busyDone() {}, sure: (m) => { said.push(m); return Promise.resolve(false); }, location: { reload() {} }, lineUp: () => true, toastLine() {}, HOST: { drain: async () => ({}) }, sendableRows: (r) => r };
+    vm.createContext(ctx);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + ['askReload', 'frozenStop', 'sendNow'].map(lift).join(''), ctx);
+    await vm.runInContext('sendNow()', ctx);
+    assert.strictEqual(reads, 0, 'sendNow read the queue while frozen'); assert.ok(/sending was stopped/.test(said[0]), said[0]);
+  });
+  await it('GUARD: every DB read inside a try/catch is sorted — gated (the function stops first), checked (the catch rethrows/paints frozen) or closed (fails closed, reason written); a new unsorted one fails here', async () => {
+    let esprima = null; try { esprima = require('esprima'); } catch (_) { console.log('       (esprima not installed: guard skipped)'); return; }
+    const html = PAGE, code = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)].map((x) => x[1]).join('\n');
+    const ast = esprima.parseScript(code, { loc: true, range: true, tolerant: true }), found = {};
+    const isFn = (node) => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(node.type);
+    const walk = (node, ctx, name) => {
+      if (!node || typeof node.type !== 'string') return;
+      if (isFn(node)) ctx = { fn: (node.id && node.id.name) || name || ctx.fn + '>anon', handler: null, text: code.slice(node.range[0], node.range[1]) };
+      if (node.type === 'AwaitExpression' && node.argument.type === 'CallExpression' && /^DB\.(get|all|allRaw|ownerRaw)$/.test(code.slice(node.argument.callee.range[0], node.argument.callee.range[1])) && ctx.handler) {
+        const key = ctx.fn.replace(/>anon.*/, ''); (found[key] = found[key] || []).push(ctx);
+      }
+      for (const key of Object.keys(node)) {
+        if (key === 'loc' || key === 'range') continue;
+        for (const child of (Array.isArray(node[key]) ? node[key] : [node[key]])) {
+          if (!child || typeof child.type !== 'string') continue;
+          let next = ctx, nm = null;
+          if (node.type === 'Property' && key === 'value' && node.key) nm = node.key.name || node.key.value;
+          if (node.type === 'VariableDeclarator' && key === 'init' && node.id) nm = node.id.name;
+          if (node.type === 'TryStatement' && key === 'block') next = Object.assign({}, ctx, { handler: node.handler ? code.slice(node.handler.range[0], node.handler.range[1]) : '(finally only)' });
+          walk(child, next, nm);
+        }
+      }
+    };
+    walk(ast, { fn: '(top)', handler: null, text: '' }, null);
+    const GATE = /frozenStop\(|frozenDrain\(|dbFrozen\(\)/, CHECK = /throwIfFrozen|dbFrozen|frozenOr|paintFrozenInto|DB_FROZEN/;
+    const SORTED = {   // fn: [kind, why]   gated = the function stops/branches on frozen first · checked = every catch rethrows or paints frozen · closed = an unreadable store already fails closed, said here
+      closeCounter: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
+      queueTally: ['gated'], queueLength: ['checked'], retainPaint: ['checked'], subListPaint: ['checked'], tillIssued: ['checked'],
+      keepParked: ['closed', 'null = unreadable; every caller stops through keptUnread'],
+      checkAbsorbed: ['closed', 'null = could not check; callers say so, nothing is decided from it'],
+      dayMarkWithdrawn: ['closed', 'only marks bills withdrawn; its writes reject while frozen'],
+      dayReread: ['closed', 'its only consequence is DB writes, which reject while frozen'],
+      load: ['closed', 'boot only: a fresh page is never frozen'],
+      moveOldStores: ['closed', 'the read feeds a log line; the moves are writes that reject while frozen'],
+      openStuck: ['closed', 'the catch puts the frozen words on the panel, and the frozen notice leads it'],
+      qReady: ['closed', 'resets waits only; nothing is decided from an empty read'],
+      resendBill: ['closed', 'the catch toasts the frozen words and queues nothing'],
+      retainRun: ['closed', 'a read that fails stops the whole run'],
+      schemeTakesEffect: ['closed', 'blank = no claim made'],
+      setAside: ['closed', 'the catch toasts the frozen words; nothing is moved'],
+      storageMap: ['closed', 'null rows print as an unknown dash, not as zero'],
+      stuckReport: ['closed', 'the catch prints the frozen words in the report'],
+      unparkSame: ['closed', 'a parked copy simply stays; its delete would reject anyway'],
+      waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter']
+    };
+    const bad = [];
+    for (const fn of Object.keys(found)) {
+      const entry = SORTED[fn];
+      if (!entry) { bad.push(fn + ': a DB read in a try/catch that is not sorted (decides-from-empty / paints-empty / fails-closed?) — gate it, rethrow DB_FROZEN, or add it to SORTED with its reason'); continue; }
+      const text = found[fn][0].text;
+      if (entry[0] === 'gated' && !(GATE.test(text) || /queueCount\(\)/.test(text))) bad.push(fn + ': claimed gated but the function never checks frozen');
+      if (entry[0] === 'checked' && !found[fn].every((c) => CHECK.test(c.handler))) bad.push(fn + ': claimed checked but a catch lacks the frozen check');
+      if (entry[0] === 'closed' && !(entry[1] && entry[1].length > 15)) bad.push(fn + ': closed without a written reason');
+    }
+    for (const fn of Object.keys(SORTED)) if (!found[fn]) bad.push(fn + ': listed but no longer has a DB read in a try (remove it from SORTED)');
+    assert.deepStrictEqual(bad, [], bad.join('\n         '));
   });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);
