@@ -45992,7 +45992,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -46099,7 +46099,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -63159,7 +63159,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1092 stage2: handler re-read for the 13 columns; answer shape closed from recordings, no key the route can add is dropped (owner door, no by/parent); 428 line answers the same words as the helper that already did; no behaviour change",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
         "lifecycle": "stable"
       },
       "status": "meets standard",

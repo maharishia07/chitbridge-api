@@ -60085,18 +60085,6 @@
      }
     },
     {
-     "scenario": "freeze-id-is-not-a-uuid",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
      "scenario": "freeze-db-fails",
      "status": 500,
      "body_keys": {

@@ -133,7 +133,7 @@ function extras(tools) {
     X('freeze-a-governed-slab', 'POST ' + D + '/freeze', 200, { body: { definition_ids: [GOVERNED, 'IN-GST-99'] }, setup: withRows(firstOf(country('in'), oneLayer)) }),
     X('freeze-governed-read-throws', 'POST ' + D + '/freeze', 500, { body: { definition_ids: [GOVERNED] }, patch: { gov: { governedSlabsFor: boom } } }),
     X('freeze-not-migrated', 'POST ' + D + '/freeze', 503, { body: { definition_ids: [DEF] }, setup: withRows(migrated(/JOIN definition_version v/)) }),
-    X('freeze-id-is-not-a-uuid', 'POST ' + D + '/freeze', 500, { body: { definition_ids: [NOT_AN_ID] }, setup: withRows(raising(/JOIN definition_version v/, '22P02')) }),
+    X('freeze-id-is-not-a-uuid', 'POST ' + D + '/freeze', 400, { body: { definition_ids: [NOT_AN_ID] }, after: true }), /* CAT-333: refused in words before the cast (it was the 500 of the cast) */
     X('freeze-db-fails', 'POST ' + D + '/freeze', 500, { body: { definition_ids: [DEF] }, setup: failing })
   ];
 }

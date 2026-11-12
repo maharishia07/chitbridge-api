@@ -1811,6 +1811,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "DEFINITION_STALE",
+   "status": "409",
+   "title": "Changed by someone else",
+   "shopkeeper": "Someone saved this definition after you opened it, so your save was not written over theirs.",
+   "hint": "Open it again, check the new version and redo your change.",
+   "owner_area": "definitions",
+   "since": "2026-11-12"
+  },
+  {
    "code": "DEFINITION_TAKEOVER_NOT_LIVE",
    "status": "400",
    "title": "Slab cannot take over",

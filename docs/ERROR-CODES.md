@@ -190,6 +190,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
 | DEFINITION_INCOMPLETE | 422 | Rule has no value | This rule has no value yet, so it would do nothing. | Fill in the value, then save again. | definitions | 2026-10-23 |
 | DEFINITION_NAME_TAKEN | 409 | Name already used | You already have one of this kind with that name. | Choose another name. | definitions | 2026-10-23 |
+| DEFINITION_STALE | 409 | Changed by someone else | Someone saved this definition after you opened it, so your save was not written over theirs. | Open it again, check the new version and redo your change. | definitions | 2026-11-12 |
 | DEFINITION_TAKEOVER_NOT_LIVE | 400 | Slab cannot take over | The slab chosen to take over is not a live slab here. | Choose one of your live slabs. | definitions | 2026-10-23 |
 | DEFINITION_TAKEOVER_SAME | 400 | Same slab chosen | The slab chosen to take over is the one being retired. | Choose a different slab. | definitions | 2026-10-23 |
 | DEVICE_MISMATCH | 401 | Device mismatch | This sign-in belongs to another device. | Sign in again on this device. | auth | 2026-10-22 |
