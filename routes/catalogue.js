@@ -2076,8 +2076,8 @@ const enquiryLimitCheck = async (viewer, item_id) => {
 };
 /** SEC-129 · decoyEnquiryReads(viewer) → { ok:false } after the same two reads (the shop row, then its public view) a hidden item of a real shop costs; the caller's own shop stands in, the result is thrown away */
 async function decoyEnquiryReads(viewer) {
-  const own = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [viewer]);
-  if (own.rows[0]) await publicViewFor(own.rows[0], { viewer }).catch(logger.orElse('catalogue enquiry decoy: the view failed — nothing to say', null));
+  const standIn = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [viewer]);
+  if (standIn.rows[0]) await publicViewFor(standIn.rows[0], { viewer }).catch(logger.orElse('catalogue enquiry decoy: the view failed — nothing to say', null));
   return { ok: false };
 }
 /** SEC-129: does this storefront view show this item (the shop is open to the viewer AND the item is one it lists)? */
