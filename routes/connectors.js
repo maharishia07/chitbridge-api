@@ -24,6 +24,7 @@ const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution 
 const { body, param } = require('express-validator');
 const { validateAsProblem, sanitise } = require('../middleware/validate');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses the helper under the handler can answer
 const { words, failed, ingestRefusal, checked, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract');
 const { claimReceipt, finishReceipt } = require('../lib/erp-receipt'); // CON-ERP-IDEM: the receipt's key, claim and re-claim // API-4: the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
@@ -683,6 +684,7 @@ router.post(
   validateAsProblem,
   ...checked('POST /erp-ingest'),
   deviceKey('ERP ingest failed') /* SEC3: key + the shop's connector switch, one statement (deviceActor) */,
+  declaresStatuses([422, 503]) /* erpReceiptRefusal below writes these: key reused with another body, document not delivered */,
   async (req, res) => {
     try {
       const actor = req.device;
