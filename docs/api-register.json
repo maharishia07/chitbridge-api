@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 2,
-  "meets": 629,
+  "partial": 1,
+  "meets": 630,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -32128,11 +32128,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5c518dc7f966982d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1168 stage2: handler and contract re-read; the 400 PRICE_DECIMALS (registered, shopkeeper sentence, one error shape) is now a recorded error test; additive only; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
