@@ -94,12 +94,12 @@ function order(no, rows, opts) {
   return { recipients: toRecipients(o.to), purpose: 'order', subject: 'Order ' + no, manual_subject: 'Order ' + no, client_ref: no,
     business_json: Object.assign(o.side ? { side: o.side } : {}, { order_no: no, note: o.note || 'lifecycle run' }), line_items: rows.map(partnerLine) };
 }
-/** an invoice chit sent to a partner (seed-local demoSupplierBill's shape). opts: to · invoice (the engine's determine(), carried unchanged) · against (the order chit id) · billedAt */
+/** an invoice chit sent to a partner (seed-local demoSupplierBill's shape). opts: to · invoice (the engine's determine(), carried unchanged) · against (the order chit id: written as against.chit_id AND order.from) · billedAt */
 function invoice(no, rows, opts) {
   const o = opts || {};
   return { recipients: toRecipients(o.to), purpose: 'invoice', subject: 'Invoice ' + no, manual_subject: 'Invoice ' + no, client_ref: no,
     business_json: Object.assign({ bill_no: no, billed_at: o.billedAt || new Date().toISOString() },
-      o.invoice ? { invoice: o.invoice } : {}, o.against ? { against: { chit_id: o.against } } : {}),
+      o.invoice ? { invoice: o.invoice } : {}, o.against ? { against: { chit_id: o.against }, order: { from: o.against } } : {}),   /* order.from is the link the match, the books and open-orders read (OPS-82); against stays for the receipt-side readers */
     line_items: rows.map(partnerLine) };
 }
 /** a fresh shop made for this run: register → verify with the dev code → country. `tag` keeps User IDs apart (≤ 20 chars).

@@ -42,6 +42,7 @@ ok('invoice: purpose invoice, the engine invoice carried unchanged, against name
   assert.strictEqual(b.business_json.bill_no, 'B4-J1');
   assert.strictEqual(b.business_json.invoice, inv);
   assert.deepStrictEqual(b.business_json.against, { chit_id: 'chit-P1' });
+  assert.deepStrictEqual(b.business_json.order, { from: 'chit-P1' });   /* QA-150: the match finds the bill by order.from (routes/till.js theirInvoice) */
   assert.strictEqual(b.business_json.billed_at, '2026-10-30T05:00:00Z');
   assert.strictEqual(b.recipients[0].bridge_id, 'bridge-9');
   assert.strictEqual(b.line_items[0].item_data.item_id, 'item-1');
@@ -49,7 +50,7 @@ ok('invoice: purpose invoice, the engine invoice carried unchanged, against name
 
 ok('invoice: no invoice and no against, no such keys on the chit', () => {
   const b = H.invoice('B4-J0', [[parotta, 1, 12]], { to: 'bridge-9' });
-  assert.ok(!('invoice' in b.business_json) && !('against' in b.business_json));
+  assert.ok(!('invoice' in b.business_json) && !('against' in b.business_json) && !('order' in b.business_json));
 });
 
 ok('invoice: a partner product with no id (the supplier has no shelf here) sends no item_data', () => {
