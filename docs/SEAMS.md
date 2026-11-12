@@ -109,9 +109,9 @@ of file each thing is; this says what already does the job.
 | 27 | `guard` | `amend.js` | would disturb what has gone out. |
 | 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 27 | `group` | `identity.js` | again in a different costume. |
 | 26 | `view` | `country-ready.js` |  |
 | 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
-| 26 | `group` | `identity.js` | again in a different costume. |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |

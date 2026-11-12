@@ -281,22 +281,22 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/testing/stale | testing | routes/testing.js:2707 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/testing/trace | testing | routes/testing.js:356 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/testing/vocabulary | testing | routes/testing.js:368 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/bills | till | routes/till.js:3514 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/catalogue/blueprints | till | routes/till.js:3402 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/bills | till | routes/till.js:3614 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/catalogue/blueprints | till | routes/till.js:3412 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/counters | till | routes/till.js:1812 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/engine/:name | till | routes/till.js:4108 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/match | till | routes/till.js:3730 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/engine/:name | till | routes/till.js:4210 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/match | till | routes/till.js:3832 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/quick-keys/groups | till | routes/till.js:1821 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/quick-keys/hidden | till | routes/till.js:1861 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/quick-keys/screen-config | till | routes/till.js:1908 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/quick-keys/state | till | routes/till.js:1831 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/reward | till | routes/till.js:2459 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/screens | till | routes/till.js:2810 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/reward | till | routes/till.js:2469 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/screens | till | routes/till.js:2820 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/snapshot | till | routes/till.js:204 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/stock | till | routes/till.js:3240 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/summary | till | routes/till.js:3470 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/tasks | till | routes/till.js:3700 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/verify | till | routes/till.js:2985 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | yes |
+| GET | /api/till/stock | till | routes/till.js:3250 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/summary | till | routes/till.js:3480 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/tasks | till | routes/till.js:3802 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/till/verify | till | routes/till.js:2995 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | yes |
 | GET | /api/till/worth-an-offer | till | routes/till.js:1973 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/work/:chit_id | work | routes/work.js:67 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/work/facts | work | routes/work.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -588,29 +588,29 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/testing/results | testing | routes/testing.js:1435 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | POST | /api/testing/results/junit | testing | routes/testing.js:1613 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | POST | /api/testing/trace | testing | routes/testing.js:343 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/till/alias | till | routes/till.js:3981 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/catalogue | till | routes/till.js:3314 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/alias | till | routes/till.js:4083 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/catalogue | till | routes/till.js:3324 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/close | till | routes/till.js:1628 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/diagnostic | till | routes/till.js:1558 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/enrol | till | routes/till.js:2705 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/enrol | till | routes/till.js:2715 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/flags | till | routes/till.js:1723 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/listen | till | routes/till.js:4042 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/offer-item | till | routes/till.js:2099 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/pair | till | routes/till.js:2638 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/pair/claim | till | routes/till.js:2747 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/price | till | routes/till.js:2172 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/listen | till | routes/till.js:4144 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/offer-item | till | routes/till.js:2109 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/pair | till | routes/till.js:2648 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/pair/claim | till | routes/till.js:2757 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/price | till | routes/till.js:2182 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/quick-keys/hide | till | routes/till.js:1877 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/quick-keys/screen-config | till | routes/till.js:1919 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/quick-keys/state | till | routes/till.js:1845 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/quick-keys/unhide | till | routes/till.js:1894 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/rate | till | routes/till.js:2399 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/recheck | till | routes/till.js:2219 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/reconcile | till | routes/till.js:2933 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/reward | till | routes/till.js:2499 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/reward/claim | till | routes/till.js:2571 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/screens/rename | till | routes/till.js:2877 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/screens/revoke | till | routes/till.js:2857 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/shop | till | routes/till.js:3083 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/rate | till | routes/till.js:2409 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/recheck | till | routes/till.js:2229 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/reconcile | till | routes/till.js:2943 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/reward | till | routes/till.js:2509 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/reward/claim | till | routes/till.js:2581 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/screens/rename | till | routes/till.js:2887 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/screens/revoke | till | routes/till.js:2867 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/till/shop | till | routes/till.js:3093 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/state | till | routes/till.js:1694 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/stock | till | routes/till.js:1427 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/till/stock/bulk | till | routes/till.js:1485 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
@@ -4353,7 +4353,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/till/summary** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-mis-trend.js 1/1, till.html 1/130) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 6; share cap-mis-trend.js 1/1, till.html 1/130) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-mis-trend.js, till.html · actions: -
 
 **GET /api/till/tasks** · till · cb-counter · meets standard
@@ -4371,7 +4371,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/till/worth-an-offer** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/130) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 5; share till.html 1/130) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/alias** · till · cb-counter · meets standard

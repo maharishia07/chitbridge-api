@@ -26605,7 +26605,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07, re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -27900,7 +27900,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3), re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -28196,7 +28196,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3), re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
