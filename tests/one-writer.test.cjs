@@ -80,27 +80,28 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
   console.log('\n-- the helpers, against a recording stand-in --');
   const rec = () => { const calls = []; const db = { query: async (sql, p) => { calls.push({ sql: String(sql).replace(/\s+/g, ' '), p }); return { rows: [{ item_id: 'x' }], rowCount: 1 }; } }; return { db, calls }; };
   const CW = require(path.join(API, 'lib', 'catalogue-write'));
+  const IA = '66666666-6666-4666-8666-666666666666', IB = '77777777-7777-4777-8777-777777777777'; /* CAT-230: patchItems matches real ids only; a word is not a product */
 
   await it('patchItems: many edits → ONE statement; the same id twice is folded (merges compose, a replace wins)', async () => {
     const { db, calls } = rec();
-    await CW.patchItems(db, 'E', [{ item_id: 'a', merge: { x: 1 } }, { item_id: 'b', replace: { n: 'B' } }, { item_id: 'a', merge: { y: 2 } }, { item_id: 'b', replace: { n: 'B2' } }]);
+    await CW.patchItems(db, 'E', [{ item_id: IA, merge: { x: 1 } }, { item_id: IB, replace: { n: 'B' } }, { item_id: IA, merge: { y: 2 } }, { item_id: IB, replace: { n: 'B2' } }]);
     assert.strictEqual(calls.length, 1);
     const [ids, datas, modes, actives, eid] = calls[0].p;
-    assert.deepStrictEqual(ids, ['a', 'b']); assert.deepStrictEqual(modes, ['merge', 'replace']);
+    assert.deepStrictEqual(ids, [IA, IB]); assert.deepStrictEqual(modes, ['merge', 'replace']);
     assert.deepStrictEqual(datas.map((d) => JSON.parse(d)), [{ x: 1, y: 2 }, { n: 'B2' }]);
     assert.deepStrictEqual(actives, [null, null]); assert.strictEqual(eid, 'E');
     assert.ok(/WHERE c\.item_id = u\.id AND c\.entity_id = \$5 RETURNING c\.item_id$/.test(calls[0].sql.trim()), calls[0].sql);
   });
   await it('patchItems: one change for many ids · a soft remove leaves item_data and updated_at · returning is c.-prefixed · activeOnly', async () => {
     const { db, calls } = rec();
-    await CW.patchItems(db, 'E', { ids: ['a', 'b'], merge: { status: 'unavailable' } }, { returning: 'item_id, item_data' });
+    await CW.patchItems(db, 'E', { ids: [IA, IB], merge: { status: 'unavailable' } }, { returning: 'item_id, item_data' });
     assert.deepStrictEqual(calls[0].p[2], ['merge', 'merge']);
     assert.ok(/RETURNING c\.item_id, c\.item_data$/.test(calls[0].sql.trim()));
-    await CW.patchItems(db, 'E', [{ item_id: 'a', active: false }], { returning: '*', activeOnly: true });
+    await CW.patchItems(db, 'E', [{ item_id: IA, active: false }], { returning: '*', activeOnly: true });
     assert.deepStrictEqual(calls[1].p[1], [null]); assert.deepStrictEqual(calls[1].p[2], [null]); assert.deepStrictEqual(calls[1].p[3], [false]);
     assert.ok(/updated_at = CASE WHEN u\.mode IS NULL THEN c\.updated_at ELSE NOW\(\) END/.test(calls[1].sql));
     assert.ok(/AND c\.is_active = true RETURNING c\.\*$/.test(calls[1].sql.trim()));
-    await assert.rejects(() => CW.patchItems(db, 'E', [{ item_id: 'a', merge: {} }], { returning: 'item_id; DROP' }));
+    await assert.rejects(() => CW.patchItems(db, 'E', [{ item_id: IA, merge: {} }], { returning: 'item_id; DROP' }));
     const empty = await CW.patchItems(db, 'E', []); assert.strictEqual(empty.rowCount, 0); assert.strictEqual(calls.length, 2, 'no edits → no statement');
   });
   await it('patchWhere: match by an item_data field, merge, optional entity / active-only / activate', async () => {

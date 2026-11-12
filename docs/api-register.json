@@ -32465,7 +32465,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
    "line": 79,
-   "hash": "07ac7405642c8930",
+   "hash": "7fa22d81e90e3f57",
    "does": "",
    "errors": {
     "count": 0,
@@ -32541,7 +32541,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41353,7 +41353,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4528,
-   "hash": "0065084284fd1df2",
+   "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
     "count": 0,
@@ -41423,7 +41423,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42264,7 +42264,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4284,
-   "hash": "1899c9cfdf06ac32",
+   "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
     "count": 0,
@@ -42335,7 +42335,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",
