@@ -409,8 +409,9 @@ router.post('/:id/withdraw', auth, sessionOnly, brandOwnerOnly, ...contract.chec
     const cur = ((flags.network_offers || {}).released || {})[o.definition_id];
     if (!cur)
       return refuse(req, res, { status: 409, code: 'OFFER_NOT_RELEASED', error: 'Not released', message: 'That offer was never released to your stores.' });
-    const until = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me), 'at');
-    await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: new Date().toISOString() }));
+    const asked = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me), 'at');
+    const until = net.earlierEnd(cur, asked); /* NET-56: a second withdraw keeps the earlier end */
+    await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: cur.withdrawn_at || new Date().toISOString() }));
     const pushed = await net.pushToNetwork(me, 'network offer withdrawn');
     res.json({ ok: true, id: o.definition_id, until, pushed });
   } catch (e) {

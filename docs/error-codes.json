@@ -3017,6 +3017,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NET_KEY_TAKEN",
+   "status": "409",
+   "title": "Installation key already taken",
+   "shopkeeper": "That installation key is already in the member registry (hosted here, retired, or an active member), so it was not overwritten. Nothing was changed.",
+   "hint": "Pick a new key, or add --update to change an active member.",
+   "owner_area": "network",
+   "since": "2026-11-12"
+  },
+  {
    "code": "NET_WRITE_DISABLED",
    "status": "503",
    "title": "Network editing is off",

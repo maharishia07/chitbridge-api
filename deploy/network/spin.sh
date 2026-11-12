@@ -80,7 +80,7 @@ OUT=$($SSH 'sh ~/net/install.sh' < /dev/null | tee /dev/stderr | sed -n 's/^SPIN
 ROOT_BRIDGE=$(printf '%s\n' "$OUT" | sed -n 's/.*"root_bridge_id":"\([^"]*\)".*/\1/p')
 
 say "the master registers $KEY and issues its certificate"
-$MC register "$KEY" "$HOST" ${COUNTRY:+--country "$COUNTRY"} --root-handle "$HANDLE" --root-bridge "$ROOT_BRIDGE" >/dev/null
+$MC register "$KEY" "$HOST" --update ${COUNTRY:+--country "$COUNTRY"} --root-handle "$HANDLE" --root-bridge "$ROOT_BRIDGE" >/dev/null
 $MC issue "$KEY" ${MINUTES:+--minutes "$MINUTES"}
 $DOCKER compose -p "$PROJECT" -f ../compose.yml -f docker-compose.yml --env-file .env exec -T api node tools/network-sync.cjs master || true
 $SSH "cd ~/net/chitbridge-api/deploy/sit && $DOCKER compose -p $TARGET_PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env exec -T api node tools/network-sync.cjs member" || true
