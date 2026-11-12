@@ -24555,7 +24555,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 99,
+   "line": 100,
    "hash": "7d620eeddb9eb249",
    "does": "",
    "errors": {
@@ -24761,7 +24761,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "b0fb95da2f4e8a1c",
+   "hash": "982fa58847fe59d3",
    "does": "",
    "errors": {
     "count": 0,
@@ -24832,7 +24832,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: a month GIVEN and unreadable is 400 DATE_INVALID (was 500 or this month), absent keeps this month; scene in api-legacy, 400 in error tests; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1180 stage2: C11 10c read: GET /tax/ledger gains the additive dropped_why key (fixed sentences 'Bill X: it could not be read.', no error text relayed), declared in api-output-shapes; an unreadable expense chit is named in dropped instead of losing every ITC in silence; no refusal path or status changed; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56830,7 +56830,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 185,
+   "line": 186,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -56934,7 +56934,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 148,
+   "line": 149,
    "hash": "f06e00970724f9d6",
    "does": "",
    "errors": {
