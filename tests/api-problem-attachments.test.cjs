@@ -232,9 +232,9 @@ async function checkFindings(recording) {
   check('F1: an attachment to an open (non-dispute) message fans out to ALL ' + roster.length + ' participants', sameValue(entitiesOf(upKey('up-message-open')), roster));
   console.log('  FIXED F2 (RAIL-187): a message_id the caller holds no copy of narrows the file to the own copy of the caller, never the roster: ' + hidden.length + ' copy');
   check('F2: a message the caller cannot see: one copy, the own copy of the caller, never the roster', hidden.length === 1 && hidden[0].p[2] === scenes.MSG_PEER_INTERNAL && entitiesOf(upKey('up-message-of-another-shop-not-visible')).join() === [scenes.SHOP_ID].join(), hidden.map((one) => one.p[2]));
-  const name = recording[getKey('get-name-beyond-latin-1-cannot-be-sent')];
-  console.log('  FINDING F3 cb-rail: a file named with a character above U+00FF (Devanagari, Arabic, an emoji) uploads, then cannot be read back: Node refuses the Content-Disposition header (ERR_INVALID_CHAR), the answer is the safe 500 "Fetch failed": ' + name.status + ' ' + JSON.stringify(name.body).slice(0, 120));
-  check('F3: a download of a name beyond Latin-1 answers 500 (Fetch failed) and a Latin-1 name is sent', name.status === 500 && name.body.error === 'Fetch failed' && recording[getKey('get-name-in-latin-1')].status === 200);
+  const name = recording[getKey('get-name-beyond-latin-1-is-sent')];
+  console.log('  FIXED F3 (RAIL-189): a file named with a character above U+00FF used to upload and then answer 500; the Content-Disposition now carries an ASCII fallback plus filename* (UTF-8), pinned in tests/c11-10b-rail-shape.test.cjs: ' + name.status);
+  check('F3 closed (RAIL-189): a download of a name beyond Latin-1 is sent (200), and so is a Latin-1 name', name.status === 200 && recording[getKey('get-name-in-latin-1')].status === 200);
   const outcome = await storageAfterOneFailure();
   console.log('  FINDING F4 cb-rail/cb-platform: lib/storage.js ensureTable() keeps its FIRST result in a module variable, a rejected promise included: after one failed first query every later upload and download answers 500 until the process restarts: ' + JSON.stringify(outcome));
   check('F4: a library loaded fresh fails on its first call (the database is down) and STILL fails on the second (the database is back)', outcome.first === 'threw' && outcome.second === 'threw', outcome);
@@ -281,8 +281,8 @@ const DOWNLOADS = [
   ['get-no-name-is-file', 'image/png', 'inline', 'file'], ['get-name-in-latin-1', 'application/pdf', 'inline', 'résumé.pdf']
 ];
 
-/** the Content-Disposition of a download; a name beyond ASCII is checked by its ASCII frame only (how Node encodes a header above U+007F is its own business and differs by version) */
-const dispositionIs = (given, how, name) => (/^[ -~]*$/.test(name) ? given === how + '; filename="' + name + '"' : new RegExp('^' + how + '; filename="r.{1,4}sum.{1,4}\.pdf"$').test(given));
+/** the Content-Disposition of a download; a name beyond ASCII (RAIL-189) is an ASCII fallback in quotes plus filename*=UTF-8'' percent-encoded: checked by that shape and by the encoded name */
+const dispositionIs = (given, how, name) => (/^[ -~]*$/.test(name) ? given === how + '; filename="' + name + '"' : given === how + '; filename="' + name.replace(/[^ -~]/g, '_') + '"; filename*=UTF-8' + "''" + encodeURIComponent(name));
 
 /** the headers and the bytes of every download, asked raw: the S2 defence (nosniff, no inline render but images and pdf), the cache line, the bytes as stored */
 async function checkDownloads(port) {

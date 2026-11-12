@@ -23,8 +23,9 @@ const { schemaValidate } = require(path.join(HERE, 'middleware', 'validate.js'))
 const store = require(path.join(HERE, 'lib', 'supply-store.js'));
 const clock = require(path.join(HERE, 'lib', 'shop-clock.js'));
 
-let failed = 0;
+let failed = 0, checks = 0;
 const check = (name, ok, detail) => {
+  checks++;
   if (!ok) {
     failed++;
     console.log('  FAIL  ' + name + (detail === undefined ? '' : ' ' + JSON.stringify(detail)));
@@ -90,5 +91,6 @@ const line = (more) => ({ ref: 'BILL-1', lines: [Object.assign({ name: 'Floor cl
   check('the ref of an issue: neither: the store makes its own', issueRefOf(undefined, undefined) === undefined);
 
   console.log(failed ? '\n  ' + failed + ' failed' : '\n  every check held');
+  console.log('  ' + checks + ' checks'); /* scripts/guards.cjs counts a guard by this line */
   process.exit(failed ? 1 : 0);
 })();

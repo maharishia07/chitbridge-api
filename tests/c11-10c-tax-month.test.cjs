@@ -17,8 +17,9 @@ process.env.NODE_ENV = 'test';
 const path = require('path');
 const API = path.join(__dirname, '..');
 const SHOP = '11111111-1111-4111-8111-111111111111';
-let failed = 0;
+let failed = 0, checks = 0;
 const ok = (name, cond, why) => {
+  checks++;
   if (!cond) {
     failed++;
     console.log('   FAIL ' + name + (why ? '\n          ' + why : ''));
@@ -118,6 +119,7 @@ const itcOf = (led) => require(path.join(API, 'lib', 'tax-lines')).gstr3b(led.le
   ok('ACC-276: a figure past what a ledger line holds is refused in words', !!huge && /beyond what a ledger line holds/.test(huge.message), huge && huge.message);
 
   console.log(failed ? '\n  ' + failed + ' failed' : '\n  every check held');
+  console.log('  ' + checks + ' checks'); /* scripts/guards.cjs counts a guard by this line */
   process.exit(failed ? 1 : 0);
 })().catch((e) => {
   console.error(e);

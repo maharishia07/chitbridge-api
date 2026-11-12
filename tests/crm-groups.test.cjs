@@ -190,7 +190,8 @@ const seg = (r, k) => r.body.segments.find((s) => s.key === k);
   });
   await ita('refused in words: no text · over 1000 characters · an unknown key · e-mail (not sendable here) · a viewer', async () => {
     let r = await t.post('/segments/group:Dealers/send', { text: '  ' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'NO_TEXT');
-    r = await t.post('/segments/group:Dealers/send', { text: 'x'.repeat(1001) }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'TOO_LONG');
+    r = await t.post('/segments/group:Dealers/send', { text: 'x'.repeat(1000) }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'TOO_LONG'); /* MKT-26: the door's schema stops at 1000; the room left by the opt-out footer is the handler's */
+    r = await t.post('/segments/group:Dealers/send', { text: 'x'.repeat(1001) }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'CRM_BAD_REQUEST');
     r = await t.post('/segments/everyone/send', { text: 'hi' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'BAD_KEY');
     r = await t.post('/segments/regular/send', { text: 'hi', channel: 'email' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'CHANNEL_NOT_SENDABLE');
     r = await t.post('/segments/regular/send', { text: 'hi', channel: 'pigeon' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'BAD_CHANNEL');

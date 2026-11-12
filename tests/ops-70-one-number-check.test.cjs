@@ -92,7 +92,10 @@ const buy = (server, line) =>
 async function refused(server, label, line, words) {
   const a = await buy(server, line);
   const f = (a.body.failed || [])[0] || {};
-  check(a.status === 200 && (a.body.failed || []).length === 1 && f.line === 0 && words.test(f.why || ''), label + ' → failed[0] says "' + (f.why || '') + '" (status ' + a.status + ')');
+  /* C11 10a: a boolean quantity and a negative cost are now refused by the route's contract (422 naming the field) before a line is read; a number as text is still a line in failed[] */
+  const field = /^quantity/.test(words.source) ? 'lines.0.qty' : 'lines.0.cost';
+  const atDoor = a.status === 422 && a.body.field === field;
+  check(atDoor || (a.status === 200 && (a.body.failed || []).length === 1 && f.line === 0 && words.test(f.why || '')), label + ' → ' + (atDoor ? '422 names ' + field : 'failed[0] says "' + (f.why || '') + '" (status ' + a.status + ')'));
   check(!(a.body.recorded || []).length && !posted.length && !stamped.length, label + ' → nothing recorded, posted or stamped');
 }
 

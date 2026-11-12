@@ -49491,18 +49491,6 @@
      }
     },
     {
-     "scenario": "get-name-beyond-latin-1-cannot-be-sent",
-     "status": 500,
-     "body_keys": {
-      "error": "Fetch failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Fetch failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
      "scenario": "get-id-not-a-uuid",
      "status": 500,
      "body_keys": {
