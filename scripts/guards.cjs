@@ -331,6 +331,7 @@ const GUARDS = [
   'books-period.test.cjs', // ⭐⭐ v1.14–v1.16: asset register (b280 draft), depreciation, closing stock, GST close + challan, loans, accruals, contra — the engine's lines, once, locked, owner-only
   'acc-278-gstr3b-no-gstin.test.cjs', // ACC-278: GSTR-3B for a shop with no/short GSTIN is refused in the engine's own words (asked with no documents, no copied regex), India-only first; parallel run says could-not-read
   'acc-330-billed-at-future.test.cjs', // ACC-330: a till billed_at more than 24 h ahead of the send posts on the send day (books day AND GST month, the SQL run on the local Postgres), with a note, never refused
+  'acc-301-note-issued-basis.test.cjs', // ACC-301: a credit/debit note on an issued invoice is priced on the basis the invoice was issued on (_cb.price_includes_tax, else derived from its lines, else refused), never the seller's live flag
   'acc-224-period-of-record.test.cjs', // ACC-224: a late bill of a locked month is in the return of the month the books hold it in, named a prior-period item; each month's return = the books
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
