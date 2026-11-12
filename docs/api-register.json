@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 6,
-  "meets": 625,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -23726,11 +23726,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "838efddd220e91de"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 batch c12-m9 (member #1176 b10-crm-mint, merge d4e97f6a) stage2: handler read: the supplier list now shows only live suppliers (CRM-247 liveSql, a removed supplier is not on it); no key, status or refusal changed; 13 columns true; api-problem-crm, api-problem-relationships, b10-crm-door, b10-crm-mint, party-live green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -44637,11 +44636,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e2e8be2381ec8bb2"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 batch c12-m9 (member #1176 b10-crm-mint, merge d4e97f6a) stage2: handler read: answer gains the additive restored/message words when a deleted party was brought back (CRM-247 restoredAnswer); the add path is one transaction; refusals and codes unchanged; 13 columns true; api-problem-crm, api-problem-relationships, b10-crm-door, b10-crm-mint, party-live green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -45563,11 +45561,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4bf9c5a4b74c017e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 batch c12-m9 (member #1176 b10-crm-mint, merge d4e97f6a) stage2: handler read: same additive restored/message words and one-transaction mint; points_claimed and refusals unchanged; 13 columns true; api-problem-crm, api-problem-relationships, b10-crm-door, b10-crm-mint, party-live green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js"
    ],
@@ -53680,11 +53677,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1d7cfce76d101948"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 batch c12-m9 (member #1176 b10-crm-mint, merge d4e97f6a) stage2: handler read: name and handle must be text (CRM-251, the standard 400 words, was minted as [object Object]); the add is the one addLocalCustomer on one transaction; a deleted customer comes back with restored: true (additive); phone/tax-id refusals and the 409 keep their frozen words; 13 columns true; api-problem-crm, api-problem-relationships, b10-crm-door, b10-crm-mint, party-live green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-crm-record.js",
@@ -53787,11 +53783,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "035dcc95b8adf401"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 batch c12-m9 (member #1176 b10-crm-mint, merge d4e97f6a) stage2: handler read: groups that is not a list is refused 400 in words (CRM-233, groupsNotList registered) and the customer groups stay as they were (was cleared silently); a body with no groups key keeps its frozen answer; 13 columns true; api-problem-crm, api-problem-relationships, b10-crm-door, b10-crm-mint, party-live green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -53895,11 +53890,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0ad0db0b90a8cbf3"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 batch c12-m9 (member #1176 b10-crm-mint, merge d4e97f6a) stage2: handler read: add-by-name is one transaction under the shop mint lock (CRM-226/230/231), a deleted supplier comes back (additive restored words) instead of a 409; the live duplicate still answers the frozen 409; name must be text (CRM-251); 13 columns true; api-problem-crm, api-problem-relationships, b10-crm-door, b10-crm-mint, party-live green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
