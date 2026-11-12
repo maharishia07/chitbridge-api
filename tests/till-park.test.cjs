@@ -305,7 +305,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       }
     }
   });
-  await it('AFTER A BLOCKED CLEAR the counter takes nothing new: every DB write (bill, queue row, number series, delete) is refused with the Reload-this-counter words, reads still work, and nothing was written', async () => {
+  await it('AFTER A BLOCKED CLEAR the counter takes nothing new: every DB write (bill, queue row, number series, delete) is refused with the Reload-this-counter words, every read REJECTS with the one DB_FROZEN error (never empty, never a hang), and nothing was written', async () => {
     const wrote = [], ctx = { console, Promise, Error, JSON, Object, MEM: { on: false, get: async () => undefined, put: async (...a) => { wrote.push(a); }, del: async () => { wrote.push('del'); }, all: async () => [] },
       ownRow: (x) => x, ownOK: () => true, cbQuiet() {}, tillStore: () => 'cb-till-x', tillStoresMake() {}, OWNER: null,
       indexedDB: { open: () => { const rq = {}; setImmediate(() => { wrote.push('open'); rq.onerror && rq.onerror(); }); return rq; } } };
@@ -318,8 +318,10 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       let said = ''; try { await call(); } catch (e) { said = e.message; }
       assert.ok(/Reload this counter/.test(said) && /no new bills or changes/.test(said), name + ' was not refused with words: ' + said);
     }
-    assert.strictEqual(await DB.get('series'), undefined, 'a read after the block must answer at once, empty (the store cannot be opened behind the queued delete)');
-    assert.deepStrictEqual([(await DB.all('bills')).length, (await DB.allRaw('queue')).length], [0, 0]);
+    for (const [name, read] of [['get', () => DB.get('series')], ['all', () => DB.all('bills')], ['allRaw', () => DB.allRaw('queue')], ['ownerRaw', () => DB.ownerRaw()]]) {
+      let err = null; try { await Promise.race([read(), new Promise((_, no) => setTimeout(() => no(new Error('HUNG')), 500))]); } catch (e) { err = e; }
+      assert.ok(err && err.code === 'DB_FROZEN' && /Reload this counter/.test(err.message), name + ' while frozen must REJECT at once with the frozen error (never [] / undefined = empty, never hang): ' + (err ? err.message : 'it answered'));
+    }
     assert.deepStrictEqual(wrote, [], 'something was written after the block: ' + JSON.stringify(wrote));
   });
   await it('holdBlocked freezes the DB, saves the kept rows where a reload finds them and offers Reload this counter; reviveKept (after the reload) puts them back once, only into the same store', async () => {
@@ -328,15 +330,18 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       sure: (...a) => { asked.push(a.slice(1, 4)); return Promise.resolve(true); }, location: { reload: () => reloads.push(1) },
       removeLocalKeys: (keys) => keys.forEach((k) => { delete store[k]; }), queueTally: async () => {}, paintStatus() {}, JSON, Array };
     vm.createContext(base);
-    vm.runInContext(liftVar('BLOCKED_WORDS') + lift('holdBlocked') + lift('reviveKept'), base);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + lift('askReload') + lift('mergedKept') + lift('holdBlocked') + lift('reviveKept'), base);
     vm.runInContext('holdBlocked', base)('cb-till-x', [{ no: 'OP/77' }]);
     await new Promise((r) => setImmediate(r));
     assert.ok(/Reload this counter/.test(base.frozen), 'DB not frozen'); assert.deepStrictEqual(asked[0], ['Reload this counter', 'Close the other counter tab', 'Not yet']); assert.strictEqual(reloads.length, 1, 'Reload this counter did nothing');
     assert.ok(store.cb_kept_parked && JSON.parse(store.cb_kept_parked).rows[0].no === 'OP/77', 'the kept rows were not saved for the reload');
+    vm.runInContext('holdBlocked', base)('cb-till-x', []);   // a SECOND block with fewer (here no) rows must not shrink the note
+    vm.runInContext('holdBlocked', base)('cb-till-x', [{ no: 'OP/78' }]);
+    assert.deepStrictEqual(JSON.parse(store.cb_kept_parked).rows.map((row) => row.no).sort(), ['OP/77', 'OP/78'], 'the note was overwritten with fewer rows, or lost one: ' + store.cb_kept_parked);
     base.tillStore = () => 'cb-till-OTHER'; await vm.runInContext('reviveKept()', base);
     assert.deepStrictEqual(puts, [], 'revived into another shop\'s store'); assert.ok(store.cb_kept_parked, 'the note was dropped for another shop');
     base.tillStore = () => 'cb-till-x'; await vm.runInContext('reviveKept()', base);
-    assert.deepStrictEqual(puts, ['OP/77']); assert.ok(!store.cb_kept_parked, 'the note was not forgotten'); await vm.runInContext('reviveKept()', base); assert.strictEqual(puts.length, 1, 'revived twice');
+    assert.deepStrictEqual(puts, ['OP/77', 'OP/78']); assert.ok(!store.cb_kept_parked, 'the note was not forgotten'); await vm.runInContext('reviveKept()', base); assert.strictEqual(puts.length, 2, 'revived twice');
   });
   await it('WHILE FROZEN the counter never looks empty or all sent: queueWords/queueStuck/queueTally/the day pill/the 🩺 block/the alert card/the Bills list all say frozen and offer Reload this counter', async () => {
     const els = {}, el = (id) => (els[id] = els[id] || { textContent: '', innerHTML: '', open: false, showModal() { this.open = true; } });
@@ -366,6 +371,22 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     assert.ok(/stuckNow && queueCount\(\)/.test(ps) && /queueCount\(\) \? '  ·  ' \+ queueWords\(\)/.test(ps), 'paintStatus does not read the frozen state');
     const qw = PAGE.slice(PAGE.indexOf('\nfunction queueWords('), PAGE.indexOf('\n}\n', PAGE.indexOf('\nfunction queueWords(')));
     assert.ok(/stuck && queueCount\(\)/.test(qw) && /return stuckLine\(stuck\)/.test(qw), 'queueWords can still say "all sent" while frozen');
+  });
+  await it('a FROZEN counter cannot decide from a read: frozenStop says the frozen words with the Reload offer and stops; closeCounter, wipeDevice, coldStart and sureSheet all begin with it; closeReadinessNow rethrows the frozen error instead of "0 of 0 sent"', async () => {
+    const said = [], asked = [];
+    const ctx = { dbFrozen: () => true, busyDone() {}, sure: (m, ok, t, no) => { asked.push([ok, no]); return Promise.resolve(false); }, location: { reload() {} }, cbQuiet() {}, PARKED: [], rowIsMine: () => true, isIssuedRow: () => true, Array, Error,
+      DB: { all: async () => { const e = new Error('frozen'); e.code = 'DB_FROZEN'; throw e; }, allRaw: async () => { const e = new Error('frozen'); e.code = 'DB_FROZEN'; throw e; } } };
+    vm.createContext(ctx);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + ['askReload', 'frozenStop', 'throwIfFrozen', 'closeReadinessNow'].map(lift).join('') + 'function sendableRows(r){ return r; }\n', ctx);
+    ctx.sure = (m, ok) => { said.push(m); asked.push(ok); return Promise.resolve(false); };
+    assert.strictEqual(vm.runInContext('frozenStop', ctx)('closing the counter'), true);
+    assert.ok(/This counter is frozen, so closing the counter was stopped and nothing was cleared or sent\. Another counter tab/.test(said[0]) && asked[0] === 'Reload this counter', said[0]);
+    let thrown = null; try { await vm.runInContext('closeReadinessNow()', ctx); } catch (e) { thrown = e; }
+    assert.ok(thrown && thrown.code === 'DB_FROZEN', 'closeReadinessNow swallowed the frozen error and would show 0 of 0 sent');
+    for (const fn of ['closeCounter', 'wipeDevice', 'coldStart', 'sureSheet']) {
+      const at = PAGE.indexOf('\nasync function ' + fn + '('), body = PAGE.slice(at, PAGE.indexOf('\n}\n', at)), gate = body.indexOf('frozenStop(');
+      assert.ok(gate > 0 && gate < body.indexOf('await ') || (gate > 0 && body.slice(0, gate).indexOf('await ') < 0), fn + ' reads before it checks frozen');
+    }
   });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);
