@@ -138,9 +138,8 @@ const badLine = (lines) => S.badLine(lines, { needQty: true, noPrice: 'shelf', b
 router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);
-    if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line.');
-    const bad = S.badLine(lines);
-    if (bad) return refuse(req, res, 400, bad[0], bad[1]);
+    const refusal = S.lineRefusal(lines, {}, taxSaid(400, 'NO_LINES', 'Send at least one line.'));
+    if (refusal) return problem(req, res, refusal);
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
     res.json({

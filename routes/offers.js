@@ -23,7 +23,7 @@ const {
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const auth = require('../middleware/auth');
-const S = require('../lib/services');
+const services = require('../lib/services');
 const { withEntity } = require('../db');
 const eng = require('../lib/offers-engine').CBOffers;
 /** the schema check of one route (its own operation in lib/offers-contract.js), as a list to spread after the gates: a route that takes no input has none */
@@ -67,11 +67,9 @@ async function ownOffers(req) {
 const answer = (explain) =>
   async function offersAnswer(req, res) {
     try {
-      const rows = S.normLines(req.body || {});
-      if (!rows.length)
-        return problem(req, res, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
-      const bad = S.badLine(rows, { noPrice: 'must' });
-      if (bad) return problem(req, res, { status: 400, code: bad[0], detail: bad[1], legacy: { error: 'validation', message: bad[1] } });
+      const rows = services.normLines(req.body || {});
+      const refusal = services.lineRefusal(rows, { noPrice: 'must' }, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
+      if (refusal) return problem(req, res, refusal);
       const lines = offerLines(rows);
       const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
       const ctx = Object.assign({ now: new Date(), currency: null }, ctxOf(req.body.ctx)); /* T2-NATDEF: the caller's stated money, never INR by name */
