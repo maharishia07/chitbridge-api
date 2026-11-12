@@ -20,8 +20,9 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const { harness, STAFF, SECRET_SQL, sameValue } = require('./lib/problem-world.cjs');
+const { harness, STAFF, SHOP, OWNER, SECRET_SQL, sameValue } = require('./lib/problem-world.cjs');
 const ALLOW = require('./lib/allowlist-world.cjs');
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -117,6 +118,25 @@ const SUCCESS = [
   X('offer-released', 'POST /api/network-offers/:id/release', 200, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: {} }), nextOpeningFor: async () => WINDOW.at, setReleased: async () => ({}), pushToNetwork: PUSHED } } }),
   X('offer-withdrawn', 'POST /api/network-offers/:id/withdraw', 200, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: { network_offers: { released: { [OFFER]: WINDOW } } } }), nextOpeningFor: async () => WINDOW.at, setReleased: async () => ({}), pushToNetwork: PUSHED } } })
 ];
+/* S35: the offer id of the choice door belongs to the brand and is shown to the stores of its network (reads.storeSide): shop B asks for an offer only shop A is shown, and is answered as for an id nobody has */
+const STRANGER = { identity_id: '66666666-6666-4666-8666-666666666666', identity_type: 'entity', display_name: 'Shop B' };
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a foreign offer id answers exactly as an unknown id (S35) --');
+  const reads = require(path.join(HERE, 'routes', 'network-offers')).reads;
+  const net = require(path.join(HERE, 'lib', 'network-offers'));
+  const recording = FOREIGN.recorder();
+  const play = (who, planted) => {
+    const [storeSide, setIn] = [reads.storeSide, net.setIn];
+    reads.storeSide = async (batch, shopId) => mine(planted && shopId === SHOP ? [{ id: OFFER, live: true, until: null }] : [])();
+    net.setIn = async () => ({});
+    Object.assign(lab.world, { realAuth: false, who: who === 'owner' ? OWNER : STRANGER, asKey: false, db: 'ok', sqlRows: null });
+    return lab.send(port, 'POST', '/api/network-offers/' + OFFER + '/choice', { choice: 'in' }).finally(() => Object.assign(reads, { storeSide }) && Object.assign(net, { setIn }));
+  };
+  const failures = await FOREIGN.runCases([{ route: 'POST /api/network-offers/:id/choice', play }], recording.record);
+  failures.forEach((sentence) => console.log('  FINDING ' + sentence));
+  check("POST /:id/choice: another shop's offer id answers the 404 an unknown id gets, byte for byte, and the owner's own is found", failures.length === 0, failures);
+  return { proved: recording.proved() };
+}
 const contractOf = (one) => require(path.join(HERE, one.contract)).contract;
 
 /** the contracts as units: every route has an operation and every operation a route; every refusal an operation declares is a Problem; the words never carry a cause */
@@ -156,6 +176,7 @@ function checkCodesRegistered(recording) {
   const allowed = capturing ? () => [] : (route) => allowedBy[route] || [];
   const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS.concat(SUCCESS, STAFF_REFUSED), { id: OFFER });
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ net: require(path.join(HERE, 'lib', 'network-offers')), ncat: require(path.join(HERE, 'lib', 'network-catalogue')), reads: require(path.join(HERE, 'routes', 'network-offers')).reads }));
+  const foreign = capturing ? { proved: {} } : await checkForeignIds(server.address().port);
   server.close();
   if (capturing) {
     fs.writeFileSync(capturing, JSON.stringify(recording, null, 1));
@@ -176,7 +197,11 @@ function checkCodesRegistered(recording) {
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
-  } else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+  } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), foreign.proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
+  }
   if (!lab.argv.includes('--write')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/network-offers.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
