@@ -71,6 +71,7 @@ async function j(path, { method = 'GET', token, body } = {}) {
     headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once),
     body: body ? JSON.stringify(body) : undefined
   });
+  require('../tests/lib/call-log.cjs').record(method, path, reply.status);   /* QA 12 Nov: the run's requests, for the SIT junit endpoint rows */
   let b = null;
   try {
     b = await reply.json();

@@ -17,11 +17,13 @@ const TARGET = require('./run-target.cjs').assertTarget(API, DB, 'truth-harness'
 
 const ENTITY_OTP = TARGET.entityOtp, CUSTOMER_OTP = TARGET.customerOtp;   /* local: lib/dev-otp.js fixed codes; SIT box: today's tester code */
 const results = [];
+const LOG = require('./call-log.cjs');   /* what the run sent, for the SIT junit's endpoint rows */
 
 /** the doors (the seed's own j()); an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
   const once = method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {}; /* FIN-63: every write is one attempt with its own key (the books money doors require it) */
   const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once), body: body ? JSON.stringify(body) : undefined });
+  LOG.record(method, path, r.status);
   let b = null; try { b = await r.json(); } catch (_) { /* a reply with no JSON body (bytes, 204) is read as {} */ }
   return { status: r.status, b: b || {} };
 }
@@ -30,8 +32,10 @@ const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 
 /** the case runner: an expectation that fails is recorded with what was seen */
 async function kase(id, title, fn, gap) {
-  try { const seen = await fn(); results.push({ id, title, pass: true, seen: seen || '', gap }); console.log('  ok   ' + id + ' ' + title); }
-  catch (e) { results.push({ id, title, pass: false, seen: e.message, gap }); console.log('  FAIL ' + id + ' ' + title + (gap ? '  [gap: ' + gap + ']' : '') + '\n         ' + e.message); }
+  const from = LOG.calls.length; LOG.state.current = id;   /* the requests this case sends ride on its result (calls: METHOD + path + status), for the SIT junit's endpoint rows */
+  try { const seen = await fn(); results.push({ id, title, pass: true, seen: seen || '', gap, calls: LOG.since(from) }); console.log('  ok   ' + id + ' ' + title); }
+  catch (e) { results.push({ id, title, pass: false, seen: e.message, gap, calls: LOG.since(from) }); console.log('  FAIL ' + id + ' ' + title + (gap ? '  [gap: ' + gap + ']' : '') + '\n         ' + e.message); }
+  finally { LOG.state.current = null; }
 }
 function expect(cond, said) { if (!cond) throw new Error(said); }
 const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-6;
