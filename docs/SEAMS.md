@@ -34,7 +34,7 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
-| 61 | `items` | `books-store.js` | PERF1: |
+| 62 | `items` | `books-store.js` | PERF1: |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 59 | `record` | `access-events.js` |  |
 | 58 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -71,10 +71,10 @@ of file each thing is; this says what already does the job.
 | 39 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `modal` | `app.html` |  |
 | 37 | `rate` | `convert.js` | A rate, with its evidence. |
-| 37 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 38 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 36 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 36 | `page` | `cap-catalogue.js` |  |
-| 36 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
+| 37 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 36 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 35 | `closeModal` | `app.html` |  |
 | 35 | `shell` | `pick.js` |  |
@@ -123,7 +123,7 @@ of file each thing is; this says what already does the job.
 | 23 | `form` | `accounts-shell.js` |  |
 | 23 | `entries` | `books-store.js` |  |
 | 23 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
-| 23 | `governance` | `home-facts.js` |  |
+| 24 | `governance` | `home-facts.js` |  |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `keep` | `signin.js` | see. |
 | 22 | `says` | `adopt.js` |  |
@@ -151,7 +151,7 @@ of file each thing is; this says what already does the job.
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 19 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 19 | `connectors` | `home-facts.js` | declare (said in words — |
-| 19 | `move` | `rail.js` | Order = the order the server refused in: |
+| 20 | `move` | `rail.js` | Order = the order the server refused in: |
 | 18 | `step` | `cart.js` |  |
 | 18 | `today` | `kural.js` |  |
 | 18 | `more` | `lab-kit.js` | idKey: |
@@ -182,7 +182,7 @@ of file each thing is; this says what already does the job.
 | 16 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
-| 16 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
+| 17 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 16 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 16 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
