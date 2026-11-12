@@ -28,6 +28,9 @@ const { world, check } = lab;
 
 const ITEM = PARTY;
 const DAY = 86400000;
+/* the shop clock (lib/shop-clock.js, the clock the route reads) is pinned at 06:00 UTC: the rows below sit half a day off "now" and the route counts SHOP days, so a real clock past 12:00 UTC pushed every half-day row over midnight into the next day */
+const clock = require(path.join(HERE, 'lib', 'shop-clock.js'));
+const PINNED = '2026-06-15T06:00:00Z';
 let port = 0;
 let skipped = 0;
 const skip = (what, why) => {
@@ -116,8 +119,8 @@ async function priceRefusals() {
 const stock = (name, expiryDays, soldDays) => ({
   item_id: name,
   name,
-  expiry: expiryDays === null ? null : new Date(Date.now() + expiryDays * DAY).toISOString(),
-  last_sold: soldDays === null ? null : new Date(Date.now() - soldDays * DAY).toISOString()
+  expiry: expiryDays === null ? null : new Date(clock.nowMs() + expiryDays * DAY).toISOString(),
+  last_sold: soldDays === null ? null : new Date(clock.nowMs() - soldDays * DAY).toISOString()
 });
 const HISTORY = (rows) => answering(/WITH lines AS/, rows);
 const worth = (rows, query) => ask('GET', '/api/till/worth-an-offer' + (query || ''), undefined, { rows: HISTORY(rows) });
@@ -166,9 +169,9 @@ async function worthAnOffer() {
 
 async function dateOnlyExpiry() {
   console.log('\n── an expiry is a DATE (lotfields: "the date it must not be sold after") ──\n');
-  const today = new Date().toISOString().slice(0, 10);
-  const tomorrow = new Date(Date.now() + DAY).toISOString().slice(0, 10);
-  const row = (date) => ({ item_id: 'a', name: 'curd', expiry: date, last_sold: new Date(Date.now() - 0.5 * DAY).toISOString() });
+  const today = clock.now().toISOString().slice(0, 10);
+  const tomorrow = new Date(clock.nowMs() + DAY).toISOString().slice(0, 10);
+  const row = (date) => ({ item_id: 'a', name: 'curd', expiry: date, last_sold: new Date(clock.nowMs() - 0.5 * DAY).toISOString() });
   const nowToday = (await worth([row(today)])).json.items;
   const nowTomorrow = (await worth([row(tomorrow)])).json.items;
   const sayToday = nowToday[0] && nowToday[0].why[0];
@@ -180,6 +183,7 @@ async function dateOnlyExpiry() {
 (async () => {
   console.log('\n══ CAT-222 · the till price move and worth-an-offer, at the route ══');
   lab.installStubs();
+  clock.set(PINNED);
   const app = express();
   app.use((req, res, next) => {
     req.id = 'req-test';
@@ -196,6 +200,7 @@ async function dateOnlyExpiry() {
     await worthAnOffer();
     await dateOnlyExpiry();
   } finally {
+    clock.reset();
     server.close();
   }
   console.log('\n' + lab.count.passed + ' passed, ' + lab.count.failed + ' failed, ' + skipped + ' skipped (each a real bug, with its backlog line)');
