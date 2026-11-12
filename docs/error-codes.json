@@ -544,9 +544,9 @@
   {
    "code": "BILL_WITHDRAWN",
    "status": "409",
-   "title": "Bill already cancelled",
-   "shopkeeper": "That bill was cancelled, so a credit note cannot be raised against it.",
-   "hint": "The cancel already reversed the whole bill. Nothing more to do.",
+   "title": "Bill already withdrawn",
+   "shopkeeper": "That bill was cancelled or rejected, so a credit note cannot be raised against it.",
+   "hint": "It was already reversed whole. Nothing more to do.",
    "owner_area": "chits",
    "since": "2026-11-13"
   },

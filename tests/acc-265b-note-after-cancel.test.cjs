@@ -22,9 +22,11 @@ const SHOP = '11111111-1111-4111-8111-265265265b65', BILL = 'b0000000-0000-4000-
 const read = (file) => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 
 /** a note send, answered by a stand-in database holding one bill row (withdrawn or not) */
-function noteAgainst(billRow, byNumber) {
+const reread = { n: 0 };
+function noteAgainst(billRow, byNumber, flipAfterLock) {
   const client = { query: async (sql, params) => {
     if (sql === lock.LOCK_SQL) return { rows: [] };
+    if (/AS withdrawn FROM chit_header h WHERE/.test(sql)) { reread.n++; return { rows: [{ withdrawn: flipAfterLock || billRow.withdrawn }] }; }
     if (/ANY\(\$4::text\[\]\)/.test(sql)) return { rows: [billRow] };
     if (/DISTINCT ON/.test(sql)) return { rows: [] };
     throw new Error('unexpected sql ' + sql.slice(0, 60));
@@ -52,11 +54,13 @@ function world(status, notes) {
   console.log('\n== ACC-265b · a note after the cancel · a reject with a live note ==\n');
   /* gap 1 */
   let r = await noteAgainst(bill({ withdrawn: true }));
-  ok('G1 · a note naming a cancelled bill by its id: 409 BILL_WITHDRAWN, a thrown refusal in words', r && r.refused === true && r.status === 409 && r.code === 'BILL_WITHDRAWN' && /was cancelled/.test(r.message) && /already reversed/.test(r.message), String(r && (r.code || r)));
+  ok('G1 · a note naming a cancelled bill by its id: 409 BILL_WITHDRAWN, a thrown refusal in words', r && r.refused === true && r.status === 409 && r.code === 'BILL_WITHDRAWN' && /cancelled or rejected/.test(r.message) && /already reversed/.test(r.message) && r.title === 'Bill already withdrawn', String(r && (r.code || r)));
   r = await noteAgainst(bill({ withdrawn: true }), true);
   ok('G1 · the same by bill number (one bill on its till)', r && r.code === 'BILL_WITHDRAWN' && r.status === 409, String(r && (r.code || r)));
   r = await noteAgainst(bill());
   ok('G1 · a live bill: the note is judged as before (inside the cap, ok)', r === 'ok', String(r && (r.code || r)));
+  r = await noteAgainst(bill(), false, true);
+  ok('G1 · RACE: the bill reads live, a cancel commits while the note waits for the lock; the re-read under the lock refuses BILL_WITHDRAWN', r && r.code === 'BILL_WITHDRAWN' && reread.n >= 1, String(r && (r.code || r)));
   ok('G1 · BILL_WITHDRAWN is not a waiting code (middleware/idempotency WAITING_CODES keeps only BILL_NOT_RECORDED)', !/WAITING_CODES = new Set\([^)]*BILL_WITHDRAWN/.test(read('middleware/idempotency.js')));
   ok('G1 · the one reader: billOf selects the withdrawn flag with counter-bill WITHDRAWN_TEST (not a second status read)', /\$\{counterBill\.WITHDRAWN_TEST\} AS withdrawn/.test(read('lib/credit-cap.js')));
   /* gap 2 */
@@ -72,6 +76,8 @@ function world(status, notes) {
   ok('G2 · a move that is neither never asks for notes', !db.log.some((e) => /DISTINCT ON/.test(e.sql)));
   ok('G2 · the list is the rail\'s own WITHDRAWN (rejected, cancelled): no second spelling in rail-status', /railActions\.WITHDRAWN\.includes\(to\)/.test(read('lib/rail-status.js')) && railActions.WITHDRAWN.join() === 'rejected,cancelled');
   ok('G2 · the words cover both moves', /cancelled or rejected/.test(railStatus.creditNoteSaid([NOTE]).message));
+  const withdrawnTest = require('../lib/counter-bill').WITHDRAWN_TEST;
+  ok('the books withdrawn test names every status the rail calls withdrawn (counter-bill WITHDRAWN_TEST vs rail-actions WITHDRAWN)', railActions.WITHDRAWN.every((status) => withdrawnTest.includes("'" + status + "'")), withdrawnTest);
   const reg = JSON.parse(read('docs/error-codes.json')).codes.filter((row) => row.code === 'BILL_WITHDRAWN');
   ok('G1 · BILL_WITHDRAWN is registered once (409, a sentence, a hint) in docs/error-codes.json and docs/ERROR-CODES.md', reg.length === 1 && reg[0].status === '409' && reg[0].shopkeeper !== 'PENDING' && /BILL_WITHDRAWN \| 409/.test(read('docs/ERROR-CODES.md')));
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
