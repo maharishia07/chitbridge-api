@@ -95,11 +95,21 @@ it('a quintal and a tonne are weights', () => {
   assert.strictEqual(Q.convert(1, 'kg', 'quintal').qty, 0.01);
 });
 
-/** ⚠️ two decimal places, like every other quantity on a counter — and that is a rounding, not a truncation */
-it('⚠️ it rounds to two places, as the counter does everywhere', () => {
-  assert.strictEqual(Q.convert(1, 'gram', 'kg').qty, 0);
-  assert.strictEqual(Q.convert(5, 'gram', 'kg').qty, 0.01);
-  assert.strictEqual(Q.convert(1, 'mg', 'gram').qty, 0);
+/** ⚠️ SIX decimals, not two (DECISIONS 2026-10-18, Athi Q5): a quantity is an input, money is rounded once at the money point.
+ *  Two decimals made a 125 gm scale label 0.13 kg (billed as 130 gm) and 1 mg vanish. engines #125 (adopted here). */
+it('a quantity is kept to six decimals: 125 gm is 0.125 kg, 1 mg is 0.001 g', () => {
+  assert.strictEqual(Q.convert(125, 'gm', 'kg').qty, 0.125);
+  assert.strictEqual(Q.convert(1, 'gram', 'kg').qty, 0.001);
+  assert.strictEqual(Q.convert(5, 'gram', 'kg').qty, 0.005);
+  assert.strictEqual(Q.convert(1, 'mg', 'gram').qty, 0.001);
+  assert.strictEqual(Q.convert(100, 'g', 'quintal').qty, 0.001);
+});
+
+it('end to end: 125 gm of something priced per kg is 0.125 kg on the line and the money rounds once, at the total', () => {
+  const kg = Q.convert(125, 'gm', 'kg').qty;
+  assert.strictEqual(kg, 0.125);
+  const money = require('../lib/money');
+  assert.strictEqual(money.round(kg * 90.4, 'INR'), 11.3, '0.125 x 90.40 = 11.30 (the old 0.13 kg billed 11.75)');
 });
 
 console.log('\nAND THE TABLE IS NO LONGER IN THE PAGE\n');

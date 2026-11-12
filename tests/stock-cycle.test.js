@@ -503,6 +503,8 @@ await ita('⚠️⚠️ a line whose batch cannot be read is REFUSED with a sent
   assert.strictEqual(exp.code, 'expiry_unreadable', 'a date that is not YYYY-MM-DD is refused, not guessed at');
   assert.ok(/YYYY-MM-DD/.test(exp.why), 'the sentence says what to type');
   assert.strictEqual(bad({ batch: 'AC1', best_before: 'soon' }).code, 'expiry_unreadable', 'a best-before that is not a date, the same');
+  assert.strictEqual(bad({ batch: 'AC1', expiry: '2028-13-45' }).code, 'expiry_unreadable', 'an impossible date (month 13) is refused, never stored as an expiry that reads fine (engines #125)');
+  assert.strictEqual(bad({ batch: 'AC1', expiry: '2027-02-29' }).code, 'expiry_unreadable', '29 February in a common year');
   /* and the refusal reaches postFor as a named skip while the readable line of the same chit still posts */
   const before = MOVES.length;
   const r = await fromChit.postFor(SHOP, { purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-MIX' }, created_at: at(41),
