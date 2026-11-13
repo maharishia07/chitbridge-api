@@ -1466,14 +1466,6 @@
     400
    ]
   },
-  "GET /api/till/invoice-lease/report": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
   "GET /api/till/match": {
    "cases": 2,
    "failed": 0,
@@ -3884,22 +3876,6 @@
   },
   "POST /api/till/flags": {
    "cases": 6,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "POST /api/till/invoice-lease": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "POST /api/till/invoice-lease/close": {
-   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

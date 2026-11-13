@@ -1146,30 +1146,6 @@
     "why": "not reached: answered 400"
    }
   },
-  "POST /api/till/invoice-lease": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 409"
-   }
-  },
-  "GET /api/till/invoice-lease/report": {
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
-   }
-  },
-  "POST /api/till/invoice-lease/close": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
-   }
-  },
   "POST /api/till/rate": {
    "strict_input": {
     "pass": true
