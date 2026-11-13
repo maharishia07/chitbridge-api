@@ -4345,6 +4345,7 @@ async function refusedRow(row, status, said, code){
   row._status = status; row._code = code; row._why = said || ('the shop answered ' + status);
   row._tries = (Number(row._tries) || 0) + 1; row._at = Date.now();
   row._nextAt = row._at + qBackoff(row._tries);
+  if (status === 409 && code === 'CHIT_REPLAY_DIFFERS' && isSaleRow(row)) { delete row._nextAt; row._hold = { at: row._at, why: row._why }; }   /* CTR-204: a different sale under this number is HELD, never retried: a person decides */
   if (parksOn(row, status, code)) { delete row._nextAt; row._parked = { at: row._at, status: status, code: code || null, why: row._why }; }
   try { await DB.put('queue', row); } catch (e) { cbQuiet('drain:4', e); }
   return (row._parked ? 'A change was refused and set aside for you to fix: ' : 'Bill ' + row.no + ': ') + row._why;
@@ -5850,7 +5851,7 @@ var CloudHost = {
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
         /* ⭐ not due yet — counted so the screen can say so; a skipped row that says nothing IS the wedge */
-        if (!force && !qDue(bill, nowMs)) { held++; continue; }
+        if (bill._hold || (!force && !qDue(bill, nowMs))) { held++; continue; }   /* CTR-204: a held bill waits for a person, Send now included */
         /* ⚠️⚠️ THE LAST GATE, AND THE ONE THAT COSTS MONEY. DB.all has already dropped foreign rows, but this is where a bill
            leaves the building under a key — so it is checked again here, against the key actually being used. A sale posted into
            another business's books is not a display bug, it is a wrong entry in somebody's accounts. */
@@ -5946,9 +5947,7 @@ var CloudHost = {
        */
       if (!why && priceHeld) why = priceHeld + ' bill(s) waiting for the owner to say a price change is fine. Tap the amber chip on the bill.';
       if (!why && tried === 0 && held > 0) {
-        var soon = qSoonest(rows);
-        why = held + ' waiting a moment before the next try'
-            + (soon ? ' · ' + qWaitWords({ _nextAt: soon }) : '') + '. Press Send now to try at once.';
+        why = heldWaitWords(rows, held);
       }
       if (!why && tried === 0 && (STATE && STATE.queued > 0))
         why = 'Nothing was even attempted — tell us this, it is not normal.';
@@ -24276,7 +24275,7 @@ async function renumberBill(bill, why, drainRows){   /* `drainRows` (optional): 
                   why: why || 'the number was already used by another counter' },
     _renum: tries + 1, _tries: 0
   });
-  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._code; delete fresh._verified; delete fresh.renumber_to;
+  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._code; delete fresh._hold; delete fresh._verified; delete fresh.renumber_to;
   await DB.put('bills', fresh);
   await DB.put('queue', fresh);
   var companions = await rekeyCompanions(from, to);
@@ -24986,7 +24985,7 @@ async function openStuck(){
   /* ⚠️ kept so the report that is SENT says the same thing the shopkeeper is looking at — two accounts of one
      counter, differing by a refresh, is how a support call goes wrong */
   STUCK_VERDICT = verdict;
-  h = frozenNoticeHTML() + parkedSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
+  h = frozenNoticeHTML() + parkedSectionHTML(qMine) + heldSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
     + '<div class="qbar" style="padding:8px 0">'
     + '<button class="pill" data-testid="till-stuck-release" onclick="releaseQueue()"><b>▶ Get my bills moving</b></button>'
     + '<button class="pill" data-testid="till-stuck-send" onclick="stuckSend()">📨 Tell ChitBridge</button>'
@@ -25122,7 +25121,7 @@ async function stuckReport(){
   if (!qM.length) L.push('  nothing of this shop\'s is queued');
   qM.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
     .slice(0, 20).forEach(function(q){
-      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : '') + '  tries=' + (q._tries || 0)
+      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : q._hold ? '  HELD (a different sale has this number)' : '') + '  tries=' + (q._tries || 0)
         + '  status=' + (q._status || '—') + '  ' + (qWaitWords(q) || 'due now') + '  '
         + (q._why || 'not refused — not yet attempted'));
     });
@@ -29520,6 +29519,44 @@ async function staleDecide(no){
 }
 /** the timer's own function: the popup after a drain, never inside it */
 function staleAskLater(){ staleAskSoon().catch(function(e){ cbQuiet('staleAskLater:1', e); }); }
+
+/**
+ * ⭐ CTR-204 (2026-11-13): A DIFFERENT SALE UNDER THE SAME BILL NUMBER IS HELD, NOT RETRIED. The shop answers 409 CHIT_REPLAY_DIFFERS when
+ * a replay carries this counter's number and moment but another sale (total, currency or lines). Trying it again can never succeed and
+ * silently giving it a new number could hide a real mix-up, so the bill stays here unsent (_hold, no retry time), the shop's own words
+ * are kept, and the cashier is asked ONCE: "This is a new sale" -> the same renumberBill path a number collision takes, then it goes.
+ * ⚠️ A held bill still counts as waiting (queueTally, the close): it is money not at the shop. TILL_SERIES_COLLISION keeps its auto-renumber.
+ */
+function heldWaitWords(rows, held){
+  var one = (rows || []).filter(function(row){ return row && row._hold; })[0];
+  if (one) return 'Bill ' + one.no + ' is held, not sent: ' + one._hold.why + ' Open 🩺 to give it a new number.';
+  var soon = qSoonest(rows);
+  return held + ' waiting a moment before the next try' + (soon ? ' · ' + qWaitWords({ _nextAt: soon }) : '') + '. Press Send now to try at once.';
+}
+/** the "Needs your say" block of the stuck panel: each held bill, the shop's words, one button */
+function heldSectionHTML(rows){
+  var held = (rows || []).filter(function(row){ return row && row._hold; });
+  if (!held.length) return '';
+  return '<div class="sec" data-testid="till-held-head">Needs your say — ' + held.length + ' bill' + (held.length === 1 ? ' is' : 's are') + ' held, not sent</div>'
+    + held.map(function(row){
+      return '<div class="t warnrow" data-testid="till-held-row-' + esc(row.no) + '"><span>Bill ' + esc(row.no) + '</span><span>' + esc(row._hold.why)
+        + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP012" data-testid="till-held-renumber-' + esc(row.no) + '" onclick="heldRenumber(\'' + esc(row.no) + '\')">New number</button></span></div>';
+    }).join('');
+}
+/** the cashier's one confirm: this IS a new sale, so it takes this counter's next number (renumberBill, as a number collision does) and goes */
+async function heldRenumber(no){
+  var row = ((await DB.all('queue')) || []).filter(function(x){ return x && String(x.no) === String(no) && x._hold; })[0];
+  if (!row) return;
+  var ok = await sure('This is a new sale — give it a new number?\n\nBill ' + no + ' is recorded under the next number of this counter and sent. The number on the customer’s paper is kept as printed.', 'Yes, new number', 'Bill ' + no);
+  if (!ok) return;
+  var moved = null;
+  try { moved = await renumberBill(row, 'the shop already had a different sale under number ' + no); } catch (e) { cbQuiet('heldRenumber:1', e); }
+  if (!moved) { toastLine('Bill ' + no + ' could not get a new number. It is still held.'); return openStuck(); }
+  try { await queueTally(); paintStatus(); } catch (e) { cbQuiet('heldRenumber:2', e); }
+  toastLine('Bill ' + moved.from + ' is now ' + moved.to + ' and is going to the shop.');
+  try { if (HOST && HOST.drain) HOST.drain(); } catch (e) { cbQuiet('heldRenumber:3', e); }
+  openStuck();
+}
 </script>
 </body>
 </html>
