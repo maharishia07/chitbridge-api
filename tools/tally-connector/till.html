@@ -5324,7 +5324,7 @@ var CloudHost = {
     var snap = await DB.get('snapshot');
     var bills = (await DB.all('bills')) || [], queue = (await DB.all('queue')) || [];
     var day = dayKeyOf(Date.now());   /* CTR-242: the shop's day, never a UTC slice */
-    var mine = bills.filter(function(b){ return dayKeyOf(b.at) === day && !isDocRow(b); });   /* M128: bills only */
+    var mine = bills.filter(function(b){ return !!day && dayKeyOf(b.at) === day && !isDocRow(b); });   /* '' = no shop day = no bills, never every bill */   /* M128: bills only */
     /**
      * ⚠️⚠️ FOUR FIGURES ON FOUR SCREENS, AND THREE OF THEM DISAGREED (2026-09-18). A credit note is stored
      * negative, so the total netted by itself — but count was mine.length, which called a refund a bill, and
@@ -5495,13 +5495,13 @@ var CloudHost = {
   async bills(){
     var all = (await DB.all('bills')) || [];
     var day = dayKeyOf(Date.now());
-    return all.filter(function(b){ return dayKeyOf(b.at) === day && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });   /* M128 */
+    return all.filter(function(b){ return !!day && dayKeyOf(b.at) === day && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });   /* M128 */
   },
   /** ⭐ the bills THIS device still holds for the last N days — offline (M11: a return after midnight) */
   async local(days){
     var all = (await DB.all('bills')) || [];
     var since = dayKeyOf(Date.now() - (days || 1) * 86400000);
-    return all.filter(function(b){ return dayKeyOf(b.at) >= since && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
+    return all.filter(function(b){ return !!since && dayKeyOf(b.at) >= since && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   /** FX-CT1: `till` asks for ONE counter's bills (the day report's check) — filtered by the server, before its limit */
   async history(days, till){
@@ -7352,7 +7352,8 @@ function creditDaysOf(c){
 /** the due date a credit bill carries; null when the shop has not set this customer's terms (never guessed) */
 function dueDateFor(c, at){
   var d = creditDaysOf(c); if (d == null) return null;
-  var t = new Date((dayKeyOf(at || Date.now()) || '1970-01-01') + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + d);   /* CTR-242: the shop's day + d calendar days */
+  var base = dayKeyOf(at || Date.now()); if (!base) return null;   /* no shop day = no due date, never a guessed one */
+  var t = new Date(base + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + d);   /* CTR-242: the shop's day + d calendar days */
   return t.toISOString().slice(0, 10);   /* a calendar date built in UTC from a date — not a moment cut */
 }
 /**
@@ -22545,7 +22546,8 @@ async function dayServerCheck(rows){
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return null;      /* the shop PC's program keeps its own day */
   var h; try { h = await HOST.history(2, tillId()); } catch (e) { h = { offline: true }; }
   if (!h || h.offline || !Array.isArray(h.bills)) return { state: 'offline' };
-  var day = dayKeyOf(Date.now()), counted = function(b){ return !!(b && b.no) && !(isDocRow(b) || isExpenseRow(b)); };
+  var day = dayKeyOf(Date.now()); if (!day) return { state: 'offline' };   /* no shop day: the check cannot run (the close itself refuses in words) */
+  var counted = function(b){ return !!(b && b.no) && !(isDocRow(b) || isExpenseRow(b)); };
   /* ⭐ CTR-197: the server leaves a cancelled bill out of its list and NAMES it in `withdrawn`. A bill of this device that is named there is
      known, not unsent: it is marked withdrawn in the store (out of the day's sums) and left out of both sides of the check. */
   var gone = withdrawnNos(h.withdrawn), marked = await dayMarkWithdrawn(gone);
@@ -22649,7 +22651,8 @@ function dayReopenNow(){
 function dayClosedMark(){
   try {
     var m = JSON.parse(ls.get(shopLs('cb_till_dayclosed'), 'null'));
-    return (m && m.day === dayKeyOf(Date.now())) ? m : null;
+    var today = dayKeyOf(Date.now());
+    return (m && today && m.day === today) ? m : null;
   } catch (_) { return null; }
 }
 /** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
@@ -22657,6 +22660,7 @@ function dayCloseDo(){
   var d = DAY_D; if (!d) return;
   /* FX-CT1: never close a day the server disagrees with — the button is greyed with its line; this is the same rule, held here too */
   if (d.server && d.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
+  if (!dayKeyOf(Date.now())) { toastLine(noDayMoney().why); return; }   /* no shop day: nothing is closed under a guessed one */
   var m = { day: dayKeyOf(Date.now()), at: new Date().toISOString(), bills: d.bills, total: d.total,
             by: (WHO && WHO.name) || null };
   ls.set(shopLs('cb_till_dayclosed'), JSON.stringify(m));
@@ -23061,8 +23065,9 @@ function lotTrouble(l){
   (p.required || []).forEach(function(k){ if (lot[k] == null || String(lot[k]).trim() === '') miss.push(lotLabel(k)); });
   /* ⚠️ NO ENGINE IN THIS PATH. Two dates compare themselves; asking CBGS1 meant that on a counter where the engine had not
      arrived, expired stock was accepted in silence — the one thing this rule exists to prevent. */
-  var exp = lot.expiry || lot.best_before;
-  if (exp && /^\d{4}-\d{2}-\d{2}$/.test(exp) && exp < dayKeyOf(Date.now()))   /* CTR-242: two YYYY-MM-DD compare as text; today is the shop's day */
+  var exp = lot.expiry || lot.best_before, today = dayKeyOf(Date.now());
+  if (exp && /^\d{4}-\d{2}-\d{2}$/.test(exp) && !today) return { refuse: noDayMoney().why, missing: [] };   /* no shop day: expiry cannot be judged, so it is not accepted */
+  if (exp && /^\d{4}-\d{2}-\d{2}$/.test(exp) && exp < today)   /* CTR-242: two YYYY-MM-DD compare as text; today is the shop's day */
     return { refuse: 'This has already expired (' + exp + '). It cannot be taken in.', missing: [] };
   return { missing: miss };
 }

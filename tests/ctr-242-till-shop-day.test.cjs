@@ -11,29 +11,30 @@ function grabAt(at, label) {
   for (; i < h.length; i++) { if (h[i] === '{') d++; else if (h[i] === '}' && --d === 0) break; }
   return h.slice(at, i + 1);
 }
-const grab = (n) => grabAt(h.indexOf('function ' + n + '('), n);
+const grab = (n) => { const at = h.indexOf('function ' + n + '('); return (h.slice(at - 6, at) === 'async ' ? 'async ' : '') + grabAt(at, n); };
 /** a CloudHost method ('bills', 'local', 'state') lifted as a function the test can call */
 const grabMethod = (n) => 'var M_' + n + ' = ' + grabAt(h.indexOf('async ' + n + '(', h.indexOf('var CloudHost')), n).replace(/^async \w+\(/, 'async function(');
-const FNS = ['dayKeyOf', 'shopDayOf', 'dayInZone', 'shopTz', 'tzOpt', 'shopPack', 'dayClosedMark', 'dayCloseDo', 'dueDateFor'];
+const FNS = ['dayKeyOf', 'shopDayOf', 'dayInZone', 'shopTz', 'tzOpt', 'shopPack', 'dayClosedMark', 'dayCloseDo', 'dueDateFor', 'dayServerCheck', 'lotTrouble', 'noDayMoney'];
 const ZONES = { IN: 'Asia/Kolkata', AU: 'Australia/Sydney' };
 
 /** the page for a country with the clock stopped at `now` (an ISO instant) and `rows` in the bill store */
-function page(country, now, rows) {
+function page(country, now, rows, zones) {
   const T0 = Date.parse(now), store = {}, sent = [];
   class Clock extends Date { constructor(...a) { if (a.length) super(...a); else super(T0); } static now() { return T0; } }
   const ctx = {
-    window: { CBRegulation: { packFor: () => (country === 'IN' ? { timeZones: [ZONES.IN] } : { timeZones: ['Australia/Sydney', 'Australia/Perth'] }) },
+    window: { CBRegulation: { packFor: () => (zones ? { timeZones: zones } : country === 'IN' ? { timeZones: [ZONES.IN] } : { timeZones: ['Australia/Sydney', 'Australia/Perth'] }) },
               CBLocale: { timezone: () => ZONES[country] } },
     Date: Clock, Intl, Number, String, Math, Object, Array, JSON, isNaN, cbQuiet() {}, docCountry: () => country,
-    DB: { all: async () => rows }, isDocRow: () => false, creditDaysOf: () => 15,
+    DB: { all: async () => rows }, HOST: { history: async () => ({ bills: [] }), cred: () => true }, tillId: () => 't1', moneyOf: () => ({}), lotPack: () => ({ required: [] }), lotLabel: (k) => k,
+    withdrawnNos: () => ({}), dayMarkWithdrawn: async () => 0, isExpenseRow: () => false,  isDocRow: () => false, creditDaysOf: () => 15,
     ls: { get: (k, d) => (k in store ? store[k] : d), set: (k, v) => { store[k] = v; } }, shopLs: (k) => k,
     DAY_D: { bills: 3, total: 90, server: null }, WHO: { name: 'T' }, money: (v) => String(v), toastLine() {}, hhmm: () => '00:10',
     dayCloseHTML: () => '', dayClosedButtons() {}, paintStatus() {}, daySummarySend: (m) => { sent.push(m); },
     document: { getElementById: () => ({ textContent: '', innerHTML: '', hidden: false }) },
   };
-  ctx.CBLocale = ctx.window.CBLocale; vm.createContext(ctx);
+  ctx.CBRegulation = ctx.window.CBRegulation; ctx.CBLocale = ctx.window.CBLocale; vm.createContext(ctx);
   vm.runInContext(FNS.map(grab).join('\n') + '\n' + ['bills', 'local'].map(grabMethod).join('\n'), ctx);
-  ctx.CBLocale = ctx.window.CBLocale; ctx.sent = sent;
+  ctx.CBRegulation = ctx.window.CBRegulation; ctx.CBLocale = ctx.window.CBLocale; ctx.sent = sent;
   return ctx;
 }
 let n = 0; const ok = (what, fn) => { fn(); n++; console.log('  ok  ' + what); };
@@ -71,6 +72,23 @@ const okA = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what);
     const p = page('IN', '2026-11-14T06:00:00Z', []);
     assert.strictEqual(p.dueDateFor({}, '2026-11-13T18:40:00Z'), '2026-11-29');
   });
+  // a zone the device refuses: no shop day. '' must never match '' (every bill) or pass expiry or guess a due date
+  const NOZONE = ['Not/AZone'], NOW = '2026-11-14T06:00:00Z', ROWS = [{ no: 'A', at: NOW, total: 10 }, { no: 'B', at: '2026-11-10T06:00:00Z', total: 20 }];
+  const q = page('IN', NOW, ROWS, NOZONE);
+  await okA('no shop day: the lists show nothing, not every bill', async () => {
+    assert.strictEqual(q.dayKeyOf(NOW), ''); assert.deepStrictEqual(await q.M_bills(), []); assert.deepStrictEqual(await q.M_local(3), []);
+  });
+  await okA('no shop day: the close refuses in words and files nothing; the server check says it cannot run', async () => {
+    q.dayCloseDo();
+    assert.strictEqual(q.sent.length, 0, 'nothing sent under a guessed day'); assert.strictEqual(q.dayClosedMark(), null);
+    assert.strictEqual((await q.dayServerCheck([])).state, 'offline');
+  });
+  ok('no shop day: expired stock is refused, not accepted', () => {
+    const r = q.lotTrouble({ lot: { expiry: '2020-01-01' } });
+    assert.ok(r.refuse && /time zone/.test(r.refuse), r.refuse);
+    assert.ok(!q.lotTrouble({ lot: {} }).refuse, 'a line with no expiry is untouched');
+  });
+  ok('no shop day: a credit bill gets no due date, never a guessed one', () => { assert.strictEqual(q.dueDateFor({}, NOW), null); });
   ok('no UTC slice is left cutting a day in the till (the ones left are listed in the PR body)', () => {
     const left = h.split('\n').map((l, i) => [i + 1, l]).filter(([, l]) => /toISOString\(\)\.slice\(0, ?10\)/.test(l)).map(([i]) => i);
     assert.strictEqual(left.length, 2, 'only dueDateFor (a calendar date from a date) and the catalogue file name keep the slice: ' + left);
