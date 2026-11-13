@@ -22,7 +22,7 @@ function grab(name) {
   for (; i < HTML.length; i++) { if (HTML[i] === '{') depth++; else if (HTML[i] === '}' && --depth === 0) break; }
   return HTML.slice(at, i + 1);
 }
-const FNS = ['r2', 'shopCur', 'docCountry', 'shopPack', 'shopMinor', 'booksMajor', 'cashRule', 'payWayId', 'cashDue', 'restBeforeLast', 'cashRoundOf', 'addPart', 'tenderParts', 'subTaken', 'subIssue', 'chitOfSubscription'];
+const FNS = ['r2', 'rmoney', 'shopCur', 'docCountry', 'shopPack', 'shopMinor', 'booksMajor', 'cashRule', 'payWayId', 'cashDue', 'restBeforeLast', 'cashRoundOf', 'addPart', 'tenderParts', 'subTaken', 'subIssue', 'chitOfSubscription'];
 
 /** a till page for one shop: net = the bill, picked = the tender way, typed = the amount box */
 function page(country, currency, net, picked, typed) {

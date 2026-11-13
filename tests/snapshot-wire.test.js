@@ -480,7 +480,7 @@ it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows t
    * asserting the TOTAL rather than the label.
    */
   const now = page.slice(page.indexOf('function modAddNow('), page.indexOf('function modClose('));
-  assert.ok(now.indexOf('c.price = r2((Number(base.price)') > 0,
+  assert.ok(now.indexOf('c.price = rmoney((Number(base.price)') > 0,
     'an edited line keeps its old price — the choices would change and the bill would not');
   /* ⚠️ re-keyed, and merged when the new key is one another line already has */
   assert.ok(now.indexOf('lineKey(c.item_id') > 0,
@@ -1111,8 +1111,8 @@ it('⭐⭐⭐ the till prices through CBPricing, before offers', () => {
   assert.ok(page.indexOf('CBPricing.unitPrice(') > 0, 'nothing asks the engine what a unit costs at a quantity');
   /* the cart's arithmetic must take the priced unit, not the list price */
   const pr = page.slice(page.indexOf('function price(){'), page.indexOf('function cartLineNote'));
-  assert.ok(pr.indexOf('r2(unit * c.qty)') > 0, 'gross is still the list price times the quantity');
-  assert.ok(pr.indexOf('r2(c.price * c.qty)') < 0, 'the list price is still being multiplied somewhere');
+  assert.ok(pr.indexOf('rmoney(unit * c.qty)') > 0, 'gross is still the list price times the quantity');
+  assert.ok(pr.indexOf('rmoney(c.price * c.qty)') < 0, 'the list price is still being multiplied somewhere');
   /* the wire must carry the TRAVELLING COPY, or the counter cannot price with the line down */
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   for (const k of ['pricing_kind', 'pricing_tiers', 'pricing_amount', 'pricing_min', 'pricing_max', 'pricing_def_name'])
@@ -1210,7 +1210,7 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
   /* TILL-B2 (2026-10-17): the tender moved to tenderParts — the rest is cashDue (rounded only where the pack rounds cash), the same one keystroke */
   const tp = page.slice(page.indexOf('function tenderParts('), page.indexOf('function tenderParts(') + 1200);
   assert.ok(fin2.indexOf('parts = tenderParts(parts, m.net, tendered)') > 0 && tp.indexOf('if (!parts.length) {') > 0
-    && tp.indexOf('return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];') > 0 && tp.indexOf('if (tendered > 0 && r2(rest - tendered) >= 0.01)') > 0,
+    && tp.indexOf('return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];') > 0 && tp.indexOf('if (tendered > 0 && rmoney(rest - tendered) >= 0.01)') > 0,
     'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');
 });
 
@@ -1312,7 +1312,7 @@ it('⭐⭐ the counter tells the customer screen, and tells it only what a custo
     assert.ok(send.indexOf(forbidden) < 0, 'the customer screen is sent ' + forbidden + ' — it may not see that');
   /* ⚠️ the screen RENDERS, it never computes: every figure arrives already formatted */
   const draw = promo.slice(promo.indexOf('function drawBill('), promo.indexOf('function drawBill(') + 3000);
-  for (const arith of ['billMoney(', 'r2(', '* c.qty', 'reduce('])
+  for (const arith of ['billMoney(', 'r2(', 'rmoney(', '* c.qty', 'reduce('])
     assert.ok(draw.indexOf(arith) < 0, 'the customer screen computes with ' + arith + ' — it could disagree with the till');
   /* and it lets go on its own — a screen left showing a finished bill shows it to the next customer */
   assert.ok(promo.indexOf('BILL = null; paint(true); restart();') > 0, 'the screen never returns to the slides');
@@ -1342,11 +1342,11 @@ it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () =
   assert.ok(rt.indexOf('CBTax.supplyType(') > 0, 'the counter decides intra vs inter itself');
   assert.ok(rt.indexOf("supply !== 'unknown'") > 0,
     'a purchase with no supplier state would be filed under a head it may not belong to');
-  assert.ok(rt.indexOf('r2(t - half)') > 0, 'SGST is not the remainder — the halves can fail to sum to the tax');
+  assert.ok(rt.indexOf('rmoney(t - half)') > 0, 'SGST is not the remainder — the halves can fail to sum to the tax');
   /* ⚠️ tax is NOT part of the cost: folding it in would overstate every margin by the tax rate */
   const conf = page.slice(page.indexOf('costs: RCV.costs, goods: rcvGoods()'), page.indexOf('costs: RCV.costs, goods: rcvGoods()') + 900);
   assert.ok(conf.indexOf('input_tax:') > 0, 'the consignment does not record its input tax');
-  assert.ok(conf.indexOf('landed_total: r2(rcvGoods() + rcvExtras())') > 0,
+  assert.ok(conf.indexOf('landed_total: rmoney(rcvGoods() + rcvExtras())') > 0,
     'the landed total has changed — tax must never be added into what the stock cost');
   /* and it must cross onto the CHIT, or a return can never see it */
   assert.ok(page.indexOf('input_tax: d.input_tax || null') > 0,

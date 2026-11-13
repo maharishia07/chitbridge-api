@@ -37,7 +37,7 @@ function scene(local, serverAnswer) {
     HOST: { history: async () => serverAnswer, cred: () => true },
     dayClose: () => { ctx.reopened = (ctx.reopened || 0) + 1; },
     tillId: () => 'C1', cbQuiet: (where, e) => { throw e; },
-    r2: (n) => Math.round((Number(n) || 0) * 100) / 100
+    r2: (n) => Math.round((Number(n) || 0) * 100) / 100, rmoney: (n) => Math.round((Number(n) || 0) * 100) / 100
   };
   vm.createContext(ctx);
   vm.runInContext(NAMES.map(lift).join('\n'), ctx);

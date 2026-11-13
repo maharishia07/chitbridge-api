@@ -4010,8 +4010,8 @@ var CFD = (function(){
       try {
         var m = billMoney(), n = cartCount();
         var way = ((S && S.shop && S.shop.pay) || []).filter(function(w){ return w.label === PICKED && w.qr; })[0];
-        var taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
-        var left = r2(m.net - taken);
+        var taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
+        var left = rmoney(m.net - taken);
         ch.postMessage({
           at: Date.now(),
           shop: (S && S.shop && S.shop.name) || '',
@@ -4063,6 +4063,8 @@ function MONEY(){
   return window.CBMoney;
 }
 var r2 = function(n){ return MONEY().round(Number(n) || 0); };
+/** money: round to the SHOP currency's own decimals (KWD 3, JPY 0) through the ONE engine rule; r2 stays for quantities. No currency -> the engine's 2. */
+var rmoney = function(n){ return MONEY().round(Number(n) || 0, shopCur() || undefined); };
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
 /**
  * ⭐⭐ ONE MONEY FORMATTER, AND IT IS NOT OURS. CBLocale.money(amount, code) groups by the locale (India is 2-2-3,
@@ -5347,23 +5349,23 @@ var CloudHost = {
        * as a sale and leaves whatever tender it was paid from, same reasoning as a credit note two lines up. */
       var by2 = {}, total2 = 0, count2 = 0, back2 = 0, red2 = 0, exp2 = 0;
       mine.forEach(function(b){
-        total2 = r2(total2 + (b.total||0));
+        total2 = rmoney(total2 + (b.total||0));
         if (b.kind === 'credit_note') {
-          var split2 = creditNoteSplit(b); back2 = r2(back2 + split2.refunded); red2 = r2(red2 + split2.reduced);
-          (b.refunds||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
+          var split2 = creditNoteSplit(b); back2 = rmoney(back2 + split2.refunded); red2 = rmoney(red2 + split2.reduced);
+          (b.refunds||[]).forEach(function(x){ by2[x.how] = rmoney((by2[x.how]||0) - (Number(x.amount)||0)); });
         } else if (b.kind === 'expense') {
-          exp2 = r2(exp2 + Math.abs(Number(b.total)||0));
-          (b.spent||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
+          exp2 = rmoney(exp2 + Math.abs(Number(b.total)||0));
+          (b.spent||[]).forEach(function(x){ by2[x.how] = rmoney((by2[x.how]||0) - (Number(x.amount)||0)); });
         } else {
           count2++;
-          (b.payments||[]).forEach(function(p){ by2[p.how] = r2((by2[p.how]||0) + (p.amount||0)); });
+          (b.payments||[]).forEach(function(p){ by2[p.how] = rmoney((by2[p.how]||0) + (p.amount||0)); });
         }
       });
       return { count: count2, total: total2, by: by2, refunds: back2, reduced: red2, expenses: exp2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: lineUp() && !!this.cred(), queued: queue.length,
-             today: { count: count, total: total, by: by, returns: r2(back), expenses: r2(t.expenses || 0) },
+             today: { count: count, total: total, by: by, returns: rmoney(back), expenses: rmoney(t.expenses || 0) },
              till: { id: tillId(), name: counterName(), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
   },
@@ -6503,7 +6505,7 @@ function chitOfCN(cn){
       against: cn.against || null,
       reason: cn.reason || null, reason_words: cn.reason_words || null,
       /* ⭐ money OUT, named as its own thing — every reader of business_json.payment assumes money taken */
-      refund: { parts: cn.refunds || [], total: r2(Math.abs(Number(cn.total) || 0)) },
+      refund: { parts: cn.refunds || [], total: rmoney(Math.abs(Number(cn.total) || 0)) },
       heads: cn.heads || null, supply: cn.supply || null, by_rate: cn.by_rate || {},
       taxable: cn.taxable, tax: cn.tax,
     },
@@ -6539,7 +6541,7 @@ function chitOfExpense(e){
       doc: 'expense', slip: 'expense',
       bill_no: e.no, billed_at: e.at,
       /* ⭐ money OUT, named as its own thing — same reasoning as a credit note's `refund` above */
-      expense: { what: e.what, mode: e.mode, amount: r2(Math.abs(Number(e.total) || 0)) },
+      expense: { what: e.what, mode: e.mode, amount: rmoney(Math.abs(Number(e.total) || 0)) },
     },
     line_items: [],
   };
@@ -7299,13 +7301,13 @@ function creditCust(){ return booksOn() ? custKnown() : null; }
 function booksMajor(minor){
   var cur = shopCur();
   var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
-  return r2(Number(minor || 0) / Math.pow(10, dec));
+  return rmoney(Number(minor || 0) / Math.pow(10, dec));
 }
 /** an amount → minor units in the shop's own currency — booksMajor's inverse, the same decimals (CX1: the pack's taxInvoice takes minor) */
 function shopMinor(amount){
   var cur = shopCur();
   var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
-  return Math.round(r2(amount) * Math.pow(10, dec));
+  return Math.round(rmoney(amount) * Math.pow(10, dec));
 }
 function creditDaysOf(c){
   var d = c && c.credit_days;
@@ -7324,7 +7326,7 @@ function dueDateFor(c, at){
 function creditLimitCheck(c, amount){
   if (!c || c.credit_limit_minor == null || c.credit_limit_minor === '') return { known: false };
   var since = CREDIT_SINCE[c.identity_id] || 0;
-  var limit = booksMajor(c.credit_limit_minor), owed = r2(booksMajor(c.balance_minor || 0) + since), after = r2(owed + (Number(amount) || 0));
+  var limit = booksMajor(c.credit_limit_minor), owed = rmoney(booksMajor(c.balance_minor || 0) + since), after = rmoney(owed + (Number(amount) || 0));
   return { known: true, limit: limit, owed: owed, since: since, after: after, over: after > limit + 0.004 };
 }
 /**
@@ -7362,7 +7364,7 @@ async function creditSinceRefresh(c){
   bills.forEach(function(b){
     if (!b || !b.customer || b.customer.identity_id !== c.identity_id) return;
     if (snapAt && String(b.at || '') <= snapAt && !unsent(b)) return;
-    (b.payments || []).forEach(function(p){ if (p && p.how === 'On credit') owed = r2(owed + (Number(p.amount) || 0)); });
+    (b.payments || []).forEach(function(p){ if (p && p.how === 'On credit') owed = rmoney(owed + (Number(p.amount) || 0)); });
   });
   CREDIT_SINCE[c.identity_id] = owed;
   return owed;
@@ -7466,7 +7468,7 @@ function rcvPayPropose(){
 }
 async function rcvPaySave(){
   var c = creditCust(); if (!c) return;
-  var amt = r2(Number((document.getElementById('rp_amt') || {}).value) || 0);
+  var amt = rmoney(Number((document.getElementById('rp_amt') || {}).value) || 0);
   if (!(amt > 0)) { say('Type the amount received.'); return; }
   var mode = (document.getElementById('rp_mode') || {}).value || 'cash';
   var cheque = null;
@@ -10045,21 +10047,21 @@ function menuTodayBody(){
   var n = bills.length - back.length - spent.length;
   /* ⚠️ M48 (walk 2026-10-10): a return of YESTERDAY's bill showed "Today's sale −₹50.00 · Bills 0" — this summed every row,
      credit notes and expenses included. A sale is never negative: Sales are the sale rows; Net is what is left after the rest. */
-  var net = bills.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
+  var net = bills.reduce(function(a, b){ return rmoney(a + (Number(b.total) || 0)); }, 0);
   var total = bills.filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); })
-                   .reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
+                   .reduce(function(a, b){ return rmoney(a + (Number(b.total) || 0)); }, 0);
   var saved = bills.reduce(function(a, b){ return a + (Number(b.saved) || 0); }, 0);
-  var returned = back.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
-  var expensed = spent.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  var returned = back.reduce(function(a, b){ return rmoney(a + Math.abs(Number(b.total) || 0)); }, 0);
+  var expensed = spent.reduce(function(a, b){ return rmoney(a + Math.abs(Number(b.total) || 0)); }, 0);
   /* how the money came in, less what went back out (a refund) or was paid out (an expense) in the same tender */
   var by = {};
   bills.forEach(function(b){
     if (isReturnRow(b)) { (b.refunds || []).forEach(function(x){
-      var how = String(x.how || 'Cash'); by[how] = r2((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
+      var how = String(x.how || 'Cash'); by[how] = rmoney((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
     if (isExpenseRow(b)) { (b.spent || []).forEach(function(x){
-      var how = String(x.how || 'Cash'); by[how] = r2((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
+      var how = String(x.how || 'Cash'); by[how] = rmoney((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
     (b.payments || []).forEach(function(pmt){
-      var how = String(pmt.how || 'cash'); by[how] = r2((by[how] || 0) + (Number(pmt.amount) || 0)); });
+      var how = String(pmt.how || 'cash'); by[how] = rmoney((by[how] || 0) + (Number(pmt.amount) || 0)); });
   });
   /* what moved: quantity per product across today's lines */
   var moved = {};
@@ -10082,7 +10084,7 @@ function menuTodayBody(){
     + (returned ? row('Returns', '−' + money(returned)) : '')
     + (expensed ? row('Expenses paid', '−' + money(expensed)) : '')
     + (returned || expensed ? row('Net', money(net), true) : '')
-    + (n ? row('Average bill', money(r2(total / n))) : '')
+    + (n ? row('Average bill', money(rmoney(total / n))) : '')
     + (saved ? row('Taken off by offers', money(saved)) : '');
   Object.keys(by).sort().forEach(function(how){ out += row(how.charAt(0).toUpperCase() + how.slice(1), money(by[how])); });
   if (busiest != null && n > 1) out += row('Busiest hour', String(busiest).padStart(2, '0') + ':00–' + String((Number(busiest) + 1) % 24).padStart(2, '0') + ':00');
@@ -10132,25 +10134,25 @@ function dayRepRows(bills){
       var k = l.name;
       var r = items[k] || (items[k] = { name: l.name, unit: l.unit || '', qty: 0, gross: 0, off: 0, tax: 0, net: 0 });
       r.qty = r2(r.qty + (Number(l.qty) || 0));
-      r.gross = r2(r.gross + (Number(l.gross) || 0));
-      r.off = r2(r.off + (Number(l.save) || 0));
+      r.gross = rmoney(r.gross + (Number(l.gross) || 0));
+      r.off = rmoney(r.off + (Number(l.save) || 0));
       /* ⭐ THE LINE'S OWN TAX, as it was issued ([TILL-101]). Stored at sale time precisely so a reprint does
          not recompute against today's slabs — and for the same reason this report must not either. A bill
          from before that field existed contributes 0 rather than a guess. */
-      r.tax = r2(r.tax + (Number(l.tax) || 0));
-      r.net = r2(r.net + (Number(l.net) || 0));
+      r.tax = rmoney(r.tax + (Number(l.tax) || 0));
+      r.net = rmoney(r.net + (Number(l.net) || 0));
     });
     /* ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
     Object.keys(b.by_rate || {}).forEach(function(rate){
       var v = b.by_rate[rate] || {};
       var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
-      r.taxable = r2(r.taxable + (Number(v.taxable) || 0));
-      r.tax = r2(r.tax + (Number(v.tax) || 0));
+      r.taxable = rmoney(r.taxable + (Number(v.taxable) || 0));
+      r.tax = rmoney(r.tax + (Number(v.tax) || 0));
     });
     var seen = {};
     (b.payments || []).forEach(function(pmt){
       var how = String(pmt.how || 'cash');
-      byPay[how] = r2((byPay[how] || 0) + (Number(pmt.amount) || 0));
+      byPay[how] = rmoney((byPay[how] || 0) + (Number(pmt.amount) || 0));
       if (!seen[how]) { payBills[how] = (payBills[how] || 0) + 1; seen[how] = 1; }
     });
   });
@@ -10175,8 +10177,8 @@ function dayRepTable(title, cols, rows, foot){
 /** the day's first table — bills, items, average, offers, taxable, tax, Net sales. ⭐ TILL-B2: and the cash rounding the bills took (AU · MY,
     each bill's cash_round), so Net sales plus it is what "How the money moved" totals */
 function dayRepSummary(figures){
-  var rounded = figures.bills.reduce(function(sum, bill){ return r2(sum + (Number(bill.cash_round) || 0)); }, 0);
-  var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(r2(figures.total / figures.count)) : '\u2014'],
+  var rounded = figures.bills.reduce(function(sum, bill){ return rmoney(sum + (Number(bill.cash_round) || 0)); }, 0);
+  var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(rmoney(figures.total / figures.count)) : '\u2014'],
     ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Taxable value', money(figures.taxable)], ['Tax', money(figures.tax)]];
   if (rounded) rows.push(['Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)]);
   return dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], rows,
@@ -10189,10 +10191,10 @@ function dayReportHTML(bills){
   var spent = (bills || []).filter(isExpenseRow);
   var n = (bills || []).length - back.length - spent.length;
   var agg = dayRepRows(bills);
-  var total = bills.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
-  var taxable = bills.reduce(function(a, b){ return r2(a + (Number(b.taxable) || 0)); }, 0);
-  var tax = bills.reduce(function(a, b){ return r2(a + (Number(b.tax) || 0)); }, 0);
-  var saved = bills.reduce(function(a, b){ return r2(a + (Number(b.saved) || 0)); }, 0);
+  var total = bills.reduce(function(a, b){ return rmoney(a + (Number(b.total) || 0)); }, 0);
+  var taxable = bills.reduce(function(a, b){ return rmoney(a + (Number(b.taxable) || 0)); }, 0);
+  var tax = bills.reduce(function(a, b){ return rmoney(a + (Number(b.tax) || 0)); }, 0);
+  var saved = bills.reduce(function(a, b){ return rmoney(a + (Number(b.saved) || 0)); }, 0);
   var qty = Object.keys(agg.items).reduce(function(a, k){ return r2(a + agg.items[k].qty); }, 0);
   var bohni = bohniOf(bills);
   var hours = {};
@@ -10233,16 +10235,16 @@ function dayReportHTML(bills){
    * (expenses), and its net — and the net total is the Net sales figure, to the paisa.
    */
   var outBack = {}, outPaid = {};
-  back.forEach(function(b){ (b.refunds || []).forEach(function(x){ if (x && x.how) outBack[x.how] = r2((outBack[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
-  spent.forEach(function(b){ (b.spent || []).forEach(function(x){ if (x && x.how) outPaid[x.how] = r2((outPaid[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  back.forEach(function(b){ (b.refunds || []).forEach(function(x){ if (x && x.how) outBack[x.how] = rmoney((outBack[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  spent.forEach(function(b){ (b.spent || []).forEach(function(x){ if (x && x.how) outPaid[x.how] = rmoney((outPaid[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
   var hows = {}; [agg.byPay, outBack, outPaid].forEach(function(o){ Object.keys(o).forEach(function(k){ hows[k] = 1; }); });
   var payRows = Object.keys(hows).sort().map(function(how){
     var inn = agg.byPay[how] || 0, bk = outBack[how] || 0, pd = outPaid[how] || 0;
     return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(inn),
-            bk ? '\u2212' + money(bk) : '', pd ? '\u2212' + money(pd) : '', money(r2(inn - bk - pd))];
+            bk ? '\u2212' + money(bk) : '', pd ? '\u2212' + money(pd) : '', money(rmoney(inn - bk - pd))];
   });
-  var sumOf = function(o){ return Object.keys(o).reduce(function(a, k){ return r2(a + o[k]); }, 0); };
-  var payTotal = r2(sumOf(agg.byPay) - sumOf(outBack) - sumOf(outPaid));
+  var sumOf = function(o){ return Object.keys(o).reduce(function(a, k){ return rmoney(a + o[k]); }, 0); };
+  var payTotal = rmoney(sumOf(agg.byPay) - sumOf(outBack) - sumOf(outPaid));
   var pay = dayRepTable('How the money moved', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Taken', num: true },
     { label: 'Given back', num: true }, { label: 'Paid out', num: true }, { label: 'Net', num: true }],
     payRows, ['<b>Total</b>', '', '<b>' + money(sumOf(agg.byPay)) + '</b>', sumOf(outBack) ? '<b>\u2212' + money(sumOf(outBack)) + '</b>' : '',
@@ -10252,7 +10254,7 @@ function dayReportHTML(bills){
     var r = agg.byRate[k];
     /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate.
        CX0: only under a state-split pack (India); a one-head scheme (GST in Australia, VAT in the UAE) has one Tax column, never two invented halves */
-    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(r2(r.tax / 2)), money(r2(r.tax / 2)), money(r.tax)]
+    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(rmoney(r.tax / 2)), money(rmoney(r.tax / 2)), money(r.tax)]
                                : [esc(k) + '%', money(r.taxable), money(r.tax)];
   });
   var rate = packSplitsByState()
@@ -10266,9 +10268,9 @@ function dayReportHTML(bills){
      right as the arithmetic happens: what it listed at, what came off, what the state takes, what is left. */
   var soldRows = Object.keys(agg.items).map(function(k){ return agg.items[k]; })
     .sort(function(a, b){ return b.net - a.net; });          /* by VALUE, top to bottom */
-  var taxSold = soldRows.reduce(function(a, r){ return r2(a + r.tax); }, 0);
-  var offSold = soldRows.reduce(function(a, r){ return r2(a + r.off); }, 0);
-  var grossSold = soldRows.reduce(function(a, r){ return r2(a + r.gross); }, 0);
+  var taxSold = soldRows.reduce(function(a, r){ return rmoney(a + r.tax); }, 0);
+  var offSold = soldRows.reduce(function(a, r){ return rmoney(a + r.off); }, 0);
+  var grossSold = soldRows.reduce(function(a, r){ return rmoney(a + r.gross); }, 0);
   var sold = soldRows.map(function(r){ return [esc(r.name), esc(r.unit), String(r.qty), money(r.gross),
                               r.off ? '\u2212' + money(r.off) : '', r.tax ? money(r.tax) : '', money(r.net)]; });
   var items = dayRepTable('Everything sold', [{ label: 'Item' }, { label: 'Unit' }, { label: 'Qty', num: true },
@@ -10288,7 +10290,7 @@ function dayReportHTML(bills){
     { label: 'Items', num: true }, { label: 'Paid', num: true }, { label: 'Total', num: true }], billRows,
     ['<b>' + dayRepCount(n, 'bill', 'bills') + '</b>', '', '', '<b>' + qty + '</b>', '', '<b>' + money(total) + '</b>']);
 
-  var returned = back.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  var returned = back.reduce(function(a, b){ return rmoney(a + Math.abs(Number(b.total) || 0)); }, 0);
   var backT = dayRepTable('Returns', [{ label: 'Credit note' }, { label: 'Against' }, { label: 'Why' },
     { label: 'Given back', num: true }],
     back.map(function(b){
@@ -10300,7 +10302,7 @@ function dayReportHTML(bills){
 
   /* ⭐ [till expenses] the identical table, one column short — an expense has no "against" bill and no GST
    * reason, just what it was for and which tender it left. */
-  var expensedT = spent.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  var expensedT = spent.reduce(function(a, b){ return rmoney(a + Math.abs(Number(b.total) || 0)); }, 0);
   var expT = dayRepTable('Expenses', [{ label: 'No' }, { label: 'What' }, { label: 'Paid by' },
     { label: 'Amount', num: true }],
     spent.map(function(b){
@@ -14337,7 +14339,7 @@ function cartPicCell(c, n, byId, testid){
     + '<b>' + esc(c.name) + '</b>'
     + (c.mods && c.mods.length ? '<span class="ibmods">' + esc(modWordsPlain(c.mods)) + '</span>' : '')
     + (c.kot ? '<span class="ibmods">KOT ' + esc(c.kot) + '</span>' : '')
-    + '<span class="ibmoney">' + money(r2((Number(c.price) || 0) * (Number(c.qty) || 0))) + '</span>'
+    + '<span class="ibmoney">' + money(rmoney((Number(c.price) || 0) * (Number(c.qty) || 0))) + '</span>'
     + '<span class="ibqty">'
       /* ⭐ THE BILL'S OWN HANDLERS, by cart index — the same two the bill table's steppers call, so a quantity
          changed here and a quantity changed there cannot come out different. */
@@ -14510,7 +14512,7 @@ function cartChip(){
   /* ⚠️ ONE COUNT FOR THE WHOLE COUNTER. This used to sum every qty itself and showed "5.25" for a bill the
      panel beside it described as "3 items · 2.25 kg". */
   var n = countShort();
-  var due = CART.reduce(function(a, c){ return r2(a + (Number(c.price) || 0) * (Number(c.qty) || 0)); }, 0);
+  var due = CART.reduce(function(a, c){ return rmoney(a + (Number(c.price) || 0) * (Number(c.qty) || 0)); }, 0);
   return '<button class="qcart' + (IB_OPEN ? ' on' : '') + '" data-testid="till-cart-chip"'
     + ' title="the things on this bill, in pictures" onclick="ibToggle()">'
     + '<span class="qcarti" aria-hidden="true">\u{1F6D2}</span><b>' + n + '</b>'
@@ -14618,7 +14620,7 @@ function shelfLine(shown){
  */
 function mrpUnder(i){
   var mrp = Number(i && i.mrp) || 0, pay = Number(i && i.price) || 0;
-  return (mrp > pay && pay > 0) ? (money(r2(mrp - pay)) + ' under MRP') : '';
+  return (mrp > pay && pay > 0) ? (money(rmoney(mrp - pay)) + ' under MRP') : '';
 }
 /**
  * ── ⭐⭐⭐ THE ONE PLACE THAT ASKS FOR A PICTURE AT A SIZE ([TILL-93]) ──────────────────────
@@ -14761,9 +14763,9 @@ function offerExample(i, o){
     line.excluded = [];
     var ev = CBOffers.evaluate({ lines:[line], offers:[trial],
       ctx:{ currency:shopCur(), now:new Date().toISOString() } });
-    var gross = r2(price * q);
-    var net = (ev && ev.line_net && ev.line_net[line.key] != null) ? r2(ev.line_net[line.key]) : gross;
-    var save = r2(gross - net);
+    var gross = rmoney(price * q);
+    var net = (ev && ev.line_net && ev.line_net[line.key] != null) ? rmoney(ev.line_net[line.key]) : gross;
+    var save = rmoney(gross - net);
     if (save > 0) {
       out = q + ' × ' + money(price) + ' = ' + money(gross) + ' → <b>' + money(net) + '</b> · saves ' + money(save);
     } else {
@@ -15217,7 +15219,7 @@ function cardPrice(i){
               var q = Number(t && t.qty) || 0; if (!q) return;
               var pr = pricedAt(i, q);
               rows.push('<div class="u">' + q + ' ' + esc(i.unit || 'piece') + ' → ' + money(pr.amount)
-                + ' each · ' + money(r2(pr.amount * q)) + ' the lot</div>');
+                + ' each · ' + money(rmoney(pr.amount * q)) + ' the lot</div>');
             });
             if (pr1.violation) rows.push('<div class="was">⚠️ ' + esc(pr1.violation) + '</div>');
             return rows.join('');
@@ -15714,7 +15716,7 @@ function priceBlock(i){
    */
   var mrp = Number(i.mrp) || 0;
   var was = (mrp > pay)
-    ? '<span class="was">MRP <s>' + money(mrp) + '</s>' + money(r2(mrp - pay)) + ' under</span>' : '';
+    ? '<span class="was">MRP <s>' + money(mrp) + '</s>' + money(rmoney(mrp - pay)) + ' under</span>' : '';
   return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per"' + perTip + '>' + per + '</span>' + was + '</span>';
 }
 /**
@@ -16753,14 +16755,14 @@ function comboOf(i){
   var apart = 0, missing = 0;
   c.forEach(function(nm){
     var found = by[String(nm || '').toLowerCase()];
-    if (found && Number(found.price) > 0) apart = r2(apart + Number(found.price));
+    if (found && Number(found.price) > 0) apart = rmoney(apart + Number(found.price));
     else missing++;
   });
   var price = Number(i.price) || 0;
   return { parts: c, missing: missing,
            /* only a comparison this counter can stand behind */
            apart: missing ? 0 : apart,
-           under: (!missing && apart > price) ? r2(apart - price) : 0 };
+           under: (!missing && apart > price) ? rmoney(apart - price) : 0 };
 }
 /** the words a key and a bill line both use — one phrasing, so the two can never differ */
 function comboWords(i){
@@ -17011,11 +17013,11 @@ function comboOut(o){
 function comboMoney(){
   var i = MOD_FOR && MOD_FOR.item; if (!i) return null;
   var chosen = modChosen();
-  var pay = r2((Number(i.price) || 0) + modAdd(chosen));
+  var pay = rmoney((Number(i.price) || 0) + modAdd(chosen));
   /* the static parts this product declares (comboOf), plus whatever the picks themselves add */
   var cb = comboOf(i);
-  var apart = cb && cb.apart ? r2(cb.apart + modAdd(chosen)) : 0;
-  return { pay: pay, apart: apart, save: (apart > pay) ? r2(apart - pay) : 0 };
+  var apart = cb && cb.apart ? rmoney(cb.apart + modAdd(chosen)) : 0;
+  return { pay: pay, apart: apart, save: (apart > pay) ? rmoney(apart - pay) : 0 };
 }
 /**
  * ⭐⭐⭐ THE BUTTON, FIVE STATES, NEVER DEAD (spec §3). *"Never disabled. In the amber states the button is
@@ -17153,7 +17155,7 @@ function modAddNow(){
        * "Hot · Paneer +₹20" over a line still charging the plain price. Same figure, same call as addItem.
        */
       var base = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
-      if (base) c.price = r2((Number(base.price) || 0) + modAdd(chosenNow));
+      if (base) c.price = rmoney((Number(base.price) || 0) + modAdd(chosenNow));
     }
     price(); focusSearch();
     return;
@@ -17207,7 +17209,7 @@ async function addWeighed(w){
   if (w.price == null && refuseUnpriced(i)) return;
   CART.push({ key: i.item_id + '|w' + Date.now() + Math.random().toString(36).slice(2, 6),
               item_id: i.item_id, name: i.name, unit: i.unit || 'kg',
-              price: (w.price != null && n > 0) ? r2(w.price / n) : (Number(i.price) || 0),
+              price: (w.price != null && n > 0) ? rmoney(w.price / n) : (Number(i.price) || 0),
               qty: n, hsn: i.hsn || null, weighed: true,
               mrp: (Number(i.mrp) > 0 ? Number(i.mrp) : null),
               /* ⭐ the same stamp addItem() puts on a line — a reprint must show which item needed checking */
@@ -17246,7 +17248,7 @@ function addItem(i, qty, mods){
                    /* ⚠️ THE CHOICES MOVE THE PRICE, and the moved price is what the line bills at — modAdd is
                       added once here rather than being re-derived on every repaint, so a bill is what was true
                       when it was made (the same rule mrp follows below). */
-                   price:r2((Number(i.price)||0) + modAdd(mods)), qty:n, hsn:i.hsn||null,
+                   price:rmoney((Number(i.price)||0) + modAdd(mods)), qty:n, hsn:i.hsn||null,
                    mods:(mods && mods.length ? mods : null),
                    mrp:(Number(i.mrp) > 0 ? Number(i.mrp) : null),
                    /* ⭐ carried on the LINE as well as the bill: a reprint has to show which item needed it */
@@ -17447,7 +17449,7 @@ function recheckRateOf(itemData, ctx){
   catch (e) { cbQuiet('recheckRateOf:1', e); return null; }
 }
 /** the shelf price of a cart line without the choices added on top of it (modAdd is added once, at the line) */
-function recheckBaseOf(cartLine){ return r2((Number(cartLine.price) || 0) - (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0)); }
+function recheckBaseOf(cartLine){ return rmoney((Number(cartLine.price) || 0) - (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0)); }
 /** what moved on one cart line against the catalogue's answer → { c, it, gone, price: [from, to]|null, rate: [from, to]|null } or null */
 function recheckLineChange(cartLine, answerRow, ctx){
   if (!answerRow || answerRow.checked === false) return null;
@@ -17460,7 +17462,7 @@ function recheckLineChange(cartLine, answerRow, ctx){
 }
 /** the shelf price moved? → [from, to], or null (the same price, or the very price the owner already chose to keep) */
 function recheckPriceMove(cartLine, answerRow){
-  var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
+  var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = rmoney(Number(answerRow.price) || 0);
   return from === to || keptAt === to ? null : [from, to];
 }
 /** the unit the product is sold in moved (CAT-264b: a unit change is a commercial change like price)? → [was, now], or null; an answer that names no unit is "unknown", never a move; sameness is the platform's CBUnits.sameUnit (case and plural folded), no second equality */
@@ -17482,7 +17484,7 @@ function recheckChanges(answer){
 }
 /** put a line on the catalogue's current facts (price with its choices, mrp, hsn, the rate facts); the stamp rides the line */
 function recheckRefresh(cartLine, answerRow){
-  cartLine.price = r2((Number(answerRow.price) || 0) + (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0));
+  cartLine.price = rmoney((Number(answerRow.price) || 0) + (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0));
   cartLine.mrp = Number(answerRow.mrp) > 0 ? Number(answerRow.mrp) : null;
   cartLine.hsn = answerRow.hsn || null;
   if (answerRow.unit) cartLine.unit = String(answerRow.unit);
@@ -17690,7 +17692,7 @@ async function draftResume(){
   var d = draftRead(); if (!d) return;
   if (CART.length) return;
   var n = d.cart.length;
-  var total = d.cart.reduce(function(a, c){ return r2(a + (c.net != null ? c.net : (Number(c.price) || 0) * (Number(c.qty) || 0))); }, 0);
+  var total = d.cart.reduce(function(a, c){ return rmoney(a + (c.net != null ? c.net : (Number(c.price) || 0) * (Number(c.qty) || 0))); }, 0);
   var who = (d.name || '').trim();
   var go = await sure(
     'You had a bill open with ' + n + ' item' + (n === 1 ? '' : 's') + ' · ' + money(total)
@@ -17734,7 +17736,7 @@ function draftAside(d){
 function paintParked(){
   var el = document.getElementById('parked'); if (!el) return;
   el.innerHTML = PARKED.map(function(p, n){
-    var total = (p.cart || []).reduce(function(a, c){ return r2(a + (c.net != null ? c.net : c.price * c.qty)); }, 0);
+    var total = (p.cart || []).reduce(function(a, c){ return rmoney(a + (c.net != null ? c.net : c.price * c.qty)); }, 0);
     return '<button data-testid="till-parked-' + n + '" onclick="unpark(' + n + ')" title="bring this bill back">⏸ ' + esc(p.name) + ' · ' + money(total)
       + ' <span onclick="event.stopPropagation();dropParked(' + n + ')" title="throw it away">×</span></button>';
   }).join('');
@@ -18137,11 +18139,11 @@ function price(){
     var pr = (lines[n] && lines[n].priced) || null;
     var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
     c.priced = pr; c.unitPrice = unit;
-    var gross = r2(unit * c.qty), net = gross;
+    var gross = rmoney(unit * c.qty), net = gross;
     /* ⚠️ READ BACK UNDER THE SAME KEY IT WAS SENT WITH — see the note on netKey(). Reading by item_id put one
        line's offer onto every line of that product the moment modifiers made two of them. */
     var lk = c.key || c.item_id;
-    if (ev && ev.line_net && ev.line_net[lk] != null) net = r2(ev.line_net[lk]);
+    if (ev && ev.line_net && ev.line_net[lk] != null) net = rmoney(ev.line_net[lk]);
     /**
      * ── ⭐⭐⭐ EVERY OFFER ON THE LINE, AND WHAT EARNED IT ──────────────────────────────────────────────────────
      *
@@ -18171,11 +18173,11 @@ function price(){
     c.offs = (ev && ev.adjustments)
       ? ev.adjustments.filter(function(a){ return a.amount < 0 && String(a.target) === String(c.item_id); })
       : [];
-    c.gross = gross; c.net = net; c.save = r2(gross - net); c.off = c.save > 0;
+    c.gross = gross; c.net = net; c.save = rmoney(gross - net); c.off = c.save > 0;
     /* ⚠️ what the named offers account for, so the row can OWN UP to the remainder instead of implying the
        named ones explain the whole figure. A share of a bill-wide offer is the usual remainder. */
-    var named = r2(c.offs.reduce(function(t, a){ return t + Math.abs(a.amount); }, 0));
-    c.save_unnamed = r2(c.save - named);
+    var named = rmoney(c.offs.reduce(function(t, a){ return t + Math.abs(a.amount); }, 0));
+    c.save_unnamed = rmoney(c.save - named);
     c.off_label = (c.offs[0] && (c.offs[0].label || c.offs[0].why)) || '';
     /* ⚠️ A RATE ON A CASH MEMO IS A CLAIM WE CANNOT MAKE. The engine still answers, but a shop that charges no GST shows none —
        otherwise the line said "GST 18%" under a total that contained no tax at all. */
@@ -18362,9 +18364,9 @@ function offerRate(offerId){
  */
 function lineFigures(c){
   var price = Number(c.unitPrice != null ? c.unitPrice : c.price) || 0;
-  var gross = Number(c.gross != null ? c.gross : r2(price * (Number(c.qty) || 0))) || 0;
-  var off   = r2(Math.max(0, (Number(c.save) || 0) - (Number(c.save_unnamed) || 0)));
-  return { price: price, gross: gross, off: off, value: r2(gross - off) };
+  var gross = Number(c.gross != null ? c.gross : rmoney(price * (Number(c.qty) || 0))) || 0;
+  var off   = rmoney(Math.max(0, (Number(c.save) || 0) - (Number(c.save_unnamed) || 0)));
+  return { price: price, gross: gross, off: off, value: rmoney(gross - off) };
 }
 /**
  * ── ⭐⭐ WHICH COLUMNS THIS COUNTER SHOWS (Athi, observation 6, division E) ──────────────────────────────────
@@ -19172,8 +19174,8 @@ function rwPointsFor(amount){
  */
 function rwEncash(){
   if (RW.spend) return;                            /* pressing twice must not take twice */
-  var m = billMoney(), taken = PARTS.reduce(function(a,x){ return r2(a + x.amount); }, 0);
-  var left = r2(m.net - taken);
+  var m = billMoney(), taken = PARTS.reduce(function(a,x){ return rmoney(a + x.amount); }, 0);
+  var left = rmoney(m.net - taken);
   var pts = Math.min(RW.points, rwPointsFor(left));
   var amt = rwWorth(pts);
   if (!(pts > 0) || !(amt > 0)) { say('There is nothing that can be encashed against this bill.'); return; }
@@ -21245,7 +21247,7 @@ function savedParts(){
     /* grouped by NAME: one offer can land on several lines, and a shopkeeper counts offers, not adjustments */
     var nm = a.label || a.kind || 'Offer';
     if (by[nm] === undefined) { by[nm] = 0; order.push(nm); }
-    by[nm] = r2(by[nm] + Math.abs(a.amount));
+    by[nm] = rmoney(by[nm] + Math.abs(a.amount));
   });
   return order.map(function(nm){ return { name: nm, off: by[nm] }; });
 }
@@ -21275,9 +21277,9 @@ function paintTotals(){
      concatenated cannot be told about a footnote that has not been worked out yet. */
   var brk = savedBreakdown();
   var tendered = Number(document.getElementById('tendered').value) || 0;
-  var taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
-  var stillOwed = cashDue(r2(m.net - taken), payWayId(PICKED));   /* TILL-B2: the cash that pays the rest is owed the rounded amount */
-  var change = r2(tendered - stillOwed);
+  var taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
+  var stillOwed = cashDue(rmoney(m.net - taken), payWayId(PICKED));   /* TILL-B2: the cash that pays the rest is owed the rounded amount */
+  var change = rmoney(tendered - stillOwed);
   document.getElementById('change').textContent = PARTS.length
     ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(stillOwed))
     : (tendered ? (change >= 0 ? 'change ' + money(change) : 'short ' + money(-change)) : '');
@@ -21308,8 +21310,8 @@ function paintTotals(){
    * ⚠️ NOTHING IS RECOMPUTED. `lineFigures` and `billMoney` both read the same evaluation the lines were priced
    * from; this only states the step between them, so the two figures can be checked against each other.
    */
-  var lineSum  = r2(CART.reduce(function(t, c){ return t + lineFigures(c).value; }, 0));
-  var billWide = r2(CART.reduce(function(t, c){ return t + (Number(c.save_unnamed) || 0); }, 0));
+  var lineSum  = rmoney(CART.reduce(function(t, c){ return t + lineFigures(c).value; }, 0));
+  var billWide = rmoney(CART.reduce(function(t, c){ return t + (Number(c.save_unnamed) || 0); }, 0));
   var wideRows = (billWide > 0.004)
     ? '<div class="t" data-testid="till-nets-total"><span>Lines total</span><span>' + money(lineSum) + '</span></div>'
       + '<div class="t save" data-testid="till-billwide"><span>Offer on the whole bill</span><span>−' + money(billWide) + '</span></div>'
@@ -21360,10 +21362,10 @@ function paintTotals(){
 var PARTS = [];
 function addPart(){
   var amt = Number(document.getElementById('tendered').value);
-  var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
-  var left = r2(m.net - taken);
+  var m = billMoney(), taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
+  var left = rmoney(m.net - taken);
   if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
-  var coinAmount = cashDue(r2(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED));
+  var coinAmount = cashDue(rmoney(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED));
   if (!(coinAmount > 0)) { say('That rounds to nothing in ' + PICKED + ' - type at least the smallest coin.'); return; }   /* CTRY-77: never a Cash 0.00 part */
   /* CTRY-77: a CASH part is TAKEN at the pack's coin step like the part that pays the rest (cashDue) — typed 10.02 on a 10.02 bill goes out 10.00, cash_round -0.02 follows from cashRoundOf */
   PARTS.push({ how: PICKED, amount: coinAmount });
@@ -21741,8 +21743,8 @@ function orderReviewPaint(){
    */
   var live = (ORDER_ID === o.id) ? CART : [];
   var lines = stored.concat(live);
-  var liveTotal = live.reduce(function(a, c){ return r2(a + (c.net != null ? c.net : r2((Number(c.price)||0) * (Number(c.qty)||0)))); }, 0);
-  var total = r2(orderTotals(o).total + liveTotal);
+  var liveTotal = live.reduce(function(a, c){ return rmoney(a + (c.net != null ? c.net : rmoney((Number(c.price)||0) * (Number(c.qty)||0)))); }, 0);
+  var total = rmoney(orderTotals(o).total + liveTotal);
   var waiting = orderTotals(o).waiting;
   var body = document.getElementById('orderdlgbody');
   if (body) body.innerHTML =
@@ -21752,7 +21754,7 @@ function orderReviewPaint(){
           + '<b>' + esc(l.qty) + ' × ' + esc(l.name) + '</b>'
           + '<span class="u">' + (!sent ? 'typed, not sent'
               : (l.ready ? 'ready' : 'in the ' + esc(says('station')))) + '</span>'
-          + '<i>' + esc(money(l.net != null ? l.net : r2((Number(l.price)||0) * (Number(l.qty)||0)))) + '</i>'
+          + '<i>' + esc(money(l.net != null ? l.net : rmoney((Number(l.price)||0) * (Number(l.qty)||0)))) + '</i>'
           + '</div>';
       }).join('') + '</div>'
       : '<p class="u" data-testid="till-order-dlg-none">Nothing on it yet.</p>')
@@ -21946,8 +21948,8 @@ function kotHTML(lines, n, at){
     + '<hr><div>' + countWords(lines) + '</div></div>';
 }
 function paintPays(){
-  var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
-  var left = r2(m.net - taken);
+  var m = billMoney(), taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
+  var left = rmoney(m.net - taken);
   /* ⚠️ FROM THE SHOP. The list used to be a literal, so a Gulf shop was offered UPI it cannot take and a shop with
      no declared payee was offered a QR with no address in it. Cash and Card are always there; a scheme is not. */
   var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay.slice()
@@ -22023,7 +22025,7 @@ function payLink(way, amount, ref){
     var name = (S && S.shop && (S.shop.name || S.shop.legal_name)) || '';
     return 'upi://pay?pa=' + encodeURIComponent(way.payee)
       + '&pn=' + encodeURIComponent(String(name).slice(0, 60))
-      + (amount ? '&am=' + encodeURIComponent(String(r2(amount))) : '')
+      + (amount ? '&am=' + encodeURIComponent(String(rmoney(amount))) : '')
       + (shopCur() ? '&cu=' + encodeURIComponent(shopCur()) : '')   /* T2-NATDEF: the stated money only — UPI reads a missing cu as its own */
       + '&tn=' + encodeURIComponent('CB-' + String(ref || '').slice(0, 12));
   }
@@ -22096,8 +22098,8 @@ async function finish(){
     /* ⚠️ a draft or a stale pick can still say On credit after the ledger went off — refused here, not only hidden */
     if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return { ok: false }; }
     if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return { ok: false }; }
-    var takenC = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
-    var owedNow = r2(m.net - takenC);
+    var takenC = rmoney(parts.reduce(function(a,p){ return a + p.amount; }, 0));
+    var owedNow = rmoney(m.net - takenC);
     if (owedNow > 0) {
       await creditSinceRefresh(cust);
       var chk = creditLimitCheck(cust, owedNow);
@@ -22107,7 +22109,7 @@ async function finish(){
     }
   }
   else if (!(parts = tenderParts(parts, m.net, tendered))) return { ok: false };   /* the rest in the picked way; short is said (tenderParts) */
-  var paid = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
+  var paid = rmoney(parts.reduce(function(a,p){ return a + p.amount; }, 0));
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
        decided it, so a reprint next year explains itself without the definition — the same reason a slab travels. */
@@ -22192,7 +22194,7 @@ function billLineOf(cartLine){
        nobody can re-derive which offers applied. Kept beside off_label rather than replacing it, so every existing reader keeps working. */
     offers:(cartLine.offs||[]).map(function(a){
       return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
-               off:r2(Math.abs(a.amount)), why:a.why||null }; }),
+               off:rmoney(Math.abs(a.amount)), why:a.why||null }; }),
     save_unnamed:cartLine.save_unnamed || 0,
     /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
     mods:(cartLine.mods && cartLine.mods.length ? cartLine.mods : null),
@@ -22240,8 +22242,8 @@ function dayAddIssued(sheet, bill){
   if (issued) Object.keys(issued).forEach(function(rate){
     var figures = issued[rate] || {}; if (!Number(rate)) return;
     sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
-    sheet.rate[rate].base = r2(sheet.rate[rate].base + (Number(figures.base != null ? figures.base : figures.taxable) || 0));
-    sheet.rate[rate].tax = r2(sheet.rate[rate].tax + (Number(figures.tax) || 0));
+    sheet.rate[rate].base = rmoney(sheet.rate[rate].base + (Number(figures.base != null ? figures.base : figures.taxable) || 0));
+    sheet.rate[rate].tax = rmoney(sheet.rate[rate].tax + (Number(figures.tax) || 0));
   });
   return issued;
 }
@@ -22250,8 +22252,8 @@ function dayAddSplit(sheet, line){
   var rate = Number(line.gst_rate) || 0, lineNet = Number(line.net) || 0; if (!rate) return;
   var split = CBTax.splitLineTax({ net: lineNet, rate: rate, priceIncludesTax: taxIncluded() });
   sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
-  sheet.rate[rate].base = r2(sheet.rate[rate].base + split.assessable);
-  sheet.rate[rate].tax = r2(sheet.rate[rate].tax + split.tax);
+  sheet.rate[rate].base = rmoney(sheet.rate[rate].base + split.assessable);
+  sheet.rate[rate].tax = rmoney(sheet.rate[rate].tax + split.tax);
 }
 function dayCloseSheet(rows){
   /**
@@ -22295,27 +22297,27 @@ function dayCloseSheet(rows){
   back.forEach(function(b){
     /* ⚠️ per-tender refunds are this sheet's own — the engine nets them into `by`, and a drawer count must not */
     ((b.refunds) || []).forEach(function(x){
-      d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
+      d.refunded[x.how] = rmoney((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
     });
   });
   spent.forEach(function(b){
-    if (!rt0) d.expensed = r2(d.expensed + Math.abs(Number(b.total) || 0));
+    if (!rt0) d.expensed = rmoney(d.expensed + Math.abs(Number(b.total) || 0));
     /* ⚠️ per-tender expenses are this sheet's own, same reasoning as refunds two lines up */
     ((b.spent) || []).forEach(function(x){
-      d.spentby[x.how] = r2((d.spentby[x.how] || 0) + (Number(x.amount) || 0));
+      d.spentby[x.how] = rmoney((d.spentby[x.how] || 0) + (Number(x.amount) || 0));
     });
   });
   (rows||[]).slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at)); }).forEach(function(b){
     /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series, and so —
        [till expenses] — does an expense's ('EXP') */
     if (!isReturnRow(b) && !isExpenseRow(b)) { if (!d.first) d.first = b.no; d.last = b.no; }
-    d.total = r2(d.total + (b.total||0)); d.saved = r2(d.saved + (b.saved||0));
-    d.gross = r2(d.gross + (b.total||0) + (b.saved||0));
-    d.taxable = r2(d.taxable + (b.taxable||0)); d.tax = r2(d.tax + (b.tax||0));
+    d.total = rmoney(d.total + (b.total||0)); d.saved = rmoney(d.saved + (b.saved||0));
+    d.gross = rmoney(d.gross + (b.total||0) + (b.saved||0));
+    d.taxable = rmoney(d.taxable + (b.taxable||0)); d.tax = rmoney(d.tax + (b.tax||0));
     if (b.kind === 'tax') d.taxed = true;
-    (b.payments||[]).forEach(function(p){ d.modes[p.how] = r2((d.modes[p.how]||0) + (p.amount||0)); });
+    (b.payments||[]).forEach(function(p){ d.modes[p.how] = rmoney((d.modes[p.how]||0) + (p.amount||0)); });
     /* ⭐ the habit, as a number. A drawer that is short by exactly these bills is not a mystery, it is a routine. */
-    if (b.payment_asked === false) { d.unasked = (d.unasked || 0) + 1; d.unasked_total = r2((d.unasked_total || 0) + (b.total || 0)); }
+    if (b.payment_asked === false) { d.unasked = (d.unasked || 0) + 1; d.unasked_total = rmoney((d.unasked_total || 0) + (b.total || 0)); }
     /**
      * ⚠️⚠️⚠️ NEVER FOLD "NOBODY" INTO SOMEBODY ([design-handoff/A-screens/04-todays-bills §6.3]). This used
      * to name the bucket 'the shop' for a bill with no `by` at all — the exact hole the package's `desktop3`
@@ -22327,17 +22329,17 @@ function dayCloseSheet(rows){
     /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not — [till expenses] nor
        is paying rent a sale, however it went through the same person's hands */
     if (!isReturnRow(b) && !isExpenseRow(b)) d.people[who].bills++;
-    d.people[who].total = r2(d.people[who].total + (b.total||0));
+    d.people[who].total = rmoney(d.people[who].total + (b.total||0));
     var issued = dayAddIssued(d, b);
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
       d.items[k] = d.items[k] || { qty:0, net:0, unit:l.unit||'' };
       d.items[k].qty = r2(d.items[k].qty + (Number(l.qty)||0));
-      d.items[k].net = r2(d.items[k].net + (Number(l.net)||0));
+      d.items[k].net = rmoney(d.items[k].net + (Number(l.net)||0));
       if (!issued) dayAddSplit(d, l);
     });
   });
-  d.cash = r2(d.modes.Cash || 0);
+  d.cash = rmoney(d.modes.Cash || 0);
   d.float = (WHO && WHO.float) || 0;
   /**
    * ⚠️⚠️ CASH HANDED BACK HAS LEFT THE DRAWER. Nothing here produces a negative Cash mode — a refund is recorded
@@ -22348,9 +22350,9 @@ function dayCloseSheet(rows){
    * array, never 'payments', so rent paid in cash has to be told here or the drawer will look short by exactly
    * what left it for a reason that was never a refund.
    */
-  d.cash_back = r2(d.refunded.Cash || 0);
-  d.cash_out = r2(d.spentby.Cash || 0);
-  d.expected_cash = r2(d.cash + d.float - d.cash_back - d.cash_out);
+  d.cash_back = rmoney(d.refunded.Cash || 0);
+  d.cash_out = rmoney(d.spentby.Cash || 0);
+  d.expected_cash = rmoney(d.cash + d.float - d.cash_back - d.cash_out);
   return d;
 }
 /** CTR-196 — a credit note split into money handed back and money only taken off what is owed: the same rule as lib/rollup splitNote (a note with no refunds field counts wholly as a refund) */
@@ -22359,8 +22361,8 @@ function creditNoteSplit(note){
   if (!Array.isArray(note.refunds)) return { refunded: whole, reduced: 0 };
   var paid = 0;
   for (var at = 0; at < note.refunds.length; at++) paid += Number(note.refunds[at].amount) || 0;
-  var refunded = Math.min(r2(paid), whole);
-  return { refunded: refunded, reduced: r2(whole - refunded) };
+  var refunded = Math.min(rmoney(paid), whole);
+  return { refunded: refunded, reduced: rmoney(whole - refunded) };
 }
 /** the day's returned money and reduced money: the engine's figures, else the same split over the notes (CTR-196) */
 function returnedFigures(totals, notes){
@@ -22368,7 +22370,7 @@ function returnedFigures(totals, notes){
   var out = { returned: 0, reduced: 0 };
   for (var at = 0; at < notes.length; at++) {
     var split = creditNoteSplit(notes[at]);
-    out.returned = r2(out.returned + split.refunded); out.reduced = r2(out.reduced + split.reduced);
+    out.returned = rmoney(out.returned + split.refunded); out.reduced = rmoney(out.reduced + split.reduced);
   }
   return out;
 }
@@ -22380,7 +22382,7 @@ function dayCloseHTML(d){
   /* ⭐ a returns block, only when there were returns — a line of zeroes every day trains people to skip it */
   var backBlock = d.returns
     ? '<hr><div><b>RETURNS</b></div>'
-      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(r2(d.returned + d.reduced)) + '</span></div>' + reducedRowHTML(d)
+      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(rmoney(d.returned + d.reduced)) + '</span></div>' + reducedRowHTML(d)
       + Object.keys(d.refunded).sort().map(function(how){
           return '<div>back in ' + esc(how) + '<span style="float:right">' + money(d.refunded[how]) + '</span></div>';
         }).join('')
@@ -22515,7 +22517,7 @@ async function dayServerCheck(rows){
   h.bills.filter(function(b){ return counted(b) && dayKeyOf(b.at) === day; }).forEach(function(b){ theirs[String(b.no)] = b; });
   var more = Object.keys(theirs).filter(function(k){ return !mine[k]; }).map(function(k){ return theirs[k]; });
   var fewer = Object.keys(mine).filter(function(k){ return !theirs[k]; }).map(function(k){ return mine[k]; });
-  var sum = function(l){ return l.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0); };
+  var sum = function(l){ return l.reduce(function(a, b){ return rmoney(a + (Number(b.total) || 0)); }, 0); };
   /* ACC-255: a refund is counted APART from the sales — one signed sum of both would read as a bill total that no bill has */
   var sales = function(list){ return list.filter(function(bill){ return !isReturnRow(bill); }); }, back = function(list){ return list.filter(isReturnRow); };
   /* an old note stored no amount: when none of the refunds carries one the sum is null (the bare word), never ₹0.00 */
@@ -23171,7 +23173,7 @@ function rcvBalLine(l){
   var out = '<span class="u" data-testid="rcv-balance">Have ' + haveQty + ' ' + esc(l.unit) + ' @ ' + money(haveCost);
   if (addQty > 0) {
     var newQty = r2(haveQty + addQty);
-    var newAvg = newQty ? r2((haveQty * haveCost + addQty * addCost) / newQty) : 0;
+    var newAvg = newQty ? rmoney((haveQty * haveCost + addQty * addCost) / newQty) : 0;
     out += ' → ' + newQty + ' ' + esc(l.unit) + ' @ ' + money(newAvg) + ' avg';
   }
   return out + '</span>';
@@ -23214,7 +23216,7 @@ function paintReceive(){
   paintRcvCosts(); paintRcvSum();
   var b = document.getElementById('rcv_save'); if (b) b.disabled = !RCV.lines.filter(function(l){ return l.counted > 0; }).length;
 }
-function rcvLineValue(l){ return r2((Number(l.counted) || 0) * (Number(l.rate) || 0)); }
+function rcvLineValue(l){ return rmoney((Number(l.counted) || 0) * (Number(l.rate) || 0)); }
 /** ⭐ the rate this product attracts, asked of the SAME engine the sell side asks — never a second opinion */
 function rcvDefaultRate(i){
   if (!i || !window.CBTax || !S || !shopTax().charges) return null;
@@ -23248,10 +23250,10 @@ function rcvTax(){
   var taxable = 0, tax = 0, byRate = {};
   (RCV.lines || []).forEach(function(l){
     var t = rcvLineTax(l);
-    taxable = r2(taxable + t.taxable); tax = r2(tax + t.tax);
+    taxable = rmoney(taxable + t.taxable); tax = rmoney(tax + t.tax);
     if (t.rate) { byRate[t.rate] = byRate[t.rate] || { taxable: 0, tax: 0 };
-                  byRate[t.rate].taxable = r2(byRate[t.rate].taxable + t.taxable);
-                  byRate[t.rate].tax = r2(byRate[t.rate].tax + t.tax); }
+                  byRate[t.rate].taxable = rmoney(byRate[t.rate].taxable + t.taxable);
+                  byRate[t.rate].tax = rmoney(byRate[t.rate].tax + t.tax); }
   });
   var ours = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
   var theirs = String(RCV.vendor_state || '').trim();
@@ -23259,16 +23261,16 @@ function rcvTax(){
   var heads = [];
   if (supply !== 'unknown') {
     Object.keys(byRate).sort(function(a, b){ return Number(a) - Number(b); }).forEach(function(rt){
-      var t = byRate[rt].tax, half = r2(t / 2);
+      var t = byRate[rt].tax, half = rmoney(t / 2);
       if (supply === 'inter') heads.push({ name:'IGST', rate:Number(rt), amount:t });
       else { heads.push({ name:'CGST', rate:Number(rt) / 2, amount:half });
-             heads.push({ name:'SGST', rate:Number(rt) / 2, amount:r2(t - half) }); }
+             heads.push({ name:'SGST', rate:Number(rt) / 2, amount:rmoney(t - half) }); }
     });
   }
   return { taxable: taxable, tax: tax, byRate: byRate, supply: supply, heads: heads };
 }
-function rcvGoods(){ var t = 0; RCV.lines.forEach(function(l){ t = r2(t + rcvLineValue(l)); }); return t; }
-function rcvExtras(){ var c = RCV.costs; return r2((Number(c.freight)||0) + (Number(c.loading)||0) + (Number(c.duty)||0) + (Number(c.other)||0)); }
+function rcvGoods(){ var t = 0; RCV.lines.forEach(function(l){ t = rmoney(t + rcvLineValue(l)); }); return t; }
+function rcvExtras(){ var c = RCV.costs; return rmoney((Number(c.freight)||0) + (Number(c.loading)||0) + (Number(c.duty)||0) + (Number(c.other)||0)); }
 
 /**
  * ⭐⭐ LANDED COST, APPORTIONED BY VALUE (the spec, §12). ₹2,000 of freight belongs to the goods — the expensive lines carry more of
@@ -23278,16 +23280,16 @@ function rcvExtras(){ var c = RCV.costs; return r2((Number(c.freight)||0) + (Num
  * and nobody can say where it went.
  */
 function apportion(values, amount){
-  var total = 0; values.forEach(function(v){ total = r2(total + (Number(v) || 0)); });
+  var total = 0; values.forEach(function(v){ total = rmoney(total + (Number(v) || 0)); });
   var amt = Number(amount) || 0;
   if (!(amt > 0)) return values.map(function(){ return 0; });
   if (!(total > 0)) return values.map(function(){ return 0; });
-  var out = values.map(function(v){ return r2(amt * (Number(v) || 0) / total); });
-  var sum = 0; out.forEach(function(x){ sum = r2(sum + x); });
-  var drift = r2(amt - sum);
+  var out = values.map(function(v){ return rmoney(amt * (Number(v) || 0) / total); });
+  var sum = 0; out.forEach(function(x){ sum = rmoney(sum + x); });
+  var drift = rmoney(amt - sum);
   if (drift !== 0){
     var big = 0; values.forEach(function(v, i){ if ((Number(v) || 0) > (Number(values[big]) || 0)) big = i; });
-    out[big] = r2(out[big] + drift);
+    out[big] = rmoney(out[big] + drift);
   }
   return out;
 }
@@ -23296,7 +23298,7 @@ function rcvLanded(){
   var share = apportion(vals, rcvExtras());
   return RCV.lines.map(function(l, n){
     var qty = Number(l.counted) || 0;
-    var cost = r2(rcvLineValue(l) + share[n]);
+    var cost = rmoney(rcvLineValue(l) + share[n]);
     return { share: share[n], cost: cost, unit_cost: qty > 0 ? Math.round((cost / qty) * 10000) / 10000 : null };
   });
 }
@@ -23344,7 +23346,7 @@ function rcvBillCheck(total, taxable, tax, no){
 function paintRcvSum(){
   var el = document.getElementById('rcv_sum'); if (!el) return;
   if (RCV.hidden) { el.innerHTML = rcvHiddenSum(); return; }   /* RAIL-146c */
-  var goods = rcvGoods(), extra = rcvExtras(), landed = r2(goods + extra);
+  var goods = rcvGoods(), extra = rcvExtras(), landed = rmoney(goods + extra);
   /**
    * ⭐⭐ THE TAX PAID IS SHOWN SEPARATELY FROM THE GOODS, always. It is not part of what the stock cost — it is
    * money the shop can set against what it collects — and adding it into the landed cost would overstate every
@@ -23396,7 +23398,7 @@ async function rcvConfirm(){
     vendor: { name: (RCV.vendor || '').trim() || 'Not named', party_id: RCV.vendor_party || null },
     their_bill: { no: (RCV.bill_no || '').trim() || null, date: RCV.bill_date || null, total: RCV.bill_total },
     against: RCV.task ? { chit_id: RCV.task.chit_id, party: RCV.task.party, subject: RCV.task.subject } : null,
-    costs: RCV.costs, goods: rcvGoods(), extras: rcvExtras(), landed_total: r2(rcvGoods() + rcvExtras()),
+    costs: RCV.costs, goods: rcvGoods(), extras: rcvExtras(), landed_total: rmoney(rcvGoods() + rcvExtras()),
     /**
      * ⭐ THE INPUT TAX ON THIS CONSIGNMENT, recorded with its heads where they can be known.
      * ⚠️ supply is 'unknown' when the supplier's state was not given, and the heads are then EMPTY rather than
@@ -23670,18 +23672,18 @@ function cashSaysHTML(left){
 }
 /** what was still owed when the last part was taken — the rest it paid, before any rounding */
 function restBeforeLast(parts, billNet){
-  var last = parts[parts.length - 1] || {}, paid = r2(parts.reduce(function(sum, part){ return sum + part.amount; }, 0));
-  return r2(billNet - r2(paid - (Number(last.amount) || 0)));
+  var last = parts[parts.length - 1] || {}, paid = rmoney(parts.reduce(function(sum, part){ return sum + part.amount; }, 0));
+  return rmoney(billNet - rmoney(paid - (Number(last.amount) || 0)));
 }
 /** the change handed back: what was tendered over what the last way was owed (rounded when it is the cash that rounds) */
 function changeOf(tendered, billNet, parts){
   var last = parts[parts.length - 1] || {};
-  return r2(Math.max(0, (tendered || 0) - cashDue(restBeforeLast(parts, billNet), payWayId(last.how))));
+  return rmoney(Math.max(0, (tendered || 0) - cashDue(restBeforeLast(parts, billNet), payWayId(last.how))));
 }
 /** TILL-B2: the rounding this bill took — the cash part over what it was owed (signed, major units); 0 when nothing rounded */
 function cashRoundOf(parts, billNet){
   var last = parts[parts.length - 1] || {}, rest = restBeforeLast(parts, billNet);
-  return parts.length && cashDue(rest, payWayId(last.how)) === last.amount && last.amount !== rest ? r2(last.amount - rest) : 0;
+  return parts.length && cashDue(rest, payWayId(last.how)) === last.amount && last.amount !== rest ? rmoney(last.amount - rest) : 0;
 }
 /**
  * the payments a bill not On credit is saved with: the parts already taken plus the picked way for the rest — the rest at cashDue (rounded
@@ -23691,10 +23693,10 @@ function cashRoundOf(parts, billNet){
  * credit — never dropped. (An empty box still means "exactly the total", the ordinary one-keystroke sale.)
  */
 function tenderParts(parts, billNet, tendered){
-  var taken = r2(parts.reduce(function(sum, part){ return sum + part.amount; }, 0)), rest = cashDue(r2(billNet - taken), payWayId(PICKED));
+  var taken = rmoney(parts.reduce(function(sum, part){ return sum + part.amount; }, 0)), rest = cashDue(rmoney(billNet - taken), payWayId(PICKED));
   if (!parts.length) {
-    if (tendered > 0 && r2(rest - tendered) >= 0.01) {
-      say(money(r2(rest - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way' + (creditCust() ? ', or put it On credit.' : '.'));
+    if (tendered > 0 && rmoney(rest - tendered) >= 0.01) {
+      say(money(rmoney(rest - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way' + (creditCust() ? ', or put it On credit.' : '.'));
       return null;
     }
     return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];
@@ -23963,9 +23965,9 @@ function taxSummaryHTML(bill, t, dash){
   var v = bill.invoice && bill.invoice.ValDtls;
   var tb = 0, t1 = 0, t2 = 0;
   var body = rates.map(function(rt){
-    var b = by[rt].base, tx = by[rt].tax, half = (by[rt].cgst != null) ? by[rt].cgst : r2(tx / 2);
-    var sg = (by[rt].sgst != null) ? by[rt].sgst : r2(tx - half);
-    if (!v) { tb = r2(tb + b); t1 = r2(t1 + (inter ? tx : half)); t2 = r2(t2 + sg); }
+    var b = by[rt].base, tx = by[rt].tax, half = (by[rt].cgst != null) ? by[rt].cgst : rmoney(tx / 2);
+    var sg = (by[rt].sgst != null) ? by[rt].sgst : rmoney(tx - half);
+    if (!v) { tb = rmoney(tb + b); t1 = rmoney(t1 + (inter ? tx : half)); t2 = rmoney(t2 + sg); }
     if (inter) return row(rt + '%', money(b), money(by[rt].igst != null ? by[rt].igst : tx), '');
     return row(rt + '%', money(b), money(half), money(sg));
   }).join('');
@@ -25693,7 +25695,7 @@ function billHow(b){
     if (!p || !p.how) return;
     var how = String(p.how);
     if (!(how in m)) { m[how] = 0; order.push(how); }
-    m[how] = r2(m[how] + (Number(p.amount) || 0));
+    m[how] = rmoney(m[how] + (Number(p.amount) || 0));
   });
   return order.map(function(how){ return { how: how, amount: m[how] }; });
 }
@@ -25822,7 +25824,7 @@ async function openBills(keepOpen){
         });
         return byHour.map(function(g, gi){
           /* ⭐ the hour's own count and money, so the head answers without being opened */
-          var sum = g.rows.reduce(function(t, x){ return r2(t + (Number(x.total) || 0)); }, 0);
+          var sum = g.rows.reduce(function(t, x){ return rmoney(t + (Number(x.total) || 0)); }, 0);
           var n = g.rows.length;
           /* ⚠️ anything not normal is counted ON the head, or a folded hour could hide a refusal */
           var odd = g.rows.filter(function(x){ return stateOf(x) !== 'sent'; }).length;
@@ -25995,7 +25997,7 @@ function retBack(bill, n){
   retPriorOf(bill).forEach(function(cn){
     (cn.lines || []).forEach(function(cl){
       if (!cl || Number(cl.from_line) !== n) return;
-      Object.keys(out).forEach(function(k){ out[k] = r2(out[k] + Math.abs(Number(cl[k]) || 0)); });
+      Object.keys(out).forEach(function(k){ out[k] = rmoney(out[k] + Math.abs(Number(cl[k]) || 0)); });
     });
   });
   return out;
@@ -26101,8 +26103,8 @@ function retCustomerName(bill){ return (bill.customer && bill.customer.name && !
 function retReducedBefore(bill){
   var taken = 0;
   retPriorOf(bill).forEach(function(note){
-    var paid = 0; (note.refunds || []).forEach(function(part){ paid = r2(paid + Math.abs(Number(part.amount) || 0)); });
-    taken = r2(taken + Math.max(0, Math.abs(Number(note.total) || 0) - paid));
+    var paid = 0; (note.refunds || []).forEach(function(part){ paid = rmoney(paid + Math.abs(Number(part.amount) || 0)); });
+    taken = rmoney(taken + Math.max(0, Math.abs(Number(note.total) || 0) - paid));
   });
   return taken;
 }
@@ -26110,7 +26112,7 @@ function retReducedBefore(bill){
 function retCustomerOwes(identityId){
   var customer = ((S && S.customers) || []).filter(function(entry){ return entry && entry.identity_id === identityId; })[0];
   if (!customer || customer.balance_minor == null || customer.balance_minor === '') return null;
-  return r2(booksMajor(customer.balance_minor) + (CREDIT_SINCE[identityId] || 0));
+  return rmoney(booksMajor(customer.balance_minor) + (CREDIT_SINCE[identityId] || 0));
 }
 /** the sentence that says why "Reduce what they owe" cannot be used (empty when it can) */
 function retOwedRefusal(identityId, max, total){
@@ -26122,11 +26124,11 @@ function retOwedRefusal(identityId, max, total){
 /** is "Reduce what they owe" offered for this bill, does a return of `total` fit, and the sentence that says why not (or what it will do) */
 function retOwedFor(bill, total){
   var credit = 0;
-  ((bill && bill.payments) || []).forEach(function(part){ if (part && part.how === 'On credit') credit = r2(credit + (Number(part.amount) || 0)); });
+  ((bill && bill.payments) || []).forEach(function(part){ if (part && part.how === 'On credit') credit = rmoney(credit + (Number(part.amount) || 0)); });
   if (!(credit > 0)) return { offered: false, fits: false, max: 0, sentence: '' };
   var identityId = bill.customer && bill.customer.identity_id;
   var owes = identityId ? retCustomerOwes(identityId) : null;
-  var left = r2(credit - retReducedBefore(bill));
+  var left = rmoney(credit - retReducedBefore(bill));
   var max = owes == null ? left : Math.min(left, Math.max(0, owes));
   var refusal = retOwedRefusal(identityId, max, total);
   return { offered: true, fits: !refusal, max: max,
@@ -26160,9 +26162,9 @@ function retMoney(){
      */
     var back = retBack(RET_FOR, n), last = q >= retLeft(RET_FOR, n);
     var part = function(k){
-      var orig = Math.abs(Number(l[k]) || 0), left = r2(orig - back[k]);
-      var v = last ? left : Math.min(r2(orig * share), left);
-      return r2(Math.max(0, v)) * ((Number(l[k]) || 0) < 0 ? -1 : 1);
+      var orig = Math.abs(Number(l[k]) || 0), left = rmoney(orig - back[k]);
+      var v = last ? left : Math.min(rmoney(orig * share), left);
+      return rmoney(Math.max(0, v)) * ((Number(l[k]) || 0) < 0 ? -1 : 1);
     };
     var net = part('net'), taxable = part('taxable'), tax = part('tax'), save = part('save');
     var taxUndecided = l.tax === null; /* ACC-191: the original line carried tax null = not decided; its return does too */
@@ -26178,13 +26180,13 @@ function retMoney(){
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net, gst_rate: rt || l.gst_rate,
                                           gross: -part('gross'),
                                           taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }));
-    out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
-    out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
+    out.total = rmoney(out.total + net); out.taxable = rmoney(out.taxable + taxable);
+    out.tax = rmoney(out.tax + tax); out.saved = rmoney(out.saved + save);
     out.count = r2(out.count + q);
     if (rt) {
       out.byRate[rt] = out.byRate[rt] || { taxable: 0, tax: 0 };
-      out.byRate[rt].taxable = r2(out.byRate[rt].taxable + taxable);
-      out.byRate[rt].tax = r2(out.byRate[rt].tax + tax);
+      out.byRate[rt].taxable = rmoney(out.byRate[rt].taxable + taxable);
+      out.byRate[rt].tax = rmoney(out.byRate[rt].tax + tax);
     }
   });
   if (out.taxUndecided) { out.tax = null; Object.keys(out.byRate).forEach(function(rate){ out.byRate[rate].tax = null; }); }
@@ -26388,7 +26390,7 @@ function expTouch(){
  * when the line is there — never lost to the line being down, never mistaken for a sale.
  */
 async function expIssue(){
-  var what = EXP_WHAT.trim(), amount = r2(Number(EXP_AMOUNT) || 0);
+  var what = EXP_WHAT.trim(), amount = rmoney(Number(EXP_AMOUNT) || 0);
   if (!what) { toastLine('Say what this expense is for first.'); return; }
   if (!(amount > 0)) { toastLine('Give it a real amount first.'); return; }
   if (await tillStopped()) return;
@@ -26469,11 +26471,11 @@ function subPaint(){
  *  when the line is there. Unlike an expense, this IS a sale — see chitOfSubscription()'s own comment. */
 /** CTRY-77: a CASH subscription is TAKEN at the pack's coin step like a bill (cashDue); cash_round is what the coin changed, as on a bill (absent when nothing rounds) */
 function subTaken(amount){
-  var taken = cashDue(amount, payWayId(SUB_HOW)), moved = r2(taken - amount);
+  var taken = cashDue(amount, payWayId(SUB_HOW)), moved = rmoney(taken - amount);
   return { payments: [{ how: SUB_HOW, amount: taken }], cash_round: moved ? moved : undefined };
 }
 async function subIssue(){
-  var what = SUB_WHAT.trim(), amount = r2(Number(SUB_AMOUNT) || 0), cadence = Number(SUB_CADENCE) || 0;
+  var what = SUB_WHAT.trim(), amount = rmoney(Number(SUB_AMOUNT) || 0), cadence = Number(SUB_CADENCE) || 0;
   if (!what) { toastLine('Say what this subscription/AMC is for first.'); return; }
   if (!(amount > 0)) { toastLine('Give it a real amount first.'); return; }
   if (!(cadence > 0)) { toastLine('Say how many days between each one first.'); return; }
@@ -26952,10 +26954,10 @@ async function paintEarlier(){
   if (r.offline) body = '<div style="color:var(--warn);padding:10px">The line is down, so earlier bills cannot be read. Today\'s are on this device and are still here.</div>';
   else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No counter bills in the last ' + days + ' days.</div>';
   else {
-    var total = rows.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0);
+    var total = rows.reduce(function(a,b){ return rmoney(a + (b.total||0)); }, 0);
     /* ⭐ M47 (walk 2026-10-10): "Mayur Bhavan: 10 bill(s)" left the other 15 unexplained — the split is WHO billed them */
     body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px" data-testid="till-earlier-head">' + rows.length + (rows.length === 1 ? ' bill · ' : ' bills · ') + money(total)
-      + (WHO && mine.length !== rows.length ? ' · ' + mine.length + ' by ' + esc(whoWord()) + ' ' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
+      + (WHO && mine.length !== rows.length ? ' · ' + mine.length + ' by ' + esc(whoWord()) + ' ' + money(mine.reduce(function(a,b){ return rmoney(a+(b.total||0)); },0)) : '') + '</div>'
       + rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-old-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(atShop(b.at)) + ' · '
@@ -26983,7 +26985,7 @@ function reprintOld(no){
   document.getElementById('billsdlg').close();
   b = slipOfRow(b);
   LAST = b;
-  showSlip(b, { gross: b.gross != null ? b.gross : r2((b.total||0) + (b.saved||0)) });
+  showSlip(b, { gross: b.gross != null ? b.gross : rmoney((b.total||0) + (b.saved||0)) });
 }
 /**
  * ⭐⭐⭐ A DUPLICATE IS THE SAME DOCUMENT AS THE ORIGINAL (2026-10-02). The row ChitBridge kept carries the stored invoice —
@@ -27009,7 +27011,7 @@ async function reprint(no){
   /* ⭐ a bill that carries its invoice is reprinted from it (slipOfRow); an older one in the shape it was saved in */
   if (b.invoice) b = slipOfRow(b);
   LAST = b;
-  showSlip(b, { gross: b.gross != null ? b.gross : r2((b.total||0) + (b.saved||0)) });
+  showSlip(b, { gross: b.gross != null ? b.gross : rmoney((b.total||0) + (b.saved||0)) });
 }
 /** the rest of ChitBridge is a different job — one door, never a panel (Athi, 2026-09-07) */
 function cbHome(){
@@ -28035,10 +28037,10 @@ async function handOver(){
   try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (e) { cbQuiet('handOver:1', e); }
   var mine = rows.filter(function(b){ return b.by && WHO && b.by.id === WHO.id; });
   var by = {};
-  mine.forEach(function(b){ (b.payments||[]).forEach(function(p){ by[p.how] = r2((by[p.how]||0) + (p.amount||0)); }); });
-  var cash = r2((by.Cash || 0) + (WHO && WHO.float ? WHO.float : 0));
+  mine.forEach(function(b){ (b.payments||[]).forEach(function(p){ by[p.how] = rmoney((by[p.how]||0) + (p.amount||0)); }); });
+  var cash = rmoney((by.Cash || 0) + (WHO && WHO.float ? WHO.float : 0));
   SHIFT = { by: { id: WHO.id, name: WHO.name }, from: WHO.since, to: new Date().toISOString(),
-            bills: mine.length, total: mine.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0),
+            bills: mine.length, total: mine.reduce(function(a,b){ return rmoney(a + (b.total||0)); }, 0),
             float: (WHO && WHO.float) || 0, modes: by, expected_cash: cash, till: tillId(),
             /* ⭐ breaks taken during the shift — minutes each, so the shift record is a record of the time too */
             breaks: (WHO && WHO.breaks) || [] };
@@ -28058,8 +28060,8 @@ async function shiftClose(){
   if (!SHIFT) return;
   var counted = Number((document.getElementById('shift_counted') || {}).value);
   if (!(counted >= 0) || (document.getElementById('shift_counted') || {}).value === '') { say('Type what is in the drawer first.'); return; }
-  SHIFT.counted_cash = r2(counted);
-  SHIFT.difference = r2(SHIFT.counted_cash - SHIFT.expected_cash);
+  SHIFT.counted_cash = rmoney(counted);
+  SHIFT.difference = rmoney(SHIFT.counted_cash - SHIFT.expected_cash);
   var word = SHIFT.difference === 0 ? 'exact' : (SHIFT.difference > 0 ? 'over by ' + money(SHIFT.difference) : 'short by ' + money(-SHIFT.difference));
   var modes = Object.keys(SHIFT.modes).map(function(k){ return k + ' ' + money(SHIFT.modes[k]); }).join(' · ') || 'nothing taken';
   document.getElementById('shiftbody').innerHTML =
@@ -28716,7 +28718,7 @@ function onlineOrdersPaint(){
  * own order screen, fed by the same /api/till/tasks read), never app.html, never a new tab.
  */
 function onlineOrderMoney(t){
-  return t.cost_hidden === true ? null : r2((t.lines || []).reduce(function(a, l){ return a + (Number(l.rate) || 0) * (Number(l.ordered) || 0); }, 0));   /* RAIL-146c: null = hidden, never ₹0 */
+  return t.cost_hidden === true ? null : rmoney((t.lines || []).reduce(function(a, l){ return a + (Number(l.rate) || 0) * (Number(l.ordered) || 0); }, 0));   /* RAIL-146c: null = hidden, never ₹0 */
 }
 function onlineOrderAge(at){
   var m = Math.max(0, Math.round((Date.now() - new Date(at).getTime()) / 60000));
