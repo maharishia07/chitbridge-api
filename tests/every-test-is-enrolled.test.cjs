@@ -34,14 +34,13 @@ const KNOWN_NOT_ENROLLED = {
   'governed-currency.test.js': 'QA-122: tests 11 and 12 are static regexes (API-58, RAIL-63); replace by a behavioural case on the resolved currency, then enrol (closes CTRY-28)',
   'iam-access.test.cjs': 'QA-122: 8 of 36 rows disagree with the spec (read-only and editable external 403; PATCH /actors/x answers 404 not 403; the Viewer/Commenter rows): judge test-stale vs product (cb-security) before any change',
   'products-bulk.test.cjs': 'QA-122: the bulk route moved behind catalogue-write.patchItems (CAT-W1); 8 static route pins to re-aim',
-  'query-shape.test.js': 'QA-122: the per-file query budget names files that changed, an EISDIR on a path that became a folder, the LIKE trigram check: refresh the budget with reasons',
   'requirements.test.js': 'QA-122: 3 pins (the rule half, the default filter, the backlog sort) predate the Test board decisions: fix to the current board',
   'test-board.test.js': 'QA-122: 4 static pins of the panel (run-kind options, token identity, size preset key, header divs) lost their anchors: re-aim to the current panel',
   'tier2-record.test.js': 'QA-122: 5 regex pins lost their text to reformatting and moves (offer total_value, allow-list catch, field-first read, face-save, MY_PAGE_MAX): re-aim each; behaviour unchanged on a first read',
   'type-tokens.test.js': 'QA-122: the type scale moved to appearanceApply; raw pixel sizes in 26 capability files become a budget (UX pack 12)'
 };
 /** the list may not grow: lower this when a row is deleted */
-const MAX_KNOWN = 12;
+const MAX_KNOWN = 11;
 
 const read = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
 const guardsText = read(path.join(API, 'scripts', 'guards.cjs'));

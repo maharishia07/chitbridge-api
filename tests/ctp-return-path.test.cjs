@@ -90,7 +90,8 @@ function rowsFor(sql, p) {
     return [{ seq: Math.max(0, ...mine.map((r) => r.seq)) + 1 }];
   }
   if (/^INSERT INTO ctp_event_out/.test(s)) {
-    W.out.push({ id: W.nextId++, chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: p[5], to_bridge_id: p[6], to_installation_key: p[7], status: 'pending', attempts: 0, last_error: null, created_at: new Date() });
+    /* ONE statement carries every party (unnest arrays in p[5..7]): one row per party, in order */
+    p[5].forEach((to, i) => W.out.push({ id: W.nextId++, chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: to, to_bridge_id: p[6][i], to_installation_key: p[7][i], status: 'pending', attempts: 0, last_error: null, created_at: new Date() }));
     return [{}];
   }
   if (/FROM ctp_event_out WHERE chit_id = \$1 AND from_entity_id = \$2 AND status <> 'accepted'/.test(s))

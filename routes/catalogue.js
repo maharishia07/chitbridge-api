@@ -1383,9 +1383,10 @@ async function recordSourcePenetration(entity, line_items, custLocality) {
   try {
     const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
     await withEntity(entity.identity_id, async (db) => {
-      for (const sk of srcs)
-        await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
-          sk,
+      /* ONE statement for every source (was one INSERT each) */
+      if (srcs.length)
+        await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) SELECT s, $2, $3 FROM unnest($1::text[]) WITH ORDINALITY AS u(s, n) ORDER BY u.n', [
+          srcs,
           entity.identity_id,
           custLocality
         ]);
