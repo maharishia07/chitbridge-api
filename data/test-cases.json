@@ -108764,6 +108764,31 @@
    "needs": [
     "a database"
    ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/net-41-bridge-id-search.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "NET-41: a whole bridge id typed in supplier search finds the listed shop on another installation (exact, any case)",
+   "claim": "NET-41: a whole bridge id typed in supplier search finds the listed shop on another installation (exact, any case)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 52 lines. Run: node chitbridge-api/tests/net-41-bridge-id-search.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }

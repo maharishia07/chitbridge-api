@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * net-41-bridge-id-search.red.cjs — NET-41 (proof 2026-11-14): a BRIDGE ID typed in supplier search finds the network shop on ANOTHER installation.
+ * net-41-bridge-id-search.test.cjs — NET-41 (proof 2026-11-14): a BRIDGE ID typed in supplier search finds the network shop on ANOTHER installation.
  * @type regression
  * OWNS      the proof on lib/network-search.search (where = one far installation, then 'all'): the far side answers with the SAME lib/business-search.find the door
  *           (routes/ctp.js answerSearch) runs, over a stand-in table. Hand-computed: the far shop is "Far Timber", user_id far-timber, bridge id CBFARTIM01, listed and
  *           opted in. Typed "CBFARTIM01" (and lower-case "cbfartim01") -> ONE row, bridge_id CBFARTIM01, address CBFARTIM01@au.example.com, never the asker.
  *           Control: typed "far timber" finds the same shop (so the stand-in is live and a miss is the code's, not the world's).
- * RENAME to .test.cjs and add to GUARDS the day it passes (every-test-is-enrolled would otherwise fail).
+ * Enrolled in GUARDS (was .red.cjs while red).
  * CALLED BY scripts/guards.cjs · CI. No database, no network.
  * FLOW      typed id -> network-search.search -> ctpquery.ask stub -> business-search.find({ abroad:true }) over the stand-in -> rows
- *   node tests/net-41-bridge-id-search.red.cjs
+ *   node tests/net-41-bridge-id-search.test.cjs
  */
 'use strict';
 const path = require('path');
