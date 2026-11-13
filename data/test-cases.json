@@ -108730,6 +108730,81 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctry-28-order-subject-currency.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTRY-28: a network order subject carries the governed currency CODE, never a symbol",
+   "claim": "CTRY-28: a network order subject carries the governed currency CODE, never a symbol",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 85 lines. Run: node chitbridge-api/tests/ctry-28-order-subject-currency.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rep-22-move-one-transaction.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "REP-22: a status move reads, validates and writes in ONE transaction",
+   "claim": "REP-22: a status move reads, validates and writes in ONE transaction",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 56 lines. Run: node chitbridge-api/tests/rep-22-move-one-transaction.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rep-9-detached-keys.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "REP-9: detachedKeys names the overlay keys that match no item",
+   "claim": "REP-9: detachedKeys names the overlay keys that match no item",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 30 lines. Run: node chitbridge-api/tests/rep-9-detached-keys.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }
