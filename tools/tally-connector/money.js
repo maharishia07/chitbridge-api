@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.94.0 · money · sha256 a8815434a26a286bf1ee986f7b22ad61af3fe479f665156c7d0423c4aea8e6a2 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.94.0 · money · sha256 82dc29bfc8126261071d283c5982468961ae50425a73a55303482e64486ec21b — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · money. Edited ONLY in chitbridge-engines/src/money.js; every platform adopts a released version of it. */
 /*
  * OWNS      the one money type: an amount with its currency (the value type, ISO 4217 list and minor units, plus/minus/compare/times/allocate/round/format, assertMoneyShape), the one rounder and the one price reader; never converts
@@ -384,12 +384,13 @@
    *
    * This is the SECOND price home and the one the seed scripts mostly use, so missing it would leave half the
    * catalogue unstamped while looking finished.
+   * `stored` (optional) = the previous commercials by name: an UNCHANGED legacy price passes, a changed finer one is refused (OUR decision, not an industry rule).
    */
-  function stampCommercials(commercials, currency) {
+  function stampCommercials(commercials, currency, stored) {
     if (!commercials || typeof commercials !== 'object' || Array.isArray(commercials)) return commercials;
     const out = {};
     for (const [name, entry] of Object.entries(commercials)) {
-      out[name] = entry && typeof entry === 'object' && !Array.isArray(entry) ? stampItem(entry, currency) : entry;
+      out[name] = entry && typeof entry === 'object' && !Array.isArray(entry) ? stampItem(entry, currency, stored && typeof stored === 'object' ? stored[name] : undefined) : entry; // `stored` = the commercials as they were, by name: stampItem's own rule, passed through
     }
     return out;
   }
