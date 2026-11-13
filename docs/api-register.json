@@ -2505,8 +2505,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 817,
-   "hash": "d244d298c4147b45",
+   "line": 822,
+   "hash": "3cd9061ca816e45a",
    "does": "",
    "errors": {
     "count": 0,
@@ -2574,7 +2574,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#704 stage2",
+    "signed_off_by_date": "cb-api (non-builder) 2026-11-13 PR#1236 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -2613,7 +2613,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1640,
+   "line": 1645,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2711,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1829,
+   "line": 1834,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2897,7 +2897,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1511,
+   "line": 1516,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -7285,7 +7285,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2451,
-   "hash": "3cffdda5474f29a9",
+   "hash": "c62c1a4a50d4fa0b",
    "does": "",
    "errors": {
     "count": 2,
@@ -7359,7 +7359,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1238 stage2: re-read after ACC-342; the output shape now lists action as optional (kind, count, words stay required, every other key closed) because the new bills_not_in_books row has no button; the 11 earlier kinds still carry action, older web readers unchanged; recorded in tests/books-todo-unposted.test.cjs T7; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31449,7 +31449,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 908,
+   "line": 913,
    "hash": "88c05cc1b9fd315d",
    "does": "",
    "errors": {
@@ -61031,7 +61031,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1603,
+   "line": 1608,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61139,7 +61139,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 985,
+   "line": 990,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61249,7 +61249,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1738,
+   "line": 1743,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61351,7 +61351,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1337,
+   "line": 1342,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -61462,7 +61462,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1199,
+   "line": 1204,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -61671,7 +61671,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1532,
+   "line": 1537,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {

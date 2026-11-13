@@ -114374,6 +114374,56 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-237-actors-list-level.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-237: GET /api/actors lists each person's access_level and whole_entity (a viewer auditor login shows as read-only)",
+   "claim": "ACC-237: GET /api/actors lists each person's access_level and whole_entity (a viewer auditor login shows as read-only)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 67 lines. Run: node chitbridge-api/tests/acc-237-actors-list-level.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 110,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T09:51:03.129Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-242-till-shop-day.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-242: the till cuts the day in the shop zone once (dayKeyOf, shopDayOf)",
+   "claim": "CTR-242: the till cuts the day in the shop zone once (dayKeyOf, shopDayOf)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 118 lines. Run: node chitbridge-api/tests/ctr-242-till-shop-day.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 111,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T09:51:03.130Z"
   }
  ]
 }
