@@ -135,7 +135,7 @@ function refuse(req, res, status, code, message, extra) {
 const nameOf = (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"';
 /** the first malformed line, said — qty above 0, a price that is not negative, a rate 0–100 */
 function badLine(lines) {
-  const first = S.lineRefusal(lines, nameOf); /* ACC-221 + CAT-305: unreadable figure, qty above 0, price not below 0: the one helper the pricing and offers services share */
+  const first = S.lineRefusal(lines, nameOf, { bound: false }); /* tax/compute keeps its own chit ceiling (ACC-282) */ /* ACC-221 + CAT-305: unreadable figure, qty above 0, price not below 0: the one helper the pricing and offers services share */
   if (first) return first;
   for (const l of lines) {
     if (l.gst_rate != null && (l.gst_rate < 0 || l.gst_rate > 100)) return ['BAD_RATE', 'Line ' + nameOf(l) + ' has a tax rate outside 0–100%.'];
@@ -148,6 +148,8 @@ router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), a
   try {
     const lines = S.normLines(req.body);
     if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line.');
+    const refused = S.lineRefusal(lines, nameOf, { qtyOptional: true }); /* CTRY-134: the one line guard; a rate lookup takes no quantity or price */
+    if (refused) return refuse(req, res, 400, refused[0], refused[1]);
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
     res.json({

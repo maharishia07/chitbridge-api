@@ -79,7 +79,7 @@ const send = (port, token, method, url, body) =>
   });
 
 const CASES = [
-  ['CAT-329', 'POST', '/api/pricing/price', { lines: [null, 7, 'x'] }, [422], null],
+  ['CAT-329', 'POST', '/api/pricing/price', { lines: [null, 7, 'x'] }, [400], /not a line/i],
   ['CAT-335', 'POST', '/api/catalogue/photo-extract', { images: Array(10000).fill('x') }, [400], /images/],
   ['CTR-174', 'POST', '/api/till/shop', { legal_name: -1, address: -1 }, [400], null],
   ['CTR-240', 'PUT', '/api/quick-keys/screen-config/default', { config: '12abc' }, [400], /config/],

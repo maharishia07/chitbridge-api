@@ -56,6 +56,8 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
     const entity_id = auth.entityOf(req);
     const lines0 = S.normLines(req.body);
     if (!lines0.length) return problem(req, res, { status: 400, code: 'INVOICE_BAD_REQUEST', detail: 'lines[] required', legacy: { error: 'validation', message: 'lines[] required' } });
+    const refused = S.lineRefusal(lines0, S.lineName); /* CTRY-134: the one line guard, before any shelf read (a quantity of 0 or a price below 0 was priced) */
+    if (refused) return problem(req, res, taxSaid(400, refused[0], refused[1]));
     const body = req.body || {};
     const sh = await S.shelfOf(entity_id);
     const lines = lines0.map((item) => withShelfFacts(item, sh));
