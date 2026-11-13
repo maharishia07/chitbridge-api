@@ -108730,6 +108730,56 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-208-enrol-race.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-208: the claim that lost a race is refused 409 COUNTER_HELD and its key closed",
+   "claim": "CTR-208: the claim that lost a race is refused 409 COUNTER_HELD and its key closed",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 62 lines. Run: node chitbridge-api/tests/ctr-208-enrol-race.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-208-enrol-race-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-208: two enrols at once on real Postgres, one winner and one live key",
+   "claim": "CTR-208: two enrols at once on real Postgres, one winner and one live key",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 65 lines. Run: node chitbridge-api/tests/ctr-208-enrol-race-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
   }
  ]
 }
