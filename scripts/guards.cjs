@@ -169,6 +169,13 @@ const GUARDS = [
   'snapshot-wire.test.js', // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs', // the bill number's shape: what the date says vs when the run restarts
+  'ord-18-bom-detail.test.cjs', // ORD-18 (proof 2026-11-14): an order stays one line and the product components ride on it as detail
+  'ctr-95-worklist-by-person.test.cjs', // CTR-95 (proof 2026-11-14): GET /api/folders/worklist groups one station's queue across every open order through assign.byPerson
+  'ctr-96-line-delivery-timestamp.test.cjs', // CTR-96 (proof 2026-11-14): chit_line_delivery rows carry their timestamp (DDL default, writer, reader)
+  'ctr-104-collision-verdict.test.cjs', // CTR-104 (proof 2026-11-14): both call sites of tillCollisionVerdict return the same verdict
+  'ord-61-switch-off-atomic.test.cjs', // ORD-61 (proof 2026-11-14): a switch-off and the task reassignment commit together or not at all
+  'ctr-117-trade-name-profile-first.test.cjs', // CTR-117 (proof 2026-11-14): invoiceParty trade_name reads identities.display_name before the vault
+  'ord-25-connector-task.test.cjs', // ORD-25 (proof 2026-11-14): connector install registers a repeating Task Scheduler task (restart with nobody there)
   'ctr-177-bill-number-unique.test.cjs', // CTR-177: the till's real takeNumber never issues a number twice across a roll (needs the engines pin that carries the period label)
   'acc-191-undecided-tax-null.test.cjs', // ACC-191: an undecided tax is null (not decided) in moneyOf and the send header, the total stays the price
   'acc-191-till-not-decided.test.cjs', // ACC-191 till twin: the slip foot, the credit note and the stored bill say not decided, never 0.00 / NaN / -0
