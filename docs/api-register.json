@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -28534,7 +28534,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 15,
-   "hash": "879613dddc5f2e22",
+   "hash": "a753a6417ec56c1b",
    "does": "",
    "errors": {
     "count": 0,
@@ -28593,11 +28593,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "879613dddc5f2e22"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-13 PR#1217 stage2: CTR-246 adds two integer counters (send_bridge_absent, send_heads_absent) to the health answer, additive, no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
