@@ -54,7 +54,7 @@ function counter(o) {
   const els = {}; const el = () => ({ value: '', textContent: '', className: '', innerHTML: '', classList: { remove() {}, add() {} } });
   const ctx = {
     window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date, Promise, isNaN,
-    CBTax: CBTAX, CBUnits: require('../lib/units'), MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => (Number(v) || 0).toFixed(2),
+    CBTax: CBTAX, CBUnits: require('../lib/units'), MONEY: () => MONEY, r2, rmoney: r2, esc: (v) => String(v == null ? '' : v), money: (v) => (Number(v) || 0).toFixed(2),
     S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33', country: 'IN', reg_type: 'regular' }, slabs: [SLAB18], categories: [], face: {}, at: '2026-11-08T05:00:00.000Z', offers: [],
          policy: { price_includes_tax: world.inclusive ? 'yes' : 'no', recheck_prices: world.setting, park_max_hours: 12 } },
     CART: (world.cart || [line()]).map((c) => Object.assign({}, c)), BILL_DELIVERY: null,

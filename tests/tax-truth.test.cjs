@@ -129,7 +129,7 @@ async function ring(o) {
        used to omit it and lean on the India default the counter no longer has */
     window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date, Promise,
     CBTax: o.noEngine ? undefined : CBTAX,
-    MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => '₹' + (Number(v) || 0).toFixed(2),
+    MONEY: () => MONEY, r2, rmoney: r2, esc: (v) => String(v == null ? '' : v), money: (v) => '₹' + (Number(v) || 0).toFixed(2),
     S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33', country: 'IN', reg_type: 'regular' },
          policy: { price_includes_tax: o.inclusive === false ? 'no' : 'yes' } },
     STATE: { till: { name: 'Counter 2' } }, ls: { get: (k, d) => d }, WHO: { id: 'u1', name: 'Athi', kind: 'entity' },

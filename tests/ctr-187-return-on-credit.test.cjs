@@ -31,10 +31,10 @@ const BODY = ['retPriorOf', 'retReducedBefore', 'retCustomerOwes', 'retOwedRefus
 /** one counter: the customers the snapshot holds, whether the Ledger is on, what the cashier is told and answers */
 function page(opts) {
   const said = [];
-  const make = new Function('S', 'booksOn', 'booksMajor', 'CREDIT_SINCE', 'r2', 'money', 'esc', 'toastLine', 'sure', 'said',
+  const make = new Function('S', 'booksOn', 'booksMajor', 'CREDIT_SINCE', 'r2', 'rmoney', 'money', 'esc', 'toastLine', 'sure', 'said',
     'var RET_OWED = "owed"; var RET_PRIOR = null; var RET_HOW = "";\n' + BODY);
   const api = make({ customers: opts.customers || [] }, () => opts.ledger !== false, (minor) => Number(minor) / 100, opts.since || {},
-    (v) => Math.round(v * 100) / 100, (v) => '₹' + v.toFixed(2), (v) => String(v), (m) => said.push(m), async () => opts.confirm !== false, said);
+    (v) => Math.round(v * 100) / 100, (v) => Math.round(v * 100) / 100, (v) => '₹' + v.toFixed(2), (v) => String(v), (m) => said.push(m), async () => opts.confirm !== false, said);
   return api;
 }
 
