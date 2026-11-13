@@ -22,7 +22,8 @@ const cost = require('../lib/cost');
 const { shelfWhere, SEARCH_FIELDS } = require('../lib/catalogue-search');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
-const RUN = 'sb' + (Date.now() % 1e10).toString(36);
+/* letters only: the run id sits in every name, and a digit run such as 42 in it made the S-1 search for the hidden value 42 find this run's own rows (CI 13 Nov, ids sb2421rk7 and sb24221ng) */
+const RUN = 'sb' + (Date.now() % 1e10).toString(36).replace(/[0-9]/g, (digit) => String.fromCharCode(97 + Number(digit)));
 
 (async () => {
   console.log('\n── CAT-313/314 search sees visible fields only · run ' + RUN + ' ──');
