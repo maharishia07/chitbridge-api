@@ -73091,6 +73091,35 @@
     "a database"
    ]
   },
+ {
+  "case_key": "chitbridge-api/tests/ctr-204-till-hold.test.cjs",
+  "module_key": "chitbridge-api/tests",
+  "module_name": "API guards",
+  "intro": "",
+  "title": "CTR-204 (till half): A DIFFERENT SALE UNDER A BILL NUMBER THE SHOP ALREADY HAS IS HELD, THEN RENUMBERED ON ONE CONFIRM.",
+  "claim": "CTR-204 (till half): A DIFFERENT SALE UNDER A BILL NUMBER THE SHOP ALREADY HAS IS HELD, THEN RENUMBERED ON ONE CONFIRM.",
+  "priority": "Medium",
+  "pre": "",
+  "data": "",
+  "steps": [],
+  "note": "test.guard · unit · 136 lines. Run: node chitbridge-api/tests/ctr-204-till-hold.test.cjs",
+  "layer": "engine",
+  "test_type": "unit",
+  "group": "test.guard",
+  "automated": true,
+  "seq": 90,
+  "step": "",
+  "areas": [
+   "connector",
+   "web"
+  ],
+  "subjects": [
+   "tools/tally-connector/till.html"
+  ],
+  "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+  "changed_at": "2026-11-13T15:00:00+05:30",
+  "needs": []
+ },
   {
    "case_key": "chitbridge-api/tests/ctr-227-no-country-bill.test.cjs",
    "module_key": "chitbridge-api/tests",
