@@ -6,7 +6,7 @@
  *   direction "both" -> 400 (it was read as in) · "out" -> recorded out · direction left out stays in
  *   cheque.date 2026-02-30 -> 400 DATE_INVALID (it was dropped to no date) · the same payment with 2026-03-02 -> 200 cheque_received
  *   opening due_date 2026-13-01, 2026-02-30, "soon", "12/01/2026" -> 400 DATE_INVALID naming rows[0].due_date (each was dropped) · 2026-03-31 -> 200
- *   terms party_id "x" -> 400 "Which party?" on GET and POST (it reached the database)
+ *   terms party_id "x" -> 404 NOT_FOUND (API-25 shared answer) on GET and POST (it reached the database)
  *   a supplier paid Rs 10.00 then Rs 24.00 ahead (no bills) -> /dues row balance_minor 3400 and balance_words "they owe you Rs 34.00", the payment outcome's own words
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/fin-books-doors-strict.test.cjs
  * CARD      16-finance/payments
@@ -82,9 +82,9 @@ const serve = () => {
     ok('opening due_date 2026-03-31 -> 200', okDue.status === 200, okDue.status + ' ' + JSON.stringify(okDue.body));
 
     const getBad = await q('GET', '/terms?party_id=x');
-    ok('GET /terms party_id "x" -> 400 "Which party?"', getBad.status === 400 && getBad.body.error === 'Which party?', getBad.status + ' ' + JSON.stringify(getBad.body));
+    ok('GET /terms party_id "x" -> 404 NOT_FOUND (shared path-id answer)', getBad.status === 404 && getBad.body.code === 'NOT_FOUND', getBad.status + ' ' + JSON.stringify(getBad.body));
     const postBad = await q('POST', '/terms', { party_id: 'x', credit_days: 10 });
-    ok('POST /terms party_id "x" -> 400 "Which party?"', postBad.status === 400 && postBad.body.error === 'Which party?', postBad.status + ' ' + JSON.stringify(postBad.body));
+    ok('POST /terms party_id "x" -> 404 NOT_FOUND (shared path-id answer)', postBad.status === 404 && postBad.body.code === 'NOT_FOUND', postBad.status + ' ' + JSON.stringify(postBad.body));
 
     const adv = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 2400, received_at: '2026-10-06' }));
     ok('a supplier advance of Rs 24.00 recorded', adv.status === 200, adv.status + ' ' + JSON.stringify(adv.body));

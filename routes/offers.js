@@ -58,7 +58,7 @@ router.get('/kinds', (req, res) => {
 const services = require('../lib/services'); // the one line reader and the one refusal of a line (CAT-312): offers no longer keeps a Number()||0 reader of its own
 const nameOf = (line) => '"' + String(line.name || line.item_id || line.code || 'line ' + line.key).slice(0, 60) + '"';
 /** the lines the engine reads, from the shared reader: { key, item_id, sku, name, qty, unitPrice, categories, excluded } (the listPrice alias is honoured too) */
-const engineLines = (lines) => lines.map((l) => ({ key: l.key, item_id: l.item_id, sku: l.code, name: l.name, qty: l.qty, unitPrice: l.listPrice, categories: l.categories, excluded: l.excluded }));
+const engineLines = (lines) => lines.map((line) => ({ key: line.key, item_id: line.item_id, sku: line.code, name: line.name, qty: line.qty, unitPrice: line.listPrice, categories: line.categories, excluded: line.excluded }));
 async function ownOffers(req) {
   const entity_id = auth.entityOf(req);
   const catalogueView = require('../lib/catalogue-view');

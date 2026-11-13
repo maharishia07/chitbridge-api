@@ -8,6 +8,7 @@
 'use strict';
 const { waiting } = require('../lib/not-migrated');
 const CLOCK = require('../lib/shop-clock');
+const { NOT_A_UUID_WORDS } = require('../lib/knownerr');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { refusalOf, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
@@ -48,6 +49,8 @@ const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** API-25: an id in the query or body that is no uuid names no row: the same 404 NOT_FOUND the router guard (lib/id-guard) gives an address id */
+const notAnId = (req, res) => problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_A_UUID_WORDS, legacy: { error: 'Not found', message: NOT_A_UUID_WORDS } });
 /* ⚠️ WX-P2P-02 (2026-10-13, the real stack): "today" is the SHOP's day (books-hooks.dayOf — the one calendar, M210), not the UTC date.
    /dues filtered its items by the shop's day of created_at but took asOf from the UTC clock: a bill recorded after midnight IST
    (18:30–24:00 UTC) was ahead of asOf and vanished from Payables / Receivables until the next UTC day — "You owe nobody" beside
@@ -226,7 +229,7 @@ router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res)
       T = require('../lib/finance-terms'),
       pid = req.query.party_id ? String(req.query.party_id) : null,
       side = req.query.side === 'supplier' ? 'supplier' : 'customer';
-    if (pid && !UUID.test(pid)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which party?', 'Which party?'); /* FIN-86: an id that is not an id is asked, not sent to the database */
+    if (pid && !UUID.test(pid)) return notAnId(req, res); /* FIN-86: an id that is not an id names no party: the shared 404, never the database */
     const mig = await T.migrated(),
       may = isOwner(req);
     const out = await withEntity(e, async (h) => {
@@ -269,7 +272,7 @@ router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, re
       b = req.body || {},
       pid = b.party_id ? String(b.party_id) : null,
       side = b.side === 'supplier' ? 'supplier' : 'customer';
-    if (pid && !UUID.test(pid)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which party?', 'Which party?'); /* FIN-86 */
+    if (pid && !UUID.test(pid)) return notAnId(req, res); /* FIN-86 */
     if (!(await T.migrated()))
       return problem(req, res, { status: 503, code: 'TERMS_NOT_MIGRATED', detail: SAID.termsNotMigrated, legacy: { error: SAID.termsNotMigrated, message: SAID.termsNotMigrated } });
     const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
