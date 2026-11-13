@@ -108730,6 +108730,81 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-75-cost-ledger-only.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-75: cost is ledger-only (no chit_header cost column); cost.read sums chit_line_cost per currency and takes the margin from the taxable value",
+   "claim": "ACC-75: cost is ledger-only (no chit_header cost column); cost.read sums chit_line_cost per currency and takes the margin from the taxable value",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 60 lines. Run: node chitbridge-api/tests/acc-75-cost-ledger-only.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-141-named-customer-credit.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-141: a customer added by name is an ordinary party and receives a credit on credit (Cr debtors on his party_id)",
+   "claim": "ACC-141: a customer added by name is an ordinary party and receives a credit on credit (Cr debtors on his party_id)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 76 lines. Run: node chitbridge-api/tests/acc-141-named-customer-credit.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-168-freeze-no-second-read.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-168: freezeOnComplete takes the row the transaction already holds (no second chit_header read)",
+   "claim": "ACC-168: freezeOnComplete takes the row the transaction already holds (no second chit_header read)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 65 lines. Run: node chitbridge-api/tests/acc-168-freeze-no-second-read.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }
