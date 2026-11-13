@@ -52,7 +52,7 @@ const WIRED = [
   ['routes/notifications.js', "${counterBill.billTotalSql('ch')}::text AS total_value"],
   ['lib/kyb.js', "COALESCE(${counterBill.billTotalSql('h')}, d.total_value) AS total_value"],
   ['lib/forms.js', "COALESCE(${counterBill.billTotalSql('h')}, d.total_value) AS total_value"],
-  ['lib/beckn-map.js', 'billTotalOf(c)']
+  ['lib/beckn-map.js', 'const total = billTotalOf(chit);']
 ];
 for (const [file, piece] of WIRED) ok(read(file).includes(piece), file + ' reads the one pick: ' + piece);
 const chitsSrc = read('routes/chits.js');
