@@ -36,6 +36,7 @@ const catalogueBuild = require('../lib/catalogue-build'); // B3.7-ref: resolve t
 const container = require('../lib/container'); // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
 const regional = require('../lib/regional'); // GOVERNED CURRENCY — the network path must not invent 'INR'
 const money = require('../lib/money'); // MONEY TYPE — a price is never a bare number
+const sellablePrice = require('../lib/sellable-price'); // CAT-318/324: when a stored price cannot be sold — one rule for the order and the till
 
 // ⚠️ ONE generator (lib/bridgeid.js). This copy was the ONLY one that ever received the S4 CSPRNG hardening —
 //    the fix was correct and reached one sixth of the code it was written for. That is why it now lives in one file.
@@ -106,8 +107,9 @@ const _422 = (m) => {
  * the doors judged) is "not valid" — refused in words (ORDER_REJECTED, 422), never clamped to 0 and never carried as a negative line total.
  */
 function throwIfUnpriced(rec) {
-  if (!Number.isFinite(rec.price)) throw _422(`Price for "${rec.name}" is not set — order cannot be placed`);
-  if (rec.price < 0) throw _422(`The price of "${rec.name}" is not valid, so it cannot be ordered right now — the shop needs to correct it.`);
+  const fault = sellablePrice.fault(rec.price);
+  if (fault === 'unset') throw _422(sellablePrice.unsetSaid(rec.name));
+  if (fault === 'negative') throw _422(sellablePrice.negativeSaid(rec.name));
 }
 // ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
 // A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
@@ -703,7 +705,7 @@ router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId
         name: d.name || d.particulars || '(unnamed)',
         category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
-        price: Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null,
+        price: sellablePrice.soldAt(money.amountOfLoose(d.price)),
         unit: d.unit || null,
         image: d.image || null
       };
@@ -848,7 +850,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
       const d = item.item_data || {};
       // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
       const amt = money.amountOfLoose(d.price);
-      if (!Number.isFinite(amt)) {
+      if (sellablePrice.fault(amt)) { /* CAT-324: unset or negative — never totalled */
         const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`);
         e.status = 422;
         throw e;

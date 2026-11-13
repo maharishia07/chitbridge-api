@@ -16,12 +16,12 @@ of file each thing is; this says what already does the job.
 | 117 | `withEntity` | `books-hooks.js` |  |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
-| 96 | `money` | `bill-privacy.js` |  |
+| 97 | `money` | `bill-privacy.js` |  |
 | 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 80 | `next` | `dayopen.js` | the next thing to do — |
 | 78 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 76 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
-| 75 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 70 | `list` | `cap-settings.js` |  |
 | 69 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -46,9 +46,9 @@ of file each thing is; this says what already does the job.
 | 52 | `rows` | `cap-settings.js` |  |
 | 52 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 51 | `toast` | `accounts-shell.js` |  |
+| 51 | `view` | `books-payables.js` | group: |
 | 51 | `count` | `money-check.js` | the count /health reads |
 | 50 | `again` | `signin-ui.js` |  |
-| 50 | `view` | `books-payables.js` | group: |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 46 | `read` | `cap-print.js` |  |
 | 46 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
@@ -112,9 +112,9 @@ of file each thing is; this says what already does the job.
 | 27 | `group` | `identity.js` | again in a different costume. |
 | 26 | `view` | `country-ready.js` |  |
 | 26 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 26 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
-| 25 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
@@ -195,6 +195,7 @@ of file each thing is; this says what already does the job.
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
+| 15 | `fault` | `sellable-price.js` | Zero IS a price (a free sample). |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `group` | `cart.js` | A heading's control adds ONE of each — |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 14 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
-| 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |

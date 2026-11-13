@@ -116,6 +116,7 @@ const crypto = require('crypto');
  * unpriced (external review §21). money.priceOf reads every stored shape and answers null for "no price" — never 0.
  */
 const { priceOf: amountOf } = require('../lib/money');
+const sellablePrice = require('../lib/sellable-price'); // CAT-324: a stored negative price reaches the counter as "no price", by the rule the order door refuses with
 const offerClash = require('../lib/offer-clash'); /* CAT-223: two live discounts on one shelf are refused at every live save */
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
@@ -933,7 +934,7 @@ function itemNameAndPrice(data) {
     name: data.name,
     code: firstSet(data.code, data.sku),
     unit: data.unit || 'piece',
-    price: amountOf(data.price),
+    price: sellablePrice.soldAt(amountOf(data.price)),
     mrp: amountOf(data.mrp)
   };
 }
@@ -3081,7 +3082,7 @@ async function spreadSample(entity_id, total) {
   ).catch(log.orElse('till GET /verify: the read failed — answered with none', { rows: [] }));
   return sampleRows.rows.map((row) => {
     const data = row.item_data || {};
-    return { at_offset: row.n, item_id: row.item_id, name: data.name || null, price: amountOf(data.price), tax_slab: data.tax_slab || null };
+    return { at_offset: row.n, item_id: row.item_id, name: data.name || null, price: sellablePrice.soldAt(amountOf(data.price)), tax_slab: data.tax_slab || null };
   });
 }
 
