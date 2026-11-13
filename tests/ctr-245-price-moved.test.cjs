@@ -163,7 +163,7 @@ const storedPrices = (copies) => [...J(copies).matchAll(/"price":(\d+(?:\.\d+)?)
 const facts = (r) => r.tickets[0] && r.tickets[0].t.money_mismatch;
 const ackFrom = (r) => r.answer && r.answer.ack;
 /** an ack as the server would sign it, for a test that needs another draft, another person, an old one */
-const mintAck = (claims, opts) => jsonWebToken.sign(Object.assign({ kind: 'price_ack', draft: DRAFT, actor: SHOP, lines: [{ item_id: ITEM, changed_at: T0 }] }, claims), process.env.JWT_SECRET, Object.assign({ algorithm: 'HS256', expiresIn: 300 }, opts || {}));
+const mintAck = (claims, opts) => jsonWebToken.sign(Object.assign({ kind: 'price_ack', draft: DRAFT, actor: SHOP, lines: [{ item_id: ITEM, changed_at: T0 }] }, claims), process.env.JWT_SECRET, Object.assign({ algorithm: 'HS256', audience: 'cb-price-ack', expiresIn: 300 }, opts || {}));
 
 (async () => {
   const server = app.listen(0);
