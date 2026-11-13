@@ -19,7 +19,9 @@ const counterBill = require(path.join(root, 'lib', 'counter-bill'));
 const costView = require(path.join(root, "lib", "cost-view"));
 const beckn = require(path.join(root, 'lib', 'beckn-map'));
 const { FIXTURES, INVOICE_FIXTURES, JUNK_FIXTURES } = require('./lib/bill-total-fixtures.cjs');
-const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
+const CHITS = require(path.join(root, 'tools', 'chits-files.cjs')); /* the chits route's code is read through the one list, so a split keeps this test honest */
+const fileText = (f) => fs.readFileSync(path.join(root, f), 'utf8');
+const read = (f) => (f === 'routes/chits.js' ? CHITS.read(root) : fileText(f));
 let checks = 0;
 const ok = (cond, msg) => { assert.ok(cond, msg); checks += 1; };
 
@@ -92,7 +94,7 @@ const WIRED = [
   ['lib/beckn-map.js', 'const total = billTotalOf(chit);']
 ];
 for (const [file, piece] of WIRED) ok(read(file).includes(piece), file + ' reads the one pick: ' + piece);
-const chitsSrc = read('routes/chits.js');
+const chitsSrc = CHITS.read(root);
 ok(!/summary_json->>'total_value'/.test(chitsSrc) && !/\(ch\.summary_json->>'total_value'\)/.test(chitsSrc), 'routes/chits.js holds no raw total_value SQL read');
 ok((chitsSrc.match(/amount: 'bill_total'/g) || []).length === 1, 'the folder sort orders by the picked bill_total (its outer select has no business_json)');
 ASYNC_CASES.then(() => console.log('acc-206-readers: ' + checks + ' checks pass')).catch((e) => { console.error('FAIL ' + e.message); process.exit(1); });

@@ -108730,6 +108730,56 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-206-readers.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-206 C2-C4: every reader of a bill total shows the carried total (one SQL pick, one JS pick), a withheld copy stays withheld on every reader",
+   "claim": "ACC-206 C2-C4: every reader of a bill total shows the carried total (one SQL pick, one JS pick), a withheld copy stays withheld on every reader",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 101 lines. Run: node chitbridge-api/tests/acc-206-readers.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/money-reader-scan.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-206 G1: no reader takes a raw copy of the bill total (total_value, money.total, TotInvVal) outside the one pick; each named exception carries its reason",
+   "claim": "ACC-206 G1: no reader takes a raw copy of the bill total (total_value, money.total, TotInvVal) outside the one pick; each named exception carries its reason",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 108 lines. Run: node chitbridge-api/tests/money-reader-scan.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
   }
  ]
 }

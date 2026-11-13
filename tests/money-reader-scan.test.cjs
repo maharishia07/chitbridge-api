@@ -103,5 +103,5 @@ for (const dir of ['lib', 'routes']) {
     }
   }
 }
-console.log(failed ? 'money-reader-scan: ' + failed + ' raw reads' : 'money-reader-scan: ' + scanned + ' files, no raw read of the bill total outside the one pick (' + ALLOWED.length + ' named)');
+console.log(failed ? 'money-reader-scan: ' + failed + ' raw reads' : 'money-reader-scan: ' + scanned + ' files, no raw read of the bill total outside the one pick (' + ALLOWED.length + ' named) · ' + scanned + ' checks');
 process.exit(failed ? 1 : 0);
