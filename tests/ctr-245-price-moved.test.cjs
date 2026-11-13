@@ -186,6 +186,9 @@ const mintAck = (claims, opts) => jsonWebToken.sign(Object.assign({ kind: 'price
     ok('2 use new prices (120.00 sent): sent, no 409, no ticket, no ack needed, stored at 120', r2.status === 200 && r2.copies !== null && r2.tickets.length === 0 && storedPrices(r2.copies).includes(120) && !storedPrices(r2.copies).includes(100), J([r2.status, r2.answer, storedPrices(r2.copies)]));
     if (storedTotal(r2.copies) !== null) ok('2 stored total is 283.20 (240.00 + 21.60 + 21.60), the engine run for the actual', storedTotal(r2.copies) === 283.2, J(storedTotal(r2.copies)));
 
+    const r2b = await send(promote({ lines: [Object.assign(mkLine({ price: 120, list_price: 120 }), { total: undefined })] }));
+    ok('2 use new prices WITHOUT a line total (the web no longer rebuilds one): sent, and the engines total decides: 283.20', r2b.status === 200 && (storedTotal(r2b.copies) === null || storedTotal(r2b.copies) === 283.2), J([r2b.status, r2b.answer, storedTotal(r2b.copies)]));
+
     /* row 3: send as drafted, with the ack the 409 handed out */
     const ack = ackFrom(r1);
     const r3 = await send(promote({ ack }));
