@@ -114453,6 +114453,93 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T09:51:03.130Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-204-replay-body.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-204: A DIFFERENT SALE UNDER THE SAME BILL NUMBER, TILL AND MOMENT IS REFUSED, NOT ANSWERED \"DUPLICATE\".",
+   "claim": "CTR-204: A DIFFERENT SALE UNDER THE SAME BILL NUMBER, TILL AND MOMENT IS REFUSED, NOT ANSWERED \"DUPLICATE\".",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 219 lines. Run: node chitbridge-api/tests/ctr-204-replay-body.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 112,
+   "step": "",
+   "areas": [
+    "connector",
+    "web"
+   ],
+   "subjects": [
+    "tools/tally-connector/till.html"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-13T11:07:42.955Z",
+   "needs": []
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-181-books-once.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-181: A SECOND VERSION OF A DAY SUMMARY POSTS NOTHING A SECOND TIME.",
+   "claim": "CTR-181: A SECOND VERSION OF A DAY SUMMARY POSTS NOTHING A SECOND TIME.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 63 lines. Run: node chitbridge-api/tests/ctr-181-books-once.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 113,
+   "step": "",
+   "areas": [
+    "connector",
+    "web"
+   ],
+   "subjects": [
+    "tools/tally-connector/till.html"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-13T11:07:42.958Z",
+   "needs": []
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-181-summary-reclose.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-181: A DAY CLOSED, REOPENED AND CLOSED AGAIN IS A NEW VERSION, NOT \"DUPLICATE\".",
+   "claim": "CTR-181: A DAY CLOSED, REOPENED AND CLOSED AGAIN IS A NEW VERSION, NOT \"DUPLICATE\".",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 242 lines. Run: node chitbridge-api/tests/ctr-181-summary-reclose.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 114,
+   "step": "",
+   "areas": [
+    "connector",
+    "web"
+   ],
+   "subjects": [
+    "tools/tally-connector/till.html"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-13T11:07:42.958Z",
+   "needs": []
   }
  ]
 }
