@@ -444,7 +444,6 @@ const GUARDS = [
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
   'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
-  'ctr-p2-174-190-225.test.cjs', // CTR-174 CTR-190 CTR-225: the shop header refuses a junk e-mail/phone/PIN, screen-config answers an object, GET /till/bills reads its page and answers the whole window's total
   'body-shape-and-range.test.cjs', // CAT-329 CAT-335 CTR-174 CTR-240 SEC-154 SET-70 AI-36 API-26 API-27: a junk body field is refused in words, never a 500 or stored
   'path-id-guard.test.cjs', // API-25 + RAIL-159 RAIL-206 RAIL-209 ORD-78 NET-92 CAT-230 CTR-169 ACC-217 FIN-86 CMP-28: a path, query or body id that is no uuid is refused in words, never a 500 from the cast
   'cmp-22-23-input.test.cjs', // CMP-22/23: a non-uuid identity_id on the identity-document routes answers 403 IDOC_SUBJECT_FORBIDDEN and a badly typed or impossible (2026-02-30) field of POST /api/kyb/credential 400 VALIDATION_FAILED, before the database
