@@ -114540,6 +114540,64 @@
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-11-13T11:07:42.958Z",
    "needs": []
+  },
+  {
+   "case_key": "chitbridge-api/tests/ops100-match-open.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "OPS-100: GET /API/TILL/MATCH SAYS \"OPEN\" (WAITING FOR THE REST), NOT \"DIFFERS\", WHILE A DELIVERY IS STILL OPEN.",
+   "claim": "OPS-100: GET /API/TILL/MATCH SAYS \"OPEN\" (WAITING FOR THE REST), NOT \"DIFFERS\", WHILE A DELIVERY IS STILL OPEN.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 81 lines. Run: node chitbridge-api/tests/ops100-match-open.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 115,
+   "step": "",
+   "areas": [
+    "operations",
+    "api"
+   ],
+   "subjects": [
+    "routes/till.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-13T12:27:00.647Z",
+   "needs": []
+  },
+  {
+   "case_key": "chitbridge-api/tests/ops351-billed-qty.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "OPS-351: GET /API/TILL/MATCH SETS WHAT THEIR INVOICE BILLS BESIDE WHAT WAS RECEIVED, PER LINE; BILLED ABOVE RECEIVED IS A DIFFERENCE.",
+   "claim": "OPS-351: GET /API/TILL/MATCH SETS WHAT THEIR INVOICE BILLS BESIDE WHAT WAS RECEIVED, PER LINE; BILLED ABOVE RECEIVED IS A DIFFERENCE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 116 lines. Run: node chitbridge-api/tests/ops351-billed-qty.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 116,
+   "step": "",
+   "areas": [
+    "operations",
+    "api"
+   ],
+   "subjects": [
+    "routes/till.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-13T12:27:00.648Z",
+   "needs": []
   }
  ]
 }
