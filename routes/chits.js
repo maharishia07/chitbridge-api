@@ -841,7 +841,8 @@ async function sendReplay(sendState, req, res) {
     if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
     const reclose = seen ? await summaryReclose(sendState, req, res) : null;
     if (reclose === 'versioned') return; /* CTR-181: new figures for a held summary go on as its next version */
-    if (seen) return reclose || answerReplay(req, res, seen, client_ref);
+    if (reclose) return reclose; /* 'replied': the summary's own duplicate answer was sent */
+    if (seen) return answerReplay(req, res, seen, client_ref);
   } catch (e) {
     cbLog.fellBack(
       'chits: failed — carried on without it',
