@@ -108730,6 +108730,56 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-243-recheck-changed-at.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-243: POST /api/till/recheck carries changed_at (commercial_changed_at); a database before b845 answers null, never a 500",
+   "claim": "CTR-243: POST /api/till/recheck carries changed_at (commercial_changed_at); a database before b845 answers null, never a 500",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 106 lines. Run: node chitbridge-api/tests/ctr-243-recheck-changed-at.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctr-243-stale-send.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-243: a bill rung at an out-of-date price goes as sold with an ack (price only) or is held for the owner PIN (rate moved, no longer sold), never re-priced, never lost",
+   "claim": "CTR-243: a bill rung at an out-of-date price goes as sold with an ack (price only) or is held for the owner PIN (rate moved, no longer sold), never re-priced, never lost",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 293 lines. Run: node chitbridge-api/tests/ctr-243-stale-send.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-13T00:00:00.000Z"
   }
  ]
 }

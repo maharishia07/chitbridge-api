@@ -2245,6 +2245,7 @@ function priceInput(body) {
  * withdrew it or it is unpriced here), and the answer carries `slabs` · `categories` · `face` (taxBlock, the snapshot's own) so the counter resolves the rate with the same
  * pack it resolves it with at sale. A SOFT-removed product is read as the row it is: active:false (a delta never sees that; this door does).
  * An id that is no id at all is answered found:false.
+ * `changed_at` (CTR-243) = the row's commercial_changed_at: the ONE moment a price, a rate or a status last moved (null on a network line, an adopted line or a database without b845); the counter compares it with a queued bill's billed_at and the snapshot's `at`.
  * `stamp` = the row's own price_changed_at (null when no price change was ever stamped): only POST /price writes it today, so the counter compares the
  * carried VALUES (price · rate · status) and does not rely on the stamp (CTR-212 R2; the writers that do not stamp are listed in docs/critique/CTR-212.md).
  * Who: a till key (scope till). Trips: the rows (one transaction), the category master, the tax shelf, and the adoption read only when a network line is asked.
@@ -2257,7 +2258,7 @@ router.post('/recheck', auth, auth.requireScope('till'), ...checked('POST /reche
     if (!ids.length) return refuseBad(req, res, 'item_ids required');
     if (ids.length > RECHECK_MAX) return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + RECHECK_MAX + ' products in one check.') });
     const shopIds = ids.filter((id) => UUID_RE.test(id));
-    const found = shopIds.length ? await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, shopIds])) : { rows: [] };
+    const found = shopIds.length ? await recheckRows(entity_id, shopIds) : { rows: [] };
     const master = await readCategoryMaster(entity_id);
     const rows = new Map(found.rows.map((row) => [String(row.item_id), row]));
     const reads = await recheckReads(entity_id, ids, master.catNames, req);
@@ -2268,6 +2269,21 @@ router.post('/recheck', auth, auth.requireScope('till'), ...checked('POST /reche
   }
 });
 
+/**
+ * CTR-243: the rows asked about, WITH the one commercial stamp (catalogue_items.commercial_changed_at, b845, CAT-264a). One read, one transaction.
+ * A database that has not run b845 yet answers 42703 (undefined column): the read is repeated WITHOUT the column and every answer carries changed_at null, never a 500
+ * (the counter says "price changes could not be checked yet" for a null, it never reads it as "nothing moved").
+ */
+const RECHECK_ROWS_SQL = 'SELECT item_id, item_data, is_active, commercial_changed_at FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])';
+const RECHECK_ROWS_OLD_SQL = 'SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])';
+async function recheckRows(entity_id, shopIds) {
+  try {
+    return await withEntity(entity_id, (db) => db.query(RECHECK_ROWS_SQL, [entity_id, shopIds]));
+  } catch (e) {
+    if (!e || e.code !== '42703') throw e;
+    return withEntity(entity_id, (db) => db.query(RECHECK_ROWS_OLD_SQL, [entity_id, shopIds]));
+  }
+}
 /** the sentence a counter shows when the check could not run: it must never read as "nothing moved" */
 const RECHECK_UNAVAILABLE = 'The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.';
 /**
@@ -2323,7 +2339,7 @@ function networkAnswer(item_id, network) {
   if (!network) return { item_id, found: null, checked: false, why: 'network_not_read' };
   const line = network.get(item_id);
   if (!line) return { item_id, found: false, checked: true };
-  return recheckPick(Object.assign({}, line, { found: true, checked: true, active: true, stamp: null }));
+  return recheckPick(Object.assign({}, line, { found: true, checked: true, active: true, stamp: null, changed_at: null }));
 }
 
 /**
@@ -2335,7 +2351,7 @@ function recheckAnswer(item_id, row, catNames, network) {
   if (!row) return { item_id, found: false, checked: true };
   const data = row.item_data || {};
   const projected = tillItem(item_id, data, [], catNames);
-  return recheckPick(Object.assign(projected, { found: true, checked: true, active: row.is_active !== false, stamp: data.price_changed_at || null }));
+  return recheckPick(Object.assign(projected, { found: true, checked: true, active: row.is_active !== false, stamp: data.price_changed_at || null, changed_at: row.commercial_changed_at ? new Date(row.commercial_changed_at).toISOString() : null }));
 }
 
 /**

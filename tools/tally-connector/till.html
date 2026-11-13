@@ -5828,9 +5828,11 @@ var CloudHost = {
       try { await queueTally(); paintStatus(); } catch (e) { cbQuiet('drain:2', e); } return; }
     this._busy = true;
     /* ⚠️ hoisted, because the finally below reports them and DB.all can throw before the loop begins */
-    var why = null, tried = 0, sent = 0, code = null;
+    var why = null, tried = 0, sent = 0, code = null, priceHeld = 0;
     try {
       var rows = sendableRows(await DB.all('queue'));
+      /* ⭐ CTR-243: a bill rung at a price the shop had already changed is looked at BEFORE any bill goes (held rows never go); the popup is raised after this run, never inside it */
+      var gated = await staleGateSafe(rows, opts && opts.force); rows = gated.rows; priceHeld = gated.held; why = gated.why || why;
       /**
        * ⭐⭐ A CATALOGUE CHANGE GOES FIRST. Athi: *"when the net is up, it is the first thing to be done."* And it
        * is not merely politeness — while it waits, this counter is selling at a price ChitBridge does not have,
@@ -5873,49 +5875,7 @@ var CloudHost = {
           var r = await fetchBy(url, { method:'POST',
             headers: this.auth(this.idemHeaders(url.slice(this.api.length), payload, { 'Content-Type':'application/json' })), body: JSON.stringify(payload) });
           if (r.ok) {
-            /**
-             * ⭐⭐ THE SERVER CHECKS THE NUMBER WE PRINTED, and answers `number_check` only when something is
-             * wrong with it — too long for this country, or a character the rule does not allow.
-             *
-             * ⚠⚠ IT ACCEPTED THE BILL, and that is correct: the number is already on paper in a customer's hand,
-             * so refusing it would not un-print it, it would only wedge this queue and lose the sale from the
-             * books. What it can do is tell us, and what WE can do is put it where the shopkeeper will read it
-             * rather than let it vanish with the HTTP response.
-             */
-            /**
-             * ── ⭐⭐⭐ THE ACKNOWLEDGEMENT IS WRITTEN DOWN (Athi, observation 6, division I) ──────────────────
-             *
-             * *"I tried creating couple of invoices from counter app, it says sent, but could not see it task in
-             * the tallytest app. It has to be visible, but it is not."*
-             *
-             * ⚠️⚠️ "SENT" WAS INFERRED FROM AN ABSENCE. A bill was called sent when it was NOT in the queue — and
-             * a row can be missing from that queue for three very different reasons:
-             *   1. it was delivered and the row was deleted here  ← the only one that means the money is safe
-             *   2. it was never queued, because the write failed
-             *   3. `DB.all` filtered it out, because the row is stamped for a different shop on this device
-             * The counter could not tell them apart and showed the most flattering of the three. Three bills read
-             * "✓ sent · All 3 have reached the shop" while ChitBridge had never heard of them.
-             *
-             * ⭐ SO THE PROOF IS KEPT, not deduced: the chit_id ChitBridge answered with, and when. A bill says
-             * "sent" only if it carries one. Absence now reads as "not confirmed", which is the truth, and the
-             * shopkeeper is given a way to send it again rather than a green tick over a missing sale.
-             */
-            var ack = null, oneSided = null;
-            try {
-              var ans = await r.json();
-              if (ans && ans.number_check && !ans.number_check.ok) {
-                ls.set('cb_numwarn', JSON.stringify({ no: bill.no, why: ans.number_check.reason, at: Date.now() }));
-              }
-              if (ans && (ans.chit_id || (ans.chit && ans.chit.chit_id))) ack = ans.chit_id || ans.chit.chit_id;
-              /* ⭐ ONE-SIDED (2026-10-02): the sale is recorded, but the customer could not be sent their copy — said, not hidden */
-              if (ans && ans.one_sided) oneSided = String(ans.one_sided.why || 'the customer could not be sent their copy');
-            } catch (_) { /* a body we cannot read is not a reason to lose the bill */ }
-            /* ⚠️ the RECEIPT goes on the bill, not on the queue row — the queue row is about to be deleted, and a
-               proof that dies with the thing it proves is not a proof. */
-            try {
-              var kept = (await DB.all('bills')).filter(function(x){ return x && String(x.no) === String(bill.no); })[0];
-              if (kept) { kept._sent = { at: Date.now(), chit_id: ack || null, one_sided: oneSided }; await DB.put('bills', kept); }
-            } catch (_) { /* a bill we cannot stamp still went — it will read "not confirmed", which is honest */ }
+            await drainRecordSent(r, bill);   /* the receipt, the number check, the one-sided word: see drainRecordSent */
             await DB.del('queue', bill.no); sent++;
           }
           /* ⚠️⚠️ NOT EVERY 403 IS THE KEY (Athi, 2026-10-02: two bills "pending", network green). The send route
@@ -5972,6 +5932,7 @@ var CloudHost = {
       }
     } finally {
       this._busy = false;
+      if (priceHeld) { try { setTimeout(staleAskLater, 0); } catch (e) { cbQuiet('drain:9', e); } }
       /**
        * ⭐ recorded whatever happened, including a clean run — "nothing to send" is an answer too.
        * ⚠️⚠️ AND THE WORST CASE IS "ROWS EXISTED AND NOT ONE WAS TRIED". That is the shape of every wedge this
@@ -5983,6 +5944,7 @@ var CloudHost = {
        * wedge, and an alarm that cries wolf every twenty seconds during a normal backoff is one nobody reads.
        * A held row has its own, true sentence instead.
        */
+      if (!why && priceHeld) why = priceHeld + ' bill(s) waiting for the owner to say a price change is fine. Tap the amber chip on the bill.';
       if (!why && tried === 0 && held > 0) {
         var soon = qSoonest(rows);
         why = held + ' waiting a moment before the next try'
@@ -6196,7 +6158,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-13.ctr246';
+var TILL_BUILD = 'rc-2026-11-13';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -24492,7 +24454,7 @@ async function closeCounter(already){
     /* ⚠️ PROVE it — every reason the books could still be short, each named */
     var why = [];
     var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) { why.push('the waiting list could not be read'); }
-    var sendQ = sendableRows(q); if (sendQ.length) why.push(sendQ.length + ' bill(s) still waiting to send');   /* a parked change is not a bill: it never holds the close */
+    var sendQ = sendableRows(q); if (sendQ.length) why.push(sendQ.length + ' bill(s) still waiting to send' + heldPriceWords(sendQ));   /* a parked change is not a bill: it never holds the close */
     var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) { why.push('the bill list could not be read'); }
     why.push.apply(why, billsNotSettled(bills));
     var left = 0; try { (await otherCounters()).forEach(function(s){ if (!s.moved && String(s.owner || '') === String(OWNER || '')) left += s.bills + s.queue; }); } catch (e) { cbQuiet('closeCounter:6', e); }
@@ -25063,7 +25025,7 @@ async function openStuck(){
         /* ⭐ R2: a row that is WAITING is not a row that is stuck, and the difference is the whole question this
            panel answers. Without the wait on screen a backoff is indistinguishable from a wedge. */
         var waitW = qWaitWords(q);
-        var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted')
+        var why = (q._price_hold ? 'Price changed: waiting for the owner · ' : '') + (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted')
                 + (waitW ? ' · ' + waitW : '');
         h += '<div class="t' + (q._why ? ' warnrow' : '') + ((q._code === 'MONEY_UNBALANCED' || q._code === 'BRIDGE_MISSING') ? ' stoprow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
           + '<span>' + esc(why)
@@ -25884,7 +25846,7 @@ async function openBills(keepOpen){
             + (b.printed_as ? ' <span class="u" data-testid="till-bill-printed-' + esc(b.no) + '" title="'
                 + esc((b.renumbered && b.renumbered.why) || 'recorded under a new number') + '">printed as ' + esc(b.printed_as) + '</span>' : '')
             /* ⭐ the pill says which of the three this bill is, and only "✓ sent" is a promise */
-            + (function(){
+            + staleChipHTML(b, stateOf(b) === 'waiting') + (function(){
                 var st = stateOf(b);
                 /**
                  * ⚠️⚠️ SENT CARRIES NO CHIP ([TILL-136]). It is the normal case, and the header above has
@@ -29233,6 +29195,317 @@ setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
   navigator.serviceWorker.register('/till-sw.js').catch(function(e){ cbQuiet('top:22', e); });
+/* ═══ CTR-243 helpers that sit at the end of the page, so no anonymous function of theirs shifts the readability ratchet's ordinals above ═══ */
+/**
+ * what drain does with the shop's ACCEPTANCE of a bill (moved out of drain whole, CTR-243, so drain does not grow): the number check, the receipt on the bill, the one-sided word.
+ */
+async function drainRecordSent(response, bill){
+  /**
+   * ⭐⭐ THE SERVER CHECKS THE NUMBER WE PRINTED, and answers `number_check` only when something is
+   * wrong with it — too long for this country, or a character the rule does not allow.
+   *
+   * ⚠⚠ IT ACCEPTED THE BILL, and that is correct: the number is already on paper in a customer's hand,
+   * so refusing it would not un-print it, it would only wedge this queue and lose the sale from the
+   * books. What it can do is tell us, and what WE can do is put it where the shopkeeper will read it
+   * rather than let it vanish with the HTTP response.
+   */
+  /**
+   * ── ⭐⭐⭐ THE ACKNOWLEDGEMENT IS WRITTEN DOWN (Athi, observation 6, division I) ──────────────────
+   *
+   * *"I tried creating couple of invoices from counter app, it says sent, but could not see it task in
+   * the tallytest app. It has to be visible, but it is not."*
+   *
+   * ⚠️⚠️ "SENT" WAS INFERRED FROM AN ABSENCE. A bill was called sent when it was NOT in the queue — and
+   * a row can be missing from that queue for three very different reasons:
+   *   1. it was delivered and the row was deleted here  ← the only one that means the money is safe
+   *   2. it was never queued, because the write failed
+   *   3. `DB.all` filtered it out, because the row is stamped for a different shop on this device
+   * The counter could not tell them apart and showed the most flattering of the three. Three bills read
+   * "✓ sent · All 3 have reached the shop" while ChitBridge had never heard of them.
+   *
+   * ⭐ SO THE PROOF IS KEPT, not deduced: the chit_id ChitBridge answered with, and when. A bill says
+   * "sent" only if it carries one. Absence now reads as "not confirmed", which is the truth, and the
+   * shopkeeper is given a way to send it again rather than a green tick over a missing sale.
+   */
+  var proof = { ack: null, oneSided: null };
+  try { proof = drainAnswerProof(await response.json(), bill); } catch (_) { /* a body we cannot read is not a reason to lose the bill */ }
+  /* ⚠️ the RECEIPT goes on the bill, not on the queue row — the queue row is about to be deleted, and a
+     proof that dies with the thing it proves is not a proof. */
+  try {
+    var kept = (await DB.all('bills')).filter(function(x){ return x && String(x.no) === String(bill.no); })[0];
+    if (kept) { kept._sent = { at: Date.now(), chit_id: proof.ack || null, one_sided: proof.oneSided }; await DB.put('bills', kept); }
+  } catch (_) { /* a bill we cannot stamp still went — it will read "not confirmed", which is honest */ }
+}
+/** the shop's answer to an accepted bill → { ack: the chit id, oneSided: the reason the customer's copy was not sent }; a number that fails the country's rule is put where the shopkeeper reads it */
+function drainAnswerProof(answer, bill){
+  var proof = { ack: null, oneSided: null };
+  if (answer && answer.number_check && !answer.number_check.ok) ls.set('cb_numwarn', JSON.stringify({ no: bill.no, why: answer.number_check.reason, at: Date.now() }));
+  if (answer && (answer.chit_id || (answer.chit && answer.chit.chit_id))) proof.ack = answer.chit_id || answer.chit.chit_id;
+  /* ⭐ ONE-SIDED (2026-10-02): the sale is recorded, but the customer could not be sent their copy — said, not hidden */
+  if (answer && answer.one_sided) proof.oneSided = String(answer.one_sided.why || 'the customer could not be sent their copy');
+  return proof;
+}
+
+/* ═══ CTR-243 · A BILL RUNG OFFLINE AT A PRICE THE SHOP HAD ALREADY CHANGED ════════════════════════════════════════
+ * A bill finished with no line (or with the check failing) sells at the prices this counter holds, and says so (price_basis.checked false). When the line returns the shop may already have
+ * changed a price, a rate or a status. The bill is the sale: the customer holds it, so it is NEVER re-priced and never refused (REV-02, TILL-41, CTR-212 principle 0). What the counter owes the
+ * shopkeeper is the truth, once, before the bill goes: staleGate runs at the top of drain, ONE POST /api/till/recheck for every queued bill's products, and compares CARRIED values only:
+ *   a. the answer's changed_at (catalogue_items.commercial_changed_at) is at or before the bill's billed_at (moved to the server clock by the offset the answer showed, plus 2 minutes, toward a popup, never toward a miss),
+ *   b. and after price_basis.snapshot_at (this counter's catalogue was older than the change),
+ *   c. and the figures differ: the shelf price the line was rung from, the rate on the line, or the product is no longer sold.
+ * A change AFTER the sale is silent. A deleted product (found false) is silent (S3 files it). One stamp = the LATEST change: a second change after the sale can hide the first (a named false negative).
+ * PRICE ONLY (A1, Athi 13 Nov): the bill goes as sold and carries price_basis.stale_ack (via auto); chip "Price changed: sent as sold". No hold. RATE MOVED or NOT SOLD (B1): the row is HELD (_price_hold, an underscored
+ * queue field like _tries / _parked; NOT _parked, which means refused for good), the rest of the queue goes, THEN the popup is raised (never awaited inside drain, never mid-sale), and Send as sold needs the owner's PIN.
+ * Never a total: the popup shows only carried values per line. ⚠️ A stamp the door could not give (database before b845, changed_at null on a plain row) is not "nothing moved": one toast says so.
+ * ONE sender path: every CloudHost send is drain(), so the gate is in one place; the shop PC program (AgentHost) keeps its own queue and is outside this gate.
+ */
+var STALE_SKEW_MS = 120000, STALE_CHUNK = 200;
+/** WHEN THE PRICE DOOR IS DOWN (review of CTR-243, 13 Nov; Athi has not chosen yet, so (a) is the default). 'wait' = (a): a bill that could not be checked stays queued, the door is asked again on the next drain, and once the retry
+ *  ladder has reached its ceiling (qBackoff(STALE_DOOR_MAX) = Q_CEIL) the bill goes with the chip "Prices not checked". 'open' = (b): fail open, the bill goes at once with that chip. One word switches them. */
+var STALE_DOOR_MODE = 'wait', STALE_DOOR_MAX = 9;
+/** a queued SALE bill the gate may ask about: finished with the catalogue unchecked, never sent, not yet confirmed or held, no owner override on the money */
+function staleCandidate(row){
+  var basis = row && row.price_basis;
+  return !!(basis && basis.checked !== true && !basis.stale_ack && !basis.stale_unchecked && staleSaleRow(row) && !row._tries && !row._price_hold && !row._parked);
+}
+/** a queued SALE bill (lines, not a document, a change, a shift or a delivery) with no owner override on its money */
+function staleSaleRow(row){
+  return !!(Array.isArray(row.lines) && row.lines.length && !row.chitBody && !row.tillPost && !row.shiftBody && !row.deliver && !row.doc && !row.money_override);
+}
+/** the shelf price a line was rung from, without the choices added on top of it (the same base recheckBaseOf reads from a cart line) */
+function staleSoldPrice(line){
+  var shelf = line.list_price != null ? line.list_price : line.price;
+  return r2((Number(shelf) || 0) - (line.mods && line.mods.length ? Number(modAdd(line.mods)) || 0 : 0));
+}
+/** rules a and b for one change moment (ISO) → true / false, or null when a moment cannot be read */
+function staleWindow(changedAt, billedMs, snapMs){
+  var changed = Date.parse(changedAt);
+  if (isNaN(changed) || isNaN(billedMs)) return null;
+  return changed <= billedMs + STALE_SKEW_MS && (isNaN(snapMs) || changed > snapMs);
+}
+/** rule c: why the figures differ → 'not_sold' | 'rate_moved' | 'price_moved' | null */
+function staleReason(sold, current, gone){
+  if (gone) return 'not_sold';
+  if (sold.gst_rate != null && current.gst_rate != null && sold.gst_rate !== current.gst_rate) return 'rate_moved';
+  return sold.price !== current.price ? 'price_moved' : null;
+}
+/** what the change stamp says about a line that moved: 'values' (a network line is decided by its values), 'removed' (a soft-removed product: removing stamps nothing, so nothing can say it happened BEFORE the sale: the bill is never held for it), 'unknown' (a plain row with no stamp), 'outside' (the change is not inside the window) or 'inside' */
+function staleStampSays(line, answerRow, env){
+  if (answerRow.active === false) return 'removed';
+  if (/^src:/.test(String(line.item_id))) return 'values';
+  if (!answerRow.changed_at) return 'unknown';
+  return staleWindow(answerRow.changed_at, env.billedMs, env.snapMs) ? 'inside' : 'outside';
+}
+/** one bill line against the door's answer for its product → null (nothing to say), { unknown } (it moved but no stamp can say when), or the line's verdict */
+function staleLineVerdict(line, answerRow, env){
+  if (!answerRow || answerRow.checked === false || answerRow.found !== true) return null;
+  if (env.kept[String(line.item_id)]) return null;
+  var gone = recheckGone(answerRow);
+  var sold = { price: staleSoldPrice(line), gst_rate: line.gst_rate == null ? null : Number(line.gst_rate) };
+  var rateNow = recheckRateOf(Object.assign({ name: answerRow.name }, taxInputOf(answerRow)), env.ctx);
+  var current = { price: r2(Number(answerRow.price) || 0), gst_rate: rateNow, status: answerRow.active === false ? 'inactive' : (answerRow.status || null) };
+  var reason = staleReason(sold, current, gone);
+  if (!reason) return null;
+  var stamp = staleStampSays(line, answerRow, env);
+  if (stamp === 'unknown') return { unknown: true };
+  if (stamp === 'outside' || stamp === 'removed') return null;
+  return { item_id: line.item_id, name: line.name, reason: reason, sold: sold, current: current, changed_at: answerRow.changed_at || null };
+}
+var STALE_RANK = { price_moved: 1, rate_moved: 2, not_sold: 3 };
+/** a whole bill → { lines, reason, hold, unknown }: hold is true for a rate move or a line no longer sold (B1), false for a price only (A1) */
+function staleRowVerdict(row, answers){
+  var env = { kept: {}, ctx: answers.ctx, snapMs: Date.parse(row.price_basis.snapshot_at), billedMs: Date.parse(row.at) + answers.offset };
+  (row.price_basis.kept || []).forEach(function(k){ env.kept[String(k.item_id)] = true; });
+  var out = { lines: [], reason: null, hold: false, unknown: false };
+  (row.lines || []).forEach(function(line){
+    var said = staleLineVerdict(line, answers.by[String(line.item_id)], env);
+    if (!said) return;
+    if (said.unknown) { out.unknown = true; return; }
+    out.lines.push(said);
+    if (!out.reason || STALE_RANK[said.reason] > STALE_RANK[out.reason]) out.reason = said.reason;
+  });
+  out.hold = out.reason === 'rate_moved' || out.reason === 'not_sold';
+  return out;
+}
+/** ONE ask (200 products at a time, the door's cap, never queued) for every product on the candidate bills → { by, ctx, offset } or null when any answer is missing: nobody is blocked then */
+async function staleRead(cands){
+  var ids = [];
+  cands.forEach(function(row){ row.lines.forEach(function(line){ var id = line && line.item_id && String(line.item_id); if (id && ids.indexOf(id) < 0) ids.push(id); }); });
+  var out = { by: {}, ctx: null, offset: 0 };
+  try {
+    for (var i = 0; i < ids.length; i += STALE_CHUNK) {
+      var asked = Date.now(), answer = await HOST.tillPost('/api/till/recheck', { item_ids: ids.slice(i, i + STALE_CHUNK) }, { noQueue: true });
+      if (!(answer && answer.ok && Array.isArray(answer.items))) return null;
+      if (!out.ctx) { out.ctx = recheckContext(answer); var seen = Date.parse(answer.at); out.offset = isNaN(seen) ? 0 : seen - asked; }
+      answer.items.forEach(function(item){ out.by[String(item.item_id)] = item; });
+    }
+  } catch (e) { cbQuiet('staleRead:1', e); return null; }
+  return out.ctx ? out : null;
+}
+/** the same change on the queue row AND the bill row, each re-read by key just before its put (a put of an older copy must never undo a hold or an ack) → true when the queue row was found and written */
+async function staleMark(no, edit, queueOnly){
+  var key = String(no);
+  var queued = ((await DB.all('queue')) || []).filter(function(x){ return x && String(x.no) === key; })[0];
+  if (!queued) return false;
+  edit(queued); await DB.put('queue', queued);
+  if (queueOnly) return true;
+  var kept = ((await DB.all('bills')) || []).filter(function(x){ return x && String(x.no) === key; })[0];
+  if (kept) { edit(kept); await DB.put('bills', kept); }
+  return true;
+}
+/** the acknowledgement stored with the bill: what was seen, who let it go and how. The figures of the bill are NEVER touched */
+function staleAck(verdict, via, owner){
+  var who = owner ? owner.by : WHO;
+  return { at: new Date().toISOString(), by: who ? String(who.id) : null, by_name: who ? who.name : null, via: via, reason: verdict.reason, owner_pin: !!owner, lines: verdict.lines };
+}
+function staleSetAck(ack){ return function(x){ delete x._price_hold; x.price_basis = Object.assign({}, x.price_basis, { stale_ack: ack, stale_checked_at: ack.at }); }; }
+/**
+ * the top of drain: rows in → { rows to send now, held count, why }. Held rows (this pass or an earlier one) never go; a bill that could not be checked while the door is down waits (STALE_DOOR_MODE).
+ * Each bill is settled on its own (staleSettle): a bill whose row cannot be read is HELD with that reason and the rest go. A bill that cannot be marked is not sent this pass (never sent unrecorded).
+ * force (Send now) asks bills that are still waiting on their ladder too.
+ */
+async function staleGate(rows, force){
+  var held = rows.filter(function(row){ return row && row._price_hold; }).length;
+  var open = rows.filter(function(row){ return row && !row._price_hold; });
+  var cands = open.filter(function(row){ return staleCandidate(row) && (force || qDue(row)); });
+  if (!cands.length) return { rows: open, held: held, why: null };
+  var answers = await staleRead(cands), tally = { unknown: false, waiting: 0, held: held, unchecked: 0 }, send = [];
+  for (var i = 0; i < open.length; i++) {
+    if (cands.indexOf(open[i]) < 0) { send.push(open[i]); continue; }
+    var outcome = await staleSettle(open[i], answers, tally);
+    if (outcome === 'send') send.push(open[i]);
+  }
+  if (!answers) toastLine(tally.waiting ? 'Prices could not be checked. ' + tally.waiting + ' bill(s) wait here and the check is tried again.' : 'Prices could not be checked. These bills are sent without it.');
+  else if (tally.unknown) toastLine('Price changes could not be checked yet.');
+  return { rows: send, held: tally.held, why: tally.waiting ? tally.waiting + ' bill(s) waiting for the price check. It is tried again.' : null };
+}
+/** the gate with a net under it: a failure of the gate itself never stops the queue (frozen still stops it): every bill goes as sold, with the words */
+async function staleGateSafe(rows, force){
+  try { return await staleGate(rows, force); }
+  catch (e) {
+    throwIfFrozen(e); cbQuiet('staleGateSafe:1', e);
+    toastLine('Prices could not be checked. These bills are sent as sold.');
+    var open = rows.filter(function(row){ return row && !row._price_hold; });
+    return { rows: open, held: rows.length - open.length, why: null };
+  }
+}
+/** one candidate bill → 'send' | 'hold' | 'wait' | 'skip'. Whatever goes wrong inside this bill, it is HELD with the reason (staleHoldUnreadable), never thrown at the queue */
+async function staleSettle(row, answers, tally){
+  try {
+    if (!answers) return await staleDoorDown(row, tally);
+    var verdict = staleRowVerdict(row, answers);
+    if (verdict.unknown) tally.unknown = true;
+    if (!verdict.lines.length) return 'send';
+    if (verdict.hold) { await staleMark(row.no, staleSetHold(verdict)); tally.held++; return 'hold'; }
+    var receipt = staleAck(verdict, 'auto', null);
+    if (!(await staleMark(row.no, staleSetAck(receipt)))) return 'skip';
+    staleSetAck(receipt)(row);
+    return 'send';
+  } catch (e) {
+    throwIfFrozen(e); cbQuiet('staleSettle:1', e);
+    return staleHoldUnreadable(row, e, tally);
+  }
+}
+function staleSetHold(verdict){ var hold = { at: new Date().toISOString(), reason: verdict.reason, lines: verdict.lines, asked: false }; return function(x){ x._price_hold = hold; }; }
+/** a bill whose row could not be read: held, with the reason on it (the popup and the chip say so); a hold that cannot be written leaves the bill unsent this pass */
+async function staleHoldUnreadable(row, error, tally){
+  var hold = { at: new Date().toISOString(), reason: 'unreadable', lines: [], asked: false, why: String((error && error.message) || error).slice(0, 160) };
+  try { if (!(await staleMark(row.no, function(x){ x._price_hold = hold; }))) return 'skip'; } catch (e) { throwIfFrozen(e); cbQuiet('staleHoldUnreadable:1', e); return 'skip'; }
+  tally.held++;
+  return 'hold';
+}
+/** the door could not be asked: 'open' sends the bill with the "Prices not checked" mark; 'wait' keeps it queued on the retry ladder until the ladder's ceiling, then sends it with the mark */
+async function staleDoorDown(row, tally){
+  var tries = (Number(row._stale_tries) || 0) + 1;
+  if (STALE_DOOR_MODE === 'open' || tries >= STALE_DOOR_MAX) return staleMarkUnchecked(row, tries, tally);
+  await staleMark(row.no, function(x){ x._stale_tries = tries; x._nextAt = Date.now() + qBackoff(tries); }, true);
+  tally.waiting++;
+  return 'wait';
+}
+/** the bill goes without a price check: the mark is written (queue row and bill row) BEFORE the first send, so its body, and its idempotency key, never change after an attempt */
+async function staleMarkUnchecked(row, tries, tally){
+  var mark = { at: new Date().toISOString(), tries: tries, mode: STALE_DOOR_MODE };
+  var set = function(x){ delete x._stale_tries; x.price_basis = Object.assign({}, x.price_basis, { stale_unchecked: mark }); };
+  if (!(await staleMark(row.no, set))) return 'skip';
+  set(row); tally.unchecked++;
+  return 'send';
+}
+/** ' (N waiting for a decision on a price change)' when some of these queued bills are held for the owner, else '' (the day close says it) */
+function heldPriceWords(rows){
+  var n = rows.filter(function(row){ return row && row._price_hold; }).length;
+  return n ? ' (' + n + ' waiting for a decision on a price change)' : '';
+}
+/** a popup is never opened while a sale is being rung: a bill on screen, a question open, a dialog open, or the till locked */
+function staleBusyNow(){
+  var dlg = null; try { dlg = document.querySelector('dialog[open]'); } catch (e) { cbQuiet('staleBusyNow:1', e); }
+  return !!((CART && CART.length) || _askResolve || LOCK || dlg);
+}
+function staleTime(iso){ var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+/** one line in the popup: carried values only, never a total, never "wrong" */
+function staleLineWords(l){
+  var name = l.name || 'An item', bits = [];
+  if (l.reason === 'not_sold') bits.push('sold at ' + money(l.sold.price) + ', no longer sold');
+  else {
+    if (l.sold.price !== l.current.price) bits.push('sold at ' + money(l.sold.price) + ', the shop price is now ' + money(l.current.price));
+    if (l.sold.gst_rate !== l.current.gst_rate && l.sold.gst_rate != null && l.current.gst_rate != null) bits.push(schemeWord() + ' was ' + l.sold.gst_rate + '%, now ' + l.current.gst_rate + '%');
+  }
+  return name + ': ' + bits.join('; ') + (l.changed_at && staleTime(l.changed_at) ? ' (changed ' + staleTime(l.changed_at) + ')' : '');
+}
+/** the popup text for the held bills: each bill, its lines, then what sending does and what waiting costs */
+function staleAskWords(held){
+  var parts = held.map(function(row){
+    return ['Bill ' + row.no + (staleTime(row.at) ? ', ' + staleTime(row.at) : '') + ', ' + money(row.total) + ' paid'].concat(row._price_hold.lines.length ? row._price_hold.lines.map(staleLineWords) : ['its prices could not be checked (' + (row._price_hold.why || 'the bill could not be read') + ')']).join('\n');
+  });
+  return parts.join('\n\n') + '\n\nSending records ' + (held.length > 1 ? 'each bill' : 'this bill') + ' as the customer holds ' + (held.length > 1 ? 'it' : 'it')
+    + '. It will not be re-priced. Until it is sent it is not in your books or stock. Not yet is only a delay: a bill the customer holds cannot be refused. Only the owner can send it.';
+}
+/** mark the held rows as asked, so the popup does not come back on every drain (the chip, the day close and a new sign-in ask again) */
+async function staleMarkAsked(rows){
+  for (var i = 0; i < rows.length; i++) {
+    try { await staleMark(rows[i].no, function(x){ if (x._price_hold) x._price_hold = Object.assign({}, x._price_hold, { asked: true }); }); } catch (e) { cbQuiet('staleMarkAsked:1', e); throwIfFrozen(e); }
+  }
+}
+/** the owner says yes: PIN, then each bill is recorded as sold and goes through the one drain → true when they were let go */
+async function staleRelease(rows){
+  var owner = await ownerPinAsk('Send ' + (rows.length > 1 ? 'these bills' : 'this bill') + ' as sold?\n\nThe tax rate or the product changed after ' + (rows.length > 1 ? 'they were' : 'it was') + ' rung, or the prices could not be checked.', 'Send as sold');
+  if (!owner) { await staleMarkAsked(rows); toastLine('Not sent. It stays here until the owner says.'); return false; }
+  try {
+    for (var i = 0; i < rows.length; i++) {
+      var hold = rows[i]._price_hold;
+      await staleMark(rows[i].no, staleSetAck(staleAck({ reason: hold.reason, lines: hold.lines }, 'send_as_sold', owner)));
+    }
+  } catch (e) { cbQuiet('staleRelease:2', e); toastLine('The owner said yes but it could not be saved here (' + String((e && e.message) || e).slice(0, 80) + '). The bill stays held.'); return false; }
+  try { if (HOST && HOST.drain) await HOST.drain({ force: true }); } catch (e) { cbQuiet('staleRelease:1', e); }
+  return true;
+}
+/** the popup for these held bills (ui id till-stale-send-popup, path till.html > drain > staleAsk) → true when sent */
+async function staleAsk(rows){
+  if (!rows.length) return false;
+  var yes = await sure(staleAskWords(rows), rows.length > 1 ? 'Send all ' + rows.length + ' as sold' : 'Send as sold', 'Price changed', 'Not yet');
+  if (!yes) { await staleMarkAsked(rows); return false; }
+  return staleRelease(rows);
+}
+/** after a drain, when something is held and was not asked yet: the popup at an idle moment, otherwise the chip waits (the next drain tries again) */
+async function staleAskSoon(){
+  if (staleBusyNow()) return false;
+  var rows = []; try { rows = ((await DB.all('queue')) || []).filter(function(r){ return r && r._price_hold && !r._price_hold.asked; }); } catch (e) { cbQuiet('staleAskSoon:1', e); throwIfFrozen(e); return false; }
+  return rows.length ? staleAsk(rows) : false;
+}
+/** the chip on a bill in the list: held = amber with the button that asks again; acknowledged = quiet */
+function staleChipHTML(b, waiting){
+  if (b && b._price_hold && waiting) return '<span data-testid="till-bill-stale-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;color:var(--warn);border-color:var(--warn)">' + (b._price_hold.reason === 'unreadable' ? 'Not sent: prices not checked' : 'Price changed: not sent') + '</span>'
+    + '<button class="pill" style="margin-inline-start:6px" data-testid="till-bill-stale-ask-' + esc(b.no) + '" onclick="staleDecide(\'' + esc(b.no) + '\')">decide</button>';
+  if (b && b.price_basis && b.price_basis.stale_unchecked) return '<span data-testid="till-bill-stale-unchecked-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;color:var(--dim);border-color:var(--line)">Prices not checked</span>';
+  var acknowledged = b && b.price_basis && b.price_basis.stale_ack;
+  return acknowledged ? '<span data-testid="till-bill-stale-sent-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;color:var(--dim);border-color:var(--line)">Price changed: sent as sold</span>' : '';
+}
+/** the chip's button: ask again for this one bill, whatever the earlier answer was */
+async function staleDecide(no){
+  var row = null; try { row = ((await DB.all('queue')) || []).filter(function(r){ return r && String(r.no) === String(no) && r._price_hold; })[0]; } catch (e) { cbQuiet('staleDecide:1', e); throwIfFrozen(e); }
+  if (row && await staleAsk([row])) await openBills(true);
+}
+/** the timer's own function: the popup after a drain, never inside it */
+function staleAskLater(){ staleAskSoon().catch(function(e){ cbQuiet('staleAskLater:1', e); }); }
 </script>
 </body>
 </html>
