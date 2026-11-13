@@ -67,8 +67,8 @@ it('drain(): only a KEY refusal stops the queue — a bill refused with TILL_SEN
   assert.ok(/TILL_SEND_REFUSED/.test(guard), 'the key-refused branch no longer tells a bill refusal from a key refusal');
 });
 it('a bill recorded one-sided carries the reason (_sent.one_sided) and its row says "no copy to customer"', () => {
-  assert.ok(/ans\.one_sided/.test(PAGE), 'drain() no longer reads one_sided from the answer');
-  assert.ok(/kept\._sent = \{[^}]*one_sided: oneSided/.test(PAGE), 'the reason is not kept on the bill');
+  assert.ok(/answer\.one_sided/.test(PAGE), 'drain() no longer reads one_sided from the answer (drainAnswerProof, moved out of drain whole in CTR-243)');
+  assert.ok(/kept\._sent = \{[^}]*one_sided: proof\.oneSided/.test(PAGE), 'the reason is not kept on the bill');
   assert.ok(/till-bill-onesided-/.test(PAGE) && /no copy to customer/.test(PAGE), 'the bill row no longer shows it');
 });
 
