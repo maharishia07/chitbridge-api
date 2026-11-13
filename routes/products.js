@@ -196,6 +196,11 @@ const identity = require('../lib/identity'); // which line is this, and which pr
 const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
 /* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
+/** CUR-1b: the shop's money for NEW rows: a withdrawn or unlisted one is refused once, up front, in words (a worded 422), not as a failed line per row */
+function newMoneyOf(currency) {
+  if (currency) money.refuseNewCurrency(currency);
+  return currency;
+}
 function userSafeMessage(e) {
   return e.userMessage || safeErr(e);
 }
@@ -1246,8 +1251,7 @@ router.post(
       const refusal = await importRefusal(req, entity_id, applied, ident);
       if (refusal) return problem(req, res, refusal);
 
-      const currency = await regional.currencyFor(entity_id);
-      if (currency) money.refuseNewCurrency(currency); /* CUR-1b: a shop whose own money is withdrawn imports nothing: one worded 422, not a failed line per row */
+      const currency = newMoneyOf(await regional.currencyFor(entity_id));
       // O(1): the rules are read once for the whole file, not once per row.
       let ruleRows = await schemaFieldsOf(schema_id);
 
