@@ -44,15 +44,15 @@ function fakeDB() {
 const FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'heldWaitWords'];
 
 /** a counter whose wire answers from `answer(url, n)` -> [status, body]; `renumbered` lists every bill renumberBill was asked to move */
-function counter(answer) {
-  const DB = fakeDB(), calls = [], renumbered = [];
+function counter(answer, sharedDB) {
+  const DB = sharedDB || fakeDB(), calls = [], renumbered = [];
   const ctx = { console, setTimeout, clearTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error, DB, OWNER: null, FOREIGN: 0, STATE: { queued: 1 }, DEADLINE: 20000, dbFrozen: () => false, FROZEN_LINE: 'frozen',
     lineUp: () => true, cbQuiet: () => {}, queueTally: async () => {}, paintStatus: () => {}, personOn: () => false, drainSoon: () => {}, ls: { set() {}, get: (k, d) => d },
-    isSaleRow: (b) => !!(b && !b.tillPost && Array.isArray(b.lines)), stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
+    stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     renumberBill: async (bill) => { renumbered.push(bill.no); const to = bill.no + 'N'; await DB.put('queue', Object.assign({}, bill, { no: to, _tries: 0 })); await DB.del('queue', bill.no); return { from: bill.no, to, companions: [] }; },
     fetchBy: async (url) => { calls.push(url); const [status, body] = answer(url, calls.length); return { ok: status >= 200 && status < 300, status, json: async () => body, clone() { return this; } }; } };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + FNS.map(lift).join('') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + FNS.map(lift).join('') + lift('isSaleRow') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'k'; host.api = 'http://shop'; host.cred = () => 'k'; host.auth = (x) => Object.assign({}, x || {}); host.idemHeaders = (p, b, x) => x;
   return { host, DB, calls, renumbered };
@@ -128,8 +128,49 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     const { ctx, renumbered, asked } = panel(true);
     await ctx.heldRenumber('C1/404'); assert.strictEqual(asked.length, 0); assert.strictEqual(renumbered.length, 0);
   });
-  await it('renumberBill drops the hold from the copy it makes (the new number starts clean)', () => {
-    assert.ok(/delete fresh\._code; delete fresh\._hold;/.test(lift('renumberBill')), 'renumberBill keeps _hold');
+
+  await it('only a SALE is held: a goods-in note (chitBody), a credit note, an expense and a subscription answered the same code keep the old ladder', async () => {
+    const rowsByKind = { grn: { no: 'GRN/1', at: 'x', chitBody: { kind: 'goods_in' } }, cn: Object.assign(SALE('CN/1'), { kind: 'credit_note' }), exp: Object.assign(SALE('EX/1'), { kind: 'expense' }), sub: Object.assign(SALE('SU/1'), { kind: 'subscription' }) };
+    for (const k of Object.keys(rowsByKind)) {
+      const { host, DB, calls } = counter(() => [409, { code: 'CHIT_REPLAY_DIFFERS', message: WORDS }]);
+      const no = rowsByKind[k].no; DB.stores.queue[no] = rowsByKind[k];
+      await host.drain({ force: true }); await host.drain({ force: true });
+      const row = DB.stores.queue[no];
+      assert.ok(row && !row._hold && row._nextAt > Date.now(), k + ' was held: ' + JSON.stringify(row));
+      assert.strictEqual(calls.length, 2, k + ' is no longer retried');
+    }
+  });
+  await it('a held bill survives a reload: the row is in the store, and a FRESH drain over the same store still holds it and sends nothing', async () => {
+    const first = counter(() => [409, { code: 'CHIT_REPLAY_DIFFERS', message: WORDS }]);
+    first.DB.stores.queue['C1/1'] = SALE('C1/1');
+    await first.host.drain({ force: true });
+    const second = counter(() => [200, { chit_id: 'x' }], first.DB);
+    await second.host.drain({ force: true }); await second.host.drain();
+    assert.strictEqual(second.calls.length, 0, 'the held bill was sent after a reload');
+    assert.ok(second.DB.stores.queue['C1/1']._hold && second.host.last.why.indexOf(WORDS) > 0, second.host.last.why);
+  });
+  await it('a held bill still counts as WAITING: queueTally (STATE.queued, bills) and closeReadinessNow().waiting', async () => {
+    const DB = fakeDB(), ctx = { DB, STATE: { queued: 0 }, QUEUED: null, OUT_OF_SYNC: [], PARKED: [], cbQuiet() {}, throwIfFrozen() {}, rowIsMine: () => true };
+    vm.createContext(ctx);
+    DB.isFrozen = () => false;
+    vm.runInContext(liftVar('QUEUED') + ['dbFrozen', 'isParkedRow', 'sendableRows', 'queueTally', 'isSaleRow', 'isIssuedRow', 'closeReadinessNow'].map(lift).join(''), ctx);
+    DB.stores.queue['C1/1'] = Object.assign(SALE('C1/1'), { _hold: { at: 1, why: WORDS } });
+    DB.stores.queue['C1/2'] = SALE('C1/2');
+    const t = await vm.runInContext('queueTally()', ctx);
+    assert.strictEqual(t.bills, 2); assert.strictEqual(t.parked, 0); assert.strictEqual(ctx.STATE.queued, 2);
+    const ready = await vm.runInContext('closeReadinessNow()', ctx);
+    assert.strictEqual(ready.waiting, 2, 'the close would not wait for the held bill: ' + JSON.stringify(ready));
+  });
+  await it('the REAL renumberBill on a held row: the copy has no _hold (nor the old status), keeps the printed number, and the held key is gone', async () => {
+    const DB = fakeDB(), ctx = { DB, LAST_SERIES: null, cbQuiet() {}, tillId: () => 'C1', nextNumber: async () => 'C1/9', rememberRenumber: async () => {}, rekeyCompanions: async () => [], forgetRows() {}, Object, Number, Date };
+    vm.createContext(ctx); vm.runInContext(lift('renumberBill'), ctx);
+    const held = Object.assign(SALE('C1/1'), { _hold: { at: 1, why: WORDS }, _status: 409, _why: WORDS, _code: 'CHIT_REPLAY_DIFFERS', _tries: 3 });
+    DB.stores.queue['C1/1'] = clone(held); DB.stores.bills['C1/1'] = clone(held);
+    const moved = await vm.runInContext('renumberBill', ctx)(held, 'x');
+    const copy = DB.stores.queue['C1/9'];
+    assert.deepStrictEqual([moved.from, moved.to], ['C1/1', 'C1/9']);
+    assert.ok(copy && !('_hold' in copy) && !('_status' in copy) && copy.printed_as === 'C1/1' && copy._tries === 0, JSON.stringify(copy));
+    assert.ok(!DB.stores.queue['C1/1'] && !DB.stores.bills['C1/1'] && DB.stores.bills['C1/9'] && !('_hold' in DB.stores.bills['C1/9']));
   });
   console.log('\n' + (n - failed) + '/' + n + ' passed');
   process.exit(failed ? 1 : 0);

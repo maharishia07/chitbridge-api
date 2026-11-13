@@ -4343,7 +4343,7 @@ async function refusedRow(row, status, said, code){
   row._status = status; row._code = code; row._why = said || ('the shop answered ' + status);
   row._tries = (Number(row._tries) || 0) + 1; row._at = Date.now();
   row._nextAt = row._at + qBackoff(row._tries);
-  if (status === 409 && code === 'CHIT_REPLAY_DIFFERS' && !row.tillPost) { delete row._nextAt; row._hold = { at: row._at, why: row._why }; }   /* CTR-204: a different sale under this number is HELD, never retried: a person decides */
+  if (status === 409 && code === 'CHIT_REPLAY_DIFFERS' && isSaleRow(row)) { delete row._nextAt; row._hold = { at: row._at, why: row._why }; }   /* CTR-204: a different sale under this number is HELD, never retried: a person decides */
   if (parksOn(row, status, code)) { delete row._nextAt; row._parked = { at: row._at, status: status, code: code || null, why: row._why }; }
   try { await DB.put('queue', row); } catch (e) { cbQuiet('drain:4', e); }
   return (row._parked ? 'A change was refused and set aside for you to fix: ' : 'Bill ' + row.no + ': ') + row._why;
@@ -25145,7 +25145,7 @@ async function stuckReport(){
   if (!qM.length) L.push('  nothing of this shop\'s is queued');
   qM.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
     .slice(0, 20).forEach(function(q){
-      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : '') + '  tries=' + (q._tries || 0)
+      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : q._hold ? '  HELD (a different sale has this number)' : '') + '  tries=' + (q._tries || 0)
         + '  status=' + (q._status || '—') + '  ' + (qWaitWords(q) || 'due now') + '  '
         + (q._why || 'not refused — not yet attempted'));
     });
