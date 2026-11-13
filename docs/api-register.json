@@ -28534,7 +28534,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 15,
-   "hash": "a753a6417ec56c1b",
+   "hash": "bd427ae4ddb9455b",
    "does": "",
    "errors": {
     "count": 0,
@@ -28593,7 +28593,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-13 PR#1217 stage2: CTR-246 adds two integer counters (send_bridge_absent, send_heads_absent) to the health answer, additive, no key removed; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-13 PR#1224: re-sign after the closed contract (lib/plumbing-contract.js) gained send_bridge_absent and send_heads_absent as required integer properties to match routes/health.js absentCounts; diff read, additive, no key removed, names and sentence unchanged, answer already carried them (CTR-246 adds two integer counters (send_bridge_absent, send_heads_absent) to the health answer, additive, no key removed; 13 columns true)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
