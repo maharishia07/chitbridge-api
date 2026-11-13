@@ -65913,6 +65913,646 @@
      }
     }
    ]
+  },
+  "GET /api/till/invoice-lease/report": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/till/invoice-lease": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "till_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "till_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "till_id",
+      "errors": [
+       {
+        "field": "till_id",
+        "code": "MISSING_FIELD",
+        "detail": "till_id is needed."
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "POST /api/till/invoice-lease/close": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till",
+      "type": "https://chitbridge.com/problems/key_not_scoped",
+      "title": "Key not scoped",
+      "status": 403,
+      "code": "KEY_NOT_SCOPED",
+      "detail": "This key is not scoped for till",
+      "hint": "Use a key made for this, or sign in as a person.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lease_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "lease_id is needed.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "lease_id",
+      "errors": [
+       {
+        "field": "lease_id",
+        "code": "MISSING_FIELD",
+        "detail": "lease_id is needed."
+       }
+      ]
+     }
+    }
+   ]
   }
  },
  "global": {

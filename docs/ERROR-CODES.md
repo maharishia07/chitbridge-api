@@ -609,4 +609,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BUYER_TAX_ID_BAD | 400 | Buyer tax number not accepted | The buyer's tax number on this bill does not check out for your country. | Check the buyer's number and send the bill again. | chits | 2026-10-30 |
 | CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |
+| LEASE_COUNTER_BUSY | 503 | Invoice numbers busy | The invoice numbers are busy for a moment. Nothing was taken. | Try again in a few seconds. | till | 2026-11-13 |
+| LEASE_NOT_FOR_COUNTRY | 409 | No block of numbers for this shop | This shop's invoice numbers are not issued by blocks, so no block was given. | Keep numbering invoices as the counter does today. | till | 2026-11-13 |
+| LEASE_NOT_FOUND | 404 | Block not found | That block of invoice numbers is not one of this shop's. | Open the day close and pick a block from the list. | till | 2026-11-13 |
+| LEASE_NOT_READY | 409 | Invoice blocks not switched on | Invoice number blocks are not switched on for this shop yet. | Ask support to switch them on. | till | 2026-11-13 |
+| LEASE_NOT_YOUR_COUNTER | 403 | Not your counter | A counter can only ask for its own invoice numbers. | Ask from the counter that will print them. | till | 2026-11-13 |
+| LEASE_NUMBER_NOT_IN_LEASE | 409 | Number not in the block | A number you named as unused is not in this block. | Check the number on the day close list. | till | 2026-11-13 |
+| LEASE_NUMBER_WAS_USED | 409 | Number is on an invoice | That number is already on an invoice, so it cannot be called unused. | Name only numbers that were not printed. | till | 2026-11-13 |
+| LEASE_REASON_INVALID | 400 | Reason not accepted | The reason must be void, unused or retired. | Pick one of the three and save again. | till | 2026-11-13 |
+| LEASE_TILL_UNKNOWN | 404 | Counter not found | That counter is not one of this shop's counters, so no block was given. | Ask from a counter this shop has connected. | till | 2026-11-13 |
+| LEASE_WANT_INVALID | 400 | Block size not accepted | Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50. | Change the number and ask again. | till | 2026-11-13 |
 <!-- codes:end -->
