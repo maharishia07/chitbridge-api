@@ -24,10 +24,12 @@ const ok = (name, cond, why) => {
 const J = (x) => JSON.stringify(x);
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const shopRow = { status: 'active', identity_type: 'entity', identity_id: SHOP, bridge_id: 'CB-SHOP', display_name: 'Test Shop', country: 'IN', gstn: '33AABCK1234F1Z6', policy_flags: { price_includes_tax: 'no' } };
-let HELD = null; /* the bill the shop already holds: { ref, header, full } */
+let HELD = null;
+let LOOKUP_FAILS = false; /* the lines read throws (a db error) */ /* the bill the shop already holds: { ref, header, full } */
 function rowsFor(sql, params) {
   const s = String(sql);
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
+  if (LOOKUP_FAILS && /summary_json/.test(s)) throw new Error('the lines read failed');
   if (/business_json->>'client_ref' = \$2/.test(s)) return HELD && params[1] === HELD.ref ? [/summary_json/.test(s) ? HELD.full : HELD.header] : [];
   if (/SELECT self_copy_pref/.test(s)) return [{ self_copy_pref: null }];
   if (/FROM identities/.test(s) && /identity_id = ANY/.test(s)) return (params[0] || []).map((id) => (id === SHOP ? shopRow : null)).filter(Boolean);
@@ -175,6 +177,40 @@ const OTHER_ITEM = [line('coffee', 100, 2)];
     const idlessMoney = await send(bill(idless('tea', 3)));
     ok('id-less lines, another quantity and so another total → still 409 (the total carries it)', idlessMoney.status === 409 && idlessMoney.answer.differs === 'total', J([idlessMoney.status, idlessMoney.answer]));
     HELD.full = held236;
+    /* ── bridges written in different decimals are not comparable: no verdict ── */
+    const held = (money, lines) => Object.assign({}, held236, { line_items: lines || TWO, summary_json: { money } });
+    HELD.full = held({ total: 1.235, currency_code: 'KWD', bridge: { decimals: 3, steps: [{ name: 'total', amount_minor: 1235 }] } });
+    const scale = await send(bill(TWO, (bj) => { bj.invoice.currency = 'KWD'; bj.invoice.ValDtls.TotInvVal = 1.24; bj.invoice._cb.bridge = { ok: true, decimals: 2, steps: [{ name: 'total', amount: 1.24, amount_minor: 124 }] }; }));
+    ok('both bridged but written in different decimals (3 and 2) → no verdict: 200 duplicate:true', scale.status === 200 && scale.answer.duplicate === true, J([scale.status, scale.answer]));
+    /* a 0-decimal currency */
+    HELD.full = held({ total: 236, currency_code: 'JPY', bridge: { decimals: 0, steps: [{ name: 'total', amount_minor: 236 }] } });
+    const yen = (total) => bill(TWO, (bj) => { bj.invoice.currency = 'JPY'; bj.invoice.ValDtls.TotInvVal = total; bj.invoice._cb.bridge = { ok: true, decimals: 0, steps: [{ name: 'total', amount: total, amount_minor: total }] }; });
+    const yenSame = await send(yen(236));
+    ok('a JPY (0-decimal) bill replayed honestly → 200 duplicate:true', yenSame.status === 200 && yenSame.answer.duplicate === true, J([yenSame.status, yenSame.answer]));
+    const yenOther = await send(yen(237));
+    ok('a JPY bill one yen more → 409 total', yenOther.status === 409 && yenOther.answer.differs === 'total', J([yenOther.status, yenOther.answer]));
+
+    /* ── one line with an item_id and one without, different items: no verdict on lines (the id-less line cannot be judged) ── */
+    const mixedHeld = [{ item_id: 'tea', name: 'tea', quantity: 2 }, { name: 'biscuit', particulars: 'biscuit', quantity: 1 }];
+    const mixedSent = [{ item_id: 'coffee', name: 'coffee', quantity: 2 }, { name: 'rusk', particulars: 'rusk', quantity: 1 }];
+    HELD.full = Object.assign({}, held236, { line_items: mixedHeld });
+    const mixedBody = bill(TWO);
+    mixedBody.line_items = mixedSent;
+    const mixed = await send(mixedBody);
+    ok('one line with an item_id and one without, different items on the replay → no verdict on lines: 200 duplicate:true', mixed.status === 200 && mixed.answer.duplicate === true, J([mixed.status, mixed.answer]));
+    HELD.full = held236;
+
+    /* ── the lookup throws: a replay is answered as a replay (never a blocked sale), and the fall-back is SAID ── */
+    const logger = require(path.join(API, 'lib', 'logger'));
+    const realFellBack = logger.fellBack;
+    const SAID = [];
+    logger.fellBack = (words) => { SAID.push(String(words)); };
+    LOOKUP_FAILS = true;
+    const broken = await send(bill(THREE));
+    LOOKUP_FAILS = false;
+    logger.fellBack = realFellBack;
+    ok('the lines read throws → still 200 duplicate:true (fail open: an honest sale is never refused by a faulty check)', broken.status === 200 && broken.answer.duplicate === true, J([broken.status, broken.answer]));
+    ok('and the guarded branch ran: the fall-back was said (logger.fellBack)', SAID.some((w) => /replay body check failed/.test(w)), J(SAID));
   } finally {
     server.close();
   }
