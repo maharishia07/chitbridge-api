@@ -1,3 +1,10 @@
+/**
+ * matrix.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/matrix.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 'use strict';
 /**
  * matrix.js — THE CONFORMANCE MATRIX. One store per catalogue type; every one driven end to end.
@@ -23,7 +30,7 @@
  *   chit         GET /api/chits/:id as the SHOP      the record arrived and carries the payload
  *   supplier     GET /suppliers/:id/catalogue        a BUYER ENTITY sees the same catalogue (B2B)
  */
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('matrix.js');
 const OTP = process.env.DEV_OTP || '123456';
 const SEED = process.argv.includes('--seed');
 

@@ -1,3 +1,10 @@
+/**
+ * journey-supplier-hop.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/journey-supplier-hop.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 'use strict';
 /**
  * journey-supplier-hop.js — "I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call
@@ -10,7 +17,7 @@
  *
  * ⚠️ Creates real entities (@test-cb.com) — cleanup-test-entities.sql sweeps them.
  */
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('journey-supplier-hop.js');
 const OTP = process.env.DEV_OTP || '123456';
 const B = (s) => '\x1b[1m' + s + '\x1b[0m',
   G = (s) => '\x1b[32m' + s + '\x1b[0m';

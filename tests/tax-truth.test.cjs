@@ -149,7 +149,10 @@ async function ring(o) {
   };
   ctx.window.CBTax = ctx.CBTax;
   vm.createContext(ctx);
-  vm.runInContext(PAGE_FNS.map((s) => fnText(PAGE, s)).join('\n'), ctx);
+  /* CTR-246: finish() stamps till_build from TILL_BUILD; lifted from the till master with the functions, never a literal here */
+  const tillBuild = /var TILL_BUILD = '[^']*';/.exec(PAGE);
+  if (!tillBuild) throw new Error('var TILL_BUILD is gone from the till master — this test is measuring nothing');
+  vm.runInContext([tillBuild[0]].concat(PAGE_FNS.map((s) => fnText(PAGE, s))).join('\n'), ctx);
   await vm.runInContext('finish()', ctx);
   if (o.noEngine) return { ctx, said: saved.said, called: !!saved.called, last: ctx.LAST, cart: ctx.CART.length };
   const bill = ctx.LAST;

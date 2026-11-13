@@ -45,12 +45,14 @@ router.post('/request', auth, checked('POST /request'), async (req, res) => {
     }
 
     // Check if connection already exists
-    const existing = await query(
-      `SELECT connection_id, status
+    const existing = await withEntity(from_id, (bound) =>
+      bound.query(
+        `SELECT connection_id, status
        FROM connections
        WHERE (from_entity_id = $1 AND to_entity_id = $2)
           OR (from_entity_id = $2 AND to_entity_id = $1)`,
-      [from_id, to_id]
+        [from_id, to_id]
+      )
     );
 
     if (existing.rows.length > 0) {
@@ -62,17 +64,19 @@ router.post('/request', auth, checked('POST /request'), async (req, res) => {
 
     // Create connection request
     const connection_id = uuidv4();
-    await query(
-      `INSERT INTO connections
+    await withEntity(from_id, (bound) =>
+      bound.query(
+        `INSERT INTO connections
        (connection_id, from_entity_id, from_display_name, from_bridge_id,
         to_entity_id, to_display_name, to_bridge_id, status, note)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
-      [connection_id, from_id, sender.rows[0].display_name, sender.rows[0].bridge_id, to_id, receiver.rows[0].display_name, receiver.rows[0].bridge_id, note]
+        [connection_id, from_id, sender.rows[0].display_name, sender.rows[0].bridge_id, to_id, receiver.rows[0].display_name, receiver.rows[0].bridge_id, note]
+      )
     );
 
     // Log to state_log (the requester's OWN copy). B1 RLS: withEntity(me).
-    await withEntity(from_id, (c) =>
-      c.query(
+    await withEntity(from_id, (bound) =>
+      bound.query(
         `INSERT INTO state_log
        (chit_id, entity_id, action, action_by_identity_id,
         action_by_display_name, detail)
@@ -106,10 +110,12 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     const entity_id = req.identity.identity_id;
 
     // Find connection
-    const conn = await query(
-      `SELECT * FROM connections
+    const conn = await withEntity(entity_id, (bound) =>
+      bound.query(
+        `SELECT * FROM connections
        WHERE connection_id = $1 AND to_entity_id = $2 AND status = 'pending'`,
-      [connection_id, entity_id]
+        [connection_id, entity_id]
+      )
     );
 
     if (conn.rows.length === 0) {
@@ -119,11 +125,13 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     const newStatus = action === 'accept' ? 'accepted' : 'rejected';
 
     // Update connection status
-    await query(
-      `UPDATE connections
+    await withEntity(entity_id, (bound) =>
+      bound.query(
+        `UPDATE connections
        SET status = $1, responded_at = NOW()
        WHERE connection_id = $2`,
-      [newStatus, connection_id]
+        [newStatus, connection_id]
+      )
     );
 
     // Log to state_log — for both entities
@@ -132,8 +140,8 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     const detail = `${req.identity.display_name} ${newStatus} connection from ${conn.rows[0].from_display_name}`; // newStatus is the word: accepted | rejected
 
     // Log for receiver (the responder's OWN copy). B1 RLS: withEntity(me).
-    await withEntity(entity_id, (c) =>
-      c.query(
+    await withEntity(entity_id, (bound) =>
+      bound.query(
         `INSERT INTO state_log
        (chit_id, entity_id, action, action_by_identity_id,
         action_by_display_name, detail)

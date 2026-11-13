@@ -253,6 +253,7 @@ const GUARDS = [
   'rls-guard-baseline.test.cjs',
   'rls-open-ratchet.test.cjs', // SEC-75: every open readable table is classified (dictionary / entity / shared / platform-private); the non-dictionary count only falls
   'sec-75-actor-settings-entity.test.cjs', // SEC-75 P1 slice: every statement on entity_actor_settings runs under withEntity (b842)
+  'sec-75-shared-tables-entity.test.cjs', // SEC-75 + DB-103: b855 locks six shared tables; every statement on them runs bound to a shop; break test on the policies
   'rls-predicate.test.cjs', // ⚠️ every policy reads a GUC something sets — written, never declared, so never run
   'migration-rls.test.js', // a new table closes itself; the default grant makes an open one readable
   /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that
@@ -363,6 +364,9 @@ const GUARDS = [
   'ctr182-gstin-owner-only.test.cjs', // CTR-182: the shop's GSTIN is the owner's on every door (till POST /shop · PATCH /entities/profile · PUT /governance/profile/vault · POST /integrations/profile): a clerk and a manager refused 403 OWNER_ONLY with nothing written, owner and a key pass, may_set_tax_id on can-see-costs
   'ctr-212-recheck-door.test.cjs', // ⭐ CTR-212 S1: POST /till/recheck answers every id with the catalogue's CURRENT row (deleted = found:false, soft-removed = active:false, a brand line read as the snapshot reads it)
   'ctr-212-recheck-setting.test.cjs', // ⭐ CTR-212 S0: recheck_prices is asked, never assumed (askedOf, the snapshot's null, FIELDS rows)
+  'ctr-243-recheck-changed-at.test.cjs', // ⭐ CTR-243: POST /till/recheck carries changed_at (commercial_changed_at); a database before b845 answers null, never a 500
+  'ctr-243-stale-send.test.cjs', // ⭐ CTR-243: a bill rung at an out-of-date price: price only goes as sold with an ack, a rate move or a withdrawn line is HELD for the owner PIN, never re-priced, never lost (25 cases)
+  'ctr-246-bridge-missing.test.cjs', // ⭐ CTR-246: a bill that carries an invoice but no bridge or no readable till build stamp is passed and counted (/health send_bridge_absent · send_heads_absent), never refused
   'ctr-212-recheck-till.test.cjs', // ⭐ CTR-212 S2a: the counter reads prices again at unpark and finish; 236.00 kept · 283.20 · 224.00 · deleted never billed (hand figures, the real engine)
   'cat-264a-commercial-stamp.test.cjs', // ⭐ CAT-264a: the b845 trigger key list equals till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency; cb_item_fields makes each key (SQL and JS cannot drift)
   'till-rate-door.test.cjs', // ⭐ F5 A1: the counter's item carries its tax facts (gst_rate · categories[] · hsn from sac, never code); POST /rate refuses a key and a cashier in words, an owner/manager sets it once (idempotent); Veg Meals ₹120 inclusive at 5% through the engine
@@ -532,6 +536,7 @@ const GUARDS = [
   'rail156-po-cost-blind.test.cjs', // RAIL-156 (enrolled by OPS-98): a cost-blind co-assist cannot SEND a priced buy-side chit (403 COST_BLIND); a quantity-only PO and every sale still go; the stand-in answers the engine's seller+buyer read
   'rail146c-receipt-carry.test.cjs', // RAIL-146c: a cost-blind co-assist's goods receipt carries the order's stored price (RAIL-149's carry widened), a figure of his is a 403, a null price is a no_cost skip, never rate 0
   'rail146c-till-cost-blind.test.cjs', // RAIL-146c: the till reads (GET /api/till/tasks · /match) carry no purchase money to a cost-blind co-assist; a sales order stays priced; the owner and the paired till key read as before; whole-body scan, fail closed
+  'crm-d7-unbilled-by-currency.test.cjs', // CRM-D7: a party's unbilled figure is one total per currency (never added across), a currency-less order counted not summed, a blind reader hidden whole; the record door carries the list row's figure
   'rail146e-crm-unbilled-cost.test.cjs', // RAIL-146e: the Parties list's per-party unbilled money is partial for a cost-blind co-assist (RAIL-146b rule per party); owner byte-identical; whole-body scan
   'rail146i-dues-cost-blind.test.cjs', // RAIL-146i: a party's supplier-side balance (what the shop owes) and supplier credit limit never reach a cost-blind co-assist on GET /api/crm/parties, /parties/:id or GET /api/books/dues; a customer's balance stays; owner byte-identical; whole-body scan
   'rail146h-timeline-cost-blind.test.cjs', // RAIL-146h: GET /api/crm/parties/:id/timeline sends a supplier bill's value and a supplier-side ledger amount_minor as null + cost_hidden to a cost-blind co-assist; a sale and a customer-only ledger stay; owner and cost-allowed byte-identical
@@ -674,6 +679,7 @@ const GUARDS = [
   'register-spin-country.test.cjs',
   'call-log.test.cjs', // QA 12 Nov: the harness logs METHOD + path + status per case; the SIT lifecycle and gorilla junits turn them into endpoint rows the map credits
   'run-target.test.cjs', // QA 12 Nov: the one run-target allow-list (production refused, SIT boxes named)
+  'scripts-target.test.cjs', // PLT-101: no api script names the live host; apiBase refuses unset and production
   'schema-fingerprint.test.cjs',
   'sec4-server-gates.test.cjs',
   'seed-local-refusals.test.cjs',

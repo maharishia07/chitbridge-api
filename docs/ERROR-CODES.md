@@ -606,6 +606,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REL_NOTHING_TO_UPDATE | 400 | Nothing to change | You sent nothing to change. | Send at least one field to change. | relationships | 2026-10-23 |
 | REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
 | REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
+| BRIDGE_MISSING | 409 | The tax check figures are missing | This bill arrived without its tax check figures, so it was not saved. | Reload the counter and make the bill again; we have been told and no override exists. | chits | 2026-11-13 |
 | BUYER_TAX_ID_BAD | 400 | Buyer tax number not accepted | The buyer's tax number on this bill does not check out for your country. | Check the buyer's number and send the bill again. | chits | 2026-10-30 |
 | CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |

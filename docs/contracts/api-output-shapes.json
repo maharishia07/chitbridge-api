@@ -5700,6 +5700,9 @@
               "null"
             ]
           },
+          "unbilled": {
+            "type": "object"
+          },
           "migrated": {
             "type": "boolean"
           },
@@ -5758,6 +5761,10 @@
         },
         {
           "path": "points",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "unbilled",
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
         },
         {

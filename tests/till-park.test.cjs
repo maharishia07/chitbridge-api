@@ -43,7 +43,7 @@ function fakeDB() {
     put: async (s, row) => { stores[s][row.no] = clone(row); }, del: async (s, k) => { delete stores[s][k]; },
     all: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])), allRaw: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])) };
 }
-const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain'];
+const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
 const PRICE_SENTENCE = 'Price can have at most 2 decimal places in INR (not 10.999). Round it and send it again.';
 
 /** a counter whose wire answers from `answer(url)` -> [status, body]; `calls` lists every url it was asked */
@@ -459,7 +459,9 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       storageMap: ['closed', 'null rows print as an unknown dash, not as zero'],
       stuckReport: ['closed', 'the catch prints the frozen words in the report'],
       unparkSame: ['closed', 'a parked copy simply stays; its delete would reject anyway'],
-      waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter']
+      waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter'],
+      drainRecordSent: ['closed', 'called only by drain, which stops first when frozen; a receipt that cannot be written leaves the bill reading not confirmed, never lost (moved out of drain whole, CTR-243)'],
+      staleAskSoon: ['checked'], staleDecide: ['checked']
     };
     const bad = [];
     if (Object.keys(found).length < 25) bad.push('the scan found only ' + Object.keys(found).length + ' functions with a DB read in a try/catch — the guard has gone blind');

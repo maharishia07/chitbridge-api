@@ -17,4 +17,12 @@ module.exports = {
   cb_entity_employee: { key: 'owner_id', cols: { employee_id: 'gen_random_uuid()' } },
   entity_actor_settings: { key: 'entity_id', cols: {} },
   cb_consumer_traction: { key: 'business_id', cols: {} },
+  /* b855 (SEC-75 + DB-103): two strictly shop-keyed tables take the generic probe */
+  connector_connection: { key: 'entity_id', cols: { actor_id: 'gen_random_uuid()', ref: "'probe'" } },
+  dispute_participants: { key: 'entity_id', cols: { dispute_id: 'gen_random_uuid()', chit_id: 'gen_random_uuid()' } },
+  /* b855: four tables are either-side or read-wide, so "a shop sees only its own" is the wrong probe: checkSharedTables in tests/rls-fresh-db.test.cjs proves them */
+  connections: { shared: true },
+  catalogue_source: { shared: true },
+  product_container: { shared: true },
+  media_blobs: { shared: true },
 };

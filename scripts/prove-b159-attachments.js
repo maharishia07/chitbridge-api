@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * prove-b159-attachments.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-b159-attachments.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
+/**
  * prove-b159-attachments.js — b159 added `object_key`; prove attachments still work.
  *
  * ⚠️ THIS IS THE CHECK THAT MATTERS AFTER b159, and it is not obvious why.
@@ -83,7 +90,7 @@ async function login(email, name) {
       ok('…and the length matches', got.buffer.length === bytes.length, { sent: bytes.length, got: got.buffer.length });
     } else {
       /* _proof has no binary helper — fall back to a plain fetch with the same auth. */
-      const base = process.env.CB_API_BASE || 'https://chitbridge-api-production.up.railway.app';
+      const base = require('../tests/lib/run-target.cjs').apiBase('prove-b159-attachments.js');
       const reply = await fetch(base + '/api/attachments/' + attId, { headers: { Authorization: 'Bearer ' + me.token } });
       ok('read returns 200', reply.ok, reply.status);
       const buf = Buffer.from(await reply.arrayBuffer());

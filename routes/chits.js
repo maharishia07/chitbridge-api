@@ -1699,6 +1699,8 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
+  const absent = is_draft ? null : sendMoneyScope.bridgeMissingOf(business_json.invoice, business_json.till, { bill: business_json.bill_no });
+  if (absent) return sendBridgeRefusal(sendState, absent, req, res);
   const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), engine: sendMoneyScope.engineStampOf(business_json, sendState.moneyScope), bill: business_json.bill_no });
   if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
@@ -1732,6 +1734,16 @@ async function sendPairRefusal(sendState, pair, req, res) {
     status: 409,
     ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
   });
+}
+
+/** CTR-246 — the carried invoice has no bridge although the till's own build stamp says its builds always send one: a FAULT, refused before anything is stored, NO override, ONE ticket (own code, not MONEY_UNBALANCED) */
+async function sendBridgeRefusal(sendState, found, req, res) {
+  const { sender_id, business_json } = sendState;
+  const filed = await require('../lib/money-check').raiseMissingBridge(sender_id, found, { bill: business_json.bill_no, client_ref: sendState.client_ref });
+  const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  const words = 'This bill arrived without its tax check figures, so it was not saved. Reload the counter and make the bill again. ' + told;
+  res.locals.code = 'BRIDGE_MISSING';
+  return problem(req, res, { status: 409, ...said({ code: 'BRIDGE_MISSING', error: 'The tax check figures are missing.', message: words, build: found.build, words }, 'CHIT_CONFLICT') });
 }
 
 /** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */

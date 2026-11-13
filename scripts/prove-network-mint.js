@@ -27,7 +27,7 @@
  */
 'use strict';
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('prove-network-mint.js');
 const OTP = process.env.DEV_OTP || '123456';
 const SUFFIX = process.env.CB_SUFFIX || '1'; // bump for a fresh network
 const ROOT_HANDLE = 'athitest' + SUFFIX;

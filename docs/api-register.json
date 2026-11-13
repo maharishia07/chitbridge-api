@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 281,
+    "applies": 288,
     "failing": 38
    },
    "rate_limited": {
@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6353,
+   "line": 6365,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5231,
+   "line": 5243,
    "hash": "8289e954b5c807d1",
    "does": "",
    "errors": {
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6614,
+   "line": 6626,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -930,8 +930,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1014,
-   "hash": "e5b9eacc9c599271",
+   "line": 1016,
+   "hash": "b29edcd26a079e31",
    "does": "",
    "errors": {
     "count": 0,
@@ -1001,14 +1001,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -1039,7 +1039,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 434,
+   "line": 435,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 728,
+   "line": 729,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1245,7 +1245,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 450,
+   "line": 451,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -9138,7 +9138,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3717,
+   "line": 3729,
    "hash": "5b3b7b59d1faaf33",
    "does": "",
    "errors": {
@@ -9286,7 +9286,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5045,
+   "line": 5057,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9388,7 +9388,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4268,
+   "line": 4280,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9488,7 +9488,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6093,
+   "line": 6105,
    "hash": "ad2b481cd5b97231",
    "does": "",
    "errors": {
@@ -9587,7 +9587,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6047,
+   "line": 6059,
    "hash": "db87c3b5029337bc",
    "does": "",
    "errors": {
@@ -9697,7 +9697,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5625,
+   "line": 5637,
    "hash": "82ed2a6878097cdb",
    "does": "",
    "errors": {
@@ -9911,7 +9911,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4475,
+   "line": 4487,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10011,7 +10011,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4586,
+   "line": 4598,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10309,7 +10309,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6254,
+   "line": 6266,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10417,7 +10417,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3272,
+   "line": 3284,
    "hash": "8dafbdfc875c70c5",
    "does": "",
    "errors": {
@@ -10524,7 +10524,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3468,
+   "line": 3480,
    "hash": "158440f72b9764bf",
    "does": "",
    "errors": {
@@ -10635,7 +10635,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3655,
+   "line": 3667,
    "hash": "77f9463c104b2ef9",
    "does": "",
    "errors": {
@@ -10732,7 +10732,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4457,
+   "line": 4469,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10830,7 +10830,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4297,
+   "line": 4309,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -10926,7 +10926,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4307,
+   "line": 4319,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11024,7 +11024,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4349,
+   "line": 4361,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11119,7 +11119,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4414,
+   "line": 4426,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11219,7 +11219,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3367,
+   "line": 3379,
    "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
@@ -11321,7 +11321,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3205,
+   "line": 3217,
    "hash": "28854d3230999418",
    "does": "",
    "errors": {
@@ -11745,7 +11745,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3682,
+   "line": 3694,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -11945,8 +11945,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 779,
-   "hash": "e7284e2a1727d98b",
+   "line": 781,
+   "hash": "d821ffddceedd12f",
    "does": "",
    "errors": {
     "count": 0,
@@ -12011,14 +12011,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12047,8 +12047,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 963,
-   "hash": "4574a239426bb2f1",
+   "line": 965,
+   "hash": "01a7db15cfab548e",
    "does": "",
    "errors": {
     "count": 0,
@@ -12115,14 +12115,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12151,8 +12151,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 803,
-   "hash": "c7ab8441a009fdac",
+   "line": 805,
+   "hash": "f86e2da68f562da9",
    "does": "",
    "errors": {
     "count": 0,
@@ -12219,14 +12219,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12255,7 +12255,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 719,
+   "line": 721,
    "hash": "11be9936f414911a",
    "does": "",
    "errors": {
@@ -12466,7 +12466,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 501,
+   "line": 502,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -12564,7 +12564,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 392,
+   "line": 393,
    "hash": "b0ff2a933d7638b5",
    "does": "",
    "errors": {
@@ -12765,7 +12765,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 119,
-   "hash": "8e2de5a48a92f87e",
+   "hash": "d0628c294c8f8b38",
    "does": "",
    "errors": {
     "count": 0,
@@ -12838,7 +12838,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#605 stage2 (re-sign; 13 of 13 read, purchase money null + cost_hidden for a cost-blind actor, owner bytes untouched, finance=1 still OWNER_ONLY)",
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1218 stage2 (re-sign; 13 of 13 read; additive unbilled {n,minor,currency,by_currency,no_currency,unpriced} = the list row's one sum over lib/money summarise, mixed currencies minor null, currency-less order counted not summed, blind reader hidden whole; every current web reader reads n/minor/currency only; JPY 500 and KWD 12.345+0.005=12350 minor checked by hand)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12869,7 +12869,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 625,
+   "line": 626,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -12972,7 +12972,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 212,
+   "line": 213,
    "hash": "1d3706ef33c106b7",
    "does": "",
    "errors": {
@@ -13085,7 +13085,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 665,
+   "line": 666,
    "hash": "4d599620da61bcc0",
    "does": "",
    "errors": {
@@ -13185,7 +13185,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 707,
+   "line": 708,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -26549,7 +26549,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3638,
+   "line": 3654,
    "hash": "2f6ccb3bf69814d1",
    "does": "",
    "errors": {
@@ -26645,7 +26645,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3436,
+   "line": 3452,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -26837,7 +26837,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4301,
+   "line": 4317,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -26935,7 +26935,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3856,
+   "line": 3872,
    "hash": "4cc02b7049e1cf09",
    "does": "",
    "errors": {
@@ -27433,7 +27433,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2493,
+   "line": 2509,
    "hash": "b7945b493fc90536",
    "does": "",
    "errors": {
@@ -27534,7 +27534,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2844,
+   "line": 2860,
    "hash": "34ca27a7c7ac2723",
    "does": "",
    "errors": {
@@ -27743,7 +27743,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3274,
+   "line": 3290,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -27843,7 +27843,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3504,
+   "line": 3520,
    "hash": "cb196c32797a4f71",
    "does": "",
    "errors": {
@@ -27943,7 +27943,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3826,
+   "line": 3842,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -28039,7 +28039,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3019,
+   "line": 3035,
    "hash": "8822f90ab44821bf",
    "does": "",
    "errors": {
@@ -28534,7 +28534,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 15,
-   "hash": "a1fcb628914fc8e6",
+   "hash": "bd427ae4ddb9455b",
    "does": "",
    "errors": {
     "count": 0,
@@ -28593,7 +28593,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-13 PR#1224: re-sign after the closed contract (lib/plumbing-contract.js) gained send_bridge_absent and send_heads_absent as required integer properties to match routes/health.js absentCounts; diff read, additive, no key removed, names and sentence unchanged, answer already carried them (CTR-246 adds two integer counters (send_bridge_absent, send_heads_absent) to the health answer, additive, no key removed; 13 columns true)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -29147,8 +29147,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 984,
-   "hash": "ea0e27d69ed819ff",
+   "line": 986,
+   "hash": "95bd74f445e029d9",
    "does": "",
    "errors": {
     "count": 0,
@@ -29216,14 +29216,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -29356,7 +29356,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 422,
+   "line": 423,
    "hash": "33318eb6af2768b4",
    "does": "",
    "errors": {
@@ -39805,7 +39805,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4959,
+   "line": 4971,
    "hash": "b5bf1ff993c4dff3",
    "does": "",
    "errors": {
@@ -39915,7 +39915,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6506,
+   "line": 6518,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40023,7 +40023,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4810,
+   "line": 4822,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40129,7 +40129,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5283,
+   "line": 5295,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40235,7 +40235,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4250,
+   "line": 4262,
    "hash": "380c285599bb79c1",
    "does": "",
    "errors": {
@@ -40331,7 +40331,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4620,
+   "line": 4632,
    "hash": "2230812987fb9ca7",
    "does": "",
    "errors": {
@@ -40441,7 +40441,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5868,
+   "line": 5880,
    "hash": "d6eb5545b4017d0b",
    "does": "",
    "errors": {
@@ -40561,7 +40561,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5484,
+   "line": 5496,
    "hash": "acb999f6908ec147",
    "does": "",
    "errors": {
@@ -40668,7 +40668,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5193,
+   "line": 5205,
    "hash": "fd0d3624e4edb5a0",
    "does": "",
    "errors": {
@@ -41167,7 +41167,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4489,
+   "line": 4501,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -41267,7 +41267,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4545,
+   "line": 4557,
    "hash": "a6c3059bcdab231a",
    "does": "",
    "errors": {
@@ -41367,7 +41367,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4565,
+   "line": 4577,
    "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
@@ -41463,7 +41463,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4211,
+   "line": 4223,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -41563,7 +41563,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6585,
+   "line": 6597,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -41668,7 +41668,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6564,
+   "line": 6576,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -41772,7 +41772,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6546,
+   "line": 6558,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -41876,7 +41876,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6827,
+   "line": 6839,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -41982,7 +41982,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4435,
+   "line": 4447,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42078,7 +42078,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4404,
+   "line": 4416,
    "hash": "b4db7e428e83b4b7",
    "does": "",
    "errors": {
@@ -42178,7 +42178,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4425,
+   "line": 4437,
    "hash": "614db4519036ff5d",
    "does": "",
    "errors": {
@@ -42278,7 +42278,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4321,
+   "line": 4333,
    "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
@@ -42379,7 +42379,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4339,
+   "line": 4351,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -42479,7 +42479,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4381,
+   "line": 4393,
    "hash": "89b46078bdc9bea1",
    "does": "",
    "errors": {
@@ -42579,7 +42579,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4360,
+   "line": 4372,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -42997,7 +42997,7 @@
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
    "line": 23,
-   "hash": "3d6ff5c3055c8d28",
+   "hash": "c5670393e2b5c8e8",
    "does": "",
    "errors": {
     "count": 0,
@@ -43071,7 +43071,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43096,7 +43096,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 193,
+   "line": 195,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -43199,8 +43199,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 923,
-   "hash": "45c59297489b4a7c",
+   "line": 925,
+   "hash": "707e9f5c98b659b8",
    "does": "",
    "errors": {
     "count": 0,
@@ -43268,14 +43268,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43304,7 +43304,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 744,
+   "line": 746,
    "hash": "f427329066062d46",
    "does": "",
    "errors": {
@@ -43409,8 +43409,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 908,
-   "hash": "888a9edf8f9752b2",
+   "line": 910,
+   "hash": "91d36164392e3e40",
    "does": "",
    "errors": {
     "count": 0,
@@ -43478,14 +43478,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43514,7 +43514,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 861,
+   "line": 863,
    "hash": "5c5dd3f7f0c7925f",
    "does": "",
    "errors": {
@@ -43618,7 +43618,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 675,
+   "line": 677,
    "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
@@ -43727,8 +43727,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 534,
-   "hash": "4e4ad9002d6b420e",
+   "line": 536,
+   "hash": "9383cee1b059687e",
    "does": "",
    "errors": {
     "count": 0,
@@ -43813,7 +43813,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#1144 (CON-159): file_err and proof_err on the 200 now hold a registered code (CONNECTOR_FOLDER_NOT_FILED, CONNECTOR_PROOF_NOT_KEPT, shopkeeper sentences in ERROR-CODES.md) or null, never exception text; both keys kept, still null/non-null so a device testing presence works (cap-connector.js logs proof_err, lifecycle-test reads file_err only as a label); refusals are RFC 9457 with 400/401/403/404/409/503 declared, a failed chit is 503 not 200; tolerant-by-design exemption (S33-T) stands; all 13 machine columns read yes",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43838,7 +43838,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 836,
+   "line": 838,
    "hash": "5321fbf8637c444b",
    "does": "",
    "errors": {
@@ -44359,7 +44359,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 406,
+   "line": 407,
    "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
@@ -44466,7 +44466,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 717,
+   "line": 718,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -44570,7 +44570,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 466,
+   "line": 467,
    "hash": "e2e8be2381ec8bb2",
    "does": "",
    "errors": {
@@ -44676,7 +44676,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 535,
+   "line": 536,
    "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
@@ -44774,7 +44774,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 648,
+   "line": 649,
    "hash": "ec220e59bf3fda06",
    "does": "",
    "errors": {
@@ -44876,7 +44876,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 370,
+   "line": 371,
    "hash": "785eb787c08de857",
    "does": "",
    "errors": {
@@ -44985,7 +44985,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 516,
+   "line": 517,
    "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
@@ -45085,7 +45085,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 548,
+   "line": 549,
    "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
@@ -45191,7 +45191,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 676,
+   "line": 677,
    "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
@@ -45293,7 +45293,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 691,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -45397,7 +45397,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 739,
+   "line": 740,
    "hash": "57a3696e9ad8ab93",
    "does": "",
    "errors": {
@@ -45497,7 +45497,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 574,
+   "line": 575,
    "hash": "4bf9c5a4b74c017e",
    "does": "",
    "errors": {
@@ -58342,7 +58342,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4174,
+   "line": 4190,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -58444,7 +58444,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3348,
+   "line": 3364,
    "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
@@ -58750,7 +58750,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2739,
+   "line": 2755,
    "hash": "b5d1d38fbdf85c1f",
    "does": "",
    "errors": {
@@ -58957,7 +58957,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4235,
+   "line": 4251,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -59167,7 +59167,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2672,
+   "line": 2688,
    "hash": "fb7ee244234d4a45",
    "does": "",
    "errors": {
@@ -59269,7 +59269,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2781,
+   "line": 2797,
    "hash": "d548871784442c21",
    "does": "",
    "errors": {
@@ -59889,7 +59889,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2433,
+   "line": 2449,
    "hash": "ce2b954bd9af8e16",
    "does": "",
    "errors": {
@@ -59998,8 +59998,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2253,
-   "hash": "dbafba055729b52d",
+   "line": 2254,
+   "hash": "8150ea58b444a534",
    "does": "",
    "errors": {
     "count": 0,
@@ -60074,7 +60074,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-08 PR#995 head 576282a6: new till door re-read, 13 columns pass; 503 TILL_RECHECK_UNAVAILABLE right (read failed, nothing changed; not 409/422), registered with a shopkeeper sentence, closed RECHECK_ITEM_KEYS, strict body, till key via KEY_ROUTES",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 CTR-243 (PR#1218-1221 RC): answer gains the optional changed_at key (null when unknown, additive, old counters ignore it), 42703 fallback keeps old databases answering, status codes and refusals unchanged; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -60099,7 +60099,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2967,
+   "line": 2983,
    "hash": "bce8298f80a6601e",
    "does": "",
    "errors": {
@@ -60199,7 +60199,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2533,
+   "line": 2549,
    "hash": "0a6e72f6afb69950",
    "does": "",
    "errors": {
@@ -60307,7 +60307,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2605,
+   "line": 2621,
    "hash": "a51c77c0c4211825",
    "does": "",
    "errors": {
@@ -60413,7 +60413,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2911,
+   "line": 2927,
    "hash": "e8dec48d423da49f",
    "does": "",
    "errors": {
@@ -60517,7 +60517,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2891,
+   "line": 2907,
    "hash": "5ff14e252baed951",
    "does": "",
    "errors": {
@@ -60621,7 +60621,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3117,
+   "line": 3133,
    "hash": "3609a57a2f557a8d",
    "does": "",
    "errors": {
@@ -61779,7 +61779,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 401,
-   "hash": "72a08c43e4fe0b41",
+   "hash": "7d52796f4028042c",
    "does": "",
    "errors": {
     "count": 0,
@@ -61858,7 +61858,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1204 (independent review, not the builder: handler diff re-read, CAT-246 source_key over 200 characters answers 400 ASSIST_BAD_REQUEST (registered code, new inline 400 in contract, scene, legacy answer, error-tests row), missing key still 422, owner-only door unchanged, sole web caller catSourcePut shows the sentence; new test 45 passed, 13 columns read yes) stage2",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): the one write now runs bound to the owner (withEntity) under RLS, same body, answers and codes; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -62190,7 +62190,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6172,
+   "line": 6184,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62302,7 +62302,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6398,
+   "line": 6410,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62407,7 +62407,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6454,
+   "line": 6466,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -62514,7 +62514,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6529,
+   "line": 6541,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -62619,7 +62619,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5327,
+   "line": 5339,
    "hash": "b7cf1cbeb711e833",
    "does": "",
    "errors": {
@@ -62778,7 +62778,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4609,
+   "line": 4621,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -62882,7 +62882,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6684,
+   "line": 6696,
    "hash": "bca9bf272f4bc0fc",
    "does": "",
    "errors": {
@@ -62990,8 +62990,8 @@
    "owner_area": "connections",
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
-   "line": 102,
-   "hash": "dcfed7864c08486f",
+   "line": 106,
+   "hash": "ecb72b602637f215",
    "does": "",
    "errors": {
     "count": 0,
@@ -63065,7 +63065,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",

@@ -155,16 +155,16 @@ function keepClassification(now) {
     if (!parsed[item] && !now[item].rls && now[item].app_reads) fresh.push(item);
   });
 
-  const say = (label, list, bad) => {
+  const report = (label, list, bad) => {
     if (!list.length) return;
     console.log('\n  ' + (bad ? '⚠️ ' : '') + label + ':');
     list.forEach((x) => console.log('     ' + x));
   };
-  say('LOST row level security', lost, true);
-  say('FEWER policies than before', weaker, true);
-  say('NEW, open, and readable by cb_app', fresh, true);
-  say('gained protection since the baseline — please re-save it', gained, false);
-  say('no longer exist', gone, false);
+  report('LOST row level security', lost, true);
+  report('FEWER policies than before', weaker, true);
+  report('NEW, open, and readable by cb_app', fresh, true);
+  report('gained protection since the baseline — please re-save it', gained, false);
+  report('no longer exist', gone, false);
 
   const broken = lost.length + weaker.length + fresh.length;
   console.log(

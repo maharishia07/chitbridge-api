@@ -1,3 +1,10 @@
+/**
+ * prototype-form16-to-itr2.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prototype-form16-to-itr2.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 'use strict';
 /**
  * prototype-form16-to-itr2.js — A REAL PDF FILLS A REAL FORM, end to end.
@@ -220,7 +227,7 @@ async function extractText(pdfBuffer) {
   // 7 · optional live submission
   if (process.argv.includes('--submit')) {
     console.log('\n' + B('7 · Submit it to the live storefront, PDF attached'));
-    const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+    const API = require('../tests/lib/run-target.cjs').apiBase('prototype-form16-to-itr2.js');
     const call = async (m, p, body, token) => {
       const reply = await fetch(API + p, {
         method: m,

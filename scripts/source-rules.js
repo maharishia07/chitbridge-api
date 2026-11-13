@@ -1,8 +1,15 @@
+/**
+ * source-rules.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/source-rules.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /** @covers FR-K2 — STONE 2: an order below the SOURCE’s min_order_litres is rejected — the host cannot override it */
 // source-rules.js — STONE 2: the SOURCE's governance resolves + is ENFORCED at order time (not the host's).
 // Brand authors a source with rules.min_order_litres=5 → distributor adopts → an order below 5 L is REJECTED, an
 // order >=5 L is accepted and its line carries the `governed` stamp (under source@v + routing = info). Needs b78.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('source-rules.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

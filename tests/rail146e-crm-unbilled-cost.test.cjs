@@ -55,13 +55,13 @@ async function partOne() {
   const blind = await W.unbilledByParty({ entity: E1, actor: 'A7', blind: true });
   t('blind | a supplier party: n stands, minor null, cost_hidden:true', blind.get(SUP), { n: 2, minor: null, currency: 'INR', cost_hidden: true });
   t('blind | a party on no list fails closed: minor null, cost_hidden:true', blind.get(STRANGER), { n: 1, minor: null, currency: 'INR', cost_hidden: true });
-  t('blind | a sales party keeps its sum (1200.50 + 300.00), no marker', blind.get(CUS), { n: 2, minor: 150050, currency: 'INR' });
+  t('blind | a sales party keeps its sum (1200.50 + 300.00), no marker', blind.get(CUS), { n: 2, minor: 150050, currency: 'INR', by_currency: [{ currency: 'INR', minor: 150050, n: 2 }], no_currency: 0, unpriced: 0 });
   noLeak('blind | every party but the sales one', withoutSales(blind));
 
   world(); D.canSeeCosts = false;
   const owner = await W.unbilledByParty({ entity: E1, actor: 'A7' });
   const allowed = await W.unbilledByParty({ entity: E1, actor: 'A7', blind: false });
-  t('owner / cost-allowed | the supplier party keeps its sum, byte for byte', owner.get(SUP), { n: 2, minor: 737375, currency: 'INR' });
+  t('owner / cost-allowed | the supplier party keeps its sum, byte for byte', owner.get(SUP), { n: 2, minor: 737375, currency: 'INR', by_currency: [{ currency: 'INR', minor: 737375, n: 2 }], no_currency: 0, unpriced: 0 });
   t('owner and cost-allowed answer the same bytes', JSON.stringify([...allowed]), JSON.stringify([...owner]));
   t('owner | no marker anywhere', JSON.stringify([...owner]).includes('cost_hidden'), false);
 

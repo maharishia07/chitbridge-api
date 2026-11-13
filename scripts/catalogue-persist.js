@@ -1,8 +1,15 @@
+/**
+ * catalogue-persist.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/catalogue-persist.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // catalogue-persist.js — proves Beta's catalogue PERSISTS by REFERENCE + commercials (b75 catalogue_adoption).
 // register → structure → adopt (price 2 finishes) → read-mine → assert the commercials persisted AND the design/colour
 // resolved by reference (not copied). Needs b75 applied (else adopt/mine return 503 CATALOGUE_STORE_MISSING).
 // Run: node scripts/catalogue-persist.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('catalogue-persist.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

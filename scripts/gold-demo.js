@@ -1,3 +1,10 @@
+/**
+ * gold-demo.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/gold-demo.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // scripts/gold-demo.js — Dubai gold "THE NERVE" demo (v2). Runs on the live engine.
 //
 // v1 mistake (Athi caught it): it starred the subtraction (950-800=150). That's trivial — a calculator does it.
@@ -18,10 +25,10 @@
 // single party (not even the launderer) holds or controls both sides. Concept proof on realistic data — NOT a
 // proof on a refiner's real data (that's the pilot). Never present it as a live proof.
 //
-// Run:  TEST_URL=https://chitbridge-api-production.up.railway.app node scripts/gold-demo.js
+// Run:  CB_API=http://localhost:3000 node scripts/gold-demo.js
 
 require('dotenv').config();
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = require('../tests/lib/run-target.cjs').apiBase('gold-demo.js');
 const C = { g: '\x1b[32m', r: '\x1b[31m', y: '\x1b[33m', dim: '\x1b[2m', z: '\x1b[0m', bold: '\x1b[1m', cyan: '\x1b[36m' };
 const SPOT_USD_PER_OZ = 2900,
   G_PER_OZT = 31.1035;
