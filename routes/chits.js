@@ -422,8 +422,7 @@ router.post(
       /* ⭐ T2-SPLIT (2026-10-14): the 1,408 lines that stood here are the named steps below, in order, each under 80
          lines — the same statements, the same order, the same answers (tests/send-golden.test.cjs, frozen before the split).
          A step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
-      const st = {};
-      for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+      await runSendSteps(req, res);
     } catch (err) {
       /**
        * ── ⭐⭐⭐ A LOST RACE IS A DUPLICATE, NOT A FAILURE (2026-09-18) ───────────────────────
@@ -474,6 +473,42 @@ router.post(
     }
   }
 );
+
+/** the named send steps, in order; a step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
+async function runSendSteps(req, res) {
+  try {
+    await sendStepsOnce(req, res);
+  } catch (err) {
+    const again = await rerunLostSummary(err, req, res); /* CTR-181: a summary that lost the unique-reference race is judged again, once */
+    if (!again.done) throw again.err;
+  }
+}
+/** one pass through the steps */
+async function sendStepsOnce(req, res) {
+  const st = {};
+  for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+}
+/**
+ * ⭐ CTR-181 · TWO RE-CLOSES, ONE VERSION NUMBER. Both judge "#2"; the loser's insert meets the unique reference (23505) and the race answer below would call it the
+ * winner's duplicate — its later totals lost. For a summary the whole send runs once more from the base reference with the stamps removed: sendReplay now sees the
+ * winner, so the same figures are a replay and other figures are "#3". Answers { done: true } when the second run answered, else { err } (the error to handle as before).
+ */
+async function rerunLostSummary(err, req, res) {
+  const reclose = require('../lib/summary-reclose');
+  const summary = reclose.summaryOf(req.body);
+  const lost = !!err && err.code === '23505' && /client_ref/.test(String(err.constraint || err.detail || err.message || ''));
+  if (!lost || !summary || req.summaryRerun) return { err };
+  req.summaryRerun = true;
+  req.body.client_ref = reclose.baseRef(refOf(req));
+  delete summary.revision;
+  delete summary.supersedes;
+  try {
+    await sendStepsOnce(req, res);
+    return { done: true };
+  } catch (second) {
+    return { err: second };
+  }
+}
 
 /* ═══ POST /chits/send — THE NAMED STEPS (T2-SPLIT, 2026-10-14) ═════════════════════════════════════════════════════════
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
@@ -833,6 +868,9 @@ async function sendReplay(sendState, req, res) {
     const seen = await sameRefLook(sender_id, client_ref);
     /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
     if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
+    const reclose = seen ? await summaryReclose(sendState, req, res) : null;
+    if (reclose === 'versioned') return; /* CTR-181: new figures for a held summary go on as its next version */
+    if (reclose) return reclose; /* 'replied': the summary's own duplicate answer was sent */
     if (seen) return await answerReplay(req, res, seen, client_ref, sender_id);
   } catch (e) {
     cbLog.fellBack(
@@ -841,6 +879,27 @@ async function sendReplay(sendState, req, res) {
     ); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */
   }
 }
+/**
+ * ⭐ CTR-181 · A SUMMARY CLOSED AGAIN. A counter summary (SUM/D/<till>/<day>) is sent under a fixed reference, so a day reopened, sold more and closed again was
+ * answered duplicate:true and the first totals stayed. lib/summary-reclose judges it from the two carried totals: the same figures (or a late retry) → 200 duplicate
+ * naming the newest chit ('replied'); new figures → the next VERSION, sent on as a new chit under "<ref>#<n>" (summary.revision, summary.supersedes), append-only, the
+ * readers take the newest ('versioned'); not a summary, or a failed lookup → null and the ordinary replay answer follows (the worst case is the old answer).
+ */
+async function summaryReclose(sendState, req, res) {
+  const { sender_id, client_ref } = sendState;
+  const reclose = require('../lib/summary-reclose');
+  const verdict = await withEntity(sender_id, (db) => reclose.judge(db, sender_id, client_ref, req.body)).catch(cbLog.orElse('chits: summary re-close lookup failed — answered as a replay', null));
+  if (!verdict) return null;
+  if (verdict.replay) {
+    res.status(200).json({ ok: true, chit_id: verdict.replay, duplicate: true, client_ref, revision: verdict.revision });
+    return 'replied';
+  }
+  Object.assign(req.body.business_json.summary, { revision: verdict.version, supersedes: verdict.supersedes });
+  req.body.client_ref = verdict.ref; /* ⚠ the race catch reads refOf(req): it must ask about the version's reference */
+  sendState.client_ref = verdict.ref;
+  return 'versioned';
+}
+
 /** a chit already exists under this client_ref: 409 when it is two devices on one number (named), else 200 with the chit that exists (a retry) */
 async function answerReplay(req, res, seen, client_ref, sender_id) {
   const refusal = await replayRefusal(req, sender_id, seen, client_ref);
