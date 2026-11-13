@@ -31,6 +31,8 @@
 -- RLS: unchanged. identities stays without row security until step B.
 
 BEGIN;
+-- RETURNS TABLE cannot change its row type under CREATE OR REPLACE (42P13), so a re-run drops first; the REVOKE/GRANT below put the grants back (same transaction).
+DROP FUNCTION IF EXISTS ops.signin_candidates(text, text);
 
 CREATE OR REPLACE FUNCTION ops.signin_candidates(p_kind text, p_key text)
 RETURNS TABLE (identity_id uuid, identity_type text, parent_entity_id uuid, bridge_id text, display_name text, user_id text, email text, status text)
