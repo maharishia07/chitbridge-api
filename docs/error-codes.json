@@ -482,7 +482,7 @@
    "code": "BAD_PRICE",
    "status": "400",
    "title": "Price below zero or not a number",
-   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line.",
+   "shopkeeper": "A line, on a quote, on a chit being sent, on the pricing service (also a pricing structure amount, minimum, maximum or tier price) or on the offers service (also a missing price), has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line.",
    "hint": "Send a price of 0 or more, as a number, and a discount no larger than the line.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -500,7 +500,7 @@
    "code": "BAD_QTY",
    "status": "400",
    "title": "Quantity not above zero or not a number",
-   "shopkeeper": "A line, on a quote or on a chit being sent, needs a quantity above 0, as a number.",
+   "shopkeeper": "A line, on a quote, on a chit being sent, on the pricing service or on the offers service, needs a quantity above 0, as a number.",
    "hint": "Send a quantity above 0 on every line, as a number.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -3870,6 +3870,15 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PRICING_KIND_UNKNOWN",
+   "status": "400",
+   "title": "Pricing structure not known",
+   "shopkeeper": "A line names a pricing structure we do not know. The kinds are fixed, tiered and range.",
+   "hint": "Use fixed, tiered or range, or send the line without a structure to use the list price.",
+   "owner_area": "pricing",
+   "since": "2026-11-13"
   },
   {
    "code": "PRIVACY_NOT_MIGRATED",
