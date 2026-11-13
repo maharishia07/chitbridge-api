@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 2,
-  "meets": 629,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -29946,11 +29946,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c77e98d68089acbf"
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1234 (independent re-sign: handler diffed against origin/main; the user-id taken check reads through signin-lookup and drops the caller's own id in code (same result as identity_id <> $2), same 409/400 answers and codes, trips unchanged at 1, 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -46315,11 +46314,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1abdd71c03974c36"
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1234 (independent re-sign: handler diffed against origin/main; the user-id taken check reads through signin-lookup (same LOWER(user_id) match, ORDER LIMIT 10, min key 3 below the 8-char handle rule), same 409/400 answers and codes, one trip for one trip, 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-register.js",
