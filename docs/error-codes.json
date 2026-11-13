@@ -884,6 +884,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_REPLAY_DIFFERS",
+   "status": "409",
+   "title": "Bill number holds another sale",
+   "shopkeeper": "That bill number was already recorded for a different sale.",
+   "hint": "The bill stays on this counter, unsent; nothing is lost.",
+   "owner_area": "chits",
+   "since": "2026-11-13"
+  },
+  {
    "code": "CHIT_TOO_MANY",
    "status": "400",
    "title": "Too many at once",

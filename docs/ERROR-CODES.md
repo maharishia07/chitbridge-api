@@ -520,6 +520,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SUPPORT_NOT_TAKEN | 502 | Report not delivered | Your report did not reach the shop. | Contact the shop another way for now. | catalogue | 2026-10-23 |
 | CHIT_BAD_REQUEST | 400 | Chit request not accepted | That chit request could not be done. | Read the message, fix what it names and try again. | chits | 2026-10-23 |
 | CHIT_CANNOT_WITHDRAW | 409 | Cannot withdraw | This chit cannot be withdrawn from where it is. | Raise a dispute on it if something is wrong. | chits | 2026-10-23 |
+| CHIT_REPLAY_DIFFERS | 409 | Bill number holds another sale | That bill number was already recorded for a different sale. | The bill stays on this counter, unsent; nothing is lost. | chits | 2026-11-13 |
 | CHIT_CONFLICT | 409 | Chit not in that state | The chit is not in a state that allows that. | Look at the chit again, then try once more. | chits | 2026-10-23 |
 | CHIT_HAS_CREDIT_NOTE | 409 | Cannot withdraw | This bill has a credit note against it, so it cannot be cancelled or rejected yet. | Cancel the credit note first, then the bill. | chits | 2026-11-13 |
 | CHIT_INVALID | 400 | Chit details not valid | Something on the chit is missing or not valid. | Read the list of fields it names, fix them and try again. | chits | 2026-10-23 |
