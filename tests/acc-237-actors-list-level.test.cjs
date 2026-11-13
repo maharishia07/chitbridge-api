@@ -25,7 +25,9 @@ const { check } = lab;
 
 let columns = true;
 let listSql = '';
+let probes = 0;
 const model = (sql) => {
+  if (/information_schema\.columns/.test(sql)) probes++;
   if (/information_schema\.columns/.test(sql)) return { rows: columns ? [{ '?column?': 1 }] : [], rowCount: columns ? 1 : 0 };
   if (/GROUP BY break_status/.test(sql)) return { rows: [{ break_status: 'active', count: '2' }], rowCount: 1 };
   if (/FROM identities/.test(sql) && /connector_config/.test(sql)) {
@@ -46,7 +48,7 @@ async function main() {
 
   let got = await lab.send(port, 'GET', '/api/actors');
   check('with the columns: 200 (it answered ' + got.status + ')', got.status === 200 && got.json && got.json.actors.length === 2, got.text.slice(0, 200));
-  check('the SELECT names access_level and whole_entity', /access_level, whole_entity/.test(listSql), listSql.slice(0, 200));
+  check('the SELECT names access_level and whole_entity off the row JSON, with no schema probe round trip (round-trips budget 2)', /->> 'access_level'\) AS access_level, \(to_jsonb\(identities\) -> 'whole_entity'\) AS whole_entity/.test(listSql) && probes === 0, 'probes ' + probes + ' ' + listSql.slice(0, 200));
   check('a viewer login lists access_level=viewer and whole_entity=true as stored', got.json.actors[0].access_level === 'viewer' && got.json.actors[0].whole_entity === true, JSON.stringify(got.json.actors[0]));
   check('an editor lists editor / false', got.json.actors[1].access_level === 'editor' && got.json.actors[1].whole_entity === false, JSON.stringify(got.json.actors[1]));
 
@@ -54,7 +56,7 @@ async function main() {
   schema._reset();
   got = await lab.send(port, 'GET', '/api/actors');
   check('without the columns (pre-b173): still 200 (it answered ' + got.status + ')', got.status === 200 && got.json.actors.length === 1, got.text.slice(0, 200));
-  check('without the columns: the SELECT does not ask for them and the row carries none', !/access_level|whole_entity/.test(listSql) && !('access_level' in got.json.actors[0]), listSql.slice(0, 200));
+  check('without the columns (a database the row JSON has no such key in): the same SELECT, still no probe, and the row carries no level', probes === 0 && !got.json.actors[0].access_level, listSql.slice(0, 200));
   server.close();
   console.log('\n  ' + (lab.count.passed + lab.count.failed) + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
