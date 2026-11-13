@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 12,
-  "meets": 619,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -1008,11 +1008,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b29edcd26a079e31"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js",
     "core.js"
@@ -12019,11 +12018,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d821ffddceedd12f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-workforce.js"
    ],
@@ -12124,11 +12122,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "01a7db15cfab548e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js"
    ],
@@ -12229,11 +12226,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f86e2da68f562da9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js"
    ],
@@ -29227,11 +29223,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "95bd74f445e029d9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js",
     "core.js"
@@ -43076,11 +43071,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c5670393e2b5c8e8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43281,11 +43275,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "707e9f5c98b659b8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js"
    ],
@@ -43492,11 +43485,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "91d36164392e3e40"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js"
    ],
@@ -43821,11 +43813,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9383cee1b059687e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -60083,11 +60074,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8150ea58b444a534"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 CTR-243 (PR#1218-1221 RC): answer gains the optional changed_at key (null when unknown, additive, old counters ignore it), 42703 fallback keeps old databases answering, status codes and refusals unchanged; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -61868,11 +61858,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7d52796f4028042c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): the one write now runs bound to the owner (withEntity) under RLS, same body, answers and codes; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -63076,11 +63065,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ecb72b602637f215"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "core.js"
    ],
