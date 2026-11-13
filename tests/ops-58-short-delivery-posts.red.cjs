@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * ops-58-short-delivery-posts.test.cjs — OPS-58 (proof 2026-11-14), half 2: ACCEPTING the W73 rail bill must not post the full paper bill. EXPECTED RED on main (REGRESSION).
+ * ops-58-short-delivery-posts.red.cjs — OPS-58 (proof 2026-11-14), half 2: ACCEPTING the W73 rail bill must not post the full paper bill. EXPECTED RED on main (REGRESSION).
  * @type regression
  * OWNS      W73: the supplier's invoice (rail) says 60 Parotta = 720; 50 were received (600). Decided (OPS-60, ATHI-DECISIONS 24 Oct): post what ARRIVED, hold the gap, offer a debit note or
  *           a dispute. lib/books-hooks.classify of that accepted invoice, given the delivered count (the shortfall the till match already shows), must NOT answer
  *           kind 'post' at the full 720 with nothing noted: it posts at 600 with the 120 noted, or waits with wait 'gap'.
  * CALLED BY NOT enrolled in scripts/guards.cjs (red on main, reopened on the OPS-58 line). No database.
  * FLOW      accepted rail invoice 720 + delivered 50 of 60 -> classify -> expected { post at 600, short 12000 minor } | { queue, wait 'gap' }
- *   node tests/ops-58-short-delivery-posts.test.cjs
+ *   node tests/ops-58-short-delivery-posts.red.cjs
  */
 'use strict';
 const path = require('path');
