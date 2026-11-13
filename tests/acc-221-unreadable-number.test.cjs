@@ -56,7 +56,9 @@ ok('a valid line still prices: 2 x 100 + 18% = 236', good.ValDtls.TotInvVal === 
 
 /* 5 · the routes use the guard (a source read, so a deleted call goes red) */
 const rt = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tax.js'), 'utf8'), ri = fs.readFileSync(path.join(__dirname, '..', 'routes', 'invoice.js'), 'utf8');
-ok('routes/tax.js badLine asks unreadSaid, and returns it, before any other check', /function badLine\(lines\) \{\s*const unread = S\.unreadSaid\(lines, nameOf\)[^\n]*\n\s*if \(unread\) return unread;/.test(rt));
+/* CAT-305: the unread check moved into the ONE shared helper S.lineRefusal (lib/services), which asks unreadSaid FIRST; tax badLine returns it before its own rate checks */
+ok('routes/tax.js badLine asks S.lineRefusal, and returns it, before any other check', /function badLine\(lines\) \{\s*const first = S\.lineRefusal\(lines, nameOf\)[^\n]*\n\s*if \(first\) return first;/.test(rt));
+ok('lib/services lineRefusal asks unreadSaid before its own qty and price checks', /function lineRefusal\(lines, name, opts\) \{\s*const unread = unreadSaid\(lines, name\);\s*if \(unread\) return unread;/.test(fs.readFileSync(path.join(__dirname, '..', 'lib', 'services.js'), 'utf8')));
 /* the invoice route has no check of its own: normLines marks the line, computeTax throws, and readFault answers the throw as a named 400 (a handler that already runs at its size limit gets no new branch) */
 const TC = require('../lib/tax-contract');
 const thrown = call(mapped({ unit_price: null, listPrice: null }));
