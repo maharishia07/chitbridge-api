@@ -1,40 +1,40 @@
 {
  "ci": "CAP-TILL",
- "title": "Counter (till) · till.html",
+ "title": "Till · till.html",
  "type": "Page / surface",
  "system": "ChitBridge web app",
- "summary": "The counter: billing, bill slip, day close, offline — the till page the shopkeeper stands at.",
+ "summary": "Take money at the counter.",
  "source": "generated",
  "map": [
   {
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 17 API call(s) · maturity 2"
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
    "ci": "CAP-ADOPT",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
   },
   {
    "title": "cap-categories.js",
    "ci": "CAP-CATEGORIES",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
   },
   {
    "title": "cap-catsetup.js",
    "ci": "CAP-CATSETUP",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 15 API call(s)"
   },
   {
    "title": "cap-chit2.js",
    "ci": "CAP-CHIT2",
    "state": "ok",
-   "note": "3 screen(s) · 4 API call(s)"
+   "note": "3 screen(s) · 13 API call(s)"
   },
   {
    "title": "cap-cmdb.js",
@@ -46,25 +46,25 @@
    "title": "Connector · IoT / ERP",
    "ci": "CAP-CONNECTOR",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
   },
   {
    "title": "cap-definitions.js",
    "ci": "CAP-DEFINITIONS",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s)"
+   "note": "1 screen(s) · 9 API call(s)"
   },
   {
    "title": "Disputes — the USP",
    "ci": "CAP-DISPUTE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
   },
   {
    "title": "cap-folders.js",
    "ci": "CAP-FOLDERS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s)"
+   "note": "1 screen(s) · 28 API call(s)"
   },
   {
    "title": "cap-iddocs.js",
@@ -75,8 +75,8 @@
   {
    "title": "Capture connector — a message becomes a chit",
    "ci": "CAP-INTAKE",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
   },
   {
    "title": "Legend (this map)",
@@ -88,37 +88,37 @@
    "title": "cap-match.js",
    "ci": "CAP-MATCH",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "cap-messages.js",
    "ci": "CAP-MESSAGES",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Network — one shopfront, many entities",
    "ci": "CAP-NETWORK",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 2"
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
   },
   {
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 9 API call(s) · maturity 2"
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
    "ci": "CAP-REGISTER",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
   },
   {
    "title": "cap-service.js",
    "ci": "CAP-SERVICE",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
   },
   {
    "title": "cap-standards.js",
@@ -129,72 +129,151 @@
   {
    "title": "cap-supplies.js",
    "ci": "CAP-SUPPLIES",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Test lab — cases, results and the spec they cite",
    "ci": "CAP-TESTING",
    "state": "ok",
-   "note": "1 screen(s) · 4 API call(s) · maturity 2"
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
   },
   {
    "title": "cap-traceability.js",
    "ci": "CAP-TRACEABILITY",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 6 API call(s)"
   },
   {
    "title": "Co-assists",
    "ci": "CAP-WORKFORCE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 2"
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
   },
   {
    "title": "cap-worklist.js",
    "ci": "CAP-WORKLIST",
    "state": "ok",
-   "note": "5 screen(s) · 5 API call(s)"
+   "note": "5 screen(s) · 12 API call(s)"
   },
   {
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
-  },
-  {
-   "title": "till.html",
-   "ci": "CAP-TILL",
-   "state": "warn",
-   "note": "0 screen(s) · 64 API call(s)",
-   "node": "p1"
+   "note": "1 screen(s) · 48 API call(s)"
   },
   {
    "title": "accounts.html",
    "ci": "CAP-ACCOUNTS",
-   "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)",
+   "node": "p1"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
   },
   {
    "title": "chit-sheet.js",
    "ci": "CAP-CHIT-SHEET",
-   "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
   },
   {
    "title": "one-person.js",
    "ci": "CAP-ONE-PERSON",
    "state": "warn",
    "note": "0 screen(s) · 0 API call(s)"
-  },
-  {
-   "title": "lab-kit.js",
-   "ci": "CAP-LABS",
-   "state": "warn",
-   "note": "0 screen(s) · 13 API call(s)"
   }
  ],
- "entries": [],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Home card · Till",
+   "s": "manifest till · /till.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  }
+ ],
  "process": [
   {
    "id": "p1",
@@ -519,6 +598,10 @@
  ],
  "edges": [
   [
+   "e1",
+   "p1"
+  ],
+  [
    "p1",
    "p2"
   ],
@@ -729,22 +812,22 @@
  ],
  "relationships": [
   {
-   "this": "SURFACE till.html",
+   "this": "PAGE till.html",
    "rel": "draws",
    "that": "no screen"
   },
   {
-   "this": "SURFACE till.html",
+   "this": "PAGE till.html",
    "rel": "calls",
-   "that": "routes/signin.js · routes/till.js · routes/chits.js · routes/products.js · routes/events.js"
+   "that": "routes/signin.js · routes/till.js · routes/chits.js · routes/products.js · routes/events.js · routes/entities.js"
   },
   {
-   "this": "SURFACE till.html",
+   "this": "PAGE till.html",
    "rel": "documented-by",
    "that": "api design-handoff/A-screens/00-foundations/feedback-vs-known-till-apps.md · api design-handoff/A-screens/00-foundations/README-INDEX.md · api docs/API-REGISTER.md · api docs/CB-SYNC.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER-SIGNIN.md · api docs/COUNTER.md · api docs/critique/ACC-198.md · api docs/critique/ACC-206-A-B.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-bell.md · api docs/critique/API-4-entities.md · api docs/critique/API-4-quick-keys.md · api docs/critique/CAT-124-C1C2.md · api docs/critique/CS2.md · api docs/critique/CTR-212.md · api docs/cri…"
   },
   {
-   "this": "SURFACE till.html",
+   "this": "PAGE till.html",
    "rel": "retired-docs (tidy 2026-10-02)",
    "that": "api design-handoff/README-INDEX.md · api design-handoff/feedback-vs-known-till-apps.md · api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md · api docs/tasks/CLOUD-TASK-shop-name.md · web docs/design/chit-sheet/BACKLOG.md · web docs/design/chit-sheet/FOLLOWUPS-TASK.md · web docs/design/daybook-todo/CLOUD-TASK.md · web docs/design/daybook-views/CLOUD-TASK.md · web docs/design/gate-courtesy/CLOUD-TASK.md · web docs/design/index-page/CLOUD-TASK.md · web public/app/search.js · web public/app/variant.js — restore: git checkout ar…"
   }
@@ -955,5 +1038,5 @@
    "result": "not run"
   }
  ],
- "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: till.html\n  annotations:\n    chitbridge.io/ci: CAP-TILL\n    chitbridge.io/asset: SURFACE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/signin.js\n    - routes/till.js\n    - routes/chits.js\n    - routes/products.js\n    - routes/events.js"
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: till\n  annotations:\n    chitbridge.io/ci: CAP-TILL\n    chitbridge.io/asset: PAGE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/signin.js\n    - routes/till.js\n    - routes/chits.js\n    - routes/products.js\n    - routes/events.js\n    - routes/entities.js"
 }

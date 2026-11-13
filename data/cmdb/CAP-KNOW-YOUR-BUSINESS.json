@@ -1,0 +1,972 @@
+{
+ "ci": "CAP-KNOW-YOUR-BUSINESS",
+ "title": "Know your business · know-your-business.html",
+ "type": "Page / surface",
+ "system": "ChitBridge web app",
+ "summary": "What we know about your business, and how far to trust it.",
+ "source": "generated",
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 15 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 28 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 1 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 6 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 12 API call(s)"
+  },
+  {
+   "title": "cap-books.js",
+   "ci": "CAP-BOOKS",
+   "state": "ok",
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)",
+   "node": "p1"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Home card · Know your business",
+   "s": "manifest kyb · /know-your-business.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "know-your-business.html",
+   "s": "know-your-business.html · 19 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBFrame",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBEdition",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBScreenId",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBShell",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p6",
+   "t": "CBOffline",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "GET /api/tax/gstr",
+   "s": "api('taxGstr') → routes/tax.js",
+   "d": "Reads through the API, answered by routes/tax.js."
+  },
+  {
+   "id": "x2",
+   "t": "POST /api/books/enable",
+   "s": "api('booksEnable') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x3",
+   "t": "POST /api/books/setting",
+   "s": "api('booksSetting') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x4",
+   "t": "CALL /api/kyb/yourself",
+   "s": "routes/kyb.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x5",
+   "t": "CALL /api/kyb/credential",
+   "s": "routes/kyb.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x6",
+   "t": "CALL /api/kyb/position",
+   "s": "routes/kyb.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x7",
+   "t": "CALL /api/kyb/risk",
+   "s": "routes/kyb.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x8",
+   "t": "CALL /api/kyb/field",
+   "s": "routes/kyb.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x9",
+   "t": "CALL /api/entities/me/prefs/ui",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x10",
+   "t": "CALL /api/entities/me",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x11",
+   "t": "CALL /api/signin/logout",
+   "s": "routes/signin.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x12",
+   "t": "CALL /api/signin/ask",
+   "s": "routes/signin.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x13",
+   "t": "CALL /api/signin/verify",
+   "s": "routes/signin.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x14",
+   "t": "CALL /api/signin/pin",
+   "s": "routes/signin.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x15",
+   "t": "CALL /api/books/health",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x16",
+   "t": "CALL /api/books/status",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x17",
+   "t": "CALL /api/books/dues",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x18",
+   "t": "CALL /api/books/party/:id/statement",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x19",
+   "t": "CALL /api/relationships/customers/:id",
+   "s": "routes/relationships.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x20",
+   "t": "CALL /api/relationships/customers",
+   "s": "routes/relationships.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x21",
+   "t": "CALL /api/relationships/suppliers",
+   "s": "routes/relationships.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x22",
+   "t": "CALL /api/relationships/suppliers/:id",
+   "s": "routes/relationships.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x23",
+   "t": "CALL /api/entities/search",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x24",
+   "t": "CALL /api/entities/search/places",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x25",
+   "t": "CALL /api/relationships/customers/:id/rewards",
+   "s": "routes/relationships.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x26",
+   "t": "CALL /api/crm/parties",
+   "s": "routes/crm.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x27",
+   "t": "CALL /api/books/terms",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x28",
+   "t": "CALL /api/crm/followups",
+   "s": "routes/crm.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x29",
+   "t": "CALL /api/entities/profile",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x30",
+   "t": "CALL /api/governance/profile",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x31",
+   "t": "CALL /api/governance/country-setup",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x32",
+   "t": "CALL /api/entities/register",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x33",
+   "t": "CALL /api/entities/verify",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x34",
+   "t": "CALL /api/entities/constitutions",
+   "s": "routes/entities.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x35",
+   "t": "CALL /api/keys",
+   "s": "routes/keys.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x36",
+   "t": "CALL /api/keys/:jti",
+   "s": "routes/keys.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x37",
+   "t": "CALL /api/counters",
+   "s": "routes/counters.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x38",
+   "t": "CALL /api/counters/:id",
+   "s": "routes/counters.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x39",
+   "t": "CALL /api/counters/:id/open",
+   "s": "routes/counters.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x40",
+   "t": "CALL /api/counters/:id/release",
+   "s": "routes/counters.js",
+   "d": "A direct call to the API."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "p6"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
+  ],
+  [
+   "p1",
+   "x13"
+  ],
+  [
+   "p1",
+   "x14"
+  ],
+  [
+   "p1",
+   "x15"
+  ],
+  [
+   "p1",
+   "x16"
+  ],
+  [
+   "p1",
+   "x17"
+  ],
+  [
+   "p1",
+   "x18"
+  ],
+  [
+   "p1",
+   "x19"
+  ],
+  [
+   "p1",
+   "x20"
+  ],
+  [
+   "p1",
+   "x21"
+  ],
+  [
+   "p1",
+   "x22"
+  ],
+  [
+   "p1",
+   "x23"
+  ],
+  [
+   "p1",
+   "x24"
+  ],
+  [
+   "p1",
+   "x25"
+  ],
+  [
+   "p1",
+   "x26"
+  ],
+  [
+   "p1",
+   "x27"
+  ],
+  [
+   "p1",
+   "x28"
+  ],
+  [
+   "p1",
+   "x29"
+  ],
+  [
+   "p1",
+   "x30"
+  ],
+  [
+   "p1",
+   "x31"
+  ],
+  [
+   "p1",
+   "x32"
+  ],
+  [
+   "p1",
+   "x33"
+  ],
+  [
+   "p1",
+   "x34"
+  ],
+  [
+   "p1",
+   "x35"
+  ],
+  [
+   "p1",
+   "x36"
+  ],
+  [
+   "p1",
+   "x37"
+  ],
+  [
+   "p1",
+   "x38"
+  ],
+  [
+   "p1",
+   "x39"
+  ],
+  [
+   "p1",
+   "x40"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "PAGE know-your-business.html",
+   "rel": "draws",
+   "that": "no screen"
+  },
+  {
+   "this": "PAGE know-your-business.html",
+   "rel": "calls",
+   "that": "routes/tax.js · routes/books.js · routes/kyb.js · routes/entities.js · routes/signin.js · routes/relationships.js · routes/crm.js · routes/governance.js · routes/keys.js · routes/counters.js · routes/integrations.js · routes/folders.js · routes/till.js · routes/chits.js · routes/facts.js · routes/assist.js · routes/events.js · routes/notifications.js"
+  },
+  {
+   "this": "PAGE know-your-business.html",
+   "rel": "documented-by",
+   "that": "api docs/AI-ASSISTANT.md · api docs/API-REGISTER.md · api docs/cards/16-finance/books-cashflow.md · api docs/CB-SYNC.md · api docs/CO1-API-PR-BODY.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER-SIGNIN.md · api docs/COUNTER.md · api docs/critique/ACC-198.md · api docs/critique/ACC-206-A-B.md · api docs/critique/ACC-336-PLAN.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-assist.md · api docs/critique/API-4-bell.md · api docs/critique/API-4-connectors.md · api docs/critique/API-4-crm.md · api docs/critique/API-4-entities.md · api docs/critique/API-4-kyb.md · api …"
+  },
+  {
+   "this": "PAGE know-your-business.html",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md · api docs/tasks/CLOUD-TASK-shop-name.md · web public/app/search.js · web public/app/variant.js — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/know-your-business.html",
+  "design": "web docs/design/crm/BRIDGE.md"
+ },
+ "tests": [
+  {
+   "file": "web e2e/cb-sides.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/frame-every-width.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/mobile-audit.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/page-frame.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/shell.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/skeleton-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-utility-pages.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-au-words.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-kyb-address.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-screen-id.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-shop-confirm-sheets.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-store-keyboard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-utility-pages-codes.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-191-undecided-tax-null.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-221-unreadable-number.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-224-period-of-record.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-225-gstr1-b2cl.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-232-parallel-run.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-240-lock-trail.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-265-cancel-credit-note.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-268-unread-bills.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-270-reversed-named.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-330-billed-at-future.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/account-sessions.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-18-text-cap.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-47-closed-bodies.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-4b-auth-problem.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-contract.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-actors.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-assist.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-bell.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-books.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-chits.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-crm.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-entities.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-finance.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-governance.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-integrations.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-kyb.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-marketing.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: know-your-business\n  annotations:\n    chitbridge.io/ci: CAP-KNOW-YOUR-BUSINESS\n    chitbridge.io/asset: PAGE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/tax.js\n    - routes/books.js\n    - routes/kyb.js\n    - routes/entities.js\n    - routes/signin.js\n    - routes/relationships.js\n    - routes/crm.js\n    - routes/governance.js\n    - routes/keys.js\n    - routes/counters.js\n    - routes/integrations.js\n    - routes/folders.js\n    - routes/till.js\n    - routes/chits.js\n    - routes/facts.js\n    - routes/assist.js\n    - routes/events.js\n    - routes/notifications.js"
+}

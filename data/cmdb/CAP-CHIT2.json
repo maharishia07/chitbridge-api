@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -28,13 +28,13 @@
    "title": "cap-catsetup.js",
    "ci": "CAP-CATSETUP",
    "state": "ok",
-   "note": "1 screen(s) · 14 API call(s)"
+   "note": "1 screen(s) · 15 API call(s)"
   },
   {
    "title": "cap-chit2.js",
    "ci": "CAP-CHIT2",
    "state": "ok",
-   "note": "3 screen(s) · 10 API call(s)",
+   "note": "3 screen(s) · 13 API call(s)",
    "node": "p1"
   },
   {
@@ -47,25 +47,25 @@
    "title": "Connector · IoT / ERP",
    "ci": "CAP-CONNECTOR",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
   },
   {
    "title": "cap-definitions.js",
    "ci": "CAP-DEFINITIONS",
    "state": "ok",
-   "note": "1 screen(s) · 8 API call(s)"
+   "note": "1 screen(s) · 9 API call(s)"
   },
   {
    "title": "Disputes — the USP",
    "ci": "CAP-DISPUTE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
   },
   {
    "title": "cap-folders.js",
    "ci": "CAP-FOLDERS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s)"
+   "note": "1 screen(s) · 28 API call(s)"
   },
   {
    "title": "cap-iddocs.js",
@@ -89,25 +89,25 @@
    "title": "cap-match.js",
    "ci": "CAP-MATCH",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "cap-messages.js",
    "ci": "CAP-MESSAGES",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Network — one shopfront, many entities",
    "ci": "CAP-NETWORK",
    "state": "ok",
-   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
   },
   {
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
@@ -125,7 +125,7 @@
    "title": "cap-standards.js",
    "ci": "CAP-STANDARDS",
    "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "note": "0 screen(s) · 1 API call(s)"
   },
   {
    "title": "cap-supplies.js",
@@ -137,31 +137,133 @@
    "title": "Test lab — cases, results and the spec they cite",
    "ci": "CAP-TESTING",
    "state": "ok",
-   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
   },
   {
    "title": "cap-traceability.js",
    "ci": "CAP-TRACEABILITY",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 6 API call(s)"
   },
   {
    "title": "Co-assists",
    "ci": "CAP-WORKFORCE",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
   },
   {
    "title": "cap-worklist.js",
    "ci": "CAP-WORKLIST",
    "state": "ok",
-   "note": "5 screen(s) · 8 API call(s)"
+   "note": "5 screen(s) · 12 API call(s)"
   },
   {
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 19 API call(s)"
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
   }
  ],
  "entries": [
@@ -188,18 +290,18 @@
   {
    "id": "p1",
    "t": "cap-chit2.js",
-   "s": "app/cap-chit2.js · 50 functions",
+   "s": "app/cap-chit2.js · 51 functions",
    "d": "The capability module: what the screens above call."
   },
   {
    "id": "p2",
-   "t": "CBCatUI",
+   "t": "CBCart",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
   },
   {
    "id": "p3",
-   "t": "CBCart",
+   "t": "CBCatUI",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
   },
@@ -211,13 +313,25 @@
   },
   {
    "id": "p5",
-   "t": "CBLocale",
+   "t": "CBSheet",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
   },
   {
    "id": "p6",
+   "t": "CBLocale",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p7",
    "t": "CBPick",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p8",
+   "t": "CBPage",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
   }
@@ -243,43 +357,43 @@
   },
   {
    "id": "x4",
+   "t": "POST /api/chits/:id/reprice",
+   "s": "api('c2Reprice') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x5",
+   "t": "POST /api/chits/:id/deliver-lines",
+   "s": "api('c2DeliverLines') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x6",
    "t": "GET /api/relationships/suppliers",
    "s": "api('supList') → routes/relationships.js",
    "d": "Reads through the API, answered by routes/relationships.js."
   },
   {
-   "id": "x5",
+   "id": "x7",
    "t": "GET /api/products",
    "s": "api('prodList') → routes/products.js",
    "d": "Reads through the API, answered by routes/products.js."
   },
   {
-   "id": "x6",
+   "id": "x8",
    "t": "GET /api/relationships/suppliers/:sid/catalogue",
    "s": "api('supCatalogue') → routes/relationships.js",
    "d": "Reads through the API, answered by routes/relationships.js."
   },
   {
-   "id": "x7",
-   "t": "CALL /api/chits/:id/assign-lines",
-   "s": "routes/chits.js",
-   "d": "A direct call to the API."
-  },
-  {
-   "id": "x8",
-   "t": "CALL /api/chits/:id/deliver-lines",
-   "s": "routes/chits.js",
-   "d": "A direct call to the API."
-  },
-  {
    "id": "x9",
-   "t": "CALL /api/chits/:id/costs",
-   "s": "routes/chits.js",
-   "d": "A direct call to the API."
+   "t": "POST /api/chits/:id/assign-lines",
+   "s": "api('c2AssignLines') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
   },
   {
    "id": "x10",
-   "t": "CALL /api/chits/:id/reprice",
+   "t": "CALL /api/chits/:id/costs",
    "s": "routes/chits.js",
    "d": "A direct call to the API."
   }
@@ -316,6 +430,14 @@
   [
    "p1",
    "p6"
+  ],
+  [
+   "p1",
+   "p7"
+  ],
+  [
+   "p1",
+   "p8"
   ],
   [
    "p1",
@@ -372,7 +494,7 @@
   {
    "this": "CAP005 cap-chit2.js",
    "rel": "documented-by",
-   "that": "api docs/CB-SYNC.md · api docs/COUNTER.md · api docs/drafts/h2_supplier_list_rls_draft.sql · api docs/NAMESPACE.md"
+   "that": "api docs/API-REGISTER.md · api docs/CB-SYNC.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER.md · api docs/critique/ACC-206-A-B.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-relationships.md · api docs/critique/CAT-124-C1C2.md · api docs/critique/CRM-FIX.md · api docs/critique/F10.md · api docs/critique/FIN-52.md · api docs/critique/FIN-53.md · api docs/critique/FX-F10W.md · api docs/critique/FX-F10W2.md · api docs/critique/HX1.md · api docs/critique/INT5b.md · api docs/critique/INT7a.md · api docs/critique/INT7b.md · api docs/critique/K-SEC-A.md · api docs/cri…"
   },
   {
    "this": "CAP005 cap-chit2.js",
@@ -382,7 +504,7 @@
  ],
  "layers": {
   "build": "chitbridge-web/public/app/cap-chit2.js",
-  "design": "Capability cap-chit2.js"
+  "design": "web docs/design/crm/BRIDGE.md"
  },
  "tests": [
   {
@@ -391,10 +513,19 @@
    "result": "not run"
   },
   {
+   "file": "web e2e/india-words-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/one-cart-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
    "file": "web e2e/one-cart.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
    "file": "web e2e/tests/adopt-screen.spec.js",
@@ -417,11 +548,6 @@
    "result": "not run"
   },
   {
-   "file": "web e2e/tests/offers-customer.spec.js",
-   "kind": "live spec",
-   "result": "not run"
-  },
-  {
    "file": "web e2e/tests/parity-order.spec.js",
    "kind": "live spec",
    "result": "not run"
@@ -437,10 +563,89 @@
    "result": "not run"
   },
   {
+   "file": "web e2e/walk-p2-ux-sweep.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-register-chit2.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-x-o2c.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-x-p2p.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/acc-191-undecided-tax-null.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
    "file": "api tests/access-events.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
+  },
+  {
+   "file": "api tests/actors-max-tasks-cap.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/actors-switch-off.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-actors.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-chits.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-products.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-relationships.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-tolerant-doors.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-tools.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/auth-first-routes.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/auth-first.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bill-paper.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/bills-folder.test.cjs",
@@ -453,150 +658,52 @@
    "result": "not run"
   },
   {
+   "file": "api tests/books-payments.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/books-reconcile.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
    "file": "api tests/books-writer.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/dayopen.test.js",
+   "file": "api tests/cat-313-search-blind.realstack.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/defaults.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/dev-otp.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/docnumber-gate.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-boundary.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-manifest.js",
+   "file": "api tests/cat-m9a-product-doors.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/env-posture.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/fixtures/walkthrough.js",
+   "file": "api tests/cat-m9c-till-doors.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/goods-in-accepts.test.cjs",
+   "file": "api tests/change-pin-lock-mutation.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/iam-access.test.cjs",
+   "file": "api tests/change-pin-lock.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/identity-auth.test.js",
+   "file": "api tests/chit-crossing.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/knownerr.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/local-supplier.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/namespace.test.cjs",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/policy-defaults.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/products-bulk.test.cjs",
-   "kind": "server",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/query-shape.test.js",
-   "kind": "server",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/raida.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/retention-floor.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/rev01-price-includes-tax.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/rev02-no-rerate-on-send.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/rls-context.test.cjs",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/rls-predicate.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/snapshot-wire.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/tdz-guard.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/two-sided-bill.test.cjs",
+   "file": "api tests/chit-currency-default.test.cjs",
    "kind": "server",
    "result": "not run"
   }

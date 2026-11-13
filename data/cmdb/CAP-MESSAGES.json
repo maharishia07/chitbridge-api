@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -28,13 +28,13 @@
    "title": "cap-catsetup.js",
    "ci": "CAP-CATSETUP",
    "state": "ok",
-   "note": "1 screen(s) · 14 API call(s)"
+   "note": "1 screen(s) · 15 API call(s)"
   },
   {
    "title": "cap-chit2.js",
    "ci": "CAP-CHIT2",
    "state": "ok",
-   "note": "3 screen(s) · 10 API call(s)"
+   "note": "3 screen(s) · 13 API call(s)"
   },
   {
    "title": "cap-cmdb.js",
@@ -46,25 +46,25 @@
    "title": "Connector · IoT / ERP",
    "ci": "CAP-CONNECTOR",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
   },
   {
    "title": "cap-definitions.js",
    "ci": "CAP-DEFINITIONS",
    "state": "ok",
-   "note": "1 screen(s) · 8 API call(s)"
+   "note": "1 screen(s) · 9 API call(s)"
   },
   {
    "title": "Disputes — the USP",
    "ci": "CAP-DISPUTE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
   },
   {
    "title": "cap-folders.js",
    "ci": "CAP-FOLDERS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s)"
+   "note": "1 screen(s) · 28 API call(s)"
   },
   {
    "title": "cap-iddocs.js",
@@ -88,26 +88,26 @@
    "title": "cap-match.js",
    "ci": "CAP-MATCH",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "cap-messages.js",
    "ci": "CAP-MESSAGES",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)",
+   "note": "1 screen(s) · 4 API call(s)",
    "node": "p1"
   },
   {
    "title": "Network — one shopfront, many entities",
    "ci": "CAP-NETWORK",
    "state": "ok",
-   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
   },
   {
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
@@ -125,7 +125,7 @@
    "title": "cap-standards.js",
    "ci": "CAP-STANDARDS",
    "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "note": "0 screen(s) · 1 API call(s)"
   },
   {
    "title": "cap-supplies.js",
@@ -137,31 +137,133 @@
    "title": "Test lab — cases, results and the spec they cite",
    "ci": "CAP-TESTING",
    "state": "ok",
-   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
   },
   {
    "title": "cap-traceability.js",
    "ci": "CAP-TRACEABILITY",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 6 API call(s)"
   },
   {
    "title": "Co-assists",
    "ci": "CAP-WORKFORCE",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
   },
   {
    "title": "cap-worklist.js",
    "ci": "CAP-WORKLIST",
    "state": "ok",
-   "note": "5 screen(s) · 8 API call(s)"
+   "note": "5 screen(s) · 12 API call(s)"
   },
   {
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 19 API call(s)"
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
   }
  ],
  "entries": [
@@ -176,11 +278,17 @@
   {
    "id": "p1",
    "t": "cap-messages.js",
-   "s": "app/cap-messages.js · 15 functions",
+   "s": "app/cap-messages.js · 13 functions",
    "d": "The capability module: what the screens above call."
   },
   {
    "id": "p2",
+   "t": "CBThread",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
    "t": "CBLocale",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
@@ -189,21 +297,15 @@
  "exits": [
   {
    "id": "x1",
-   "t": "CALL /api/folders/messages",
-   "s": "routes/folders.js",
-   "d": "A direct call to the API."
+   "t": "GET /api/folders/messages",
+   "s": "api('msgInbox') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
   },
   {
    "id": "x2",
-   "t": "CALL /api/folders/messages/:id/mark",
-   "s": "routes/folders.js",
-   "d": "A direct call to the API."
-  },
-  {
-   "id": "x3",
-   "t": "CALL /api/chits/:id/messages",
-   "s": "routes/chits.js",
-   "d": "A direct call to the API."
+   "t": "POST /api/folders/messages/:id/mark",
+   "s": "api('msgMark') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
   }
  ],
  "edges": [
@@ -217,15 +319,15 @@
   ],
   [
    "p1",
+   "p3"
+  ],
+  [
+   "p1",
    "x1"
   ],
   [
    "p1",
    "x2"
-  ],
-  [
-   "p1",
-   "x3"
   ]
  ],
  "relationships": [
@@ -237,27 +339,37 @@
   {
    "this": "CAP015 cap-messages.js",
    "rel": "calls",
-   "that": "routes/folders.js · routes/chits.js"
+   "that": "routes/folders.js"
   },
   {
    "this": "CAP015 cap-messages.js",
    "rel": "documented-by",
-   "that": "api docs/CB-SYNC.md · api docs/COUNTER.md · api docs/drafts/h2_supplier_list_rls_draft.sql · web e2e/l3-proposals/cap-messages.md"
-  },
-  {
-   "this": "CAP015 cap-messages.js",
-   "rel": "retired-docs (tidy 2026-10-02)",
-   "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
+   "that": "api docs/API-REGISTER.md · api docs/design/crm/INVENTORY.md · api docs/design/crm/LITERATURE.md · api docs/design/crm/MESSAGING.md · api docs/FIELDS.md · web docs/ACTION-STATE-SWEEP.md · web docs/critique/D1.md · web docs/critique/T3-P4-ACCOUNT.md · web docs/design/crm/CLOUD-TASK-design.md · web docs/design/crm/CLOUD-TASK.md · web docs/design/crm/INVENTORY.md · web docs/design/crm/LITERATURE.md · web docs/design/crm/MESSAGING.md · web docs/design/CUSTODIAN-AUDIT-2026-10-13.md · web docs/design/practice-door/CA2-BUILD.md · web docs/design/practice-door/FLOW.md · web docs/design/practice-door/R…"
   }
  ],
  "layers": {
   "build": "chitbridge-web/public/app/cap-messages.js",
-  "design": "Capability cap-messages.js"
+  "design": "web docs/design/crm/CLOUD-TASK-design.md"
  },
  "tests": [
   {
-   "file": "web e2e/tests/messages.spec.js",
-   "kind": "live spec",
+   "file": "web e2e/kural-footer-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/kural-footer.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/rail-thread-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-finance.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {
@@ -271,94 +383,30 @@
    "result": "not run"
   },
   {
-   "file": "api tests/books-writer.test.cjs",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/docnumber-gate.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-boundary.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/goods-in-accepts.test.cjs",
+   "file": "api tests/bills-truth.realstack.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
    "file": "api tests/groupsum-selection.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
-   "file": "api tests/iam-access.test.cjs",
+   "file": "api tests/not-migrated.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/knownerr.test.js",
+   "file": "api tests/rail146k-blind-measure.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/local-supplier.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/policy-defaults.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/query-shape.test.js",
-   "kind": "server",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/raida.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/retention-floor.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/rev01-price-includes-tax.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/rev02-no-rerate-on-send.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/tdz-guard.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/two-sided-bill.test.cjs",
+   "file": "api tests/sec100-folder-fk.test.cjs",
    "kind": "server",
    "result": "not run"
   }
  ],
- "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: messages\n  annotations:\n    chitbridge.io/ci: CAP-MESSAGES\n    chitbridge.io/asset: CAP015\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/folders.js\n    - routes/chits.js"
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: messages\n  annotations:\n    chitbridge.io/ci: CAP-MESSAGES\n    chitbridge.io/asset: CAP015\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/folders.js"
 }

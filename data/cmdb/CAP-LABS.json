@@ -10,31 +10,31 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 17 API call(s) · maturity 2"
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
    "ci": "CAP-ADOPT",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
   },
   {
    "title": "cap-categories.js",
    "ci": "CAP-CATEGORIES",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
   },
   {
    "title": "cap-catsetup.js",
    "ci": "CAP-CATSETUP",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 15 API call(s)"
   },
   {
    "title": "cap-chit2.js",
    "ci": "CAP-CHIT2",
    "state": "ok",
-   "note": "3 screen(s) · 4 API call(s)"
+   "note": "3 screen(s) · 13 API call(s)"
   },
   {
    "title": "cap-cmdb.js",
@@ -46,25 +46,25 @@
    "title": "Connector · IoT / ERP",
    "ci": "CAP-CONNECTOR",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
   },
   {
    "title": "cap-definitions.js",
    "ci": "CAP-DEFINITIONS",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s)"
+   "note": "1 screen(s) · 9 API call(s)"
   },
   {
    "title": "Disputes — the USP",
    "ci": "CAP-DISPUTE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
   },
   {
    "title": "cap-folders.js",
    "ci": "CAP-FOLDERS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s)"
+   "note": "1 screen(s) · 28 API call(s)"
   },
   {
    "title": "cap-iddocs.js",
@@ -75,8 +75,8 @@
   {
    "title": "Capture connector — a message becomes a chit",
    "ci": "CAP-INTAKE",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
   },
   {
    "title": "Legend (this map)",
@@ -88,37 +88,37 @@
    "title": "cap-match.js",
    "ci": "CAP-MATCH",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "cap-messages.js",
    "ci": "CAP-MESSAGES",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Network — one shopfront, many entities",
    "ci": "CAP-NETWORK",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 2"
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
   },
   {
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 9 API call(s) · maturity 2"
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
    "ci": "CAP-REGISTER",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
   },
   {
    "title": "cap-service.js",
    "ci": "CAP-SERVICE",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
   },
   {
    "title": "cap-standards.js",
@@ -129,77 +129,240 @@
   {
    "title": "cap-supplies.js",
    "ci": "CAP-SUPPLIES",
-   "state": "warn",
-   "note": "1 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Test lab — cases, results and the spec they cite",
    "ci": "CAP-TESTING",
    "state": "ok",
-   "note": "1 screen(s) · 4 API call(s) · maturity 2"
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
   },
   {
    "title": "cap-traceability.js",
    "ci": "CAP-TRACEABILITY",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 6 API call(s)"
   },
   {
    "title": "Co-assists",
    "ci": "CAP-WORKFORCE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 2"
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
   },
   {
    "title": "cap-worklist.js",
    "ci": "CAP-WORKLIST",
    "state": "ok",
-   "note": "5 screen(s) · 5 API call(s)"
+   "note": "5 screen(s) · 12 API call(s)"
   },
   {
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
-  },
-  {
-   "title": "till.html",
-   "ci": "CAP-TILL",
-   "state": "warn",
-   "note": "0 screen(s) · 64 API call(s)"
+   "note": "1 screen(s) · 48 API call(s)"
   },
   {
    "title": "accounts.html",
    "ci": "CAP-ACCOUNTS",
-   "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)",
+   "node": "p1"
   },
   {
    "title": "chit-sheet.js",
    "ci": "CAP-CHIT-SHEET",
-   "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
   },
   {
    "title": "one-person.js",
    "ci": "CAP-ONE-PERSON",
    "state": "warn",
    "note": "0 screen(s) · 0 API call(s)"
-  },
-  {
-   "title": "lab-kit.js",
-   "ci": "CAP-LABS",
-   "state": "warn",
-   "note": "0 screen(s) · 13 API call(s)",
-   "node": "p1"
   }
  ],
- "entries": [],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Home card · Conversion Lab",
+   "s": "manifest conversion-lab · /conversion-lab.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e2",
+   "t": "Home card · Country Lab",
+   "s": "manifest country-lab · /country-lab.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e3",
+   "t": "Home card · Network Lab",
+   "s": "manifest network-lab · /network-design.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e4",
+   "t": "Home card · Offer Lab",
+   "s": "manifest offer-lab · /offer-lab-next.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e5",
+   "t": "Home card · Combo Lab",
+   "s": "manifest combo-lab · /offer-lab-next.html?mode=combo",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e6",
+   "t": "Home card · Product Lab",
+   "s": "manifest product-lab · /product-lab.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e7",
+   "t": "Loaded by conversion-lab.html",
+   "s": "<script src> in conversion-lab.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e8",
+   "t": "Loaded by country-lab.html",
+   "s": "<script src> in country-lab.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e9",
+   "t": "Loaded by list-lab.html",
+   "s": "<script src> in list-lab.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e10",
+   "t": "Loaded by network-design.html",
+   "s": "<script src> in network-design.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e11",
+   "t": "Loaded by offer-lab-next.html",
+   "s": "<script src> in offer-lab-next.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e12",
+   "t": "Loaded by product-lab.html",
+   "s": "<script src> in product-lab.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e13",
+   "t": "Loaded by shell-lab.html",
+   "s": "<script src> in shell-lab.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e14",
+   "t": "Loaded by signin-lab.html",
+   "s": "<script src> in signin-lab.html",
+   "d": "A page that carries this module."
+  },
+  {
+   "id": "e15",
+   "t": "Loaded by ui-standard.html",
+   "s": "<script src> in ui-standard.html",
+   "d": "A page that carries this module."
+  }
+ ],
  "process": [
   {
    "id": "p1",
    "t": "lab-kit.js",
-   "s": "combo-lab.html · 383 functions",
+   "s": "combo-lab.html · 403 functions",
    "d": "The capability module: what the screens above call."
   },
   {
@@ -290,72 +453,138 @@
   },
   {
    "id": "x3",
+   "t": "CALL /api/network-design/validate",
+   "s": "routes/network-design.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x4",
    "t": "CALL /api/definitions",
    "s": "routes/definitions.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x4",
+   "id": "x5",
    "t": "CALL /api/entities/me",
    "s": "routes/entities.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x5",
+   "id": "x6",
    "t": "CALL /api/products/",
    "s": "routes/products.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x6",
+   "id": "x7",
    "t": "CALL /api/entities/me/can-see-costs",
    "s": "routes/entities.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x7",
+   "id": "x8",
    "t": "CALL /api/relationships/customers",
    "s": "routes/relationships.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x8",
+   "id": "x9",
    "t": "CALL /api/relationships/customers/groups",
    "s": "routes/relationships.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x9",
+   "id": "x10",
    "t": "CALL /api/products/lists",
    "s": "routes/products.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x10",
+   "id": "x11",
    "t": "CALL /api/products/lists/adopt",
    "s": "routes/products.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x11",
+   "id": "x12",
    "t": "CALL /api/signin/ask",
    "s": "routes/signin.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x12",
+   "id": "x13",
    "t": "CALL /api/signin/verify",
    "s": "routes/signin.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x13",
+   "id": "x14",
    "t": "CALL /api/signin/pin",
    "s": "routes/signin.js",
    "d": "A direct call to the API."
   }
  ],
  "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "e2",
+   "p1"
+  ],
+  [
+   "e3",
+   "p1"
+  ],
+  [
+   "e4",
+   "p1"
+  ],
+  [
+   "e5",
+   "p1"
+  ],
+  [
+   "e6",
+   "p1"
+  ],
+  [
+   "e7",
+   "p1"
+  ],
+  [
+   "e8",
+   "p1"
+  ],
+  [
+   "e9",
+   "p1"
+  ],
+  [
+   "e10",
+   "p1"
+  ],
+  [
+   "e11",
+   "p1"
+  ],
+  [
+   "e12",
+   "p1"
+  ],
+  [
+   "e13",
+   "p1"
+  ],
+  [
+   "e14",
+   "p1"
+  ],
+  [
+   "e15",
+   "p1"
+  ],
   [
    "p1",
    "p2"
@@ -455,26 +684,30 @@
   [
    "p1",
    "x13"
+  ],
+  [
+   "p1",
+   "x14"
   ]
  ],
  "relationships": [
   {
-   "this": "SURFACE lab-kit.js",
+   "this": "PAGE lab-kit.js",
    "rel": "draws",
    "that": "no screen"
   },
   {
-   "this": "SURFACE lab-kit.js",
+   "this": "PAGE lab-kit.js",
    "rel": "calls",
-   "that": "routes/products.js · routes/chits.js · routes/definitions.js · routes/entities.js · routes/relationships.js · routes/signin.js"
+   "that": "routes/products.js · routes/chits.js · routes/network-design.js · routes/definitions.js · routes/entities.js · routes/relationships.js · routes/signin.js"
   },
   {
-   "this": "SURFACE lab-kit.js",
+   "this": "PAGE lab-kit.js",
    "rel": "documented-by",
    "that": "api docs/API-REGISTER.md · api docs/CB-SYNC.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER-SIGNIN.md · api docs/COUNTER.md · api docs/critique/ACC-206-A-B.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-bell.md · api docs/critique/API-4-definitions.md · api docs/critique/API-4-entities.md · api docs/critique/API-4-relationships.md · api docs/critique/CAT-124-C1C2.md · api docs/critique/CAT-211.md · api docs/critique/CRM-FIX.md · api docs/critique/CS2.md · api docs/critique/CU2-PR-body.md · api docs/critique/CU2.md · api docs/critique/DB-CENSUS-OCT19.md · api do…"
   },
   {
-   "this": "SURFACE lab-kit.js",
+   "this": "PAGE lab-kit.js",
    "rel": "retired-docs (tidy 2026-10-02)",
    "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
@@ -615,6 +848,11 @@
    "result": "not run"
   },
   {
+   "file": "api tests/api-problem-network.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
    "file": "api tests/api-problem-products.test.cjs",
    "kind": "server",
    "result": "not run"
@@ -678,12 +916,7 @@
    "file": "api tests/books-writer.test.cjs",
    "kind": "server",
    "result": "not run"
-  },
-  {
-   "file": "api tests/cat-313-search-blind.realstack.cjs",
-   "kind": "server",
-   "result": "not run"
   }
  ],
- "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: lab-kit\n  annotations:\n    chitbridge.io/ci: CAP-LABS\n    chitbridge.io/asset: SURFACE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/chits.js\n    - routes/definitions.js\n    - routes/entities.js\n    - routes/relationships.js\n    - routes/signin.js"
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: labs\n  annotations:\n    chitbridge.io/ci: CAP-LABS\n    chitbridge.io/asset: PAGE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/chits.js\n    - routes/network-design.js\n    - routes/definitions.js\n    - routes/entities.js\n    - routes/relationships.js\n    - routes/signin.js"
 }
