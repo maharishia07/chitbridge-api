@@ -69,7 +69,8 @@ it('⭐⭐ D2: each currency to its own decimals — yen 0, rial 3, rupee 2', ()
   assert.strictEqual(M.round(1.2345, 'OMR'), 1.235);
   assert.strictEqual(M.round(1.2345, 'INR'), 1.23);
   assert.strictEqual(M.round(1.235), 1.24, 'no currency must keep today\'s 2 decimals');
-  assert.strictEqual(M.decimals('not a code'), 2);
+  /* CUR-1 (engines money v1.89.0+): a code that is not on the ISO 4217 list is refused (422), no longer answered 2; an ABSENT currency still answers 2 (the line above) */
+  assert.throws(() => M.decimals('not a code'), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN' && e.status === 422);
 });
 
 it('⚠️ a non-number stays loud — NaN in, NaN out', () => {
@@ -114,10 +115,13 @@ function cut(src, start) {
    tests/one-rounding-rule.test.cjs now asserts that, and that nothing platform-owned grows one back. What is left
    here are the ADOPTED engines' own fallbacks, which only a chitbridge-engines release can retire. */
 const COPIES = [
-  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'offers-engine.js', 'pricing-engine.js']
+  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'pricing-engine.js']
     .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
-  ...['variant.js', 'offers.js', 'pricing.js']
+  ...['variant.js', 'pricing.js']
     .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n)', 'roundMoney_']),
+  /* offers v1.89.0 split the helper: roundMoney_ asks moneyEngine_() and the same-rule fallback is its own function, which is what is cut and held equal here (same edit as api #1202) */
+  [path.join(API, 'lib', 'offers-engine.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
+  [path.join(WEB_APP, 'offers.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
 ];
 for (const [file, start, name] of COPIES) {
   it('⭐ ' + path.basename(file) + ' — its fallback is money.round', () => {

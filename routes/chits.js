@@ -924,6 +924,7 @@ async function sendBody(sendState, req, res) {
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
   const business_json = businessJsonOf(req.body);
+  if (business_json && typeof business_json === 'object' && business_json.currency) require('../lib/money').refuseNewCurrency(business_json.currency); /* CUR-1b: a NEW chit never names a withdrawn or unlisted money (thrown, worded 422 by lib/knownerr) */
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
@@ -5063,8 +5064,8 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
       name: it.name,
       variant: it.variant || null,
       unit: it.unit || null,
-      price: money.amountOf(it.price),
-      currency: money.currencyOf(it.price),
+      price: money.amountOf(it.price, { stored: true }),
+      currency: money.currencyOf(it.price, { stored: true }),
       unit_size: it.unit_size || null,
       label: it.name + (it.variant ? ' · ' + it.variant : ''),
       key: it.key,

@@ -645,7 +645,7 @@ async function verify(req, res) {
         const ctx = req.body.context && typeof req.body.context === 'object' ? req.body.context : null;
         if (ctx) {
           const cc = /^[A-Za-z]{2}$/.test(String(ctx.country || '')) ? String(ctx.country).toUpperCase() : null;
-          const cur = /^[A-Za-z]{3}$/.test(String(ctx.currency_code || '')) ? String(ctx.currency_code).toUpperCase() : null;
+          const cur = require('../lib/country-setup').activeCurrency(ctx.currency_code); /* CUR-1b: the browser's guess is only ever an active ISO 4217 money */
           /* ⚠️ an IANA zone, not free text — anything else is somebody's typing and would break every date we print */
           const tz = /^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){1,2}$/.test(String(ctx.timezone || '')) ? String(ctx.timezone) : null;
           const langs = Array.isArray(ctx.languages) ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
