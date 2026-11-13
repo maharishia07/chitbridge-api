@@ -71,6 +71,20 @@ const minorOf = (v, cur) => Math.round(money.round(Number(v), cur || null) * Mat
     assert.throws(() => money.amountOf(old), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN');
     assert.throws(() => money.make(1, 'BGN'), (e) => e.withdrawn === true);
   });
+  await it('ONE LIST at the setting door: VED, UYW, CLF (active on SIX List One) are accepted and a VED shop can be set up; MRO, STD, VEF, BYR get the withdrawn words naming the successor; ZZZ and a fund stay malformed', async () => {
+    const cs = require('../lib/country-setup');
+    for (const code of ['VED', 'UYW', 'CLF']) {
+      assert.strictEqual(await gov.currencyRefusal('no-such-entity', code), null, code + ' is not malformed');
+      assert.strictEqual(await cs.currencyLockRefusal({}, 'e', code, { cur: { currency: null, constituted: false, country: { code: 'VE' } } }), null, code + ' shop can be set up');
+    }
+    const want = { MRO: 'MRU', STD: 'STN', VEF: 'VES', BYR: 'BYN' };
+    for (const code of Object.keys(want)) {
+      const refusal = await gov.currencyRefusal('no-such-entity', code);
+      assert.ok(refusal && refusal.code === 'CURRENCY_NOT_ALLOWED' && refusal.message.indexOf('replaced by ' + want[code]) >= 0, code);
+    }
+    assert.strictEqual((await gov.currencyRefusal('no-such-entity', 'ZZZ')).code, 'CURRENCY_MALFORMED');
+    assert.strictEqual((await gov.currencyRefusal('no-such-entity', 'XDR')).code, 'CURRENCY_MALFORMED');
+  });
   await it('fx-rates refuses a new rate in a withdrawn code in words, and in a fund', () => {
     const why = fx.rowOf({ date: '2026-11-01', from: 'BGN', to: 'INR', rate: '45.1' }, 'INR', 'manual');
     assert.ok(why.why && /withdrawn/.test(why.why));
