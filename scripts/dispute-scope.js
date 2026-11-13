@@ -1,6 +1,6 @@
 /** @covers FR-D2 — a chit participant outside the dispute must not see its messages */
 // Prove dispute-message scoping: a chit participant who is NOT in the dispute must NOT see dispute messages.
-const BASE = 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('dispute-scope.js');
 const ALPHA = 'Alpha Timbers',
   BETA = 'Beta Traders',
   ALPHA_ID = '71373522-147e-4a75-966a-73de3d8bf045',

@@ -3,7 +3,7 @@
 // prove-commerce.js — LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end
 // settlement chain (partner + cover per stage), both DERIVED from the lane (cross_border + Incoterm). Pure catalogue —
 // no schema, no external calls.  node scripts/prove-commerce.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-commerce.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

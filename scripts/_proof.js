@@ -54,7 +54,7 @@ function loadEnv() {
 }
 loadEnv();
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('_proof.js');
 const OTP = process.env.DEV_OTP || '123456';
 
 /** Thrown when the PLATFORM is unreachable. Never means a check failed — see the exit-code note above. */

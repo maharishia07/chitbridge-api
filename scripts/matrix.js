@@ -23,7 +23,7 @@
  *   chit         GET /api/chits/:id as the SHOP      the record arrived and carries the payload
  *   supplier     GET /suppliers/:id/catalogue        a BUYER ENTITY sees the same catalogue (B2B)
  */
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('matrix.js');
 const OTP = process.env.DEV_OTP || '123456';
 const SEED = process.argv.includes('--seed');
 

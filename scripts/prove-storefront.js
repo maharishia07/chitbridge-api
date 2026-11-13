@@ -2,7 +2,7 @@
 //   provision a shop → open its storefront → a walk-in customer orders → the storefront chit carries the FULL
 //   governance stamp (constitution · capability · work-pattern · N standards) + an advisory conformance verdict.
 // Run AFTER the storefront-stamp wire-up is deployed:  node scripts/prove-storefront.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-storefront.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

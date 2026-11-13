@@ -1,7 +1,7 @@
 // prove-forms.js — LIVE proof of the authority-forms engine. node scripts/prove-forms.js
 // Runs against the live API. Proves the field×source-precedence model + provenance/rung stamping + freeze + sign.
 // Vault-dependent tests need VAULT_ENC_KEY configured (b100/F1); issue/sign need b108 — both reported honestly, not faked.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-forms.js');
 let P = 0,
   F = 0,
   S = 0;

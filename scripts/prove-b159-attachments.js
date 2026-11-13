@@ -83,7 +83,7 @@ async function login(email, name) {
       ok('…and the length matches', got.buffer.length === bytes.length, { sent: bytes.length, got: got.buffer.length });
     } else {
       /* _proof has no binary helper — fall back to a plain fetch with the same auth. */
-      const base = process.env.CB_API_BASE || 'https://chitbridge-api-production.up.railway.app';
+      const base = require('../tests/lib/run-target.cjs').apiBase('prove-b159-attachments.js');
       const reply = await fetch(base + '/api/attachments/' + attId, { headers: { Authorization: 'Bearer ' + me.token } });
       ok('read returns 200', reply.ok, reply.status);
       const buf = Buffer.from(await reply.arrayBuffer());

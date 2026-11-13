@@ -1,6 +1,6 @@
 // prove-orderbind.js — LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json,
 // per-copy, frozen), so the BUYER sees them on the order. node scripts/prove-orderbind.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-orderbind.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

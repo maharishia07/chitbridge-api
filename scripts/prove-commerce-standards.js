@@ -1,7 +1,7 @@
 // prove-commerce-standards.js — LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93):
 // each resolves from standard_source (facet 'commerce') with a SEALED owning source-entity, AND they do NOT pollute the
 // compliance readiness roll-up. Run AFTER b93.  node scripts/prove-commerce-standards.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-commerce-standards.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

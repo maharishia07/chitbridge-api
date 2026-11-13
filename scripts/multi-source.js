@@ -1,7 +1,7 @@
 /** @covers FR-K3 — STONE 3: one distributor carries two brands with a same-named finish, each under its own rules */
 // multi-source.js — STONE 3: one distributor carries TWO brands (Royale Play + Nippon) with a SAME-NAMED finish.
 // Each is distinct, priced per-source, and runs under its OWN source's rules. Needs b78. Run: node scripts/multi-source.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('multi-source.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

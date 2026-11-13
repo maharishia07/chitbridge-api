@@ -2,7 +2,7 @@
 // register → structure → adopt (price 2 finishes) → read-mine → assert the commercials persisted AND the design/colour
 // resolved by reference (not copied). Needs b75 applied (else adopt/mine return 503 CATALOGUE_STORE_MISSING).
 // Run: node scripts/catalogue-persist.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('catalogue-persist.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

@@ -2,7 +2,7 @@
 // penetration.js — STONE 4: consent location capture → the brand's AGGREGATE-ONLY penetration heatmap (no PII).
 // Brand authors a source → distributor adopts → customers order WITH a locality → the brand sees aggregated counts by
 // locality (orders + distributor coverage), never a customer identity. Needs b78 + b79. Run: node scripts/penetration.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('penetration.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

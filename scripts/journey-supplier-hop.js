@@ -10,7 +10,7 @@
  *
  * ⚠️ Creates real entities (@test-cb.com) — cleanup-test-entities.sql sweeps them.
  */
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('journey-supplier-hop.js');
 const OTP = process.env.DEV_OTP || '123456';
 const B = (s) => '\x1b[1m' + s + '\x1b[0m',
   G = (s) => '\x1b[32m' + s + '\x1b[0m';

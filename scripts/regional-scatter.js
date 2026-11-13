@@ -1,6 +1,6 @@
 // regional-scatter.js — 6a "spin the globe": one product resolves differently per customer region (auto-basics +
 // regional overrides), sealed + cached. Needs b80 + b81. Run: node scripts/regional-scatter.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('regional-scatter.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

@@ -1,6 +1,6 @@
 // register-mint.js — proves AUTO-MINT at entity creation: a registrant CHOOSES a vertical at verify and the entity is
 // minted onto it (else defaults to base). Also checks the public chooser endpoint. Run: node scripts/register-mint.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('register-mint.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

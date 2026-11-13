@@ -1,5 +1,5 @@
 // prove-availability.js — The locator, end to end: build a network, give the stores stock, and ask "who has it?"
-const API = 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('prove-availability.js');
 const a = async (p, o = {}) => {
   const reply = await fetch(API + p, {
     method: o.method || 'GET',

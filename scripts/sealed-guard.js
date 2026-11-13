@@ -1,7 +1,7 @@
 // sealed-guard.js — P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and
 // stays reachable by NAME for the help-desk send. Targets the real sealed entity GOV-01-Help (bridge CBHELPSRC01).
 // Run: node scripts/sealed-guard.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('sealed-guard.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

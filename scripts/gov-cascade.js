@@ -3,7 +3,7 @@
 //   service-desk → the AWS Mexico platform → MXN · America/Mexico_City · MX · es
 //   base         → the India platform        → INR · Asia/Kolkata · IN · en
 // Everything comes from the b74 attributes; nothing hardcoded. Run: node scripts/gov-cascade.js  (needs b74 applied)
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('gov-cascade.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

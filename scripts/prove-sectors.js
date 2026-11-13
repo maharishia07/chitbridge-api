@@ -1,6 +1,6 @@
 // prove-sectors.js — LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific
 // certifications/clearances (b95: food/textiles/electronics), same engine as chemical. Run AFTER b95.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-sectors.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

@@ -1,6 +1,6 @@
 // prove-capture.js — LIVE proof of the capture connector (inbound message → AI structure → confirm → chit).
 // Self-heals: if b104 isn't applied, the capture store 503s → reported as pending, not a fail. node scripts/prove-capture.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-capture.js');
 let P = 0,
   F = 0,
   SKIP = 0;

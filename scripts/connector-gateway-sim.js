@@ -32,7 +32,7 @@ const http = require('http');
 const fs = require('fs');
 const { URL } = require('url');
 
-const PRODUCTION = 'https://chitbridge-api-production.up.railway.app';
+const PRODUCTION = require('../tests/lib/run-target.cjs').PRODUCTION_API; // the one home of the live host (PLT-101)
 const LOCAL = 'http://localhost:3000';
 /** apiBase(env, argv) → { base } | { refuse } — local by default, http only to localhost, production only by explicit flag */
 function apiBase(env, argv) {

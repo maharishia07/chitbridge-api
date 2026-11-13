@@ -1,7 +1,7 @@
 // iot-assignee.js — proves the RESOLUTION SEAM + default-assignee for IoT signals (the visibility fix):
 // a device with a per-device default_assignee → the emitted signal chit is ASSIGNED to that co-assist.
 // Also exercises the cascade (a device with none falls back to the entity default). Run: node scripts/iot-assignee.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('iot-assignee.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

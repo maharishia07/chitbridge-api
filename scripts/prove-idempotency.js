@@ -1,7 +1,7 @@
 // prove-idempotency.js — LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js
 // Proves a replayed mutation executes AT MOST ONCE: same Idempotency-Key ⇒ same chit (no double), replay header set;
 // new key ⇒ new chit; same key + different body ⇒ 422. Needs the API up + b109 run.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-idempotency.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

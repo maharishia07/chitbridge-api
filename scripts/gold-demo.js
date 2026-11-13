@@ -18,7 +18,7 @@
 // single party (not even the launderer) holds or controls both sides. Concept proof on realistic data — NOT a
 // proof on a refiner's real data (that's the pilot). Never present it as a live proof.
 //
-// Run:  TEST_URL=https://chitbridge-api-production.up.railway.app node scripts/gold-demo.js
+// Run:  TEST_URL=http://localhost:3000 node scripts/gold-demo.js
 
 require('dotenv').config();
 const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';

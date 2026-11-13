@@ -1,6 +1,6 @@
 // ACTOR-perspective harness. Invariants: (1) NOTHING shared between entities; (2) NOTHING private to an actor
 // except drafts. Creates two actors under Alpha (Ana, Bob), logs in as each, and checks sharing/isolation.
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('actor-harness.js');
 const ALPHA = 'Alpha Timbers',
   BETA = 'Beta Traders',
   ALPHA_ID = '71373522-147e-4a75-966a-73de3d8bf045',

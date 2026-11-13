@@ -7,7 +7,7 @@
 // Backend: routes/chits.js (manual self-chits). IoT task-only lives in routes/connectors.js (emitSignalChit) —
 // verify that path via lifecycle-iot.js or a live device signal; this harness covers the manual flag + the invariant.
 // Run: node scripts/self-copy-pref.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('self-copy-pref.js');
 let PASS = 0,
   FAIL = 0;
 const ISSUES = [];

@@ -1,7 +1,7 @@
 /** @covers FR-K7 — refs + routing + hash are emitted, never the raw payload */
 // erp-handoff.js — 6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's
 // ERP (refs + routing + hash, NOT the raw payload; process-then-forget). CB does NOT route. Needs b78+b80+b82.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('erp-handoff.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

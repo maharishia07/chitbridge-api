@@ -28,7 +28,7 @@
  */
 'use strict';
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('dept-store-demo.js');
 const OTP = process.env.DEV_OTP || '123456';
 
 let pass = 0,

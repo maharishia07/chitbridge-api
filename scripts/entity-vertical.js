@@ -1,7 +1,7 @@
 // entity-vertical.js — proves PER-ENTITY / VERTICAL minting: each entity's signal chit records the entity's OWN
 // minted constitution. Beta Traders is minted onto 'service-desk@v1' (b73); Alpha (unstamped) falls back to 'base@v1'.
 // Same rail, same capability, DIFFERENT vertical per entity. Run: node scripts/entity-vertical.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('entity-vertical.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

@@ -1,7 +1,7 @@
 // prove-profile.js — LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only
 // ISO 9001 sees exactly ISO 9001 (adopted) + no export standards; switching to export EU + adopting nothing pulls in the
 // mandatory regulatory set. Run AFTER b96.  node scripts/prove-profile.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-profile.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

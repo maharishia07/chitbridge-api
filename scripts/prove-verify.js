@@ -3,7 +3,7 @@
 // is accepted but is NOT "verified" — it is a format-checked claim (rung 'declared'). A malformed ID is refused (422).
 // The 'verified' rung is reserved for a real registry confirmation (set CB_KYB_PROVIDER + keys to make it real).
 // Run AFTER b92.  node scripts/prove-verify.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-verify.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

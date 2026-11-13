@@ -2,7 +2,7 @@
 // source-rules.js — STONE 2: the SOURCE's governance resolves + is ENFORCED at order time (not the host's).
 // Brand authors a source with rules.min_order_litres=5 → distributor adopts → an order below 5 L is REJECTED, an
 // order >=5 L is accepted and its line carries the `governed` stamp (under source@v + routing = info). Needs b78.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('source-rules.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

@@ -220,7 +220,7 @@ async function extractText(pdfBuffer) {
   // 7 · optional live submission
   if (process.argv.includes('--submit')) {
     console.log('\n' + B('7 · Submit it to the live storefront, PDF attached'));
-    const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+    const API = require('../tests/lib/run-target.cjs').apiBase('prototype-form16-to-itr2.js');
     const call = async (m, p, body, token) => {
       const reply = await fetch(API + p, {
         method: m,

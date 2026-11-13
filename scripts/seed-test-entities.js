@@ -22,9 +22,9 @@
  *
  * ⚠️ Writes to the live database. All five use @test-cb.com, so cleanup-test-entities.sql sweeps them later.
  */
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('seed-test-entities.js');
 const OTP = process.env.DEV_OTP || '123456';
-const WEB = API.replace('-api-production.up.railway.app', '-web.vercel.app');
+const WEB = process.env.CB_WEB || '(set CB_WEB)';
 
 const B = (s) => '\x1b[1m' + s + '\x1b[0m',
   G = (s) => '\x1b[32m' + s + '\x1b[0m';

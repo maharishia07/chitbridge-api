@@ -10,7 +10,7 @@ try {
   require('dotenv').config();
 } catch (_) {} // load .env for the standalone script (the db module doesn't)
 const { query, withEntity } = require('../db');
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-definer-guards.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

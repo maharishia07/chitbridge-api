@@ -3,7 +3,7 @@
 // Proves the wire moves: a food-safety payload is checked against the template; the DETERMINISTIC verdict flips
 // compliant↔non-compliant, gaps are named, and the Crux-2 `acted_by` deputy stamp rides the response.
 // Works WITH or WITHOUT the model key (narrative asserted only when present). Run: node scripts/conform-check.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('conform-check.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

@@ -1,6 +1,6 @@
 // IoT connector lifecycle harness — drives the LIVE API end-to-end and asserts the desired result at each step.
 // Auth: dev-mode entity login (register -> dev_otp -> verify -> JWT). Run: node lifecycle-iot.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('lifecycle-iot.js');
 const ENTITY = process.env.CB_ENTITY || 'Alpha Timbers';
 const BETA = process.env.CB_BETA || '75c378a6-ad7f-4b58-87d2-e1509cbb0482'; // counterparty for CC
 // a valid 1x1 JPEG, for the proof-attachment path

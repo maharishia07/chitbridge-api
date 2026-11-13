@@ -1,6 +1,6 @@
 // prove-lanes.js — LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED
 // (home rules ∪ destination rules ∪ universal), never enumerated. Run AFTER b91.  node scripts/prove-lanes.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-lanes.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

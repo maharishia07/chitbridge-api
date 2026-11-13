@@ -4,7 +4,7 @@
 //
 // PREREQ: migration b69_connector_receipt.sql applied, and this connectors.js deployed. Run: node scripts/erp-connector.js
 const crypto = require('crypto');
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('erp-connector.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

@@ -1,6 +1,6 @@
 // Prove cancel-as-request: sender voids → sender's OWN copy = void, recipient's copy UNTOUCHED, recipient gets a
 // flagged "[cancel requested]" message and decides for itself.
-const BASE = 'https://chitbridge-api-production.up.railway.app',
+const BASE = require('../tests/lib/run-target.cjs').apiBase('cancel-request.js'),
   BETA_ID = '75c378a6-ad7f-4b58-87d2-e1509cbb0482';
 let PASS = 0,
   FAIL = 0;

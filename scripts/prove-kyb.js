@@ -2,7 +2,7 @@
 // prove-kyb.js — LIVE proof of the "Know your business" panel. node scripts/prove-kyb.js
 // Runs against the live API. Tests the runnable directive boxes (R1/R2/P1/P2/K1/K2 + the Field wall structure F2/F3).
 // F4 (24h cache) + a full F1 drop-test need a connected search provider (UAT) — noted, not faked.
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-kyb.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

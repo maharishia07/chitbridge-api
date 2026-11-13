@@ -13,7 +13,7 @@
 //
 // Concept proof on realistic data — NOT a proof on real manufacturing data (that's the pilot). Never sell it as live proof.
 //
-// Run:  TEST_URL=https://chitbridge-api-production.up.railway.app node scripts/akums-demo.js
+// Run:  TEST_URL=http://localhost:3000 node scripts/akums-demo.js
 
 require('dotenv').config();
 const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';

@@ -3,7 +3,7 @@
 // CARD 29-qa-test-tooling-ux-locale-and-design-system/test-board
 // Cross-entity REGRESSION harness — drives the core mailing flows on the LIVE API and asserts logic + criss-cross
 // isolation. Finds issues the way the IoT harness did. Run: node regression.js
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('regression.js');
 // THE CAST, repointed 2026-08-06 after the clean-slate wipe.
 //
 // This logged in by DISPLAY NAME ('Alpha Timbers', 'Beta Traders') against two hardcoded UUIDs. The wipe deleted

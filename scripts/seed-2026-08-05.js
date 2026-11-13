@@ -13,7 +13,7 @@
 // So: phase 1 → one small SQL (printed at the end) → phase 2. The awkwardness is the feature working.
 'use strict';
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('seed-2026-08-05.js');
 const OTP = process.env.DEV_OTP || '123456';
 const MODE = process.argv.includes('--phase2') ? 'phase2' : process.argv.includes('--verify') ? 'verify' : 'phase1';
 

@@ -2,7 +2,7 @@
 // source-entity.js — SOURCE-AS-ENTITY + experience blueprint (needs b78).
 // A brand entity AUTHORS its own source (content + experience) → a distributor adopts it → the storefront runs the
 // SOURCE's experience (cascade). Also checks the seeded source's experience cascades. Run: node scripts/source-entity.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('source-entity.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

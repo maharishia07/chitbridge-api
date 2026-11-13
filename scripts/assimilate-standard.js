@@ -1,7 +1,7 @@
 // assimilate-standard.js — proves the assimilation SEAM stamps the boilerplate lineage on a chit, INCLUDING the
 // canonical SHARED standard (ISO 9000) alongside the entity's own constitution + capability + work-pattern.
 // Self-healing: ISO 9000 resolves from standard_source (b85) or the code seed. Run: node scripts/assimilate-standard.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('assimilate-standard.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

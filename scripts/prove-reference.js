@@ -2,7 +2,7 @@
 // prove-reference.js — LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real
 // chit, the receiver settles it, and the sender's track record reflects 1 counterparty / 1 settled — DERIVED, not
 // entered.  node scripts/prove-reference.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-reference.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {
