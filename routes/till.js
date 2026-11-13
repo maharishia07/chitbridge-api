@@ -3209,8 +3209,8 @@ function checkSentShop(body, before) {
 
 /** a blank is left alone (a blank never clears, see shopChanges); a filled e-mail, phone or PIN/ZIP that does not read right is refused 400 with the field named. → the refusal's spec, or null */
 function checkSentContact(body, before) {
-  const why = require('../lib/party-fields').shopHeaderWhy(body, before);
-  return why ? said('TILL_BAD_REQUEST', 'validation', why.words, { field: why.field }) : null;
+  const reason = require('../lib/party-fields').shopHeaderWhy(body, before);
+  return reason ? said('TILL_BAD_REQUEST', 'validation', reason.words, { field: reason.field }) : null;
 }
 
 /** a tax number sent with the edit is checked and stored upper-cased (the one form every reader already assumes): the refusal's spec, or null */
