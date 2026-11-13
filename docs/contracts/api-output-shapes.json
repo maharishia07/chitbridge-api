@@ -1996,13 +1996,22 @@
           "liabilities": {},
           "equity": {},
           "total_assets_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "total_liab_equity_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "profit_to_date_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "balanced": {
             "type": "boolean"
@@ -2039,7 +2048,10 @@
                 "properties": {
                   "heads": {},
                   "total_minor": {
-                    "type": "number"
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "currency": {},
                   "asOf": {}
@@ -2055,7 +2067,10 @@
                 "properties": {
                   "heads": {},
                   "total_minor": {
-                    "type": "number"
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "currency": {},
                   "asOf": {}
@@ -2066,12 +2081,18 @@
                 "type": "boolean"
               },
               "difference_minor": {
-                "type": "number"
+                "type": [
+                  "number",
+                  "null"
+                ]
               },
               "currency": {},
               "asOf": {}
             },
             "additionalProperties": false
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -2520,7 +2541,29 @@
           "page": {},
           "limit": {},
           "next": {},
-          "totals": {}
+          "totals": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "dr_minor": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "cr_minor": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          },
+          "cost_hidden": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },
@@ -2970,13 +3013,22 @@
           "income": {},
           "expense": {},
           "total_income_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "total_expense_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "profit_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "by_line": {
             "type": "object",
@@ -2989,6 +3041,9 @@
               "expense": {}
             },
             "additionalProperties": false
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -3236,7 +3291,26 @@
             },
             "items": {
               "type": "array",
-              "items": {}
+              "items": {
+                "type": "object",
+                "properties": {
+                  "amount_minor": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "owed_minor": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "cost_hidden": {
+                    "type": "boolean"
+                  }
+                }
+              }
             }
           },
           "additionalProperties": false
@@ -3272,12 +3346,21 @@
           },
           "rows": {},
           "total_dr_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "total_cr_minor": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "balanced": {
+            "type": "boolean"
+          },
+          "cost_hidden": {
             "type": "boolean"
           }
         },

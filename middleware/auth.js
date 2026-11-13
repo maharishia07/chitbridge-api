@@ -266,6 +266,17 @@ const softIdentity = (req) => {
   return SOFT_DECIDED.get(req);
 };
 
+/**
+ * What the database row judge() read says about a co-assist, put on the request identity: hat (default 'act' for a row older than the hat column), level, reach,
+ * and SEC-119 can_see_costs (the SAME row, never the token, so lib/cost canRead spends no second trip).
+ */
+function attachActorRow(identity, actor) {
+  identity.hat = actor.hat || 'act';
+  identity.access_level = actor.access_level;
+  identity.whole_entity = actor.whole_entity === true;
+  identity.can_see_costs = actor.can_see_costs === true;
+}
+
 const auth = async (req, res, next) => {
   if (req && DECIDED.has(req)) return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
   try {
@@ -296,11 +307,7 @@ const auth = async (req, res, next) => {
     // Revalidate actor status — a removed/deactivated co-assist must lose access
     // immediately on their next request, not whenever the JWT happens to expire.
     /* the hat, level and reach come from the database row judge() already read (never the token) — default 'act' for a row older than the hat column */
-    if (judged.actor) {
-      req.identity.hat = judged.actor.hat || 'act';
-      req.identity.access_level = judged.actor.access_level;
-      req.identity.whole_entity = judged.actor.whole_entity === true;
-    }
+    if (judged.actor) attachActorRow(req.identity, judged.actor);
 
     /**
      * ⭐⭐ THE HAT GATE RUNS HERE, INSIDE auth, AND THAT PLACEMENT IS THE WHOLE DESIGN.

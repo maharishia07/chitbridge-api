@@ -610,7 +610,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         }
       : {};
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json({ currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals });
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1017,14 +1017,14 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
     const tb = await withEntity(e, (h) => B.trialBalance(h, e, asOf));
-    res.json({
+    res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
       rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
       balanced: tb.balanced
-    });
+    }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1044,7 +1044,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       to = dateQ(req.query.to, today(req)),
       from = dateQ(req.query.from, fyStart(req, to));
     const pl = await withEntity(e, (h) => B.profitAndLoss(h, e, from, to));
-    res.json({
+    res.json(await forBooksDoor(req, e, 'pl', {
       currency: curOf(req),
       from,
       to,
@@ -1054,7 +1054,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       total_expense_minor: pl.total_expenses_minor,
       profit_minor: pl.profit_minor,
       by_line: { income: pl.income, expense: pl.expenses }
-    });
+    }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1112,7 +1112,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         schedule_iii: sched3(bs, Object.keys(B.packOf(req.books).sch3 || {}))
       };
     });
-    res.json(Object.assign({ currency: curOf(req), asOf }, out));
+    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf }, out)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2472,7 +2472,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
 /** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · suppliers_to_add · bills_unrated (F5 A1: a bill with an unrated line, listed never changed) · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
-    res.json(await require('../lib/books-todo').todo(ctx(req), req.books));
+    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
