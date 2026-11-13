@@ -288,6 +288,7 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     const TC = require(path.join(H.API, 'lib', 'tax-copy')); TC.ledgerFor = async () => { throw new Error('no chits in this test'); };
     const { srv, q } = serve(X);
     await X.B.postEntry(X.db, SHOP, { type: 'expense', date: '2026-09-11', currency: 'INR', class: 'rent', amount: 500, paid_from: 'cash', source_ref: 'chit:e1' });
+    await q('POST', '/periods/2026-27/6/lock', { reason: 'September done' }); /* CAT-127 (M7b): a month pack is made from a locked month */
     const b1 = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
     const id1 = b1.body.pack && b1.body.pack.pack_id;
     const g1 = await q('GET', '/packs/' + id1);

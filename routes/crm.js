@@ -160,10 +160,11 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
         moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage),
         may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
       });
+    await crm.withUnbilled([rec], owner, byOf(req), blind); /* CRM-D7: the SAME figure the list row carries (the one sum, work-rows.sumUnbilled); absent when the shop is truncated, hidden whole for a blind reader */
     rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     /* S34: the party's keys (lib/crm.js assemble, in its order: a supplier-only party has no customer or lead), then what this record adds */
     // prettier-ignore
-    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, migrated: rec.migrated, followups: rec.followups, may: rec.may });
+    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, unbilled: rec.unbilled, migrated: rec.migrated, followups: rec.followups, may: rec.may });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }

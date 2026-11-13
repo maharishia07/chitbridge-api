@@ -1,13 +1,13 @@
 {
  "version": 1,
  "stage": "2b",
- "updated": "2026-11-12",
- "total": 631,
+ "updated": "2026-11-13",
+ "total": 634,
  "not_meeting": 0,
- "codes_total": 598,
+ "codes_total": 615,
  "codes_pending": 0,
  "raw_error_writes": 1,
- "routes_without_does": 621,
+ "routes_without_does": 624,
  "tolerant_outward": 26,
  "columns_failing": {
   "strict_input": 0,

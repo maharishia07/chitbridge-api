@@ -33,7 +33,11 @@ const holdsNul = (sql, params) => {
 };
 /** the rows of one statement, by its shape */
 const answering = (pattern, rows) => (sql) => (pattern.test(String(sql)) ? { rows, rowCount: rows.length } : null);
-const TWO_SHOPS = answering(/LOWER\(display_name\) = LOWER/, [
+/** SEC-184: the rows of the definer lookup for one kind (ops.signin_candidates), and of the by-id credential read that follows it */
+const lookupOf = (kind, rows) => (sql, params) => (/ops\.signin_candidates/.test(String(sql)) && (params || [])[0] === kind ? { rows, rowCount: rows.length } : null);
+const byIdRows = (rows) => (sql) => (/identity_id = ANY\(\$1::uuid\[\]\)/.test(String(sql)) ? { rows, rowCount: rows.length } : null);
+const firstOf = (...fns) => (sql, params) => { for (const f of fns) { const r = f(sql, params); if (r) return r; } return null; };
+const TWO_SHOPS = lookupOf('name', [
   { identity_id: 'a', bridge_id: 'A', email: 'a@x.com', display_name: 'Tea Shop' },
   { identity_id: 'b', bridge_id: 'B', email: 'b@x.com', display_name: 'Tea Shop' }
 ]);
@@ -46,7 +50,8 @@ function extras() {
   const refusing = (code) => ({ identityAuth: { verifyCredential: async () => ({ ok: true }), issueToken: async () => { throw Object.assign(new Error(code), { code }); } } });
   /* one contact on two accounts that the same secret opens: the chooser (SEC-143, M14) */
   const choosing = () => ({ identityAuth: { findLoginIdentity: async () => ({ ambiguous: true, via: 'contact', candidates: [{ identity_id: 'a' }, { identity_id: 'b' }], contact: 'tea@x.com' }), proveOnContact: async () => ({ opens: [{ identity_id: 'a' }, { identity_id: 'b' }], hashes: 1 }), choicesOf: async () => [{ id: 'a', label: 'Tea Shop' }, { id: 'b', label: 'Tea Shop' }] } });
-  const KNOWN = { sqlRows: answering(/FROM identities WHERE email = \$1/, [{ identity_id: 'a', bridge_id: 'A', display_name: 'Tea Shop', email: 'a@x.com', identity_type: 'entity' }]) };
+  const A_ROW = { identity_id: 'a', bridge_id: 'A', display_name: 'Tea Shop', email: 'a@x.com', identity_type: 'entity' };
+  const KNOWN = { sqlRows: firstOf(lookupOf('email', [A_ROW]), byIdRows([A_ROW])) };
   /* the success answers (S34: output_allowlist is proved from what these record) */
   /* a fresh copy for every statement: the session library edits the listing it reads in place, and one scene must not leave its edit for the next */
   const HOLDING = { sqlRows: (sql) => (/SELECT policy_flags/.test(String(sql)) ? { rows: [{ policy_flags: { devices: JSON.parse(JSON.stringify(MY_DEVICES)) } }], rowCount: 1 } : null) };

@@ -98,7 +98,7 @@ const rowOf = async (view, q) => ((await get('/api/work/list?view=' + view + '&q
   t('a SALES sheet: the remark and address a customer typed stay (not the shop\'s purchase)', [saleSheet.remark, saleSheet.address], ['ring first', 'Rs ' + FIG.address + ' Road']);
   D.copies = [D.copies[2]];
   const saleFacts = (await get('/api/work/facts?unbilled=1')).body.figures.unbilled;
-  t('facts?unbilled=1 over sales only keeps the sum, no marker', saleFacts, { n: 1, minor: 120050, currency: 'INR' });
+  t('facts?unbilled=1 over sales only keeps the sum, no marker', saleFacts, { n: 1, minor: 120050, currency: 'INR', by_currency: [{ currency: 'INR', minor: 120050, n: 1 }], no_currency: 0, unpriced: 0 });
 
   /* ── fail closed ── */
   world(); as(BLIND); D.canSeeCosts = false;

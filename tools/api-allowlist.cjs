@@ -32,7 +32,7 @@ const REGISTER_FILE = path.join(ROOT, 'docs', 'api-register.json');
 const DYNAMIC_KEYS = 40; /* an object with more keys than this, or keys that look like ids or dates, is a map keyed by data, not a record */
 const KEY_LOOKS_LIKE_DATA = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-|\d{4}-\d\d-\d\d|\d+$)/i;
 const CLOSED_BY = 'x-closed-by'; /* the schema keyword lib/output-allowlist.js reads: a node closed from recorded answers alone is reported when a key falls outside it, never dropped */
-const ROUTE_START = /^\s*(?:router|app)\.(?:get|post|put|patch|delete|all|use)\s*\(/;
+const ROUTE_START = /^\s*(?:(?:router|app)\.(?:get|post|put|patch|delete|all|use)|route)\s*\(/; // a registration: router.get( ... or the route( helper of routes/books.js
 
 /* ── what the answers show ─────────────────────────────────────────────────────────────────────── */
 const typeName = (value) => (value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value);
@@ -375,10 +375,16 @@ function wrapperLineOf(lines, route) {
 /** a route( wrapper route: its own text holds no res.json at all */
 const answeredByWrapper = (wrapperLine, answers) => wrapperLine > 0 && !answers.node && answers.calls === 0;
 
+/** where a route( wrapper route sits, 0 when the route is not one: the register gives a route( route its real line (API-11), so it is known by its line being a route( line; wrapperLineOf stays for a register not yet regenerated */
+function wrapperLineFor(lines, route) {
+  if (/^\s*route\(/.test(lines[route.line - 1] || '')) return route.line;
+  return route.line ? 0 : wrapperLineOf(lines, route);
+}
+
 /** one route's shape entry { status, schema, observed, open, closed_by?, example? } from its recorded answers and its handler's text; a route( wrapper route (its own text holds no res.json) closes from recordings */
 function shapeEntry(route, { byStatus, lines, captures, fromRecordings }) {
   const statuses = Object.keys(byStatus);
-  const wrapperLine = route.line ? 0 : wrapperLineOf(lines, route);
+  const wrapperLine = wrapperLineFor(lines, route);
   const answers = handlerAnswers(handlerText(lines, route.line || wrapperLine));
   const status = statuses.includes('200') ? '200' : statuses[0] || '200';
   const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: answeredByWrapper(wrapperLine, answers) || !!fromRecordings });

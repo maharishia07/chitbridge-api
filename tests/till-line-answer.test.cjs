@@ -64,11 +64,13 @@ it('drain(): only a KEY refusal stops the queue — a bill refused with TILL_SEN
   const at = PAGE.indexOf("why = 'The shop refused this counter");
   assert.ok(at > 0, 'the key-refused branch is gone');
   const guard = PAGE.slice(PAGE.lastIndexOf('else if', at), at);
-  assert.ok(/TILL_SEND_REFUSED/.test(guard), 'the key-refused branch no longer tells a bill refusal from a key refusal');
+  /* CTR-155/114: the one-bill refusals are named ONCE, in ONE_ROW_REFUSALS; the key-refused branch reads that list (TILL_SEND_REFUSED, MEMBERSHIP_SUSPENDED) */
+  const list = (PAGE.match(/var ONE_ROW_REFUSALS = \[([^\]]*)\]/) || [])[1] || '';
+  assert.ok(/TILL_SEND_REFUSED/.test(list) && /ONE_ROW_REFUSALS/.test(guard), 'the key-refused branch no longer tells a bill refusal from a key refusal');
 });
 it('a bill recorded one-sided carries the reason (_sent.one_sided) and its row says "no copy to customer"', () => {
-  assert.ok(/ans\.one_sided/.test(PAGE), 'drain() no longer reads one_sided from the answer');
-  assert.ok(/kept\._sent = \{[^}]*one_sided: oneSided/.test(PAGE), 'the reason is not kept on the bill');
+  assert.ok(/answer\.one_sided/.test(PAGE), 'drain() no longer reads one_sided from the answer (drainAnswerProof, moved out of drain whole in CTR-243)');
+  assert.ok(/kept\._sent = \{[^}]*one_sided: proof\.oneSided/.test(PAGE), 'the reason is not kept on the bill');
   assert.ok(/till-bill-onesided-/.test(PAGE) && /no copy to customer/.test(PAGE), 'the bill row no longer shows it');
 });
 

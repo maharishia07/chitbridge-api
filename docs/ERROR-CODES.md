@@ -40,8 +40,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_FORM | 400 | Return form not offered | That return is not one we build. Ask for GSTR-1 or GSTR-3B. | Pick GSTR-1 or GSTR-3B and try again. | tax | 2026-11-09 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
-| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line. | Send a price of 0 or more, as a number, and a discount no larger than the line. | tax | 2026-10-23 |
-| BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote or on a chit being sent, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
+| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote, on a chit being sent, on the pricing service (also a pricing structure amount, minimum, maximum or tier price) or on the offers service (also a missing price), has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line. | Send a price of 0 or more, as a number, and a discount no larger than the line. | tax | 2026-10-23 |
+| BAD_BOUND | 400 | A line is too large | A line has a quantity, a price or a total above the most a line can hold. | Check the quantity and the price; send smaller figures. | tax | 2026-11-13 |
+| BAD_LINE | 400 | A line is not a line | A line in the list is not an object (it is empty, a number or text). | Send each line as an object with a name, a quantity and a price. | tax | 2026-11-13 |
+| BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote, on a chit being sent, on the pricing service or on the offers service, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
 | BAD_RATE | 400 | Tax rate out of range or not a number | A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too). | Send a rate from 0 to 100 (cess 0 or more), as a number. | tax | 2026-10-23 |
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
@@ -388,6 +390,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
 | POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
+| PRICE_MOVED | 409 | Prices have moved | Some items in this draft changed in the catalogue after the draft was made. Nothing was sent. | Use the new prices, or send it as drafted when only a price moved. | chits | 2026-11-14 |
+| PRICING_KIND_UNKNOWN | 400 | Pricing structure not known | A line names a pricing structure we do not know. The kinds are fixed, tiered and range. | Use fixed, tiered or range, or send the line without a structure to use the list price. | pricing | 2026-11-13 |
 | PRODUCT_BAD_REQUEST | 400 | The catalogue needs something else | The catalogue could not take that request, and the sentence says why. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
 | PRODUCT_CLASH | 409 | Clashes with the catalogue | That clashes with how this catalogue is set up. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
 | PRODUCT_FILE_UNREADABLE | 400 | File could not be read | That file could not be read. | Save it again as a spreadsheet or a CSV and upload it again. | products | 2026-10-23 |
@@ -520,6 +524,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SUPPORT_NOT_TAKEN | 502 | Report not delivered | Your report did not reach the shop. | Contact the shop another way for now. | catalogue | 2026-10-23 |
 | CHIT_BAD_REQUEST | 400 | Chit request not accepted | That chit request could not be done. | Read the message, fix what it names and try again. | chits | 2026-10-23 |
 | CHIT_CANNOT_WITHDRAW | 409 | Cannot withdraw | This chit cannot be withdrawn from where it is. | Raise a dispute on it if something is wrong. | chits | 2026-10-23 |
+| CHIT_REPLAY_DIFFERS | 409 | Bill number holds another sale | That bill number was already recorded for a different sale. | The bill stays on this counter, unsent; nothing is lost. | chits | 2026-11-13 |
 | CHIT_CONFLICT | 409 | Chit not in that state | The chit is not in a state that allows that. | Look at the chit again, then try once more. | chits | 2026-10-23 |
 | CHIT_HAS_CREDIT_NOTE | 409 | Cannot withdraw | This bill has a credit note against it, so it cannot be cancelled or rejected yet. | Cancel the credit note first, then the bill. | chits | 2026-11-13 |
 | CHIT_INVALID | 400 | Chit details not valid | Something on the chit is missing or not valid. | Read the list of fields it names, fix them and try again. | chits | 2026-10-23 |
@@ -532,6 +537,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_TOO_MANY | 400 | Too many at once | That is more than can be done in one go. | Send fewer, then repeat for the rest. | chits | 2026-10-23 |
 | CHIT_UNPROCESSABLE | 422 | Chit refused | That was understood but cannot be done as it stands. | Read the sentence shown and fix what it names. | chits | 2026-10-23 |
 | CHIT_VALUE_NOT_ACCEPTED | 409 | Value not accepted | The database does not accept one of those values yet. | Try again after the next update. | chits | 2026-10-23 |
+| CHIT_VOIDED | 409 | This bill was withdrawn | This bill is withdrawn or rejected, so it cannot be marked paid. | Open the bill to see its status. | chits | 2026-11-12 |
 | DISPUTES_TABLE_MISSING | 500 | Disputes not set up | Disputes are not set up on this server yet. | Tell us; the update has to be run. | chits | 2026-10-23 |
 | DISPUTE_ALREADY_RESOLVED | 400 | Dispute already resolved | That dispute is already resolved. | Nothing more to do. | chits | 2026-10-23 |
 | DISPUTE_EXISTS | 400 | Dispute already open | You already have an open dispute of that kind on this chit. | Open the existing dispute instead. | chits | 2026-10-23 |
@@ -606,7 +612,18 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REL_NOTHING_TO_UPDATE | 400 | Nothing to change | You sent nothing to change. | Send at least one field to change. | relationships | 2026-10-23 |
 | REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
 | REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
+| BRIDGE_MISSING | 409 | The tax check figures are missing | This bill arrived without its tax check figures, so it was not saved. | Reload the counter and make the bill again; we have been told and no override exists. | chits | 2026-11-13 |
 | BUYER_TAX_ID_BAD | 400 | Buyer tax number not accepted | The buyer's tax number on this bill does not check out for your country. | Check the buyer's number and send the bill again. | chits | 2026-10-30 |
 | CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |
+| LEASE_COUNTER_BUSY | 503 | Invoice numbers busy | The invoice numbers are busy for a moment. Nothing was taken. | Try again in a few seconds. | till | 2026-11-13 |
+| LEASE_NOT_FOR_COUNTRY | 409 | No block of numbers for this shop | This shop's invoice numbers are not issued by blocks, so no block was given. | Keep numbering invoices as the counter does today. | till | 2026-11-13 |
+| LEASE_NOT_FOUND | 404 | Block not found | That block of invoice numbers is not one of this shop's. | Open the day close and pick a block from the list. | till | 2026-11-13 |
+| LEASE_NOT_READY | 409 | Invoice blocks not switched on | Invoice number blocks are not switched on for this shop yet. | Ask support to switch them on. | till | 2026-11-13 |
+| LEASE_NOT_YOUR_COUNTER | 403 | Not your counter | A counter can only ask for its own invoice numbers. | Ask from the counter that will print them. | till | 2026-11-13 |
+| LEASE_NUMBER_NOT_IN_LEASE | 409 | Number not in the block | A number you named as unused is not in this block. | Check the number on the day close list. | till | 2026-11-13 |
+| LEASE_NUMBER_WAS_USED | 409 | Number is on an invoice | That number is already on an invoice, so it cannot be called unused. | Name only numbers that were not printed. | till | 2026-11-13 |
+| LEASE_REASON_INVALID | 400 | Reason not accepted | The reason must be void, unused or retired. | Pick one of the three and save again. | till | 2026-11-13 |
+| LEASE_TILL_UNKNOWN | 404 | Counter not found | That counter is not one of this shop's counters, so no block was given. | Ask from a counter this shop has connected. | till | 2026-11-13 |
+| LEASE_WANT_INVALID | 400 | Block size not accepted | Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50. | Change the number and ask again. | till | 2026-11-13 |
 <!-- codes:end -->

@@ -1,9 +1,15 @@
 <!doctype html>
 <html lang="en">
-<!-- OWNS  the shop screen (a second screen / TV): the shop's offers as a carousel, read from the counter's promo answer.
-     CALLED BY the counter (till.html opens it on a second screen) and the web's vendored copy (public/promo.html).
-     FLOW  load → the frame's bar → the promo read → the carousel paints → ↻ re-reads and says what it read
-     CARD counter/shop-screen -->
+<!-- OWNS  the shop screen (a second screen / TV): the shop's offers as a carousel drawn on one canvas, the same drawing saved as a PNG
+           or shared, a six-character pairing door (/api/till/pair/claim), and the bell that re-reads when the shop changes.
+     CALLED BY till.html (tvAddr, tvHere: opens /promo.html with the screen key in the address) · app.html (screenGo, screenPair: the
+           same address) · till-sw.js (KEEP list: cached for offline) · app/screen-id.js (names it PRM001, the bar code).
+           This file is the MASTER in the api (tools/tally-connector/promo.html); web public/promo.html is a copy written by
+           scripts/vendor-till.cjs, never edited by hand.
+     FLOW  load → the frame's bar (CBFrame.mount) → no key: the pairing door → pairClaim → reload · a key: readShop (/api/till/snapshot,
+           else the kept copy) → build() the slides → the carousel paints → ↻ and the bell (bellUp) read again
+     IDS   every control carries its register code (the data-cbsid attribute, screen PRM001; docs SCREENS.json, UX-137)
+     CARD  09-counter/functions/customer-display-promo-screen -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -131,21 +137,21 @@
 <div class="tools">
   <span class="brand" id="shopname">not paired yet</span>
 
-  <select id="camp" title="Which campaign is running"></select>
+  <select id="camp" title="Which campaign is running" data-cbsid="PRM001-S01"></select>
   <div class="rail" id="chan"></div>
 
-  <button id="play" class="on" title="Space">⏸ Pause</button>
-  <button id="prevb" class="ghost" title="←">‹</button>
-  <button id="nextb" class="ghost" title="→">›</button>
+  <button id="play" class="on" title="Space" data-cbsid="PRM001-B01">⏸ Pause</button>
+  <button id="prevb" class="ghost" title="←" data-cbsid="PRM001-B02">‹</button>
+  <button id="nextb" class="ghost" title="→" data-cbsid="PRM001-B03">›</button>
 
   <span class="sp"></span>
   <span class="note" id="count"></span>
-  <button id="share" title="Send it where it goes">↗ Share</button>
-  <button id="dl" title="Save this one as a PNG">⤓ Save</button>
-  <button id="dlall" title="Save the next ten">⤓ Save 10</button>
-  <button id="full" title="F">⛶ Full screen</button>
-  <button id="refresh" class="ghost" title="Read the shop again">↻</button>
-  <button id="repair" class="ghost" data-testid="promo-repair" title="Pair this screen again with a new code">📡</button>
+  <button id="share" title="Send it where it goes" data-cbsid="PRM001-B04">↗ Share</button>
+  <button id="dl" title="Save this one as a PNG" data-cbsid="PRM001-B05">⤓ Save</button>
+  <button id="dlall" title="Save the next ten" data-cbsid="PRM001-B06">⤓ Save 10</button>
+  <button id="full" title="F" data-cbsid="PRM001-B07">⛶ Full screen</button>
+  <button id="refresh" class="ghost" title="Read the shop again" data-cbsid="PRM001-B08">↻</button>
+  <button id="repair" class="ghost" data-testid="promo-repair" title="Pair this screen again with a new code" data-cbsid="PRM001-B09">📡</button>
 </div>
 
 <main>
@@ -163,8 +169,8 @@
         <li>On ChitBridge, open <b>Counter → Put it on a screen in the shop → Pair a TV</b></li>
         <li>Type the six characters it shows here</li>
       </ol>
-      <input id="paircode" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A2C4E6" data-testid="promo-pair-code">
-      <button id="pairgo" data-testid="promo-pair-go">Connect this screen</button>
+      <input id="paircode" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A2C4E6" data-testid="promo-pair-code" data-cbsid="PRM001-I01">
+      <button id="pairgo" data-testid="promo-pair-go" data-cbsid="PRM001-B10">Connect this screen</button>
       <div id="pairsay" class="pairsay"></div>
     </div>
   </div>
@@ -185,8 +191,8 @@
       <p id="how" class="muted"></p>
     </div>
     <div class="panel" id="capwrap">
-      <h3>Caption <button id="copycap" class="tiny">copy</button></h3>
-      <textarea id="cap" rows="9" spellcheck="false"></textarea>
+      <h3>Caption <button id="copycap" class="tiny" data-cbsid="PRM001-B11">copy</button></h3>
+      <textarea id="cap" rows="9" spellcheck="false" data-cbsid="PRM001-T01"></textarea>
     </div>
   </aside>
 </main>
@@ -1100,7 +1106,7 @@ function paintBar(){
 
   /* WHERE IT GOES — the channel picks the shape, so there is nothing else to get right */
   document.getElementById('chan').innerHTML = Object.keys(CHANNELS).map(function(k){
-    return '<button data-c="' + k + '" class="' + (k === CHAN ? 'on' : '') + '">' + CHANNELS[k].label + '</button>'; }).join('');
+    return '<button data-c="' + k + '" class="' + (k === CHAN ? 'on' : '') + '" data-cbsid="PRM001-B12">' + CHANNELS[k].label + '</button>'; }).join('');
   [].forEach.call(document.querySelectorAll('#chan button'), function(b){
     b.onclick = function(){ CHAN = b.getAttribute('data-c'); ls.set('cb_promo_chan', CHAN);
       FMT = CHANNELS[CHAN].fmt; ls.set('cb_promo_fmt', FMT); paintBar(); paint(true); }; });

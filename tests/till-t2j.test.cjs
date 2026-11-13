@@ -21,9 +21,9 @@ const grab = (name) => {
 
 const mk = (store) => {
   const ctx = { ls: { get: (k, d) => (k in store ? store[k] : d), set: (k, v) => { store[k] = v; } }, shopLs: (k) => k,
-    tillScheme: () => ({ dayRollHour: 0 }), esc: (x) => String(x), menuAlerts: () => [] };
+    tillScheme: () => ({ dayRollHour: 0 }), window: {}, shopPack: () => null, cbQuiet: () => {}, Intl, Date, isNaN, String, esc: (x) => String(x), menuAlerts: () => [] };
   vm.createContext(ctx);
-  vm.runInContext(['bizDay', 'dayOpened', 'dayClosedMark', 'dayStatus', 'menuAlertsBody', 'dayWarnWords'].map(grab).join(NL), ctx);
+  vm.runInContext(['shopTz', 'dayInZone', 'shopDayOf', 'dayKeyOf', 'bizDay', 'dayOpened', 'dayClosedMark', 'dayStatus', 'menuAlertsBody', 'dayWarnWords'].map(grab).join(NL), ctx);
   return ctx;
 };
 const today = new Date().toLocaleDateString('en-CA');

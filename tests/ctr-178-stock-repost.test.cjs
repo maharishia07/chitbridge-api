@@ -215,7 +215,7 @@ logger.info = (what, data) => said.push(['info', what, data]);
   const replayFrom = text.indexOf('async function sendReplay(');
   const replayBody = text.slice(replayFrom, text.indexOf('function answerReplay(', replayFrom));
   const healAt = replayBody.indexOf("stock-sweep').healShop");
-  assert.ok(healAt > 0 && healAt < replayBody.indexOf('return answerReplay'), 'sendReplay heals before it answers duplicate');
+  assert.ok(healAt > 0 && healAt < replayBody.search(/return (await )?answerReplay/), 'sendReplay heals before it answers duplicate');
 
   logger.warn = realWarn;
   logger.info = realInfo;

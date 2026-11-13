@@ -14,7 +14,7 @@
 //      contradiction on an export order missing hs_code/incoterms; ISO 9000 (entity-scope) is read but not mis-applied.
 //   C. DISCRIMINATION — a complete order passes (the check isn't just always-fail).
 const PLATFORM_TOKEN = process.env.CB_PLATFORM_TOKEN;
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-lifecycle.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

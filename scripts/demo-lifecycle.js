@@ -10,7 +10,7 @@
 //   node scripts/demo-lifecycle.js
 // Status per step:  ✅ live   ◐ exists/surfaced here   🔨 pending (later increment)
 const PLATFORM_TOKEN = process.env.CB_PLATFORM_TOKEN;
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('demo-lifecycle.js');
 const BP = 'royaleplay-bp-india';
 let P = 0,
   F = 0;

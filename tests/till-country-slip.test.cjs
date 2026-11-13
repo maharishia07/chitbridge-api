@@ -26,7 +26,7 @@ function grab(name, optional) {
   for (; i < HTML.length; i++) { if (HTML[i] === '{') depth++; else if (HTML[i] === '}' && --depth === 0) break; }
   return HTML.slice(at, i + 1);
 }
-const PAGE_FNS = ['esc', 'r2', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule',
+const PAGE_FNS = ['esc', 'r2', 'rmoney', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule',
   'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'shopTax'];
 const NEW_FNS = ['bandWordsOf', 'slipRateOf', 'SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
   'packCollectsWithoutId', 'cashRule', 'payWayId', 'cashDue', 'cashRoundWords', 'slipCashRoundHTML', 'restBeforeLast', 'changeOf', 'cashRoundOf'];

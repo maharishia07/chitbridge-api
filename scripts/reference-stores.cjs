@@ -30,7 +30,7 @@
  */
 
 const BP = require('../lib/catalogue-blueprint');
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('reference-stores.cjs');
 
 const { STORES } = require('../lib/reference-store-lists'); /* one table of stores, shared with GET /lists (CAT-124 C1) */
 

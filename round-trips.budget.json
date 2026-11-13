@@ -4381,8 +4381,8 @@
     },
     "POST /api/signin/ask": {
       "file": "signin.js",
-      "trips": 7,
-      "wire": 7,
+      "trips": 9,
+      "wire": 9,
       "fired": true,
       "status": 200,
       "registered_only": true,
@@ -4392,8 +4392,8 @@
     },
     "POST /api/signin/logout": {
       "file": "signin.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 3,
       "fired": true,
       "status": 200,
       "extra": true
@@ -4441,8 +4441,8 @@
     },
     "POST /api/signin/verify": {
       "file": "signin.js",
-      "trips": 6,
-      "wire": 9,
+      "trips": 7,
+      "wire": 10,
       "fired": true,
       "status": 200,
       "registered_only": true,
@@ -4794,6 +4794,30 @@
       "fired": true,
       "status": 200,
       "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/till/invoice-lease/report": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/invoice-lease": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/invoice-lease/close": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/till/rate": {
       "file": "till.js",

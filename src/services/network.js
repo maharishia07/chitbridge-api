@@ -167,14 +167,15 @@ async function refuseRemote(identityIds) {
 }
 /** refuseRemoteNodes(nodes) — the same refusal for nodes already read: each node's identity is looked up by its bridge id (none found = refused, fail closed) */
 async function refuseRemoteNodes(nodes) {
-  const ids = [];
-  for (const node of nodes) {
-    const {
-      rows: [identityRow]
-    } = await pool.query(`select identity_id from identities where upper(bridge_id) = upper($1) and identity_type = 'entity'`, [node.bridge_id]);
-    ids.push(identityRow && identityRow.identity_id);
-  }
-  await refuseRemote(ids);
+  /* ONE read for every node (was one each); the answer keeps the nodes' order, a node with no identity stays undefined (refused, fail closed) */
+  /* a node with no bridge_id has no key (null, never the text 'UNDEFINED'): it matches nothing, so it stays refused */
+  const keyOf = (node) => (node.bridge_id ? String(node.bridge_id).toUpperCase() : null);
+  const { rows } = await pool.query(`select upper(bridge_id) as bridge_key, identity_id from identities where upper(bridge_id) = any($1::text[]) and identity_type = 'entity'`, [
+    nodes.map(keyOf).filter(Boolean)
+  ]);
+  const idOf = new Map();
+  for (const row of rows) if (!idOf.has(row.bridge_key)) idOf.set(row.bridge_key, row.identity_id);
+  await refuseRemote(nodes.map((node) => idOf.get(keyOf(node)) || undefined));
 }
 /** a business named by handle, refused if remote BEFORE any node is made for it (a refused ask writes nothing) → its node, or null */
 async function askableNodeOfHandle(handle) {
@@ -446,6 +447,7 @@ async function claim(entityId, actorEntityId) {
   throw _nodeGone();
 }
 module.exports = {
+  refuseRemoteNodes, // exported for tests/net-77-remote-dealer-409.test.cjs (a node with no bridge id)
   EDGE_KEYS,
   EDGE_ASKED_KEYS,
   edgeView,

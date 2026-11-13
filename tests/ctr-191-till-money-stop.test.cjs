@@ -95,7 +95,7 @@ function page(o) {
   });
   await ok('a queued bill the server stopped (409 MONEY_UNBALANCED) keeps its code and shows RED in the outbox; a re-send clears it', () => {
     assert.ok(HTML.includes('row._code = code;') && HTML.includes('await refusedRow(bill, r.status, said, code)'), 'drain keeps the server code on the row (refusedRow, till-park)');
-    assert.ok(HTML.includes("q._code === 'MONEY_UNBALANCED' ? ' stoprow'"), 'the waiting list marks that row stoprow');
+    assert.ok(HTML.includes("(q._code === 'MONEY_UNBALANCED' || q._code === 'BRIDGE_MISSING') ? ' stoprow'"), 'the waiting list marks that row stoprow (the money stop and, from CTR-246, the missing bridge)');
     assert.ok(HTML.includes('.t.warnrow.stoprow{color:var(--bad'), 'stoprow is red (--bad), not the amber warn');
     assert.ok(HTML.includes('delete fresh._why; delete fresh._code') && HTML.includes('delete moved._why; delete moved._code'), 'a re-sent or renumbered row drops the old code');
   });

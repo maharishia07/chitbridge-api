@@ -1044,6 +1044,7 @@
        "gt_3y": 0,
        "lt_1y": -59000
       },
+      "balance_words": "they owe you ₹1,180",
       "credit_limit_minor": null,
       "credit_limit_from": null,
       "over_limit": false,
@@ -2205,7 +2206,11 @@
       "unbilled": {
        "n": 0,
        "minor": 0,
-       "currency": null
+       "currency": null,
+       "by_currency": [],
+       "no_currency": 0,
+       "unpriced": 0,
+       "cost_hidden": false
       },
       "contact_prefs": {
        "migrated": false,
@@ -2316,7 +2321,11 @@
     "parties[].may_trade.why",
     "parties[].supplier",
     "parties[].terms.customer",
-    "parties[].terms.supplier"
+    "parties[].terms.supplier",
+    "parties[].unbilled.by_currency",
+    "parties[].unbilled.cost_hidden",
+    "parties[].unbilled.no_currency",
+    "parties[].unbilled.unpriced"
    ]
   },
   "GET /api/crm/parties/:id": {
@@ -2408,6 +2417,11 @@
      "differs": false
     },
     "name": "Chola",
+    "unbilled": {
+     "n": 0,
+     "minor": 0,
+     "currency": null
+    },
     "contact_prefs": {
      "migrated": false,
      "may": {
@@ -2510,6 +2524,15 @@
       "code": null,
       "why": null
      }
+    },
+    "unbilled": {
+     "n": 0,
+     "minor": 0,
+     "currency": null,
+     "by_currency": [],
+     "no_currency": 0,
+     "unpriced": 0,
+     "cost_hidden": false
     }
    },
    "optional": [
@@ -2518,7 +2541,12 @@
     "may_trade.why",
     "supplier",
     "terms.customer",
-    "terms.supplier"
+    "terms.supplier",
+    "unbilled",
+    "unbilled.by_currency",
+    "unbilled.cost_hidden",
+    "unbilled.no_currency",
+    "unbilled.unpriced"
    ]
   },
   "GET /api/crm/parties/:id #404": {

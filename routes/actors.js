@@ -812,6 +812,10 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
 // the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
 router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /login'), signin.verifyChecks, validate, signin.handlers.verify);
 
+/* ACC-237: the level and the reach for the list's SELECT, so the owner sees a viewer / commenter login is read-only. Read off the row's JSON: a database before b173 (no such column)
+   answers null here instead of failing, with NO probe round trip (lib/schema hasColumn would be a 3rd statement on a cold process; the otp_code_hash read in the list is the same pattern) */
+const LEVEL_COLUMNS = " (to_jsonb(identities) ->> 'access_level') AS access_level, (to_jsonb(identities) -> 'whole_entity') AS whole_entity,";
+
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
@@ -838,7 +842,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     const result = await db(
       `SELECT
            identity_id, bridge_id, display_name,
-           actor_key, actor_role, actor_type, hat,
+           actor_key, actor_role, actor_type, hat,${LEVEL_COLUMNS}
            break_status, break_type, break_started_at,
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,

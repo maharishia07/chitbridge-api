@@ -17,12 +17,13 @@ require.cache[require.resolve(path.join(__dirname, '..', 'db'))] = { exports: { 
 const stub = (file, exports) => (require.cache[require.resolve(path.join(__dirname, '..', 'lib', file))] = { id: file, filename: file, loaded: true, exports });
 
 const RICE = { name: 'Rice', price: { amount: 100, currency: 'INR' }, pricing_kind: 'tiered', pricing_tiers: [{ qty: 10, price: 80 }] };
+const NEG = { name: 'Jeera', price: { amount: -5, currency: 'INR' }, pricing_kind: 'tiered', pricing_tiers: [{ qty: 10, price: 80 }] };
 const NO_LIST = { name: 'Dal', pricing_kind: 'tiered', pricing_tiers: [{ qty: 10, price: 80 }] };
 let ROWS = [];
 const WRITTEN = [];
 stub('itemmatch', {
-  loadCatalogue: async () => ({ items: [RICE, NO_LIST] }),
-  match: (phrase) => ({ item: /dal/i.test(phrase) ? NO_LIST : RICE })
+  loadCatalogue: async () => ({ items: [RICE, NO_LIST, NEG] }),
+  match: (phrase) => ({ item: /dal/i.test(phrase) ? NO_LIST : /jeera/i.test(phrase) ? NEG : RICE })
 });
 stub('amend', {
   readLines: async () => ROWS,
@@ -55,4 +56,10 @@ test('a tiered product with no list price, below the first break, is needs_price
   assert.equal(plan.will_price.length, 0);
   assert.equal(plan.needs_price.length, 1);
   assert.ok(plan.needs_price[0].reason && plan.needs_price[0].reason.length > 0);
+});
+test('CAT-251 + CAT-324 together: a stored negative list price is no price below the first break, the tier still prices above it (Jeera list -5.00, from 10 kg 80.00)', async () => {
+  ROWS = [line('e', 'Jeera', 20, null), line('f', 'Jeera', 5, null)];
+  const plan = await reprice.plan('E1', 'C1', {});
+  assert.deepEqual(plan.will_price.map((item) => [item.line_id, item.to]), [['e', 80]]); // 20 kg: the 80.00 tier, never the -5.00 list
+  assert.deepEqual(plan.needs_price.map((item) => item.line_id), ['f']); // 5 kg: only the negative list applies, so no price (never -5, never 0)
 });

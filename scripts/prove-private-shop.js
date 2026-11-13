@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * prove-private-shop.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-private-shop.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
+/**
  * prove-private-shop.js — make a shop private, open its storefront, and get NOTHING.
  *
  * Athi, 2026-08-06: *"I may not be able to understand it very clearly. What we can do is create a network, create
@@ -21,7 +28,7 @@
  */
 'use strict';
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('prove-private-shop.js');
 const OTP = process.env.DEV_OTP || '123456';
 
 let pass = 0,

@@ -102,7 +102,7 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   ok('ledger off → no check', (await T.creditSaleCheck('E1', bill('On credit', 1500))).over === false);
   const chits = CF.read(path.join(__dirname, '..'));
   const financeTermsSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'finance-terms.js'), 'utf8');
-  ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /overrideBy\(req, business_json\.credit_override\)/.test(chits) && /if \(!allowedBy\)\s*\n?\s*return problem\(req, res, \{ status: 409/.test(chits) && (/isOwner\(req\)/.test(financeTermsSrc) && /holder\.kind === 'key' && holder\.counter/.test(financeTermsSrc))); /* the who-may-override rule moved into lib/finance-terms overrideBy (SEC-FIX3 S3): the owner's login or a counter key, never a bare req.till */
+  ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /overrideBy\(req, business_json\.credit_override\)/.test(chits) && /if \(!allowedBy\) \{[^]{0,400}return problem\(req, res, \{ status: 409/.test(chits) && (/isOwner\(req\)/.test(financeTermsSrc) && /holder\.kind === 'key' && holder\.counter/.test(financeTermsSrc))); /* the who-may-override rule moved into lib/finance-terms overrideBy (SEC-FIX3 S3): the owner's login or a counter key, never a bare req.till */
 
   /* ── the routes before b298 has run ── */
   console.log('\n── routes before b298 ──');
