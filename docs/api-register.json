@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 3,
+  "meets": 628,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -2505,8 +2505,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 822,
-   "hash": "3cd9061ca816e45a",
+   "line": 821,
+   "hash": "f3b5356c80fe1afe",
    "does": "",
    "errors": {
     "count": 0,
@@ -2574,10 +2574,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder) 2026-11-13 PR#1236 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f3b5356c80fe1afe"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -2613,7 +2614,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1645,
+   "line": 1644,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2712,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1834,
+   "line": 1833,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2897,7 +2898,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1516,
+   "line": 1515,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -24167,7 +24168,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 141,
+   "line": 143,
    "hash": "edb76b75208461bd",
    "does": "",
    "errors": {
@@ -24265,7 +24266,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 114,
+   "line": 116,
    "hash": "c6f20bf2d163747a",
    "does": "",
    "errors": {
@@ -31416,10 +31417,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1167 stage2: handler diff read, 13 columns pass; owner e-mail write cap answers the one 429 RATE_LIMITED (gate, only on calls carrying an e-mail); EMAIL_UNAVAILABLE 409 registered with its plain sentence and names nobody, EMAIL_TAKEN kept for the owner's own list; /entities/register: same 200 words for held and new address, per-address cap one 429; old keys and statuses kept",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c95af0652a6cfec6"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-employees.js",
@@ -31449,7 +31451,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 913,
+   "line": 912,
    "hash": "88c05cc1b9fd315d",
    "does": "",
    "errors": {
@@ -31524,10 +31526,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1154 (independent review: PPL-40 reset ends listed sessions via the one closeBy writer before the new code, owner-only door unchanged, bite proven, 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "88c05cc1b9fd315d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-workforce.js"
    ],
@@ -31621,7 +31624,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1171 stage2: re-read, hash unchanged, 13 columns pass; answers unchanged: the tester-code 'in' event row and pending_user_id applied at verify are written to the shop's own records only, no key, status or sentence added",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55739,7 +55742,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 977,
+   "line": 1028,
    "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
@@ -55835,8 +55838,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 104,
-   "hash": "ad13be02969e3299",
+   "line": 102,
+   "hash": "af927b549fce1811",
    "does": "",
    "errors": {
     "count": 0,
@@ -55848,7 +55851,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "identities"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -55904,15 +55909,15 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1171 stage2: handler diff read, 13 columns pass; logout of a token with no jti now ends it (SEC-157) and answers the same three keys ok/removed/legacy (removed is now true when ended), 1 round trip budgeted; no new status or code",
     "lifecycle": "stable"
    },
    "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 0,
-    "wire": 0,
+    "trips": 1,
+    "wire": 3,
     "screens": []
    },
    "measured": {
@@ -55929,7 +55934,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 979,
+   "line": 1030,
    "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
@@ -56124,7 +56129,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 163,
+   "line": 165,
    "hash": "885f42d5770569ce",
    "does": "",
    "errors": {
@@ -56226,7 +56231,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 978,
+   "line": 1029,
    "hash": "cc9b07d8bcc06ba5",
    "does": "",
    "errors": {
@@ -56304,7 +56309,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1171 stage2: re-checked on 22a3cce0, hash unchanged, 13 columns pass; the staged User ID is applied only when the body repeats it as user_id or id, both keys already documented in the verify body contract (id, user_id), no new key, status, code or sentence",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -61031,7 +61036,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1608,
+   "line": 1607,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61139,7 +61144,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 990,
+   "line": 989,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61249,7 +61254,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1743,
+   "line": 1742,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61351,7 +61356,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1342,
+   "line": 1341,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -61462,7 +61467,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1204,
+   "line": 1203,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -61671,7 +61676,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1537,
+   "line": 1536,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {

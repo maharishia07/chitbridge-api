@@ -109,7 +109,7 @@ async function q(sql, params) {
       const o = {}; cols.forEach((c) => { o[c] = c === '1' ? 1 : (r[c] === undefined ? null : r[c]); }); return o; });
     return { rows, rowCount: rows.length };
   }
-  if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+)$/i))) {
+  if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+?)(?: RETURNING .+)?$/i))) {
     const sets = splitTop(m[1], ',');
     const hit = where(m[2], params);
     hit.forEach((r) => sets.forEach((a) => {

@@ -26,7 +26,7 @@
  * ⚠️ A KEY CANNOT SIGN IN. Every route here answers a key (kind:'api_key', a counter PC / connector / screen) 403 —
  * keys are listed and revoked on /api/keys.
  * ⭐ A LEGACY TOKEN (no jti, issued before M05 or by a page that did not name its device) is welcome here: logout answers
- * 200 (nothing listed to remove — the page clears itself), and renew turns it into a listed session when the request
+ * 200 and ends it (SEC-157: its hash is kept until its exp; the page clears itself), and renew turns it into a listed session when the request
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
  
  * CALLED BY server.js (app.use('/api/signin') and the /api/signin/{ask,verify,pin} rate-limit list) · routes/actors.js and routes/entities.js (the alias mounts) · the web's sign-in (signin-ui.js) · tests/api-problem-signin.test.cjs · tests/signin-routes.test.cjs
@@ -99,11 +99,13 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schem
   }
 });
 
-/** a token from before M05 lists no session: nothing to remove, and the page clears itself (the 200 answer, frozen) */
-const LEGACY_TOKEN_LOGOUT = { ok: true, removed: false, legacy: true };
 router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', schemaOptions), async (req, res) => {
   try {
-    if (!req.session) return res.json(LEGACY_TOKEN_LOGOUT);
+    if (!req.session) {
+      /* SEC-157: a token with no jti has no listing; its hash goes on the shop's ended list until its own exp, and auth refuses it from then on */
+      const ended = await sessions.endLegacy(withTransaction, shopOf(req), String(req.headers.authorization || '').replace(/^Bearer\s+/i, ''), claimsOf(req).exp);
+      return res.json({ ok: true, removed: ended.removed, legacy: true });
+    }
     const out = await sessions.close(withTransaction, shopOf(req), req.session.device_id, req.session.jti);
     res.json({ ok: true, removed: out.removed });
   } catch (e) {
@@ -400,6 +402,52 @@ async function firstCodeFor(actor, toMail) {
 }
 
 
+/**
+ * ⭐ SEC-109 · stagePendingUserId(row, typed) — a person who registers AGAIN before the first code was used (typed a different User ID the second time): the User ID is only
+ * STAGED (policy_flags.pending_user_id, the one policy writer), never applied here, because nothing has proved the mailbox yet. applyPendingUserId (below) applies it when the
+ * code is verified. An active or verified account is never staged; every outcome answers the same "code sent" (this door stays blind to who holds what). Before, the first id
+ * stayed and the tester name rule then refused the new one with no reason.
+ */
+// the lookup row (lib/signin-lookup, eight columns) carries status but not email_verified: the first good verify makes the account active (identity-auth), so status pending already means never verified
+async function stagePendingUserId(row, typed) {
+  const wanted = String(typed == null ? '' : typed).trim();
+  if (!wanted || row.status !== 'pending' || row.email_verified || holdsNul(wanted)) return;
+  const verdict = require('../lib/handle').checkRoot(wanted);
+  if (!verdict.ok || verdict.value === String(row.user_id || '').toLowerCase()) return;
+  try {
+    await require('../lib/policy').patchKey(null, row.identity_id, ['pending_user_id'], verdict.value);
+  } catch (e) {
+    log.fellBack('signin stagePendingUserId: the new User ID was not staged — the pending account keeps its first one and the code is sent as usual', e);
+  }
+}
+/**
+ * ⭐ SEC-109 · markVerified(identity, body) — the mailbox is proved (the code was right): email_verified, and a User ID staged while the account was pending is applied in one guarded UPDATE
+ * (valid, nobody else holds it) ONLY IF the verify request body repeats that same id as user_id or id (the owner's consent to the value); otherwise verify succeeds without renaming. Either way the staging is cleared. No staged id → the one email_verified statement, as before.
+ */
+async function markVerified(identity, body) {
+  const marked = await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1 RETURNING policy_flags->>'pending_user_id' AS pending_user_id`, [identity.identity_id]);
+  const staged = marked && marked.rows && marked.rows[0] ? marked.rows[0].pending_user_id : null; // read on the write that proves the mailbox: the sign-in SELECT stays as it was
+  if (!staged) return;
+  const typedUserId = (body && (body.user_id || body.id)) || '';
+  const consented = String(typedUserId).trim().toLowerCase() === staged;
+  try {
+    if (consented) {
+      await query(
+        `UPDATE identities SET user_id = $2 WHERE identity_id = $1 AND NOT EXISTS (SELECT 1 FROM identities o WHERE LOWER(o.user_id) = $2 AND o.identity_id <> $1)`,
+        [identity.identity_id, staged]
+      );
+    }
+    await require('../lib/policy').patchKey(null, identity.identity_id, ['pending_user_id'], null, { op: 'remove' });
+  } catch (e) {
+    log.fellBack('signin markVerified: the staged User ID was not applied — the account keeps its first one', e);
+  }
+}
+/** the existing account's id; at the register door (not login mode) a pending account first STAGES the User ID typed again (SEC-109) */
+async function accountIdAfterRestart(req, row) {
+  if (req.signinDoor === 'register' && req.body.mode !== 'login') await stagePendingUserId(row, req.body.user_id);
+  return row.identity_id;
+}
+
 async function ask(req, res, next) {
   try {
     const input = typedByAsk(req); // never empty here: askDoor refused that
@@ -458,7 +506,7 @@ async function ask(req, res, next) {
       display_name = sanitise(req.body.display_name || input);
       const existing = (await signinLookup.candidates(query, 'email', email)).filter(identityAuth.isAccount); // SEC-130
       if (existing.length > 0) {
-        identity_id = existing[0].identity_id;
+        identity_id = await accountIdAfterRestart(req, existing[0]);
         console.log(`Existing entity login: ${email}`);
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
         return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
@@ -632,7 +680,7 @@ async function verify(req, res) {
      */
     let mintedConstitution = null;
     if (identity.identity_type !== 'actor' && identity.identity_type !== 'customer') {
-      await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1`, [identity.identity_id]);
+      await markVerified(identity, req.body);
 
       /**
        * ⭐⭐ THE GOVERNANCE LAYER THE BROWSER WORKED OUT ([REG-2]/[REG-3]). ⚠️ COALESCE, NEVER OVERWRITE — this runs on every
@@ -983,5 +1031,5 @@ router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinCh
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
-Object.assign(router, { askAddressCap, sentWords, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
+Object.assign(router, { askAddressCap, sentWords, stagePendingUserId, markVerified, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

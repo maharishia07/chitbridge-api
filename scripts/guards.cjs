@@ -581,6 +581,8 @@ const GUARDS = [
   'sec-148-register-address-cap.test.cjs', // SEC-148 (C12): a per-address hourly cap on POST /api/entities/register (held and free alike, one 429), and a mailer outage reads the same on the held path and the new one
   'sec-97-storefront-public-ids.test.cjs', // SEC-97 (C12): the five storefront routes keyed by a published shop/network id are public by design (api-hardening-scope public_ids) and an unknown shop is the family's one 404
   'signin-routes.test.cjs', // M06: every old sign-in path answers as before the move (golden) and IS the new door's handler; one signin_events row per attempt; b282 missing never blocks
+  'sec-157-ended-tokens.test.cjs', // SEC-157 (C12): the signed-out legacy token list is pruned by exp only and its cache is bounded
+  'sec-109-pending-user-id.test.cjs', // SEC-109 (C12): registering again with a changed User ID only STAGES it (policy_flags.pending_user_id); verify applies it after the code proved the mailbox; a stranger renames nothing
   'signin-sessions-routes.test.cjs', // 1 Nov walk: devices/sessions/renew/logout/revoke DO their job through the real auth: SEC-131 a logged-out token is 401 and cannot renew; one person cannot end another's session (403); devices owner-only
   'signin-ask-pin-register.test.cjs', // 1 Nov walk: ask/pin and entities register/verify behaviour: code or PIN asked, unknown id refused alike, wrong/6x-wrong code no token, new e-mail = one INSERT, PIN stored hashed
   'measure.test.cjs', // INT7b: lib/measure's own unit test — median to one decimal (never NaN), OPEN/CLOSED = the rail's one status table, an empty set measures to zeros

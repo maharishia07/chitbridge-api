@@ -321,7 +321,9 @@ function sendCase(port, { method, url, body, headers }) {
 }
 
 /** the shop's token every case carries (an entity token, signed with the walk's secret) */
-const shopToken = () => require('jsonwebtoken').sign({ identity_id: CALLER_SHOP, identity_type: 'entity', bridge_id: 'CB-CASE', display_name: 'Case shop' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
+/* SEC-157: each case gets its OWN token (a counter claim): two tokens signed in the same second would otherwise be one token, and a logout case would end every later case's */
+let tokenCounter = 0;
+const shopToken = () => require('jsonwebtoken').sign({ identity_id: CALLER_SHOP, identity_type: 'entity', bridge_id: 'CB-CASE', display_name: 'Case shop', case_no: ++tokenCounter }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 
 /** the Idempotency-Key header a money write that REQUIRES one needs for a case that is about something else (an id, a canary): a fresh key per call, so no case replays another's answer. {} for any other route (FIN-51) */
 let keyCounter = 0;
