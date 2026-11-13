@@ -115097,6 +115097,106 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rail-30-meter-chit-send.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "RAIL-30: a sent chit writes one chit.send usage row carrying its basis, a draft none, and a failed meter never fails the send",
+   "claim": "RAIL-30: a sent chit writes one chit.send usage row carrying its basis, a draft none, and a failed meter never fails the send",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 88 lines. Run: node chitbridge-api/tests/rail-30-meter-chit-send.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 116,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rail-65-labelled-never-converted.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "RAIL-65: an amount is labelled, never converted: money.sum refuses mixed currencies, the bill door 409s a foreign cell, no rail file reaches a rate table",
+   "claim": "RAIL-65: an amount is labelled, never converted: money.sum refuses mixed currencies, the bill door 409s a foreign cell, no rail file reaches a rate table",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 72 lines. Run: node chitbridge-api/tests/rail-65-labelled-never-converted.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 117,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rail-71-with-transaction.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "RAIL-71: withTransaction commits or rolls back, and the /send fan-out and the dispute creation run inside it",
+   "claim": "RAIL-71: withTransaction commits or rolls back, and the /send fan-out and the dispute creation run inside it",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 83 lines. Run: node chitbridge-api/tests/rail-71-with-transaction.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 118,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rail-121-dispute-participants-both-sides.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "RAIL-121: a dispute names the raiser and the party on both sides, written and read",
+   "claim": "RAIL-121: a dispute names the raiser and the party on both sides, written and read",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 57 lines. Run: node chitbridge-api/tests/rail-121-dispute-participants-both-sides.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 119,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }
