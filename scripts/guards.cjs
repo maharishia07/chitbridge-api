@@ -595,6 +595,9 @@ const GUARDS = [
   'rail-actions.test.cjs', // ⭐⭐ R01: GET /chits/:id `actions` and the writing doors are ONE engine (lib/rail.js) — 14 situations; before/after: same outcome, `why` added
   'ord-fix.test.cjs', // ORD-FIX O1–O7: closed orders unlisted · amended lines billed · CAS status write · rejected bill reverses its posting · one-shot shopper code · bill-based delivery
   'rail-status.test.cjs', // ⭐⭐ T1-RAIL: every status change goes through lib/rail-status statusGate (the one write); void of a completed chit 409s; no SQL writes current_status elsewhere
+  'ctry-28-order-subject-currency.test.cjs', // CTRY-28 (proof 2026-11-14): a network order subject says "AED 180" (code), summary_json.currency_code is AED, no rupee sign or INR in any minted copy
+  'rep-22-move-one-transaction.test.cjs', // REP-22 (proof 2026-11-14): a status move reads, validates and writes in one transaction (read, header read and write share one withEntity)
+  'rep-9-detached-keys.test.cjs', // REP-9 (proof 2026-11-14): detachedKeys names exactly the overlay keys matching no item name and no formerly name
   'qa-131-status-bulk.test.cjs', // QA-131: a bulk status step names its from (a moved copy is refused, never moved back), folds the use choice into the one call, and a replayed key answers once
   'qa-142-cost-figures.test.cjs', // QA-142: the cost door refuses 1e308, 2^53, a boolean, a text and minutes past an integer (422, field named); takes real figures
   'sec-140-prototype-keys.test.cjs', // SEC-140: a place of supply / GSTIN / HSN that is an object word (__proto__, constructor) is an ordinary key in the GSTR-1 maps
