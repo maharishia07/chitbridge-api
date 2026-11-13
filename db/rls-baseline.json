@@ -103,7 +103,8 @@
    "policies": 1,
    "app_reads": true,
    "class": "shared",
-   "why": "owner writes, subscribers read (read_all policy exists but RLS is off); K-CATALOGUE"
+   "why": "owner writes, subscribers read (read_all policy exists but RLS is off); K-CATALOGUE",
+   "fix": "b855_rls_shared_tables_sec75_db103.sql"
   },
   "cb_attachment": {
    "rls": true,
@@ -371,7 +372,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "shared",
-   "why": "from_entity_id and to_entity_id: either side sees the row; K-DISPUTE / K-CHITWRITE"
+   "why": "from_entity_id and to_entity_id: either side sees the row; K-DISPUTE / K-CHITWRITE",
+   "fix": "b855_rls_shared_tables_sec75_db103.sql"
   },
   "connector_connection": {
    "rls": false,
@@ -379,7 +381,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "shared",
-   "why": "entity_id and counterparty_entity_id: either side; K-DISPUTE / K-CHITWRITE"
+   "why": "entity_id and counterparty_entity_id: either side; K-DISPUTE / K-CHITWRITE",
+   "fix": "b855_rls_shared_tables_sec75_db103.sql"
   },
   "connector_receipt": {
    "rls": true,
@@ -445,7 +448,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "shared",
-   "why": "one row per party of a dispute; every party reads it; K-DISPUTE"
+   "why": "one row per party of a dispute; every party reads it; K-DISPUTE",
+   "fix": "b855_rls_shared_tables_sec75_db103.sql"
   },
   "entity_actor_settings": {
    "rls": false,
@@ -581,7 +585,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "shared",
-   "why": "entity_id; served to other shops through public image links; K-SEC follow-up design"
+   "why": "entity_id; served to other shops through public image links; K-SEC follow-up design",
+   "fix": "b855_rls_shared_tables_sec75_db103.sql"
   },
   "network_design": {
    "rls": true,
@@ -629,7 +634,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "shared",
-   "why": "owner_entity_id writes, subscribers read; K-CATALOGUE"
+   "why": "owner_entity_id writes, subscribers read; K-CATALOGUE",
+   "fix": "b855_rls_shared_tables_sec75_db103.sql"
   },
   "product_version": {
    "rls": false,

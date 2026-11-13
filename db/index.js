@@ -168,6 +168,8 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   /* SEC-75 (b778, b779): written ahead of the migrations (b779 run 29 Oct); no code reads them context-free, so the guard stays quiet until one does */
   'supplier_list', 'governance_exceptions', 'cb_device', 'cb_external_reference', 'cb_entity_supplier', 'cb_contact', 'cb_entity_employee', 'cb_consumer_traction',
   /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
+  /* SEC-75/DB-103 (b855): the three either-side or own tables; catalogue_source, product_container, media_blobs are read-wide, so a bare READ is legitimate and they stay out (the offline scan covers their writes) */
+  'connections', 'connector_connection', 'dispute_participants',
   'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 

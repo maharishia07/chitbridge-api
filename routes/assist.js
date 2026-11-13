@@ -418,7 +418,7 @@ router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the c
     const experience = b.experience && typeof b.experience === 'object' ? b.experience : {};
     const formatting = b.formatting && typeof b.formatting === 'object' ? b.formatting : {};
     try {
-      await query(
+      await withEntity(owner, (bound) => bound.query(
         `INSERT INTO catalogue_source (source_key, version, for_vertical, title, collection, schema, items, commercials_fields, owner_entity_id, experience, formatting, active)
            VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11::jsonb,true)
          ON CONFLICT (source_key) DO UPDATE SET
@@ -439,7 +439,7 @@ router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the c
           JSON.stringify(experience),
           JSON.stringify(formatting)
         ]
-      );
+      ));
     } catch (dbErr) {
       return problem(req, res, { status: 503, ...words.sourceStoreMissing() });
     }
