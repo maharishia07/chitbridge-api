@@ -842,6 +842,7 @@ const GUARDS = [
   'acc-240-lock-trail.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-240 (AU-AUDITOR-READINESS §A7): A MONTH LOCK CAN BE LIFTED, BUT NEVER SILENTLY.
   'acc-75-cost-ledger-only.test.cjs', // ACC-75 (proof 2026-11-14): cost is ledger-only (no chit_header cost column); cost.read sums chit_line_cost per currency and takes the mar
   'acc-141-named-customer-credit.test.cjs', // ACC-141 (proof 2026-11-14): a customer added by name is an ordinary party and receives a credit on credit (Cr debtors on his party_id)
+  'acc-118-cmdb-documents-records.test.cjs', // ACC-118 (proof 2026-11-14): the CMDB holds a record for the till, accounts.html, the chit sheet, one-person and the Labs
   'acc-168-freeze-no-second-read.test.cjs', // ACC-168 (proof 2026-11-14): freezeOnComplete takes the row the transaction already holds (no second chit_header read)
   'acc-263-credit-refund.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-263: A TILL CREDIT NOTE REFUNDED "ON CREDIT" POSTS AGAINST THE CUSTOMER'S RECEIVABLE.
   'acc-268-unread-bills.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-268-unread-bills.test.cjs — ACC-268: A RETURN NEVER GOES OUT WITH A BILL SILENTLY MISSING.

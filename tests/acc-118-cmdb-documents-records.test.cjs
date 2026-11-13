@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * acc-118-cmdb-documents-records.red.cjs — ACC-118 (proof 2026-11-14): the CMDB lists a record for the counter (till), CB Accounts (accounts.html), the chit sheet, one-person and the Labs.
+ * acc-118-cmdb-documents-records.test.cjs — ACC-118 (proof 2026-11-14): the CMDB lists a record for the counter (till), CB Accounts (accounts.html), the chit sheet, one-person and the Labs.
  * @type regression
  * OWNS      the proof that data/cmdb/ (the shipped CMDB records, lib/cmdb.js shape) holds a record whose own title, source or entry names each of the five items the documents join (api #6) found missing.
- * CALLED BY NOTHING (named .red.cjs, outside the enrolment sweep): red on main 2026-11-14 (no record names the till page, accounts.html, one-person or the Labs) - ACC-118 is reopened. No database, no network.
+ * CALLED BY scripts/guards.cjs · CI. Green since 2026-11-14: records CAP-TILL, CAP-ACCOUNTS, CAP-CHIT-SHEET, CAP-ONE-PERSON, CAP-LABS are written by the CMDB generator (docs cmdb.cjs, SURFACES list). No database, no network.
  * FLOW      data/cmdb/*.json -> per item: the records whose title / ci / source / entries / map name it
- * Run: node tests/acc-118-cmdb-documents-records.red.cjs
+ * Run: node tests/acc-118-cmdb-documents-records.test.cjs
  */
 'use strict';
 const fs = require('fs');

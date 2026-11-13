@@ -108805,6 +108805,31 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-118-cmdb-documents-records.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ACC-118: the CMDB holds a record for the till, CB Accounts, the chit sheet, one-person and the Labs",
+   "claim": "ACC-118: the CMDB holds a record for the till, CB Accounts, the chit sheet, one-person and the Labs",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 29 lines. Run: node chitbridge-api/tests/acc-118-cmdb-documents-records.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }
