@@ -1044,6 +1044,7 @@
        "gt_3y": 0,
        "lt_1y": -59000
       },
+      "balance_words": "they owe you ₹1,180",
       "credit_limit_minor": null,
       "credit_limit_from": null,
       "over_limit": false,

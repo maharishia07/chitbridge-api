@@ -58,7 +58,17 @@ const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(valu
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
-const minorOf = (input, currency) => (input.amount_minor != null ? Math.round(Number(input.amount_minor)) : cashflow().toMinor(input.amount, currency));
+/** the amount of a payment or write-off as minor units, by the ONE strict reader (books-period.amountOf: a whole JSON number); throws the plain question "How much?" (a 400) when it is not one */
+const minorOf = (input, currency) => require('../lib/books-period').amountOf(input, 'amount', currency, { ask: 'How much?', zero: true });
+/** minorOf for a caller that answers the question itself: null when the amount is not a whole number (the payment door asks "How much?") */
+function minorAsked(input, currency) {
+  try {
+    return minorOf(input, currency);
+  } catch (err) {
+    if (err.code === 'BOOKS_BAD_REQUEST') return null;
+    throw err;
+  }
+}
 const WORD = {
   walkin_day: 'Walk-in sales',
   sale_bill: 'Sale',
@@ -216,6 +226,7 @@ router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res)
       T = require('../lib/finance-terms'),
       pid = req.query.party_id ? String(req.query.party_id) : null,
       side = req.query.side === 'supplier' ? 'supplier' : 'customer';
+    if (pid && !UUID.test(pid)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which party?', 'Which party?'); /* FIN-86: an id that is not an id is asked, not sent to the database */
     const mig = await T.migrated(),
       may = isOwner(req);
     const out = await withEntity(e, async (h) => {
@@ -258,6 +269,7 @@ router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, re
       b = req.body || {},
       pid = b.party_id ? String(b.party_id) : null,
       side = b.side === 'supplier' ? 'supplier' : 'customer';
+    if (pid && !UUID.test(pid)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which party?', 'Which party?'); /* FIN-86 */
     if (!(await T.migrated()))
       return problem(req, res, { status: 503, code: 'TERMS_NOT_MIGRATED', detail: SAID.termsNotMigrated, legacy: { error: SAID.termsNotMigrated, message: SAID.termsNotMigrated } });
     const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
@@ -958,7 +970,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         for (const r of rows.values()) r.payable = v.by_party[String(r.party_id)] || null;
         payables = { total_minor: v.total_minor };
       }
-      return require('../lib/upi-waiting').quietRows(Array.from(rows.values()), e, fin).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
+      return require('../lib/upi-waiting').quietRows(Array.from(rows.values()).map(withBalanceWords(curOf(req))), e, fin).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
     res.json(
       await forReader(req, e, {
@@ -1122,6 +1134,10 @@ function knownMode(body) {
 function allocateOf(body) {
   return body.allocate === 'none' ? 'none' : body.allocate === 'oldest_first' ? 'oldest_first' : null;
 }
+/** FIN-60: a /dues row with its standing in words, the payment outcome's own function (B.owesWords; + they owe you) — said once the rows are netted */
+const withBalanceWords = (currency) => (row) => Object.assign(row, { balance_words: B.owesWords(row.balance_minor, currency) });
+/** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
+const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode) {
   const body = req.body || {},
@@ -1129,13 +1145,15 @@ function paymentQuestion(req, needMode) {
   const party = String(body.party_id || body.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   if (body.currency && String(body.currency).toUpperCase() !== currency) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
-  const amount_minor = minorOf(body, currency);
+  const amount_minor = minorAsked(body, currency);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
+  const direction = directionOf(body);
+  if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
   const mode = knownMode(body);
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — cash, bank, UPI, card or cheque?' } };
   const allocate = allocateOf(body);
   const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
-  return { party, direction: body.direction === 'out' ? 'out' : 'in', amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
+  return { party, direction, amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
@@ -1259,7 +1277,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no,
         cheque_bank: chq.bank || b.cheque_bank,
-        cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? chq.date || chq.dated || b.cheque_date : null,
+        cheque_date: require('../lib/books-period').dateGiven(chq.date || chq.dated || b.cheque_date, 'cheque.date', null) /* FIN-82: a given day that is not one is DATE_INVALID, never dropped */,
         received_at: date,
         client_ref,
         by: byOf(req),
@@ -1804,11 +1822,12 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const writeOffMinor = minorOf(b, curOf(req)); /* a plain 400 "How much?" when it is not a whole number above nothing (the write-off posts nothing for 0 either) */
     const out = await B.postEntry(null, ctx(req), {
       type: 'write_off',
       owner: true,
       party,
-      amount: cashflow().fromMinor(minorOf(b, curOf(req)), curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
+      amount: cashflow().fromMinor(writeOffMinor, curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
       reason: b.reason,
       currency: curOf(req),
       strict_date: true,
