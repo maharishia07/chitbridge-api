@@ -383,6 +383,14 @@ const firstDiff = (a, b) => {
     await one('ask (entity)              → ask · otp', 'POST', '/api/signin/ask', { id: 'shopone' }, { action: 'ask', method: 'otp', entity_id: 'shop1', identity_id: 'shop1' });
     await one('ask (actor with PIN)      → ask · pin', 'POST', '/api/signin/ask', { id: 'ravi@shopone.br' }, { action: 'ask', method: 'pin', entity_id: 'shop1', identity_id: 'ravi' });
     await one('verify ok (owner)         → in · otp', 'POST', '/api/signin/verify', { email: 'owner@shop.test', otp: '111111' }, { action: 'in', method: 'otp', identity_id: 'shop1' });
+    /* SEC-136: the row says HOW the code was right — a tester code is listed (VIA_TESTER_CODE), the person's own stored code is not */
+    await one('verify ok (stored code)   → in · otp, code null (control)', 'POST', '/api/signin/verify', { email: 'owner@shop.test', otp: '111111' }, { action: 'in', method: 'otp', code: null });
+    await one('SEC-136 control: co-assist login by their OWN stored code → in · otp, code null (not listed as a tester sign-in)', 'POST', '/api/actors/login', { username: 'mala@shop one', otp: '654321' }, { action: 'in', method: 'otp', code: null });
+    await one('SEC-136 control: co-assist login by PIN → in · pin, code null', 'POST', '/api/actors/login', { username: 'ravi@shop one', pin: '1234' }, { action: 'in', method: 'pin', code: null });
+    process.env.TESTER_CODE = 'tq7-Lantern-42'; process.env.TESTER_NAMES = '*'; /* the daily tester code (env, never in the code) */
+    await one('SEC-136 verify by tester code → in · otp · VIA_TESTER_CODE', 'POST', '/api/signin/verify', { email: 'owner@shop.test', otp: 'tq7-Lantern-42' }, { action: 'in', method: 'otp', code: 'VIA_TESTER_CODE' });
+    await one('SEC-136 co-assist login by tester code → in · otp · VIA_TESTER_CODE', 'POST', '/api/actors/login', { username: 'mala@shop one', otp: 'tq7-Lantern-42' }, { action: 'in', method: 'otp', code: 'VIA_TESTER_CODE' });
+    delete process.env.TESTER_CODE; delete process.env.TESTER_NAMES;
     await one('verify ok (actor PIN)     → in · pin, shop slot = parent', 'POST', '/api/signin/verify', { user_id: 'ravi@shopone.br', pin: '1234' }, { action: 'in', method: 'pin', entity_id: 'shop1', identity_id: 'ravi' });
     await one('wrong PIN                 → fail · PIN_WRONG', 'POST', '/api/signin/verify', { user_id: 'ravi@shopone.br', pin: '9999' }, { action: 'fail', method: 'pin', code: 'PIN_WRONG' });
     await one('wrong code                → fail · OTP_WRONG', 'POST', '/api/signin/verify', { email: 'owner@shop.test', otp: '000000' }, { action: 'fail', method: 'otp', code: 'OTP_WRONG' });

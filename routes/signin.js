@@ -793,7 +793,7 @@ async function verify(req, res) {
      * left parent_entity_id out for a coassist). M05: a page that names its device gets a listed, revocable session.
      */
     const token = await identityAuth.issueToken(query, identity, sessions.deviceOfSignin(req));
-    note(req, identity, 'in', methodOf(identity), null, jtiOf(token));
+    note(req, identity, 'in', methodOf(identity), identityAuth.viaCode(check.via), jtiOf(token)); /* SEC-136: a tester-code sign-in is listed as one */
     console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
 
     res.json({
@@ -840,7 +840,10 @@ async function actorSecretRefused(req, res, actor) {
   /* SEC-139: one secret box. A co-assist with a PIN may type it in either field (a first-timer's code goes in `otp`): the page cannot know which, and check-login no longer says */
   const method = actor.pin_hash ? 'pin' : 'otp';
   const check = await actorSecretCheck(req, actor, actor.pin_hash ? nestedPin || otp : otp);
-  if (check.ok) return false;
+  if (check.ok) {
+    req.signinVia = identityAuth.viaCode(check.via); /* SEC-136: the 'in' row of this door says a tester code opened it */
+    return false;
+  }
   note(req, actor, actionOf(check.reason), method, check.reason);
   if (isSecretRefusal(check.reason)) await secretRefused(req, res, check);
   else {
@@ -896,7 +899,7 @@ async function actorLogin(req, res) {
     if (await actorSecretRefused(req, res, a)) return;
 
     const token = await identityAuth.issueToken(query, a, sessions.deviceOfSignin(req));
-    note(req, a, 'in', a.pin_hash ? 'pin' : 'otp', null, jtiOf(token));
+    note(req, a, 'in', a.pin_hash ? 'pin' : 'otp', req.signinVia, jtiOf(token));
     console.log(`Actor login: ${actor_key}@${entity_name}`);
     res.json({
       message: 'Login successful',
