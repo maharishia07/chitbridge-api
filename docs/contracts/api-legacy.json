@@ -14621,6 +14621,21 @@
      "note": "ORD-65 (2026-10-23): new answer. Before, deliverEdge called NO_CURRENCY_SAYS() on a string and the operator with no currency got a 500."
     },
     {
+     "scenario": "norder-withdrawn-currency",
+     "status": 422,
+     "body_keys": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. An operator whose stated money is a code ISO 4217 withdrew is refused in words naming the successor; withdrawn: true travels with the refusal (lib/knownerr thrownRefusal)."
+    },
+    {
      "scenario": "norder-fails",
      "status": 500,
      "body_keys": {

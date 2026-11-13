@@ -63,6 +63,7 @@ const server = app.listen(0, async () => {
         const answer = await ask(port, '/price/' + code);
         assert.strictEqual(answer.status, 422, code);
         assert.strictEqual(answer.body.code, 'MONEY_CURRENCY_UNKNOWN', code);
+        assert.strictEqual(answer.body.withdrawn, true, code + ': withdrawn travels on the wire');
         assert.ok(JSON.stringify(answer.body).indexOf('replaced by ' + SUCCESSOR[code]) >= 0, code + ' words name ' + SUCCESSOR[code]);
       }
     });
