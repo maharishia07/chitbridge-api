@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 3,
-  "meets": 628,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -51723,11 +51723,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b6cf97330b7c7dad"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51825,11 +51824,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "256f20c7749a2fe9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51927,11 +51925,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "45cd0a7f006fec68"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
