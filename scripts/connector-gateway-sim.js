@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * connector-gateway-sim.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/connector-gateway-sim.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /* connector-gateway-sim.js — a stand-in IoT / ERP GATEWAY (the "edge box", e.g. a Raspberry Pi).
  *
  * It plays the role the Pi plays in real life: it HOLDS the credential + the counterparty bridge/entity,
@@ -32,7 +39,7 @@ const http = require('http');
 const fs = require('fs');
 const { URL } = require('url');
 
-const PRODUCTION = 'https://chitbridge-api-production.up.railway.app';
+const PRODUCTION = require('../tests/lib/run-target.cjs').PRODUCTION_API; // the one home of the live host (PLT-101)
 const LOCAL = 'http://localhost:3000';
 /** apiBase(env, argv) → { base } | { refuse } — local by default, http only to localhost, production only by explicit flag */
 function apiBase(env, argv) {
@@ -48,6 +55,7 @@ function apiBase(env, argv) {
   if (u.protocol === 'http:' && !local) return { refuse: 'plain http is allowed only for localhost — use https for ' + u.hostname };
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return { refuse: 'API_BASE must be http(s): ' + base };
   if (base === PRODUCTION && !wantProd) return { refuse: 'this is the PRODUCTION api — pass --production to write into it on purpose' };
+  if ((base === PRODUCTION || require('../tests/lib/run-target.cjs').PRODUCTION.test(base)) && env.CB_ALLOW_PROD !== '1') return { refuse: 'the production api also needs CB_ALLOW_PROD=1 (set by Athi): the one rule of tests/lib/run-target.cjs' };
   return { base };
 }
 module.exports = { apiBase };

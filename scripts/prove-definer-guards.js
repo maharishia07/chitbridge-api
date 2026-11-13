@@ -1,3 +1,10 @@
+/**
+ * prove-definer-guards.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-definer-guards.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /** @covers FR-F2 — M3/ROOT: chit_message_deliver with no entity context must RAISE — the governed function refuses to be called bare */
 /** @covers FR-D1 — NEW-1: a non-raiser calling chit_dispute_resolve must RAISE */
 // prove-definer-guards.js — DB-DIRECT proof of the three definer guards the reviewer flagged as untested:
@@ -10,7 +17,7 @@ try {
   require('dotenv').config();
 } catch (_) {} // load .env for the standalone script (the db module doesn't)
 const { query, withEntity } = require('../db');
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-definer-guards.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

@@ -1,7 +1,14 @@
+/**
+ * multi-source.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/multi-source.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /** @covers FR-K3 — STONE 3: one distributor carries two brands with a same-named finish, each under its own rules */
 // multi-source.js — STONE 3: one distributor carries TWO brands (Royale Play + Nippon) with a SAME-NAMED finish.
 // Each is distinct, priced per-source, and runs under its OWN source's rules. Needs b78. Run: node scripts/multi-source.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('multi-source.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

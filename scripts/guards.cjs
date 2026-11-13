@@ -674,6 +674,7 @@ const GUARDS = [
   'register-spin-country.test.cjs',
   'call-log.test.cjs', // QA 12 Nov: the harness logs METHOD + path + status per case; the SIT lifecycle and gorilla junits turn them into endpoint rows the map credits
   'run-target.test.cjs', // QA 12 Nov: the one run-target allow-list (production refused, SIT boxes named)
+  'scripts-target.test.cjs', // PLT-101: no api script names the live host; apiBase refuses unset and production
   'schema-fingerprint.test.cjs',
   'sec4-server-gates.test.cjs',
   'seed-local-refusals.test.cjs',

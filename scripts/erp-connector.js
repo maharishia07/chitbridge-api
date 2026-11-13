@@ -1,10 +1,17 @@
+/**
+ * erp-connector.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/erp-connector.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // erp-connector.js — proves the ERP "process-then-forget" connector end-to-end AS the ERP would (an authenticated
 // HTTP client posting a document). Asserts: receipt-only (raw payload NEVER stored), idempotency (retry = one
 // receipt, one effect), per-copy chit emission, RLS isolation of the receipt ledger, and the auth/type guards.
 //
 // PREREQ: migration b69_connector_receipt.sql applied, and this connectors.js deployed. Run: node scripts/erp-connector.js
 const crypto = require('crypto');
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('erp-connector.js');
 let PASS = 0,
   FAIL = 0;
 function check(n, ok, d) {

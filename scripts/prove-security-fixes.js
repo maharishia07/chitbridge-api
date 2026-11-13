@@ -6,7 +6,7 @@
 // CALLED BY by hand, against a SIT box: CB_API=<url> node scripts/prove-security-fixes.js · tests/prove-security-fixes-gated.test.cjs (the S1 gated branch)
 // FLOW      sign up two test shops → T1/T4/M1 guards → S1 (a lead token, or the gated 404 on a sealed box) → PASS/FAIL count, exit 1 on any FAIL
 // CARD      18-identity-sign-in-and-access/security-proofs
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-security-fixes.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

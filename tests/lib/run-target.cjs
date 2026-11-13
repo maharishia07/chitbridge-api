@@ -17,6 +17,10 @@
  *   4. Anything else is refused in words naming what to do.
  * Sign-in: local = the fixed dev codes (lib/dev-otp.js); a SIT box has none, so the entity and customer code is TODAY'S tester code,
  * built here from the container's TESTER_CODE + TESTER_CODE_TZ ({yymmdd}), and the e-mail domain is the one TESTER_NAMES lets in.
+ *
+ * PLT-101 (13 Nov 2026) widened it with apiBase(): THE ONE TARGET for the api scripts (scripts/*.js|cjs) that talk to an api over HTTP and need no
+ * database. No fallback: CB_API unset = exit 2 before any request; a production host = exit 3 unless Athi sets CB_ALLOW_PROD=1. The only
+ * home of the production host literal is PRODUCTION_API below; tests/scripts-target.test.cjs fails any script that writes one.
  * CARD 01-rail-core-the-chit/README
  */
 const fs = require('fs'), path = require('path');
@@ -27,6 +31,9 @@ const BOX_OWN_API = /^http:\/\/localhost:3000$/;
 const BOX_DB = /@db:5432\/chitbridge(\?|$)/;
 const BOX_ENVS = ['staging', 'uat'];
 const DEFAULT_SERVERS = path.join(__dirname, '..', '..', '..', 'PM', 'SIT-SERVERS.json');
+
+/** the live api: named here and nowhere in scripts/ (PLT-101); a script that must reach it says so with CB_ALLOW_PROD=1, set by Athi */
+const PRODUCTION_API = 'https://chitbridge-api-production.up.railway.app';
 
 const noSlash = (s) => String(s || '').replace(/\/$/, '');
 const localDb = (env) => new RegExp('@(127\\.0\\.0\\.1|localhost):(55432' + (env.CB_LOCAL_PGPORT ? '|' + String(env.CB_LOCAL_PGPORT).replace(/\D/g, '') : '') + ')/(cb_local|cb_s41)(\\?|$)'); /* cb_s41 = the CI service database on :55432 (ci.yml S41 job); the old harness check accepted any database name on the local port */
@@ -58,6 +65,31 @@ function judge(api, db, env) {
   return { ok: false, why: 'the target is not local and no SIT box is named: ' + a + ' / database ' + (d ? 'given' : 'unset') + '. Local is 127.0.0.1 + cb_local on :55432; a SIT box is named in CB_SIT_BOX (one of PM/SIT-SERVERS.json) and the runner runs on that box' };
 }
 
+/** resolveApi(env) → { ok:true, base } | { ok:false, code, why } — pure. CB_API only; no default; production only with CB_ALLOW_PROD=1 */
+function resolveApi(env) {
+  const e = env || process.env, raw = String(e.CB_API || '').trim();
+  if (!raw) return { ok: false, code: 2, why: 'CB_API is not set. There is no default target: name the api (local http://127.0.0.1:3100 or a SIT box) and run again' };
+  let u;
+  try { u = new URL(raw); } catch (_) { return { ok: false, code: 2, why: 'CB_API is not a URL: ' + raw }; }
+  if (!/^https?:$/.test(u.protocol)) return { ok: false, code: 2, why: 'CB_API must be http(s): ' + raw };
+  if (u.username || u.password) return { ok: false, code: 2, why: 'CB_API must not carry a user name or password' };
+  const base = u.origin;   /* the parser's own normal form: railway%2eapp and a full-width dot are judged as the host they really are */
+  if ((PRODUCTION.test(base) || PRODUCTION.test(raw)) && String(e.CB_ALLOW_PROD || '').trim() !== '1') {
+    return { ok: false, code: 3, why: 'CB_API is the production api (' + base + '). Writing to production needs CB_ALLOW_PROD=1, which only Athi sets' };
+  }
+  return { ok: true, base };
+}
+
+/** the call every api script makes at load: the api base, else REFUSED on stderr + exit before any request. label = the script's name */
+function apiBase(label, env) {
+  /* loaded as a library by a test (the entry file is not in scripts/): no target, no refusal, and no request can be made with '' */
+  const entry = !env && require.main && require.main.filename;
+  if (entry && path.basename(path.dirname(entry)) !== 'scripts') return '';
+  const v = resolveApi(env);
+  if (!v.ok) { console.error('REFUSED' + (label ? ' (' + label + ')' : '') + ': ' + v.why); process.exit(v.code); }
+  return v.base;
+}
+
 const ymd = (tz, off) => {
   const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() + off * 864e5)).split('-');
   return p[0].slice(2) + p[1] + p[2];
@@ -83,4 +115,4 @@ function assertTarget(api, db, label) {
   return Object.assign({}, v, signIn(v, process.env));
 }
 
-module.exports = { judge, assertTarget, signIn, testerCodeToday, sitBoxes, PRODUCTION };
+module.exports = { apiBase, resolveApi, PRODUCTION_API, judge, assertTarget, signIn, testerCodeToday, sitBoxes, PRODUCTION };

@@ -1,3 +1,10 @@
+/**
+ * journey-document-store.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/journey-document-store.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 'use strict';
 /**
  * journey-document-store.js — THE TRAVEL PATH, end to end, against the LIVE API.
@@ -17,7 +24,7 @@
  * (the adopted reference catalogue). `items` (a store's own catalogue_items) render read-only with NO order button.
  * So a form must travel the blueprint → adopt path to be submittable. That is what steps 2-3 do.
  */
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('journey-document-store.js');
 const OTP = process.env.DEV_OTP || '123456';
 
 const B = (s) => '\x1b[1m' + s + '\x1b[0m';
@@ -133,7 +140,7 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
     ok(`entity "${store.name}"  ·  bridge_id ${B(store.bridge_id)}`);
     // shop.html reads the param `bridge` — NOT `b`. An earlier version of this line printed ?b= and the link silently
     // loaded an empty shop, which cost real time to diagnose.
-    note(`storefront: ${API.replace('-api-production.up.railway.app', '-web.vercel.app')}/shop.html?bridge=${store.bridge_id}`);
+    note(`storefront: ${process.env.CB_WEB || '(set CB_WEB)'}/shop.html?bridge=${store.bridge_id}`);
   } catch (e) {
     bad('could not create the store — ' + e.message);
     return finish();
