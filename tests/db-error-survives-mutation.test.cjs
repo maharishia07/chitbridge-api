@@ -37,7 +37,7 @@ const noPoolListener = (src) => src.replace("pool.on('error',", "(() => {})('err
 const noClientListener = (src) => src.replace("client.on('error', onClientError);", '');
 const plainRelease = (src) => src.replace('client.release(clientDied || undefined);', 'client.release();');
 const noClientRemove = (src) => src.replace("client.removeListener('error', onClientError);", '');
-const noTxRemove = (src) => src.replace("c.removeListener('error', onError);", '');
+const noTxRemove = (src) => src.replace("client.removeListener('error', onError);", '');
 const cases = [
   ['src/db.js without the pool error listener', wentRed('src/db.js', noPoolListener, 'DB_ERR_SRC_DB')],
   ['withTransaction without the client error listener', wentRed('db/index.js', noClientListener, 'DB_ERR_INDEX')],

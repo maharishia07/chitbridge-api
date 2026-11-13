@@ -30,18 +30,20 @@ const FIXTURE = path.join(API, 'tests', 'fixtures', 'fn-size.json');
 const ADOPTED = /^\/\* ADOPTED from chitbridge-engines v\S+ · \S+ · sha256 /;
 const isAdopted = (text) => ADOPTED.test(String(text).split(String.fromCharCode(10), 1)[0]);
 
+/** every .js / .cjs file under one api folder, as repo-relative paths */
 function walk(dir) {
   const out = [];
-  const abs = path.join(API, dir);
-  if (!fs.existsSync(abs)) return out;
-  for (const f of fs.readdirSync(abs, { withFileTypes: true })) {
-    const rel = dir + '/' + f.name;
-    if (f.isDirectory()) out.push(...walk(rel));
-    else if (/\.(c?js)$/.test(f.name)) out.push(rel);
+  const absDir = path.join(API, dir);
+  if (!fs.existsSync(absDir)) return out;
+  for (const f of fs.readdirSync(absDir, { withFileTypes: true })) {
+    const relPath = dir + '/' + f.name;
+    if (f.isDirectory()) out.push(...walk(relPath));
+    else if (/\.(c?js)$/.test(f.name)) out.push(relPath);
   }
   return out;
 }
 
+/** scan every folder in DIRS: all functions, the ones over LIMIT (adopted engine files excluded), the most complex, and the long names per file */
 function measure() {
   const all = [];
   DIRS.flatMap(walk)
@@ -62,15 +64,15 @@ function measure() {
 }
 
 if (require.main === module) {
-  const m = measure();
+  const sizes = measure();
   const arg = process.argv[2];
   if (arg === '--json' || arg === '--write') {
     const out = {
       limit: LIMIT,
-      long_functions: m.long.length,
-      worst_complexity: m.worst.complexity,
-      worst_at: m.worst.file + ' ' + m.worst.name,
-      long: m.perFile
+      long_functions: sizes.long.length,
+      worst_complexity: sizes.worst.complexity,
+      worst_at: sizes.worst.file + ' ' + sizes.worst.name,
+      long: sizes.perFile
     };
     const text = JSON.stringify(out, null, 2) + '\n';
     if (arg === '--write') {
@@ -78,9 +80,9 @@ if (require.main === module) {
       console.log('wrote ' + path.relative(API, FIXTURE));
     } else process.stdout.write(text);
   } else {
-    console.log(`functions > ${LIMIT} lines in ${DIRS.join('/ ')}/: ${m.long.length}`);
-    console.log(`worst complexity: ${m.worst.complexity} — ${m.worst.file}:${m.worst.line} ${m.worst.name}`);
-    m.all
+    console.log(`functions > ${LIMIT} lines in ${DIRS.join('/ ')}/: ${sizes.long.length}`);
+    console.log(`worst complexity: ${sizes.worst.complexity} — ${sizes.worst.file}:${sizes.worst.line} ${sizes.worst.name}`);
+    sizes.all
       .slice()
       .sort((first, second) => second.complexity - first.complexity)
       .slice(0, 20)
