@@ -122,7 +122,7 @@ async function q(sql, params) {
   }
   const counted = require(path.join(API, 'tests', 'lib', 'pin-count-stub.cjs')).answer(s, params, (id) => Object.values(DB).find((r) => r.identity_id === id), 'NOW');
   if (counted) return counted;
-  if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+)$/i))) {
+  if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+?)(?: RETURNING .+)?$/i))) {
     const sets = splitTop(m[1], ',');
     const hit = where(m[2], params);
     hit.forEach((r) => sets.forEach((a) => {

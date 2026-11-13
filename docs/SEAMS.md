@@ -59,9 +59,9 @@ of file each thing is; this says what already does the job.
 | 44 | `rules` | `docnumber.js` | the rule set for a country — |
 | 43 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
+| 43 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `facts` | `bill-steps.js` | MY state_log — |
-| 42 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 42 | `live` | `receivables.js` | the allocations that still count: |
 | 41 | `host` | `chit-sheet.js` |  |
 | 41 | `gate` | `country-setup.js` | gate(h, entity): |

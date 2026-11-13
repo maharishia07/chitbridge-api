@@ -62,7 +62,16 @@ async function judgeSession(req, res, decoded) {
    */
   const refusal = tokenRefusal(decoded, res);
   if (refusal) return refuse(401, refusal.code, refusal);
-  return isPersonSession(decoded) ? judgeDevice(req, res, decoded) : { sessRec: null };
+  if (isPersonSession(decoded)) return judgeDevice(req, res, decoded);
+  return judgeLegacyEnded(req, res, decoded);
+}
+/** SEC-157: a no-jti person token the person signed out (POST /api/signin/logout) is refused 401 SESSION_EXPIRED, as a listed session is once it is gone */
+async function judgeLegacyEnded(req, res, decoded) {
+  if (decoded.kind === 'api_key' || decoded.kind === 'auto' || !(decoded.parent_entity_id || decoded.identity_id)) return { sessRec: null };
+  const rawToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!(await require('../lib/person-session').legacyEnded(query, decoded.parent_entity_id || decoded.identity_id, rawToken))) return { sessRec: null };
+  mark(res, 'code', 'SESSION_EXPIRED');
+  return refuse(401, 'SESSION_EXPIRED', { error: 'Unauthorised', code: 'SESSION_EXPIRED', message: 'Sign in to continue.' });
 }
 /** a person session on its device: the X-Device-Id must match, the device must not be revoked, the jti must be listed → { sessRec } or { refusal } */
 async function judgeDevice(req, res, decoded) {

@@ -40,7 +40,7 @@ const q = async (sql, params) => {
   const row = ROWS[PP.isPatch(s) ? PP.entityOf(s, params) : params && params[0]];
   if (PP.isPatch(s)) {                                       /* T2-POLICY: every policy_flags write is policy.patchKey */
     if (FAIL_WRITES) throw new Error('simulated write failure');
-    if (String(params[0]) !== 'devices') throw new Error('a write touched more than policy_flags.devices');
+    if (!['devices', 'ended_tokens'].includes(String(params[0]))) throw new Error('a write touched more than policy_flags.devices (or SEC-157 ended_tokens)'); /* one key per write */
     row.policy_flags = row.policy_flags || {};
     return PP.apply(s, params, row.policy_flags);
   }
@@ -221,7 +221,9 @@ const dec = (tok) => jwt.decode(tok);
     r = await call('POST', '/api/signin/sessions/revoke', { token: tokE, device: DEV_B, body: { device_id: DEV_A } });
     t('an employee cannot remove a device → 403', r.status === 403);
     r = await call('POST', '/api/signin/logout', { token: legacy });
-    t('logout with a legacy token → 200 (nothing listed to remove; the page clears itself)', r.status === 200 && r.body.legacy === true);
+    t('logout with a legacy token → 200 (its hash goes on the ended list; the page clears itself)', r.status === 200 && r.body.legacy === true);
+    r = await call('GET', '/api/probe', { token: legacy });
+    t('  …and SEC-157: that legacy token is refused 401 SESSION_EXPIRED from then on', r.status === 401 && r.body.code === 'SESSION_EXPIRED');
     r = await call('POST', '/api/signin/logout', { token: tokE, device: DEV_B });
     t('logout removes my jti → 200', r.status === 200 && r.body.removed === true);
     r = await call('GET', '/api/probe', { token: tokE, device: DEV_B });
