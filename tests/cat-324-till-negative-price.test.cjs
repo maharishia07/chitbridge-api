@@ -56,7 +56,7 @@ t('shop window: negatives are hidden and counted in unpriced_hidden with the unp
 t('shop window: zero is still shown (a free sample)', finishes[0].items.some((i) => i.commercials.price === 0));
 const catSrc = require('fs').readFileSync(path.join(API, 'routes', 'catalogue.js'), 'utf8');
 const tillSrc = require('fs').readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-t('the public list, the verify sample and the network order read the one rule', catSrc.includes('price: sellablePrice.soldAt(money.amountOfLoose(d.price))') && tillSrc.includes('price: sellablePrice.soldAt(amountOf(data.price)), tax_slab') && catSrc.includes('if (sellablePrice.fault(amt)) {'));
+t('SOURCE PIN ONLY (not coverage): the public list, the verify sample and the network order name the one rule', catSrc.includes('price: sellablePrice.soldAt(money.amountOfLoose(d.price))') && tillSrc.includes('price: sellablePrice.soldAt(amountOf(data.price)), tax_slab') && catSrc.includes('if (sellablePrice.fault(amt)) {'));
 
 const srv = app.listen(0, '127.0.0.1', async () => {
   try {
@@ -66,6 +66,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     for (const it of body.items || []) got[it.item_id] = it.price;
     t('snapshot answers 200 with all seven rows', r.status === 200 && (body.items || []).length === 7, r.status + ' ' + JSON.stringify(got));
     for (const id of Object.keys(WANT)) t(`row ${id}: price ${JSON.stringify(ROWS.find((x) => x[0] === id)[1])} reaches the counter as ${WANT[id]}`, got[id] === WANT[id], String(got[id]));
+    const v = await fetch(`http://127.0.0.1:${srv.address().port}/api/till/verify`);
+    const vb = await v.json().catch(() => ({}));
+    const vgot = {};
+    for (const it of vb.sample || []) vgot[it.item_id] = it.price;
+    t('verify sample (behaviour): negative rows are null, zero stays 0, a good price is unchanged', v.status === 200 && vgot.a === 60 && vgot.b === null && vgot.c === null && vgot.d === 0 && vgot.f === null, v.status + ' ' + JSON.stringify(vgot));
     const cat = require(path.join(API, 'routes', 'catalogue.js'));
     t('the order door keeps its two sentences (CAT-318): negative and unset', /not valid, so it cannot be ordered right now/.test(sellable.negativeSaid('Rice')) && /is not set — order cannot be placed/.test(sellable.unsetSaid('Rice')) && !!cat);
   } finally {
