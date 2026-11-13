@@ -30,7 +30,7 @@ const KINDS = {
   version: 1,
   order: ['pricing structure', 'offers', 'tax'],
   kinds: [
-    { kind: 'fixed', fields: ['amount'], note: 'one declared amount; blank = the list price' },
+    { kind: 'fixed', fields: ['amount'], note: 'one declared amount; no amount = the list price (a blank or negative amount is refused)' },
     {
       kind: 'tiered',
       fields: ['tiers[{qty,price}]'],
@@ -55,10 +55,22 @@ function partialTotal(out) {
   return keys.length ? { total_partial: true, unpriced_lines: keys, total_words: 'The total leaves out ' + keys.length + ' line' + (keys.length === 1 ? '' : 's') + ' with no price set: ' + keys.join(', ') + '.' } : {};
 }
 
+const nameOf = (line) => '"' + String(line.name || line.item_id || line.code || 'line ' + line.key).slice(0, 60) + '"';
+/** the first line whose own pricing structure is refused (lib/services structureRefusal), or null */
+function firstStructureRefusal(lines) {
+  for (const line of lines) {
+    const refused = S.structureRefusal(line, nameOf);
+    if (refused) return refused;
+  }
+  return null;
+}
+
 router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /price'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);
     if (!lines.length) return problem(req, res, { status: 400, ...said('NO_LINES', 'validation', 'lines[] required: { item_id|code, qty, listPrice?, pricing? }') });
+    const refused = S.lineRefusal(lines, nameOf) || firstStructureRefusal(lines); /* CAT-305/306: a quantity not above 0, a price below 0 or a structure we do not know is refused, never priced */
+    if (refused) return problem(req, res, { status: 400, ...said(refused[0], 'validation', refused[1]) });
     const needShelf = lines.some((item) => !item.pricing || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(auth.entityOf(req)) : null;
     const out = lines.map((item) => S.priceLine(item, sh ? sh.productOf(item) : null));

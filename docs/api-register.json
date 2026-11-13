@@ -21304,7 +21304,7 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 109,
+   "line": 104,
    "hash": "0fea4ab2374ff23d",
    "does": "",
    "errors": {
@@ -51647,8 +51647,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 105,
-   "hash": "b443772f4998f191",
+   "line": 100,
+   "hash": "b6cf97330b7c7dad",
    "does": "",
    "errors": {
     "count": 1,
@@ -51723,7 +51723,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51748,8 +51748,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 106,
-   "hash": "7ffb40a2463ac7a9",
+   "line": 101,
+   "hash": "256f20c7749a2fe9",
    "does": "",
    "errors": {
     "count": 1,
@@ -51824,7 +51824,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 merged contract2: ctx cut to the closed typed key list (ctxOf), answer unchanged, no leak path; all 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51849,8 +51849,8 @@
    "owner_area": "pricing",
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
-   "line": 58,
-   "hash": "5735055939a80b80",
+   "line": 68,
+   "hash": "45cd0a7f006fec68",
    "does": "",
    "errors": {
     "count": 0,
@@ -51925,7 +51925,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56829,7 +56829,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 186,
+   "line": 184,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -56933,7 +56933,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 149,
+   "line": 147,
    "hash": "f06e00970724f9d6",
    "does": "",
    "errors": {

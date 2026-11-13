@@ -55,18 +55,10 @@ router.get('/kinds', (req, res) => {
   }
 });
 
-function normLines(body) {
-  return (Array.isArray(body.lines) ? body.lines : []).map((item, index) => ({
-    key: String(item.key != null ? item.key : index),
-    item_id: item.item_id || null,
-    sku: item.sku || null,
-    name: item.name || '',
-    qty: Number(item.qty != null ? item.qty : item.quantity) || 0,
-    unitPrice: Number(item.unitPrice != null ? item.unitPrice : item.price) || 0,
-    categories: Array.isArray(item.categories) ? item.categories.map(String) : [],
-    excluded: Array.isArray(item.excluded) ? item.excluded.map(String) : []
-  }));
-}
+const services = require('../lib/services'); // the one line reader and the one refusal of a line (CAT-312): offers no longer keeps a Number()||0 reader of its own
+const nameOf = (line) => '"' + String(line.name || line.item_id || line.code || 'line ' + line.key).slice(0, 60) + '"';
+/** the lines the engine reads, from the shared reader: { key, item_id, sku, name, qty, unitPrice, categories, excluded } (the listPrice alias is honoured too) */
+const engineLines = (lines) => lines.map((l) => ({ key: l.key, item_id: l.item_id, sku: l.code, name: l.name, qty: l.qty, unitPrice: l.listPrice, categories: l.categories, excluded: l.excluded }));
 async function ownOffers(req) {
   const entity_id = auth.entityOf(req);
   const catalogueView = require('../lib/catalogue-view');
@@ -76,9 +68,12 @@ async function ownOffers(req) {
 const answer = (explain) =>
   async function offersAnswer(req, res) {
     try {
-      const lines = normLines(req.body || {});
-      if (!lines.length)
+      const read = services.normLines(req.body || {});
+      if (!read.length)
         return problem(req, res, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
+      const refused = services.lineRefusal(read, nameOf, { requirePrice: true }); /* CAT-312: a negative, blank or missing quantity or price is refused, never a free or negative line */
+      if (refused) return problem(req, res, { status: 400, code: refused[0], detail: refused[1], legacy: { error: 'validation', message: refused[1] } });
+      const lines = engineLines(read);
       const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
       const ctx = Object.assign({ now: new Date(), currency: null }, ctxOf(req.body.ctx)); /* T2-NATDEF: the caller's stated money, never INR by name */
       /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
