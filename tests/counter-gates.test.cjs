@@ -16,6 +16,7 @@
  * fails here, by name, before it can open a second path.
  *
  * Run: node tests/counter-gates.test.cjs   · no DB, no network.
+ * CARD      09-counter/counters-and-keys-pair-enrol-open-release
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 
@@ -372,7 +373,7 @@ it('the browser files a payment received in its own list — never the bills sto
   const at = PAGE.indexOf('\n  async payment(p){');
   assert.ok(at > 0, 'CloudHost.payment is gone — this guard is measuring nothing');
   const p = { text: PAGE.slice(at, PAGE.indexOf('\n  },\n', at)) };   /* a method ends at its own "  }," */
-  assert.ok(/nextNumber\('R'\)/.test(p.text), 'payments are not numbered in their own R series');
+  assert.ok(/nextNumber\('R'[,)]/.test(p.text), 'payments are not numbered in their own R series');
   assert.ok(/DB\.put\('queue'/.test(p.text), 'a payment is not queued');
   assert.ok(!/DB\.put\('bills'/.test(p.text), 'a payment was written into the bills store — the day would count it as a sale');
 });
@@ -414,7 +415,9 @@ it('the offline limit counts credit bills not yet confirmed sent, whatever the s
   assert.ok(/queue_kinds\.oldest/.test(u.text) && /!b\._sent/.test(u.text), 'unsent is no longer read from the program\'s queue / the _sent stamp');
 });
 it('over the limit, only the OWNER\'s counter PIN allows it', () => {
-  const o = body(PAGE, 'async function ownerApprove(');
+  /* CTR-191: ownerApprove asks the credit-limit question and hands the PIN check to ownerPinAsk (also used by the money stop) */
+  assert.ok(/return ownerPinAsk\(/.test(body(PAGE, 'async function ownerApprove(').text), 'the credit limit no longer goes through the one owner-PIN check');
+  const o = body(PAGE, 'async function ownerPinAsk(');
   assert.ok(/e\.kind === 'entity'/.test(o.text), 'the override is no longer limited to the owner');
   assert.ok(/SIGN\(\)\.pinAfter\(/.test(o.text), 'a wrong PIN no longer counts against the PIN');
 });

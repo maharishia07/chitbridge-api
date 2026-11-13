@@ -1,4 +1,5 @@
 /**
+ * CARD  11-crm-and-marketing/walk-in-customers
  * CB CRM, Phase 4 — "Remove from my parties" (Q10, provisional) and walk-in → party. Offline (tests/support/crm-stub.cjs).
  *   remove: owner only · refused with open dues · hides the row, deletes nothing · a merged id is not removable · 503 before b276
  *   walk-in: a phone that holds points becomes a LOCAL customer through the one mint (kind 'cus'), and the points move by rewards.claim (two entries)

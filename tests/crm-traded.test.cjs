@@ -5,6 +5,7 @@
  * Run: node tests/crm-traded.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
@@ -27,13 +28,13 @@ it('the shop itself, or a name that is not an id → no statement at all (a shop
   const h = handle([]); assert.strictEqual(await crm.traded(h, OWNER, OWNER, null), null); assert.strictEqual(await crm.traded(h, OWNER, 'Ravi Stores', null), null); assert.strictEqual(h.sql.length, 0);
 });
 it('routes/chits.js: the bump runs INSIDE the delivery\'s withEntity, on deliver\'s own client, in a savepoint, skipping a recipient', () => {
-  const s = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
-  /* T2-SPLIT (2026-10-14): the write is the sendWrite step now — the same two lines, so matched whatever their indent */
-  const m = /await withEntity\(sender_id, async \(c\) => \{\r?\n\s*await mint\.deliver\(sender_id, chit_id, copies, \{ is_draft: !!promote_draft_id, client: c \}\);/.exec(s);
+  const s = CF.read(API);
+  /* T2-SPLIT (2026-10-14): the write is the sendWrite step now — the same two lines, so matched whatever their indent; RAIL-149 may put ONE verifySourceCarry line (same client c, same transaction) before deliver */
+  const m = /await withEntity\(sender_id, async \(entityClient\) => \{\r?\n(?:\s*await creditCap\.holdUnderLock\(entityClient, sendState\);[^\n]*\r?\n)?(?:\s*if \(sendState\.sourceCarry\) await costWrite\.verifySourceCarry\(entityClient, [^\n]*\r?\n)?\s*await mint\.deliver\(sender_id, chit_id, copies, \{ is_draft: !!promote_draft_id, client: entityClient \}\);/.exec(s);
   const i = m ? m.index : -1;
   assert.ok(i > 0, 'deliver runs on the route\'s own withEntity client');
-  const block = s.slice(i, i + 600);
-  assert.ok(/trySavepoint\(c, \(\) => require\('\.\.\/lib\/crm'\)\.traded\(c, sender_id, namedParty, now\), null\)/.test(block), 'traded in a savepoint, the shop clock\'s moment');
+  const block = s.slice(i, i + 900);
+  assert.ok(/trySavepoint\(entityClient, \(\) => require\('\.\.\/lib\/crm'\)\.traded\(entityClient, sender_id, namedParty, now\), null\)/.test(block), 'traded in a savepoint, the shop clock\'s moment');
   assert.ok(/namedParty && !isRecipient/.test(block), 'a named party that also receives the chit is counted by the recipient block only');
   assert.ok(/require\('\.\.\/lib\/crm'\)\.namedParty\(business_json\)/.test(s), 'whom the bill names: lib/crm.namedParty → books-hooks.partyFromCustomer, the one reading');
   assert.strictEqual(crm.namedParty({ customer: { name: 'Anbu', party_id: P } }), P); assert.strictEqual(crm.namedParty({ customer: { entity_id: P } }), P); assert.strictEqual(crm.namedParty({}), null);

@@ -6,6 +6,7 @@
  * It is paid in CASH only — gstClose adds it to the challan beside the forward tax (no credit is used against it) and gstPay pays it:
  * Dr RCM payable · Cr the bank. A bill with no RCM line is unchanged (no `rcm` key at all).
  * Run: node tests/books-rcm.test.cjs
+ * CARD      15-tax-and-country-packs/reverse-charge
  */
 'use strict';
 const path = require('path');
@@ -24,8 +25,8 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   const T = require(path.join(H.API, 'lib', 'tax'));
   const BP = require(path.join(H.API, 'lib', 'books-period'));
-  const BUYER = { Gstin: '33AAAAA0000A1Z5', LglNm: 'Tally Test', State: '33', Pos: '33' };
-  const UNREG = { LglNm: 'Sri Ram Transport', State: '33', RegType: 'unregistered' };
+  const BUYER = { Gstin: '33AAAAA0000A1Z5', LglNm: 'Tally Test', State: '33', Pos: '33', Country: 'IN' }; /* CTRY-94: the engines no longer read India when no country is said */
+  const UNREG = { LglNm: 'Sri Ram Transport', State: '33', RegType: 'unregistered', Country: 'IN' };
   /* a GTA freight bill, 10,000 from an unregistered transporter: 5% = CGST 250 + SGST 250 in the RCM heads, none charged, no credit */
   const inv = T.determine({ rcm: true, seller: UNREG, buyer: BUYER, lines: [{ name: 'Freight Salem to Chennai', hsn: '996511', qty: 1, unit_price: 10000 }] });
   const plain = T.determine({ seller: Object.assign({ Gstn: '' }, BUYER, { Gstin: '33BBBBB1111B1Z2' }), buyer: BUYER, lines: [{ name: 'Tea', hsn: '0902', qty: 1, unit_price: 1000, rate: 5 }] });

@@ -94,8 +94,63 @@ t('checkCaptures: a recorded answer that fits its committed shape loses nothing'
 t('checkCaptures: a recorded answer with a key the shape lacks is named', tool.checkCaptures([{ 'GET /api/assist/whoami|x': { route: 'GET /api/assist/whoami', status: 200, body: { ok: true, is_helpdesk: false, actions: {}, canary: 1 } } }]).some((line) => /canary/.test(line)));
 const contract = require(path.join(API, 'lib', 'assist-contract.js'));
 const whoami = contract.operationFor('GET /whoami');
+const noShape = require(path.join(API, 'lib', 'attachments-contract.js')); /* a row whose success answer is a download: no derived shape (docs/contracts/api-output-shapes.json 'not reached') */
 t('kit: a route with a derived shape answers under that closed schema, and its checked() chain holds the filter', whoami.responses[200].content['application/json'].schema.additionalProperties === false && contract.checked('GET /whoami').some((fn) => fn && fn.outputAllowlist));
-t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', contract.operationFor('POST /conform').responses[200].content['application/json'].schema.additionalProperties === undefined && !contract.checked('POST /conform').some((fn) => fn && fn.outputAllowlist));
+t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', Object.values(noShape.operationFor('GET /:id').responses[200].content)[0].schema.additionalProperties === undefined && !noShape.checked('GET /:id').some((fn) => fn && fn.outputAllowlist));
+
+/* ── closed from recordings only (a route answered by a shared wrapper): reported, never enforced ── */
+const wrapped = tool.deriveShape({ samples: [{ ok: true, entry_id: 'e1', lines: [{ code: '1', dr: 1 }] }, { ok: true, duplicate: true, entry_id: 'e1' }], source: null, recordings: true });
+t('recordings: with no handler literal and recorded objects, the node closes over the recorded keys and says so', wrapped.schema.additionalProperties === false && wrapped.schema['x-closed-by'] === 'recordings' && same(Object.keys(wrapped.schema.properties), ['ok', 'entry_id', 'lines', 'duplicate']) && !wrapped.open.length);
+t('recordings: the nested list items are closed from recordings too', wrapped.schema.properties.lines.items['x-closed-by'] === 'recordings');
+t('recordings: the same samples without the flag stay OPEN and are listed (the literal rule is unchanged)', (() => { const out = tool.deriveShape({ samples: [{ ok: true }], source: null }); return out.schema.additionalProperties === undefined && out.open.length === 1; })());
+t('recordings: a handler literal closes by the handler, never marked', (() => { const out = tool.deriveShape({ samples: [{ ok: true }], source: literal('{ ok: true }'), recordings: true }); return out.schema.additionalProperties === false && out.schema['x-closed-by'] === undefined; })());
+const unproven = allow.prune(wrapped.schema, { ok: true, entry_id: 'e1', brand_new_key: 1, lines: [{ code: '1', dr: 1, other: 2 }] });
+t('prune: a key outside a recordings-closed node is listed as dropped AND kept in the value (never enforced)', same(unproven.dropped.slice().sort(), ['brand_new_key', 'lines.[].other']) && same(unproven.kept.slice().sort(), ['brand_new_key', 'lines.[].other']) && unproven.value.brand_new_key === 1 && unproven.value.lines[0].other === 2);
+t('prune: a key outside a node closed by the handler is still dropped and not in kept', (() => { const out = allow.prune(schema, body); return out.kept.length === 0 && out.value.canary === undefined; })());
+allow.forgetDropped();
+t('filter (enforce): a recordings-closed answer keeps its new key, and the drop is still counted and named', (() => { const out = run(200, { ok: true, brand_new_key: 1 }, { status: 200, observed: 2, schema: wrapped.schema }); return out.brand_new_key === 1 && allow.droppedCount() === 1 && allow.droppedKeys()[0].path === 'brand_new_key'; })());
+allow.forgetDropped();
+const wrapperText = ["router.get('/assets', auth, async (req, res) => { res.json({ a: 1 }); });", "route('post', '/assets', (req, e) => P().addAsset(e));", "route('post', '/assets/:id/dispose', (req, e) => P().disposeAsset(e));"];
+t('wrapperLineOf: a route( registration is found by method and by the path the key ends with, exactly', tool.wrapperLineOf(wrapperText, { key: 'POST /api/books/assets' }) === 2 && tool.wrapperLineOf(wrapperText, { key: 'POST /api/books/assets/:id/dispose' }) === 3 && tool.wrapperLineOf(wrapperText, { key: 'GET /api/books/assets' }) === 0);
+t('shapeEntry: a route( wrapper route closes from its recordings and says closed_by recordings; a router.get route with a literal does not', (() => {
+  const samples = { 200: [{ ok: true, entry_id: 'e1' }] };
+  const wrapped = tool.shapeEntry({ key: 'POST /api/books/assets', line: 0 }, { byStatus: samples, lines: wrapperText, captures: [] });
+  const literal = tool.shapeEntry({ key: 'GET /api/books/assets', line: 1 }, { byStatus: samples, lines: wrapperText, captures: [] });
+  return wrapped.closed_by === 'recordings' && wrapped.schema.additionalProperties === false && !wrapped.open.length && literal.closed_by === undefined;
+})());
+t('register: a passing output_allowlist whose evidence says basis recordings is marked on its row; nothing else is', (() => { const reg = require(path.join(API, 'tools', 'api-register.cjs')); return same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true, output_allowlist_basis: 'recordings' }), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true }), {}) && same(reg.basisOf({ output_allowlist: false }, { output_allowlist_basis: 'recordings' }), {}); })());
+
+t('deriveShape: identifiers a passed-through value happens to name (a shorthand key, a call argument) are NOT keys; only keys a recorded answer held are', (() => {
+  const source = literal('Object.assign(view, pageOut(rows, { owner: isOwner(req), PAGE_DEFAULT }))');
+  const shape = tool.deriveShape({ samples: [{ people: [{ id: 1 }], total: 1 }], source });
+  const names = Object.keys(shape.schema.properties);
+  return same(names, ['people', 'total']) && !names.includes('owner') && !names.includes('PAGE_DEFAULT') && shape.schema['x-closed-by'] === 'recordings';
+})());
+t('deriveShape: a passed-through value whose answers held no key stays open instead of taking its names as keys', (() => {
+  const shape = tool.deriveShape({ samples: [{}], source: literal('rows.map((r) => ({ a: 1 }))') });
+  return shape.open.length === 1 && shape.schema.additionalProperties === undefined;
+})());
+t('fromRecordings: a handler that hands its answer on (a library call, a spread) closes over the recorded keys, marked, only when asked', (() => {
+  const text = ["router.get('/a', auth, async (req, res) => { res.json(await lib.listThings(req.query)); });", "router.get('/b', auth, async (req, res) => { res.json({ ...await lib.one(), extra: 1 }); });"];
+  const samples = { 200: [{ rows: [{ id: 1 }], total: 1 }] };
+  const asked = tool.shapeEntry({ key: 'GET /api/a', line: 1 }, { byStatus: samples, lines: text, captures: [], fromRecordings: true });
+  const spread = tool.shapeEntry({ key: 'GET /api/b', line: 2 }, { byStatus: { 200: [{ a: 1 }] }, lines: text, captures: [], fromRecordings: true });
+  const plain = tool.shapeEntry({ key: 'GET /api/a', line: 1 }, { byStatus: samples, lines: text, captures: [] });
+  return asked.closed_by === 'recordings' && asked.schema.additionalProperties === false && asked.schema.properties.rows.items['x-closed-by'] === 'recordings' && !asked.open.length
+    && same(Object.keys(spread.schema.properties).sort(), ['a', 'extra']) && spread.schema['x-closed-by'] === 'recordings' && plain.open.length === 1 && plain.closed_by === undefined;
+})());
+t('mergeShapeFile: a run keeps every other route in its place and puts a new route just before the first key that sorts after it (no whole-file re-sort, so parallel area runs do not collide)', (() => {
+  const file = { _about: 'x', routes: { 'GET /b': { v: 1 }, 'GET /a': { v: 1 }, 'GET /z': { v: 1 } }, listed: {} };
+  const out = tool.mergeShapeFile(file, { shapes: { 'GET /c': { v: 2 }, 'GET /a': { v: 3 } }, listed: {} });
+  return same(Object.keys(out.routes), ['GET /b', 'GET /a', 'GET /c', 'GET /z']) && out.routes['GET /a'].v === 3;
+})());
+t('register: a route whose success schema holds an x-closed-by recordings node carries the basis whichever test proved it; a literal-closed one does not', (() => {
+  const reg = require(path.join(API, 'tools', 'api-register.cjs'));
+  const of = (schema) => ({ responses: { 200: { content: { 'application/json': { schema } } } } });
+  const marked = of({ type: 'object', additionalProperties: false, properties: { rows: { type: 'array', items: { type: 'object', additionalProperties: false, 'x-closed-by': 'recordings' } } } });
+  const literal = of({ type: 'object', additionalProperties: false, properties: {} });
+  return same(reg.basisOf({ output_allowlist: true }, {}, marked), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, {}, literal), {}) && same(reg.basisOf({ output_allowlist: false }, {}, marked), {});
+})());
 
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -19,6 +19,8 @@
  * the figures that become the shop's permanent record.
  *
  * Run: node tests/rollup.test.js   · no DB, no network.
+ * CARD      26-reporting-mis-and-bi/rollups-and-summary-chits
+ * CARD      09-counter/day-open-day-close-summary-chits
  */
 const assert = require('assert');
 const R = require('../lib/rollup');
@@ -416,11 +418,11 @@ console.log('\n\u26A0\uFE0F\u26A0\uFE0F THE QUERY AND THE CHIT MUST AGREE\n');
 const TILL_SRC = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
 let SUMMARY_ROUTE = '';
 const SUMMARY_SQL = (function () {
-  const at = TILL_SRC.indexOf("router.get('/summary'");
+  const at = TILL_SRC.indexOf('async function periodSummary(');
   assert.ok(at > 0, 'GET /api/till/summary is gone — this guard is measuring nothing');
   /* RPT2: the route runs lib/till-summary's statement (the one copy Home's till card also runs) — so the SQL checked is that one */
-  const route = TILL_SRC.slice(at, TILL_SRC.indexOf('res.json({ period', at));
-  assert.ok(/TS\.summaryStatement\(/.test(route), 'the summary route no longer runs lib/till-summary.summaryStatement — which SQL is it running?');
+  const route = TILL_SRC.slice(at, TILL_SRC.indexOf('const BILLS_PAGE', at));
+  assert.ok(/tillSummary\.summaryStatement\(/.test(route), 'the summary route no longer runs lib/till-summary.summaryStatement — which SQL is it running?');
   SUMMARY_ROUTE = route;
   const sql = require('../lib/till-summary').SUMMARY_SQL;
   assert.ok(/FROM chit_header/.test(sql), 'the summary statement no longer queries chit_header');
@@ -476,7 +478,7 @@ it('the query is ordered newest-first, which the fold relies on', () => {
 it('the read goes through withEntity — RLS, not a bare query', () => {
   /* RPT2: the plain read under withEntity in the route; the Trend read under readBatch (entity-scoped, one trip) in lib/till-summary */
   const TS_SRC = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'till-summary.js'), 'utf8');
-  assert.ok(/withEntity\(entity_id/.test(SUMMARY_ROUTE) && /readBatch\(entity, actor/.test(TS_SRC),
+  assert.ok(/[wW]ithEntity\(entity_id/.test(SUMMARY_ROUTE) && /readBatch\(entity, actor/.test(TS_SRC),
     'the summary route reads chit_header without withEntity() — under FORCE RLS it would silently return nothing');
 });
 
@@ -636,6 +638,15 @@ it('⭐ a despatch note is not a bill: 3 bills + 1 despatch → count 3', () => 
   const b = (n) => ({ total: n, payments: [{ how: 'cash', amount: n }] });
   const t = R.totals([b(10), b(20), b(30), { total: 99, business_json: { doc: 'despatch' } }, { doc: 'receive', total: 7 }]);
   assert.strictEqual(t.count, 3); assert.strictEqual(t.gross, 60);
+});
+
+/** ⭐ ACC-255 — GET /api/till/bills now gives a credit note its negative total: the day nets by a plain sum AND the engine still counts it as a return */
+it('⭐ a credit note row with its negative total (ACC-255): sale 1000 + note -300 → total 700, 1 bill, 1 return, refund 300 off Cash', () => {
+  const sale = { no: 'S1', kind: 'cash', total: 1000, payments: [{ how: 'Cash', amount: 1000 }] };
+  const note = { no: 'N1', kind: 'credit_note', total: -300, taxable: -254.24, tax: -45.76, refunds: [{ how: 'Cash', amount: 300 }] };
+  const t = R.totals([sale, note]);
+  assert.strictEqual(t.total, 700); assert.strictEqual(t.count, 1); assert.strictEqual(t.returns, 1);
+  assert.strictEqual(t.refunds, 300); assert.strictEqual(t.by.Cash, 700);
 });
 
 console.log('\n' + pass + ' checks passed\n');

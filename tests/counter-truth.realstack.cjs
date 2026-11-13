@@ -109,7 +109,7 @@ async function caseCollisionNamed() {
 /** CT-17 (R58 walk 24 Oct): a shop's SALES offer never touches a goods receipt: the line total equals qty x cost. The offer is proved live first, on a captured sale. */
 async function caseNoOfferOnReceipt() {
   const S = await freshShop(RUN + 'f', 'Offer'), p = await product(S, 'Dal', 100);
-  ok(await j('/api/definitions', { method: 'POST', token: S.token, body: { kind: 'offer', sub_kind: 'amount_off', name: 'Dal 5 off ' + RUN, status: 'live', rules: { amount: 5, scope: 'line', applies_to: { item_ids: [p.id] } } } }), 'offer');
+  ok(await j('/api/definitions', { method: 'POST', token: S.token, body: { kind: 'offer', sub_kind: 'amount_off', name: 'Dal 5 off ' + RUN, status: 'live', confirmed: true, rules: { amount: 5, scope: 'line', applies_to: { item_ids: [p.id] } } } }), 'offer');
   const sale = bill(RUN + '-F1', [[p, 1]]); delete sale.business_json.billed_at;   /* a captured sale carries no billed_at: the live offers apply to it */
   const sid = (await sendAs(S, sale, 'captured sale')).chit_id;
   const sold = (await pg.query('SELECT line_items FROM chit_detail WHERE chit_id = $1', [sid])).rows[0].line_items[0];
@@ -150,6 +150,8 @@ async function caseNoOfferOnReceipt() {
       const tag = RUN + 'n', email = tag + '@local.test';
       ok(await j('/api/entities/register', { method: 'POST', body: { email, display_name: 'No country ' + tag, user_id: tag } }), 'register');
       const v = ok(await j('/api/entities/verify', { method: 'POST', body: { email, otp: ENTITY_OTP } }), 'verify').b;
+      /* CTR-227: a spin that STATES its country hands it to a new shop at sign-up (offerOf), so a bare register is not country-less there; state the fact this case is about */
+      await pg.query("UPDATE identities SET country = NULL, currency_code = NULL WHERE lower(email) = $1", [email]);
       const r = await j('/api/chits/send', { method: 'POST', token: v.token, body: bill(RUN + '-BN', [[{ id: 'x', name: 'Thing', unit: 'piece', price: 10 }, 1]]) });
       expect(r.status >= 400 && r.status < 500 && /country/i.test(JSON.stringify(r.b)), 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
     });

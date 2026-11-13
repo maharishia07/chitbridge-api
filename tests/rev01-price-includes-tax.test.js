@@ -14,6 +14,7 @@
  *
  * Run: node tests/rev01-price-includes-tax.test.js
  */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const path = require('path');
 const assert = require('assert');
 const API = path.join(__dirname, '..');
@@ -94,9 +95,9 @@ async function theReproduction() {
    there is not exercised by the tests above, which only reach lib/tax-copy.js's own path. */
 async function structuralGuard() {
   console.log('\n-- ⚠️ routes/chits.js\'s OWN invoiceFor() call must keep asking policy.flagOf() for this --\n');
-  const fs = require('fs');
-  const src = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
-  const m = /taxLines\.invoiceFor\(\{[^}]*\}\)/s.exec(src);
+  /* the send's invoiceFor() call moved from the chits route files into lib/send-money.js (the one send-money step): read both, the call must be found in one of them */
+  const src = CF.read(API) + '\n' + require('fs').readFileSync(path.join(API, 'lib', 'send-money.js'), 'utf8');
+  const m =/taxLines\.invoiceFor\(\{[^}]*\}\)/s.exec(src);
   await t('routes/chits.js\'s invoiceFor() call includes priceIncludesTax', () => {
     assert.ok(m, 'could not find the invoiceFor() call at all — has it moved or been renamed?');
     assert.ok(/priceIncludesTax/.test(m[0]), 'the call no longer mentions priceIncludesTax — the §1 defect is back');

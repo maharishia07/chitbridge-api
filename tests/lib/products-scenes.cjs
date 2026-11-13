@@ -34,6 +34,7 @@ function extras(tools) {
   const own = answering(/SELECT item_data FROM catalogue_items WHERE item_id/, [{ item_data: ITEM().item_data }]);
   const shelf = firstOf(money, written, own);
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more)); // an answer born after the sweep froze the old ones (B2, K-1): no frozen legacy to match
   const withRows = (answer) => ({ sqlRows: answer });
   const failing = { db: 'fail' };
   const requiredName = firstOf(
@@ -50,7 +51,11 @@ function extras(tools) {
   const counts = answering(/count\(\*\)::int AS n FROM catalogue_items/, [{ n: 0 }]);
   const listRows = firstOf(counts, answering(/FROM catalogue_items WHERE/, [ITEM()]));
   const costBlind = { who: STAFF };
+  const markedOut = (rows) => answering(/^s*UPDATE catalogue_items/, rows.map((row) => Object.assign({ item_data: ITEM({ status: 'unavailable' }).item_data }, row)));
+  const withMedia = (media) => firstOf(answering(/^s*UPDATE catalogue_items/, [{ item_data: ITEM({ media }).item_data }]), shelf);
   const costHidden = { cost: { canReadSafe: async () => false } };
+  const CATEGORY = '22222222-2222-4222-8222-222222222222';
+  const categoriesBulkRows = firstOf(answering(/FROM definition/, [{ definition_id: CATEGORY, name: 'Fruit', status: 'live' }]), answering(/FOR UPDATE/, [{ item_id: PARTY, item_data: ITEM().item_data }]), shelf);
   const importBody = (more) => Object.assign({ csv: CSV, decisions: DECIDED, confirm: true }, more);
   return [
     /* POST / */
@@ -61,8 +66,11 @@ function extras(tools) {
     X('server-owned-key', 'POST ' + P, 400, { body: { item_data: { name: 'Tea', media: [{ id: 'm1' }] } }, setup: withRows(shelf) }),
     X('price-below-zero', 'POST ' + P, 422, { body: { item_data: { name: 'Tea', price: 'abc' } }, setup: withRows(shelf) }),
     X('rate-owner-only', 'POST ' + P, 403, { body: { item_data: { name: 'Tea', gst_rate: 18 } }, setup: costBlind }),
+    /* CAT-235 part 2: a cost-blind co-assist creates items, never a cost key at any depth (`after`: main created it with the cost) */
+    X('create-cost-blind', 'POST ' + P, 403, { after: true, body: { item_data: { name: 'Tea', modifiers: [{ options: [{ name: 'L', cost: 4 }] }] } }, setup: costBlind }),
     /* POST /bulk */
     X('bulk-rate-owner-only', 'POST ' + P + '/bulk', 403, { body: { items: [{ name: 'Tea', gst_rate: 18 }] }, setup: costBlind }),
+    X('bulk-cost-blind', 'POST ' + P + '/bulk', 403, { after: true, body: { items: [{ name: 'Tea', cost: 4 }] }, setup: costBlind }),
     X('too-many-products', 'POST ' + P + '/bulk', 400, { body: { items: manyOf(201, { name: 'Tea' }) } }),
     X('an-item-is-not-an-object', 'POST ' + P + '/bulk', 400, { body: { items: ['tea'] } }),
     X('bulk-refused-by-the-rules', 'POST ' + P + '/bulk', 400, { body: { items: [{ unit: 'kg' }] }, setup: withRows(requiredName) }),
@@ -73,16 +81,28 @@ function extras(tools) {
     X('an-id-is-not-text', 'POST ' + P + '/status/bulk', 400, { body: { ids: [5], status: 'available' } }),
     X('retired-is-not-bulk', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY], status: 'retired' } }),
     X('bulk-status-set', 'POST ' + P + '/status/bulk', 200, { body: { ids: [PARTY], status: 'unavailable' }, setup: withRows(answering(/^\s*UPDATE catalogue_items/, [{ item_id: PARTY, item_data: ITEM().item_data }])) }),
+    /* the item reads as out of stock (reads_as a sentence, not null) · one id the shop does not hold (missed names it) */
+    X('bulk-status-marked-out', 'POST ' + P + '/status/bulk', 200, { body: { ids: [PARTY, 'no-such-id'], status: 'unavailable' }, setup: withRows(markedOut([{ item_id: PARTY }])) }),
     X('bulk-status-db-fails', 'POST ' + P + '/status/bulk', 500, { body: { ids: [PARTY], status: 'unavailable' }, setup: failing }),
     X('bulk-status-ids-and-status-wrong', 'POST ' + P + '/status/bulk', 400, { body: { ids: 'x', status: 5 } }),
     X('bulk-status-status-missing', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY] } }),
     /* POST /bulk-update */
     X('edit-rate-owner-only', 'POST ' + P + '/bulk-update', 403, { body: { items: [{ id: PARTY, item_data: { name: 'Tea', gst_rate: 18 } }] }, setup: costBlind }),
+    /* CAT-235: a cost-blind co-assist's bulk edit replaces each record, so even a status-only one is refused, naming the shelf's keys it would erase (`after`: main answered 200 and wiped the row) */
+    X('edits-cost-blind', 'POST ' + P + '/bulk-update', 403, { after: true, body: { items: [{ id: PARTY, item_data: { status: 'unavailable' } }] }, setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT item_id, item_data FROM catalogue_items/, [{ item_id: PARTY, item_data: ITEM().item_data }]), shelf) }, patch: costHidden }),
     X('too-many-edits', 'POST ' + P + '/bulk-update', 400, { body: { items: manyOf(201, { id: PARTY, item_data: { name: 'Tea' } }) } }),
     X('an-edit-has-the-wrong-shape', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY }] } }),
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
     X('edits-written', 'POST ' + P + '/bulk-update', 200, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: withRows(shelf) }),
     X('edits-db-fails', 'POST ' + P + '/bulk-update', 500, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: failing }),
+    /* POST /categories/bulk (QA-130, born after the sweep: N) */
+    N('categories-bulk-nothing-named', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY] } }),
+    N('categories-bulk-both-ways', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY], add: [CATEGORY], remove: [CATEGORY] } }),
+    N('categories-bulk-too-many', 'POST ' + P + '/categories/bulk', 400, { body: { ids: manyOf(201, PARTY).map((id, at) => id + at), add: [CATEGORY] } }),
+    N('categories-bulk-unknown-category', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY], add: [CATEGORY] } }),
+    N('categories-bulk-cost-blind', 'POST ' + P + '/categories/bulk', 403, { body: { ids: [PARTY], add: [CATEGORY] }, setup: costBlind }),
+    N('categories-bulk-done', 'POST ' + P + '/categories/bulk', 200, { body: { ids: [PARTY, '33333333-3333-4333-8333-333333333333'], add: [CATEGORY] }, setup: withRows(categoriesBulkRows) }),
+    N('categories-bulk-db-fails', 'POST ' + P + '/categories/bulk', 500, { body: { ids: [PARTY], add: [CATEGORY] }, setup: failing }),
     /* GET / */
     X('list-answers', 'GET ' + P, 200, { setup: withRows(listRows) }),
     X('list-by-text', 'GET ' + P, 200, { url: P + '?q=tea&limit=10&offset=0', setup: withRows(listRows) }),
@@ -111,10 +131,14 @@ function extras(tools) {
     X('import-a-row-has-a-problem', 'POST ' + P + '/import', 409, { body: importBody({ csv: 'sku,name,unit,price\nA1,Tea,kg,not-a-number\n' }), setup: withRows(shelf) }),
     X('import-done', 'POST ' + P + '/import', 200, { body: importBody(), setup: withRows(shelf) }),
     X('import-rate-owner-only', 'POST ' + P + '/import', 403, { body: importBody({ csv: 'sku,name,unit,price,gst_rate' + String.fromCharCode(10) + 'A1,Tea,kg,5,18' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'gst_rate', action: 'map', field: 'gst_rate' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }]), shelf) } }),
+    X('import-cost-blind', 'POST ' + P + '/import', 403, { after: true, body: importBody({ csv: 'sku,name,unit,price,cost' + String.fromCharCode(10) + 'A1,Tea,kg,5,3' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'cost', action: 'create', field: 'cost' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }]), shelf) } }),
     X('import-db-fails', 'POST ' + P + '/import', 500, { body: importBody({ decisions: [] }), setup: failing }),
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */
     X('starter-list', 'GET ' + P + '/starter-columns', 200, { url: P + '/starter-columns?vertical=gold' }),
+    N('starter-vertical-given-twice', 'GET ' + P + '/starter-columns', 400, { url: P + '/starter-columns?vertical=gold&vertical=tea' }),
+    X('starter-list-bare', 'GET ' + P + '/starter-columns', 200, {}),
+    X('starter-list-unknown-trade', 'GET ' + P + '/starter-columns', 200, { url: P + '/starter-columns?vertical=nope' }),
     X('starter-list-fails', 'GET ' + P + '/starter-columns', 500, { patch: { starter: { list: crash } } }),
     X('starter-unknown-trade', 'POST ' + P + '/starter-columns', 400, { body: { vertical: 'nope' } }),
     X('starter-no-definition', 'POST ' + P + '/starter-columns', 500, { body: { vertical: 'gold' }, patch: { boot: { ensureDefaultSchema: async () => ({}) } } }),
@@ -131,10 +155,20 @@ function extras(tools) {
     X('edit-server-owned-key', 'PATCH ' + P + '/:id', 400, { body: { item_data: { name: 'Tea', image: 'x' } }, setup: withRows(firstOf(own, money)) }),
     X('edit-written', 'PATCH ' + P + '/:id', 200, { body: body(), setup: withRows(shelf) }),
     X('edit-merged', 'PATCH ' + P + '/:id', 200, { body: { merge: true, item_data: { unit: 'g' } }, setup: withRows(shelf) }),
+    /* CAT-234/236: a cost-blind co-assist flips status (merge:true) and gets the row back WITHOUT its cost at any depth (the shelf holds cost: 3, cost_x and an option cost) */
+    X('edit-status-cost-blind', 'PATCH ' + P + '/:id', 200, { body: { merge: true, item_data: { status: 'unavailable' } }, setup: { who: STAFF, sqlRows: firstOf(money, answering(/^\s*UPDATE catalogue_items/, [ITEM({ cost: 3, cost_x: 1, modifiers: [{ name: 'Size', options: [{ name: 'L', price: 12, cost: 2 }] }] })]), answering(/SELECT item_data FROM catalogue_items WHERE item_id/, [{ item_data: ITEM({ cost: 3, cost_x: 1, modifiers: [{ name: 'Size', options: [{ name: 'L', price: 12, cost: 2 }] }] }).item_data }])) }, patch: costHidden }),
+    /* CAT-237: the same flip WITHOUT merge:true would replace the row with {status}: refused, naming the shelf's keys it would erase (`after`: main answered 200 and wiped the row, so nothing was frozen) */
+    X('edit-status-cost-blind-replace', 'PATCH ' + P + '/:id', 403, { after: true, body: { item_data: { status: 'unavailable' } }, setup: { who: STAFF, sqlRows: shelf }, patch: costHidden }),
     X('edit-currency-clash', 'PATCH ' + P + '/:id', 409, { body: { item_data: { name: 'Tea', price: { amount: 3, currency: 'USD' } } }, setup: withRows(shelf) }),
     /* schedule */
     X('schedule-read', 'GET ' + P + '/:id/schedule', 200, { patch: scheduleOn }),
+    /* CAT-234: a parked change the owner made carries a cost; a cost-blind co-assist reads the list without it */
+    X('schedule-read-cost-blind', 'GET ' + P + '/:id/schedule', 200, { setup: costBlind, patch: { schema: scheduleOn.schema, schedule: { pending: async () => [{ schedule_id: PARTY, item_id: PARTY, effective_at: SOMEDAY, patch: { status: 'unavailable', cost: 3 }, created_at: SOMEDAY }] }, cost: costHidden.cost } }),
     X('schedule-read-fails', 'GET ' + P + '/:id/schedule', 500, { patch: { schedule: { pending: boom } } }),
+    /* K-1: a parked change that was cancelled answers true; one nobody holds (not a uuid, another shop's, already applied) answers false, both 200 */
+    X('schedule-cancel', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: { schedule: { cancel: async () => true } } }),
+    X('schedule-cancel-none-held', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: { schedule: { cancel: async () => false } } }),
+    X('schedule-cancel-fails', 'DELETE ' + P + '/:id/schedule/:sid', 500, { patch: { schedule: { cancel: boom } } }),
     X('schedule-needs-both', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY } }),
     X('schedule-cost-blind', 'POST ' + P + '/:id/schedule', 403, { body: { effective_at: SOMEDAY, item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
     X('schedule-server-owned-key', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY, item_data: { image: 'x' } } }),
@@ -162,6 +196,7 @@ function extras(tools) {
     X('status-item-not-found', 'PUT ' + P + '/:id/status', 404, { body: { status: 'unavailable' } }),
     X('status-unknown-word', 'PUT ' + P + '/:id/status', 400, { body: { status: 'sold' }, setup: withRows(shelf) }),
     X('status-set', 'PUT ' + P + '/:id/status', 200, { body: { status: 'unavailable' }, setup: withRows(shelf) }),
+    X('status-marked-out', 'PUT ' + P + '/:id/status', 200, { body: { status: 'unavailable' }, setup: withRows(markedOut([{ item_id: PARTY }])) }),
     X('status-db-fails', 'PUT ' + P + '/:id/status', 500, { body: { status: 'unavailable' }, setup: failing }),
     /* DELETE /:id */
     X('removed', 'DELETE ' + P + '/:id', 200, { setup: withRows(shelf) }),
@@ -175,29 +210,40 @@ function extras(tools) {
     X('media-link-not-a-video', 'POST ' + P + '/:id/media', 400, { body: { url: 'https://example.com/x' } }),
     X('media-link-item-not-found', 'POST ' + P + '/:id/media', 404, { body: { url: 'https://youtu.be/abcdef123' } }),
     X('media-video-linked', 'POST ' + P + '/:id/media', 200, { body: { url: 'https://youtu.be/abcdef123', name: 'Tour' }, setup: withRows(shelf) }),
+    X('media-video-linked-lists-media', 'POST ' + P + '/:id/media', 200, { body: { url: 'https://youtu.be/abcdef123', name: 'Tour' }, setup: withRows(withMedia([{ id: PARTY, kind: 'video' }])) }),
     X('media-name-and-bytes-needed', 'POST ' + P + '/:id/media', 400, { body: { name: 'a.png' } }),
     X('media-store-not-configured', 'POST ' + P + '/:id/media', 503, { body: { name: 'a.png', data_base64: PNG.toString('base64') } }),
     X('media-empty', 'POST ' + P + '/:id/media', 400, { body: { name: 'a.png', data_base64: '!' }, patch: storeOn }),
     X('media-too-large', 'POST ' + P + '/:id/media', 413, { body: { name: 'a.bin', data_base64: Buffer.alloc(8 * 1024 * 1024 + 1).toString('base64') }, patch: storeOn }),
     X('media-upload-item-not-found', 'POST ' + P + '/:id/media', 404, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeOn }),
     X('media-uploaded', 'POST ' + P + '/:id/media', 200, { body: { name: 'a.png', mime: 'image/png', data_base64: 'data:image/png;base64,' + PNG.toString('base64') }, patch: storeOn, setup: withRows(shelf) }),
+    X('media-uploaded-lists-media', 'POST ' + P + '/:id/media', 200, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeOn, setup: withRows(withMedia([{ id: PARTY, kind: 'image' }])) }),
     X('media-upload-fails', 'POST ' + P + '/:id/media', 500, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeWith({ put: boom }) }),
     X('media-removed', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeOn, setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }] } }])) }),
+    X('media-removed-one-stays', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeOn, setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }, { id: 'm2', name: 'tour', kind: 'video' }] } }])) }),
     X('media-remove-key-outside-the-shop', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeWith({ del: async () => { throw Object.assign(new Error('no'), { code: 'NOT_OWNER' }); } }), setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }] } }])) }),
     /* versions */
     X('versions-bad-date', 'GET ' + P + '/:id/versions', 400, { url: P + '/' + PARTY + '/versions?at=yesterday' }),
     X('versions-not-migrated', 'GET ' + P + '/:id/versions', 503, { setup: withRows(raising(/SELECT item_id FROM catalogue_items/, '42P01')) }),
     X('versions-listed', 'GET ' + P + '/:id/versions', 200, { setup: withRows(firstOf(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }]), answering(/FROM catalogue_item_version v/, [{ version_no: 1, valid_to: null, snapshot: { cost: 3 } }]))) }),
     X('versions-as-of', 'GET ' + P + '/:id/versions', 200, { url: P + '/' + PARTY + '/versions?at=2026-10-01T00:00:00.123Z', setup: withRows(firstOf(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }]), answering(/FROM catalogue_item_version/, [{ version_no: 1, snapshot: { cost: 3 } }]))) }),
+    /* versions: no row at that moment (version null) · a history with no open version (current null) · no history at all */
+    X('versions-as-of-no-row', 'GET ' + P + '/:id/versions', 200, { url: P + '/' + PARTY + '/versions?at=2026-10-01T00:00:00.123Z', setup: withRows(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }])) }),
+    X('versions-none-open', 'GET ' + P + '/:id/versions', 200, { setup: withRows(firstOf(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }]), answering(/FROM catalogue_item_version v/, [{ version_no: 1, valid_to: '2026-10-01T00:00:00.000Z', snapshot: { name: 'Tea' } }]))) }),
+    X('versions-no-history', 'GET ' + P + '/:id/versions', 200, { setup: withRows(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }])) }),
     /* the lists */
     X('lists-db-fails', 'GET ' + P + '/lists', 200, { setup: failing }),
     X('lists-trade-unreadable', 'GET ' + P + '/lists', 500, { patch: { gov: { verticalOf: boom } } }),
     X('lists-shown', 'GET ' + P + '/lists', 200, { setup: withRows(firstOf(money, answering(/FROM catalogue_items WHERE entity_id/, [{ name: 'Tea', unit: 'kg', price: { amount: 10, currency: 'INR' }, is_active: true }]))) }),
+    /* the trade opens on a list (pick) · a trade no list fits (pick null, vertical named) · a shop with no stated trade (vertical null) */
+    X('lists-for-a-grocer', 'GET ' + P + '/lists', 200, { patch: { gov: { verticalOf: async () => ({ key: 'kirana' }) } }, setup: withRows(money) }),
+    X('lists-for-an-unlisted-trade', 'GET ' + P + '/lists', 200, { patch: { gov: { verticalOf: async () => ({ key: 'gold' }) } }, setup: withRows(money) }),
     X('lists-adopt-list-missing', 'POST ' + P + '/lists/adopt', 400, { body: {} }),
     X('lists-adopt-unknown-list', 'POST ' + P + '/lists/adopt', 400, { body: { list: 'nope' } }),
     X('lists-adopt-nothing-selected', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'no such product', unit: 'kg' }] }, setup: withRows(money) }),
     X('lists-adopt-done', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'Tomato (country)', unit: 'kg', price: 40 }], status: 'available' }, setup: withRows(firstOf(money, answering(/INSERT INTO catalogue_items/, [ITEM()]))) }),
-    X('lists-adopt-a-row-with-a-picture', 'POST ' + P + '/lists/adopt', 400, { body: { list: 'veg', names: [{ name: 'Tomato', unit: 'kg' }] }, setup: withRows(money) }),
+    /* CAT-207: the list's picture links are stripped (they are the server's to mint), so a starter row is adopted, not refused whole */
+    X('lists-adopt-a-row-with-a-picture', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'Tomato', unit: 'kg' }] }, setup: withRows(firstOf(money, answering(/INSERT INTO catalogue_items/, [ITEM()]))), after: true }),
     X('lists-adopt-categories-fail', 'POST ' + P + '/lists/adopt', 500, { body: { list: 'veg' }, patch: { cats: { ensureCategories: boom } }, setup: withRows(money) }),
     X('lists-adopt-db-fails', 'POST ' + P + '/lists/adopt', 500, { body: { list: 'veg' }, setup: failing })
   ];

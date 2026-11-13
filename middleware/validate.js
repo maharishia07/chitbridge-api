@@ -43,8 +43,14 @@ const sanitise = (str) => {
     .substring(0, 1000); // max length
 };
 
+/**
+ * isCalendarDay(value) — true only for a REAL calendar day written YYYY-MM-DD (2026-02-30 and 2026-13-01 are not days). CMP-23: a date column is fed
+ * from a body, and Postgres answers a bad day with its own words (22007, 22008) under a 500; callers refuse it first.
+ */
+const isCalendarDay = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && isDay(value); // date only, through the one day rule (isDay, API-17)
+
 /* one engine for the body (exact types: a number is not a string) and one for the URL (a query value is always text, so "5" may be the integer 5) */
-const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true };
+const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true, verbose: true }; /* verbose: a failure carries its parent schema, so a bound fragment (lib/bounds.js, x-bound) can be told from a hand-written keyword */
 const bodyEngine = new Ajv2020(AJV_OPTIONS);
 const urlEngine = new Ajv2020(Object.assign({ coerceTypes: true }, AJV_OPTIONS));
 const DEFAULT_REFUSAL = { status: 422, code: 'INVALID_INPUT' };
@@ -73,13 +79,28 @@ const fieldOf = (failure) => {
   return where.join('.') || '(body)';
 };
 
+/* the shopkeeper sentence of each bound keyword (SHARED-CHECKS 0a), used ONLY for a schema carrying x-bound (lib/bounds.js fragments): a frozen route that wrote the same keyword by hand keeps ajv's words byte for byte */
+const BOUND_SENTENCES = {
+  minimum: (field, params) => field + ' must be at least ' + params.limit + '.',
+  exclusiveMinimum: (field, params) => field + ' must be more than ' + params.limit + '.',
+  maximum: (field, params) => field + ' must be at most ' + params.limit + '.',
+  exclusiveMaximum: (field, params) => field + ' must be less than ' + params.limit + '.',
+  multipleOf: (field) => field + ' must be a whole number.',
+  minLength: (field, params) => (params.limit === 1 ? field + ' cannot be empty.' : field + ' must be at least ' + params.limit + ' characters.'),
+  maxLength: (field, params) => field + ' must be at most ' + params.limit + ' characters.',
+  maxItems: (field, params) => field + ' must have at most ' + params.limit + ' entries.',
+  format: (field, params) => field + (params.format === 'calendar-day' || params.format === 'date-time-day' ? ' must be a real date.' : ' is not in the form expected.'),
+  pattern: (field) => field + ' is not in a form that is accepted.'
+};
+
 /** the plain sentence for one failure: what is wrong with which field */
 const sentenceOf = (failure, field) => {
   if (failure.keyword === 'required') return field + ' is needed.';
   if (failure.keyword === 'type') return field + ' must be ' + (Array.isArray(failure.params.type) ? failure.params.type.join(' or ') : 'a ' + failure.params.type) + '.';
   if (failure.keyword === 'additionalProperties') return field + ' is not accepted here.'; /* API-3 strict input: refused, never dropped */
   if (failure.keyword === 'enum') return field + ' must be one of: ' + failure.params.allowedValues.join(', ') + '.';
-  return field + ' ' + failure.message + '.';
+  const isBound = failure.parentSchema && failure.parentSchema['x-bound'] === true;
+  return isBound && BOUND_SENTENCES[failure.keyword] ? BOUND_SENTENCES[failure.keyword](field, failure.params) : field + ' ' + failure.message + '.';
 };
 
 const KIND_CODES = { required: 'MISSING_FIELD', additionalProperties: 'UNKNOWN_FIELD' };
@@ -97,10 +118,29 @@ function errorsOf(validator, value) {
     .filter((item) => !seen.has(item.field + item.code) && seen.add(item.field + item.code));
 }
 
+/* the keys already reported, so a tolerant door sent the same stray key every minute names it once per process, not once per request */
+const reportedKeys = new Set();
+const KEY_LOG_CAP = 2000;
+let capNoted = false;
+/**
+ * API-43 / S33-T (Athi 12 Nov): a door that tolerates unknown keys ACCEPTS them and says so: one warning line naming the route and the key (never the value), once per process per key.
+ * Only a body schema that lists its keys and does not close itself is read (a closed one refused the key already). This only logs: the key is not read, stored or answered.
+ */
+function noteUnknownKeys(req, schema) {
+  if (!schema || schema.additionalProperties === false || !schema.properties || !req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return;
+  const route = req.method + ' ' + (req.baseUrl || '') + (req.route ? req.route.path : '');
+  Object.keys(req.body).filter((key) => !Object.prototype.hasOwnProperty.call(schema.properties, key)).slice(0, 20).forEach((key) => {
+    const name = route + '|' + key.slice(0, 80);
+    if (reportedKeys.has(name)) return;
+    if (reportedKeys.size >= KEY_LOG_CAP) { if (!capNoted) { capNoted = true; console.warn(JSON.stringify({ event: 'unknown_key_log_cap_reached', cap: KEY_LOG_CAP })); } return; } /* silence is the bug: past the cap, say so once */
+    reportedKeys.add(name);
+    console.warn(JSON.stringify({ event: 'unknown_key_accepted', route, key: key.slice(0, 80) }));
+  });
+}
 /**
  * schemaValidate(operation, options?) — express middleware. operation = the route's OpenAPI operation (requestBody + parameters).
  * options.status/code/legacy keep an outward route on its old refusal (S2: 400 and its frozen body) until its next major; default is S4's 422 INVALID_INPUT.
- * options.legacy(errors) → the frozen body for the first failure.
+ * options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that counts what was sent, as definitions' two chains did).
  */
 function schemaValidate(operation, options) {
   const choice = options || {};
@@ -110,14 +150,14 @@ function schemaValidate(operation, options) {
   const schemaValidated = function schemaValidated(req, res, next) {
     const urlFacts = Object.assign({}, req.query, req.params);
     const failures = (urlCheck ? errorsOf(urlCheck, urlFacts) : []).concat(bodyCheck ? errorsOf(bodyCheck, req.body === undefined ? {} : req.body) : []);
-    if (!failures.length) return next();
+    if (!failures.length) { noteUnknownKeys(req, bodyCheck && bodySchemaOf(operation)); return next(); }
     return problem(req, res, {
       status: choice.status || DEFAULT_REFUSAL.status,
       code: choice.code || DEFAULT_REFUSAL.code,
       detail: failures.length === 1 ? failures[0].detail : BODY_SENTENCE,
       field: failures[0].field,
       errors: failures,
-      legacy: choice.legacy ? choice.legacy(failures) : undefined
+      legacy: choice.legacy ? choice.legacy(failures, req) : undefined
     });
   };
   /* the register and the contract-test generator find a route's schema check by these two properties */
@@ -126,4 +166,33 @@ function schemaValidate(operation, options) {
   return schemaValidated;
 }
 
-module.exports = { validate, validateAsProblem, sanitise, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+/** a real calendar day (YYYY-MM-DD, optionally followed by a time): "7", "abc" and 2026-02-30 are not */
+const isDay = (text) => {
+  const found = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(text);
+  if (!found) return false;
+  const calendarDay = new Date(Date.UTC(+found[1], +found[2] - 1, +found[3]));
+  return calendarDay.getUTCFullYear() === +found[1] && calendarDay.getUTCMonth() === +found[2] - 1 && calendarDay.getUTCDate() === +found[3];
+};
+
+/**
+ * queryDay(...names) — express middleware (API-17, BH-6): each named query value, when given, must be ONE real day, else 400 VALIDATION_FAILED before any read.
+ * Postgres refuses "7" or "abc" for a timestamp with its own words, and that used to surface as a 500. An absent or empty value is left to the handler.
+ */
+const queryDay = (...names) =>
+  function queryDayChecked(req, res, next) {
+    const failures = names
+      .filter((name) => req.query[name] !== undefined && req.query[name] !== '' && !(typeof req.query[name] === 'string' && isDay(req.query[name].trim())))
+      .map((name) => ({ field: name, code: 'WRONG_VALUE', detail: name + ' must be a date (YYYY-MM-DD).' }));
+    if (!failures.length) return next();
+    return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: failures[0].detail, field: failures[0].field, errors: failures });
+  };
+
+/**
+ * REGISTERED_FORMATS — every ajv format a contract may name, each over the ONE reader of its shape (SHARED-CHECKS 0a). ajv runs with strict: false and ajv-formats is not a
+ * dependency, so a format nobody registered is silently ignored; tests/ajv-formats-registered.test.cjs fails when any contract names one that is not here (silence is the bug).
+ * 'calendar-day' reads isCalendarDay (date only), 'date-time-day' reads isDay (a day, optionally with a time).
+ */
+const REGISTERED_FORMATS = { 'calendar-day': isCalendarDay, 'date-time-day': isDay };
+Object.keys(REGISTERED_FORMATS).forEach((name) => [bodyEngine, urlEngine].forEach((engine) => engine.addFormat(name, REGISTERED_FORMATS[name])));
+
+module.exports = { KEY_LOG_CAP, noteUnknownKeys, REGISTERED_FORMATS, urlEngine, queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };

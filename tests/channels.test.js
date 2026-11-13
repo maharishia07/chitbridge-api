@@ -97,7 +97,11 @@ t('★★ approval is NOT an entity action — it cannot be reached with a norma
 t('★★ a missing CB_ADMIN_KEY DISABLES approval — it never means "no check"', () => {
   const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'channels.js'), 'utf8');
   const gate = route.slice(route.indexOf('function admin('), route.indexOf("router.post('/:id/approve'"));
-  assert.match(gate, /if \(!key\) return res\.status\(503\)/, 'no key must fail CLOSED, not open');
+  assert.match(gate, /if \(!key\) return problem\(req, res, \{ status: 503, \.\.\.adminOff\(\) \}\)/, 'no key must fail CLOSED, not open');
+  assert.match(gate, /if \(!ok\) return problem\(req, res, \{ status: 403, \.\.\.adminWrongKey\(\) \}\)/, 'a wrong key is refused');
+  const words = require('../lib/channels-contract');
+  assert.ok(words.OPERATIONS['POST /api/channels/:id/approve'].responses['503'] && words.OPERATIONS['POST /api/channels/:id/approve'].responses['403'], 'the contract declares both refusals of the gate');
+  assert.deepStrictEqual(words.adminOff().legacy, { error: 'Admin disabled', message: 'CB_ADMIN_KEY is not set on this server.' }, 'the 503 words are the ones it always had');
   assert.match(gate, /timingSafeEqual/, 'compare the key in constant time');
 });
 
@@ -109,14 +113,35 @@ console.log('\nchannels · ⚠️ the webhook must get the RAW body');
  * got a cheerful 200. A signature could never be verified and every real message would have been dropped while
  * Meta was told it had been accepted. Silent, total, and invisible to anything except an actual signed request.
  */
-t('★★ the raw parser for /api/capture/webhook is mounted BEFORE express.json', () => {
-  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
-  const raw = srv.indexOf("app.use('/api/capture/webhook', express.raw(");
-  const json = srv.indexOf('app.use(express.json(');
-  assert.ok(raw > -1, 'the raw mount is missing — signatures cannot be verified');
-  assert.ok(json > -1, 'express.json mount not found; this test needs rewriting');
-  assert.ok(raw < json, 'raw must come FIRST or the body is already consumed and the HMAC can never match');
+const rawName = '★★ the raw parser claims /api/capture/webhook before any JSON parser (the route sees the raw bytes)';
+/** Behaviour, not source text: boot the REAL app, slot a probe in right after the body parsers, POST JSON to the webhook path.
+ *  The probe sees a Buffer only if the raw parser claimed the stream first; if any JSON parser ran first it sees an object. */
+const probeBody = async () => {
+  const http = require('node:http'), authFirst = require('../middleware/auth-first');
+  Object.assign(process.env, { PORT: '0', HOST: '127.0.0.1', NODE_ENV: 'test', JWT_SECRET: 'x'.repeat(40) });
+  delete process.env.DATABASE_URL;
+  const app = require('../server');
+  const stack = (app._router || app.router).stack;
+  app.post('/api/capture/webhook/_probe', (req, res) => res.json({ raw: Buffer.isBuffer(req.body) }));
+  const probe = stack.pop(), after = stack.map((l) => l.handle).lastIndexOf(authFirst.parsers[1]);
+  assert.ok(after > -1, 'the global body parsers are no longer mounted from middleware/auth-first.js; this test needs rewriting');
+  stack.splice(after + 1, 0, probe);
+  return new Promise((resolve, reject) => {
+    const door = http.createServer(app).listen(0, '127.0.0.1', () => {
+      const body = '{"entry":[]}', rq = http.request({ host: '127.0.0.1', port: door.address().port, method: 'POST', path: '/api/capture/webhook/_probe', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) } }, (res) => {
+        let text = ''; res.on('data', (p) => { text += p; }); res.on('end', () => { door.close(); resolve({ status: res.statusCode, text }); });
+      });
+      rq.on('error', (e) => { door.close(); reject(e); }); rq.end(body);
+    });
+  });
+};
+const rawCheck = probeBody().then((r) => {
+  assert.strictEqual(r.status, 200, 'probe was not reached: ' + r.status + ' ' + r.text);
+  assert.strictEqual(JSON.parse(r.text).raw, true, 'the webhook body reached the route PARSED - the HMAC can never match');
 });
 
-console.log('\nchannels · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' assertions)\n');
-process.exit(fail ? 1 : 0);
+
+rawCheck.then(() => { console.log('  \x1b[32mok\x1b[0m  ' + rawName); pass++; }, (e) => { console.log('  \x1b[31mXX\x1b[0m  ' + rawName + ' — ' + e.message); fail++; }).then(() => {
+  console.log('\nchannels · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' checks)\n');
+  process.exit(fail ? 1 : 0);
+});

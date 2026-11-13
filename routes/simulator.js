@@ -4,11 +4,26 @@
 //   POST /api/simulator/feedback  → capture page feedback
 // Reads/writes the sim_* tables (migrations/sim01_simulator.sql) — SEPARATE from
 // the legacy identities tables and the cb_* network tables.
+// OWNS       the three PUBLIC routes of the /tour page (no sign-in): the content it renders, the lead gate, the page feedback.
+// CALLED BY  server.js (mounted at /api/simulator, behind publicLimiter: 240 a minute per address) · the /tour page (SimulatorPage).
+// FLOW       every route: its schema check (lib/simulator-contract.js) → the handler. A refusal or a fault → problem(req, res, ...), the old { error } kept beside the Problem fields
+//            (docs/contracts/api-legacy.json); a 500 says only a fixed sentence. The e-mail to the leads inbox (notify) is best effort and never answers the visitor.
+// CARD       qa/offline-guards
 const express = require('express');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { contract, schemaOptions, words, faultOf, writeFaultOf } = require('../lib/simulator-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
+const devOtp = require('../lib/dev-otp'); // isSealed: the ONE definition of a production-like environment
+
+/**
+ * ⭐ SEC-132 (Athi, 12 Nov: gate the simulator; OWASP ASVS V14.3, no test or demo endpoints in production) · simulatorOn() — the tour's routes answer only OFF a sealed environment
+ * (production · uat · staging · live · prod), unless SIMULATOR_ENABLED=1 is set on purpose. Sealed and not enabled, the router steps aside and the request meets the app's own
+ * "no such route", so a stranger cannot tell the tour from any other missing path.
+ */
+const simulatorOn = () => !devOtp.isSealed() || /^(1|true)$/i.test(String(process.env.SIMULATOR_ENABLED || '').trim());
+router.use((req, res, next) => (simulatorOn() ? next() : next('router')));
 
 // Reuse the existing Resend sender, fully guarded: never throws, no-ops without config.
 // (Same pattern as routes/entities.js — notifications are best-effort, never block the request.)
@@ -32,10 +47,23 @@ const notify = async (subject, html) => {
   }
 };
 
+/** a uuid as Postgres reads one (hex digits, a hyphen after any four, 36 characters): the same lead the form was always attached to */
+const PG_UUID = /^(?:[0-9a-f]{4}-?){7}[0-9a-f]{4}$/i;
+const INT4_MAX = 2147483647;
+/** the lead id the gate gave, or null for anything that is not one (a short text, a list, 36 characters that are no uuid: it was a 500) */
+const leadIdOf = (given) => (typeof given === 'string' && given.length === 36 && PG_UUID.test(given) ? given : null);
+/** the rating as the integer column holds it: null when none was given or it is not a number ('abc', as before);
+ *  undefined when it IS a number the column cannot hold (3.5, 5000000000: they were a 500, 22P02 / 22003), so the route refuses it in words */
+const ratingOf = (given) => {
+  const asked = +given;
+  if (!Number.isFinite(asked)) return null; /* as main: "abc" and a missing rating are none; "" and null are +value 0 */
+  return Number.isSafeInteger(asked) && Math.abs(asked) <= INT4_MAX ? asked : undefined;
+};
+
 const esc = (s) => String(s == null ? '' : s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
 // GET /api/simulator/content — everything the page renders from.
-router.get('/content', async (_req, res) => {
+router.get('/content', ...contract.checked('GET /content'), async (req, res) => {
   try {
     const [layers, items, shapes, rules, compare, usps] = await Promise.all([
       query('SELECT * FROM sim_layers  ORDER BY ord'),
@@ -55,12 +83,12 @@ router.get('/content', async (_req, res) => {
     });
   } catch (err) {
     console.error('[SIM] content error:', err.message);
-    res.status(500).json({ error: 'Failed to load content', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to load content'));
   }
 });
 
 // POST /api/simulator/lead — the gate. { name, email, org? } → { token, leadId }.
-router.post('/lead', async (req, res) => {
+router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
     const email = String(req.body.email || '')
@@ -68,7 +96,7 @@ router.post('/lead', async (req, res) => {
       .toLowerCase();
     const org = String(req.body.org || '').trim() || null;
     if (name.length < 2 || !email.includes('@')) {
-      return res.status(400).json({ error: 'A name and a valid email are required.' });
+      return problem(req, res, { status: 400, ...words.leadFieldsMissing() });
     }
     const ins = await query('INSERT INTO sim_leads (name, email, org) VALUES ($1, $2, $3) RETURNING id', [name, email, org]);
     const leadId = ins.rows[0].id;
@@ -80,19 +108,20 @@ router.post('/lead', async (req, res) => {
     res.json({ token, leadId });
   } catch (err) {
     console.error('[SIM] lead error:', err.message);
-    res.status(500).json({ error: 'Could not record that — please try again.' });
+    problem(req, res, writeFaultOf(err, req));
   }
 });
 
 // POST /api/simulator/feedback — { section, rating, message, leadId? }.
-router.post('/feedback', async (req, res) => {
+router.post('/feedback', ...contract.checked('POST /feedback', schemaOptions), async (req, res) => {
   try {
     const message = String(req.body.message || '').trim();
-    if (!message) return res.status(400).json({ error: 'A message is required.' });
+    if (!message) return problem(req, res, { status: 400, ...words.messageMissing() });
     const section = String(req.body.section || '').trim() || null;
-    const rating = Number.isFinite(+req.body.rating) ? +req.body.rating : null;
+    const rating = ratingOf(req.body.rating);
+    if (rating === undefined) return problem(req, res, { status: 400, ...words.ratingNotWhole() });
     // leadId is a uuid from the gate; ignore anything that isn't one.
-    const leadId = /^[0-9a-f-]{36}$/i.test(req.body.leadId || '') ? req.body.leadId : null;
+    const leadId = leadIdOf(req.body.leadId);
     await query('INSERT INTO sim_feedback (lead_id, section, rating, message) VALUES ($1, $2, $3, $4)', [leadId, section, rating, message]);
     notify(
       `Tour feedback (${section || 'page'}${rating ? `, ${rating}★` : ''})`,
@@ -101,8 +130,10 @@ router.post('/feedback', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[SIM] feedback error:', err.message);
-    res.status(500).json({ error: 'Could not record that — please try again.' });
+    problem(req, res, writeFaultOf(err, req));
   }
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
 module.exports = router;

@@ -11,6 +11,7 @@
  *   4. deploy/backup.sh dumps without the passphrase check first, or lets pg_dump write anywhere but into openssl;
  *   5. `backup.sh take` without a passphrase (or with a short one) does not refuse, or leaves a file behind.
  * Run: node tests/backup-guard.test.cjs [workflows-dir]   (the engines nightly runs it over its own .github/workflows)
+ * CARD      27-data-lifecycle-retention-storage-archive/backup-and-bcp
  */
 'use strict';
 const fs = require('fs'), path = require('path'), os = require('os');

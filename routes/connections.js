@@ -1,21 +1,19 @@
 // routes/connections.js — Connection handshake
-// OWNS      /api/connections: one business asks another to connect, the other answers, and each lists the connections it has (request · pending · respond · list).
+// OWNS      /api/connections: one business asks another to connect, the other answers, and each lists the connections it has (request · respond).
 // CALLED BY server.js (app.use('/api/connections', ...))
 // FLOW      auth → trim the words the old validator chains trimmed → schema check (lib/network-contract.js) → connections · state_log → res.json | problem(req, res, { status, ...words.x() })
 //           (API-STANDARD S1: every refusal is a Problem that keeps the keys it always had, frozen in docs/contracts/api-legacy.json)
 // CARD      04-network/connections-and-invitations
 const express = require('express');
-const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50,
-  PAGE_MAX = 200; /* one page of this file's lists */
 const log = require('../lib/logger');
 const router = express.Router();
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 const { v4: uuidv4 } = require('uuid');
 const { query, withEntity } = require('../db');
 const { schemaValidate, sanitise } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const auth = require('../middleware/auth');
+const { UUID_RE } = require('../lib/trace'); // NET-48: an id that is not a uuid names no one
 
 /** the checks of one route, in front of its handler: the words the old validator chain trim()med, then the schema of lib/network-contract.js (answering in the chain's own 400 body) */
 const checked = (route) => [contract.trimmedFor(route), schemaValidate(contract.connections.operationFor(route), contract.schemaOptions.connections(route))];
@@ -33,7 +31,8 @@ router.post('/request', auth, checked('POST /request'), async (req, res) => {
       return problem(req, res, { status: 400, ...contract.words.toYourself() });
     }
 
-    // Check receiver exists
+    // Check receiver exists (an id that is not a uuid cannot: answered before the database is asked)
+    if (typeof to_id !== 'string' || !UUID_RE.test(to_id)) return problem(req, res, { status: 404, ...contract.words.receiverUnknown() });
     const receiver = await query(
       `SELECT identity_id, bridge_id, display_name
        FROM identities
@@ -95,24 +94,8 @@ router.post('/request', auth, checked('POST /request'), async (req, res) => {
   }
 });
 
-// ─── GET /connections/pending ─────────────────────────────────
-// Get pending connection requests for current entity
-router.get('/pending', auth, checked('GET /pending'), async (req, res) => {
-  try {
-    const result = await query(
-      `SELECT connection_id, from_entity_id, from_display_name,
-              from_bridge_id, note, created_at
-       FROM connections
-       WHERE to_entity_id = $1 AND status = 'pending'
-       ORDER BY created_at DESC`,
-      [req.identity.identity_id]
-    );
-
-    res.json(Object.assign({ count: result.rows.length }, PL.pageOut('requests', result.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
-  } catch (err) {
-    problem(req, res, contract.failed(err, req, 'Failed to get requests'));
-  }
-});
+/* K-1 (API-10) — a request id that is not a uuid names no request: 404 before the database answers with its own words in a 500 */
+router.param('id', uuidParam(contract.words.requestUnknown));
 
 // ─── PUT /connections/:id/respond ────────────────────────────
 // Entity B accepts or rejects connection request
@@ -146,10 +129,7 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     // Log to state_log — for both entities
     const logAction = action === 'accept' ? 'connection_accepted' : 'connection_rejected';
 
-    const detail =
-      action === 'accept'
-        ? `${req.identity.display_name} accepted connection from ${conn.rows[0].from_display_name}`
-        : `${req.identity.display_name} rejected connection from ${conn.rows[0].from_display_name}`;
+    const detail = `${req.identity.display_name} ${newStatus} connection from ${conn.rows[0].from_display_name}`; // newStatus is the word: accepted | rejected
 
     // Log for receiver (the responder's OWN copy). B1 RLS: withEntity(me).
     await withEntity(entity_id, (c) =>
@@ -192,34 +172,6 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     });
   } catch (err) {
     problem(req, res, contract.failed(err, req, 'Response failed'));
-  }
-});
-
-// ─── GET /connections/list ────────────────────────────────────
-// Get all accepted connections for current entity
-router.get('/list', auth, checked('GET /list'), async (req, res) => {
-  try {
-    const entity_id = req.identity.identity_id;
-
-    const result = await query(
-      `SELECT connection_id,
-              CASE WHEN from_entity_id = $1
-                   THEN to_entity_id ELSE from_entity_id END AS partner_entity_id,
-              CASE WHEN from_entity_id = $1
-                   THEN to_display_name ELSE from_display_name END AS partner_display_name,
-              CASE WHEN from_entity_id = $1
-                   THEN to_bridge_id ELSE from_bridge_id END AS partner_bridge_id,
-              status, created_at, responded_at
-       FROM connections
-       WHERE (from_entity_id = $1 OR to_entity_id = $1)
-       AND status = 'accepted'
-       ORDER BY created_at DESC`,
-      [entity_id]
-    );
-
-    res.json(Object.assign({ count: result.rows.length }, PL.pageOut('connections', result.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
-  } catch (err) {
-    problem(req, res, contract.failed(err, req, 'Failed to get connections'));
   }
 });
 

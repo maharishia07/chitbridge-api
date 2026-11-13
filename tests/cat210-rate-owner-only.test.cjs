@@ -48,6 +48,7 @@ const call = (port, method, p, body) => new Promise((done) => {
       },
       withEntity: async (_id, fn) => fn({
         query: async (sql) => {
+          if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }] }; /* CAT-282: the edit declares on its own transaction */
           if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: true }] };
           if (/SELECT item_id, item_data FROM catalogue_items WHERE entity_id=.1 AND is_active/.test(sql)) return { rows: [{ item_id: ITEM, item_data: Object.assign({}, STORED, { sku: 'A1' }) }] };
           if (/SELECT item_id, item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_id: ITEM, item_data: Object.assign({}, STORED) }] };

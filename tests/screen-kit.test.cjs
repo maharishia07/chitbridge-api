@@ -9,6 +9,7 @@
  *   every picker offers both levels (groups, then one group's items).
  *
  * Run: node tests/screen-kit.test.cjs   · no DB, no network, no DOM.
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/screen-library
  */
 'use strict';
 const assert = require('assert'), path = require('path');

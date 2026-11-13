@@ -6,7 +6,8 @@
  *           and the three recordings: --capture (the answers of the code BEFORE the change), --freeze (the refusals of a capture into docs/contracts/api-legacy.json) and
  *           --compare (the answers now, byte for byte against a capture).
  * CALLED BY tests/api-problem-products.test.cjs · tests/api-problem-catalogue.test.cjs · tests/api-problem-network.test.cjs. Not a test itself.
- * Options a sweep may add: `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
+ * A scenario with `until: '<text>'` is a stream (SSE): the answer is what arrived up to that text, masked like any body, and the socket is closed then (the bell sweep, tests/lib/bell-scenes.cjs).
+ * Options a sweep may add: `leak` (a RegExp for the text a 5xx must not carry: a route whose own code word is in the Problem type, e.g. VAULT_ENC_UNCONFIGURED → .../vault_enc_unconfigured, names the stand-in's SQL instead of the word), `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
  * FLOW      harness({ here, mounts, routeFiles, ... }) → installStubs() → scenariosOf(routes) → runScenario() → record / check / compare
  * CARD      qa/offline-guards
  * No database, no network. A scenario that needs a row the stand-in cannot make says so in its own `setup.sqlRows`.
@@ -31,7 +32,8 @@ const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'r
 const BODY_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const ANSWER_WAIT_MS = 4000;
 const OWNED_BY_PROBLEM = ['type', 'title', 'status', 'detail', 'request_id', 'errors'];
-const FRESH = { realAuth: false, who: OWNER, asKey: false, db: 'ok', sqlRows: null, jsonThrows: false, noCustomer: false };
+const GENERIC_SENTENCE = /^Something went wrong( — please try again\.| on our side\.)$/; /* lib/respond SAFE_SENTENCE · lib/problem INTERNAL_DETAIL: the words of a fault, never of a refusal */
+const FRESH = { realAuth: false, who: OWNER, session: null, asKey: false, db: 'ok', sqlRows: null, jsonThrows: false, noCustomer: false };
 
 const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const sha = (buffer) => crypto.createHash('sha256').update(buffer).digest('hex');
@@ -44,6 +46,18 @@ const safeParse = (text) => {
 };
 /** an error the way pg raises one: a message and a SQLSTATE code */
 const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
+/**
+ * K-1 (B2): the one rule of Postgres every stand-in db keeps: a NUL byte is not text a column can hold. A bound string with one is refused 22021, and a jsonb value
+ * built from one (JSON.stringify writes it as the six characters backslash-u-0-0-0-0) is refused 22P05. A request that lets one reach the database is the 500 it was.
+ */
+const holdsNul = (value) => (typeof value === 'string' ? value.includes('\u0000') : Array.isArray(value) && value.some(holdsNul));
+const holdsNulEscape = (value) => typeof value === 'string' && /^[[{]/.test(value) && value.includes('\\u0000');
+function pgRefusesNul(params) {
+  (params || []).forEach((one) => {
+    if (holdsNul(one)) throw sqlError('22021');
+    if (holdsNulEscape(one)) throw sqlError('22P05');
+  });
+}
 /** a stand-in db that raises one SQLSTATE for statements matching a pattern */
 const raising = (pattern, code) => (sql) => {
   if (pattern.test(sql)) throw sqlError(code);
@@ -70,6 +84,7 @@ function harness(options) {
 
   /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
   function rowsFor(sql, params) {
+    pgRefusesNul(params);
     if (world.sqlRows) {
       const given = world.sqlRows(String(sql), params);
       if (given) return given;
@@ -84,22 +99,24 @@ function harness(options) {
 
   /** the stand-in sign-in (a business or its staff) and the stand-in database, put in the require cache before any route file loads */
   function installStubs() {
+    /* the database stand-in goes in FIRST: a library a middleware loads (lib/schema binds `query` when it loads) must see the stand-in, not the real pool */
+    const client = { query: async (sql, params) => rowsFor(sql, params) };
+    const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, db, run) => (typeof db === 'function' ? db : run)(client), /* onEntity(id, db, fn): db is the transaction a caller owns, or nothing */ trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
+    const fallback = async () => ({ rows: [], rowCount: 0 });
+    const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : fallback) });
+    mock('db', db);
+    mock('db/index', db);
     const realAuth = require(path.join(here, 'middleware', 'auth'));
     const stubAuth = (req, res, next) => {
       if (world.realAuth) return realAuth(req, res, next);
       req.identity = world.who;
+      if (world.session) req.session = world.session; /* a listed session (device_id, jti), as the real auth sets one from a token that names its device */
       if (world.asKey) req.api_key = { jti: 'j1', scopes: ['till'] };
       return next();
     };
     mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
     const realCustomer = require(path.join(here, 'middleware', 'customer-auth'));
     mock('middleware/customer-auth', (req, res, next) => (world.realAuth || world.noCustomer ? realCustomer(req, res, next) : ((req.customer = CUSTOMER), next())));
-    const client = { query: async (sql, params) => rowsFor(sql, params) };
-    const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, run) => run(client), trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
-    const fallback = async () => ({ rows: [], rowCount: 0 });
-    const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : fallback) });
-    mock('db', db);
-    mock('db/index', db);
     if (!argv.includes('--debug')) console.error = console.warn = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
   }
 
@@ -128,18 +145,28 @@ function harness(options) {
     return generic.concat(named.filter((one) => routes[one.route]));
   }
 
-  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body, extraHeaders) {
+  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is. `raw` = { headers, text }: the bytes as a provider signs and sends them (a webhook), not JSON; `extraHeaders` = headers added to a JSON request (a platform key); `until` = a stream (SSE) is read up to that text, then closed */
+  function send(port, method, urlPath, body, raw, extraHeaders, until) {
     return new Promise((resolve) => {
-      const data = body === undefined ? null : JSON.stringify(body);
-      const request = http.request({ port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {}) }, (response) => {
+      const data = raw ? raw.text : body === undefined ? null : JSON.stringify(body);
+      const headers = raw ? Object.assign({ 'content-length': Buffer.byteLength(data) }, raw.headers) : Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {});
+      const request = http.request({ port, path: urlPath, method, headers }, (response) => {
         const parts = [];
-        response.on('data', (part) => parts.push(part));
-        response.on('end', () => {
-          const bytes = Buffer.concat(parts);
-          const text = bytes.toString('utf8');
-          resolve({ status: response.statusCode, type: String(response.headers['content-type'] || ''), disposition: String(response.headers['content-disposition'] || ''), cache: String(response.headers['cache-control'] || ''), bytes, text, json: safeParse(text) });
+        const answer = () => {
+          const read = Buffer.concat(parts);
+          const text = until ? steady(read.toString('utf8')) : read.toString('utf8'); /* a stream's first frames carry a clock stamp: masked, as every body is */
+          const bytes = until ? Buffer.from(text) : read;
+          return { status: response.statusCode, type: String(response.headers['content-type'] || ''), disposition: String(response.headers['content-disposition'] || ''), cache: String(response.headers['cache-control'] || ''), bytes, text, json: safeParse(text) };
+        };
+        response.on('data', (part) => {
+          parts.push(part);
+          /* `until`: a stream never ends. The answer is what arrived up to the frame asked for, and the socket is closed so no test holds a stream open. */
+          if (until && Buffer.concat(parts).toString('utf8').includes(until)) {
+            resolve(answer());
+            request.destroy();
+          }
         });
+        response.on('end', () => resolve(answer()));
       });
       request.setTimeout(ANSWER_WAIT_MS, () => {
         request.destroy();
@@ -165,7 +192,7 @@ function harness(options) {
   /** a scenario may switch process variables for its one request (`env`); the ones it set are put back (or removed) afterwards */
   function setEnv(given) {
     const before = Object.keys(given || {}).map((name) => [name, process.env[name]]);
-    Object.keys(given || {}).forEach((name) => (process.env[name] = given[name]));
+    Object.keys(given || {}).forEach((name) => (given[name] === null ? delete process.env[name] : (process.env[name] = given[name]))); /* null = not set (process.env would store the text "null") */
     return () => before.forEach(([name, was]) => (was === undefined ? delete process.env[name] : (process.env[name] = was)));
   }
 
@@ -176,7 +203,7 @@ function harness(options) {
     const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body, scenario.headers);
+    const answer = await send(port, method, scenario.url, body, scenario.raw, scenario.headers, scenario.until);
     unset();
     restore();
     return answer;
@@ -184,10 +211,12 @@ function harness(options) {
 
   const legacyOf = (key, scenario) => (JSON.parse(fs.readFileSync(options.legacyFile, 'utf8')).routes[key] || { answers: [] }).answers.find((answer) => answer.scenario === scenario);
 
-  function checkProblemBody(label, answer) {
+  function checkProblemBody(label, answer, genericOk) {
     check(label + ': content-type is application/problem+json', /application\/problem\+json/.test(answer.type), answer.type);
     check(label + ': has every Problem field', answer.json && REQUIRED_FIELDS.every((name) => answer.json[name] !== undefined), answer.json);
     check(label + ': status in the body equals the HTTP status', answer.json && answer.json.status === answer.status);
+    /* API-6 (25 Oct): a 4xx is a refusal the caller can act on, so its detail and message are the thrower's own sentence, never the generic words of a fault */
+    if (answer.status < 500 && answer.json && !genericOk) check(label + ': a 4xx says its own sentence, never the generic fault words', !GENERIC_SENTENCE.test(String(answer.json.detail)) && !GENERIC_SENTENCE.test(String(answer.json.message)), [answer.json.detail, answer.json.message]);
   }
 
   function checkLegacy(label, answer, frozen, givenUp) {
@@ -221,9 +250,9 @@ function harness(options) {
   function judgeRefusal(label, scenario, answer, allowed) {
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (options.inherited(scenario, answer)) return;
-    checkProblemBody(label, answer);
-    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
-    else if (!scenario.after) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id), options.cannotRide ? options.cannotRide(scenario.route, scenario.id) : []); /* `after`: a refusal the sweep adds, so nothing was frozen */
+    checkProblemBody(label, answer, scenario.genericOk); /* a scene whose thrower set no sentence says so */
+    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !(options.leak || /SELECT|vault|relation "/).test(answer.text), answer.text);
+    else if (!scenario.after && !(options.added && options.added(scenario.route, scenario.id))) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id), options.cannotRide ? options.cannotRide(scenario.route, scenario.id) : []); /* `after`: a refusal the sweep adds, so nothing was frozen */
   }
 
   /** run every scenario; record each answer; in a check run judge it. → the statuses each route was seen to refuse with */

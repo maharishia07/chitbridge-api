@@ -17,6 +17,7 @@
  * ⚠️ It counts `withEntity` bodies too: each one is BEGIN + set_config + the query + COMMIT, so a transaction
  * opened to run a single SELECT costs four trips, not one. That is the measurement that matters, and counting
  * only `db.query` calls would have said this endpoint was cheap.
+ * CARD      28-platform-and-operations/performance-and-round-trips
  */
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
@@ -116,8 +117,12 @@ const t = (name, cond, extra) => {
  * ⚠️ NOT DONE HERE ON PURPOSE. Both need `SELECT *` turned into json subqueries, and `to_jsonb` returns a
  * numeric as a JSON NUMBER where pg returns it as a STRING today — so `total_value` would change type in the
  * response. That is a client-visible change and wants a person watching it, not an unattended run.
+ *
+ * ⚠️ 15 SINCE RAIL-106 (25 Oct 2026): the cold path gained ONE more cached probe — ctpaddress.remoteInstallations ("is any installation hosted elsewhere?"), asked by
+ * lib/ctpreturn unconfirmed() so the chit can say "not yet confirmed to the other side". It is the same memo (60 s) every send and delivery already shares, and when it answers
+ * "nothing is hosted elsewhere" (almost every deployment) no other statement follows. A warm process still opens a chit in 12.
  */
-const BUDGET = Number(process.env.CHIT_READ_BUDGET || 14);
+const BUDGET = Number(process.env.CHIT_READ_BUDGET || 15);
 /**
  * The status write's ceiling. It was 25 (7 statements in SIX transactions) when first measured — ~6.7s on the
  * Railway→Supabase hop, which is why closing twenty-six tasks took minutes. Three same-entity transactions

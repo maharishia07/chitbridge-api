@@ -10,6 +10,7 @@
  *   · acceptAtSignup (verify): the source is the server's call (installation · browser · chosen); another allowed country MOVES the stored one
  *     with its pack's money; outside the envelope → nothing; a shop that holds anything → nothing (a sign-in never re-countries a trading shop)
  * Run: node tests/register-spin-country.test.cjs
+ * CARD      19-onboarding-and-shop-setup/register-a-business-and-verify
  */
 'use strict';
 const path = require('path');

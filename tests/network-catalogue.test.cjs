@@ -7,6 +7,8 @@
  *   a renamed product keeps the store's price; a store's save keeps following only while it saves the brand's price.
  *
  * Run: node tests/network-catalogue.test.cjs   · no DB (the one query is stubbed), no network.
+ * CARD      04-network/network-offers-brand-releases-price-catalogue-st
+ * UNIT      04/Network offers — brand releases price/catalogue, store chooses
  */
 'use strict';
 const assert = require('assert'), path = require('path');

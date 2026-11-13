@@ -8,6 +8,7 @@
 // with the governance in it. The wire call itself stays unproven until a token exists, and is marked as such.
 //
 // Run: node tests/whatsapp-out.test.js
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -53,22 +54,43 @@ t('★★ with no token it REFUSES rather than pretending to queue', async () =>
   delete process.env.WHATSAPP_TOKEN;
   assert.strictEqual(w.canSend(), false);
 });
-t('★★ every refusal that HAS a recipient is logged, not silently dropped', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');
-  const notify = src.slice(src.indexOf('async function templatePayload('), src.indexOf('async function notifyChitStatus'));
-  /**
-   * A notification never attempted is not the same as one that failed, and the shop must be able to tell which.
-   * So every refusal on the send path goes through _log — no token, no provider_ref, window closed.
-   *
-   * ⚠️ THE ONE EXCEPTION IS DELIBERATE. `!to_ref || !text` returns bare, because there is no recipient to file the
-   * receipt against (to_ref is NOT NULL) and it is a caller error rather than a business outcome — nothing was
-   * ever going to be sent to anyone. Asserting the count keeps that exception at exactly one.
-   */
-  const logged = (notify.match(/_log\(entity_id, \{[^;]*status: 'refused'/g) || []).length;
-  const bare = (notify.match(/return \{ status: 'refused'/g) || []).length;
-  assert.ok(logged >= 3, 'expected the token / provider_ref / window refusals to be logged, found ' + logged);
-  assert.strictEqual(bare, 1, 'exactly one bare refusal is allowed (no recipient to file against), found ' + bare);
-});
+/**
+ * A notification never attempted is not the same as one that failed, and the shop must be able to tell which. So every refusal on the send
+ * path leaves a receipt - no token, no provider_ref, window closed. Proven by BEHAVIOUR: a fresh copy of the module runs against a fake
+ * database handle that records each INSERT INTO channel_outbound (values: [6] status, [7] reason), whatever the code is named inside.
+ *
+ * ⚠️ THE ONE EXCEPTION IS DELIBERATE. `!to_ref || !text` refuses with no receipt: there is no recipient to file it against (to_ref is NOT NULL)
+ * and it is a caller error, not a business outcome. The test pins that this exception stays exactly one.
+ */
+const refusalReceipts = async () => {
+  const dbPath = require.resolve('../db'), modPath = require.resolve('../lib/whatsapp-out'), db = require('../db'), privacy = require('../lib/privacy');
+  const saved = { withEntity: db.withEntity, gate: privacy.gate, token: process.env.WHATSAPP_TOKEN }, inserts = [];
+  const handle = { query: async (sql, vals) => { if (/INSERT INTO channel_outbound/.test(sql)) { inserts.push(vals); return { rows: [{ status: vals[6], reason: vals[7] }] }; } return { rows: [] }; } };
+  db.withEntity = async (_entity, fn) => fn(handle);
+  privacy.gate = async () => ({ may: true, code: 'OK' });
+  delete require.cache[modPath];
+  try {
+    const fresh = require('../lib/whatsapp-out'), send = (over) => fresh.notify('11111111-1111-4111-8111-111111111111', Object.assign({ to_ref: '+919876543210', from_ref: '+911234567890', provider_ref: 'pn1', text: 'hello' }, over));
+    const seen = async (label, token, over, reasonRx) => {
+      if (token) process.env.WHATSAPP_TOKEN = token; else delete process.env.WHATSAPP_TOKEN;
+      const before = inserts.length, r = await send(over);
+      assert.strictEqual(r.status, 'refused', label + ': expected a refusal, got ' + JSON.stringify(r));
+      assert.strictEqual(inserts.length - before, 1, label + ': the refusal was not logged (found ' + (inserts.length - before) + ' receipts)');
+      assert.strictEqual(inserts[inserts.length - 1][6], 'refused', label + ': the receipt must say refused');
+      assert.match(String(inserts[inserts.length - 1][7]), reasonRx, label + ': the receipt must carry the reason');
+    };
+    await seen('no token', null, {}, /WHATSAPP_TOKEN/);
+    await seen('no provider_ref', 'tok', { provider_ref: '' }, /provider_ref/);
+    await seen('window closed, no template', 'tok', {}, /window|approved/i);
+    const before = inserts.length;
+    assert.strictEqual((await send({ to_ref: '' })).status, 'refused');
+    assert.strictEqual(inserts.length, before, 'exactly one bare refusal is allowed (no recipient to file against)');
+  } finally {
+    db.withEntity = saved.withEntity; privacy.gate = saved.gate; delete require.cache[modPath]; void dbPath;
+    if (saved.token === undefined) delete process.env.WHATSAPP_TOKEN; else process.env.WHATSAPP_TOKEN = saved.token;
+  }
+};
+const refusalCheck = refusalReceipts();
 t('★★ absent evidence counts as OUTSIDE the window, never inside', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');
   const fn = src.slice(src.indexOf('async function windowOpen'), src.indexOf('async function _log'));
@@ -78,7 +100,7 @@ t('★★ absent evidence counts as OUTSIDE the window, never inside', () => {
 
 console.log('\nwhatsapp-out · ⚠️ it must never affect the chit');
 t('★★ the status route calls it AFTER res.json and does not await it', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = CF.read(path.join(__dirname, '..'));
   // ⚠️ `.notifyChitStatus(` — the CALL, not the first mention. The explanatory comment above it names the function
   // too, and matching that put the assertion window 200 characters short of the code it was meant to check. A test
   // reading documentation instead of implementation passes or fails for reasons that have nothing to do with either.
@@ -144,6 +166,9 @@ t('★ the send payload is the shape Meta documents', () => {
   assert.strictEqual(p.template.components[0].parameters[0].text, 'It has been accepted.');
 });
 
-console.log('\nwhatsapp-out · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' assertions)');
-console.log('  \x1b[33m⚠️\x1b[0m  The WIRE CALL to Meta is NOT covered here and cannot be until a real token exists.\n');
-process.exitCode = fail ? 1 : 0;
+const refusalName = '★★ every refusal that HAS a recipient is logged, not silently dropped';
+refusalCheck.then(() => { console.log('  [32mok[0m  ' + refusalName); pass++; }, (e) => { console.log('  [31mXX[0m  ' + refusalName + ' — ' + e.message); fail++; }).then(() => {
+  console.log('\nwhatsapp-out · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' checks)');
+  console.log('  \x1b[33m⚠️\x1b[0m  The WIRE CALL to Meta is NOT covered here and cannot be until a real token exists.\n');
+  process.exitCode = fail ? 1 : 0;
+});

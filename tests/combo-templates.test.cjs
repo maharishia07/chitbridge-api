@@ -11,6 +11,7 @@
  * and non-empty) — the client runs the real CBVariant.validate() before ever offering "Save as".
  *
  * Run: node tests/combo-templates.test.cjs
+ * CARD      07-offers-pricing-and-combos/combo-modifier-templates-combo-lab
  */
 'use strict';
 const path = require('path');
@@ -60,7 +61,8 @@ async function run() {
   const dbExports = {
     /* defaultSchemaId()/ensureDeclared()'s own bookkeeping queries — none of them are what this test is
        proving, so they get an empty, harmless answer, same as an entity with no custom schema at all. */
-    query: async () => ({ rows: [] }),
+    /* the shop STATES its money (lib/regional.currencyRead never guesses INR): these two shops are Indian ones */
+    query: async (text) => ({ rows: /FROM identities WHERE identity_id/.test(text) ? [{ currency_code: 'INR', country: 'IN' }] : [] }),
     withEntity: async (entity_id, fn) => fn({
       query: async (text, params) => {
         const q = text.replace(/\s+/g, ' ').trim();
@@ -83,7 +85,7 @@ async function run() {
         }
         if (q.startsWith('INSERT INTO combo_templates')) {
           const [eid, name, def, price] = params;
-          const row = { id: 'ct' + (seq), seq: seq++, entity_id: eid, name, definition: JSON.parse(def), price: price == null ? null : Number(price), created_at: 'now', updated_at: 'now' };
+          const row = { id: '00000000-0000-4000-8000-' + String(seq).padStart(12, '0'), seq: seq++, entity_id: eid, name, definition: JSON.parse(def), price: price == null ? null : Number(price), created_at: 'now', updated_at: 'now' };
           ROWS.push(row);
           return { rows: [cols(row)] };
         }
@@ -121,7 +123,7 @@ async function run() {
         }
         if (q.startsWith('INSERT INTO catalogue_items')) {
           const [eid, schema_id, item_data] = params;
-          const row = { item_id: 'p' + (pseq++), entity_id: eid, schema_id, item_data: JSON.parse(item_data), is_active: true };
+          const row = { item_id: '90000000-0000-4000-8000-' + String(pseq++).padStart(12, '0'), entity_id: eid, schema_id, item_data: JSON.parse(item_data), is_active: true };
           PRODUCTS.push(row);
           return { rows: [row] };
         }

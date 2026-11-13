@@ -1,4 +1,5 @@
 /**
+ * CARD  12-suppliers-and-procurement/repeat-supply
  * repeat-supply.test.cjs — REPEAT SUPPLY AS AN AGREEMENT BOTH PARTIES HOLD (round RI1, b303 DRAFT), through real Express, with a stand-in
  * auth, db and table (no database), a stand-in for the one send path (lib/autoraise.sendAs) and for the one status writer.
  *

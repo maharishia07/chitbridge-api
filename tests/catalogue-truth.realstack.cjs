@@ -179,16 +179,18 @@ const productId = async (shop, item_data) => ok(await j('/api/products', { metho
     expect(now === OWN_USE_QTY + BILL_LINE_QTY, 'stock moved ' + now + ' (expected ' + (OWN_USE_QTY + BILL_LINE_QTY) + '): the bill line names no supply of mine');
   }, 'CATALOGUE-BACKLOG CAT-1 (5b) · ST-19: a received bill line carries no supply_item_id, so goods-in cannot raise an own-use item');
   await kase('CA-09', 'a supply item cannot be sold as a product: no price on it, not editable through the products route', async () => {
-    const made = ok(await j('/api/supplies', { method: 'POST', token: A.token, body: { name: 'Mop ' + RUN, unit: 'piece', price: SMUGGLED_PRICE } }), 'supply').b.supply;
+    const smuggled = await j('/api/supplies', { method: 'POST', token: A.token, body: { name: 'Mop ' + RUN, unit: 'piece', price: SMUGGLED_PRICE } });
+    expect(smuggled.status === 422, 'a price in the supply body is refused by name (contract bulk pass batch 1), got HTTP ' + smuggled.status);
+    const made = ok(await j('/api/supplies', { method: 'POST', token: A.token, body: { name: 'Mop ' + RUN, unit: 'piece' } }), 'supply').b.supply;
     expect(!('price' in made) && !('selling_price' in made), 'the supply carries a price: ' + JSON.stringify(made));
     const edit = await j('/api/products/' + (made.supply_item_id || made.item_id), { method: 'PATCH', token: A.token, body: { merge: true, item_data: { price: SMUGGLED_PRICE } } });
     expect(edit.status === 404, 'PATCH /api/products on a supply answered HTTP ' + edit.status);
   });
   await kase('CA-11', 'a live offer that clashes with another live offer is refused in words, and nothing is written', async () => {
     const shelf = 'tiffin-' + RUN, first = 'Tiffin 10% ' + RUN, scope = { scope: 'line', applies_to: { category: shelf } };
-    await definition(A, { kind: 'offer', sub_kind: 'percent_off', name: first, status: 'live', rules: Object.assign({ percent: 10 }, scope) });
+    await definition(A, { kind: 'offer', sub_kind: 'percent_off', name: first, status: 'live', confirmed: true, rules: Object.assign({ percent: 10 }, scope) });
     const second = { kind: 'offer', sub_kind: 'amount_off', name: 'Tiffin 5 off ' + RUN, rules: Object.assign({ amount: 5 }, scope) };
-    const r = await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'live' }, second) });
+    const r = await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'live', confirmed: true }, second) });
     expect(r.status === 409 && r.b.code === 'OFFER_CLASH', 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
     expect(r.b.message.includes('overlaps "' + first + '"') && /one discount at a time/.test(r.b.message), 'sentence: ' + r.b.message);
     ok(await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'draft' }, second) }), 'the refused name is free: nothing was stored');

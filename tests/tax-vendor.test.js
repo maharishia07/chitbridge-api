@@ -17,7 +17,10 @@ const { execFileSync } = require('child_process');
 const server = require('../lib/tax.js');
 const serverSlab = require('../lib/tax-slab.js');
 /* ⭐ 2026-09-28: the counter's copy is the ADOPTED bundle (tax-slab + tax from chitbridge-engines), not a generated file */
-const COPY = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'tax.js');
+/* CB_WEB_DIR / CB_ENGINES_DIR: the paired checkouts (fresh-siblings.sh, land-combined.sh set them), as pages-parse and till-vendor read them; unset = the sibling clones */
+const WEB_ROOT = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR) : path.join(__dirname, '..', '..', 'chitbridge-web');
+const ENG_ROOT = process.env.CB_ENGINES_DIR ? path.resolve(process.env.CB_ENGINES_DIR) : path.join(__dirname, '..', '..', 'chitbridge-engines');
+const COPY = path.join(WEB_ROOT, 'public', 'engine', 'tax.js');
 
 let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
@@ -26,9 +29,10 @@ console.log('— the tax engine, on both sides —');
 
 it('the copy on disk is exactly the release both sides pin (nobody edited one side only)', () => {
   /* moved 2026-09-28 from "vendor-tax.cjs --check": the copy is now adopted, so the check is the adopt tool's */
-  const ADOPT = path.join(__dirname, '..', '..', 'chitbridge-engines', 'tools', 'adopt.cjs');
-  for (const repo of ['chitbridge-api', 'chitbridge-web']) {
-    try { execFileSync(process.execPath, [ADOPT, path.join(__dirname, '..', '..', repo), '--check'], { encoding: 'utf8' }); }
+  const ADOPT = path.join(ENG_ROOT, 'tools', 'adopt.cjs');
+  for (const repoDir of [path.join(__dirname, '..'), WEB_ROOT]) {
+    const repo = path.basename(repoDir);
+    try { execFileSync(process.execPath, [ADOPT, repoDir, '--check'], { encoding: 'utf8' }); }
     catch (e) { throw new Error(repo + ': ' + ((e.stdout || '').trim() || 'adopt --check failed')); }
   }
 });
@@ -50,7 +54,7 @@ const both = (input) => {
   assert.strictEqual(JSON.stringify(b), JSON.stringify(a), 'the two engines answered differently');
   return a;
 };
-const TN = { Gstin: '33AABCK1234F1Z6', State: '33', RegType: 'regular' };
+const TN = { Gstin: '33AABCK1234F1Z6', State: '33', RegType: 'regular', Country: 'IN' }; /* CTRY-94: the seller says its country; neither side reads India on a guess now */
 const KA = { Gstin: '29ABCDE1234F1Z5', State: '29', RegType: 'regular' };
 const TN2 = { Gstin: '33XYZAB1234F1Z9', State: '33', RegType: 'regular' };
 

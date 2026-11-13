@@ -1,4 +1,5 @@
 /**
+ * CARD  05-ctp-and-cross-installation/deliver-query-across-domains
  * ── ⭐⭐⭐ CTP QUERY — the READ verb, proven without a network ───────────────────────────────────────────────────
  *
  * Athi, 2026-09-16: *"catalogue pull I guess… the same resolves in cross platform also."*
@@ -153,7 +154,21 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
       fetch: async () => ({ ok: false, status: 403, json: async () => ({ ok: false, why: 'installation platform-mx is not one we deal with' }) }),
     });
     assert.strictEqual(r.ok, false);
-    assert.ok(/not one we deal with/.test(r.why), r.why);
+    /* RAIL-140 (e) · Q19: quoted in a member of its own, never inside our sentence */
+    assert.strictEqual(r.why, 'the far installation refused the question');
+    assert.strictEqual(r.far_why, 'installation platform-mx is not one we deal with');
+    assert.strictEqual(r.status, 403);
+  });
+
+  await okA('RAIL-140 (e): an unreachable far end is said in fixed words — no url, no error text', async () => {
+    const r = await Q.ask({ domain: 'in.example' }, { want: 'resolve', handle: 'nobody' }, {
+      resolvePeer: async () => ({ installation_key: 'platform-0', endpoint: 'https://in.example/api/ctp/deliver', domain: 'in.example' }),
+      signer, from: FROM,
+      fetch: async () => { throw new Error('getaddrinfo ENOTFOUND in.example <b>'); },
+    });
+    assert.strictEqual(r.why, 'the far installation could not be reached');
+    const none = await Q.ask({ domain: 'stranger.example' }, { want: 'resolve', handle: 'x' }, { resolvePeer: async () => null, signer, from: FROM });
+    assert.ok(!/stranger/.test(none.why), 'the domain asked for is not echoed: ' + none.why);
   });
 
   /* ── SINGLE SOURCE: the door answers with the SAME view an anonymous visitor gets ────────────────────────── */
@@ -191,8 +206,9 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
 
   ok('⚠️ resolve answers only for a BUSINESS — the grammar decides before the database is asked', () => {
     const src = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
-    assert.ok(/resolveuserid'\)\.classify\(ask\.handle\)/.test(src), 'classify first');
-    assert.ok(/c\.kind !== 'entity' && c\.kind !== 'network_node' && c\.kind !== 'bridge_id'/.test(src),
+    assert.ok(/resolveuserid'\)\.classify\(\w+\.handle\)/.test(src), 'classify first');
+    /* the rule, whatever the classification is called (sit/run6 F5 named it handleKind): only these three kinds may be resolved */
+    assert.ok(/(\w+)\.kind !== 'entity' && \1\.kind !== 'network_node' && \1\.kind !== 'bridge_id'/.test(src),
       'an employee, a customer or a minted party is never resolvable by another installation');
   });
 

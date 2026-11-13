@@ -1,4 +1,5 @@
 /**
+ * CARD  10-online-shop-and-storefront-orders/enquiry-on-an-item
  * tests/sec4-server-gates.test.cjs — SEC4 · THE SERVER CHECKS WHAT THE PAGE GREYS (docs/critique/SEC4.md).
  *
  * The REAL middleware/auth.js, routes/chits.js, routes/catalogue.js and the adopted rail engine. Only the database (and the catalogue
@@ -33,6 +34,8 @@ const R = 'bbbbbbbb-0000-4000-8000-00000000000b';   // receives C1; asks about S
 const X = 'eeeeeeee-0000-4000-8000-00000000000e';   // holds nothing
 const C1 = '0000c417-0000-4000-8000-0000000000c1';
 const ITEM = '17e17e17-0000-4000-8000-000000000017', MY_ITEM = '17e17e17-0000-4000-8000-000000000018';
+const HIDDEN_ITEM = '17e17e17-0000-4000-8000-000000000019';   // S's item that S's storefront does NOT show (private / over the cap) — SEC-129
+const NO_ITEM = '17e17e17-0000-4000-8000-0000000000ff';       // nobody's
 const ACTORS = {
   'a-vw':  { parent: R, access_level: 'viewer', whole_entity: false, hat: 'view_only' },
   'a-cmt': { parent: R, access_level: 'commenter', whole_entity: false, hat: 'audit' },
@@ -42,6 +45,7 @@ const HEADER = [
   { chit_id: C1, entity_id: S, direction: 'sent', sender_entity_id: S, purpose: 'order', current_status: 'delivered' },
   { chit_id: C1, entity_id: R, direction: 'received', sender_entity_id: S, purpose: 'order', current_status: 'pending' },
 ];
+let CTX = null;   // the shop a withEntity scope runs as (row security: a scoped read sees only its own items)
 let SF = 'login';   // the shop's storefront_access
 const SQL = [];
 
@@ -52,7 +56,7 @@ function rowsFor(sql, p) {
   if (/break_status/.test(s) && /FROM identities/.test(s)) { const a = ACTORS[p[0]]; return a ? [{ break_status: 'active', hat: a.hat, access_level: a.access_level, whole_entity: a.whole_entity }] : []; }
   if (/FROM chit_header h LEFT JOIN chit_detail/.test(s) && /h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return HEADER.filter((h) => h.chit_id === p[0] && h.entity_id === p[1]);
   if (/FROM identities WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) return p[0] === 'shop-s' ? [{ identity_id: S, display_name: 'Shop S', bridge_id: 'shop-s', currency_code: 'INR' }] : [];
-  if (/SELECT entity_id FROM catalogue_items WHERE item_id = \$1/.test(s)) return p[0] === ITEM ? [{ entity_id: S }] : p[0] === MY_ITEM ? [{ entity_id: R }] : [];
+  if (/SELECT entity_id FROM catalogue_items WHERE item_id = \$1/.test(s)) { const owner = p[0] === ITEM || p[0] === HIDDEN_ITEM ? S : p[0] === MY_ITEM ? R : null; return owner && (!CTX || CTX === owner) ? [{ entity_id: owner }] : []; }
   if (/SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities/.test(s)) return [{ identity_id: p[0], bridge_id: 'shop-s' }];
   if (/enquiry_message_deliver/.test(s)) return [{ created_at: '2026-10-14T00:00:00.000Z' }];
   if (/FROM chit_messages WHERE entity_id = \$1 AND subject_type = 'product'/.test(s)) {
@@ -65,7 +69,7 @@ const tx = { query: q };
 const dbPath = require.resolve(path.join(API, 'db'));
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
-  withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
+  withEntity: async (id, fn) => { CTX = id; try { return await fn(tx); } finally { CTX = null; } }, withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
   readBatch: async () => ({}), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
 } };
 const sc = require(path.join(API, 'lib', 'schema'));
@@ -171,12 +175,17 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 200);
   t('the CTP pull (publicViewFor with neither owner nor viewer) → the card only', !!ctp.sign_in && !ctp.items && Object.keys(ctp).sort().join(',') === 'shop,sign_in', Object.keys(ctp).join(','));
   t('a signed-in business reading as a viewer (enquiry, B2B) → the catalogue', !(await cat.publicViewFor(ent, { viewer: 'other-shop' })).sign_in);
   const CTP_SRC = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
-  t('routes/ctp.js answers a peer through publicViewFor + publicResponseFor (the same cut)', /cat\.publicViewFor\(ent, \{\}\)/.test(CTP_SRC) && /cat\.publicResponseFor\(view, false\)/.test(CTP_SRC));
+  t('routes/ctp.js answers a peer through publicViewFor + publicResponseFor (the same cut)', /catalogue\.publicViewFor\(ent, \{\}\)/.test(CTP_SRC) && /catalogue\.publicResponseFor\(view, false\)/.test(CTP_SRC));
   const CAT_SRC = fs.readFileSync(path.join(API, 'routes', 'catalogue.js'), 'utf8');
   t('the network storefront skips a sign-in-first department', /if \(view\.sign_in\) continue;/.test(CAT_SRC));
-  SQL.length = 0;
-  await call('GET', '/api/catalogue/network-store/shop-s', null);
-  t('the network lens (network-store) filters sign-in-first shops in its one statement', SQL.some((s) => /FROM catalogue_items ci/.test(s) && /storefront_access' = 'login'/.test(s)));
+  /* SEC-126: the network lens reads each shop through publicViewFor — the same sign-in cut, not a statement of its own */
+  let nr = await call('GET', '/api/catalogue/network-store/shop-s', null);
+  t('the network lens (network-store) lists nothing of a sign-in-first shop', nr.status === 200 && (nr.body.products || []).length === 0, show(nr));
+  SF = 'browse';
+  nr = await call('GET', '/api/catalogue/network-store/shop-s', null);
+  t('…and the same shop, browse-first, is listed', nr.status === 200 && (nr.body.products || []).length === 1, show(nr));
+  SF = 'login';
+  t('…through publicViewFor, never its own catalogue_items statement', /publicViewFor\(shop, \{\}\)/.test(CAT_SRC) && !/FROM catalogue_items ci WHERE ci\.entity_id = ANY/.test(CAT_SRC));
 
   console.log('\n— C · enquiries ring the supplier\'s bell, and there is a list —');
   BELL.length = 0;
@@ -188,6 +197,15 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 200);
   t('an internal note rings nothing', BELL.length === 0, JSON.stringify(BELL));
   await call('POST', '/api/catalogue/enquiry/' + MY_ITEM, tok(R, 'entity'), { message_text: 'testing my own item' });
   t('asking about my own item rings nothing', BELL.length === 0, JSON.stringify(BELL));
+  /* SEC-129: an item the shop's storefront does not show answers EXACTLY what an item that does not exist answers (404, same body) — never a 201 that proves the id */
+  let mark = SQL.length;
+  const hid = await call('POST', '/api/catalogue/enquiry/' + HIDDEN_ITEM, tok(R, 'entity'), { message_text: 'Do you have this?' });
+  const hidReads = SQL.slice(mark).length; mark = SQL.length;
+  const nope = await call('POST', '/api/catalogue/enquiry/' + NO_ITEM, tok(R, 'entity'), { message_text: 'Do you have this?' });
+  const nopeReads = SQL.slice(mark).length;
+  t('SEC-129 timing: a hidden item and an unknown item do the same number of reads before the 404 (' + hidReads + ' vs ' + nopeReads + ')', hidReads === nopeReads && hidReads > 0, hidReads + ' vs ' + nopeReads);
+  t('SEC-129: an item S does not show is 404 (not 201)', hid.status === 404, show(hid));
+  t('SEC-129: …and the same status and body as an item that does not exist', nope.status === 404 && JSON.stringify(hid.body) === JSON.stringify(nope.body), show(hid) + ' vs ' + show(nope));
   r = await call('GET', '/api/catalogue/enquiry?page=1&limit=2', tok(S, 'entity'));
   t('GET /catalogue/enquiry → paged list: enquiries[] + top-level total · page · limit', r.status === 200 && Array.isArray(r.body.enquiries) && r.body.total === 3 && r.body.page === 1 && r.body.limit === 2, show(r));
   t('…not swallowed by /:bridge_id (no "Shop not found")', r.body.error === undefined);

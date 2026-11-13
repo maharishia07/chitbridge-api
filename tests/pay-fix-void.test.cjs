@@ -9,6 +9,7 @@
  * Offline. Run: node tests/pay-fix-void.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
@@ -81,7 +82,7 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('…and the books posted the REVERSAL of the invoice (source reverse:<entry>), named on the answer', !!rev && r.body.books && r.body.books.ok === true && r.body.books.reverses === posted.entry_no && r.body.books.entry_no === rev.entry_no, JSON.stringify(r.body.books));
   t('…the sale is out of Dues: ₹0 open from Mala on that bill', (await openOf(C1)) === 0, String(await openOf(C1)));
   t('…one entry was added, no second status writer, the reason on the narration', X.T.entries.length === entriesBefore + 1 && /Withdrawn: customer cancelled/.test(rev.narration), rev && rev.narration);
-  const srcRoute = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+  const srcRoute = CF.read(H.API);
   const voidSrc = srcRoute.slice(srcRoute.indexOf("router.put('/:chit_id/void'"), srcRoute.indexOf('// POST /chits/assign-bulk')); /* that route's opening line was re-wrapped; its comment is the stable end */
   t('the reversal is posted INSIDE the gate transaction (after g.write(), before the handle returns) — a refusal rolls the withdrawal back and answers 409 in words',
     voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('for (const g of gates) await g.write();')
@@ -99,16 +100,24 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const w = await X.dbStub.withEntity(SHOP, (db) => K.chitWithdrawn(db, SHOP, C2, 'changed their mind', SHOP));
   const w2 = await X.dbStub.withEntity(SHOP, (db) => K.chitWithdrawn(db, SHOP, C2, 'changed their mind', SHOP));
   t('chitWithdrawn: the ONE helper both doors call — reverses once; the second call answers duplicate', w.ok === true && w.reverses === posted3.entry_no && w2.duplicate === true && (await openOf(C2)) === 0, JSON.stringify([w, w2]));
-  const moveSrc = srcRoute.slice(srcRoute.indexOf('async function moveStatus('), srcRoute.indexOf("router.put('/:chit_id/void'"));
-  const cancelSrc = srcRoute.slice(srcRoute.indexOf('async function cancelSentCopy('), srcRoute.indexOf('async function moveStatus('));
-  t('moveStatus: the sender-cancel leg (cancelSentCopy) calls chitWithdrawnSaid on the sent copy\'s handle, after g.write(), and carries `books` on the answer (a refusal in words, never swallowed)',
-    /if \(isSender && new_status === 'cancelled'\) booksOnCancel = await cancelSentCopy\(/.test(moveSrc) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
-    && /books: booksOnCancel/.test(moveSrc) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
+  const srcMove = fs.readFileSync(path.join(H.API, 'lib', 'chit-move.js'), 'utf8'); /* moveStatus + its cancel leg live in lib/chit-move.js now (LEAN-PLAN §8 #3) */
+  const moveSrc = srcMove.slice(srcMove.indexOf('async function moveStatus('));
+  const cancelSrc = srcMove.slice(srcMove.indexOf('async function cancelSentCopy('), srcMove.indexOf('async function moveStatus('));
+  /* ACC-238: the books call left cancelSentCopy (sender only, through the SENT copy) for cancelLegs (every cancel of MY copy, keyed by the entity); the reversal is takeBackRefused's, not chitWithdrawn's */
+  t('moveStatus: the books call is in cancelLegs (every cancel of my copy, keyed by the entity), no longer in cancelSentCopy, and carries `books` on the answer',
+    moveSrc.includes('booksOnCancel = await cancelLegs(') && !/books-hooks|chitWithdrawn/.test(cancelSrc.slice(0, cancelSrc.indexOf('/** ORD-FIX O6'))) && srcMove.slice(srcMove.indexOf('async function cancelLegs(')).includes("return require('./books-hooks').takeBackCancelled(entity_id, chit_id, by.id)")
+    && srcMove.includes('books: booksOnCancel') && fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8').includes('refused: stuck.why'));
+
+  /* the cancel leg runs ONLY for a move to `cancelled`: drop that condition and every status move would cancel its sender's copy and ask the books to reverse (critic note on #632) */
+  const legsSrc = srcMove.slice(srcMove.indexOf('async function cancelLegs('), srcMove.indexOf('/** the 200 of a status that really moved */'));
+  t('cancelLegs: a move to any status but `cancelled` has no cancel leg (returns null before the sender/recipient branch)',
+    legsSrc.length > 0 && /^async function cancelLegs\([^)]*\) \{\n  if \(new_status !== 'cancelled'\) return null;\n/.test(legsSrc) && legsSrc.indexOf('cancelSentCopy(') > legsSrc.indexOf("new_status !== 'cancelled'") && legsSrc.indexOf('takeBackCancelled(') > legsSrc.indexOf('cancelSentCopy('));
 
   console.log('\n— D · the walk-in day leaves a cancelled bill out —');
   const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
   const cb = storeSrc.slice(storeSrc.indexOf('async function counterBills('), storeSrc.indexOf('async function unpostedChits('));
-  t('counterBills: NOT EXISTS a cancelled / rejected status row for the bill', /NOT EXISTS \(SELECT 1 FROM chit_status cs WHERE cs\.chit_id = h\.chit_id AND cs\.entity_id = h\.entity_id AND cs\.current_status IN \('cancelled', 'rejected'\)\)/.test(cb));
+  const withdrawn = require(path.join(H.API, 'lib', 'counter-bill')).NOT_WITHDRAWN_SQL; /* CTR-197: the one condition, shared with GET /till/bills */
+  t('counterBills: NOT EXISTS a cancelled / rejected status row for the bill (the one shared condition)', cb.includes('NOT_WITHDRAWN_SQL') && /NOT EXISTS \(SELECT 1 FROM chit_status cs WHERE cs\.chit_id = h\.chit_id AND cs\.entity_id = h\.entity_id AND cs\.current_status IN \('cancelled', 'rejected'\)\)/.test(withdrawn));
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');

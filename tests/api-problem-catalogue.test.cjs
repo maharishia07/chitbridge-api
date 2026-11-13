@@ -22,6 +22,7 @@ const fs = require('fs');
 const { harness, PARTY, OWNER, STAFF, SECRET_SQL, sameValue, raising, answering, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/catalogue-scenes.cjs');
 const chainTable = require('./lib/catalogue-chains.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -51,6 +52,7 @@ const lab = harness({
 });
 const { check } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const sources = () => ({ ai: require(path.join(HERE, 'lib', 'ai')) });
 const WORLDS = [
@@ -133,6 +135,42 @@ function checkTrimmedReachesTheRow(recording) {
   check('the enquiry text reaches the database trimmed, and a number reaches it as text, as the chain made it', asked && asked.body.created_at === 'is it fresh?' && number && number.body.created_at === '5', [asked && asked.body, number && number.body]);
 }
 
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-orders.test.cjs proves it: the face read's derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * and every recorded 200 of it (no face yet · a saved face · a saved face with no stamp) fits it, nullable columns included; the allow-list ran for real (OUTPUT_ALLOWLIST=enforce) and cut nothing.
+ */
+function checkAllowList(recording) {
+  console.log(String.fromCharCode(10) + '-- the closed success shape of the face read holds every recorded 200 --');
+  const { shapeOf, droppedKeys } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const route = 'GET ' + FACE;
+  const shape = shapeOf(route);
+  const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+  const fits = shape && engine.compile(shape.schema);
+  check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
+  check('the output allow-list dropped no key from any answer', droppedKeys().length === 0, droppedKeys());
+}
+
+/* Slice 1b (critic 6 Nov, class C): DELETE /:bridge_id/my-documents/:id in the foreign-id world. The delete is scoped to the signed-in customer's own rows (WHERE id = $1 AND entity_id = $2), so another
+   party's document, an unknown id and the id of a document the caller does not hold are one 404 (words.noSuchDocument), byte for byte; the caller's own document is not a 404. The stand-in sign-in always
+   names the same customer, so "the stranger" is that customer asking for a document held under ANOTHER entity, and "the owner" is the same customer asking for one held under their own. */
+const DOCUMENT_ROUTE = 'DELETE ' + CATALOGUE + '/:bridge_id/my-documents/:id';
+const DOCUMENT_HOLDER = '77777777-7777-4777-8777-777777777777';
+async function checkForeignIds(port) {
+  console.log(String.fromCharCode(10) + '-- a document held by another party answers exactly as an unknown one (S35) --');
+  const FOREIGN = require('./lib/foreign-id-world.cjs');
+  const { CUSTOMER } = require('./lib/problem-world.cjs');
+  const recording = FOREIGN.recorder();
+  const failures = await FOREIGN.runCases([{ route: DOCUMENT_ROUTE, play: async (who, planted) => {
+    const holder = who === 'owner' ? CUSTOMER.identity_id : DOCUMENT_HOLDER;
+    Object.assign(lab.world, { realAuth: false, who: OWNER, asKey: false, db: 'ok', jsonThrows: false, noCustomer: false, sqlRows: (sql, params) => (planted && /DELETE FROM cb_attachment/.test(sql) && params[1] === holder ? { rows: [{ id: PARTY }], rowCount: 1 } : null) });
+    return lab.send(port, 'DELETE', CATALOGUE + '/tea-shop/my-documents/' + PARTY);
+  } }], recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: DELETE my-documents answers another party\'s document exactly as an unknown id (404, same body) and the caller\'s own is not a 404', failures.length === 0, failures);
+  return recording.proved();
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
@@ -148,6 +186,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const allowed = capturing ? () => [] : (route) => (contract.catalogue.allowedStatuses()(route) || []).concat(contract.face.allowedStatuses()(route) || []);
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.extras({ PARTY, OWNER, STAFF, SECRET_SQL, raising, answering, firstOf }), {});
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
+  const foreignProved = lab.flagValue('--capture') || lab.flagValue('--compare') ? {} : await checkForeignIds(server.address().port);
   server.close();
   if (lab.flagValue('--capture')) {
     fs.writeFileSync(lab.flagValue('--capture'), JSON.stringify(recording, null, 1));
@@ -164,18 +203,26 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkPublishedPaths();
   await checkChainsAgree();
   checkTrimmedReachesTheRow(recording);
+  checkAllowList(recording);
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 30, frozen);
   check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
+  const allowHeld = ALLOW.checkAllowList(recording, Object.assign({}, contractModule().catalogue.OPERATIONS, contractModule().face.OPERATIONS), check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
+    require('./lib/foreign-id-world.cjs').writeEvidence(EVIDENCE_FILE, (route) => route === DOCUMENT_ROUTE, foreignProved);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the nine routes', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
+  } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for DELETE my-documents exactly when it held here', sameValue(require('./lib/foreign-id-world.cjs').evidenceOf(EVIDENCE_FILE, (route) => route === DOCUMENT_ROUTE), foreignProved), foreignProved);
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the nine routes', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the catalogue routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
+  }
   console.log(String.fromCharCode(10) + '  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
 })();

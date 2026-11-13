@@ -10,6 +10,8 @@
  * being tested is the real fold, the real expiry, the real claim — everything except the network.
  * ⚠️ AND THE STUB REFUSES AN UPDATE. If a future change ever tries to correct a balance by editing a row, this
  * fails here rather than in production against a table that would have refused it anyway.
+ * CARD      08-rewards-and-loyalty/points-and-reward-ledger
+ * CARD      08-rewards-and-loyalty/earn-claim-at-the-till
  */
 const assert = require('assert'), path = require('path');
 const rewards = require(path.join(__dirname, '..', 'lib', 'rewards.js'));

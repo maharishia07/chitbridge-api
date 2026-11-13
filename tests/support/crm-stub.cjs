@@ -14,7 +14,7 @@ const stub = (rel, exports) => { const p = require.resolve(path.join(API, rel));
 function make() {
   const data = {
     cust: [], sup: [], walk: [], stored: { customer: {}, supplier: {} }, chits: [], messages: [], disputes: [], ledger: [], changes: [],
-    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2'], country: null, points: null,
+    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2', 'a1000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002'], country: null, points: null,
     queries: [], appended: [],
   };
   let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
@@ -33,6 +33,7 @@ function make() {
 
   async function run(sqlRaw, p) {
     const sql = norm(sqlRaw); p = p || []; data.queries.push(sql); if (data.pre) { const x = await data.pre(sql, p); if (x) return x; }
+    if (/^SELECT pg_advisory_xact_lock\(/.test(sql) || /^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(sql)) return { rows: [] };   /* B10: the shop's mint lock and the mint's savepoint (no concurrency in a stub) */
     if (/to_jsonb\(i\)->'policy_flags'->'crm'/.test(sql)) return { rows: [{ crm: data.rule || null }] };
     if (/FROM customer_list cl JOIN identities i/.test(sql)) {
       if (/party_item/.test(sql) && data.hvMissing) throw gone('party_item');
@@ -44,6 +45,11 @@ function make() {
     if (/^SELECT country, display_name FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: data.shopCountry || 'IN', display_name: 'Test shop' }] };   /* privacy.shopFacts (CON-2): the shop's law and name */
     if (/FROM books_setting/.test(sql)) return { rows: data.country ? [{ country: data.country, enabled: true }] : [] };
     /* the Ledger-side reads of the timeline */
+    /* partyOn (a list or the books) — before the party_item timeline read, since partyOn names party_item too (#770) */
+    if (/EXISTS \(SELECT 1 FROM customer_list c WHERE c\.owner_entity_id = \$1 AND c\.customer_identity_id = \$2 AND .* AS customer/.test(sql)) {   /* CRM-247: customer / supplier = a LIVE row (no hidden_at), listed = any row */
+      const mine = (rows) => rows.filter((r) => r.owner === p[0] && r.party_id === p[1]);
+      return { rows: [{ customer: mine(data.cust).some((r) => !r.hidden_at), supplier: mine(data.sup).some((r) => !r.hidden_at), listed: mine(data.cust).length + mine(data.sup).length > 0, ledgered: data.ledger.some((r) => r.entity === p[0] && r.party_id === p[1]) }] };
+    }
     if (/FROM party_item/.test(sql)) return { rows: data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.created_at < p[2]).slice(0, p[3]) };
     if (/FROM books_change_log/.test(sql)) return { rows: data.changes.filter((r) => r.entity === p[0] && r.row_id === p[1] && r.at < p[2]).slice(0, p[3]) };
     if (/FROM chit_messages/.test(sql)) return { rows: data.messages.filter((m) => p[0].indexOf(m.chit_id) >= 0 && m.created_at < p[1]) };
@@ -81,7 +87,7 @@ function make() {
     }
     if (/^SELECT cl\.customer_identity_id AS pid/.test(sql)) return { rows: data.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
     if (/^SELECT sl\.supplier_entity_id AS pid/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
-    if (/^SELECT 1 FROM identities WHERE identity_id = \$1 AND \(identity_id = \$2/.test(sql)) return { rows: data.team.indexOf(p[0]) >= 0 && p[1] === 'E1' ? [{ '?column?': 1 }] : [] };
+    if (/^SELECT identity_id FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND \(identity_id = \$2/.test(sql)) return { rows: p[0].filter((id) => data.team.indexOf(id) >= 0 && p[1] === 'E1').map((id) => ({ identity_id: id })) }; /* lib/team-member: who of the ids is on the team */
     if (/^INSERT INTO party_followup/.test(sql)) {
       if (!data.migrated) throw gone('party_followup');
       const r = { followup_id: uid(), owner: p[0], party_id: p[1], what: p[2], due_at: p[3], assignee_user_id: p[4], source: p[5], done_at: null, done_by: null, bell_day: null, created_at: new Date().toISOString() };
@@ -104,9 +110,6 @@ function make() {
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) { if (!data.migrated) { const e = new Error('function ops.f_crm_followup_entities() does not exist'); e.code = '42883'; throw e; } }
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) return { rows: Array.from(new Set(data.followups.filter((r) => !r.done_at).map((r) => ({ owner_entity_id: r.owner })).map((x) => x.owner_entity_id))).map((x) => ({ owner_entity_id: x })) };
     /* lists */
-    if (/EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) AS customer/.test(sql)) {
-      return { rows: [{ customer: data.cust.some((r) => r.owner === p[0] && r.party_id === p[1]), supplier: data.sup.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
-    }
     if (/^UPDATE customer_list SET hidden_at/.test(sql)) {
       if (!data.hiddenColumn) { const e = new Error('column "hidden_at" of relation "customer_list" does not exist'); e.code = '42703'; throw e; }
       data.cust.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] };
@@ -122,10 +125,10 @@ function make() {
 
   /* the Ledger's stored figures, handed back the way party-fields.decorate would (ledger on = balance_minor present) */
   stub('lib/party-fields', {
-    SCHEMES: ['GSTIN', 'PAN'], ensureNo: async () => 'P-00099',
+    SCHEMES: ['GSTIN', 'PAN'], ensureNo: async () => { if (data.noSeries) throw new Error('relation "party_no_series" does not exist'); return 'P-00099'; }, /* noSeries: before b272 (the mint's savepoint answers null) */
     decorate: async (withEntity, owner, rows, idKey, side) => {
       for (const r of rows) { const s = data.stored[side][String(r[idKey])] || {};
-        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: null, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
+        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: s.credit_limit_minor == null ? null : s.credit_limit_minor, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
         if (side === 'customer') r.nickname = s.nickname || null;
         if (data.ledgerOn !== false) { r.balance_minor = s.balance_minor || 0; r.oldest_due = s.oldest_due || null; } }
       return rows;

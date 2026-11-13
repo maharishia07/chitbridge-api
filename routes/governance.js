@@ -12,10 +12,12 @@ const log = require('../lib/logger');
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
 const express = require('express');
 const router = express.Router();
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no entity (K-1)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, faultOf, thrownAs, vaultFault, countrySetupFault, conformanceRefusal, contract } = require('../lib/governance-contract'); // each route's operation (S9) and the words of its refusals
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
+const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: only the owner changes the shop's tax number */
 const { writeGate } = require('../lib/access'); /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
 const { memo } = require('../lib/confcache'); // the active constitution is read once a minute, not once a call
 const platformroot = require('../lib/platformroot'); /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
@@ -33,7 +35,7 @@ function ownerGate(req, res, next) {
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
-const { planFor, checkCount, checkRate, checkCapability } = require('../governance/entitlements');
+const { planFor, checkCount, checkRate } = require('../governance/entitlements');
 
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const genBridge = require('../lib/bridgeid').generateBridgeId;
@@ -88,6 +90,7 @@ router.get('/entities/:id', auth, ...checked('GET /entities/:id'), async (req, r
   /* ⚠️ SEC (23 Oct, found by the generated foreign_id_404 case): a shop's plan, overrides and exceptions are ITS data. A shop reads
      its own; the platform reads any; another shop's id gets the unknown id's 404. Before, any signed-in shop could read any shop's. */
   if (String(req.params.id) !== String(auth.entityOf(req)) && !platformroot.isPlatform(req)) return problem(req, res, notGoverned());
+  if (!UUID.test(String(req.params.id))) return problem(req, res, notGoverned()); /* K-1: a junk id answers as an unknown one, not a 500 with the driver's words (the platform may read any id) */
   try {
     const { rows } = await query(
       `SELECT constitution_version, params_override, plan
@@ -113,6 +116,18 @@ router.get('/entities/:id', auth, ...checked('GET /entities/:id'), async (req, r
     problem(req, res, faultOf(err, req, 'governance view failed'));
   }
 });
+
+/**
+ * Write the Class-C exceptions a governed create stamped, under the NEW shop's own binding. governance_exceptions is RLS-scoped to one shop (b778),
+ * and this request makes the shop it writes for, so the new id is bound for the rest of the transaction (the step routes/catalogue.js:1632 takes);
+ * until b778 runs the binding changes nothing.
+ */
+async function writeMintExceptions(client, newId, exceptions) {
+  await client.query(`SELECT set_config('app.current_entity', $1, true)`, [String(newId)]);
+  for (const ex of exceptions) {
+    await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
+  }
+}
 
 // ── POST /api/governance/entities — governed create (the platform role only: lib/platformroot.refuseUnlessPlatform) ──
 // Transactional: the identity row + its Class-C exceptions commit together.
@@ -150,9 +165,7 @@ router.post('/entities', auth, platformGate, ...checked('POST /entities'), async
         [genBridge(), display_name, email, stamp.governed_by, stamp.constitution_version, JSON.stringify(stamp.params_override), plan]
       );
       const newId = ins.rows[0].identity_id;
-      for (const ex of stamp.exceptions) {
-        await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
-      }
+      await writeMintExceptions(client, newId, stamp.exceptions);
       return { id: newId };
     });
 
@@ -167,6 +180,7 @@ router.post('/entities', auth, platformGate, ...checked('POST /entities'), async
 // Forward-only: an entity's NEW chits then resolve under the active constitution;
 // chits already sent stay frozen at their original version (handled at send/freeze time).
 router.post('/entities/:id/reattest', auth, platformGate, ...checked('POST /entities/:id/reattest'), async (req, res) => {
+  if (!UUID.test(String(req.params.id))) return problem(req, res, notGoverned()); /* K-1: as an unknown id (after the platform gate, so a shop still hears 403) */
   try {
     const { rows } = await query(`SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`, [req.params.id]);
     if (!rows.length) return problem(req, res, notGoverned());
@@ -225,35 +239,38 @@ function assertPublicAllowed() {
   throw new Error('assertPublicAllowed is superseded — use lib/visibility-cap.js (capOf + check), wired in routes/entities.js PATCH /profile');
 }
 
-// POST /api/governance/conformance — ADVISORY: check a process/chit's data against the ACTIVE canonical standards
+// POST /api/governance/conformance — PLATFORM ONLY (SEC-133, OWASP API5) — ADVISORY: check a process/chit's data against the ACTIVE canonical standards
 // (ISO 9000 quality + EXIM trade + …) assimilated into the boilerplate, and report contradictions (missing required
 // items). Read-only: computes a verdict, never mutates or blocks anything. This is the runtime "the standard actually
 // governs" surface — the light, deterministic form; an AI co-assist adds semantic judgement on top later.
-router.post('/conformance', auth, ...checked('POST /conformance'), async (req, res) => {
+router.post('/conformance', auth, platformGate, ...checked('POST /conformance'), async (req, res) => {
   try {
     const data = req.body && typeof req.body.data === 'object' && req.body.data ? req.body.data : req.body || {};
     const scope = req.body && typeof req.body.scope === 'string' ? req.body.scope : 'chit';
-    const verdict = await require('../lib/conformance').checkConformance(data, scope);
-    res.json(verdict);
+    const checkedAgainst = await require('../lib/conformance').checkConformance(data, scope);
+    /* S34: the answer's six keys, all named (lib/conformance.js checkConformance) */
+    res.json({ status: checkedAgainst.status, scope: checkedAgainst.scope, advisory: checkedAgainst.advisory, note: checkedAgainst.note, checked: checkedAgainst.checked, gaps: checkedAgainst.gaps });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Conformance check failed'));
   }
 });
 
-// GET /api/governance/boilerplate/:key — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
-router.get('/boilerplate/:key', auth, ...checked('GET /boilerplate/:key'), async (req, res) => {
+// GET /api/governance/boilerplate/:key — PLATFORM ONLY (SEC-133) — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
+router.get('/boilerplate/:key', auth, platformGate, ...checked('GET /boilerplate/:key'), async (req, res) => {
   try {
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
     if (!bp) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such boilerplate'));
-    res.json(bp);
+    /* S34: the mould's keys, all named; each declared source to the six columns its statement selects (lib/boilerplate.js resolveBoilerplate) */
+    // prettier-ignore
+    res.json({ key: bp.key, version: bp.version, label: bp.label, region_code: bp.region_code, locale: bp.locale, brand: bp.brand, standards: bp.standards, sources: bp.sources.map((x) => ({ source_key: x.source_key, source_kind: x.source_kind, facet: x.facet, source_entity_id: x.source_entity_id, source_bridge: x.source_bridge, source_name: x.source_name })) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Boilerplate read failed'));
   }
 });
 
-// POST /api/governance/boilerplate/:key/adopt — the minted-path binding: stamp the caller's entity with this mould so
+// POST /api/governance/boilerplate/:key/adopt — PLATFORM ONLY (SEC-133; stamps the platform caller's own entity) — the minted-path binding: stamp the caller's entity with this mould so
 // it resolves the mould's DECLARED sources (bounded, not global). Upsert; preserves any existing constitution.
-router.post('/boilerplate/:key/adopt', auth, ...checked('POST /boilerplate/:key/adopt'), async (req, res) => {
+router.post('/boilerplate/:key/adopt', auth, platformGate, ...checked('POST /boilerplate/:key/adopt'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
@@ -287,7 +304,8 @@ router.post('/source', auth, platformGate, ...checked('POST /source'), async (re
       kind: b.kind,
       template: b.template
     });
-    res.json({ message: 'Source registered & stamped', source: out });
+    const sourceEntity = out.entity;
+    res.json({ message: 'Source registered & stamped', source: { source_key: out.source_key, kind: out.kind, facet: out.facet, entity: { identity_id: sourceEntity.identity_id, bridge_id: sourceEntity.bridge_id, display_name: sourceEntity.display_name } } });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Register source failed'));
   }
@@ -298,7 +316,9 @@ router.get('/source/:key', auth, ...checked('GET /source/:key'), async (req, res
   try {
     const s = await require('../lib/source').resolveSourceEntity(req.params.key);
     if (!s) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such source'));
-    res.json(s);
+    /* S34: the eight columns the statement selects (lib/source.js resolveSourceEntity) */
+    // prettier-ignore
+    res.json({ standard_key: s.standard_key, version: s.version, facet: s.facet, title: s.title, template: s.template, identity_id: s.identity_id, bridge_id: s.bridge_id, display_name: s.display_name });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Source read failed'));
   }
@@ -315,7 +335,9 @@ router.get('/readiness', auth, ...checked('GET /readiness'), async (req, res) =>
       : await R.resolveReadiness(entity_id);
     /* G8: what this login may do here — the server answers, the screen greys a refused button WITH the sentence */
     const m = require('../lib/access').mayWrite(req);
-    res.json({ ...out, may: { gather: m, verify: m } });
+    /* S34: every key either branch (the entity's own standards, or a destination) can carry is named; a key the branch does not carry is undefined, and JSON leaves it out */
+    // prettier-ignore
+    res.json({ origin: out.origin, vertical: out.vertical, destination: out.destination, dest_name: out.dest_name, domestic: out.domestic, asked: out.asked, code: out.code, why: out.why, standards: out.standards, clearances: out.clearances, summary: out.summary, may: { gather: m, verify: m } });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Readiness failed'));
   }
@@ -326,7 +348,8 @@ router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const m = require('../lib/access').mayWrite(req); /* G8 */
-    res.json({ ...(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin)), may: { gather: m, verify: m } });
+    const matrix = await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin);
+    res.json({ vertical: matrix.vertical, origin: matrix.origin, asked: matrix.asked, code: matrix.code, why: matrix.why, lanes: matrix.lanes, may: { gather: m, verify: m } });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Lanes failed'));
   }
@@ -338,7 +361,10 @@ router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
 router.get('/track-record', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/reference').resolveTrackRecord(entity_id));
+    const record = await require('../lib/reference').resolveTrackRecord(entity_id);
+    /* S34: the reference's strength words, then its counts */
+    // prettier-ignore
+    res.json({ rung: record.rung, note: record.note, disputes_clean: record.disputes_clean, counterparties: record.counterparties, dealings: record.dealings, settled: record.settled, disputes_open: record.disputes_open, disputes_resolved: record.disputes_resolved, on_rail_since: record.on_rail_since, last_dealing: record.last_dealing });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Track record failed'));
   }
@@ -349,7 +375,8 @@ router.get('/track-record', auth, async (req, res) => {
 router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
-    res.json(require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm }));
+    const cluster = require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm });
+    res.json({ framework: cluster.framework, cross_border: cluster.cross_border, incoterm: cluster.incoterm, cargo_insured_by: cluster.cargo_insured_by, frm_classes: cluster.frm_classes, cluster: cluster.cluster });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Instruments failed'));
   }
@@ -358,7 +385,8 @@ router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res
 router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
-    res.json(require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm }));
+    const journey = require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm });
+    res.json({ cross_border: journey.cross_border, incoterm: journey.incoterm, chain: journey.chain });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Journey failed'));
   }
@@ -366,7 +394,8 @@ router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
 // GET /api/governance/commerce-standards — the commerce standards (Incoterms/UCP/FRM) as governed source-entities (b93).
 router.get('/commerce-standards', auth, async (req, res) => {
   try {
-    res.json(await require('../lib/instruments').commerceStandards());
+    const standards = await require('../lib/instruments').commerceStandards();
+    res.json({ framework: standards.framework, governed: standards.governed, sources: standards.sources });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Commerce standards failed'));
   }
@@ -376,7 +405,10 @@ router.get('/commerce-standards', auth, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').getProfile(entity_id));
+    const held = await require('../lib/profile').getProfile(entity_id);
+    /* S34: the trade profile and the vault beside it, every key named (the same eight keys PUT /profile answers) */
+    // prettier-ignore
+    res.json({ trade_mode: held.trade_mode, markets: held.markets, sectors: held.sectors, adopted: held.adopted, vault: held.vault, vault_version: held.vault_version, invoice_party: held.invoice_party, vault_encrypted: held.vault_encrypted });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Profile failed'));
   }
@@ -397,7 +429,9 @@ router.put('/profile', auth, writeGate, ...checked('PUT /profile'), async (req, 
     } catch (e) {
       log.fellBack('governance PUT /profile: the signal was not sent — carried on without it', e);
     }
-    res.json(saved);
+    /* S34: the same eight keys GET /profile answers (saveProfile answers the profile it just wrote) */
+    // prettier-ignore
+    res.json({ trade_mode: saved.trade_mode, markets: saved.markets, sectors: saved.sectors, adopted: saved.adopted, vault: saved.vault, vault_version: saved.vault_version, invoice_party: saved.invoice_party, vault_encrypted: saved.vault_encrypted });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Save profile failed'));
   }
@@ -435,7 +469,7 @@ async function writeVaultBody(entity_id, body) {
  *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
  *   Who may: the owner or an editor (SEC-71: lib/access writeGate — a viewer/commenter gets 403 read_only/comment_only WITH the rail's sentence). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
-router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), async (req, res) => {
+router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), taxIdDoor.gate((req) => require('../lib/profile').vaultChangesTaxId(auth.entityOf(req), req.body || {})) /* CTR-182: the Business identity tax number is the owner's */,  async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -448,7 +482,7 @@ router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), 
     } catch (e) {
       log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e);
     }
-    res.json(saved);
+    res.json({ vault: saved.vault, version: saved.version }); /* S34: saveVault answers { vault, version } */
   } catch (err) {
     problem(req, res, vaultFault(err, req));
   }
@@ -457,7 +491,8 @@ router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), 
 router.get('/profile/readiness', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').resolveProfileReadiness(entity_id));
+    const ownReadiness = await require('../lib/profile').resolveProfileReadiness(entity_id);
+    res.json({ profile: ownReadiness.profile, asked: ownReadiness.asked, code: ownReadiness.code, why: ownReadiness.why, clearances: ownReadiness.clearances, summary: ownReadiness.summary });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Profile readiness failed'));
   }
@@ -466,7 +501,8 @@ router.get('/profile/readiness', auth, async (req, res) => {
 router.get('/profile/path', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').resolvePath(entity_id));
+    const road = await require('../lib/profile').resolvePath(entity_id);
+    res.json({ profile: road.profile, sector: road.sector, origin: road.origin, asked: road.asked, code: road.code, why: road.why, lanes: road.lanes, adoptable: road.adoptable });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Path failed'));
   }
@@ -487,7 +523,10 @@ router.get('/country-setup', auth, ...checked('GET /country-setup'), async (req,
   try {
     const entity_id = auth.entityOf(req);
     const CS = require('../lib/country-setup');
-    res.json(await withEntity(entity_id, (h) => CS.profile(h, entity_id)));
+    const setup = await withEntity(entity_id, (h) => CS.profile(h, entity_id));
+    /* S34: the profile's keys, all named (lib/country-setup.js profile) */
+    // prettier-ignore
+    res.json({ migrated: setup.migrated, done: setup.done, set_at: setup.set_at, required: setup.required, country: setup.country, currency: setup.currency, fy_start_month: setup.fy_start_month, tax: setup.tax, timezone: setup.timezone, zones: setup.zones, constituted: setup.constituted, constituted_by: setup.constituted_by, countries: setup.countries, source: setup.source, pack: setup.pack });
   } catch (err) {
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be read', 500));
   }
@@ -510,7 +549,9 @@ router.put('/country-setup', auth, ownerGate, ...checked('PUT /country-setup'), 
     } catch (e) {
       log.fellBack('governance PUT /country-setup: the signal was not sent — carried on without it', e);
     }
-    res.json(out);
+    /* S34: the profile's keys, all named as GET answers them, and `rederived` when the country was corrected (lib/country-setup.js save) */
+    // prettier-ignore
+    res.json({ migrated: out.migrated, done: out.done, set_at: out.set_at, required: out.required, country: out.country, currency: out.currency, fy_start_month: out.fy_start_month, tax: out.tax, timezone: out.timezone, zones: out.zones, constituted: out.constituted, constituted_by: out.constituted_by, countries: out.countries, source: out.source, pack: out.pack, rederived: out.rederived });
   } catch (err) {
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be saved', 422));
   }
@@ -522,7 +563,10 @@ router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) =>
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    res.json(await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {}));
+    const drafted = await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {});
+    /* S34: the draft's keys, all named (lib/ai.js invokeSkill: `data` only for a form-fill skill, `truncated` only when the reply was cut) */
+    // prettier-ignore
+    res.json({ skill: drafted.skill, kind: drafted.kind, gate: drafted.gate, draft: drafted.draft, data: drafted.data, model: drafted.model, truncated: drafted.truncated, usage: drafted.usage, note: drafted.note });
   } catch (err) {
     // 4xx are intentional, client-safe reasons (gate 402/429 · unknown skill 400) → show them;
     // 5xx keep the generic message (no internal/DB text leaks).
@@ -533,7 +577,10 @@ router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) =>
 router.get('/ai-usage', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/ai').usageSummary(entity_id));
+    const spend = await require('../lib/ai').usageSummary(entity_id);
+    /* S34: the metered answer, then the one a shop gets before b99 (calls · tokens · spent_usd · credits_usd · balance_usd · free_usd · budget_usd · remaining_usd are in both; rates and note in one each) */
+    // prettier-ignore
+    res.json({ calls: spend.calls, tokens: spend.tokens, spent_usd: spend.spent_usd, credits_usd: spend.credits_usd, balance_usd: spend.balance_usd, free_usd: spend.free_usd, budget_usd: spend.budget_usd, remaining_usd: spend.remaining_usd, rate_per_hour: spend.rate_per_hour, rate_per_day: spend.rate_per_day, note: spend.note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'AI usage failed'));
   }
@@ -549,9 +596,16 @@ router.get('/ai-skills', auth, async (req, res) => {
   }
 });
 
+/** may this caller read that entity's readiness passport — its own, or a party on the caller's customer or supplier list (lib/books-store partyOn, the one party test) */
+async function mayReadPassport(req, entity_id) {
+  const callerId = auth.entityOf(req);
+  if (String(callerId) === String(entity_id)) return true;
+  const on = await withEntity(callerId, (db) => require('../lib/books-store').partyOn(db, callerId, entity_id));
+  return Boolean(on.customer || on.supplier);
+}
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
-// confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
-// a connection.)
+// confidence" view). Status + validity only — never raw evidence contents. SEC-92: only the owner or a shop that lists it as a party.
 router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'), async (req, res) => {
   try {
     /**
@@ -569,7 +623,8 @@ router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [req.params.bridge_id]
     );
-    if (!r.rows.length) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
+    /* SEC-92: a passport is shown to its owner and to a shop that has the owner on its customer or supplier list; every other id answers as an unknown one */
+    if (!r.rows.length || !(await mayReadPassport(req, r.rows[0].identity_id))) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
@@ -585,7 +640,8 @@ router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'
     const shown = isOwnRow
       ? rd
       : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
-    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...shown });
+    /* S34: the passport is the entity's own readiness answer (standards · clearances · summary) beside the supplier and the facts */
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, standards: shown.standards, clearances: shown.clearances, summary: shown.summary });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Readiness failed'));
   }
@@ -605,7 +661,10 @@ router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), asyn
       valid_until: b.valid_until,
       status: b.status
     });
-    res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+    const sum = (await require('../lib/readiness').resolveReadiness(entity_id)).summary;
+    /* S34: the summary's ten keys, all named (lib/readiness.js summarize) */
+    // prettier-ignore
+    res.json({ message: 'Clearance gathered', total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Gather failed'));
   }
@@ -638,7 +697,9 @@ router.post('/verify', auth, writeGate, ...checked('POST /verify'), async (req, 
       }
     });
     const msg = node.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
-    res.json({ message: msg, verdict: node, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+    const sum = (await require('../lib/readiness').resolveReadiness(entity_id)).summary;
+    // prettier-ignore
+    res.json({ message: msg, verdict: node, total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Verify failed'));
   }
@@ -694,7 +755,7 @@ router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-
       )
     );
 
-    res.json({ message: 'Accepted', acceptance: r.rows[0], summary: rd.summary });
+    res.json({ message: 'Accepted', acceptance: { acceptance_id: r.rows[0].acceptance_id, accepted_at: r.rows[0].accepted_at }, summary: rd.summary }); /* S34: the two columns RETURNING selects */
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Acceptance failed'));
   }
@@ -728,7 +789,10 @@ router.get('/supplier-acceptance/:handle', auth, ...checked('GET /supplier-accep
       )
     );
 
-    res.json({ acceptance: r.rows[0] || null, applied: true });
+    const latest = r.rows[0];
+    /* S34: the five columns the statement selects */
+    // prettier-ignore
+    res.json({ acceptance: latest ? { acceptance_id: latest.acceptance_id, summary: latest.summary, accepted_at: latest.accepted_at, note: latest.note, accepted_by_name: latest.accepted_by_name } : null, applied: true });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Read failed'));
   }

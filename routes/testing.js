@@ -1,7 +1,7 @@
 /*
- * OWNS      the test board: cases, results, incidents, requirements, changes and releases.
- * CALLED BY web Testing screens · CI key.
- * FLOW      auth → entity scope → record → release closes the loop for the root
+ * OWNS      the test board (the 33 routes of /api/testing): cases and their import, results and runs, JUnit and Gherkin, the CMDB, requirements, incidents, changes and releases; each route's contract and the words of its refusals are lib/testing-contract.js.
+ * CALLED BY server.js (mounted at /api/testing) · web Testing screens · CI key · tools/api-register.cjs (router.openapi) · tests/api-problem-testing.test.cjs.
+ * FLOW      query filter read (a NUL byte matches nothing) → auth → board gate → schema check (lib/testing-contract.js) → entity scope → record (an id that is no uuid is an unknown one) → res | problem(faultOf: a NUL byte in text is a 400, any other fault a 500 that says nothing of its cause)
  * CARD      28-platform-and-operations/testing
  */
 /**
@@ -54,24 +54,52 @@ const {
   notStored,
   notSignedIn,
   notBoardWriter,
+  notBoardReader,
   faultOf,
   bareFaultOf,
   schemaOptions,
   contract
 } = require('../lib/testing-contract'); // the contract (each route's operation) and the words of a refusal
 const logger = require('../lib/logger');
+const { SAFE_SENTENCE } = require('../lib/respond');
 const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const teststatus = require('../lib/teststatus');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no row on the board
 /** the schema check of one route (its own operation in lib/testing-contract.js), as a list to spread after the gate: a route that takes no input has none */
 function checked(route) {
   const operation = contract.operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptions)] : [];
 }
+/** a query value holding a NUL byte (a character Postgres text cannot keep) can name nothing on the board: it is read as a value that matches nothing, which is what any other unknown value answers (never a 500 from the database) */
+const NO_MATCH = '\uFFFD';
+/** one query value with its NUL bytes read as the character no row holds (a list of values: each one) */
+const readable = (value) => (typeof value === 'string' ? value.split('\u0000').join(NO_MATCH) : Array.isArray(value) ? value.map(readable) : value);
+/** every query value of the board's routes is read through `readable` before a handler sees it */
+router.use((req, res, next) => {
+  Object.keys(req.query || {}).forEach((name) => {
+    req.query[name] = readable(req.query[name]);
+  });
+  next();
+});
+/** the id of a row that was never made */
+const NO_ROW = '00000000-0000-0000-0000-000000000000';
+/** an id that is not a uuid names no row: it is read as the id of one that was never made, which is what an unknown uuid is (so it answers as one: S41) */
+const uuidOrNone = (value) => (UUID.test(String(value)) ? String(value) : NO_ROW);
+/** SEC-93: the copy to our support queue failed — the caller reads the safe sentence and the request id, never the error's own words (which can name an environment variable); the cause is logged with the same id */
+function notCopied(e, req) {
+  logger.fellBack('testing: the copy to the support queue failed — answered in the safe words (ref ' + req.id + ')', e);
+  return { copied: false, why: SAFE_SENTENCE + ' (ref ' + req.id + ')' };
+}
+/** the words of an unknown id on the two records a path id names: said for an id that is no uuid exactly as for one nobody holds */
+/** the words of an unknown requirement id */
+const noRequirement = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
+/** the words of an unknown incident id */
+const noIncident = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
 /* ⚠️ `query` as well as withEntity: the operator copy reads identities, which has no RLS, so it must
    NOT be wrapped in withEntity — that would pin the read to one entity for no reason. */
-const { withEntity, query } = require('../db');
+const { withEntity } = require('../db');
 /**
  * ⭐⭐⭐ ONE BOARD FOR THE PRODUCT. Every route below reads and writes the entity testboard.entityFor() names
  * — the shared board when TEST_BOARD_ENTITY is set, and the caller's own entity when it is not.
@@ -182,6 +210,11 @@ async function readPage(db, sel, from, order, params, q, size) {
   });
   return { rows, total, page, limit };
 }
+/* S34: the report's two row lists are the columns their statements select, each named (the answer is these rows as they came) */
+// prettier-ignore
+const coverRowOf = (x) => ({ module_key: x.module_key, module_name: x.module_name, total: x.total, passed: x.passed, failed: x.failed, blocked: x.blocked, skipped: x.skipped, untested: x.untested, high_untested: x.high_untested, untested_swept: x.untested_swept, untested_written: x.untested_written });
+// prettier-ignore
+const badRowOf = (x) => ({ case_key: x.case_key, module_key: x.module_key, status: x.status, note: x.note, evidence: x.evidence, tester_name: x.tester_name, run_kind: x.run_kind, layer: x.layer, at: x.at, case_version: x.case_version });
 /* the ?state= filter of a findings list, its value at $2: 'all' · 'open' (any of `open`) · one state. The lists are constants. */
 function stateWhere(col, open) {
   return `($2 = 'all' OR ($2 = 'open' AND ${col} IN (${open.map((item) => `'${item}'`).join(',')})) OR ${col} = $2)`;
@@ -313,7 +346,9 @@ router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
     if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
     const t = require('../lib/trips');
     const b = req.body || {};
-    return res.json(b.off ? t.traceOff(me) : t.traceOn(me, b.minutes));
+    const state = b.off ? t.traceOff(me) : t.traceOn(me, b.minutes);
+    /* S34: the keys the library's answer can carry, named: off and no-entity answer { on } alone, on answers all four */
+    return res.json(state.on ? { on: state.on, minutes: state.minutes, until: state.until, seconds: state.seconds } : { on: state.on });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Failed'));
   }
@@ -322,7 +357,9 @@ router.get('/trace', auth, ...checked('GET /trace'), (req, res) => {
   try {
     const me = auth.entityOf(req);
     if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
-    return res.json(require('../lib/trips').traceState(me));
+    const state = require('../lib/trips').traceState(me);
+    /* S34: the keys the library's answer can carry, named; a key it does not carry is undefined, and JSON leaves it out */
+    return res.json({ on: state.on, until: state.until, seconds: state.seconds });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Failed'));
   }
@@ -393,7 +430,7 @@ function testerOf(req) {
  * ⚠️ ONE QUERY, not one per case: the version join is done in SQL. A board that opens 110 cases would otherwise
  * make 110 round trips, and at 1.4–2.4 s per Railway↔Supabase call that is not a screen, it is an afternoon.
  */
-router.get('/cases', auth, ...checked('GET /cases'), async (req, res) => {
+router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -847,7 +884,17 @@ router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req,
     } catch (e) {
       logger.fellBack('testing POST /cases/import: the helper failed — carried on without it', e);
     }
-    res.json(_out);
+    /* S34: the keys importCases can carry, named; orphans, retired and retire_held are set only after a read of the board, and JSON leaves out one that was never set */
+    res.json({
+      added: _out.added,
+      updated: _out.updated,
+      unchanged: _out.unchanged,
+      cases: _out.cases,
+      dropped_fields: _out.dropped_fields,
+      orphans: _out.orphans,
+      retired: _out.retired,
+      retire_held: _out.retire_held
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Import failed'));
   }
@@ -876,7 +923,7 @@ router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req,
  * ⚠️ These are NOT cases and must never be loaded as definitions: they are what the tests are about, and
  * putting them in the case table would make them countable as coverage.
  */
-router.get('/engine', auth, ...checked('GET /engine'), (req, res) => {
+router.get('/engine', auth, boardReadGate, ...checked('GET /engine'), (req, res) => {
   try {
     const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
     if (!require('fs').existsSync(f)) return res.json({ engine: null });
@@ -900,7 +947,19 @@ router.post('/cases/seed', auth, ...checked('POST /cases/seed'), async (req, res
     }
     const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
     const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
-    res.json(Object.assign({ version: doc.version, date: doc.date }, out));
+    /* S34: the document's version and date, then the keys importCases can carry (see POST /cases/import) */
+    res.json({
+      version: doc.version,
+      date: doc.date,
+      added: out.added,
+      updated: out.updated,
+      unchanged: out.unchanged,
+      cases: out.cases,
+      dropped_fields: out.dropped_fields,
+      orphans: out.orphans,
+      retired: out.retired,
+      retire_held: out.retire_held
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not load the documented cases'));
   }
@@ -964,7 +1023,8 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
     return { definition_id: identifier, version: 1, changed: true };
   }
   const id = cur.rows[0].definition_id;
-  if (JSON.stringify(cur.rows[0].rules || {}) === JSON.stringify(rules)) {
+  /* QA-148: the SAME content in any key order is no change (lib/canon sorts keys; JSON.stringify did not) */
+  if (canon.canon(cur.rows[0].rules || {}) === canon.canon(rules)) {
     return { definition_id: id, version: cur.rows[0].current_version, changed: false };
   }
   const next = Number(cur.rows[0].current_version) + 1;
@@ -987,6 +1047,7 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
  * — a shared row is published to every shop, so writing one is not every shop's call.
  */
 const cmdb = require('../lib/cmdb');
+const canon = require('../lib/canon');
 const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
 
 /**
@@ -996,10 +1057,21 @@ const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
  * branch on; nothing of theirs is read or written first. Reads, results and the per-raiser kinds never come here.
  */
 function boardRefused(req, res) {
-  if (testboard.canWrite(auth.entityOf(req))) return false;
+  if (testboard.canWriteShared(auth.entityOf(req))) return false;
   /* the sentence and the code the screen branches on (NOT_BOARD_WRITER: 'Not a writer of the shared board') are lib/testing-contract.js notBoardWriter */
   problem(req, res, { status: 403, ...notBoardWriter() });
   return true;
+}
+
+/**
+ * ⭐ SEC-122 (Athi 2026-10-31): READING the shared board asks the SAME door as writing it (testboard.canWrite: the board's own
+ * entity · TEST_BOARD_WRITERS · the platform root), so nothing posted to the board reaches an ordinary shop. The own-shop reads
+ * (incidents · requirements · changes · releases · evidence · trace) never come here: they are the Test lab. Per-tenant board
+ * (no TEST_BOARD_ENTITY): canWrite is true for a shop on its OWN board, so it still reads its own — nothing is shared there.
+ */
+function boardReadGate(req, res, next) {
+  if (testboard.canWrite(auth.entityOf(req))) return next();
+  problem(req, res, { status: 403, ...notBoardReader() });
 }
 
 /** one CMDB list row from its definition row: the id, title, version, and the flags the record raises about itself */
@@ -1015,7 +1087,7 @@ function cmdbListRow(row) {
   };
 }
 /** GET /api/testing/cmdb — every record, PAGED (W1-SET: readPage → top-level total · page · limit, ?page= ?limit=; `records` stays) */
-router.get('/cmdb', auth, ...checked('GET /cmdb'), async (req, res) => {
+router.get('/cmdb', auth, boardReadGate, ...checked('GET /cmdb'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const page = await withEntity(entity_id, (db) =>
@@ -1039,7 +1111,7 @@ router.get('/cmdb', auth, ...checked('GET /cmdb'), async (req, res) => {
 });
 
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
-router.get('/cmdb/:ci', auth, ...checked('GET /cmdb/:ci'), async (req, res) => {
+router.get('/cmdb/:ci', auth, boardReadGate, ...checked('GET /cmdb/:ci'), async (req, res) => {
   try {
     const ci = String(req.params.ci || '');
     if (!cmdb.CI_RE.test(ci)) return problem(req, res, { status: 400, ...badRequest('Not a CI id', 'A CI id looks like CAP-SIGNIN.') });
@@ -1071,7 +1143,8 @@ router.put('/cmdb/:ci', auth, ...checked('PUT /cmdb/:ci'), async (req, res) => {
     if (!v.ok) return problem(req, res, { status: 400, ...badRequest('That record does not fit', v.why) });
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const out = await withEntity(entity_id, (db) => upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
-    res.json(Object.assign({ ci: rec.ci, flags: cmdb.flags(rec) }, out));
+    /* S34: upsertVersioned answers definition_id, version and changed */
+    res.json({ ci: rec.ci, flags: cmdb.flags(rec), definition_id: out.definition_id, version: out.version, changed: out.changed });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not save the record'));
   }
@@ -1112,7 +1185,7 @@ router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) 
         (w.changed ? out.seeded : out.unchanged).push(x.r.ci + ' v' + w.version);
       }
     });
-    res.json(out);
+    res.json({ seeded: out.seeded, unchanged: out.unchanged, refused: out.refused });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not load the CMDB records'));
   }
@@ -1207,6 +1280,27 @@ function badResult(r) {
   return null;
 }
 
+/** the sitting a post names: its project (see projectOf), and its run id, which is a uuid or nothing (a junk run id is refused in words, never stored under another id) */
+function sittingOf(post) {
+  return post.run_id && !UUID.test(String(post.run_id)) ? { error: 'the run id is not a run id — leave it out and one is made for the sitting' } : projectOf(post.project);
+}
+/** one result as the INSERT takes it: the case it names (its definition and current version, null when the board does not hold it), the module it belongs to, and the tester stamped from the token */
+function resultRowOf(item, by, tester) {
+  const key = String(item.case_key).trim();
+  const d = by[key] || null;
+  return {
+    key: key,
+    definition_id: d ? d.definition_id : null,
+    case_version: d ? d.current_version : null,
+    module_key: item.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
+    status: item.status,
+    run_kind: item.run_kind,
+    layer: item.layer || null,
+    tester_name: tester.name /* SEC-FIX3 S10: stamped from the token, never the body */,
+    note: item.note || null,
+    evidence: item.evidence || null
+  };
+}
 /**
  * POST /api/testing/results — record one result, or a whole run of them.
  *
@@ -1231,7 +1325,7 @@ async function recordResults(entity_id, who, b) {
    * twice is FOLDED here, worst result first — never left to ON CONFLICT DO NOTHING, which kept the first and
    * dropped the rest silently, so a fail after a pass vanished (N01). A single result passes through as it was.
    */
-  const pj = projectOf(b.project);
+  const pj = sittingOf(b);
   if (pj.error) return { status: 422, body: { error: 'Not recorded', message: pj.error } };
   const list = junitresults.fold(given);
   {
@@ -1265,22 +1359,7 @@ async function recordResults(entity_id, who, b) {
          * ⚠ ON CONFLICT DO NOTHING still applies per row, so a replayed suite is still a quiet no-op, and the
          * rows that were skipped are simply not returned — which is what `skipped` counts.
          */
-        const norm = list.map((item) => {
-          const key = String(item.case_key).trim();
-          const d = by[key] || null;
-          return {
-            key: key,
-            definition_id: d ? d.definition_id : null,
-            case_version: d ? d.current_version : null,
-            module_key: item.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
-            status: item.status,
-            run_kind: item.run_kind,
-            layer: item.layer || null,
-            tester_name: who.name /* SEC-FIX3 S10: stamped from the token, never the body */,
-            note: item.note || null,
-            evidence: item.evidence || null
-          };
-        });
+        const norm = list.map((item) => resultRowOf(item, by, who));
 
         const ins = await db.query(
           `INSERT INTO test_result
@@ -1359,7 +1438,19 @@ router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
   try {
     const out = await recordResults(resultsEntityOf(req), testerOf(req), req.body || {});
     if (out.status >= 400) return problem(req, res, { status: 422, ...refused(out.body) }); /* recordResults answers 200 or 422 */
-    res.json(out.body);
+    const done = out.body;
+    /* S34: the keys recordResults can carry, named; project_not_written only when a project was asked for and not written */
+    res.json({
+      run_id: done.run_id,
+      run_label: done.run_label,
+      project: done.project,
+      project_not_written: done.project_not_written,
+      recorded: done.recorded,
+      skipped: done.skipped,
+      folded: done.folded,
+      not_on_board: done.not_on_board,
+      results: done.results.map((row) => ({ result_id: row.result_id, case_key: row.case_key, status: row.status, at: row.at })) /* the four columns the INSERT returns */
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not record the result'));
   }
@@ -1372,64 +1463,59 @@ router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
  * we?" The history is there on request (?case_key= or ?run_id=), and a case's history is the interesting half
  * when something is flaky.
  */
-router.get('/results', auth, ...checked('GET /results'), async (req, res) => {
+router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
     const pj = projectOf(q.project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
+    let r = null;
     if (q.case_key || q.run_id) {
       const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
-      const nestedR = await withEntity(entity_id, async (db) =>
+      r = await withEntity(entity_id, async (db) =>
         readPage(
           db,
           '*',
           `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}`,
           'at DESC',
-          [entity_id, q.case_key || q.run_id, pj.project],
+          [entity_id, q.case_key || uuidOrNone(q.run_id), pj.project],
           q,
           PAGE.history
         )
       );
       /* ⚠️ `history` named which branch answered and no caller read it — dropped by the envelope besides */
-      return res.json({
-        results: nestedR.rows,
-        count: nestedR.rows.length,
-        total: nestedR.total,
-        page: nestedR.page,
-        limit: nestedR.limit,
-        project: pj.project
-      });
+    } else {
+      /**
+       * ⚠️ LATEST PER (case, layer), not per case. One case is often proved at two levels — the offer engine's
+       * arithmetic by a unit test AND by a person at the counter — and collapsing those would let a green unit test
+       * hide a red counter, which is precisely the pair of facts worth keeping apart.
+       */
+      /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
+      r = await withEntity(entity_id, async (db) =>
+        readPage(
+          db,
+          '*',
+          `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
+          ORDER BY case_key, COALESCE(layer,''), at DESC) latest`,
+          `case_key, COALESCE(layer,'')`,
+          [entity_id, pj.project],
+          q,
+          PAGE.results
+        )
+      );
     }
-
-    /**
-     * ⚠️ LATEST PER (case, layer), not per case. One case is often proved at two levels — the offer engine's
-     * arithmetic by a unit test AND by a person at the counter — and collapsing those would let a green unit test
-     * hide a red counter, which is precisely the pair of facts worth keeping apart.
-     */
-    /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
-    const r = await withEntity(entity_id, async (db) =>
-      readPage(
-        db,
-        '*',
-        `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
-         FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
-        ORDER BY case_key, COALESCE(layer,''), at DESC) latest`,
-        `case_key, COALESCE(layer,'')`,
-        [entity_id, pj.project],
-        q,
-        PAGE.results
-      )
-    );
-    res.json({ results: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
+    /* S34: a row of the ledger is test_result as the table holds it (migrations/000_baseline_2026-10-21.sql, project from b292), every column named; a column the database does not hold yet is undefined, and JSON leaves it out */
+    // prettier-ignore
+    res.json({ results: r.rows.map((x) => ({ result_id: x.result_id, entity_id: x.entity_id, definition_id: x.definition_id, case_version: x.case_version, case_key: x.case_key, module_key: x.module_key, status: x.status, run_kind: x.run_kind, layer: x.layer, tested_by: x.tested_by, tester_name: x.tester_name, at: x.at, run_id: x.run_id, run_label: x.run_label, note: x.note, evidence: x.evidence, build: x.build, project: x.project })), count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the results'));
   }
 });
 
 /** GET /api/testing/runs — the sittings, newest first, each with its totals. */
-router.get('/runs', auth, ...checked('GET /runs'), async (req, res) => {
+router.get('/runs', auth, boardReadGate, ...checked('GET /runs'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const pj = projectOf((req.query || {}).project);
@@ -1468,7 +1554,9 @@ router.get('/runs', auth, ...checked('GET /runs'), async (req, res) => {
         PAGE.runs
       );
     });
-    res.json({ runs: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects });
+    /* S34: a sitting and a project are the columns their statements select, each named */
+    // prettier-ignore
+    res.json({ runs: r.rows.map((x) => ({ run_id: x.run_id, run_label: x.run_label, build: x.build, project: x.project, started: x.started, finished: x.finished, kinds: x.kinds, testers: x.testers, total: x.total, passed: x.passed, failed: x.failed, blocked: x.blocked, skipped: x.skipped })), count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects: projects.map((x) => ({ project: x.project, runs: x.runs, last_at: x.last_at })) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the runs'));
   }
@@ -1574,7 +1662,19 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
     });
     const answered = Object.assign({ unmatched }, out.body);
     if (out.status >= 400) return problem(req, res, { status: 422, ...refused(answered) }); /* recordResults answers 200 or 422 */
-    return res.json(answered);
+    /* S34: the unmatched cases, then the keys recordResults can carry (see POST /results) */
+    return res.json({
+      unmatched,
+      run_id: out.body.run_id,
+      run_label: out.body.run_label,
+      project: out.body.project,
+      project_not_written: out.body.project_not_written,
+      recorded: out.body.recorded,
+      skipped: out.body.skipped,
+      folded: out.body.folded,
+      not_on_board: out.body.not_on_board,
+      results: out.body.results.map((row) => ({ result_id: row.result_id, case_key: row.case_key, status: row.status, at: row.at })) /* the four columns the INSERT returns */
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read that report'));
   }
@@ -1593,7 +1693,7 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
  */
 
 /** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
-router.get('/cases/gherkin', auth, ...checked('GET /cases/gherkin'), async (req, res) => {
+router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const gherkin = require('../lib/gherkin');
@@ -1636,7 +1736,8 @@ router.get('/cases/gherkin', auth, ...checked('GET /cases/gherkin'), async (req,
        describes, is reviewed in a diff, and is edited by hand. Returning it as JSON would make the one thing
        Gherkin is actually for — being readable and editable by a person — into the caller's problem. */
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge') + '.feature"');
+    /* the file's name is the module as asked, but a header holds printable ASCII only: any other character (a module nobody has is still a module somebody can ask for) is an underscore, never a 500 */
+    res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge').replace(/[^ -!#-~]/g, '_') + '.feature"');
     res.send(gherkin.toFeatures(groups));
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not export'));
@@ -1701,7 +1802,7 @@ router.post('/cases/gherkin', auth, ...checked('POST /cases/gherkin'), async (re
       out.unchanged += r.unchanged;
       out.cases = out.cases.concat(r.cases);
     }
-    res.json(out);
+    res.json({ added: out.added, updated: out.updated, unchanged: out.unchanged, clauses: out.clauses, problems: out.problems, cases: out.cases });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not import'));
   }
@@ -1769,7 +1870,6 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
     const observed = String(b.observed || '').trim();
     const requirement = String(b.requirement || '').trim();
     const case_key = String(b.case_key || '').trim() || null;
-
     /**
      * ── ⚠️⚠️ THE CASE AND THE REQUIREMENT NO LONGER LIVE IN THE SAME ENTITY ───────────────────────────────
      *
@@ -1930,10 +2030,11 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
             audience: b.audience,
             to_bridge_id: b.to_bridge_id
           },
-          w2
+          w2,
+          req.id
         );
       } catch (e) {
-        support = { copied: false, why: String(e.message || e) };
+        support = notCopied(e, req);
       }
       require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref), {
         screen: (req.body || {}).screen_code,
@@ -1943,7 +2044,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
     } catch (e) {
       logger.fellBack('testing POST /requirements: the helper failed — carried on without it', e);
     }
-    res.json(Object.assign({ raised: true, state: 'raised', support }, out));
+    res.json({ raised: true, state: 'raised', support, definition_id: out.definition_id, clause: out.clause, cited: out.cited, cite_held: out.cite_held });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not raise it'));
   }
@@ -2054,14 +2155,13 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     if (state === 'rejected' && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'A rejected requirement needs its reason, or the next tester raises it again.') });
     }
-
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.definition_id = $2::uuid`,
-        [entity_id, req.params.id]
+        [entity_id, uuidOrNone(req.params.id)] /* K-1: an id that is no uuid is looked up as one that names no row: the unknown id's own answer */
       );
       const row = c.rows[0];
       if (!row) return null;
@@ -2096,7 +2196,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
       };
     });
 
-    if (!out) return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
+    if (!out) return problem(req, res, noRequirement());
     /* ⭐ accepted or rejected, the person who raised it hears — a rejection nobody is told about is how the
        same requirement gets raised a third time. See the argument in lib/testnews.js. */
     try {
@@ -2110,10 +2210,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     } catch (e) {
       logger.fellBack('testing PATCH /requirements/:id: the helper failed — carried on without it', e);
     }
-    delete out._ref;
-    delete out._raiser;
-    delete out._screen;
-    res.json(Object.assign({ ok: true }, out));
+    res.json({ ok: true, state: out.state, shelf: out.shelf, version: out.version });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not set it'));
   }
@@ -2183,7 +2280,6 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
     /* ⚠️ refused, not defaulted: an incident with no account of what happened cannot be investigated by
        anybody but the person who filed it, and they are the one person who will not need to. */
     if (!observed) return problem(req, res, { status: 400, ...badRequest('Nothing recorded', 'Say what happened.') });
-
     const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
     const sev = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : 'Sev-3';
     const now = new Date().toISOString();
@@ -2191,7 +2287,6 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
        and it would show as a negative delay on the one number this board exists to make visible. */
     let happened = String(b.happened_at || '').trim() || now;
     if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
-
     const out = await withEntity(entity_id, async (db) => {
       const name = String(b.ref || '').trim() || 'INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       const rules = {
@@ -2290,13 +2385,15 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
           audience: b.audience,
           to_bridge_id: b.to_bridge_id
         },
-        testerOf(req)
+        testerOf(req),
+        req.id
       );
     } catch (e) {
-      support = { copied: false, why: String(e.message || e) };
+      support = notCopied(e, req);
     }
 
-    res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
+    res.json({ recorded: true, state: 'raised', support, definition_id: out.definition_id, ref: out.ref, severity: out.severity,
+      happened_at: out.happened_at, rules: out.rules, note: out.note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not record it'));
   }
@@ -2444,14 +2541,13 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
     if (state === 'closed' && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'Closing is a decision — record it, or the next person reopens the same thing.') });
     }
-
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'incident' AND d.definition_id = $2::uuid`,
-        [entity_id, req.params.id]
+        [entity_id, uuidOrNone(req.params.id)] /* K-1: an id that is no uuid is looked up as one that names no row: the unknown id's own answer */
       );
       const row = c.rows[0];
       if (!row) return null;
@@ -2524,7 +2620,7 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
       };
     });
 
-    if (!out) return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
+    if (!out) return problem(req, res, noIncident());
     /**
      * ── ⭐⭐⭐ THE RETURN LEG ─────────────────────────────────────────────────────────────────────────────
      *
@@ -2548,10 +2644,7 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
     } catch (e) {
       logger.fellBack('testing PATCH /incidents/:id: the helper failed — carried on without it', e);
     }
-    delete out._ref;
-    delete out._raiser;
-    delete out._screen;
-    res.json(Object.assign({ ok: true }, out));
+    res.json({ ok: true, state: out.state, severity: out.severity, shelf: out.shelf, version: out.version, changes: out.changes, defects: out.defects });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not set it'));
   }
@@ -2613,7 +2706,7 @@ router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) =>
   }
 });
 
-router.get('/stale', auth, ...checked('GET /stale'), async (req, res) => {
+router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -2674,10 +2767,10 @@ router.get('/stale', auth, ...checked('GET /stale'), async (req, res) => {
  * ⚠️ ONE QUERY. A per-module loop here would be sixteen Pacific crossings to answer a question the panel asks on
  * every open. [[project-roundtrip-cost]]
  */
-router.get('/coverage', auth, ...checked('GET /coverage'), async (req, res) => {
+router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+    const run_id = req.query && req.query.run_id ? uuidOrNone(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
     /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
@@ -2858,10 +2951,10 @@ router.get('/coverage', auth, ...checked('GET /coverage'), async (req, res) => {
  * ⭐ So every section is marked `source: 'measured'` or `source: 'needs a person'`, and the ones that need a
  * person carry the QUESTION rather than an answer. The screen renders that difference plainly.
  */
-router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
+router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+    const run_id = req.query && req.query.run_id ? uuidOrNone(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
@@ -3023,8 +3116,8 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
         byLayer = fold('layer');
 
       return {
-        cover: cover.rows,
-        bad: bad.rows,
+        cover: cover.rows.map(coverRowOf),
+        bad: bad.rows.map(badRowOf),
         runs: runs.rows,
         people: people.rows,
         kinds: Object.keys(byKind)
@@ -3209,8 +3302,8 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
              * otherwise. [[feedback-silence-is-the-bug]]
              */
             tested_by:
-              [
-                ...new Set(
+              Array.from(
+                new Set(
                   data.runs
                     .flatMap((item) =>
                       String(item.testers || '')
@@ -3219,12 +3312,12 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
                     )
                     .filter(Boolean)
                 )
-              ].join(', ') || '—',
+              ).join(', ') || '—',
             period: data.runs.length ? { from: data.runs[data.runs.length - 1].started, to: data.runs[0].finished } : null,
             runs: data.runs.length,
-            kinds: [...new Set(data.runs.flatMap((item) => String(item.kinds || '').split(', ')))].filter(Boolean),
-            layers: [...new Set(data.runs.flatMap((item) => String(item.layers || '').split(', ')))].filter(Boolean),
-            builds: [...new Set(data.runs.map((item) => item.build).filter(Boolean))]
+            kinds: Array.from(new Set(data.runs.flatMap((item) => String(item.kinds || '').split(', ')))).filter(Boolean),
+            layers: Array.from(new Set(data.runs.flatMap((item) => String(item.layers || '').split(', ')))).filter(Boolean),
+            builds: Array.from(new Set(data.runs.map((item) => item.build).filter(Boolean)))
           }
         },
 
@@ -3493,7 +3586,7 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
  * ⚠ It reads RESULTS, not cases — so a guard file that has never been written up as a case still gets its
  * history. The board answers "what should be tested"; this answers "what can be believed".
  */
-router.get('/reliability', auth, ...checked('GET /reliability'), async (req, res) => {
+router.get('/reliability', auth, boardReadGate, ...checked('GET /reliability'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
@@ -3637,9 +3730,6 @@ router.get('/reliability', auth, ...checked('GET /reliability'), async (req, res
  * cites file paths, and file paths describe the product's internals. tests/board-kinds.test.cjs asserts both.
  */
 
-/* ⭐ THE SAME FOUR-STATE SHAPE the requirements use, so one vocabulary covers the board. */
-const CHANGE_STATES = ['proposed', 'reviewed', 'shipped', 'abandoned'];
-const CHANGE_SHELF = { proposed: 'draft', reviewed: 'draft', shipped: 'live', abandoned: 'retired' };
 
 /**
  * ⭐ THREE RISK CLASSES AND ONLY THREE — borrowed from ITIL because it is the standard everyone already knows,
@@ -3752,14 +3842,8 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
 
     require('../lib/testnews').testRaised(entity_id, 'change', out.ref, { state: 'proposed', by: who.id, byName: who.name });
 
-    res.status(201).json({
-      ok: true,
-      ...out,
-      forced_risk: forced,
-      /* ⭐ said out loud rather than silently applied — a rule that changes your answer without telling you is
-         one you will argue with the first time it matters. */
-      needs_review: risk !== 'routine'
-    });
+    /* ⭐ forced_risk and needs_review are said out loud, not silently applied: a rule that changes your answer without telling you is one you will argue with */
+    res.status(201).json({ ok: true, definition_id: out.definition_id, ref: out.ref, risk: out.risk, rules: out.rules, forced_risk: forced, needs_review: risk !== 'routine' });
   } catch (e) {
     console.error('change create:', e.code || '', e.message);
     problem(req, res, faultOf(e, req, 'Failed to record the change'));
@@ -3807,11 +3891,11 @@ router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
     });
     const open = all.filter((item) => item.state === 'proposed' || item.state === 'reviewed');
     const list = want === 'all' ? all : want === 'open' ? open : all.filter((item) => item.state === want);
-    res.json(
-      Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), {
-        counts: { all: all.length, open: open.length, unproven: all.filter((item) => !(item.proves || []).length).length }
-      })
-    );
+    const answer = Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), {
+      counts: { all: all.length, open: open.length, unproven: all.filter((item) => !(item.proves || []).length).length }
+    });
+    /* S34: every key the pager can add is named (capped and cap_note only when the caller asked past the cap); an absent one is undefined, and JSON leaves it out */
+    res.json({ changes: answer.changes, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, counts: answer.counts });
   } catch (e) {
     console.error('changes list:', e.code || '', e.message);
     problem(req, res, bareFaultOf(e, req, 'Failed to list changes'));
@@ -3849,7 +3933,7 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
            FROM definition d
            JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'change' AND d.definition_id = ANY($2::uuid[])`,
-        [entity_id, ids]
+        [entity_id, ids.filter((id) => UUID.test(id))] /* an id that is no uuid names no change: carried as an unknown one is (nothing) */
       );
 
       const rows = got.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
@@ -4027,8 +4111,7 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
         [entity_id]
       )
     );
-    res.json(
-      pageOut(
+    const answer = pageOut(
         'releases',
         r.rows.map((x) => ({
           definition_id: x.definition_id,
@@ -4041,8 +4124,9 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
           at: x.updated_at
         })),
         pageArgs(req.query, PAGE.releases, PAGE.releases)
-      )
-    );
+      );
+    /* S34: every key the pager can add is named (capped and cap_note only when the caller asked past the cap); an absent one is undefined, and JSON leaves it out */
+    res.json({ releases: answer.releases, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (e) {
     console.error('releases list:', e.code || '', e.message);
     problem(req, res, bareFaultOf(e, req, 'Failed to list releases'));
@@ -4053,6 +4137,7 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
 router._proj = _proj;
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
+router.upsertVersioned = upsertVersioned; /* QA-148: the one versioned write, reachable by tests/qa-148-cmdb-noop-save.test.cjs */
 module.exports = router;
 router.citedEntityOf = citedEntityOf;
 router.resultsEntityOf = resultsEntityOf; /* SEC-FIX3 — exported for tests/sec-fix3.test.cjs */

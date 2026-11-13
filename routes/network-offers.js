@@ -6,7 +6,7 @@
  *   PUT  /api/network-offers/policy           { policy: 'opt_in' | 'opt_out' }              (brand)
  *   POST /api/network-offers/:id/release      { at?: iso | 'now', until?: iso }             (brand)
  *   POST /api/network-offers/:id/withdraw     { at?: iso | 'now' }                          (brand)
- *   POST /api/network-offers/:id/choice       { choice: 'in' | 'out' | null }               (store)
+ *   POST /api/network-offers/:id/choice       { choice: 'in' | 'out' | null }               (store; 404 unless the offer is one GET lists as open to this shop, a clear of an existing record excepted)
  *   POST /api/network-offers/catalogue/publish { source_key, at?: iso | 'now', add?: [item ids], withdraw?: [names], withdraw_at?/restore_at?: { name: [store ids] } } (brand)
  *   POST /api/network-offers/catalogue/cancel  { source_key }                               (brand)
  *   POST /api/network-offers/catalogue/price   { source_key, name, key, choice: use|keep|ok } (store)
@@ -18,7 +18,7 @@
  */
 /* OWNS a brand's network offers: release to the stores, withdraw, what each store holds
  * CALLED BY server.js (mounted under /api/network-offers); the web Offers screens
- * FLOW auth -> the brand's own offer -> release / withdraw at the brand's next opening (its own zone) -> pushToNetwork
+ * FLOW auth -> session only -> the schema check (lib/network-offers-contract.js) -> the brand's own offer -> release / withdraw at the brand's next opening (its own zone) -> pushToNetwork
  * CARD network-and-trade/network-offers */
 'use strict';
 const express = require('express');
@@ -29,18 +29,28 @@ const { withEntity, readBatch } = require('../db');
 const net = require('../lib/network-offers');
 const ncat = require('../lib/network-catalogue');
 const membership = require('../lib/network-membership');
-const { safeErr } = require('../lib/respond');
-/** every door's catch: a member read that failed answers in its own words (503 + code); anything else, safeErr */
-const failed = (res, e) => membership.answerReadFailed(res, e) || res.status(500).json({ error: 'Failed', message: safeErr(e) });
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { SAID, refusalOf, faultOf, contract } = require('../lib/network-offers-contract'); // the contract (each route's operation) and the words of a refusal
+/** every door's catch: a member read that failed answers in its own words (503 + code); anything else a 500 that says nothing of its cause */
+const failed = (res, e) => problem(res.req, res, faultOf(e, res.req, membership.READ_FAILED));
+/** one refusal in the door's words: the Problem fields beside the old { error, message } */
+const refuse = (req, res, refusal) =>
+  problem(req, res, { status: refusal.status, code: refusal.code, detail: refusal.message, legacy: { error: refusal.error, message: refusal.message } });
 
 const sessionOnly = (req, res, next) => {
-  if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Network offers are managed by a signed-in person.' });
+  if (req.api_key)
+    return problem(req, res, { status: 403, code: 'SESSION_ONLY', detail: SAID.sessionOnly, legacy: { error: SAID.forbidden, message: SAID.sessionOnly } });
   next();
 };
 
+/** NET-91: the brand's policy, release, withdraw and catalogue publish, cancel and price push to or answer every store, so only the brand's owner does them — the one owner gate (lib/owner), never a staff login */
+const brandOwnerOnly = require('../lib/owner').ownerOnly('Only the business owner may change network offers and catalogue prices.');
+
 /** the brand's own live offer, or null — nobody releases an offer that is not theirs */
+/** the shape of an offer id (36 hex and dashes); the database still has the last word on whether it is a uuid */
+const OFFER_ID_SHAPE = /^[0-9a-f-]{36}$/i;
 async function ownOffer(entity_id, id) {
-  if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
+  if (!OFFER_ID_SHAPE.test(String(id || ''))) return null;
   const r = await withEntity(entity_id, (db) =>
     db.query(`SELECT definition_id, name, status, current_version FROM definition WHERE entity_id = $1 AND definition_id = $2 AND kind = 'offer'`, [
       entity_id,
@@ -205,16 +215,31 @@ function networkRow(me, brand_id, st, nestedWho, rows, choices) {
   };
 }
 
-/**
- * ⭐ EFF-TRIPS (2026-10-15): THREE TRIPS, NOT 3 + 3 PER BRAND + 2 PER MEMBER. Every read this screen needs is batched (db readBatch):
- *   readOwn      — everything keyed by ME (my identities row ONCE — it was read three times · own offers · place on the tree · roster ·
- *                  adoptions WITH their source · the brands I have an edge with · own sources · own products)
- *   readPeople   — everything keyed by the brands and members found (identities · titles · standing · membership)
- *   readReleased — each brand's released offers under THAT brand's binding (FORCE RLS on definition)
- * The answer is the same shape, row for row (tests/network-offers-shape.test.cjs). ⚠️ A batch that fails answers membership's 503 + code
- * (the reads used to degrade one by one to "none"; a half-read network is not an answer).
- */
-router.get('/', auth, sessionOnly, async (req, res) => {
+/** the store half of the screen in its three trips: what this store holds, the people it touches, and its networks with the offers each hands it — the ONE reading of "the offers a store may see" (GET / and POST /:id/choice) */
+async function readStoreSide(batch, shopId) {
+  const holdings = await readOwn(batch, shopId);
+  const people = await readPeople(batch, shopId, holdings.brandIds, holdings.memberIds);
+  const offerRows = await readReleased(batch, holdings.brandIds, people.standing, people.of);
+  const choices = holdings.myFlags.network_choices || {};
+  const networks = holdings.brandIds.map((item) =>
+    networkRow(
+      shopId,
+      item,
+      people.standing[item] || { state: 'none', via: null, edge_id: null, asked_by: null },
+      people.of(item),
+      offerRows[item] || [],
+      choices
+    )
+  );
+  return { own: holdings, people, offerRows, networks };
+}
+
+/** the store half's reader, by name, so a sweep over a stand-in database can hand a route its answer */
+const reads = { storeSide: readStoreSide };
+router.reads = reads;
+
+/** GET / — the three trips of the note above readOwn (readOwn · readPeople · readReleased), then the brand's and the store's halves of the screen */
+router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const actor = require('../lib/reqctx').currentActor();
@@ -222,15 +247,10 @@ router.get('/', auth, sessionOnly, async (req, res) => {
       readBatch(me, actor, stmts).catch((e) => {
         throw membership.readFailed(e, what);
       });
-    const own = await readOwn(batch, me);
-    const { of, standing, inNetwork } = await readPeople(batch, me, own.brandIds, own.memberIds);
+    const { own, people, networks } = await reads.storeSide(batch, me);
+    const { of, inNetwork } = people;
     const names = new Map(own.memberIds.filter((id) => of(id).name).map((id) => [id, of(id).name]));
     const brand = await net.brandView(me, { flags: own.myFlags, offers: own.ownOffers, own: own.ownPlace, roster: own.roster, names });
-    const offerRows = await readReleased(batch, own.brandIds, standing, of);
-    const choices = own.myFlags.network_choices || {};
-    const networks = own.brandIds.map((item) =>
-      networkRow(me, item, standing[item] || { state: 'none', via: null, edge_id: null, asked_by: null }, of(item), offerRows[item] || [], choices)
-    );
     /* ⭐ the catalogue half: what the brand would publish, and the prices its stores are being asked about */
     const brandsPre = {};
     own.brandIds.forEach((item) => {
@@ -272,11 +292,12 @@ router.get('/', auth, sessionOnly, async (req, res) => {
   }
 });
 
-router.put('/policy', auth, sessionOnly, async (req, res) => {
+router.put('/policy', auth, sessionOnly, brandOwnerOnly, ...contract.checked('PUT /policy'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const policy = String((req.body && req.body.policy) || '');
-    if (net.POLICIES.indexOf(policy) < 0) return res.status(400).json({ error: 'validation', message: 'policy must be opt_in or opt_out' });
+    if (net.POLICIES.indexOf(policy) < 0)
+      return refuse(req, res, { status: 400, code: 'POLICY_NOT_VALID', error: 'validation', message: 'policy must be opt_in or opt_out' });
     await net.mergeFlag(me, 'network_offers', { policy });
     const pushed = await net.pushToNetwork(me, 'network offer policy');
     res.json({ ok: true, policy, pushed });
@@ -287,10 +308,10 @@ router.put('/policy', auth, sessionOnly, async (req, res) => {
 
 const mapOf = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 const who = (req) => (req.identity && (req.identity.display_name || req.identity.identity_id)) || null;
-const fail = (res, out) =>
-  res.status(out.error === 'not_yours' ? 404 : out.error === 'validation' ? 400 : 409).json({ error: out.error, message: out.message });
+/** a refused catalogue step: not_yours 404 · validation 400 · the rest 409, the old { error, message } kept */
+const fail = (res, out) => problem(res.req, res, refusalOf(out));
 
-router.post('/catalogue/publish', auth, sessionOnly, async (req, res) => {
+router.post('/catalogue/publish', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/publish'), async (req, res) => {
   try {
     const b = req.body || {};
     const out = await ncat.publish(auth.entityOf(req), String(b.source_key || ''), {
@@ -308,7 +329,7 @@ router.post('/catalogue/publish', auth, sessionOnly, async (req, res) => {
   }
 });
 
-router.post('/catalogue/cancel', auth, sessionOnly, async (req, res) => {
+router.post('/catalogue/cancel', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/cancel'), async (req, res) => {
   try {
     const out = await ncat.cancel(auth.entityOf(req), String((req.body || {}).source_key || ''));
     if (out.error) return fail(res, out);
@@ -318,7 +339,7 @@ router.post('/catalogue/cancel', auth, sessionOnly, async (req, res) => {
   }
 });
 
-router.post('/catalogue/price', auth, sessionOnly, async (req, res) => {
+router.post('/catalogue/price', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/price'), async (req, res) => {
   try {
     const b = req.body || {};
     const out = await ncat.answer(auth.entityOf(req), {
@@ -334,35 +355,42 @@ router.post('/catalogue/price', auth, sessionOnly, async (req, res) => {
   }
 });
 
-router.post('/:id/release', auth, sessionOnly, async (req, res) => {
+/**
+ * the record of a release at `at` until `until`, reading the brand's flags once.
+ * ⭐⭐ THE RELEASE PINS THE VERSION. An edit to a released offer is a new version the stores do NOT see until it is
+ * released again — otherwise "changing the offer" would reach every store in the middle of the day, which is the one
+ * thing a controlled release exists to prevent. And the version already running KEEPS running until the new one's
+ * moment, so a re-release never leaves a gap where neither applies.
+ */
+async function releaseRecord(brandId, offer, at, until, req) {
+  const { flags: bf } = await net.flagsOf(brandId);
+  const cur = ((bf.network_offers || {}).released || {})[offer.definition_id] || null;
+  /* ⚠️ the old version is kept only if it actually RUNS before the new one starts — re-releasing an offer that has not
+     begun simply replaces it (a kept copy would have an empty window, and would show twice as "waiting") */
+  const curLive = cur && cur.version && cur.at && cur.at < at && (!cur.until || cur.until > at);
+  return {
+    version: Number(offer.current_version) || 1,
+    at,
+    until,
+    released_at: new Date().toISOString(),
+    released_by: who(req),
+    prev: curLive && Number(cur.version) !== Number(offer.current_version) ? { version: cur.version, at: cur.at, until: at } : null
+  };
+}
+
+router.post('/:id/release', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /:id/release'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const o = await ownOffer(me, req.params.id);
-    if (!o) return res.status(404).json({ error: 'Not found', message: 'That is not one of your offers.' });
-    if (o.status !== 'live') return res.status(409).json({ error: 'Not live', message: 'Make the offer live before releasing it to your stores.' });
+    if (!o) return refuse(req, res, { status: 404, code: 'NOT_FOUND', error: 'Not found', message: 'That is not one of your offers.' });
+    if (o.status !== 'live')
+      return refuse(req, res, { status: 409, code: 'OFFER_NOT_LIVE', error: 'Not live', message: 'Make the offer live before releasing it to your stores.' });
     const b = req.body || {};
     const at = net.whenOf(b.at, await net.nextOpeningFor(me));
-    const until = b.until ? net.whenOf(b.until, null) : null;
-    if (until && until <= at) return res.status(400).json({ error: 'validation', message: 'The offer would end before it starts.' });
-    /**
-     * ⭐⭐ THE RELEASE PINS THE VERSION. An edit to a released offer is a new version the stores do NOT see until it is
-     * released again — otherwise "changing the offer" would reach every store in the middle of the day, which is the one
-     * thing a controlled release exists to prevent. And the version already running KEEPS running until the new one's
-     * moment, so a re-release never leaves a gap where neither applies.
-     */
-    const { flags: bf } = await net.flagsOf(me);
-    const cur = ((bf.network_offers || {}).released || {})[o.definition_id] || null;
-    /* ⚠️ the old version is kept only if it actually RUNS before the new one starts — re-releasing an offer that has not
-       begun simply replaces it (a kept copy would have an empty window, and would show twice as "waiting") */
-    const curLive = cur && cur.version && cur.at && cur.at < at && (!cur.until || cur.until > at);
-    const rec = {
-      version: Number(o.current_version) || 1,
-      at,
-      until,
-      released_at: new Date().toISOString(),
-      released_by: (req.identity && (req.identity.display_name || req.identity.identity_id)) || null,
-      prev: curLive && Number(cur.version) !== Number(o.current_version) ? { version: cur.version, at: cur.at, until: at } : null
-    };
+    const until = net.whenOf(b.until, null, 'until');
+    if (until && until <= at)
+      return refuse(req, res, { status: 400, code: 'OFFER_ENDS_BEFORE_START', error: 'validation', message: 'The offer would end before it starts.' });
+    const rec = await releaseRecord(me, o, at, until, req);
     await net.setReleased(me, o.definition_id, rec);
     /* ⭐ the push: every member store is told, and each store's counters are the clients subscribed under it */
     const pushed = await net.pushToNetwork(me, 'network offer released');
@@ -372,16 +400,18 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
   }
 });
 
-router.post('/:id/withdraw', auth, sessionOnly, async (req, res) => {
+router.post('/:id/withdraw', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /:id/withdraw'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const o = await ownOffer(me, req.params.id);
-    if (!o) return res.status(404).json({ error: 'Not found', message: 'That is not one of your offers.' });
+    if (!o) return refuse(req, res, { status: 404, code: 'NOT_FOUND', error: 'Not found', message: 'That is not one of your offers.' });
     const { flags } = await net.flagsOf(me);
     const cur = ((flags.network_offers || {}).released || {})[o.definition_id];
-    if (!cur) return res.status(409).json({ error: 'Not released', message: 'That offer was never released to your stores.' });
-    const until = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me));
-    await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: new Date().toISOString() }));
+    if (!cur)
+      return refuse(req, res, { status: 409, code: 'OFFER_NOT_RELEASED', error: 'Not released', message: 'That offer was never released to your stores.' });
+    const asked = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me), 'at');
+    const until = net.earlierEnd(cur, asked); /* NET-56: a second withdraw keeps the earlier end */
+    await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: cur.withdrawn_at || new Date().toISOString() }));
     const pushed = await net.pushToNetwork(me, 'network offer withdrawn');
     res.json({ ok: true, id: o.definition_id, until, pushed });
   } catch (e) {
@@ -389,13 +419,32 @@ router.post('/:id/withdraw', auth, sessionOnly, async (req, res) => {
   }
 });
 
-router.post('/:id/choice', auth, sessionOnly, async (req, res) => {
+/**
+ * ⭐ MAY THIS SHOP SET A CHOICE ON THIS OFFER? Only on an offer GET / lists for it that is live and not ended — an id it cannot see is a 404 and nothing is written.
+ * Clearing (null) a record the shop already holds stays allowed even when the offer has since gone (marketplace and discount practice: you may clear your own record).
+ */
+async function choiceAllowed(shopId, offerId, choice) {
+  const actor = require('../lib/reqctx').currentActor();
+  const batch = (what, stmts) =>
+    readBatch(shopId, actor, stmts).catch((e) => {
+      throw membership.readFailed(e, what);
+    });
+  const { own: holdings, networks } = await reads.storeSide(batch, shopId);
+  const listed = networks.flatMap((network) => network.offers).find((offer) => offer.id === offerId);
+  const open = listed && listed.live && !(listed.until && new Date(listed.until) <= new Date());
+  const holdsRecord = Object.prototype.hasOwnProperty.call(holdings.myFlags.network_choices || {}, offerId);
+  return Boolean(open) || (choice === null && holdsRecord);
+}
+
+router.post('/:id/choice', auth, sessionOnly, ...contract.checked('POST /:id/choice'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const id = String(req.params.id || '');
     const c = (req.body || {}).choice;
     const choice = c === 'in' || c === 'out' ? c : null;
-    if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'validation', message: 'Unknown offer.' });
+    if (!OFFER_ID_SHAPE.test(id)) return refuse(req, res, { status: 400, code: 'OFFER_UNKNOWN', error: 'validation', message: 'Unknown offer.' });
+    if (!(await choiceAllowed(me, id, choice)))
+      return refuse(req, res, { status: 404, code: 'NOT_FOUND', error: 'Not found', message: 'That is not an offer open to your shop.' });
     await net.setIn(me, 'network_choices', id, choice);
     /* ⭐ the store's own counters re-read at once */
     require('../lib/shopchanged').shopChanged(me, 'network offer choice');
@@ -404,5 +453,7 @@ router.post('/:id/choice', auth, sessionOnly, async (req, res) => {
     failed(res, e);
   }
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the 8 routes (lib/network-offers-contract.js)
 
 module.exports = router;

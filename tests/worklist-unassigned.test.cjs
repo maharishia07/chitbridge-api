@@ -13,6 +13,8 @@
  *
  * ⭐ No client change was needed — the grouping already keys on assignee_actor_id || '__unassigned__'
  * and the worklist already sorts that bucket last and greys it. This pins the SQL that feeds it.
+ * CARD      01-rail-core-the-chit/line-model
+ * CARD  02-tasks-orders-and-workflow/everyone-s-work
  */
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 

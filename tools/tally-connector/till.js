@@ -180,6 +180,8 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
    thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
+/** idem3: the page's Idempotency-Key for a money write, as the extra header cb.call sends (none when the page sent none) */
+const idemHeader = (given) => (typeof given === 'string' && given ? { 'Idempotency-Key': given.slice(0, 200) } : undefined);
 const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'dayopen', 'signin', 'qty', 'scalecode', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 /**
@@ -555,7 +557,7 @@ async function drain() {
               net: bill.total, gross: (bill.total || 0) + (bill.saved || 0),
               count: (bill.lines || []).length,
               lines: (bill.lines || []).map((l) => ({ item_id: l.item_id, qty: l.qty, net: l.net, category: l.category })),
-            });
+            }, undefined, { 'Idempotency-Key': 'till-reward:' + bill.no + ':agent' }); /* idem3: the points write takes one key per bill */
             if (rw && (rw.added || rw.spent)) log('  points ' + (rw.added ? '+' + rw.added : '') + (rw.spent ? ' −' + rw.spent : '')
               + ' → ' + rw.points + ' held');
           } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
@@ -1529,7 +1531,7 @@ const server = http.createServer(async (req, res) => {
       let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
       /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
          pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
-      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price',
+      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price', '/api/till/recheck' /* CTR-212: read-only, before a bill */,
                    /* ⭐ a TV from the counter's menu: a SCREEN code, and switching a shop screen off (2026-09-27) */
                    '/api/till/pair', '/api/till/screens/revoke', '/api/till/screens/rename', '/api/till/flags', '/api/till/offer-item',
                    /* ⭐ points earned and encashed on a bill, and the claim that moves a walk-in's balance onto an account */
@@ -1556,7 +1558,7 @@ const server = http.createServer(async (req, res) => {
                    '/api/till/quick-keys/state', '/api/till/quick-keys/hide', '/api/till/quick-keys/unhide',
                    '/api/till/quick-keys/screen-config', '/api/till/rate' /* ⭐ F5 W1a: the ask-once rate — the SERVER decides who may (routes/till.js setsRate) */];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
-      try { const r = await cb.call('POST', o.path, o.body || {});
+      try { const r = await cb.call('POST', o.path, o.body || {}, undefined, idemHeader(o.idem)); /* idem3: the page's key for a money write rides through */
         return json(res, 200, Object.assign({ ok:true }, r || {}));
       } catch (e) { return json(res, 200, { ok:false, why: e.message }); }
     }

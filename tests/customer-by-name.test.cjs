@@ -18,6 +18,7 @@ let current = 'S1';
 const fold = (n) => String(n).trim().replace(/\s+/g, ' ').toLowerCase();
 async function run(sql, p) {
   sql = String(sql).replace(/\s+/g, ' ');
+  if (/^SELECT pg_advisory_xact_lock\(/.test(sql) ||/^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(sql)) return { rows: [] }; /* B10: the shop's mint lock and the mint's savepoint */
   if (/^SELECT user_id, bridge_id FROM identities WHERE identity_id/.test(sql)) return { rows: ids.filter((i) => i.identity_id === p[0]) };
   if (/FROM identities WHERE parent_entity_id = \$1 AND user_id LIKE/.test(sql))
     return { rows: ids.filter((i) => i.parent_entity_id === p[0] && i.user_id.startsWith(p[1].replace('%', '')) && fold(i.display_name) === p[2]) };
@@ -26,6 +27,12 @@ async function run(sql, p) {
   if (/^INSERT INTO identities/.test(sql)) { const r = { identity_id: 'N' + ids.length, bridge_id: p[0], display_name: p[1], user_id: p[2], parent_entity_id: p[3] }; ids.push(r); return { rows: [r] }; }
   if (/^UPDATE identities SET otp_contact/.test(sql)) { const r = ids.find((i) => i.identity_id === p[0] && i.parent_entity_id === p[3]); if (p[1]) r.otp_contact = p[1]; if (p[2]) r.gstn = p[2]; return { rows: [] }; }
   if (/^SELECT identity_id, display_name, user_id, bridge_id FROM identities WHERE bridge_id/.test(sql)) return { rows: [] };
+  /* R7 customerByPhone (lib/local-identity.js): the customer on this owner's list whose phone or sign-in contact has the same last 9 digits */
+  if (/^SELECT i\.identity_id, i\.display_name, i\.user_id FROM customer_list cl JOIN identities i/.test(sql)) {
+    const tail = (v) => String(v || '').replace(/\D/g, '').slice(-9);
+    return { rows: custs.filter((c) => c.o === p[0]).map((c) => ids.find((i) => i.identity_id === c.c)).filter((i) => i && (tail(i.phone) === p[1] || tail(i.otp_contact) === p[1])).slice(0, 1) };
+  }
+  if (/^UPDATE (customer|supplier)_list SET hidden_at = NULL/.test(sql)) return { rows: [] }; /* B10: the name was on the list and live, so nothing comes back */
   if (/^INSERT INTO customer_list/.test(sql)) {
     if (custs.find((c) => c.o === p[0] && c.c === p[1])) return { rows: [] };
     custs.push({ o: p[0], c: p[1] }); return { rows: [{ customer_list_id: 'CL' + custs.length }] };

@@ -28,16 +28,19 @@
  */
 'use strict';
 const express = require('express');
-const { safeErr } = require('../lib/respond');
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer · K-1: the one guard for an id in the address
 const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const adopt = require('../lib/adopt');
+const govresolve = require('../lib/govresolve'); /* VERT-13: THE resolver of the shop's trade */
 const { mintProduct } = require('../lib/mint-product');
+const cost = require('../lib/cost');
+const { words, failed, contract } = require('../lib/adopt-contract'); // the contract (each route's operation) and the words of a refusal
 
 const ctx = (req) => auth.entityOf(req);
-const fail = (res, e, what) => res.status(500).json({ error: what, message: safeErr(e) });
+router.param('chit_id', uuidParam(words.notFound)); // K-1: a chit_id that is not a uuid is a 404, as an unknown one is; the database is never asked
 
 /**
  * ⚠️ THE SENDER'S TRADE TRAVELS WITH THE GOODS, and where it is not on the chit it is looked up. A batch number is
@@ -60,15 +63,9 @@ async function senderOf(chit) {
 
 /** what the receiving shop is, and what it already stocks — the two things the engine needs about "me" */
 async function receiverOf(entity_id) {
-  let sectors = [];
-  try {
-    /* ⚠️ withEntity — this is the shop's OWN profile, and a bare query() would read nothing under RLS */
-    const p = await withEntity(entity_id, (db) => db.query(`SELECT sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]));
-    const row = p.rows[0] || {};
-    sectors = row.sectors || [];
-  } catch (e) {
-    logger.fellBack('adopt receiverOf: the read failed — carried on without it', e);
-  }
+  /* VERT-13: the receiver's trade is THE resolver's (constitution → identity → declared sectors), the same answer every other box reads.
+     verticalOf never throws: a shop whose trade cannot be read answers "not stated" (logged), which gates nothing. */
+  const sectors = govresolve.tradeWordsOf(await govresolve.verticalOf(entity_id));
   /**
    * ⚠️⚠️ MATCH ON WHAT THE SUPPLIER CALLS IT, NOT ONLY ON WHAT THE SHOP CALLS IT — and [ADOPT-02] found this
    * the first time a person walked the screen. The shop adopted "Paracetamol 500mg strip" as "Paracetamol
@@ -139,22 +136,30 @@ async function supplierKind(entity_id, supplier_entity_id) {
   }
 }
 
+/** who sent the goods: the trade on the chit, and this shop's own designation of the supplier (resale or own_use, and its nickname) laid over it */
+async function senderWithKind(entity_id, chit) {
+  const from = await senderOf(chit);
+  const kind = await supplierKind(entity_id, chit.sender_entity_id);
+  if (kind) {
+    from.supply_kind = kind.supply_kind;
+    from.name = kind.nickname || from.name;
+  }
+  return from;
+}
+
 /** ⭐ WHAT THIS DELIVERY OFFERS — reads only. Grouped the way a person reads it, never as forty rows. */
-router.get('/:chit_id', auth, async (req, res) => {
+router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const chit = await deliveryOf(entity_id, String(req.params.chit_id));
-    if (!chit) return res.status(404).json({ error: 'Not found' });
+    if (!chit) return problem(req, res, { status: 404, ...words.notFound() });
 
-    const from = await senderOf(chit);
-    const kind = await supplierKind(entity_id, chit.sender_entity_id);
-    if (kind) {
-      from.supply_kind = kind.supply_kind;
-      from.name = kind.nickname || from.name;
-    }
+    const from = await senderWithKind(entity_id, chit);
     const me = await receiverOf(entity_id);
 
     const out = adopt.considerAll(chit.line_items || [], from, me, {});
+    /* [OFFR-04] seed.cost is the supplier's price to this shop: an actor without can_see_costs reads the offer without it, at any depth (the owner is untouched) */
+    if (!(await cost.canReadSafe(req, entity_id))) out.rows.forEach(cost.dropCostKeys);
     res.json({
       chit_id: chit.chit_id,
       from: { name: from.name, vertical: adopt.verticalOf(from.sectors), supply_kind: from.supply_kind || null },
@@ -164,7 +169,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       counts: { offer: out.offer.length, refused: out.refused.length, already: out.already.length, not_for_sale: out.not_for_sale.length }
     });
   } catch (e) {
-    fail(res, e, 'Could not read the delivery');
+    problem(req, res, failed(e, req, 'Could not read the delivery'));
   }
 });
 
@@ -180,21 +185,16 @@ router.get('/:chit_id', auth, async (req, res) => {
  * your own way of doing" — so the shop has to have looked at it. Accepting a supplier's wording by default is how
  * a catalogue slowly becomes somebody else's.
  */
-router.post('/:chit_id', auth, async (req, res) => {
+router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const wanted = Array.isArray((req.body || {}).accept) ? req.body.accept : [];
-    if (!wanted.length) return res.status(400).json({ error: 'validation', message: 'name the lines to accept — there is no "accept everything"' });
+    if (!wanted.length) return problem(req, res, { status: 400, ...words.noLines() });
 
     const chit = await deliveryOf(entity_id, String(req.params.chit_id));
-    if (!chit) return res.status(404).json({ error: 'Not found' });
+    if (!chit) return problem(req, res, { status: 404, ...words.notFound() });
     const lines = chit.line_items || [];
-    const from = await senderOf(chit);
-    const kind = await supplierKind(entity_id, chit.sender_entity_id);
-    if (kind) {
-      from.supply_kind = kind.supply_kind;
-      from.name = kind.nickname || from.name;
-    }
+    const from = await senderWithKind(entity_id, chit);
     const me = await receiverOf(entity_id);
 
     const made = [],
@@ -272,18 +272,10 @@ router.post('/:chit_id', auth, async (req, res) => {
       says: made.length + ' added' + (refused.length ? ' · ' + refused.length + ' not' : '')
     });
   } catch (e) {
-    fail(res, e, 'Could not adopt');
+    problem(req, res, failed(e, req, 'Could not adopt'));
   }
 });
 
-router.openapi = {
-  paths: {
-    '/api/adopt/{chit_id}': {
-      get: { summary: 'What a delivery offers to this catalogue, and what it refuses', tags: ['adopt'] },
-      post: { summary: 'Accept named lines as your OWN products', tags: ['adopt'] }
-    }
-  },
-  schemas: {}
-};
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the 2 routes (lib/adopt-contract.js)
 
 module.exports = router;

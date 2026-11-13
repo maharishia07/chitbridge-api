@@ -9,6 +9,7 @@
  * gives stock away.
  *
  * Run: node tests/rewards.test.js   · no DB, no network.
+ * CARD      08-rewards-and-loyalty/points-and-reward-ledger
  */
 'use strict';
 const assert = require('assert'), path = require('path');

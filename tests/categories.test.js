@@ -79,9 +79,11 @@ it('⚠️⚠️ the route resolves names to ids and strips the name', () => {
   const at = src.indexOf("router.post('/catalogue'");
   assert.ok(at > 0, 'the mint route is gone');
   const route = src.slice(at, src.indexOf("router.get('/catalogue/blueprints'", at));
-  assert.ok(/ensureCategories/.test(route), 'the mint does not create the shop\'s categories');
-  assert.ok(/delete out\.categoryName/.test(route), 'the name is written through to the record as a field');
-  assert.ok(/out\.categories = \[id\]/.test(route), 'the product does not cite its category by id');
+  /* CAT-124 (#1097): the categories are made in ONE transaction with the items, by writeCitedItems (lib/catalogue-write.js), so a refused mint leaves none behind */
+  const writer = fs.readFileSync(path.join(API, 'lib', 'catalogue-write.js'), 'utf8');
+  assert.ok(/ensureCategories/.test(route) || (/writeCitedItems/.test(route) && /ensureCategories/.test(writer)), 'the mint does not create the shop\'s categories');
+  assert.ok(/delete out\.categoryName/.test(route + writer), 'the name is written through to the record as a field');
+  assert.ok(/out\.categories = \[id\]/.test(route + writer), 'the product does not cite its category by id');
 });
 
 /**
@@ -92,7 +94,7 @@ it('⚠️⚠️ the route resolves names to ids and strips the name', () => {
  */
 it('⚠️⚠️ the counter receives the relation, not just the answer', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
-  assert.ok(/category: categories\.nameOf\(d, catNames\)/.test(src), 'the snapshot no longer resolves the name');
+  assert.ok(/category: categories\.nameOf\(data, catNames\)/.test(src), 'the snapshot no longer resolves the name');
   assert.ok(/category_id:/.test(src), 'a product reaches the counter without its category id');
   assert.ok(/category_master: catList\.map/.test(src), 'the category master does not travel with the snapshot');
   /* ⚠️ THE LEGACY READ MUST NOT COME BACK as the only source */

@@ -16,16 +16,21 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://x:x@127.0.0.1
 let idempotency, jwt;
 try { jwt = require('jsonwebtoken'); idempotency = require('../middleware/idempotency.js'); } catch (e) { console.log('  (skip middleware test — require failed: ' + e.message + ')'); }
 
-if (idempotency) {
-  t('idempotency middleware: deeply-nested body → self-heals (calls next), no crash', () => {
-    const token = jwt.sign({ identity_id: 'test-entity' }, process.env.JWT_SECRET, { algorithm: 'HS256' });
-    let nexted = false;
-    const req = { method: 'POST', path: '/x', headers: { 'idempotency-key': 'k1', authorization: 'Bearer ' + token }, body: deep(2000) };
-    const res = { status: () => ({ json: () => {} }), setHeader: () => {} };
-    idempotency(req, res, () => { nexted = true; });
-    assert.strictEqual(nexted, true, 'middleware must call next() (skip idempotency) on an unhashable body, never throw/crash');
-  });
-}
+/* ⚠️ the middleware holds the key in a store first (memoryStore.begin → .then), so next() comes on a later tick.
+   This case asserted synchronously and had failed since that change, in no guard list, so nobody saw it (RAIL-141). */
+const middlewareCase = !idempotency ? Promise.resolve() : new Promise((done) => {
+  const name = 'idempotency middleware: deeply-nested body → self-heals (calls next), no crash';
+  const token = jwt.sign({ identity_id: 'test-entity' }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+  const req = { method: 'POST', path: '/x', headers: { 'idempotency-key': 'k1', authorization: 'Bearer ' + token }, body: deep(2000) };
+  const res = { statusCode: 200, status() { return res; }, json() { return res; }, setHeader: () => {}, on: () => {}, once: () => {} };
+  const timer = setTimeout(() => { t(name, () => assert.fail('middleware must call next() (skip idempotency) on an unhashable body, never throw/crash')); done(); }, 2000);
+  try {
+    Promise.resolve(idempotency(req, res, () => { clearTimeout(timer); t(name, () => {}); done(); }))
+      .catch((e) => { clearTimeout(timer); t(name, () => { throw e; }); done(); });
+  } catch (e) {
+    clearTimeout(timer); t(name, () => { throw e; }); done();
+  }
+});
 
 // ── 2) the canonicalizer guard: throws on deep, output byte-identical on normal ──
 // (kept in sync with the guarded stableStringify / stable in the engine)
@@ -53,5 +58,7 @@ t('depth within the cap still serializes fine', () => {
   assert.doesNotThrow(() => canon(deep(200)));
 });
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed');
-process.exit(fail ? 1 : 0);
+middlewareCase.then(() => {
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  process.exit(fail ? 1 : 0);
+});

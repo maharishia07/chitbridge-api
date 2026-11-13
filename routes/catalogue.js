@@ -1,6 +1,6 @@
 // CARD 10-online-shop-and-storefront-orders/order-start-confirm
-// owns: the public storefront routes (catalogue, order start / confirm, buyer login).
-// called by: server.js mounts it at /api/catalogue.
+// owns: the public storefront routes (catalogue, order start / confirm, buyer login) and the signed-in ones (the shopper's own orders and documents, product enquiries, the photo read).
+// called by: server.js mounts it at /api/catalogue; routes/ctp.js reuses publicViewFor / resolveEntity. A path value is judged before the database: router.param (textParam for a shop handle, uuidParam for an item id).
 // FLOW  order/start (issue code) → order/confirm (verify, reprice, spend once, mint both copies) → token
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
 const express = require('express');
@@ -8,12 +8,12 @@ const logger = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const idempotency = require('../middleware/idempotency'); // API-3 S36: the public money doors require an Idempotency-Key
-const { problem, fromError } = require('../lib/problem'); // API-1 slice 1e: every public storefront refusal is a Problem that keeps its old body
+const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-1 slice 1e: every public storefront refusal is a Problem that keeps its old body
 const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
 const { oldBody } = storefront; // { error, message }: the old body shop.html reads
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
-const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape (K-1: the enquiry thread read)
 const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { sanitise, schemaValidate } = require('../middleware/validate');
@@ -30,7 +30,7 @@ const customerAuth = require('../middleware/customer-auth'); // T2.4 — the sto
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's whole-list reads */
-const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
+const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode, decoyAttempt } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify'); // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build'); // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container'); // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
@@ -101,6 +101,14 @@ const _422 = (m) => {
   e.status = 422;
   return e;
 };
+/**
+ * CAT-318: a line is orderable only at a price that is a number, zero or more. A missing price is "not set"; a negative one (a bad stored value, a change that landed before
+ * the doors judged) is "not valid" — refused in words (ORDER_REJECTED, 422), never clamped to 0 and never carried as a negative line total.
+ */
+function throwIfUnpriced(rec) {
+  if (!Number.isFinite(rec.price)) throw _422(`Price for "${rec.name}" is not set — order cannot be placed`);
+  if (rec.price < 0) throw _422(`The price of "${rec.name}" is not valid, so it cannot be ordered right now — the shop needs to correct it.`);
+}
 // ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
 // A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
@@ -214,9 +222,14 @@ async function applyLiveOffers(entity, items, total, viewer) {
   return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity, viewer: viewer || null });
 }
 
-async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
+/** the line list an order may carry: a non-empty list of at most 200 items; anything else is the buyer's mistake, refused in words (422) before any read or write (ORD-96: a null line used to fail as a 500 on `.kind` of null) */
+function checkOrderLines(rawItems) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order'); // F6: bound the line count
+  if (rawItems.some((line) => line === null || typeof line !== 'object' || Array.isArray(line))) throw _422('Each line must be an item to order');
+}
+async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
+  checkOrderLines(rawItems);
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
   // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
   const cat = await withEntity(null, (db) =>
@@ -394,7 +407,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
           fref = nb ? nb.rec : null;
         }
         if (!fref) throw _422(`"${fname || 'item ' + (idx + 1)}" is not an available finish in this shop`);
-        if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
+        throwIfUnpriced(fref);
         // T2.5 · `combination` used to be stored RAW: when the resolved item declared no combinations the guard was
         // skipped entirely, so an arbitrary nested object of any size rode onto BOTH chit copies — flatly contradicting
         // "an undeclared field is rejected, never carried", which holds on the payload path but did not here.
@@ -459,7 +472,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         ref = byName.get(k);
       }
       if (!ref) throw _422(`"${name || 'item ' + (idx + 1)}" is not available in this shop's catalogue`);
-      if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
+      throwIfUnpriced(ref);
       const qty = Number(li.quantity ?? li.qty);
       if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
       /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
@@ -566,19 +579,42 @@ async function shopDatePhrase(identityId) {
   const row = (await query('SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
   return countrySetup.datePhrase(new Date(), countrySetup.clockOf(row));
 }
+/* ONE shop row and ONE "is it a live shop" test, shared by the handle read and the by-id read (SEC-126).
+   population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
+   claims to have come from the live world. */
+const SHOP_COLS = 'identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status, population';
+const SHOP_LIVE = "identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false";
+/* ⭐ K-1: a shop handle holding a NUL (Postgres text cannot store it → 22021 → 500) names no shop: answered EXACTLY as an unknown one (S41), before the database.
+   The shopper's own lists (my-orders · my-documents) never read the handle, so they keep their sign-in gate first. */
+const noShopWords = (req) => {
+  const legacy = /[/]support[/]preview$/.test(req.path) ? storefront.PREVIEW_NO_SHOP : storefront.NO_SHOP;
+  return { status: 404, code: 'NOT_FOUND', field: undefined, detail: legacy.message || legacy.why, legacy };
+};
+const handleOk = textParam(noShopWords);
+router.param('bridge_id', (req, res, next, value, name) => (/^[/][^/]+[/]my-/.test(req.path) ? next() : handleOk(req, res, next, value, name)));
+/* ⭐ K-1: an item id that is not a uuid names no product (catalogue_items.item_id and chit_messages.subject_id are uuid). The POST answers it as it answers a uuid that
+   names none: 404. The GET reads a thread and answers a product it was never part of with an empty list (RLS), so it answers a non-uuid the same way — in its handler. */
+const noSuchProduct = uuidParam(() => words.noSuchProduct());
+router.param('item_id', (req, res, next, value, name) => (req.method === 'GET' ? next() : noSuchProduct(req, res, next, value, name)));
 async function resolveEntity(handle) {
   const r = await query(
-    /* population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
-       claims to have come from the live world. */
-    `SELECT identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status, population
+    `SELECT ${SHOP_COLS}
      FROM identities
       WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1))
-        AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false
+        AND ${SHOP_LIVE}
       ORDER BY (bridge_id = $1) DESC
       LIMIT 1`,
     [handle]
   );
   return r.rows[0] || null;
+}
+/** liveShopsOf(ids) → the live shop rows of these identity ids, ONE read, in the order the ids came (a closed account, a
+ *  sealed one or an unknown id is simply absent) */
+async function liveShopsOf(ids) {
+  if (!ids.length) return [];
+  const rows = (await query(`SELECT ${SHOP_COLS} FROM identities WHERE identity_id = ANY($1::uuid[]) AND ${SHOP_LIVE}`, [ids])).rows;
+  const byId = new Map(rows.map((row) => [String(row.identity_id), row]));
+  return ids.map((id) => byId.get(String(id))).filter(Boolean);
 }
 /** the shop a request is on, read once: the key gate and the handler share the one read */
 const shopFor = (req) => (req.storefrontShop = req.storefrontShop || resolveEntity(req.params.bridge_id));
@@ -608,16 +644,49 @@ async function networkStoreOf(handle) {
   const members = await membership.members(brand.identity_id);
   return { brand, members: [String(brand.identity_id)].concat(members.map(String)) };
 }
-/** the public item rows of these members — one statement; a sign-in-first shop's items never reach the anonymous lens (SEC4) */
-const networkItems = (members) =>
-  withEntity(null, (db) =>
-    db.query(
-      `SELECT ci.item_id, ci.entity_id, ci.item_data FROM catalogue_items ci WHERE ci.entity_id = ANY($1::uuid[]) AND ci.is_active = true
-      AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`,
-      [members]
+/**
+ * ⭐⭐ SEC-126 · THE LENS SHOWS WHAT EACH SHOP'S OWN STOREFRONT SHOWS, AND NOTHING MORE. This read used to be its own SQL over
+ * catalogue_items, filtered only by sign-in-first — so a member whose catalogue was private, closed, over its plan's visibility cap
+ * or network-only still had every item and price listed to anyone holding the brand's handle. Now each shop goes through the ONE
+ * public view (publicViewFor → lib/catalogue-view buildPublicView), the same one GET /network/:bridge_id and every storefront use:
+ * closed · private · cap · network-only · sign-in-first · unavailable / qty-zero · cost and exposure — decided in one place.
+ * What the view leaves out, the lens leaves out: a shop with no public catalogue (no public schema, nothing adopted) is absent, and
+ * adopted reference catalogues (view.finishes) stay out as before — only the shop's own items are listed.
+ * ⚠️ COST: one view per shop, as on /network/:bridge_id, capped at MAX_DEPARTMENTS and the cut REPORTED (`truncated`).
+ */
+/** visibleShopsOf(network) → { shops: [live shop rows, the brand first], truncated: { shown, total } | null } */
+async function visibleShopsOf(network) {
+  const readable = network.members.slice(0, MAX_DEPARTMENTS);
+  const shops = [network.brand].concat(await liveShopsOf(readable.slice(1)));
+  return { shops, truncated: network.members.length > readable.length ? { shown: readable.length, total: network.members.length } : null };
+}
+/** publicItemsOfShops(shops) → [{ item_id, entity_id, item_data }] — each shop's items exactly as its anonymous storefront shows them */
+async function publicItemsOfShops(shops) {
+  const rows = [];
+  for (const shop of shops) {
+    const view = await publicViewFor(shop, {});
+    if (!view || !view.available || view.sign_in) continue;
+    for (const item of view.items || []) rows.push({ item_id: item.item_id, entity_id: shop.identity_id, item_data: item.item_data });
+  }
+  return rows;
+}
+/** orderableOf(ids, network) → the cart's stored rows (active, of a shop the GET reads: the same capped slice, visibleShopsOf) that their store's anonymous storefront shows (the GET's own view) — a customer of one
+ *  member never orders a private, closed or capped sibling's item by its id. The price stays the stored row's. */
+async function orderableOf(ids, network) {
+  const { shops } = await visibleShopsOf(network);
+  const found = (
+    await withEntity(null, (db) =>
+      db.query(
+        `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`,
+        [ids, shops.map((shop) => String(shop.identity_id))]
+      )
     )
-  );
-router.get('/network-store/:networkId', async (req, res) => {
+  ).rows;
+  const stores = new Set(found.map((item) => String(item.entity_id)));
+  const shown = new Set((await publicItemsOfShops(shops.filter((shop) => stores.has(String(shop.identity_id))))).map((item) => String(item.item_id)));
+  return found.filter((item) => shown.has(String(item.item_id)));
+}
+router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId'), async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return refuseAs(req, res, { status: 404, code: 'NO_SUCH_NETWORK', legacy: storefront.NO_SUCH_NETWORK });
@@ -625,7 +694,8 @@ router.get('/network-store/:networkId', async (req, res) => {
       .trim()
       .toLowerCase();
     const text = String(req.query.category || '').trim();
-    const rows = (await networkItems(network.members)).rows;
+    const lens = await visibleShopsOf(network);
+    const rows = await publicItemsOfShops(lens.shops);
     let products = rows.map((item) => {
       const d = item.item_data || {};
       return {
@@ -644,6 +714,7 @@ router.get('/network-store/:networkId', async (req, res) => {
     res.json(
       Object.assign(
         { network_id: network.brand.bridge_id, categories, count: products.length },
+        lens.truncated ? { truncated: lens.truncated } : {},
         PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))
       )
     ); // NO node/entity attribution — the internal structure stays hidden
@@ -742,14 +813,7 @@ const networkOrdersOn = () =>
 /** shopperOf(req) → the storefront customer the Bearer token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null —
  *  the same claims test as customerOf (SEC4) / middleware/customer-auth, without naming the shop up front (the network decides) */
 function shopperOf(req) {
-  const claims = claimsOf(req);
-  if (!claims || !claims.identity_id || claims.identity_type !== 'customer') return null;
-  return {
-    identity_id: claims.identity_id,
-    bridge_id: claims.bridge_id || null,
-    shop_entity_id: claims.parent_entity_id || null,
-    display_name: claims.display_name || null
-  };
+  return customerAuth.soft(req);
 }
 router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:networkId/order'), async (req, res) => {
   try {
@@ -764,14 +828,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
       return refuseAs(req, res, { status: 403, code: 'NOT_THIS_NETWORK', legacy: storefront.NOT_THIS_NETWORK });
     const nid = network.brand.bridge_id;
     const ids = cart.map((item) => item.product_id).filter(Boolean);
-    const rows = (
-      await withEntity(null, (db) =>
-        db.query(
-          `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`,
-          [ids, network.members]
-        )
-      )
-    ).rows;
+    const rows = await orderableOf(ids, network); /* SEC-126: only what the store's own storefront shows */
     if (!rows.length)
       return refuseAs(req, res, { status: 404, code: 'NO_MATCHING_PRODUCTS', legacy: oldBody('Not found', 'No matching products in this network') });
     const operatorId = String(network.brand.identity_id);
@@ -889,7 +946,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
  */
 const MAX_DEPARTMENTS = 40;
 
-router.get('/network/:bridge_id', async (req, res) => {
+router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (req, res) => {
   try {
     const root = await resolveEntity(req.params.bridge_id);
     if (!root) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
@@ -938,30 +995,23 @@ router.get('/network/:bridge_id', async (req, res) => {
  * owner is not a stranger: with a valid session for THIS entity, the read bypasses the visibility gate and answers
  * with `preview: true`. Nothing changes for anyone else — a bad or foreign token is simply anonymous.
  */
-/** the bearer's verified claims, or null — a missing, bad or expired token is simply anonymous on a public read */
-function claimsOf(req) {
-  try {
-    const text = req.headers.authorization || '';
-    if (!text.startsWith('Bearer ')) return null;
-    return require('../lib/jwt-verify').verifyJwt(text.slice(7)).claims || null; // E10 — the ONE verifier
-  } catch (e) {
-    logger.fellBack('catalogue claimsOf: the token did not verify — read as a stranger', e, 'debug');
-    return null;
-  }
-}
-function ownerOf(req, entity) {
-  const d = claimsOf(req);
-  if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
-  const mine = d.parent_entity_id || d.identity_id;
-  return String(mine) === String(entity.identity_id);
+/**
+ * ownerOf(req, entity) → the live identity of THIS shop's owner or staff, or null (a stranger) — SEC-149. A signature-valid token is not
+ * enough: middleware/auth.softIdentity runs the same decision auth runs (session listing/jti, key listing, co-assist status), so a
+ * signed-out, switched-off or removed person is a stranger here too. The identity carries can_see_costs (the database's, not the token's).
+ */
+async function ownerOf(req, entity) {
+  const caller = await auth.softIdentity(req);
+  if (!caller || String(caller.parent_entity_id || caller.identity_id) !== String(entity.identity_id)) return null;
+  return caller;
 }
 /**
  * ⭐ SEC4 · A CUSTOMER SIGNED IN TO THIS SHOP — the token /login/verify (or /order/confirm) issued: identity_type 'customer' and
  * parent_entity_id = THIS shop (storefront identities are per shop, crHandle). The same test middleware/customer-auth.js applies.
  */
 function customerOf(req, entity) {
-  const d = claimsOf(req);
-  return !!(d && d.identity_id && d.identity_type === 'customer' && String(d.parent_entity_id || '') === String(entity.identity_id));
+  const shopper = customerAuth.soft(req);
+  return !!(shopper && String(shopper.shop_entity_id || '') === String(entity.identity_id));
 }
 /**
  * ⭐⭐ SEC4 · A SIGN-IN-FIRST SHOP ANSWERS A STRANGER WITH ITS CARD ONLY. Before SEC4 `storefront_access: 'login'` was only SENT, and
@@ -1095,16 +1145,19 @@ router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => 
   }
 });
 
-router.get('/:bridge_id', async (req, res) => {
+router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
-    const asOwner = req.query.preview === '1' && ownerOf(req, entity);
+    const owner = await ownerOf(req, entity);
+    const asOwner = req.query.preview === '1' && !!owner;
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
-    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || ownerOf(req, entity) });
+    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || !!owner });
     if (!view.available) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
-    res.json(publicResponseFor(view, asOwner));
+    const body = publicResponseFor(view, asOwner);
+    /* SEC-149: a cost-blind co-assist previews the shop without the buying side — the same strip every cost-blind answer uses (lib/cost.js) */
+    res.json(asOwner && owner.can_see_costs === false ? require('../lib/cost').dropCostKeys(structuredClone(body)) : body);
   } catch (err) {
     return fromError(req, res, err, storefront.FAILED.CATALOGUE);
   }
@@ -1113,7 +1166,7 @@ router.get('/:bridge_id', async (req, res) => {
 // GET /api/catalogue/:bridge_id/capture-fields — what the storefront must ASK the customer for (increment 3): the
 // chit-scope required items from THIS shop's assimilated standards. The order form renders these; order/confirm captures
 // them → conformance passes. Public (the customer isn't logged in).
-router.get('/:bridge_id/capture-fields', async (req, res) => {
+router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fields'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
@@ -1188,7 +1241,7 @@ router.post(
  * ⭐ AND THE SHOP'S OWN ROUTING ANSWERS IT, because lib/raiseticket resolves under the RECIPIENT's id: the
  * buyer knows nothing about the shop's folders, people or teams, and needs to know nothing.
  */
-router.get('/:bridge_id/support/preview', async (req, res) => {
+router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/preview'), async (req, res) => {
   /**
    * ⚠⚠ DELIBERATELY LESS THAN THE SIGNED-IN PREVIEW. That one names the folder and the person who will answer;
    * this page is READ BY ANYONE, and "filed in 00-support, for Ravi Kumar" published to the open web is the
@@ -1322,6 +1375,25 @@ router.post(
     }
   }
 );
+
+// STONE 4: penetration capture — AGGREGATE-ONLY (source + distributor + coarse locality; NO customer identity).
+// Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
+// SEC-75c: source_penetration is RLS-closed (b831) — the distributor writes its own rows, so bind it.
+async function recordSourcePenetration(entity, line_items, custLocality) {
+  try {
+    const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
+    await withEntity(entity.identity_id, async (db) => {
+      for (const sk of srcs)
+        await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
+          sk,
+          entity.identity_id,
+          custLocality
+        ]);
+    });
+  } catch (e) {
+    logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */
+  }
+}
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
 router.post(
@@ -1729,21 +1801,8 @@ router.post(
         console.log('customer auto-add skipped:', e.message);
       }
 
-      // STONE 4: penetration capture — AGGREGATE-ONLY (source + distributor + coarse locality; NO customer identity).
-      // Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
-      if (custLocality) {
-        try {
-          const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
-          for (const sk of srcs)
-            await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
-              sk,
-              entity.identity_id,
-              custLocality
-            ]);
-        } catch (e) {
-          logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */
-        }
-      }
+      // STONE 4: penetration capture (aggregate-only; see recordSourcePenetration above).
+      if (custLocality) await recordSourcePenetration(entity, line_items, custLocality);
 
       // 6b: ERP HANDOFF (receipt-only, process-then-forget). Hand the order + its governance (source@v, frozen
       // container, routing, locality) to the ERP; keep a RECEIPT (refs + hash), NOT the raw payload. CB does NOT
@@ -1824,8 +1883,9 @@ router.post(
  * lib/otp verifyOtp, untouched.
  */
 async function codeHolds(row, typed, names) {
-  if (!row) return false;
-  return (await verifyOtp(query, row, typed, { names })).ok; // SEC1: the typed contact, for TESTER_NAMES
+  const verdict = row ? await verifyOtp(query, row, typed, { names }) : { ok: false }; // SEC1: the typed contact, for TESTER_NAMES
+  if (!verdict.ok && !verdict.counted) await decoyAttempt(query); /* SEC-139: an unknown contact, a locked row and an expired code spend the round trip a wrong code does, and write no row */
+  return verdict.ok;
 }
 router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {
@@ -1927,6 +1987,7 @@ router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge
 router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELETE /:bridge_id/my-documents/:id'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
+    if (!UUID.test(req.params.id)) return problem(req, res, { status: 404, ...words.noSuchDocument() }); // K-1: not a uuid names no document — the answer of one that is not theirs (and after the sign-in gate)
     const r = await withEntity(me, (db) => db.query(`DELETE FROM cb_attachment WHERE id = $1 AND entity_id = $2 RETURNING id`, [req.params.id, me]));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchDocument() });
     res.json({ ok: true, deleted: r.rows[0].id });
@@ -2005,13 +2066,22 @@ const enquiryLimitCheck = async (viewer, item_id) => {
     const pub = await query('SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
     owner_id = pub.rows[0] && pub.rows[0].entity_id;
   }
-  if (!owner_id) return { ok: false };
+  if (!owner_id) return decoyEnquiryReads(viewer); /* SEC-129: an unknown item does the reads a hidden one does, so the time says nothing */
   if (owner_id === viewer) return { ok: true, owner_id }; // your own product
   const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
   const view = await publicViewFor(ent.rows[0], { viewer }).catch(logger.orElse('catalogue enquiryLimitCheck: failed — answered with nothing', null));
-  return view && view.available !== false ? { ok: true, owner_id } : { ok: false };
+  /* ⭐ SEC-129: the SHOP being enquirable is not enough — THIS item must be one its storefront shows this viewer (private, over-cap, unavailable and network-only items are not), or a 201 versus a 404 tells a stranger the item id exists (the same rule as SEC-126) */
+  return viewListsItem(view, item_id) ? { ok: true, owner_id } : { ok: false };
 };
+/** SEC-129 · decoyEnquiryReads(viewer) → { ok:false } after the same two reads (the shop row, then its public view) a hidden item of a real shop costs; the caller's own shop stands in, the result is thrown away */
+async function decoyEnquiryReads(viewer) {
+  const standIn = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [viewer]);
+  if (standIn.rows[0]) await publicViewFor(standIn.rows[0], { viewer }).catch(logger.orElse('catalogue enquiry decoy: the view failed — nothing to say', null));
+  return { ok: false };
+}
+/** SEC-129: does this storefront view show this item (the shop is open to the viewer AND the item is one it lists)? */
+const viewListsItem = (view, item_id) => !!view && view.available !== false && (view.items || []).some((item) => String(item.item_id) === String(item_id));
 
 router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), async (req, res) => {
   try {
@@ -2020,14 +2090,16 @@ router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), as
        You can only read a thread you were delivered into, so there is nothing extra to check and nothing to
        leak — asking about a product you were never part of returns an empty list, exactly like one with no
        messages. */
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT * FROM chit_messages
+    const r = !UUID.test(req.params.item_id)
+      ? { rows: [] } // K-1: not a uuid names no product: the empty list a product you were never part of gets, and Postgres is not asked
+      : await withEntity(me, (db) =>
+          db.query(
+            `SELECT * FROM chit_messages
         WHERE subject_type = 'product' AND subject_id = $1
         ORDER BY created_at ASC`,
-        [req.params.item_id]
-      )
-    );
+            [req.params.item_id]
+          )
+        );
     res.json(Object.assign({ count: r.rows.length }, PL.pageOut('messages', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     /* b161/b162 not applied on this deployment → an empty thread, not a broken screen. */

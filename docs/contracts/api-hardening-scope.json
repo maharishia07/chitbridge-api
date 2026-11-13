@@ -1,22 +1,23 @@
 {
- "about": "API-3 scope (API-STANDARD S33-S36). Curated by cb-api with the owning area. money_writes: routes that move or record money; each must require an Idempotency-Key. inbound: routes that take a peer's or a webhook's JSON; each must schema-check it before use. money_reviewed_not: routes whose path looks like money but that write nothing (a preview, a build). public_ids: routes whose path id is public by design (a public door, a counterparty door, platform reference), each with its reason; foreign_id_404 (S35) does not apply to them. tools/api-register.cjs --check fails when a mutating route that looks like money is in none of the lists.",
+ "about": "API-3 scope (API-STANDARD S33-S36). Curated by cb-api with the owning area. money_writes: routes that move or record money; each must require an Idempotency-Key. inbound: routes that take a peer's or a webhook's JSON; each must schema-check it before use. money_reviewed_not: routes whose path looks like money but that write nothing (a preview, a build). public_ids: routes whose path value S35 does not apply to, each with its reason: public by design (a public door, a counterparty door, platform reference), or a label or reference that names nothing outside the caller's own shop (a fiscal year, a per-shop reference); foreign_id_404 (S35) does not apply to them. tools/api-register.cjs --check fails when a mutating route that looks like money is in none of the lists.",
  "money_writes": [
   "DELETE /api/chits/:chit_id/payment",
   "PATCH /api/books/payments/:id",
   "POST /api/books/gst/pay",
   "POST /api/books/payments",
   "POST /api/books/payments/:id/confirm",
-  "POST /api/books/payments/:id/propose",
   "POST /api/chits/:chit_id/payment",
   "POST /api/supplies/purchase",
   "POST /api/till/reward",
   "POST /api/till/reward/claim",
-  "POST /api/connectors/ingest",
   "POST /api/connectors/erp-ingest"
  ],
+ "money_reviewed_not_about": {"POST /api/connectors/ingest": "Athi 12 Nov 2026 (DECISIONS.md): not a money write. The value is a device reading; the chit carries total_value 0 and the value goes only into the subject and business_json. Backlog: no dedupe (a replayed reading mints a second chit)."},
  "money_reviewed_not": [
+  "POST /api/books/payments/:id/propose",
   "POST /api/books/payments/preview",
-  "POST /api/invoice/build"
+  "POST /api/invoice/build",
+  "POST /api/connectors/ingest"
  ],
  "inbound": [
   "POST /api/capture/webhook/email",
@@ -26,18 +27,306 @@
   "POST /api/ctp/deliver",
   "POST /api/ctp/query"
  ],
+ "machine_keyed_about": "CON-ERP-IDEM (Athi 11 Nov 2026): a keyed machine door is a money write whose caller (an agent we do not redeploy) cannot send an Idempotency-Key header. It dedupes by its own key_order instead, and S36 idempotent_money_write passes it ONLY while its test file proves the six cases (K1 same payload once, K2 two payloads two chits, K3 a failed emit is 503 and the retry creates the chit, K4 a stale pending receipt is claimed again, K5 the header key beats the hash, K6 the same key with another body is 422). A listed route whose test is missing or does not carry them fails tools/api-register.cjs --check.",
+ "machine_keyed": [
+  {
+   "route": "POST /api/connectors/erp-ingest",
+   "key_order": [
+    "Idempotency-Key header",
+    "doc_ref (with doc_type)",
+    "payload hash"
+   ],
+   "reason": "keyed machine door; the kit cannot send Idempotency-Key; revisit at the next kit release",
+   "test": "tests/erp-ingest-idempotency.test.cjs"
+  }
+ ],
  "public_ids": {
   "GET /api/catalogue/:bridge_id": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "GET /api/catalogue/:bridge_id/capture-fields": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "POST /api/catalogue/:bridge_id/order/start": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "POST /api/catalogue/:bridge_id/support/start": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "GET /api/catalogue/network-store/:networkId": "public door: a network store is published for every member and visitor",
+  "POST /api/catalogue/enquiry/:item_id": "counterparty door: an enquiry is a business asking about ANOTHER business's published item, which rings that owner's bell (sec4 C); another shop's item id answering is the purpose (API-24, 2026-11-01)",
   "GET /api/governance/boilerplate/:key": "platform reference: a boilerplate is the platform's, offered to every shop, not one shop's",
   "POST /api/governance/boilerplate/:key/adopt": "platform reference: the key names the platform's boilerplate; the adoption is written to the caller's own shop",
   "GET /api/governance/source/:key": "platform reference: a catalogue source is shared by every shop it serves",
   "GET /api/governance/readiness/:bridge_id": "counterparty door: the readiness passport is built for outsiders (Athi 2026-08-20); a stranger gets status and rung only, evidence_ref stripped (SEC-FIX3 S6)",
   "GET /api/assist/container/:id": "platform reference: a container is shared catalogue reference that chits pin by version",
   "POST /api/integrations/ask/:handle/stock": "public door: a shop's published handle answers stock to an asking peer",
-  "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer"
+  "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer",
+  "PUT /api/folders/inventory/:code": "platform reference: the code names a system folder of the platform's inventory (lib/folder-inventory: B-2100, RT-4090 …), the same in every shop; the switch is written to the caller's own policy",
+  "GET /api/books/year/:fy/status": "label: a fiscal-year label, the same in every shop; read only inside the caller's own periods (WHERE entity_id = $1), no path from the label to a row id (lib/books-store periods)",
+  "POST /api/books/year/:fy/close": "label: a fiscal-year label, the same in every shop; it acts only on the caller's own periods (setPeriodStatus names entity_id = $1)",
+  "POST /api/books/periods/:fy/:p/:act": "label: a fiscal-year label, a period number and an action word, the same in every shop; the UPDATE names the caller's entity (lib/books-store setPeriodStatus)",
+  "POST /api/books/loans/:ref/emi": "per-shop reference: loan:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent",
+  "POST /api/books/accruals/:ref/reverse": "per-shop reference: accrual:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent",
+  "GET /api/assist/catalogue-source/:key": "platform reference: the key names a catalogue source shared by every shop, not a row of any shop (routes/assist.js)",
+  "GET /api/catalogue/:bridge_id/my-documents": "public door family: the path id is the shop browsed, as GET /api/catalogue/:bridge_id; the read is the caller's own documents under it (entity_id of the caller)",
+  "GET /api/catalogue/:bridge_id/my-orders": "public door family: the path id is the shop browsed, as GET /api/catalogue/:bridge_id; the read is the caller's own orders under it (entity_id of the caller)",
+  "GET /api/catalogue/enquiry/:item_id": "counterparty door: an enquiry list is the caller's own, under another business's published item; the empty list is the answer (as POST /api/catalogue/enquiry/:item_id)",
+  "GET /api/facts/:card": "platform reference: the id is a card name of the facts engine, not a row of any shop",
+  "GET /api/forms/:key": "platform reference: the key names a form template, shared reference data the same in every shop",
+  "GET /api/governance/supplier-acceptance/:handle": "counterparty door: the handle is a public directory bridge id; an unknown handle answers 200 null by design (routes/governance.js)",
+  "GET /api/integrations/docs/:id": "platform reference: the id names a connector-kit catalogue entry, the same for every shop",
+  "GET /api/integrations/download/:id": "platform reference: the id names a connector-kit catalogue entry, the same for every shop",
+  "GET /api/products/media/:item_id/:mid": "public door: product media is served by unguessable ids, public by design (routes/products.js)",
+  "GET /api/till/engine/:name": "platform reference: the name is an engine file of the till, not a row of any shop",
+  "PATCH /api/entities/me/prefs/:kind": "label: the kind is a preference name on the caller's own row, the same in every shop",
+  "POST /api/forms/:key/issue": "platform reference: the key names a form template, shared reference data the same in every shop; the issue is written to the caller's own shop",
+  "PUT /api/identity/documents/:scheme": "label: the scheme names a kind of document for the shop's own country (PAN, GSTIN, ABN), shared reference data, not a row of any shop; an unknown scheme answers 400 by design (routes/identity-docs.js)",
+  "POST /api/forms/:key/resolve": "platform reference: the key names a form template, shared reference data the same in every shop",
+  "GET /api/chits/:chit_id/catalogue-overlay": "label: the chit id is not read by the handler; the overlay is the caller's own catalogue (itemmatch.loadCatalogue by entity), so the path value names no row of any shop",
+  "GET /api/catalogue/:bridge_id/support/preview": "public door family: the path id is the shop browsed, as GET /api/catalogue/:bridge_id (a published bridge_id any visitor may use); the preview says only who would answer and whether it will arrive (SEC-97, 12 Nov: public by design, not a foreign-id leak)",
+  "POST /api/catalogue/:bridge_id/login/verify": "public door family: the path id is the shop browsed, as POST /api/catalogue/:bridge_id/order/start; a storefront customer proves a phone or e-mail for THAT shop, and an unknown shop answers the same 404 as the family (SEC-97, 12 Nov)",
+  "POST /api/catalogue/:bridge_id/support": "public door family: the path id is the shop browsed, as POST /api/catalogue/:bridge_id/support/start; a code proved for that shop files the report under it (SEC-97, 12 Nov)",
+  "POST /api/catalogue/:bridge_id/order/confirm": "public door family: the path id is the shop browsed, as POST /api/catalogue/:bridge_id/order/start; the one-time code proved at order/start is spent for THAT shop only (SEC-97, 12 Nov)",
+  "POST /api/catalogue/network-store/:networkId/order": "public door family: a network store is published for every member and visitor (as GET /api/catalogue/network-store/:networkId); an unknown network answers 404 NO_SUCH_NETWORK, a published one refuses a signed-in non-member 403 NOT_THIS_NETWORK (SEC-97, 12 Nov)"
+ },
+ "platform_only_about": "platform_only: routes only the platform (admin key, rootGate, platformGate) or the builder can call, each with its reason. They are NOT public: no shop ever reaches the id, so foreign_id_404 (S35) does not apply, exactly as for public_ids. Read by tools/api-register.cjs hardeningScope; tools/api-register.cjs --check holds the same rules as public_ids (reason of 20+ characters, a route that exists).",
+ "platform_only": {
+  "PATCH /api/entities/:id/erase": "platform only: platformGate refuses every shop before the id is read, so a shop never reaches it",
+  "POST /api/channels/:id/approve": "platform only: the admin gate (platform key) refuses every shop before the id is read",
+  "POST /api/channels/:id/revoke": "platform only: the admin gate (platform key) refuses every shop before the id is read",
+  "POST /api/channels/:id/template-approve": "platform only: the admin gate (platform key) refuses every shop before the id is read",
+  "POST /api/governance/entities/:id/reattest": "platform only: platformGate refuses every shop (403) before the id is read; the route's own 404 paths are tested as the platform caller in api-problem-governance",
+  "PUT /api/entities/populations/:code/desk": "platform only: rootGate refuses every shop; the code names a population, not a row of a shop",
+  "PUT /api/testing/cmdb/:ci": "builder only: the ci is a configuration-item name on the testing board's own entity, never a shop's row"
+ },
+ "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
+ "cannot_answer": [
+  {
+   "route": "GET /api/actors/check-login",
+   "status": 500,
+   "reason": "the answer is one frozen constant object read from memory with no query; the only fault left is Express itself failing to write, which no request can provoke, so no test can show a 500"
+  },
+  {
+   "route": "POST /api/actors/login",
+   "status": 409,
+   "reason": "the shared sign-in refusal list names 409 CHOOSE_IDENTITY, but this door looks the person up by key@business and refuses two businesses of one name with the plain refusal (routes/signin.js actorLogin), so it never lists accounts to choose from"
+  },
+  {
+   "route": "GET /api/catalogue/:bridge_id/my-documents",
+   "status": 404,
+   "reason": "the path id is the shop browsed; the read is the caller's own documents and answers a list, so there is no missing row to answer 404"
+  },
+  {
+   "route": "GET /api/catalogue/:bridge_id/my-orders",
+   "status": 404,
+   "reason": "the path id is the shop browsed; the read is the caller's own orders and answers a list, so there is no missing row to answer 404"
+  },
+  {
+   "route": "GET /api/catalogue/enquiry/:item_id",
+   "status": 404,
+   "reason": "an empty list is the answer for an item with no enquiries (decided in routes/catalogue.js); it never answers 404"
+  },
+  {
+   "route": "GET /api/governance/supplier-acceptance/:handle",
+   "status": 404,
+   "reason": "an unknown handle answers 200 null by design (public directory read); it never answers 404"
+  },
+  {
+   "route": "GET /api/products/:id/schedule",
+   "status": 404,
+   "reason": "a collection under the caller's own items: [] for unknown and foreign ids alike, never 404"
+  },
+  {
+   "route": "DELETE /api/products/:id/schedule/:sid",
+   "status": 404,
+   "reason": "K-1: a cancel that finds nothing (an unknown, a foreign or an already applied sid) answers 200 cancelled:false by design; the item id in the path is never read, so it never answers 404"
+  },
+  {
+   "route": "DELETE /api/products/:id/schedule/:sid",
+   "status": 400,
+   "reason": "K-1: a sid that is not a uuid names no parked change and answers 200 cancelled:false by design; the handler holds no refusal, so it never answers 400"
+  },
+  {
+   "route": "PUT /api/identity/documents/:scheme",
+   "status": 404,
+   "reason": "an unknown scheme answers 400 IDOC_UNKNOWN_DOCUMENT by design (routes/identity-docs.js); the scheme is a name, not a row, so it never answers 404"
+  },
+  {
+   "route": "GET /api/relationships/customers/:id/rewards",
+   "status": 404,
+   "reason": "the id is a holder value read under the caller's own ledger; a holder with no points answers 200 with a zero balance (or programme null), never 404"
+  },
+  {
+   "route": "PUT /api/testing/cmdb/:ci",
+   "status": 404,
+   "reason": "the ci is a configuration-item name the builder writes; an unknown name is created, so it never answers 404"
+  },
+  {
+   "route": "GET /api/assist/whoami",
+   "status": 500,
+   "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/costs",
+   "status": 404,
+   "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/raida",
+   "status": 404,
+   "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"
+  },
+  {
+   "route": "GET /api/chits/register/walk/:from",
+   "status": 404,
+   "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/catalogue-overlay",
+   "status": 404,
+   "reason": "the chit id is not read: the overlay is the caller's own catalogue and answers 200 with has_catalogue false when there is none, so there is no missing chit to answer 404"
+  },
+  {
+   "route": "GET /api/chits/pulse",
+   "status": 500,
+   "reason": "a pulse that fails must not silence the screen: the route answers 200 with w null (\"cannot tell\") by design and logs the fault with the request id"
+  },
+  {
+   "route": "POST /api/till/listen",
+   "status": 500,
+   "reason": "a microphone must never be the reason a sale stops: every fault of the route answers 200 ok:false (the counter falls back to the browser recogniser) and is logged with the request id, so there is no 500 to answer; KNOWN GAP, not closed: lib/speech.js why can carry up to 200 characters of the speech provider own error text (lines 103 and 115), so the route stays partial until cb-ai gives that why one plain sentence"
+  },
+  {
+   "route": "GET /api/entities/routing/preview",
+   "status": 500,
+   "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault of the route is never a 500 (a preview never red-boxes a form); KNOWN GAP, not closed: lib/raiseticket.js resolveDesk (line 150) turns a database fault into why with the raw code and message, and the route returns it in that 200, so the route stays partial until the raise-a-ticket owner gives that why one plain sentence"
+  }
+ ],
+ "tolerant_outward_about": "S33-T (Athi 11 Nov 2026, 'tolerant by design'): a door that outside systems or queued clients call may ignore an unknown body key. An entry is { reason (20+ characters), caller_class (queued_till | queued_web_outbox | provider_webhook | ctp_delivery | record_as_body | desktop_connector | keyed_outward), test (a file that names the route, sends zz_unknown and expects the problem shape) }. Every known key of its body schema must be typed (tools/api-register.cjs knownKeysTyped). The register reads strict_input as exempt (never yes). Athi 12 Nov 2026: the class may GROW for outward doors another system or a queued client calls (never for a door our own web calls); an unknown key is accepted and logged by name once (event unknown_key_accepted, middleware/validate.js noteUnknownKeys), never used. The list changes only with these proofs and never passes tolerant_outward_ceiling.",
+ "tolerant_outward_ceiling": 26,
+ "tolerant_outward": {
+  "POST /api/pricing/price": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-43-pricing-tolerant.test.cjs"
+  },
+  "POST /api/offers/evaluate": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/offers/explain": {
+   "reason": "API-43 (Athi 6 Nov, restated 8 Nov): keyed outward; unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-problem-offers.test.cjs"
+  },
+  "POST /api/integrations/heartbeat": {
+   "reason": "S33-T: the desktop connector's heartbeat, sent by installed software on older and newer kits; the handler picks named keys only, every known key is typed and counters is bounded (20 whole-number counters)",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/integrations/profile": {
+   "reason": "S33-T: the desktop connector copies profile fields; fields are filtered to the profile map's own keys, any other key is dropped",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "PATCH /api/products/:id": {
+   "reason": "S33-T: the web outbox queues product edits on the shop owner's device and replays them after an app update; an entry written by an older page may carry a key this server no longer names, and refusing it would strand the whole queue",
+   "caller_class": "queued_web_outbox",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/products/availability/bulk": {
+   "reason": "S33-T: a connector's stock feed (ERP or desktop software on older versions) posts the list under items; an extra key beside it must not stop the feed",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/connectors/ingest": {
+   "reason": "S33-T: a Pi or gateway on a kit we do not redeploy; it keeps an event until a 2xx, so an unknown key is ignored and a known key of the wrong kind is refused before the key check",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-problem-connectors.test.cjs"
+  },
+  "POST /api/connectors/erp-ingest": {
+   "reason": "S33-T: an ERP agent on a kit we do not redeploy; process-then-forget, an unknown key is ignored and never stored; a known key of the wrong kind is refused before the key check",
+   "caller_class": "desktop_connector",
+   "test": "tests/api-problem-connectors.test.cjs"
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "reason": "S33-T: Meta owns the payload keys; only a SIGNED body is read, an unknown key is ignored, the keys we read are typed from Meta published payload examples",
+   "caller_class": "provider_webhook",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/capture/webhook/email": {
+   "reason": "S33-T: the mail provider owns the fields; only a SIGNED body is read, an unknown field is ignored, the fields we read are typed as Mailgun and SendGrid publish them",
+   "caller_class": "provider_webhook",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/events/ticket": {
+   "reason": "S33-T: asked by the app, the till, the shop screen and the connector (key scopes, some on cached older builds); it reads no body key at all, so any key is ignored",
+   "caller_class": "keyed_outward",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/ctp/deliver": {
+   "reason": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, to and from are typed as objects and the later checks keep their own words",
+   "caller_class": "ctp_delivery",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/ctp/query": {
+   "reason": "S33-T / RAIL-126: CTP/1 inbound is a tolerant reader; a peer on a higher minor may add fields, from and ask are typed as objects and the later checks keep their own words",
+   "caller_class": "ctp_delivery",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/till/flags": {
+   "reason": "S33-T: a shop-screen or offer flag the counter queues offline; an older queued body replays on a newer server, so an unknown key is ignored and only a wrong KIND of value is refused (400, parked by the drain)",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/stock": {
+   "reason": "S33-T: an available/unavailable mark the counter queues offline; unknown keys ignored, null for none accepted, a wrong kind refused 400 (the drain parks that row and sends the rest)",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/stock/bulk": {
+   "reason": "S33-T: the bulk stock mark rides the same offline queue as stock; unknown keys ignored, item_ids must be a list or null, a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/reward": {
+   "reason": "S33-T: points for one bill, queued behind the bill; the desktop agent (tools/tally-connector/till.js) still sends net, gross, count and lines, which stay accepted and unread; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/reward/claim": {
+   "reason": "S33-T: a walk-in balance claim, sent through the counter queue; unknown keys ignored, from and to must be objects, a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/quick-keys/hide": {
+   "reason": "S33-T: the first counter versions queued sold-out marks (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "reason": "S33-T: the first counter versions queued the put-back (e5fe6136) so an old queued body can replay; was closed (additionalProperties false), now tolerant; a wrong kind refused 400",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "POST /api/chits/send": {
+   "reason": "S33-T: the counter bill queue door (the sale itself); its five known keys are typed, any other key is read by name or ignored; a refused bill is parked and shown, never dropped",
+   "caller_class": "queued_till",
+   "test": "tests/api-tolerant-till.test.cjs"
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "reason": "S33-T: the body IS the CMDB record (lib/cmdb.js shape); a key beyond system, title and source travels inside the record, is never acted on, and the record is capped at 64 KB; the three named keys are typed, a junk value is refused 400",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/testing/results": {
+   "reason": "S33-T: the Testing screen and the CI key post a result or a run of them; an unknown key is ignored and never stored, every named key is text or null, a junk value is refused 400 in the board's two keys",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/testing/results/junit": {
+   "reason": "S33-T: the JUnit report travels as the text of xml beside run options; the CI key and the toolset post it from older and newer scripts, so an unknown key is ignored; xml and every option are text, a junk value is refused 400",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  },
+  "POST /api/governance/conformance": {
+   "reason": "S33-T: the handler takes the whole body as the thing to check when data is absent, so the body is the record; scope is text and data an object, a junk value is refused 422, the key itself is never stored",
+   "caller_class": "record_as_body",
+   "test": "tests/api-tolerant-doors.test.cjs"
+  }
  }
 }

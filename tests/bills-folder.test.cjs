@@ -16,6 +16,8 @@
  *      listing returns each bill with its step
  *   H  the Task and Order lists (and their counts) carry the inbox predicate; a named folder does not; reconcile still adds up
  * No database: db and auth are stubbed; the routes are the real ones.   Run: node tests/bills-folder.test.cjs
+ * CARD      13-inventory-stock-and-traceability/folder-inventory
+ * UNIT      13/Folder inventory (stock as a folder view)
  */
 'use strict';
 const path = require('path');

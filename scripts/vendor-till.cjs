@@ -6,7 +6,7 @@
  * this script writes the web's copy, its six engine files, its manifest and its service worker.
  *
  * Run:  node scripts/vendor-till.cjs          (write)
- *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale — what tests/till-vendor.test.js uses)
+ *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale; add --kit-only or --web-only to check one repo's half — see THE CHECK SPLIT)
  *
  * OWNS      the one direction of every counter copy: the kit's till.html and promo.html → web public/, the manifest, the icon and the
  *           service worker's shelf (KEEP + SHELF); web app/signin-ui.js → the kit; lib/their-bill.js → web and kit; qrcode → engine/qr.js;
@@ -372,17 +372,29 @@ const COPIES = () => [
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
-  [null, path.join(WEB, 'engine', 'versions.json'), VERSIONS()],
+  [null, path.join(WEB, 'engine', 'versions.json'), VERSIONS],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
   [null, path.join(WEB, 'till-icon.svg'), ICON]
 ];
 
 const norm = (text) => text.replace(/\r\n/g, '\n');
-const want = (from, body) => (body === 'copy' ? norm(fs.readFileSync(from, 'utf8')) : body);
+/* a function body is read lazily: --kit-only must not touch the web's engines at all */
+const want = (from, body) => (body === 'copy' ? norm(fs.readFileSync(from, 'utf8')) : typeof body === 'function' ? body() : body);
+
+/**
+ * ⭐ THE CHECK SPLIT (2026-11-11, root cause of the till-vendor / pages-parse reds). The master is HERE and the web holds the copies, so one
+ * check that read both repos reddened whichever side landed first. Now each repo checks only what it owns:
+ *   --kit-only  the api's own pairs (no web path at all): what this repo's CI runs, so web main moving can never red it
+ *   --web-only  every pair whose COPY is under the web: what web CI runs, at the api sha pinned in the web's vendor.lock.json
+ *   --check     everything (the release step and a laptop with CB_WEB_DIR), as before
+ * Web-mastered signin-ui.js is copied INTO the kit (pair destination = api): --web-only leaves it out, web CI only warns on it.
+ */
+const touchesWeb = (file) => Boolean(file) && file.startsWith(WEB + path.sep);
+const SCOPE = process.argv.includes('--kit-only') ? (pair) => !touchesWeb(pair[0]) && !touchesWeb(pair[1]) : process.argv.includes('--web-only') ? (pair) => touchesWeb(pair[1]) : () => true;
 
 if (process.argv.includes('--check')) {
-  for (const [from, to, body] of COPIES()) {
+  for (const [from, to, body] of COPIES().filter(SCOPE)) {
     const text = want(from, body);
     const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
     if (have !== text) {

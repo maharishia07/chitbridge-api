@@ -10,6 +10,7 @@
  *   node tests/api-problem.test.cjs                    check
  *   node tests/api-problem.test.cjs --write            rewrite docs/contracts/api-error-tests.json (the statuses these scenarios cover)
  *   node tests/api-problem.test.cjs --capture F        (run against the code BEFORE the change, API_ROOT=<that checkout>) record each answer to file F
+ *   node tests/api-problem.test.cjs --compare F        the answers now against a capture F: byte for byte (status, content type, body)
  */
 'use strict';
 const path = require('path');
@@ -21,6 +22,11 @@ const HERE = path.join(__dirname, '..');
 const API = process.env.API_ROOT ? path.resolve(process.env.API_ROOT) : HERE;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+const crypto = require('crypto');
+const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
+const EVIDENCE_FILE = path.join(__dirname, '..', 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const argv = process.argv.slice(2);
@@ -43,7 +49,7 @@ const mock = (relative, exported) => {
 };
 const SHOP = { identity_id: 'e1', identity_type: 'entity', owner_scope: 'entity' };
 const CO_ASSIST = { identity_id: 'a1', identity_type: 'actor', parent_entity_id: 'e1' };
-const world = { realAuth: false, who: SHOP, asKey: false, keys: [], dbFails: false };
+const world = { realAuth: false, who: SHOP, asKey: false, keys: [], dbFails: false, platform: false };
 const SECRET_SQL = 'relation "identities" does not exist -- SELECT secret FROM vault';
 
 function installStubs() {
@@ -55,29 +61,42 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.identity_id, forgetKey: () => {}, SCOPE_NAMES: ['services', 'offers', 'pricing', 'tax', 'invoice', 'till', 'connector', 'testing'] }));
-  const rows = () => {
+  const rows = (params) => {
     if (world.dbFails) throw new Error(SECRET_SQL);
-    return { rows: [{ policy_flags: { api_keys: world.keys } }], rowCount: 1 };
+    return { rows: [{ policy_flags: { api_keys: world.keysOf ? world.keysOf(params && params[0]) : world.keys } }], rowCount: 1 }; /* keysOf: each shop reads its own list only (the foreign-id world) */
   };
-  const client = { query: async () => rows() };
-  const db = { query: async () => rows(), withTransaction: async (run) => (rows(), run(client)), withEntity: async (id, run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const client = { query: async (sql, params) => rows(params) };
+  const db = { query: async (sql, params) => rows(params), withTransaction: async (run) => (rows(), run(client)), withEntity: async (id, run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   mock('db', db);
   mock('db/index', db);
-  mock('lib/policy', { patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
-  mock('lib/platformroot', { isPlatform: () => false, isRoot: () => false });
+  mock('lib/policy', { FLAGS: {}, BOUND: {}, patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
+  mock('lib/platformroot', { isPlatform: () => world.platform, isRoot: () => false });
 }
 
 /* ── the scenarios: every error answer of routes/keys.js (and the shared gates in front of it) ─────────────── */
+/** a key as the list holds it (routes/keys.js mint): jti, name, scopes, created_at, expires_at, last4 */
+const KEY_A = { jti: 'a1b2c3', name: 'Tally connector', scopes: ['connector'], created_at: '2026-10-01T05:00:00.000Z', expires_at: '2027-10-01T05:00:00.000Z', last4: 'Ab12' };
+/** a counter key as the sightings and the pairing leave it: the maker (by), a parent key, a till claim */
+const KEY_B = { jti: 'd4e5f6', name: 'Counter 1', scopes: ['till'], created_at: '2026-10-02T05:00:00.000Z', expires_at: '2027-10-02T05:00:00.000Z', last4: 'Zz90', by: 'a1', parent: 'a1b2c3', till: { counter: 'C1' } };
 const SCENARIOS = [
+  /* S34: the list as it answers a 200 — the owner's view, a co-assist's (may.revoke refused with its sentence), a platform login's (the 'testing' kind), and a shop with no list at all */
+  { id: 'list-empty', route: 'GET /api/keys', status: 200, ok: true, setup: {} },
+  { id: 'list-no-list-in-flags', route: 'GET /api/keys', status: 200, ok: true, setup: { keys: null } },
+  { id: 'list-owner-with-keys', route: 'GET /api/keys', status: 200, ok: true, setup: { keys: [KEY_A, KEY_B] } },
+  { id: 'list-co-assist-reads', route: 'GET /api/keys', status: 200, ok: true, setup: { who: CO_ASSIST, keys: [KEY_A] } },
+  { id: 'list-platform-login', route: 'GET /api/keys', status: 200, ok: true, setup: { platform: true, keys: [KEY_A] } },
   { id: 'get-key-asks', route: 'GET /api/keys', status: 403, setup: { asKey: true } },
   { id: 'get-no-token', route: 'GET /api/keys', status: 401, setup: { realAuth: true }, inherited: true },
   { id: 'get-db-fails', route: 'GET /api/keys', status: 500, setup: { dbFails: true } },
+  { id: 'post-key-made', route: 'POST /api/keys', status: 201, ok: true, setup: {}, body: { name: 'Tally connector', scopes: ['connector'] } },
+  { id: 'post-key-made-by-days', route: 'POST /api/keys', status: 201, ok: true, setup: { keys: [KEY_A] }, body: { scopes: ['offers', 'till'], days: 30 } },
   { id: 'post-key-asks', route: 'POST /api/keys', status: 403, setup: { asKey: true }, body: { scopes: ['offers'] } },
   { id: 'post-not-owner', route: 'POST /api/keys', status: 403, setup: { who: CO_ASSIST }, body: { scopes: ['offers'] } },
   { id: 'post-platform-kind', route: 'POST /api/keys', status: 403, setup: {}, body: { scopes: ['testing'] } },
   { id: 'post-bad-scope', route: 'POST /api/keys', status: 400, setup: {}, body: { scopes: ['nonsense'] } },
   { id: 'post-no-token', route: 'POST /api/keys', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'post-db-fails', route: 'POST /api/keys', status: 500, setup: { dbFails: true }, body: { scopes: ['offers'] } },
+  { id: 'delete-key-revoked', route: 'DELETE /api/keys/:jti', status: 200, ok: true, setup: { keys: [KEY_A, KEY_B] }, url: '/api/keys/a1b2c3' },
   { id: 'delete-key-asks', route: 'DELETE /api/keys/:jti', status: 403, setup: { asKey: true }, url: '/api/keys/abc' },
   { id: 'delete-not-owner', route: 'DELETE /api/keys/:jti', status: 403, setup: { who: CO_ASSIST }, url: '/api/keys/abc' },
   { id: 'delete-no-such-key', route: 'DELETE /api/keys/:jti', status: 404, setup: {}, url: '/api/keys/abc' },
@@ -107,9 +126,21 @@ function safeParse(text) {
 }
 
 async function runScenario(port, scenario) {
-  Object.assign(world, { realAuth: false, who: SHOP, asKey: false, keys: [], dbFails: false }, scenario.setup);
+  Object.assign(world, { realAuth: false, who: SHOP, asKey: false, keys: [], keysOf: null, dbFails: false, platform: false }, scenario.setup);
   const [method, template] = scenario.route.split(' ');
   return send(port, method, scenario.url || template, scenario.body);
+}
+
+/** a body's clock stamps are the same answer on every run: masked before a body is hashed */
+const steady = (text) => text.replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
+const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
+/** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
+function compare(captureFile, recording) {
+  const before = JSON.parse(fs.readFileSync(captureFile, 'utf8'));
+  const differing = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || recording[key].type !== before[key].type || recording[key].sha !== before[key].sha);
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - differing.length) + ' identical, ' + differing.length + ' different');
+  differing.forEach((key) => console.log('  ' + key + ' [' + before[key].status + ' -> ' + (recording[key] && recording[key].status) + ']'));
+  return differing.length;
 }
 
 const legacyOf = (key, scenario) => (JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes[key] || { answers: [] }).answers.find((answer) => answer.scenario === scenario);
@@ -135,17 +166,35 @@ async function checkKeysRoutes(port, recording) {
   const tested = {};
   for (const scenario of SCENARIOS) {
     const answer = await runScenario(port, scenario);
-    recording[scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
-    (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, body: answer.json, sha: shaOf(answer), request: { url: scenario.url || scenario.route.split(' ')[1], body: scenario.body } };
+    if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     const label = scenario.id;
+    if (argv.includes('--compare')) continue;
     check(label + ': answers ' + scenario.status, answer.status === scenario.status, answer.status);
     if (argv.includes('--capture')) continue;
+    if (scenario.ok) continue; /* a 200 is not a Problem: its shape is proved below (checkAllowList) */
     if (scenario.inherited) continue; /* the sign-in middleware's own 401 is the old body until slice 1b; it is tested, not yet a Problem */
     checkProblemBody(label, answer);
     checkLegacy(label, answer, legacyOf(scenario.route, scenario.id));
     if (scenario.status === 500) check(label + ': a 5xx says nothing of its cause', !/identities|SELECT|vault|relation/.test(answer.text), answer.text);
   }
   return tested;
+}
+
+/* Slice 1b (critic 6 Nov, class C): DELETE /api/keys/:jti in the foreign-id world. A shop's keys live in its OWN policy_flags, so shop B revoking shop A's jti reads B's list, finds nothing and
+   gets exactly the unknown jti's 404 KEY_NOT_FOUND; shop A's own jti is not a 404. Only this route is proved here (the file's other routes name no record by an id of theirs). */
+const KEYS_FOREIGN_ROUTE = 'DELETE /api/keys/:jti';
+const STRANGER = { identity_id: 'e2', identity_type: 'entity', owner_scope: 'entity' };
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a foreign key id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const failures = await FOREIGN.runCases([{ route: KEYS_FOREIGN_ROUTE, play: async (who, planted) => {
+    Object.assign(world, { realAuth: false, who: who === 'owner' ? SHOP : STRANGER, asKey: false, keys: [], dbFails: false, platform: false, keysOf: (id) => (planted && id === SHOP.identity_id ? [KEY_A] : []) });
+    return send(port, 'DELETE', '/api/keys/' + KEY_A.jti);
+  } }], recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: DELETE /api/keys/:jti answers shop A\'s key id to shop B exactly as an unknown id (404, same body) and the own key id is not a 404', failures.length === 0, failures);
+  return recording.proved();
 }
 
 async function checkServerHandlers(recording) {
@@ -161,7 +210,7 @@ async function checkServerHandlers(recording) {
   server.close();
   recording['server-404'] = { route: 'ANY (404 handler)', status: notFound.status, body: notFound.json };
   recording['server-error-handler'] = { route: 'ANY (error handler)', status: broken.status, body: broken.json };
-  if (argv.includes('--capture')) return;
+  if (argv.includes('--capture') || argv.includes('--compare')) return;
   const frozen = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).global;
   [['server-404', notFound], ['server-error-handler', broken]].forEach(([id, answer]) => {
     check(id + ': content-type is application/problem+json', /application\/problem\+json/.test(answer.type), answer.type);
@@ -169,7 +218,24 @@ async function checkServerHandlers(recording) {
     checkLegacy(id, answer, frozen[id]);
   });
   check('server-error-handler: the answer carries the caller\'s request id', broken.json.request_id === 'req-test', broken.json.request_id);
-  check('server-error-handler: nothing of the parser\'s message leaks', !/Unexpected|JSON|position/.test(broken.text), broken.text);
+  check('server-error-handler: nothing of the parser\'s message leaks', !/Unexpected|position|token/i.test(broken.text), broken.text);
+}
+
+/**
+ * API-8 output allow-list (S34): the list's derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root and every recorded 200 fits it (types and nullable members included).
+ * The keys[] items are the records policy_flags.api_keys holds (written by mint and the patchers), so they stay open and listed.
+ */
+function checkAllowList(recording) {
+  const { shapeOf, droppedKeys } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const shape = shapeOf('GET /api/keys');
+  const answers = Object.values(recording).filter((one) => one.route === 'GET /api/keys' && one.status === 200 && one.body);
+  const fits = shape && engine.compile(shape.schema);
+  check('GET /api/keys: every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
+  /* the revoke answer is closed at its root ({ message, jti }): its recorded 200 (the scene that revokes a listed key) must fit it with nothing dropped, which is what the register reads as output_allowlist for DELETE /api/keys/:jti (the generated case finds no key on the stand-in database and answers 404) */
+  const held = ALLOW.checkAllowList(recording, { [KEYS_FOREIGN_ROUTE]: require(path.join(HERE, 'routes', 'keys.js')).openapi.paths['/api/keys/{jti}'].delete }, check);
+  check('the output allow-list dropped no key from any answer', droppedKeys().length === 0, droppedKeys());
+  return held;
 }
 
 function checkUnits() {
@@ -208,8 +274,11 @@ function checkUnits() {
   const server = app.listen(0);
   const recording = {};
   const tested = await checkKeysRoutes(server.address().port, recording);
+  const foreignProved = argv.includes('--capture') || argv.includes('--compare') ? {} : await checkForeignIds(server.address().port);
   server.close();
   await checkServerHandlers(recording);
+  const allowHeld = !argv.includes('--capture') && !argv.includes('--compare') ? checkAllowList(recording) : {};
+  if (argv.includes('--compare')) process.exit(compare(argv[argv.indexOf('--compare') + 1], recording) ? 1 : 0);
   if (argv.includes('--capture')) fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort()]));
   /* this file owns the /api/keys rows; tests/api-problem-integrations.test.cjs, tests/api-problem-ctp.test.cjs and each other area's own test file (api-problem-<area>.test.cjs) owns its rows of the same manifest */
@@ -217,6 +286,14 @@ function checkUnits() {
   const OURS = (route) => / \/api\/keys(\/|$)/.test(route);
   const mine = Object.fromEntries(Object.keys(onDisk).filter(OURS).map((route) => [route, onDisk[route]]));
   const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter((route) => !OURS(route)).map((route) => [route, onDisk[route]])), coverage);
+  const keysForeign = (route) => route === KEYS_FOREIGN_ROUTE;
+  if (argv.includes('--write')) {
+    FOREIGN.writeEvidence(EVIDENCE_FILE, keysForeign, foreignProved);
+    ALLOW.writeEvidence(EVIDENCE_FILE, keysForeign, allowHeld);
+  } else if (!argv.includes('--capture')) {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for DELETE /api/keys/:jti exactly when its recorded 200 held', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, keysForeign), allowHeld), allowHeld);
+  }
+  if (!argv.includes('--write') && !argv.includes('--capture')) check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for DELETE /api/keys/:jti exactly when it held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, keysForeign), foreignProved), foreignProved);
   if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   else if (!argv.includes('--capture')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover', sameValue(mine, coverage), coverage);
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');

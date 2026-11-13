@@ -29,12 +29,13 @@
  * added. Refreshed 2026-09-26 from `node scripts/rls-census.cjs --save`; tests/rls-guard-baseline.test.cjs now
  * checks this list and db/index.js's against db/rls-baseline.json on every run, so the next new FORCE-RLS table
  * fails a test instead of just aging quietly here.
+ * CARD      18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
  */
 const fs = require('fs');
 const path = require('path');
 
 /** FORCE ROW LEVEL SECURITY as at 2026-09-26 — regenerate with the query above. */
-const RLS = `access_events account_balance books_change_log books_counter books_outbox books_pack books_payment
+const RLS = `supplier_list governance_exceptions access_events account_balance books_change_log books_counter books_outbox books_pack books_payment
 books_setting fixed_asset recurring_entry fiscal_period journal_entry journal_line ledger_account party_item party_tax_id party_interaction party_followup capture catalogue_adoption catalogue_face catalogue_item_schedule
 catalogue_item_version catalogue_items cb_attachment channel_binding channel_outbound chit_detail chit_disputes
 chit_header chit_line chit_line_amendment chit_line_assignment chit_line_cost chit_line_delivery chit_messages
@@ -45,7 +46,8 @@ identity_documents kyb_field_cache network_design notif_dismissed quick_key_audi
 quick_key_group_item register_acceptance register_attachable register_entry register_entry_standard
 register_subject register_template register_template_standard retention_config reward_ledger signup_context
 state_log stock_balance stock_movement supplier_readiness_acceptance supply_item test_result
-wholesaler_store`.split(/\s+/).filter(Boolean);
+wholesaler_store
+cb_device cb_external_reference cb_entity_supplier cb_contact cb_entity_employee cb_consumer_traction cb_catalogue_category cb_catalogue_item cb_chit cb_chit_item cb_chit_log cb_task cb_transaction_history`.split(/\s+/).filter(Boolean);
 
 const ROOT = path.join(__dirname, '..');
 const DIRS = ['lib', 'routes'];
@@ -105,17 +107,20 @@ const EXPECTED = {
   /* @stage poc — no route reaches it, and a retention sweep is platform-wide by definition. If it is ever wired
      to a route, it needs a context or it will sweep only what it can see, which is nothing. */
   'lib/retention.js:chit_status': 'platform-wide retention sweep, @stage poc, unreached by any route',
-  /* ⭐ VERIFIED 2026-09-15, not assumed: catalogue_items' policy is
-       USING (entity_id = current_setting(app.current_entity) OR EXISTS (… visibility = 'public'))
-     so a public item IS readable with no context — 11,572 rows are visible to cb_app right now. This is the
-     storefront fallback for "the viewer does not own this item", and it works precisely because the policy
-     says it may. */
+  /* ⭐ VERIFIED 2026-09-15, re-stated for DB-102 (migrations/b851): catalogue_items has TWO policies. rls_entity
+     (FOR ALL) lets only the owning shop read and write; catalogue_items_public_read (FOR SELECT only) lets a
+     public item through with no context, which is the storefront fallback for "the viewer does not own this
+     item". It works precisely because that policy says it may, and it cannot reach UPDATE or DELETE.
+     Before b851 runs, the older single policy still covers all commands. */
   'routes/catalogue.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
   'routes/products.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
   /* ⭐ VERIFIED against migrations/archive/b265_signup_context_rls.sql: the ONLY policy on signup_context is
      `FOR INSERT WITH CHECK (true)`, deliberately — the row is written during sign-up, BEFORE the entity being
      signed up exists, so a policy keyed on app.current_entity would block signing up at all. No SELECT/UPDATE/
      DELETE policy exists, so FORCE RLS makes the table write-only through cb_app regardless of context. */
+  /* SEC-75: supplier_list is FORCE since b270 (29 Sep) and joined this list when the stale baseline was corrected. The ONE bare-pool read is the operator
+     list's FALLBACK count, used only when ops.f_entity_counts (b241) is missing; supplier-list-scope.test.cjs names it too. */
+  'routes/entities.js:supplier_list': 'operator list fallback count, only when ops.f_entity_counts is absent; reads across shops on purpose',
   'routes/signin.js:signup_context': 'append-only audit row, written before the entity exists — b265 makes the table insert-only by design, not by context',
 };
 

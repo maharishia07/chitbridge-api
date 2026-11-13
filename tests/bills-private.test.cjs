@@ -35,11 +35,13 @@ let SQL = [], FLAGS = {}, ROWS = [], LOG = [], DISP = [], PI = [], PEOPLE = {}, 
 function rowsFor(sql, p) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   SQL.push({ s, p });
+  /* RAIL-133 (c): every line asked about is on this chit */
+  if (/line_id::text = ANY/.test(s)) return p[2].map((line_id) => ({ line_id }));
   if (/SELECT policy_flags, self_copy_pref FROM identities/.test(s)) return [{ policy_flags: FLAGS, self_copy_pref: null }];
   if (/UPDATE identities SET policy_flags/.test(s)) { FLAGS = Object.assign({}, FLAGS, JSON.parse(p[0])); return []; }
   if (/FROM chit_status cs JOIN chit_header ch/.test(s) && /AS doc_kind/.test(s)) return ROWS;
   if (/FROM state_log sl LEFT JOIN identities i/.test(s)) return LOG.filter((l) => (p[1] || []).indexOf(l.chit_id) >= 0);
-  if (/FROM chit_disputes WHERE chit_id = ANY/.test(s)) return DISP;
+  if (/FROM chit_disputes WHERE entity_id = [$]2 AND chit_id = ANY/.test(s)) return DISP;
   if (/FROM party_item i LEFT JOIN books_payment p/.test(s)) return PI;
   if (/FROM party_item WHERE entity_id = \$1 AND against_ref = \$2/.test(s)) return [{ open_minor: -18165, bill_minor: -48165 }];
   if (/SELECT identity_id, user_id, display_name FROM identities/.test(s)) return (p[0] || []).map((id) => PEOPLE[id]).filter(Boolean);
@@ -49,11 +51,11 @@ function rowsFor(sql, p) {
   if (/FROM chit_header h/.test(s) && /WHERE h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return COPY ? [Object.assign({ current_status: CUR }, COPY)] : [];
   /* moveStatus */
   if (/SELECT current_status/.test(s) && /FROM chit_status/.test(s) && /direction = 'received'/.test(s)) return [{ current_status: CUR }];
-  if (/SELECT sender_entity_id, purpose, business_json FROM chit_header/.test(s)) return HDR ? [HDR] : [];
+  if (/SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) /* sit/run6: the move header also reads all_recipients (RAIL-106 bell), same row */ return HDR ? [HDR] : [];
   /* the chit read */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return HDR ? [HDR] : [];
   if (/FROM chit_detail WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return [{ detail_type: 'invoice', line_items: [{ line_id: 'l1', particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }] }];
-  if (/FROM state_log WHERE chit_id = \$1 AND entity_id = \$2 AND action != 'read'/.test(s)) return LOG.filter((l) => l.chit_id === p[0]).map((l) => ({ action: l.action, action_by_identity_id: l.who_id, action_by_display_name: l.who_name, detail: l.detail || null, created_at: l.at }));
+  if (/FROM state_log WHERE chit_id = \$1 AND entity_id = \$2 AND action (!= 'read'|NOT IN \('read', 'payment_marked'\))/.test(s)) return LOG.filter((l) => l.chit_id === p[0] && l.action !== 'payment_marked').map((l) => ({ action: l.action, action_by_identity_id: l.who_id, action_by_display_name: l.who_name, detail: l.detail || null, created_at: l.at }));
   if (/AS participants/.test(s) && /AS deliveries/.test(s)) return [{ participants: PARTS, amendments: [], lines: [{ line_id: 'l1', seq: 1, particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }], assignments: [], deliveries: DELIV }];
   /* the read's own delivery query (the redaction) — filtered only when it asks for my claims alone */
   if (/d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at/.test(s)) return /AND \(d.delivery_id IS NULL OR d.recorded_by_entity_id = \$1\)/.test(s) ? DELIV.filter((d) => !d.delivery_id || d.recorded_by_entity_id === p[0]) : DELIV;
@@ -162,7 +164,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     await BP.moneySteps(SHOP, { direction: 'in', currency: 'INR' }, [{ against_ref: ORDER, amount_minor: 100 }], { id: OWNER_P });
     ok('a payment against something that is not a bill writes no bill step', wrote(/state_log/).length === 0);
     const booksSrc = fs.readFileSync(path.join(API, 'routes', 'books.js'), 'utf8');
-    ok('the books confirm route writes the money steps after the posting', /router\.post\('\/payments\/:id\/confirm'[\s\S]*?moneySteps\(e, pay, list,[\s\S]*?\n\}\);/.test(booksSrc));
+    /* FIN-63 step 2: confirmSteps (defined above the route) is the one place moneySteps runs for the confirm; the route calls it after the posting and after the replay answer */
+    ok('the books confirm route writes the money steps after the posting', /async function confirmSteps\([^)]*\) \{[\s\S]*?moneySteps\(e, payment, pairs,[\s\S]*?\n\}[\s\S]*?router\.post\('\/payments\/:id\/confirm'[\s\S]*?B\.postEntry[\s\S]*?await confirmSteps\(req, e, id, read\.pairs\)[\s\S]*?\n\}\);/.test(booksSrc));
 
     console.log('\n══ D · THE SELLER\'S LIFECYCLE — never a buyer step; the dispute and the shared payment ══\n');
     reset(); ROWS = [sellerRow()];

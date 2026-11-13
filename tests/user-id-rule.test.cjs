@@ -3,6 +3,7 @@
  *
  * ⚠️ Not a unit test of checkRoot — that would pass while the routes ignored it, which is exactly the failure
  * the hat gate had (20/20 green while the gate read the wrong property). This drives express.
+ * CARD      18-identity-sign-in-and-access/user-id
  */
 const path = require('path');
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
@@ -24,6 +25,9 @@ require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p)
   if (/INSERT INTO identities/.test(sql)) { DB.inserted = p[4]; return { rows: [] }; }
   return { rows: [] };
 } } };
+/* SET-80: a currency sent is written inside withEntity (the lock reads the shop in the write's transaction) — the stub hands the same query to the handle */
+const stubDb = require.cache[require.resolve(API + '/db')].exports;
+stubDb.withEntity = async (entity, fn) => fn(stubDb);
 
 const express = require('express');
 const app = express();

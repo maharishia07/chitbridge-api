@@ -1,4 +1,5 @@
 /**
+ * CARD  11-crm-and-marketing/consent-and-privacy-requests
  * CO1 privacy — contact consent (b306), the privacy-request register (b307) and the public facts, through the REAL router (routes/crm.js)
  * and the REAL lib/privacy.js, with the two tables STUBBED in memory (the migrations are drafts Athi runs). Offline (tests/support/crm-stub.cjs).
  * What it proves, each a Standards-register claim:
@@ -14,6 +15,8 @@
 const assert = require('assert');
 const { make, row } = require('./support/crm-stub.cjs');
 const t = make(), D = t.data, PV = require('../lib/privacy');
+/* CMP-42/49: b777 (the source label) has run in this world */
+const SCHEMA = require('../lib/schema'), realHasColumn = SCHEMA.hasColumn; SCHEMA.hasColumn = async (tb, col) => (tb === 'party_contact_pref' && col === 'source') || realHasColumn(tb, col);
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
@@ -30,12 +33,12 @@ D.extra = async (sql, p) => {
   if (/^SELECT pref_id, .* FROM party_contact_pref/.test(sql)) return { rows: T.prefs.filter((r) => r.owner === p[0] && r.party_id === p[1]).slice().reverse() };
   if (/^INSERT INTO party_contact_pref/.test(sql)) {
     clock += 1000;
-    const r = { pref_id: uid(), owner: p[0], party_id: p[1], channel: p[2], purpose: p[3], allowed: p[4], basis: p[5], notice_version: p[6], noted_by: p[7], noted_at: new Date(clock).toISOString(), withdrawn_at: /now\(\)\)\s*RETURNING/.test(sql) ? new Date(clock).toISOString() : null };
+    const r = { pref_id: uid(), owner: p[0], party_id: p[1], channel: p[2], purpose: p[3], allowed: p[4], basis: p[5], notice_version: p[6], source: /source, source_ref\)/.test(sql) ? p[8] : null, source_ref: /source, source_ref\)/.test(sql) ? p[9] : null, noted_by: p[7], noted_at: new Date(clock).toISOString(), withdrawn_at: /now\(\)(, \$9, \$10)?\)\s*RETURNING/.test(sql) ? new Date(clock).toISOString() : null };
     T.prefs.push(r); return { rows: [r] };
   }
   if (/^SELECT country(, display_name)? FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: D.shopCountry || 'IN', display_name: 'Mayur Bhavan' }] };
   /* T3-P3-CONSENT: the shopper route's two identity rows at once, and the shopper's own name line */
-  if (/^SELECT identity_id, display_name, phone, email, otp_contact, country FROM identities WHERE identity_id = ANY/.test(sql)) {
+  if (/^SELECT identity_id, display_name, phone, email, otp_contact, country, user_id FROM identities WHERE identity_id = ANY/.test(sql)) {
     return { rows: p[0].map((id) => (id === 'E1' ? { identity_id: 'E1', display_name: 'Mayur Bhavan', phone: null, email: 'shop@x.in', otp_contact: null, country: D.shopCountry || 'IN' }
       : { identity_id: id, display_name: 'Chola', phone: '+91 98000 00002', email: null, otp_contact: '9800000002', country: null })) };
   }
@@ -72,6 +75,12 @@ D.extra = async (sql, p) => {
     const per = new Map(); last.forEach((r) => per.set(r.party_id, (per.get(r.party_id) || false) || r.allowed));
     const v = Array.from(per.values()); return { rows: [{ agreed: v.filter(Boolean).length, said_no: v.filter((x) => !x).length }] };
   }
+  if (/^SELECT 1 FROM privacy_request WHERE owner_entity_id = \$1 AND request_id = \$2/.test(sql)) return { rows: T.reqs.filter((x) => x.owner === p[0] && x.request_id === p[1]).map(() => ({ held: 1 })) }; /* lib/privacy unanswerable: is it this shop's */
+  if (/^SELECT DISTINCT ON \(party_id, channel\) party_id, channel, allowed FROM party_contact_pref/.test(sql)) {   /* lib/optout alreadyStopped: the newest row per (party, channel) for one purpose */
+    const seen = new Set(), out = [];
+    T.prefs.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0 && r.purpose === p[2] && p[3].indexOf(r.channel) >= 0).slice().reverse().forEach((r) => { const k = r.party_id + '|' + r.channel; if (!seen.has(k)) { seen.add(k); out.push(r); } });
+    return { rows: out };
+  }
   if (/^UPDATE privacy_request SET answered_at = now\(\)/.test(sql)) {
     const r = T.reqs.find((x) => x.owner === p[0] && x.request_id === p[1] && !x.answered_at); if (!r) return { rows: [] };
     Object.assign(r, { answered_at: new Date().toISOString(), answered_by: p[2], outcome: p[3], answer: p[4] }); return { rows: [r] };
@@ -82,16 +91,16 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
 
 (async () => {
   console.log('\n-- before the migrations --');
-  await ita('b306 not run: GET and POST contact-prefs answer 503 PRIVACY_NOT_MIGRATED, naming b306 — nothing written', async () => {
+  await ita('b306 not run: GET and POST contact-prefs answer 503 PRIVACY_NOT_MIGRATED, in plain words — nothing written', async () => {
     T.have.party_contact_pref = false; PV.forget();
     for (const r of [await t.get(prefs()), await t.post(prefs(), { channel: 'whatsapp', purpose: 'marketing', allowed: true })]) {
-      assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(/b306/.test(r.body.message));
+      assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(!/b306/.test(r.body.message) && /after the next update/.test(r.body.message));
     }
     assert.strictEqual(T.prefs.length, 0); T.have.party_contact_pref = true; PV.forget();
   });
-  await ita('b307 not run: the register answers 503 PRIVACY_NOT_MIGRATED, naming b307', async () => {
+  await ita('b307 not run: the register answers 503 PRIVACY_NOT_MIGRATED, in plain words', async () => {
     T.have.privacy_request = false; PV.forget();
-    const r = await t.get('/privacy-requests'); assert.strictEqual(r.status, 503); assert.ok(/b307/.test(r.body.message));
+    const r = await t.get('/privacy-requests'); assert.strictEqual(r.status, 503); assert.ok(!/b307/.test(r.body.message) && /after the next update/.test(r.body.message));
     T.have.privacy_request = true; PV.forget();
   });
 
@@ -163,6 +172,16 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const c = await t.get('/privacy-requests'); t.as('E1'); assert.strictEqual(c.body.may_answer, false); assert.ok(/Only the owner/.test(c.body.why));
   });
+  await ita('CRM-40 need-to-know: the register (names, complaints) is read by the owner and an editor; a viewer or commenter gets 403 VIEW_ONLY in words', async () => {
+    const asActor = (level) => t.as('E1', { identity: { identity_id: 'A2', parent_entity_id: 'E1', identity_type: 'actor', access_level: level } });
+    asActor('editor'); const ed = await t.get('/privacy-requests'); assert.strictEqual(ed.status, 200, 'an editor reads it'); assert.strictEqual(ed.body.may_answer, false);
+    for (const level of ['viewer', 'commenter']) {
+      asActor(level); const v = await t.get('/privacy-requests'); const vo = await t.get('/privacy-requests?open=1');
+      assert.strictEqual(v.status, 403, level + ' is refused'); assert.strictEqual(v.body.code, 'VIEW_ONLY'); assert.ok(/only view/.test(v.body.message || v.body.detail));
+      assert.strictEqual(vo.status, 403); assert.strictEqual(v.body.requests, undefined, 'no row leaves with the refusal');
+    }
+    t.as('E1'); assert.strictEqual((await t.get('/privacy-requests')).status, 200, 'the owner reads it');
+  });
   await ita('a co-assist cannot answer (403, in words); the owner answers once; a second answer is 409', async () => {
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const c = await t.post('/privacy-requests/' + rid + '/answer', { outcome: 'done', answer: 'Sent the record' }); t.as('E1');
@@ -170,6 +189,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     const o = await t.post('/privacy-requests/' + rid + '/answer', { outcome: 'done', answer: 'Sent their record and timeline by e-mail' });
     assert.strictEqual(o.status, 200, JSON.stringify(o.body)); assert.ok(o.body.request.answered_at); assert.strictEqual(o.body.request.outcome, 'done');
     const again = await t.post('/privacy-requests/' + rid + '/answer', { outcome: 'refused', answer: 'x' }); assert.strictEqual(again.status, 409);
+    const unknown = await t.post('/privacy-requests/' + P(99) + '/answer', { outcome: 'done', answer: 'x' }); assert.strictEqual(unknown.status, 404, JSON.stringify(unknown.body)); /* S35: one this shop does not hold */
     assert.strictEqual((await t.get('/privacy-requests?open=1')).body.requests.length, 2);
   });
   await ita('G4 paging: total · page · limit top-level; ?limit=1 pages the register; open/late count the whole register, not the page', async () => {
@@ -272,7 +292,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     assert.deepStrictEqual(f.figures, { agreed: 1, said_no: 1 }); assert.ok(/1 party agreed to offers/.test(f.lines[0].text)); assert.ok(/said no/.test(f.lines[1].text));
     T.have.party_contact_pref = false;
     const n = await H.BUILD.marketing({ entity: 'E1' }); T.have.party_contact_pref = true;
-    assert.deepStrictEqual(n.lines, []); assert.ok(/b306/.test(n.unavailable));
+    assert.deepStrictEqual(n.lines, []); assert.ok(!/b306/.test(n.unavailable) && /after the next update/.test(n.unavailable));
   });
 
   console.log('\n-- T3-P3-CONSENT · the law\u2019s words, the shopper\u2019s own answer --');
@@ -338,8 +358,52 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     T.have.party_contact_pref = false; T.have.privacy_request = false; PV.forget();
     const r = await pcall('GET', '/api/privacy/me', null, shopperTok); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
     assert.strictEqual(r.body.consent.migrated, false); assert.strictEqual(r.body.may_consent.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(r.body.may_consent.why); assert.strictEqual(r.body.may_request.may, false);
-    const w = await pcall('POST', '/api/privacy/me/consent', { channel: 'email', purpose: 'marketing', allowed: false }, shopperTok); assert.strictEqual(w.status, 503); assert.ok(/b306/.test(w.body.message));
+    const w = await pcall('POST', '/api/privacy/me/consent', { channel: 'email', purpose: 'marketing', allowed: false }, shopperTok); assert.strictEqual(w.status, 503); assert.ok(!/b306/.test(w.body.message) && /after the next update/.test(w.body.message));
     T.have.party_contact_pref = true; T.have.privacy_request = true; PV.forget();
+  });
+  console.log('\n-- CMP-42 · CMP-49 · who a consent row says made it, and a withdraw that is answered --');
+  D.cust.push(Object.assign(row({ party_id: P(5), display_name: 'Latha', phone: '+91 98400 55555' }), { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'regular' }));
+  const P5 = '/parties/' + P(5) + '/contact-prefs';
+  const asStaff = () => t.as('E1', { identity: { identity_id: 'A7', parent_entity_id: 'E1', identity_type: 'actor', access_level: 'editor' } });
+  await ita('CMP-42: staff cannot write "self" or "reply" (400 in words, no row); with no source, or "staff", the row says staff and carries the actor’s id', async () => {
+    asStaff(); const n = T.prefs.length;
+    for (const source of ['self', 'reply']) {
+      const r = await t.post(P5, { channel: 'email', purpose: 'marketing', allowed: true, source, source_ref: 'x' });
+      assert.strictEqual(r.status, 400, source + ': ' + JSON.stringify(r.body)); assert.ok(/as staff/.test(r.body.message), r.body.message);
+    }
+    assert.strictEqual(T.prefs.length, n, 'a refused write adds no row');
+    const a = await t.post(P5, { channel: 'email', purpose: 'marketing', allowed: true });
+    const b = await t.post(P5, { channel: 'sms', purpose: 'marketing', allowed: true, source: 'staff', source_ref: 'someone-else' });
+    t.as('E1');
+    for (const r of [a, b]) { assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(r.body.pref.source, 'staff'); assert.strictEqual(r.body.pref.source_ref, 'A7', 'the actor, not a name the caller typed'); assert.strictEqual(r.body.pref.noted_by, 'A7'); }
+  });
+  await ita('CMP-42: the shopper’s own answer (POST /me/consent) is the one writer of "self", with the shopper as its source_ref', async () => {
+    const r = await pcall('POST', '/api/privacy/me/consent', { channel: 'whatsapp', purpose: 'marketing', allowed: true }, shopperTok);
+    assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(r.body.pref.source, 'self'); assert.strictEqual(r.body.pref.source_ref, P(2)); assert.strictEqual(r.body.pref.noted_by, P(2));
+  });
+  await ita('CMP-49: a withdraw request answered "done" writes the opt-out rows (offers, every channel, source staff, the request as proof) and the send gate then says no', async () => {
+    const q = await t.post('/privacy-requests', { kind: 'withdraw', who: 'Latha', party_id: P(5) }); assert.strictEqual(q.status, 201, JSON.stringify(q.body));
+    const rid2 = q.body.request.request_id, n = T.prefs.length;
+    assert.strictEqual((await t.get(P5)).body.may.email.marketing.may, true, 'before the answer the shop may send offers on e-mail');
+    asStaff(); const refusedStaff = await t.post('/privacy-requests/' + rid2 + '/answer', { outcome: 'done', answer: 'Stopped' }); t.as('E1');
+    assert.strictEqual(refusedStaff.status, 403, 'only the owner answers'); assert.strictEqual(T.prefs.length, n);
+    const r = await t.post('/privacy-requests/' + rid2 + '/answer', { outcome: 'done', answer: 'Their offers have stopped' }); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    const fresh = T.prefs.slice(n); assert.deepStrictEqual(fresh.map((x) => x.channel).sort(), PV.CHANNELS.slice().sort(), 'one marketing "no" per channel');
+    assert.ok(fresh.every((x) => x.party_id === P(5) && x.purpose === 'marketing' && x.allowed === false && x.basis === 'consent' && x.source === 'staff' && x.source_ref === rid2), JSON.stringify(fresh));
+    const g = (await t.get(P5)).body; for (const c of PV.CHANNELS) assert.strictEqual(g.may[c].marketing.may, false, c);
+    assert.ok(T.prefs.filter((x) => x.party_id === P(5) && x.channel === 'email' && x.purpose === 'marketing').some((x) => x.allowed === true), 'the earlier yes stays as proof');
+    assert.ok(g.history.find((x) => x.channel === 'email' && x.purpose === 'marketing' && !x.allowed).withdrawn_at, 'the e-mail yes is marked withdrawn');
+  });
+  await ita('CMP-49: only "done" on a withdraw writes rows (refused or another kind write none); done with no person on the request is refused in words, and the answer is given once', async () => {
+    const n = T.prefs.length;
+    const mk = async (b) => (await t.post('/privacy-requests', b)).body.request.request_id;
+    const r1 = await mk({ kind: 'withdraw', who: 'Latha', party_id: P(5) }), r2 = await mk({ kind: 'access', who: 'Latha', party_id: P(5) }), r3 = await mk({ kind: 'withdraw', who: 'A caller with no record' });
+    assert.strictEqual((await t.post('/privacy-requests/' + r1 + '/answer', { outcome: 'refused', answer: 'Not this person' })).status, 200);
+    assert.strictEqual((await t.post('/privacy-requests/' + r2 + '/answer', { outcome: 'done', answer: 'Sent' })).status, 200);
+    assert.strictEqual(T.prefs.length, n, 'no rows for a refused withdraw or another kind');
+    const none = await t.post('/privacy-requests/' + r3 + '/answer', { outcome: 'done', answer: 'Stopped' });
+    assert.strictEqual(none.status, 400, JSON.stringify(none.body)); assert.ok(/Pick the customer/.test(none.body.message)); assert.strictEqual(T.prefs.length, n);
+    const again = await t.post('/privacy-requests/' + r1 + '/answer', { outcome: 'done', answer: 'x' }); assert.strictEqual(again.status, 409, 'a refused answer cannot be turned into a done');
   });
   psrv.close();
 

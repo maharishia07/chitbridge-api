@@ -4,6 +4,7 @@
  *   POST /parties/:id/stage: a NEW row, history kept · refused for another shop's party · b297 not run → 503 LEADS_NOT_MIGRATED, nothing created
  *   the migration file: RLS on entity_id, append-only, kind dictionary (the RLS test of the new table)
  * Run: node tests/crm-leads.test.cjs
+ * CARD      11-crm-and-marketing/leads-import-stages
  */
 'use strict';
 const assert = require('assert'), fs = require('fs'), path = require('path');
@@ -35,7 +36,7 @@ D.extra = async (sql, p) => {
     return { rows: Array.from(latest.values()).map((m) => ({ item_id: m.item_id, grp: m.grp, at: m.at })) };
   }
   if (/^INSERT INTO memberships/.test(sql)) { const r = { membership_id: 'mm' + (++tx), entity_id: p[0], item_type: p[1], item_id: p[2], kind: p[3], grp: p[4], by: p[5], at: new Date(Date.UTC(2026, 9, 10, 9, tx)).toISOString() }; M.push(r); return { rows: [r] }; }
-  if (/^SELECT EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) OR/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
+  if (/^SELECT EXISTS \(SELECT 1 FROM customer_list c WHERE c\.owner_entity_id = \$1 AND c\.customer_identity_id = \$2 AND .*\) AS ok/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
   if (/^SELECT txn_count FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2 AND added_via = 'lead'/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
   if (/^SELECT user_id, bridge_id FROM identities WHERE identity_id/.test(sql)) return { rows: ids.filter((i) => i.identity_id === p[0]) };
   if (/FROM identities WHERE parent_entity_id = \$1 AND user_id LIKE/.test(sql)) return { rows: ids.filter((i) => i.parent_entity_id === p[0] && i.user_id.startsWith(p[1].replace('%', '')) && i.display_name.toLowerCase() === p[2]) };

@@ -63,6 +63,7 @@ function report(result, verdict, missing, acceptedCount) {
   return problems;
 }
 
+/** read --db, build the schema into that EMPTY database and report; exits 1 when it was not empty or a migration failed unaccepted, 2 when no database was named */
 async function main() {
   const databaseUrl = readDatabaseUrl(process.argv.slice(2));
   if (!databaseUrl) {

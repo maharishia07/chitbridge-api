@@ -9,6 +9,7 @@ const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const R = process.argv[2] || path.join(__dirname, '..');
+const CHITS = require('../tools/chits-files.cjs'); /* the ONE list of chits files: a break finds its anchor wherever the code lives now */
 const BREAKS = [
   [
     'books-writer',
@@ -88,6 +89,27 @@ const BREAKS = [
     '  if (!s) return { off: true };\n    return postChit(entity, chit_id, { setting: s, by });',
     '  return postChit(entity, chit_id, { setting: s || {}, by });',
     'the off switch is ignored by the hook'
+  ],
+  [
+    'acc-223-238-cancel',
+    'lib/books-hooks.js',
+    '  return refusedOwnCopy(input, copy) ? refusedNone(input, copy) : moneyHold(copy, business, base);',
+    '  return moneyHold(copy, business, base);',
+    'ACC-223: a cancelled own copy posts again (the classify gate is gone)'
+  ],
+  [
+    'acc-223-238-cancel',
+    'lib/books-hooks.js',
+    "    if (!(failure && failure.code === '23505')) throw failure;",
+    '    throw failure;',
+    'ACC-238: a lost reversal race rolls the cancel back (23505 is no duplicate)'
+  ],
+  [
+    'acc-223-238-cancel',
+    'lib/chit-move.js',
+    "  return require('./books-hooks').takeBackCancelled(entity_id, chit_id, by.id);",
+    '  return null;',
+    'ACC-238: the status door never calls the books (only the sender, through the sent copy, did)'
   ],
   [
     'books-routes',
@@ -350,7 +372,7 @@ const BREAKS = [
 let caught = 0;
 const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {
-  const abs = path.join(R, file),
+  const abs = path.join(R, CHITS.anchorFile(R, file, from)),
     copy = abs + '.breakcopy';
   const orig = fs.readFileSync(abs, 'utf8');
   fs.writeFileSync(copy, orig);

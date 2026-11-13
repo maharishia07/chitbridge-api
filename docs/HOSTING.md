@@ -121,7 +121,13 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `ASSIST_RATE_LIMIT_MAX` | optional | `40` | no | Assistant calls per window. |
 | `BODY_LIMIT_DEFAULT` / `BODY_LIMIT_LARGE` | optional | `256kb` / `8mb` | no | Request body caps. |
 | `REQUEST_TIMEOUT_MS` | optional | `30000` | no | Request deadline. |
+| `API_MAX_INFLIGHT` | optional | `DB_POOL_MAX` x 1.6 (16) | no | Requests inside the api at once; over it the answer is 503 SERVER_BUSY + Retry-After before any work (0 = off). A place is kept until the handler has answered. A value above 2 x `DB_POOL_MAX` logs a warning. |
+| `API_ABANDON_LEASE_MS` | optional | `30000` | no | How long a request whose client left may keep its place while its handler still runs (0 = free it at once). A claimed bill always runs to commit. |
+| `API_SHED_RETRY_AFTER_S` | optional | `2` | no | Seconds the busy answer asks the caller to wait. |
+| `DB_POOL_MAX` / `DB_POOL_WAIT_MS` | optional | `10` / `10000` | no | Database pool size and how long a request waits for a connection. |
 | `IDEMPOTENCY_WINDOW_HOURS` | optional | `48` | no | How long an idempotency key is remembered. |
+| `IDEMPOTENCY_STALE_MINUTES` | optional | `10` | no | Minutes after which a crashed request's in-progress key may be claimed by a retry. |
+| `IDEMPOTENCY_TOKEN_MINUTES` | optional | `15` | no | Minutes a recorded answer that carries a token may be replayed. |
 | `IMPORT_PREFLIGHT_MAX` / `IMPORT_COMMIT_MAX` / `PRODUCTS_BULK_MAX` | optional | `60` / `20` / `60` | no | Product import/bulk rate limits. |
 | `TILL_CATALOGUE_MAX` / `TILL_DELTA_CAP` | optional | `20` / `20000` | no | Counter catalogue rate and delta size caps. |
 | `NOTIF_FEED_DAYS` | optional | `90` | no | Notification feed look-back. |

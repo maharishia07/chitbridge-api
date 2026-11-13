@@ -18,12 +18,11 @@ const assert = require('assert'), fs = require('fs'), path = require('path'), vm
 const API = path.join(__dirname, '..');
 const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');   /* CB_WEB_DIR: the paired web worktree (vendor-till.cjs) */
 
+/* the web's copies (till.html, promo.html) are judged by web CI at the pinned api sha; the app, the labs and the board are web-only pages and keep their parse check here */
 const PAGES = [
   ['the app',            path.join(WEB, 'app.html')],
   ['the counter (master)', path.join(API, 'tools', 'tally-connector', 'till.html')],
-  ['the counter (web)',  path.join(WEB, 'till.html')],
   ['the shop screen (master)', path.join(API, 'tools', 'tally-connector', 'promo.html')],
-  ['the shop screen (web)', path.join(WEB, 'promo.html')],
   /* ⚠ THE STANDALONE PAGES BELONG HERE TOO, and were missing. Each is a one-file app with all of its script
      inline, so a syntax error is total in exactly the way the header above describes — and neither is covered
      by a spec that would have caught it. The offer lab is where offers are proved before they are published;
@@ -193,6 +192,9 @@ it('⭐⭐⭐ every onclick in a capability calls a function that exists', () =>
 });
 
 it('⚠️ the vendored copies still say what their masters say', () => {
+  /* THE CHECK SPLIT (11 Nov, scripts/vendor-till.cjs): web CI judges its copies at a pinned api sha, so this repo's CI no longer reads web main for them.
+     Run it when CB_WEB_DIR is named (a laptop, the release step). */
+  if (!process.env.CB_WEB_DIR) return;
   /* ⚠️ LINE ENDINGS ARE NOT CONTENT. The master is checked out CRLF on Windows and the vendor step writes LF, so a byte
      comparison fails on every run and would teach us to ignore this test — which is worse than not having it. */
   const same = (f) => fs.readFileSync(f, 'utf8').split('\r\n').join('\n');

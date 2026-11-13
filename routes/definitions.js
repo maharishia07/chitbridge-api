@@ -1,6 +1,7 @@
 /* OWNS an entity's own named things: pack models ("Carton of 6"), tax slabs, categories - every edit writes a version
  * CALLED BY server.js (mounted at /api/definitions); the web Definitions workshop (cap-definitions.js)
- * FLOW auth -> ctx(entity) -> definition / definition_version (append-only) -> list adds the governed slabs of the entity's country (or says why there are none)
+ * FLOW auth -> schema check (lib/definitions-contract.js) -> ctx(entity) -> definition / definition_version (append-only) -> list adds the governed slabs of the entity's country (or says why there are none)
+ *      a refusal -> problem(req, res, { status, ...words.x() } | definitionFault(e, req)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
  * CARD 07-catalogue-and-pricing/definitions */
 /**
  * routes/definitions.js — an entity's own named things: "Carton of 6", "Diwali 10%", a category list.
@@ -37,26 +38,35 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const logger = require('../lib/logger');
 const router = express.Router();
-const { body } = require('express-validator');
-const { query, withEntity, withTransaction, readBatch } = require('../db');
-const { validate } = require('../middleware/validate');
-const { safeErr } = require('../lib/respond');
+const { query, withEntity, readBatch } = require('../db');
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { contract, words, definitionFault, schemaOptionsFor } = require('../lib/definitions-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const { shopChanged } = require('../lib/shopchanged'); /* ⭐ an offer is what a counter and a TV are SHOWING; they hear at once */
 /* The jurisdiction's tax slabs (region_layer, b201) — served beside the entity's own definitions, read-only. */
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape (CAT-333: the freeze list)
 const slabCites = require('../lib/slab-cites');
 const rateDoor = require('../lib/rate-door'); /* CAT-211: a category's rate (rules.default_slab) is owner or manager only, like every rate door */
-const { problem } = require('../lib/problem'); /* API-STANDARD S1: the one error writer (the new 403 only; this file's older refusals keep their legacy bodies) */
 const offerClash = require('../lib/offer-clash'); /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
 
 const ctx = (req) => auth.entityOf(req);
 
 /* b160 not applied yet → say so plainly rather than 500. The API deploys before migrations by design, so this
-   window is real: a 500 here would read as "definitions are broken" when they are merely not provisioned. */
-const notMigrated = (e) => e && e.code === '42P01';
-const gone = (res) => res.status(503).json({ error: 'Not provisioned', message: 'Definitions need migration b160. Ask the operator to run it.' });
+   window is real: a 500 here would read as "definitions are broken" when they are merely not provisioned.
+   That, a taken name and any other fault are worded by definitionFault (lib/definitions-contract.js). */
+
+/** the schema check of one route (its own operation in lib/definitions-contract.js), as a list to spread after the sign-in: the old chains' 400 words are kept (schemaOptionsFor) */
+function checked(route) {
+  return [schemaValidate(contract.operationFor(route), schemaOptionsFor(route))];
+}
+
+/* K-1: the :id is a uuid column (definition.definition_id); a non-uuid id names no row and is answered as an unknown one, not a 500. A GOVERNED slab id (IN-GST-18) is not a uuid by design:
+   it passes on, and the PUT and DELETE handlers refuse it in words (403 governed). */
+const ownId = uuidParam(() => words.notFound());
+router.param('id', (req, res, next, id) => (taxGov.isGovernedId(id) ? next() : ownId(req, res, next, id)));
 
 const MAX_NAME = 120,
   MAX_NOTE = 500;
@@ -69,7 +79,7 @@ async function governedNote(entityId) {
   return { rows: [], why: (await taxGov.jurisdictionFor(entityId, { query })) ? null : taxGov.NO_COUNTRY_SLABS_SAY };
 }
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /**
@@ -205,13 +215,12 @@ router.get('/', auth, async (req, res) => {
       )
     );
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, definitionFault(e, req));
   }
 });
 
 /** GET /:id — one definition with its FULL version history. The history is the point, so it is not optional. */
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /**
@@ -248,11 +257,10 @@ router.get('/:id', auth, async (req, res) => {
       );
       return { definition: d.rows[0], versions: v.rows, status_log: sl.rows };
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return problem(req, res, { status: 404, ...words.notFound() });
     res.json(out);
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, definitionFault(e, req));
   }
 });
 
@@ -265,16 +273,32 @@ const currentRulesOf = async (db, definition) =>
 const editorChangesRate = async (req, db, definition, rules) => !rateDoor.setsRate(req) && !!rules && rateDoor.defaultSlabChanged(rules, await currentRulesOf(db, definition));
 /** the refusals an edit meets before anything is written: a rate the caller may not set, or a rule left without its value (null = go on) */
 async function editRefusal(req, db, definition, rules) {
+  if (liveNeedsYes(req, definition.kind, definition.status)) return { unconfirmed: true };
   if (await editorChangesRate(req, db, definition, rules)) return { rateRefused: true };
   const bad = rules && require('../lib/definition-check').missingValue(definition.kind, definition.sub_kind, rules);
   return bad ? { bad } : null;
 }
 
+/**
+ * CAT-273: the definition row, LOCKED (FOR UPDATE) while this edit reads its version and writes the next: five parallel saves queue and get versions 2..6, where they all read 1 and the losers
+ * died on the version key (and were reported as a name clash). A save that names the version it was made on (expected_version) is refused, with the shelf's current one, when the shelf has moved on.
+ * → { missing } | { stale: current version, sent } | { row }
+ */
+async function lockDefinition(db, id, expectedVersion) {
+  const found = await db.query(`SELECT * FROM definition WHERE definition_id = $1 FOR UPDATE`, [id]);
+  if (!found.rows.length) return { missing: true };
+  const row = found.rows[0];
+  const moved = expectedVersion !== undefined && expectedVersion !== null && Number(expectedVersion) !== row.current_version;
+  return moved ? { stale: row.current_version, sent: expectedVersion } : { row };
+}
+
 /** answers what editRefusal found (a rate the caller may not set: 403; a rule without its value: 422); true when it answered */
 function answerEditRefusal(req, res, out) {
-  if (out.rateRefused) rateRefused(req, res);
-  else if (out.bad) res.status(422).json({ error: 'Incomplete rule', message: out.bad });
-  return !!(out.rateRefused || out.bad);
+  if (out.unconfirmed) problem(req, res, { status: 428, ...words.liveUnconfirmed() });
+  else if (out.rateRefused) rateRefused(req, res);
+  else if (out.bad) problem(req, res, { status: 422, ...words.incomplete(out.bad) });
+  else if (out.stale) problem(req, res, { status: 409, ...words.stale(out.stale, out.sent) });
+  return !!(out.unconfirmed || out.rateRefused || out.bad || out.stale);
 }
 
 /** CAT-211: a category born with a rate is refused for a caller who may not set one (a gate between the checks and the handler) */
@@ -283,8 +307,14 @@ const bornWithoutRate = (req, res, next) => {
   return !rateDoor.setsRate(req) && rateDoor.defaultSlabChanged(rules, {}) ? rateRefused(req, res) : next();
 };
 
+/** UX-110: an offer becomes live only with the shop's explicit yes — the page asks first (CBLabKit.confirm) and then sends `confirmed: true`. A draft, a pause, a retire, any other kind, and an offer already live are never asked. */
+const liveNeedsYes = (req, kind, wasStatus) => kind === 'offer' && req.body && req.body.status === 'live' && wasStatus !== 'live' && req.body.confirmed !== true;
+
+/** UX-110: an offer born live without the yes is refused before anything is read or written (a gate, like bornWithoutRate) */
+const bornLiveWithoutYes = (req, res, next) => (liveNeedsYes(req, String((req.body && req.body.kind) || '').trim(), 'draft') ? problem(req, res, { status: 428, ...words.liveUnconfirmed() }) : next());
+
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
-router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').isString().trim().notEmpty()], validate, bornWithoutRate, async (req, res) => {
+router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const { kind, sub_kind, name, note } = req.body || {};
@@ -295,7 +325,7 @@ router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').
     /* a rule without its value is refused here too (lib/definition-check.js — the form's own sentences) */
     {
       const bad = require('../lib/definition-check').missingValue(String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules);
-      if (bad) return res.status(422).json({ error: 'Incomplete rule', message: bad });
+      if (bad) return problem(req, res, { status: 422, ...words.incomplete(bad) });
     }
 
     /**
@@ -335,17 +365,25 @@ router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').
       );
       return row;
     });
-    if (out && out.clash) return res.status(out.clash.status).json(out.clash.body);
+    if (out && out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
     shopChanged(entity_id, 'definition created');
     res.status(201).json({ message: 'Definition created', definition: out, version: 1 });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
     /* The unique index is a real rule, not an internal failure — a name is how people cite a definition, so
          two with the same name in the same kind would make every citation ambiguous. */
-    if (e && e.code === '23505') return res.status(409).json({ error: 'Name taken', message: 'You already have a definition of this kind with that name.' });
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, definitionFault(e, req, { nameTaken: true }));
   }
 });
+
+/** one definition_status_log row per REAL transition (see the b268 note in PUT /:id): a no-op re-send of the same status writes nothing */
+async function logStatusChange(db, req, entity_id, wasStatus, status) {
+  if (!status || status === wasStatus) return;
+  await db.query(
+    `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
+     VALUES ($1,$2,$3,$4)`,
+    [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
+  );
+}
 
 /**
  * ⭐⭐ PUT /:id — an edit is a NEW VERSION, never an overwrite.
@@ -353,24 +391,18 @@ router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').
  * This route is the freeze rule made mechanical. The old rules stay on the old version row forever, so a chit
  * stamped against version 2 can still be explained after the shelf has moved to version 5.
  */
-/* A governed slab is the jurisdiction's, not the entity's: a sentence, not a uuid-cast error. */
-const governedRefusal = (res) =>
-  res.status(403).json({
-    error: 'Governed',
-    message: 'This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own.'
-  });
-
-router.put('/:id', auth, async (req, res) => {
+/* A governed slab is the jurisdiction's, not the entity's: a sentence (words.governed), not a uuid-cast error. */
+router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
   try {
-    if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
+    if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
     const entity_id = ctx(req);
     const rules = req.body && typeof req.body.rules === 'object' ? req.body.rules : null;
-    const { name, note, status } = req.body || {};
+    const { name, note, status, expected_version } = req.body || {};
 
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT * FROM definition WHERE definition_id = $1`, [req.params.id]);
-      if (!cur.rows.length) return { missing: true };
-      const d = cur.rows[0];
+      const locked = await lockDefinition(db, req.params.id, expected_version);
+      if (!locked.row) return locked;
+      const d = locked.row;
       /* a rate the caller may not set (CAT-211), or an edit that removes the value (refused like a create without one) */
       const refused = await editRefusal(req, db, d, rules);
       if (refused) return refused;
@@ -424,24 +456,19 @@ router.put('/:id', auth, async (req, res) => {
        * question it exists for and never one nobody asked ("approved" appearing twice because a screen
        * re-sent the same status is noise, not history).
        */
-      if (status && status !== d.status) {
-        await db.query(
-          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
-           VALUES ($1,$2,$3,$4)`,
-          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
-        );
-      }
+      await logStatusChange(db, req, entity_id, d.status, status);
       return { row: upd.rows[0], version, versioned: !!rules };
     });
 
-    if (out.missing) return res.status(404).json({ error: 'Not found' });
+    if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
+    if (out.unconfirmed) return problem(req, res, { status: 428, ...words.liveUnconfirmed() }); // UX-110: said here too so the route's own text names every status it answers (S15 status_codes)
     if (answerEditRefusal(req, res, out)) return;
-    if (out.clash) return res.status(out.clash.status).json(out.clash.body);
+    if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
+    /* CTR-157: an offer made live, paused or changed is what every open counter prices with, so they hear it now, as for a create or a retire */
+    shopChanged(entity_id, 'definition saved');
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved', definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    if (e && e.code === '23505') return res.status(409).json({ error: 'Name taken', message: 'You already have a definition of this kind with that name.' });
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, definitionFault(e, req, { nameTaken: true }));
   }
 });
 
@@ -473,13 +500,13 @@ const editorTakesOver = async (req, db, slabId) => {
   const citers = await slabCites.cites(db, slabId);
   return citers.products + citers.categories > 0;
 };
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
-    if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
+    if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
       const cur = await db.query(`SELECT kind, status FROM definition WHERE definition_id = $1`, [req.params.id]);
-      if (!cur.rows.length) return { status: 404, body: { error: 'Not found' } };
+      if (!cur.rows.length) return { missing: true };
       const wasRetired = cur.rows[0].status === 'retired';
       let moved = null;
       if (cur.rows[0].kind === 'tax') {
@@ -487,7 +514,7 @@ router.delete('/:id', auth, async (req, res) => {
            which re-points every citer first — all inside this one transaction (Athi, 2026-09-05). */
         if (await editorTakesOver(req, db, req.params.id)) return { rateRefused: true }; /* CAT-211: a takeover re-points categories' rates */
         const g = await slabCites.guard(db, req.params.id, req.query.takeover, (id) => liveSlabById(db, entity_id, id));
-        if (g && g.status) return g;
+        if (g && g.status) return { refused: g };
         moved = g ? g.moved : null;
       }
       await db.query(`UPDATE definition SET status = 'retired', updated_at = now() WHERE definition_id = $1`, [req.params.id]);
@@ -503,13 +530,16 @@ router.delete('/:id', auth, async (req, res) => {
         ]);
       }
       shopChanged(entity_id, 'definition retired');
-      return { status: 200, body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
+      return { body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
     });
+    if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
     if (out.rateRefused) return rateRefused(req, res);
-    res.status(out.status).json(out.body);
+    /* the slab guard (lib/slab-cites.js) refuses 409 (cited) or 400 (the takeover is the same slab, or not a live one) */
+    if (out.refused) return problem(req, res, out.refused.status === 409 ? { status: 409, ...words.cited(out.refused.body) } : { status: 400, ...words.takeover(out.refused.body) });
+    const { message, retired, moved } = out.body; /* R2-13: the answer's keys written where it is sent, so the allow-list can read them */
+    res.json({ message, retired, moved });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, definitionFault(e, req));
   }
 });
 
@@ -531,11 +561,18 @@ router.delete('/:id', auth, async (req, res) => {
  * ⚠️ A RETIRED DEFINITION STILL FREEZES. Retiring means "do not offer this any more", not "this never happened" —
  * refusing here would block a chit citing terms that were live when the order was placed.
  */
-router.post('/freeze', auth, [body('definition_ids').isArray()], validate, async (req, res) => {
+const FREEZE_MAX = 500;
+/** the ids a freeze names: text, blank entries (null, '') dropped — a null was once read as the text "null" */
+const freezeIds = (list) => (list || []).filter((entry) => entry !== null && entry !== undefined && entry !== '').map(String);
+/** CAT-333: a snapshot is for the few definitions one chit cites (10,000 ids reached the ::uuid[] cast: 500), each a uuid or a governed slab → the words of the refusal, or null */
+const freezeRefusal = (ids) => (ids.length > FREEZE_MAX ? words.tooManyIds(FREEZE_MAX) : ids.some((entry) => !UUID.test(entry) && !taxGov.isGovernedId(entry)) ? words.badIds() : null);
+router.post('/freeze', auth, ...checked('POST /freeze'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const ids = (req.body.definition_ids || []).map(String).filter(Boolean);
-    if (!ids.length) return res.json({ frozen: [], missing: [] });
+    const ids = freezeIds(req.body.definition_ids);
+    const tooMany = freezeRefusal(ids);
+    if (tooMany) return problem(req, res, { status: 400, ...tooMany });
+    if (!ids.length) return res.json({ frozen: [], missing: [], frozen_at: null }); /* R2-13: one shape on both paths (laptop1, 24 Oct): frozen_at is null when nothing was frozen */
 
     /* ⚠️ A GOVERNED ID IS NOT A UUID and would make the cast below refuse the whole request. Split: the entity's
        own definitions freeze from their version row; the jurisdiction's slabs freeze as a copy of the regional
@@ -580,9 +617,9 @@ router.post('/freeze', auth, [body('definition_ids').isArray()], validate, async
     const found = new Set(frozen.map((item) => String(item.definition_id)));
     res.json({ frozen, missing: ids.filter((item) => !found.has(item)), frozen_at: at });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, definitionFault(e, req));
   }
 });
 
+router.openapi = { paths: contract.pathsOf() }; // S9: the 6 routes (lib/definitions-contract.js)
 module.exports = router;

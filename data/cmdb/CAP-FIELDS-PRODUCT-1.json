@@ -4,7 +4,7 @@
  "type": "Field ledger",
  "system": "ChitBridge API · catalogue_items",
  "source": "hand",
- "summary": "Part 1 of the product field ledger: 91 fields (catalogue_items.item_id … schema_fields.field_key). Index: CAP-FIELDS-PRODUCT.",
+ "summary": "Part 1 of the product field ledger: 91 fields (catalogue_items.item_id … schema_fields.field_name). Index: CAP-FIELDS-PRODUCT.",
  "raised_by": "Athi, 2026-10-09",
  "fields": [
   {
@@ -16,7 +16,7 @@
     "made-to-order"
    ],
    "origin": "system",
-   "origin_detail": "gen_random_uuid() at INSERT (migrations/archive/000_baseline.sql)",
+   "origin_detail": "gen_random_uuid() at INSERT (migrations/000_baseline.sql)",
    "means": "The product's identity; every other table points at it.",
    "source": "catalogue_items.item_id",
    "set_by": "system, at mint (lib/mint-product.js, lib/catalogue-write.js)",
@@ -34,7 +34,7 @@
     "catalogue_item_version",
     "chit lines"
    ],
-   "test": "api: till-vendor.test.js, catalogue-read.test.js · web: till-catalogue.cjs, till-category-mostused.cjs",
+   "test": "api: till-vendor.test.js, api-problem-till.test.cjs · web: till-catalogue.cjs, till-category-mostused.cjs",
    "status": "ok",
    "also": []
   },
@@ -58,7 +58,7 @@
     "meter",
     "shopChanged"
    ],
-   "test": "api: rls-predicate.test.cjs, catalogue-columns.test.js",
+   "test": "api: mint-product.test.cjs, rls-sec75-tables.cjs",
    "status": "ok",
    "also": [],
    "finding": "Not shown anywhere on purpose (it is the tenant key)."
@@ -81,7 +81,7 @@
    "used_by": [
     "catalogue-view (columns)"
    ],
-   "test": "api: catalogue-columns.test.js, catalogue-visibility.test.js",
+   "test": "api: schemas-scenes.cjs, catalogue-columns.test.js",
    "status": "no-meaning",
    "also": [
     "untested"
@@ -108,7 +108,7 @@
    "used_by": [
     "everything"
    ],
-   "test": "api: catalogue-columns.test.js",
+   "test": "api: products-scenes.cjs, catalogue-columns.test.js",
    "status": "ok",
    "also": [],
    "finding": "Free-form: the 100-field problem lives here. This ledger is the declaration the database does not hold."
@@ -136,7 +136,7 @@
     "network_search",
     "countItems"
    ],
-   "test": "api: catalogue-columns.test.js",
+   "test": "api: products-scenes.cjs, api-problem-products.test.cjs",
    "status": "ok",
    "also": [],
    "finding": "Soft delete keeps media bytes in the object store (see garbage G1)."
@@ -159,7 +159,7 @@
    "used_by": [
     "export newest-200 template sampling (?)"
    ],
-   "test": "none found",
+   "test": "api: api-problem-catalogue.test.cjs, api-problem-products.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -184,12 +184,35 @@
    "used_by": [
     "catalogue_item_version trigger ordering (?)"
    ],
-   "test": "none found",
+   "test": "api: catalogue-scenes.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
    ],
    "finding": "Written by hand in each UPDATE, so a writer that forgets it leaves it stale (two writers in routes/products.js set it; others unchecked)."
+  },
+  {
+   "key": "catalogue_items.commercial_changed_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "set by the BEFORE trigger catalogue_commercial_stamp_trg (b845, CAT-264a) when a commercial key moves; never by application code",
+   "means": "When anything a sale is charged by last moved on the product (price, currency, mrp, hsn, tax slab and rate, category, status).",
+   "source": "catalogue_items.commercial_changed_at",
+   "set_by": "system (the trigger; not a door)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ],
+   "finding": "Read by nothing yet: CAT-264b puts it in the till snapshot item and the recheck door, CTR-212 S3 compares two carried stamps."
   },
   {
    "key": "item_data.name",
@@ -219,7 +242,7 @@
     "offers",
     "books lines"
    ],
-   "test": "api: csv-preflight.test.js, catalogue-columns.test.js · web: till-catalogue.cjs",
+   "test": "api: products-scenes.cjs, csv-preflight.test.js · web: till-catalogue.cjs",
    "status": "ok",
    "also": [],
    "inputs": [
@@ -292,7 +315,7 @@
     "cart",
     "books posting"
    ],
-   "test": "api: csv-preflight.test.js · web: prod-pricing-cost.cjs, pricing-structure.spec.js",
+   "test": "api: csv-preflight.test.js, api-problem-pricing.test.cjs · web: prod-pricing-cost.cjs, pricing-structure.spec.js",
    "status": "ok",
    "also": [
     "two-sources"
@@ -384,11 +407,9 @@
    "used_by": [
     "exposure strip"
    ],
-   "test": "none found",
+   "test": "web: walk-catalogue.cjs",
    "status": "two-sources",
-   "also": [
-    "untested"
-   ],
+   "also": [],
    "finding": "desc vs description: exposure.js strips both, cart.js reads both, the form writes desc only.",
    "inputs": [
     "ct_desc"
@@ -471,7 +492,7 @@
     "network catalogue merge (network-catalogue)",
     "till rowFacts"
    ],
-   "test": "web: till-network-offers.spec.js, network-catalogue.spec.js",
+   "test": "api: network-offers-shape.test.cjs, network-member-rows.test.cjs · web: walk-catalogue.cjs, till-network-offers.spec.js",
    "status": "ok",
    "also": []
   },
@@ -498,7 +519,7 @@
     "consolidate",
     "catalogue_item_version.variant"
    ],
-   "test": "api: itemmatch-qualifier.test.cjs · web: variants.spec.js",
+   "test": "api: itemmatch-corpus.test.cjs, itemmatch-qualifier.test.cjs · web: variants.spec.js",
    "status": "two-sources",
    "also": [],
    "finding": "variant vs grade: the till shows variant||grade; catalogue_item_version copies variant."
@@ -636,7 +657,7 @@
     "message matcher (itemmatch)",
     "till search (synonym_text)"
    ],
-   "test": "api: exposure-cost.test.js, itemmatch-qualifier.test.cjs",
+   "test": "api: exposure-cost.test.js, itemmatch-corpus.test.cjs",
    "status": "ok",
    "also": [],
    "finding": "Hidden from export (HIDDEN) and public copy by default; a shop cannot round-trip them through a sheet.",
@@ -663,11 +684,9 @@
     "goods-in scan match",
     "till search (alias_text)"
    ],
-   "test": "none found",
+   "test": "api: api-problem-till.test.cjs",
    "status": "not-settable",
-   "also": [
-    "untested"
-   ],
+   "also": [],
    "finding": "Written by goods-in; no catalogue input edits it (not found)."
   },
   {
@@ -897,7 +916,7 @@
     "connectors (Tally, Zoho, GoFrugal)",
     "invoice"
    ],
-   "test": "api: tax-slab.test.js, tax-lines.test.js · web: tax-takeover.spec.js, tax-slab.test.cjs",
+   "test": "api: tax-compute.test.cjs, tax-slab.test.js · web: tax-takeover.spec.js, tax-slab.test.cjs",
    "status": "two-sources",
    "also": [],
    "finding": "Two sources with tax_slab: the slab and this copy. Not in the till projection (routes/till.js tillItem) — the counter derives the rate from tax_slab/category."
@@ -980,7 +999,7 @@
     "offers (discount vs MRP)",
     "lot fields (batch MRP)"
    ],
-   "test": "api: network-catalogue.test.cjs, till-vendor.test.js · web: network-catalogue.spec.js, till-verify.spec.js",
+   "test": "api: network-catalogue.test.cjs, till-country-slip.test.cjs · web: network-catalogue.spec.js, till-verify.spec.js",
    "status": "ok",
    "also": [],
    "finding": "Batch MRP (lot fields) may differ from the product MRP: two sources by design, not resolved in the ledger."
@@ -1008,7 +1027,7 @@
     "books period cost",
     "exposure strip (deleted from every public copy)"
    ],
-   "test": "api: item-cost.test.js, exposure-cost.test.js · web: offer-lab-next-offline.cjs, offer-lab-next-pricelist.cjs",
+   "test": "api: item-cost.test.js, exposure-cost.test.js · web: walk-offer-lab-fixes.cjs, offer-lab-next-offline.cjs",
    "status": "ok",
    "also": []
   },
@@ -1110,7 +1129,7 @@
    "used_by": [
     "pricing engine at the till without the line"
    ],
-   "test": "web: pricing-structure.spec.js",
+   "test": "api: api-problem-pricing.test.cjs · web: pricing-structure.spec.js",
    "status": "two-sources",
    "also": [],
    "finding": "Copy so the till can price offline; refresh on structure edit: ? (not found)."
@@ -1133,7 +1152,7 @@
    "used_by": [
     "pricing engine"
    ],
-   "test": "web: pricing-structure.spec.js",
+   "test": "api: api-problem-pricing.test.cjs · web: pricing-structure.spec.js",
    "status": "two-sources",
    "also": [],
    "finding": "Copy of the structure; two sources until refreshed."
@@ -1395,7 +1414,7 @@
     "offers isOfferable",
     "catalogue_item_version.status"
    ],
-   "test": "api: google-availability.test.cjs",
+   "test": "api: google-availability.test.cjs, rail-status.test.cjs",
    "status": "ok",
    "also": []
   },
@@ -1497,7 +1516,7 @@
     "lotfields.js",
     "stock-from-chit"
    ],
-   "test": "api: stock-cycle.test.js, adopt.test.js · web: adopt.spec.js, adopt-screen.spec.js",
+   "test": "api: stocked-counted.test.cjs, ops-stock.test.cjs · web: adopt.spec.js, adopt-screen.spec.js",
    "status": "two-sources",
    "also": [
     "not-settable"
@@ -1667,7 +1686,7 @@
    "used_by": [
     "promo"
    ],
-   "test": "web: promo-screen-key.cjs, promo-pick-next.cjs",
+   "test": "api: screen-snapshot.test.cjs · web: promo-screen-key.cjs, promo-pick-next.cjs",
    "status": "not-settable",
    "also": [
     "untested"
@@ -1696,7 +1715,7 @@
     "orderInput.forItem",
     "cart"
    ],
-   "test": "web: mode-survives-order.spec.js",
+   "test": "web: mode-survives-order.spec.js, walk-shop-my-orders.cjs",
    "status": "ok",
    "also": [],
    "inputs": [
@@ -1727,8 +1746,8 @@
    "used_by": [
     "POST /api/products/:id/schedule"
    ],
-   "test": "none found",
-   "status": "untested",
+   "test": "api: schedule-apply.test.cjs",
+   "status": "ok",
    "also": [],
    "finding": "Not a stored key; applied rows stay in catalogue_item_schedule (garbage G3).",
    "inputs": [
@@ -1755,7 +1774,7 @@
    "used_by": [
     "catalogue-build.resolve"
    ],
-   "test": "api: network-catalogue.test.cjs · web: network-catalogue.spec.js, network-storefront.spec.js",
+   "test": "api: till-network-unpriced.test.cjs, network-world.cjs · web: network-catalogue.spec.js, network-storefront.spec.js",
    "status": "ok",
    "also": []
   },
@@ -1855,7 +1874,7 @@
    "used_by": [
     "till By-category"
    ],
-   "test": "web: till-catalogue.cjs",
+   "test": "api: till-rate-door.test.cjs · web: till-catalogue.cjs",
    "status": "ok",
    "also": []
   },
@@ -2321,7 +2340,7 @@
    "used_by": [
     "PATCH/DELETE by id"
    ],
-   "test": "api: column-rules.test.cjs",
+   "test": "api: schemas-scenes.cjs, column-rules.test.cjs",
    "status": "ok",
    "also": [
     "untested"
@@ -2345,7 +2364,7 @@
    "used_by": [
     "all"
    ],
-   "test": "api: column-parity.test.js, catalogue-columns.test.js",
+   "test": "api: schemas-scenes.cjs, column-parity.test.js",
    "status": "ok",
    "also": [
     "untested"
@@ -2372,33 +2391,7 @@
     "product form labels",
     "export header"
    ],
-   "test": "api: column-rules.test.cjs, catalogue-columns.test.js",
-   "status": "ok",
-   "also": [
-    "untested"
-   ]
-  },
-  {
-   "key": "schema_fields.field_key",
-   "kinds": [
-    "dish",
-    "packed good",
-    "service",
-    "made-to-order"
-   ],
-   "origin": "keyed",
-   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
-   "means": "The key written into item_data.",
-   "source": "schema_fields.field_key",
-   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
-   "validated_by": "column-rules (LOCKED name/unit/price; retypeWhy/why tighten on use)",
-   "shown_in": [
-    "Catalogue setup › Columns"
-   ],
-   "used_by": [
-    "everything"
-   ],
-   "test": "api: column-rules.test.cjs, catalogue-columns.test.js",
+   "test": "api: schemas-scenes.cjs, schemas-truth.realstack.cjs",
    "status": "ok",
    "also": [
     "untested"

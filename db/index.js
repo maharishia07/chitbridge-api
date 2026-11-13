@@ -67,7 +67,8 @@ async function createPool() {
     try {
       await tryConnect(a.config);
       console.log(`DB connected via ${a.label}: ${a.where}`);
-      return armPool(new Pool({ ...a.config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
+      const { intFromEnv, poolMax } = require('../lib/limits');   /* PLT-85: the pool's size and its wait are settings, defaults unchanged (10 connections, 10 s) */
+      return armPool(new Pool({ ...a.config, max: poolMax(), idleTimeoutMillis: 30000, connectionTimeoutMillis: intFromEnv('DB_POOL_WAIT_MS', 10000) }));
     } catch (e) {
       why.push(`${a.label} ${a.where}: ${e.message}`);
       console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
@@ -88,7 +89,8 @@ async function createPool() {
 //
 // Also makes the old comment true: it claimed "queries will retry" but `pool` simply stayed undefined forever, so
 // a failed init was permanent until redeploy. A failed init now clears itself and the next query retries.
-const BOOT_WAIT_MS = Number(process.env.DB_BOOT_WAIT_MS || 15000);
+/* SEC-125b: through the one reader, so a typo or a blank is the 15 s default (and said once), never NaN or 0 — 0 stays a deliberate "do not wait" */
+const bootWaitMs = () => require('../lib/limits').intFromEnv('DB_BOOT_WAIT_MS', 15000, { min: 0 });
 const NOT_CONNECTED = 'Database not connected — check DATABASE_URL (and DB_POOLER_URL) in the environment';
 let pool;
 let initPromise = null;
@@ -119,7 +121,7 @@ async function ensurePool() {
   try {
     return await Promise.race([
       p,
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(NOT_CONNECTED)), BOOT_WAIT_MS); }),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(NOT_CONNECTED)), bootWaitMs()); }),
     ]);
   } catch (_) {
     throw new Error(NOT_CONNECTED);       // one canonical message, unchanged from before
@@ -162,7 +164,11 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   'quick_key_group_item', 'register_acceptance', 'register_attachable', 'register_entry',
   'register_entry_standard', 'register_subject', 'register_template', 'register_template_standard',
   'retention_config', 'reward_ledger', 'signup_context', 'state_log', 'stock_balance', 'stock_movement',
-  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store'];
+  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store',
+  /* SEC-75 (b778, b779): written ahead of the migrations (b779 run 29 Oct); no code reads them context-free, so the guard stays quiet until one does */
+  'supplier_list', 'governance_exceptions', 'cb_device', 'cb_external_reference', 'cb_entity_supplier', 'cb_contact', 'cb_entity_employee', 'cb_consumer_traction',
+  /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
+  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {
@@ -185,7 +191,8 @@ function rlsGuardCheck(text) {
 }
 
 const query = async (text, params) => {
-  if (!pool) await ensurePool();          // cold start: wait for the pool instead of failing the request
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: a GET/HEAD whose client has gone takes no pool connection */          // cold start: wait for the pool instead of failing the request
   try { require('../lib/trips').tick('query'); } catch (_) {}   /* counts only when CB_TRIPS=1 — lib/trips.js */
   rlsGuardCheck(text);
   const start = Date.now();
@@ -219,7 +226,13 @@ const withTransaction = async (fn) => {
   if (!pool) await ensurePool();
   /* a transaction is four trips of its own — BEGIN, the set_config, the work, COMMIT — which is the whole reason this is counted */
   try { require('../lib/trips').tick('tx'); } catch (_) {}
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: same door for a read inside a transaction (GET/HEAD only; a mutating request is never refused) */
   const client = await pool.connect();
+  /* PLT-86: while a client is checked out pg-pool has no listener on it; a connection that dies now (database restart, killed backend) emits 'error' on the
+     CLIENT and, unhandled, kills the process. Log it once and release the client WITH the error so the pool destroys it; the running query rejects on its own. */
+  let clientDied = null;
+  const onClientError = (err) => { clientDied = err; require('../lib/logger').error('database client error: a connection died inside a transaction, it is discarded', { err: err.message, code: err.code || null }); };
+  client.on('error', onClientError);
   try {
     await client.query(beginSql());   /* E01: the statement deadline rides on BEGIN's own trip */
     const result = await fn(client);
@@ -229,7 +242,8 @@ const withTransaction = async (fn) => {
     try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     throw err;
   } finally {
-    client.release();   // always return the connection to the pool
+    client.removeListener('error', onClientError);
+    client.release(clientDied || undefined);   // always return the connection to the pool; a dead one is destroyed, not reused (PLT-86)
   }
 };
 
@@ -369,4 +383,4 @@ const readBatch = async (entityId, actorId, statements) => {
   /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
   return at.map((i) => arr[2 + i]);
 };
-module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { bootWaitMs, query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };

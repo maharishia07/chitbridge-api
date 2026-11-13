@@ -7,6 +7,7 @@
  * this covers the routes that test did not. Offline: real express routers, stubbed auth + db.
  *
  * Run: node tests/cost-never-to-employees.test.cjs
+ * CARD      07-offers-pricing-and-combos/cost-and-margin-per-item
  */
 'use strict';
 const path = require('path');
@@ -115,9 +116,9 @@ const has = (s) => String(s).includes('4242');
     t(who + ' | workbook.xlsx body: ' + want, show(has(x)), want);
     if (!sees) t(who + ' | workbook.xlsx still carries the product', x.includes('Masala Dosa'), true);
 
-    r = await get(port, '/api/products/i1/versions?at=2026-10-01T00:00:00Z');
+    r = await get(port, '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc/versions?at=2026-10-01T00:00:00Z');
     t(who + ' | /versions?at= JSON: ' + want, show(has(r.buf.toString())), want);
-    r = await get(port, '/api/products/i1/versions');
+    r = await get(port, '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc/versions');
     t(who + ' | /versions (history) JSON: ' + want, show(has(r.buf.toString())), want);
     t(who + ' | /versions keeps the price either way', r.buf.toString().includes('"price":70'), true);
 

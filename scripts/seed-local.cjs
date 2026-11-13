@@ -19,24 +19,25 @@
  */
 const zlib = require('zlib');
 const API = (process.env.API_BASE || 'http://127.0.0.1:3100').replace(/\/$/, '');
-if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API)) {
-  console.error('REFUSED: seed-local only seeds an api on this machine, not ' + API);
-  process.exit(3);
-}
-
 /* CB_LOCAL_PGPORT (toolset/local-stack.sh): a second throwaway stack on another port; still only 127.0.0.1, still only this database name */
 const LOCAL_DB_URL = 'postgres://postgres:cblocal@127.0.0.1:' + (process.env.CB_LOCAL_PGPORT || '55432') + '/cb_local';
-if (process.env.DATABASE_URL && process.env.DATABASE_URL !== LOCAL_DB_URL) {
-  console.error('REFUSED: seed-local only works against the local test database');
-  process.exit(3);
+/* the ONE allow-list (tests/lib/run-target.cjs): local, or a named SIT box this runs ON; production never. */
+const RUN_TARGET = require('../tests/lib/run-target.cjs'), VERDICT = RUN_TARGET.judge(API, process.env.DATABASE_URL || LOCAL_DB_URL, process.env);
+{
+  const verdict = VERDICT;
+  if (!verdict.ok) {
+    const apiSide = !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API) && !process.env.CB_SIT_BOX;
+    console.error(apiSide ? 'REFUSED: seed-local only seeds an api on this machine or a named SIT box, not ' + API + ' (' + verdict.why + ')' : 'REFUSED: seed-local only works against the local test database or a named SIT box (' + verdict.why + ')');
+    process.exit(3);
+  }
 }
-
-const SHOP = { email: 'mayur@local.test', name: 'Mayur Restaurant' };
+const SIGN_IN = RUN_TARGET.signIn(VERDICT, process.env);   /* local: dev codes + @local.test; a SIT box: today's tester code + the tester e-mail domain */
+const SHOP = { email: 'mayur@' + SIGN_IN.emailDomain, name: 'Mayur Restaurant' };
 const STAFF = { name: 'Asha Cashier', key: 'asha01', pin: '2468' };
-const CUSTOMER = { email: 'priya@local.test', name: 'Priya Customer' };
+const CUSTOMER = { email: 'priya@' + SIGN_IN.emailDomain, name: 'Priya Customer' };
 const SUPPLIER = 'Sri Ganesh Provisions';
-const ENTITY_OTP = '123456',
-  CUSTOMER_OTP = '123123';
+const ENTITY_OTP = SIGN_IN.entityOtp,   /* local: lib/dev-otp.js fixed codes; a SIT box: today's tester code (run-target.signIn) */
+  CUSTOMER_OTP = SIGN_IN.customerOtp;
 const MENU = [
   ['Masala Dosa', 'plate', 90, 'Dosa'],
   ['Plain Dosa', 'plate', 70, 'Dosa'],
@@ -64,12 +65,13 @@ const PHOTOS = { 'Masala Dosa': [222, 160, 60], 'Veg Meals': [90, 160, 70], 'Fil
 const step = (s) => console.log('  · ' + s);
 /** one call to the api; an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
-  const once = !token && method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {};
+  const once = method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {}; /* FIN-63: every write is one attempt with its own key (the books money doors require it) */
   const reply = await fetch(API + path, {
     method,
     headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once),
     body: body ? JSON.stringify(body) : undefined
   });
+  require('../tests/lib/call-log.cjs').record(method, path, reply.status);   /* QA 12 Nov: the run's requests, for the SIT junit endpoint rows */
   let b = null;
   try {
     b = await reply.json();
@@ -80,7 +82,9 @@ async function j(path, { method = 'GET', token, body } = {}) {
 }
 const must = (r, what) => {
   if (r.status >= 300) {
-    console.error('seed failed at ' + what + ': HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
+    const said = 'seed failed at ' + what + ': HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300);
+    if (require.main !== module) throw new Error(said); /* required by the lifecycle run: it reports the stage red, it does not die */
+    console.error(said);
     process.exit(1);
   }
   return r;
@@ -152,10 +156,10 @@ const menuPrice = (productName) => MENU.find((entry) => entry[0] === productName
 const costOfPrice = (price) => Math.round(price * 0.4); /* a restaurant's food cost: about 40% of the menu price */
 
 /* 1 · India, rupees; the financial year comes from the pack (the owner's step zero) */
-async function demoSetCountry({ token }) {
+async function demoSetCountry({ token }, { tax: taxRegistration = { registered: false } } = {}) {
   const current = expectOk(await j('/api/governance/country-setup', { token }), 'read country').b;
   if (current.done && current.country && current.country.code === 'IN') return step('country IN · INR · FY from April (already set)');
-  const india = { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false } };
+  const india = Object.assign({ country: 'IN', currency: 'INR', fy_start_month: 4 }, taxRegistration ? { tax: taxRegistration } : {}); /* tax: null (left UNKNOWN) is sent as NO key: the route refuses a null tax answer (COUNTRY_SETUP_BAD, seen on sit-grund 12 Nov) */
   expectOk(await j('/api/governance/country-setup', { method: 'PUT', token, body: india }), 'set country');
   step('country IN · INR · FY from April');
 }
@@ -322,18 +326,24 @@ async function demoOpeningStock({ token, ids, stamp }) {
   );
 }
 
-/** Sri Ganesh Provisions as a shop on the rail: registers, signs in, and is put on Mayur's supplier list so the books can post its bill */
-async function demoSupplierShop({ token }) {
-  const supplier = { email: 'ganesh@local.test', display_name: SUPPLIER, user_id: 'sri-ganesh' };
+/** Sri Ganesh Provisions as a shop on the rail: registers, signs in, and is put on Mayur's supplier list so the books can post its bill.
+ *  `tag` (the lifecycle run's lc-<yymmddhhmm>, <= 20 chars with the prefix) makes a fresh partner for that run: its own e-mail, User ID and name.
+ *  Returns { token, bridge } (the run hands the partner's bridge on); no tag = the same one partner as before. */
+async function demoSupplierShop({ token }, { tag } = {}) {
+  const supplier = tag
+    ? { email: 'ganesh-' + tag + '@' + SIGN_IN.emailDomain, display_name: SUPPLIER + ' ' + tag, user_id: 'sg-' + tag }
+    : { email: 'ganesh@' + SIGN_IN.emailDomain, display_name: SUPPLIER, user_id: 'sri-ganesh' };
   expectOk(await j('/api/entities/register', { method: 'POST', body: supplier }), 'supplier register');
   const signedIn = expectOk(await j('/api/entities/verify', { method: 'POST', body: { email: supplier.email, otp: ENTITY_OTP } }), 'supplier verify');
+  /* a shop that sends a bill states its country first (NO_COUNTRY otherwise: the demo month's supplier bill was skipped for this); its tax is not assumed */
+  await demoSetCountry({ token: signedIn.b.token }, { tax: null });
   const listed = await j('/api/relationships/suppliers', {
     method: 'POST',
     token,
     body: { supplier_bridge_id: signedIn.b.entity.bridge_id, supply_kind: 'resale' }
   });
   if (listed.status !== 409) expectOk(listed, 'supplier on the list');
-  return signedIn.b.token;
+  return { token: signedIn.b.token, bridge: signedIn.b.entity.bridge_id };
 }
 const SUPPLIER_GOODS = [
   ['Parotta', 'piece', 60, 12],
@@ -343,7 +353,7 @@ const SUPPLIER_GOODS = [
 ];
 /* 4 · one bill RECEIVED from the seeded supplier: resale chosen, goods counted in (which accepts it) */
 async function demoSupplierBill(shop) {
-  const supplierToken = await demoSupplierShop(shop);
+  const supplierToken = (await demoSupplierShop(shop)).token;
   const reference = 'SG-' + shop.stamp + '-001';
   const invoice = {
     recipients: [{ display_name: SHOP.name, bridge_id: shop.bridge, kind: 'to' }],
@@ -367,14 +377,14 @@ async function demoSupplierBill(shop) {
   step('bill ' + reference + ' from ' + SUPPLIER + ': resale, accepted, ' + SUPPLIER_GOODS.length + ' lines counted in');
 }
 
-/* 5 · an open order from Priya through the storefront's own order door */
-async function demoCustomerOrder({ bridge, ids }) {
+/* 5 · an open order from Priya (or the lifecycle run's tagged customer) through the storefront's own order door */
+async function demoCustomerOrder({ bridge, ids }, { customer = CUSTOMER } = {}) {
   const door = '/api/catalogue/' + bridge;
-  const contact = { email: CUSTOMER.email, name: CUSTOMER.name };
+  const contact = { email: customer.email, name: customer.name };
   expectOk(await j(door + '/order/start', { method: 'POST', body: contact }), 'customer start');
-  const signedIn = expectOk(await j(door + '/login/verify', { method: 'POST', body: { email: CUSTOMER.email, otp: CUSTOMER_OTP } }), 'customer sign-in');
+  const signedIn = expectOk(await j(door + '/login/verify', { method: 'POST', body: { email: customer.email, otp: CUSTOMER_OTP } }), 'customer sign-in');
   const placed = expectOk(await j(door + '/my-orders', { token: signedIn.b.token }), 'customer orders').b.orders || [];
-  if (placed.length) return step('the order from ' + CUSTOMER.email + ' (already placed)');
+  if (placed.length) return step('the order from ' + customer.email + ' (already placed)');
   expectOk(await j(door + '/order/start', { method: 'POST', body: contact }), 'customer start again (signing in spent the first code)');
   const basket = [
     ['Veg Biryani', 2],
@@ -382,10 +392,10 @@ async function demoCustomerOrder({ bridge, ids }) {
     ['Gulab Jamun (2 pc)', 1]
   ].map(([name, quantity]) => ({ item_id: ids[name], quantity }));
   const order = expectOk(
-    await j(door + '/order/confirm', { method: 'POST', body: { email: CUSTOMER.email, otp: CUSTOMER_OTP, line_items: basket } }),
+    await j(door + '/order/confirm', { method: 'POST', body: { email: customer.email, otp: CUSTOMER_OTP, line_items: basket } }),
     'customer order'
   );
-  step('open order from ' + CUSTOMER.email + ' ' + (order.b.chit_id || ''));
+  step('open order from ' + customer.email + ' ' + (order.b.chit_id || ''));
 }
 /* 5 · one task for the staff login */
 async function demoStaffTask({ token }) {
@@ -533,21 +543,8 @@ async function demoMonth({ token, bridge, ids }) {
   console.log(skippedSteps.length ? '  skipped: ' + skippedSteps.join(' | ') : '  nothing skipped');
 }
 
-(async () => {
-  console.log('\n── seeding the local test shop (' + API + ') ──');
-  const health = await j('/health');
-  must(health, 'health');
-
-  /* the shop: register is also sign-in (the code is the dev one), so a second run just signs in */
-  must(await j('/api/entities/register', { method: 'POST', body: { email: SHOP.email, display_name: SHOP.name } }), 'shop register');
-  const ver = must(await j('/api/entities/verify', { method: 'POST', body: { email: SHOP.email, otp: ENTITY_OTP } }), 'shop verify (is DEV_OTP armed?)');
-  const token = ver.b.token,
-    bridge = ver.b.entity.bridge_id,
-    userId = ver.b.identity.user_id;
-  step('shop ' + SHOP.name + ' · bridge ' + bridge + ' · user id ' + userId);
-  must(await j('/api/entities/profile', { method: 'PATCH', token, body: { catalogue_visibility: 'public' } }), 'publish the storefront');
-  await demoSetCountry({ token }); /* before products: a price needs the shop's currency (see the header) */
-
+/** the 20 menu products, by name so a re-run adds nothing (the shop needs its country first) */
+async function seedProducts({ token }) {
   /* products — by name, so a re-run adds nothing */
   const have = must(await j('/api/products?limit=500', { token }), 'list products');
   const rows = have.b.items || have.b.products || have.b.rows || [];
@@ -564,30 +561,19 @@ async function demoMonth({ token, bridge, ids }) {
     ids[name] = id;
   }
   step(MENU.length + ' products (' + added + ' new)');
-  let photos = 0;
-  for (const [name, rgb] of Object.entries(PHOTOS)) {
-    const cur = rows.find((x) => (x.item_id || x.id) === ids[name]);
-    if (cur && ((cur.item_data || {}).media || []).length) continue;
-    must(
-      await j('/api/products/' + ids[name] + '/media', {
-        method: 'POST',
-        token,
-        body: { name: name + '.png', mime: 'image/png', data_base64: png(rgb).toString('base64') }
-      }),
-      'photo ' + name
-    );
-    photos++;
-  }
-  step(Object.keys(PHOTOS).length + ' products with a photo (' + photos + ' new)');
+  return { ids, rows };
+}
 
-  /* counters C1..C5 — the api hands out the lowest free number, so five creates give C5 */
-  let counters = must(await j('/api/counters', { token }), 'list counters').b.counters || [];
-  while (!counters.some((item) => item.id === 'C5')) {
-    const r = must(await j('/api/counters', { method: 'POST', token, body: { name: 'Counter ' + (counters.length + 1) } }), 'add counter');
-    counters = counters.concat([r.b.counter]);
-  }
-  step('counters ' + counters.map((item) => item.id).join(' '));
+/** the owner issues a fresh one-time code (the same act as "Reset PIN"); with DEV_OTP armed it is the fixed entity code */
+async function issueStaffCode({ token }) {
+  const list = must(await j('/api/actors', { token }), 'list staff').b;
+  const me = (list.actors || list.rows || list || []).find((item) => item.actor_key === STAFF.key);
+  must(await j('/api/actors/' + me.identity_id + '/otp', { method: 'POST', token }), 'fresh staff code');
+  return ENTITY_OTP;
+}
 
+/** the staff login: a one-time code, a PIN, then the PIN works (the run's stage 1 calls this on its own tagged shop) */
+async function seedStaff({ token, userId }) {
   /* the staff login: created with a one-time code, signs in with it, sets a PIN, then signs in with the PIN */
   const login = STAFF.key + '@' + userId;
   const made = await j('/api/actors', { method: 'POST', token, body: { display_name: STAFF.name, actor_key: STAFF.key, actor_role: 'Cashier', hat: 'act' } });
@@ -595,24 +581,28 @@ async function demoMonth({ token, bridge, ids }) {
   const pinIn = await j('/api/actors/login', { method: 'POST', body: { username: login, pin: STAFF.pin } });
   if (pinIn.status !== 200) {
     /* a re-run finds the first code spent: the owner issues a fresh one (the same act as "Reset PIN"), and with DEV_OTP armed it is the fixed entity code */
-    let code = made.b.otp;
-    if (!code) {
-      const list = must(await j('/api/actors', { token }), 'list staff').b;
-      const me = (list.actors || list.rows || list || []).find((item) => item.actor_key === STAFF.key);
-      must(await j('/api/actors/' + me.identity_id + '/otp', { method: 'POST', token }), 'fresh staff code');
-      code = ENTITY_OTP;
-    }
+    const code = made.b.otp || (await issueStaffCode({ token }));
     const otpIn = must(await j('/api/actors/login', { method: 'POST', body: { username: login, otp: code } }), 'staff login with the code');
     const set = await j('/api/actors/set-pin', { method: 'POST', token: otpIn.b.token, body: { pin: STAFF.pin, confirm_pin: STAFF.pin } });
     must(set, 'staff set PIN');
     must(await j('/api/actors/login', { method: 'POST', body: { username: login, pin: STAFF.pin } }), 'staff login with the PIN');
   }
   step('staff ' + login + ' · PIN ' + STAFF.pin);
+}
 
-  const sup = await j('/api/relationships/suppliers', { method: 'POST', token, body: { name: SUPPLIER } });
-  if (sup.status !== 409) must(sup, 'supplier'); // 409 = already in the list: a re-run
-  step('supplier ' + SUPPLIER);
+/** counters C1..C5: the api hands out the lowest free number, so five creates give C5 */
+async function seedCounters({ token }) {
+  /* counters C1..C5 — the api hands out the lowest free number, so five creates give C5 */
+  let counters = must(await j('/api/counters', { token }), 'list counters').b.counters || [];
+  while (!counters.some((item) => item.id === 'C5')) {
+    const r = must(await j('/api/counters', { method: 'POST', token, body: { name: 'Counter ' + (counters.length + 1) } }), 'add counter');
+    counters = counters.concat([r.b.counter]);
+  }
+  step('counters ' + counters.map((item) => item.id).join(' '));
+}
 
+/** the storefront customer: a first order creates them; a re-run signs them in instead */
+async function seedCustomer({ bridge, ids }) {
   /* the customer: a first storefront order creates them; a re-run signs them in instead */
   const start = must(
     await j('/api/catalogue/' + bridge + '/order/start', { method: 'POST', body: { email: CUSTOMER.email, name: CUSTOMER.name } }),
@@ -631,10 +621,84 @@ async function demoMonth({ token, bridge, ids }) {
     step('customer ' + CUSTOMER.email + ' · first order ' + (order.b.chit_id || ''));
   }
   void start;
+}
+
+/** a small solid-colour photo on four products; one that has media is left alone */
+async function seedPhotos({ token, ids, rows }) {
+  let photos = 0;
+  for (const [name, rgb] of Object.entries(PHOTOS)) {
+    const cur = rows.find((x) => (x.item_id || x.id) === ids[name]);
+    if (cur && ((cur.item_data || {}).media || []).length) continue;
+    must(
+      await j('/api/products/' + ids[name] + '/media', {
+        method: 'POST',
+        token,
+        body: { name: name + '.png', mime: 'image/png', data_base64: png(rgb).toString('base64') }
+      }),
+      'photo ' + name
+    );
+    photos++;
+  }
+  step(Object.keys(PHOTOS).length + ' products with a photo (' + photos + ' new)');
+}
+
+async function main() {
+  console.log('\n── seeding the local test shop (' + API + ') ──');
+  const health = await j('/health');
+  must(health, 'health');
+
+  /* the shop: register is also sign-in (the code is the dev one), so a second run just signs in */
+  must(await j('/api/entities/register', { method: 'POST', body: { email: SHOP.email, display_name: SHOP.name } }), 'shop register');
+  const ver = must(await j('/api/entities/verify', { method: 'POST', body: { email: SHOP.email, otp: ENTITY_OTP } }), 'shop verify (is DEV_OTP armed?)');
+  const token = ver.b.token,
+    bridge = ver.b.entity.bridge_id,
+    userId = ver.b.identity.user_id;
+  step('shop ' + SHOP.name + ' · bridge ' + bridge + ' · user id ' + userId);
+  must(await j('/api/entities/profile', { method: 'PATCH', token, body: { catalogue_visibility: 'public' } }), 'publish the storefront');
+  await demoSetCountry({ token }); /* before products: a price needs the shop's currency (see the header) */
+
+  const { ids, rows } = await seedProducts({ token });
+  await seedPhotos({ token, ids, rows });
+
+  await seedCounters({ token });
+
+  await seedStaff({ token, userId });
+
+  const sup = await j('/api/relationships/suppliers', { method: 'POST', token, body: { name: SUPPLIER } });
+  if (sup.status !== 409) must(sup, 'supplier'); // 409 = already in the list: a re-run
+  step('supplier ' + SUPPLIER);
+
+  await seedCustomer({ bridge, ids });
 
   if (process.argv.includes('--demo-month')) await demoMonth({ token, bridge, ids });
   console.log('── seed done. shop bridge id ' + bridge + ' ──\n');
-})().catch((e) => {
-  console.error('seed failed:', e && e.message);
-  process.exit(1);
-});
+}
+
+/* the steps and the doors, for toolset/lifecycle-run.cjs (stages 1-3, 5b): required, the file seeds nothing */
+module.exports = {
+  j,
+  must,
+  step,
+  expectOk,
+  MENU,
+  SHOP,
+  STAFF,
+  CUSTOMER,
+  SUPPLIER,
+  DEMO_STEPS,
+  seedProducts,
+  seedStaff,
+  demoSetCountry,
+  demoAddCosts,
+  demoAddTaxSlab,
+  demoSupplierShop,
+  demoSupplierBill,
+  demoCustomerOrder,
+  main
+};
+if (require.main === module) {
+  main().catch((e) => {
+    console.error('seed failed:', e && e.message);
+    process.exit(1);
+  });
+}

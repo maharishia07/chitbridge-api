@@ -13,6 +13,8 @@
 const AS = '/api/assist';
 const OTHER = '88888888-8888-4888-8888-888888888888';
 const STRANGER_ID = '66666666-6666-4666-8666-666666666666';
+/** the writes each watched scene asked for, by scene id (read by the test after the run) */
+const WRITES = {};
 const KNOWN_SOURCE = 'beta-royale-play@v1';
 const BEARER = { authorization: 'Bearer stand-in' };
 const MODEL_ON = { ASSIST_LLM_PROVIDER: 'anthropic' };
@@ -21,7 +23,13 @@ const MODEL_ON = { ASSIST_LLM_PROVIDER: 'anthropic' };
 function extras(tools) {
   const { SHOP, SECRET_SQL, answering, raising, firstOf, standard } = tools;
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more)); // a refusal the handler makes itself, added by the sweep: nothing was frozen
   const at = (tail) => AS + tail;
+  /** rows that also LOG every write the handler asked for under this scene's id (WRITES[id]); a refusal of a foreign or unknown id must leave it empty */
+  const watched = (id, rows) => (sql, params) => {
+    if (/^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql))) (WRITES[id] = WRITES[id] || []).push(String(sql).trim().split(/\s+/).slice(0, 3).join(' '));
+    return rows ? rows(sql, params) : null;
+  };
   const boom = () => {
     throw new Error(SECRET_SQL);
   };
@@ -32,13 +40,15 @@ function extras(tools) {
   const failing = { db: 'fail' };
   const asStranger = { who: { identity_id: STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' } };
   /** a signed-in caller for the assistant's soft sign-in, and a model that answers */
-  const signedIn = { jwt: { verifyJwt: () => ({ claims: { identity_id: SHOP, identity_type: 'entity' } }) } };
+  const signedIn = { auth: { softIdentity: async () => ({ identity_id: SHOP, identity_type: 'entity', parent_entity_id: null }) } }; /* SEC-149: the soft reader is middleware/auth.softIdentity */
   const model = (text) => ({ ai: { invokeSkill: async () => ({ draft: text, model: 'stand-in', usage: { input_tokens: 1, output_tokens: 2 } }) } });
   const modelRefuses = (status) => ({ ai: { invokeSkill: refusedWith(status) } });
   const live = (patch) => ({ env: MODEL_ON, headers: BEARER, patch: Object.assign({}, signedIn, patch) });
   const containerRow = (owner) => answering(/FROM product_container/, [{ container_id: 'a/b', owner_entity_id: owner, source_key: 's', name: 'N', current_version: 1 }]);
   const versionRow = answering(/FROM product_version/, [{ container_id: 'a/b', version: 1, content: { a: 1 }, schema: {}, schema_version: null, minted_at: '2026-10-01T00:00:00.000Z' }]);
   const adoption = answering(/FROM catalogue_adoption/, [{ source_key: KNOWN_SOURCE, version: 'v1', commercials: {}, visible: true, updated_at: '2026-10-01T00:00:00.000Z' }]);
+  /** n adoption rows as the catalogue-mine statement selects them (catalogue_adoption: every column NOT NULL in migrations/000_baseline_2026-10-21.sql), every other one hidden */
+  const adoptions = (n) => answering(/FROM catalogue_adoption/, Array.from({ length: n }, (_, i) => ({ source_key: KNOWN_SOURCE, version: i % 2 ? 'v2' : 'v1', commercials: i % 2 ? { mrp: 10 } : {}, visible: i % 2 === 0, updated_at: '2026-10-01T00:00:00.000Z' })));
   const helpDesk = answering(/schema_name = 'Assistant Q&A'/, [{ '?column?': 1 }]);
   const fixedClock = { clock: { now: () => 1760000000000 }, dice: { random: () => 0.5 } };
 
@@ -89,6 +99,8 @@ function extras(tools) {
     X('mine-listed', 'GET ' + at('/catalogue-mine'), 200, {}),
     X('mine-with-a-catalogue', 'GET ' + at('/catalogue-mine'), 200, { setup: { sqlRows: adoption } }),
     X('mine-a-page', 'GET ' + at('/catalogue-mine'), 200, { url: at('/catalogue-mine?limit=1'), setup: { sqlRows: adoption } }),
+    /* S34: past the route's cap (200 a page) the pager adds capped and cap_note; a hidden adoption is listed with visible false */
+    X('mine-past-the-cap', 'GET ' + at('/catalogue-mine'), 200, { url: at('/catalogue-mine?limit=500'), setup: { sqlRows: adoptions(201) } }),
     X('mine-store-missing', 'GET ' + at('/catalogue-mine'), 503, { setup: failing, throws: true }),
     X('mine-fault', 'GET ' + at('/catalogue-mine'), 500, { setup: { sqlRows: adoption }, throws: true, patch: { catalogueBuild: { resolve: boomLater } } })
   ];
@@ -96,6 +108,7 @@ function extras(tools) {
   const authoring = [
     X('source-needs-a-key', 'PUT ' + at('/catalogue-source'), 422, { body: {} }),
     X('source-a-list', 'PUT ' + at('/catalogue-source'), 422, { body: [1] }),
+    X('source-key-too-long', 'PUT ' + at('/catalogue-source'), 400, { body: { source_key: 'y'.repeat(201) } }) /* CAT-246: 200 is the most a key may hold */,
     X('source-of-another-brand', 'PUT ' + at('/catalogue-source'), 403, { body: { source_key: 'x@v1' }, setup: { sqlRows: answering(/SELECT owner_entity_id FROM catalogue_source/, [{ owner_entity_id: OTHER }]) } }),
     X('source-of-the-platform', 'PUT ' + at('/catalogue-source'), 403, { body: { source_key: 'x@v1' }, setup: Object.assign({ sqlRows: answering(/SELECT owner_entity_id FROM catalogue_source/, [{ owner_entity_id: null }]) }, asStranger) }),
     X('source-store-missing', 'PUT ' + at('/catalogue-source'), 503, { body: { source_key: 'x@v1' }, setup: { sqlRows: raising(/SELECT owner_entity_id FROM catalogue_source/, '42P01') } }),
@@ -103,16 +116,16 @@ function extras(tools) {
     X('source-authored', 'PUT ' + at('/catalogue-source'), 200, { body: { source_key: 'x@v1', title: 'T', items: [{ name: 'Tussar' }] } }),
     X('source-fault', 'PUT ' + at('/catalogue-source'), 500, { body: { source_key: 'x@v1' }, setup: { jsonThrows: true }, throws: true }),
     X('container-needs-an-id', 'PUT ' + at('/container'), 422, { body: {} }),
-    X('container-of-another-brand', 'PUT ' + at('/container'), 403, { body: { container_id: 'a/b' }, setup: { sqlRows: containerRow(OTHER) } }),
+    N('container-of-another-brand', 'PUT ' + at('/container'), 404, { body: { container_id: 'a/b', content: { a: 1 } }, setup: { sqlRows: watched('container-of-another-brand', containerRow(OTHER)) } }),
     X('container-store-missing', 'PUT ' + at('/container'), 503, { body: { container_id: 'a/b' }, setup: { sqlRows: raising(/INSERT INTO product_container/, '42P01') } }),
-    X('container-authored', 'PUT ' + at('/container'), 200, { body: { container_id: 'a/b', name: 'N', content: { a: 1 } } }),
+    X('container-authored', 'PUT ' + at('/container'), 200, { body: { container_id: 'a/b', name: 'N', content: { a: 1 } }, setup: { sqlRows: watched('container-authored') } }),
     X('container-enhanced', 'PUT ' + at('/container'), 200, { body: { container_id: 'a/b', content: { a: 2 } }, setup: { sqlRows: containerRow(SHOP) } }),
     X('container-fault', 'PUT ' + at('/container'), 500, { body: { container_id: 'a/b' }, setup: { jsonThrows: true }, throws: true }),
     X('region-needs-both', 'PUT ' + at('/region-override'), 422, { body: { container_id: 'a/b' } }),
-    X('region-unknown-container', 'PUT ' + at('/region-override'), 404, { body: { container_id: 'a/b', region: 'AU' } }),
-    X('region-of-another-brand', 'PUT ' + at('/region-override'), 403, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: containerRow(OTHER) } }),
+    X('region-unknown-container', 'PUT ' + at('/region-override'), 404, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: watched('region-unknown-container') } }),
+    N('region-of-another-brand', 'PUT ' + at('/region-override'), 404, { body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, setup: { sqlRows: watched('region-of-another-brand', containerRow(OTHER)) } }),
     X('region-store-missing', 'PUT ' + at('/region-override'), 503, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: firstOf(containerRow(SHOP), raising(/container_region_override/, '42P01')) } }),
-    X('region-stored', 'PUT ' + at('/region-override'), 200, { body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, setup: { sqlRows: containerRow(SHOP) } }),
+    X('region-stored', 'PUT ' + at('/region-override'), 200, { body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, setup: { sqlRows: watched('region-stored', containerRow(SHOP)) } }),
     X('region-fault', 'PUT ' + at('/region-override'), 500, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: containerRow(SHOP), jsonThrows: true }, throws: true })
   ];
 
@@ -124,6 +137,11 @@ function extras(tools) {
     X('handoffs-store-missing', 'GET ' + at('/erp-handoffs'), 503, { setup: failing, throws: true }),
     X('handoffs-fault', 'GET ' + at('/erp-handoffs'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('regions-listed', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'AU', currency: 'AUD', units: 'metric', language: 'en', jurisdiction: 'AU' }]) } }),
+    /* S34: region_layer as the baseline declares it: jurisdiction is jsonb NOT NULL (an object), currency, units and language may be NULL */
+    X('regions-every-column', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'IN', currency: 'INR', units: 'metric', language: 'en', jurisdiction: { tax: 'GST', country: 'IN' } }]) } }),
+    /* jsonb holds any JSON value and region_layer has no CHECK on it: a list is a jurisdiction the column may hold, so no key inside it is closed */
+    X('regions-jurisdiction-a-list', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'EU', currency: 'EUR', units: 'metric', language: null, jurisdiction: ['DE', 'FR'] }]) } }),
+    X('regions-nullable-null', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'XX', currency: null, units: null, language: null, jurisdiction: {} }]) } }),
     X('regions-unread', 'GET ' + at('/regions'), 200, { setup: failing, throws: true }),
     X('regions-fault', 'GET ' + at('/regions'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('resolve-needs-a-region', 'GET ' + at('/resolve'), 400, { url: at('/resolve?container=a%2Fb') }),
@@ -132,24 +150,24 @@ function extras(tools) {
     X('resolve-fault', 'GET ' + at('/resolve'), 500, { url: at('/resolve?container=a%2Fb&region=AU'), throws: true, patch: { regional: { resolveRegional: boomLater } } }),
     X('penetration-none', 'GET ' + at('/penetration'), 200, {}),
     X('penetration-counted', 'GET ' + at('/penetration'), 200, { setup: { sqlRows: answering(/FROM source_penetration/, [{ source_key: 's', locality: 'Pune', orders: 3, distributors: 1 }]) } }),
+    /* S34: two sources over two localities (source_penetration: source_key NOT NULL, locality filtered to non-empty, the counts are count(*)::int) */
+    X('penetration-two-localities', 'GET ' + at('/penetration'), 200, { setup: { sqlRows: answering(/FROM source_penetration/, [{ source_key: 's', locality: 'Pune', orders: 3, distributors: 1 }, { source_key: 't', locality: 'Nashik', orders: 1, distributors: 0 }]) } }),
     X('penetration-store-missing', 'GET ' + at('/penetration'), 503, { setup: failing, throws: true }),
     X('penetration-fault', 'GET ' + at('/penetration'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('questions-listed', 'GET ' + at('/questions'), 200, { setup: { sqlRows: answering(/FROM assist_qa/, [{ id: '1', q: 'x?', a: 'y.', topics: [], context: ['*'], fit: null, media: null }]) } }),
     X('questions-for-a-screen', 'GET ' + at('/questions'), 200, { url: at('/questions?context=compose,network') }),
-    X('questions-unread', 'GET ' + at('/questions'), 500, { setup: failing, throws: true })
+    X('questions-unread', 'GET ' + at('/questions'), 500, { setup: failing, throws: true }),
+    /* a fault in the two pickers' own libraries: before, an uncaught throw (no answer at all); now the route's 500 in its own two keys, nothing of the cause */
+    N('standards-fault', 'GET ' + at('/standards'), 500, { throws: true, patch: { compliance: { listTemplates: boom } } }),
+    N('catalogue-sources-fault', 'GET ' + at('/catalogue-sources'), 500, { throws: true, patch: { catalogueBuild: { listSources: boomLater } } })
   ];
 
   const helpDesk_ = [
-    X('gap-needs-a-question', 'POST ' + at('/gap'), 422, { body: { q: 'a' } }),
-    X('gap-too-long', 'POST ' + at('/gap'), 422, { body: { q: 'x'.repeat(401) } }),
-    X('gap-noted', 'POST ' + at('/gap'), 200, { body: { q: 'how do I pay?', context: 'compose' } }),
-    X('gap-fault', 'POST ' + at('/gap'), 500, { body: { q: 'how do I pay?' }, setup: { jsonThrows: true }, throws: true }),
     X('publish-needs-both', 'POST ' + at('/publish'), 422, { body: { question: 'q?' } }),
     X('publish-not-a-help-desk', 'POST ' + at('/publish'), 403, { body: { question: 'q?', answer: 'a.' } }),
     X('publish-new', 'POST ' + at('/publish'), 200, { body: { question: 'q?', answer: 'a.', context: ['compose', 3] }, patch: fixedClock, setup: { sqlRows: firstOf(helpDesk, answering(/is_default = true/, [{ schema_id: 's1' }])) } }),
     X('publish-refined', 'POST ' + at('/publish'), 200, { body: { question: 'q?', answer: 'a.', qa_id: 'pub_1' }, patch: { catalogueWrite: { patchWhere: async () => ({ rowCount: 1 }) } }, setup: { sqlRows: helpDesk } }),
     X('publish-fault', 'POST ' + at('/publish'), 500, { body: { question: 'q?', answer: 'a.' }, setup: failing, throws: true }),
-    X('gaps-retired', 'GET ' + at('/gaps'), 200, {}),
     X('resolve-retired', 'POST ' + at('/resolve'), 410, { body: {} }),
     X('whoami-help-desk', 'GET ' + at('/whoami'), 200, { setup: { sqlRows: helpDesk } }),
     X('whoami-not-a-help-desk', 'GET ' + at('/whoami'), 200, {}),
@@ -159,4 +177,4 @@ function extras(tools) {
   return [].concat(assistant, conform, structure, adopt, authoring, reads, helpDesk_);
 }
 
-module.exports = { extras, OTHER, STRANGER_ID, KNOWN_SOURCE };
+module.exports = { extras, WRITES, OTHER, STRANGER_ID, KNOWN_SOURCE };

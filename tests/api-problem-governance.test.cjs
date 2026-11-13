@@ -13,9 +13,11 @@
  *   node tests/api-problem-governance.test.cjs                    check
  *   node tests/api-problem-governance.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json
  *   node tests/api-problem-governance.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
+ *   node tests/api-problem-governance.test.cjs --compare F        the answers now against a capture F: the status and the body byte for byte
  *   node tests/api-problem-governance.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  */
 'use strict';
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const kit = require('./lib/problem-sweep-kit.cjs');
@@ -23,7 +25,26 @@ const kit = require('./lib/problem-sweep-kit.cjs');
 const { HERE, argv, flagValue, check, counts } = kit;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock and Math.random are held still, so a difference is the code's and not the run's */
+if (argv.includes('--capture') || argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+}
 const MOUNT = '/api/governance';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const ROUTE_FILE = 'routes/governance.js';
 const MINE = (route) => route.includes(' ' + MOUNT + '/');
 
@@ -55,7 +76,7 @@ const mock = (relative, exported) => {
 function installStubs() {
   /* the db goes in first: a module that destructures { query } the moment it loads would otherwise keep the real one */
   const client = { query: async (sql) => rowsFor(sql) };
-  const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async (entity, header, statements) => statements.map((one) => rowsFor(one.text)) };
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
@@ -99,6 +120,50 @@ const LIB_REFUSAL = (status, extra) => Object.assign(new Error('The library said
 const FAIL = (mod, fn, throws) => [{ mod, fn, throws: throws || new Error(SECRET_SQL) }];
 const TABLE_THERE = { mod: 'lib/schema', fn: 'hasTable', value: async () => true };
 
+/* ── the READY side of the reads (API-8 review lesson): the generic worlds hit a shop with nothing stated, so the schema of each read is learned from BOTH branches of its handler ── */
+const KEY_32 = '0'.repeat(64); /* a vault key for the scenarios that read a filled vault */
+const SHOP_ROW = { identity_id: SHOP, display_name: 'Test shop', bridge_id: 'BRG-1', user_id: 'testshop', gstn: '27AAAAA0000A1Z5', country: 'IN', currency_code: 'INR', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' }, address: '1 Main Road', phone: '9999999999', email: 'a@b.c' };
+const SETUP_ROW = { fy_start_month: 4, tax_registration: { registered: true, number: '27AAAAA0000A1Z5', scheme: 'regular' }, setup_source: { country: 'confirmed by the owner', currency: 'typed', fy_start_month: 'the pack', tax: 'typed', timezone: 'your device clock' }, country_setup_at: '2026-10-01T00:00:00.000Z' };
+const VAULT_BODY = { sections: [{ type: 'identity', label: 'Business identity', rows: [{ name: 'Legal name', value: 'Test Traders', tag: 'legal_name', source: 'typed', as_of: '2026-10-01T00:00:00.000Z', rung: 'declared' }, { name: 'City', value: 'Pune', rung: 'declared' }] }] };
+/** the vault as the database holds it: an envelope, made here with the key the scenario sets */
+const vaultEnvelope = () => require(path.join(HERE, 'lib', 'vaultcrypto')).encryptVault(VAULT_BODY);
+const GST_DOC = { standard_key: 'gst-registration', doc_key: 'gstn', title: 'GST registration', scope: 'org', frequency: 'once', display_order: 1 };
+const IEC_DOC = { standard_key: 'iec', doc_key: 'iec_cert', title: 'Import-export code', scope: 'org', frequency: 'once', display_order: 1 };
+const READY_ROWS = ANSWERS(
+  [/SELECT DISTINCT standard_key FROM standard_source/, [{ standard_key: 'gst-registration' }, { standard_key: 'iec' }]],
+  [/SELECT DISTINCT ON \(standard_key\)/, [{ standard_key: 'gst-registration', title: 'GST registration', applicability: { origin: ['IN'], destination: ['any'], categories: [] }, guidance: 'Register with the GST portal.' }, { standard_key: 'iec', title: 'Import-export code', applicability: { origin: ['IN'], destination: ['any'], cross_border: true, categories: [] }, guidance: 'Apply to the DGFT.' }]],
+  [/FROM standard_document/, [GST_DOC, IEC_DOC]],
+  [/FROM entity_compliance/, [{ standard_key: 'gst-registration', doc_key: 'gstn', status: 'gathered', evidence_ref: '27AAAAA0000A1Z5', valid_until: '2099-01-01', verification: { method: 'registry', verified_at: '2026-10-01T00:00:00.000Z', provider: 'GSTN' } }, { standard_key: 'iec', doc_key: 'iec_cert', status: 'gathered', evidence_ref: '33333333-3333-4333-8333-333333333333', valid_until: '2020-01-01', verification: null }]],
+  [/FROM jurisdiction/, [{ dest_key: 'IN', name: 'Domestic (India)', domestic: true }, { dest_key: 'EU', name: 'European Union', domestic: false }]],
+  [/SELECT standard_key, voluntary FROM standard_source/, [{ standard_key: 'gst-registration', voluntary: false }, { standard_key: 'iso-9001', voluntary: true }]],
+  [/FROM vertical_category/, [{ category: 'paint' }]],
+  [/country-setup constituted/, [{ products: true, chits: false, entries: false }]],
+  [/country-setup \*\/ fy_start_month/, [SETUP_ROW]],
+  [/FROM entity_profile/, () => [{ trade_mode: 'export', markets: ['EU'], sectors: ['paint'], adopted: ['iso-9001'], vault: vaultEnvelope(), version: '2026-10-01T00:00:00.000Z' }]],
+  [/WITH mine AS/, [{ counterparties: '4', dealings: '9', first_at: new Date('2026-01-01T00:00:00Z'), last_at: new Date('2026-10-01T00:00:00Z') }]],
+  [/FROM chit_status/, [{ n: '6' }]],
+  [/FROM chit_disputes/, [{ o: '0', r: '1' }]],
+  [/meter='ai.draft'/, [{ calls: 3, tokens: '1200', spent_usd: '0.0123' }]],
+  [/AS all_spent/, [{ all_spent: '0.0123' }]],
+  [/FROM entity_wallet/, [{ credits: '5.0000' }]],
+  [/s\.facet = 'commerce'/, [{ standard_key: 'FRM-1', title: 'Incoterms 2020', facet: 'commerce', guidance: 'Pick the term.', owner_bridge_id: 'BRG-9', owner_name: 'ICC', owner_sealed: true }, { standard_key: 'FRM-2', title: 'UCP 600', facet: 'commerce', guidance: null, owner_bridge_id: null, owner_name: null, owner_sealed: null }]],
+  [/FROM identities/, [SHOP_ROW]]
+);
+/** a stranger reads the passport of another shop: its registry value stays with its owner (evidence_ref null) */
+const STRANGER_ROWS = ANSWERS(
+  [/FROM customer_list/, [{ customer: false, supplier: true }]],
+  [/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER })]],
+  [/SELECT DISTINCT standard_key FROM standard_source/, [{ standard_key: 'gst-registration' }]],
+  [/FROM standard_document/, [GST_DOC]],
+  [/FROM entity_compliance/, [{ standard_key: 'gst-registration', doc_key: 'gstn', status: 'gathered', evidence_ref: '27AAAAA0000A1Z5', valid_until: null, verification: null }]]
+);
+const NO_FACTS_ROWS = ANSWERS([/FROM customer_list/, [{ customer: true, supplier: false }]], [/FROM identities/, [{ identity_id: OTHER, display_name: 'Quiet Co', bridge_id: 'BRG-2', user_id: 'quiet', gstn: null, country: null, policy_flags: null }]]);
+/** a legacy entity signed up by e-mail has no handle: identities.user_id is nullable (the unique index is WHERE user_id IS NOT NULL) */
+const NO_HANDLE_ROWS = ANSWERS([/FROM customer_list/, [{ customer: false, supplier: true }]], [/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER, user_id: null })]]);
+const MIGRATED = { mod: 'lib/schema', fn: 'hasColumn', value: async () => true };
+/** a read made with the shop's rows seated, a vault key set, and the b299 column there */
+const READY = (id, route, extra) => X(id, route, 200, Object.assign({ setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED] }, extra));
+
 /** one library call per route: the library throws a database fault → the route's own 500 */
 const FAULTS = [
   ['GET /api/governance/ai-skills', 'lib/ai', 'listSkills'], ['GET /api/governance/ai-usage', 'lib/ai', 'usageSummary'],
@@ -113,9 +178,103 @@ const FAULTS = [
   ['GET /api/governance/country-setup', 'lib/country-setup', 'profile'], ['PUT /api/governance/profile', 'lib/profile', 'saveProfile'],
   ['PUT /api/governance/profile/vault', 'lib/profile', 'readVault'], ['POST /api/governance/ai-draft', 'lib/ai', 'invokeSkill']
 ];
-const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { patch: FAIL(mod, fn) }));
+const readyExtras = [
+  READY('readiness-own-ready', 'GET /api/governance/readiness'),
+  READY('readiness-for-a-destination', 'GET /api/governance/readiness', { url: MOUNT + '/readiness?destination=EU&vertical=paint&origin=IN' }),
+  X('readiness-destination-origin-unasked', 'GET /api/governance/readiness', 200, { url: MOUNT + '/readiness?destination=EU' }),
+  READY('lanes-ready', 'GET /api/governance/lanes', { url: MOUNT + '/lanes?vertical=paint&origin=IN' }),
+  READY('track-record-ready', 'GET /api/governance/track-record'),
+  X('instruments-with-incoterm', 'GET /api/governance/instruments', 200, { url: MOUNT + '/instruments?incoterm=CIF' }),
+  X('instruments-domestic', 'GET /api/governance/instruments', 200, { url: MOUNT + '/instruments?cross_border=0' }),
+  X('journey-domestic-incoterm', 'GET /api/governance/journey', 200, { url: MOUNT + '/journey?cross_border=0&incoterm=fob' }),
+  READY('commerce-standards-ready', 'GET /api/governance/commerce-standards'),
+  READY('profile-ready', 'GET /api/governance/profile'),
+  READY('profile-readiness-ready', 'GET /api/governance/profile/readiness'),
+  READY('profile-path-ready', 'GET /api/governance/profile/path'),
+  READY('country-setup-ready', 'GET /api/governance/country-setup'),
+  READY('ai-usage-metered', 'GET /api/governance/ai-usage'),
+  X('supplier-readiness-own-row', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: READY_ROWS } }),
+  X('supplier-readiness-seen-by-a-stranger', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: STRANGER_ROWS } }),
+  X('supplier-readiness-legacy-without-handle', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: NO_HANDLE_ROWS } }),
+  X('supplier-readiness-without-facts', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: NO_FACTS_ROWS } })
+];
+/* ── the SUCCESS side of the 16 routes API-8 (2nd pass) closed: every nullable column is held as null in one scene and filled in another ── */
+const NEW_ID = '55555555-5555-4555-8555-555555555555';
+const OVER = (first, rest) => (sql) => first(sql) || rest(sql); /* a scene's own rows first, then the shop's ready rows */
+const UNKNOWN_KEY_OVERRIDE = { mystery_key: 1 }; /* resolve() records an unknown override key as a Class C exception */
+const CREATE_ROWS = ANSWERS(ACTIVE, [/count\(\*\)/, [{ n: 0 }]], [/INSERT INTO identities/, [{ identity_id: NEW_ID }]]);
+const STANDARDS_ROWS = ANSWERS([/FROM standard_source WHERE active/, [{ standard_key: 'exim-policy', version: 'v1', facet: 'trade', title: 'EXIM', template: { scope: 'chit', required: ['hs_code'] } }, { standard_key: 'iso-9001', version: 'v2', facet: 'quality', title: null, template: {} }]]);
+const MOULD_ROW = { boilerplate_key: 'trade', version: 'v1', label: 'Trade', region_code: 'IN', locale: { language: 'en' } };
+const MOULD_ROWS = ANSWERS(
+  [/FROM boilerplate_sources/, [{ source_key: 'exim-policy', source_kind: 'standard', facet: 'trade', source_entity_id: NEW_ID, source_bridge: 'CBSRCEXIM1', source_name: 'EXIM' }, { source_key: 'brand-x', source_kind: 'brand', facet: null, source_entity_id: null, source_bridge: null, source_name: null }]],
+  [/FROM region_layer/, [{ currency: 'INR', units: 'metric', language: 'en', jurisdiction: {} }]],
+  [/FROM boilerplate/, [MOULD_ROW]]
+);
+const BARE_MOULD_ROWS = ANSWERS([/FROM boilerplate_sources/, []], [/FROM region_layer/, []], [/FROM boilerplate/, [Object.assign({}, MOULD_ROW, { label: null, region_code: null, locale: {} })]]);
+const SOURCE_OWNED = { standard_key: 'iso-9001', version: 'v1', facet: 'quality', title: 'ISO 9001', template: { scope: 'entity' }, identity_id: NEW_ID, bridge_id: 'CBSRCISO91', display_name: 'ISO 9001' };
+const SOURCE_UNOWNED = Object.assign({}, SOURCE_OWNED, { title: null, identity_id: null, bridge_id: null, display_name: null });
+const SOURCE_ENTITY = { identity_id: NEW_ID, bridge_id: 'CBSRCK', display_name: 'K source' };
+const ACCEPTED = { acceptance_id: '66666666-6666-4666-8666-666666666666', accepted_at: '2026-10-02T00:00:00.000Z' };
+const SUMMARY = { total: 2, met: 1, pending: 1, expiring: 0, expired: 0, ready: false, percent: 50, verified: 1, attested: 0, documented: 0 };
+const ACCEPTANCE_READ = { acceptance_id: ACCEPTED.acceptance_id, summary: SUMMARY, accepted_at: ACCEPTED.accepted_at, note: 'looked at it', accepted_by_name: 'Test shop' }; /* the order the statement selects */
+const SUPPLIER_ROW = [/SELECT identity_id FROM identities/, [{ identity_id: OTHER }]];
+const SKILL_REPLY = (text) => async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text }], usage: { input_tokens: 120, output_tokens: 40 }, stop_reason: 'end_turn' }) });
+const COUNTRY_BODY = { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '27AAPFU0939F1ZV', scheme: 'regular' }, source: { country: 'typed' } };
+const writeExtras = [
+  X('entity-read-own', 'GET /api/governance/entities/:id', 200, { setup: { sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ constitution_version: '1', params_override: UNKNOWN_KEY_OVERRIDE, plan: 'free' }]]) } }),
+  X('entity-read-unstamped', 'GET /api/governance/entities/:id', 200, { setup: { sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ constitution_version: null, params_override: null, plan: 'free' }]]) } }),
+  X('governed-entity-created', 'POST /api/governance/entities', 201, { setup: { who: PLATFORM, sqlRows: CREATE_ROWS }, body: { display_name: 'A', email: 'a@b.c' } }),
+  X('governed-entity-created-with-exception', 'POST /api/governance/entities', 201, { setup: { who: PLATFORM, sqlRows: CREATE_ROWS }, body: { display_name: 'A', email: 'a@b.c', plan: 'free', params_override: UNKNOWN_KEY_OVERRIDE } }),
+  X('governed-entity-reattested', 'POST /api/governance/entities/:id/reattest', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: {} }]]) } }),
+  X('governed-entity-reattested-with-exception', 'POST /api/governance/entities/:id/reattest', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: UNKNOWN_KEY_OVERRIDE }]]) } }),
+  X('conformance-flagged', 'POST /api/governance/conformance', 200, { setup: { who: PLATFORM, sqlRows: STANDARDS_ROWS }, body: { data: {}, scope: 'chit' } }),
+  X('conformance-pass', 'POST /api/governance/conformance', 200, { setup: { who: PLATFORM, sqlRows: STANDARDS_ROWS }, body: { data: { hs_code: '1006' } } }),
+  X('conformance-no-standards', 'POST /api/governance/conformance', 200, { setup: { who: PLATFORM }, body: { scope: 'entity' } }),
+  X('boilerplate-read', 'GET /api/governance/boilerplate/:key', 200, { setup: { who: PLATFORM, sqlRows: MOULD_ROWS } }),
+  X('boilerplate-read-bare', 'GET /api/governance/boilerplate/:key', 200, { setup: { who: PLATFORM, sqlRows: BARE_MOULD_ROWS } }),
+  X('boilerplate-adopted', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { who: PLATFORM, sqlRows: MOULD_ROWS } }),
+  X('boilerplate-adopted-bare', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { who: PLATFORM, sqlRows: BARE_MOULD_ROWS } }),
+  X('source-registered-new', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/INSERT INTO identities/, [SOURCE_ENTITY]]) }, body: { source_key: 'k', title: 'K source', facet: 'quality', template: { scope: 'entity' } } }),
+  X('source-registered-again-renamed', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/SELECT identity_id, bridge_id, display_name FROM identities WHERE email/, [Object.assign({}, SOURCE_ENTITY)]]) }, body: { source_key: 'k', title: 'K renamed' } }),
+  X('source-registered-a-brand', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/SELECT identity_id, bridge_id, display_name FROM identities WHERE email/, [Object.assign({}, SOURCE_ENTITY)]]) }, body: { source_key: 'k', kind: 'brand' } }),
+  X('source-read-owned', 'GET /api/governance/source/:key', 200, { setup: { sqlRows: ANSWERS([/FROM standard_source s/, [SOURCE_OWNED]]) } }),
+  X('source-read-unowned', 'GET /api/governance/source/:key', 200, { setup: { sqlRows: ANSWERS([/FROM standard_source s/, [SOURCE_UNOWNED]]) } }),
+  X('country-setup-saved', 'PUT /api/governance/country-setup', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: COUNTRY_BODY }),
+  X('country-setup-corrected-before-use', 'PUT /api/governance/country-setup', 200, { setup: { sqlRows: OVER(ANSWERS([/country-setup constituted/, [{ products: false, chits: false, entries: false }]]), READY_ROWS) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: false }, confirm_deregister: true, source: { country: 'typed' } } }),
+  X('ai-draft-prose', 'POST /api/governance/ai-draft', 200, { env: { ANTHROPIC_API_KEY: 'sk-test' }, fetch: SKILL_REPLY('Metrics: steady.'), body: { skill_id: 'metrics-narrate', context: {} } }),
+  X('ai-draft-form-fill', 'POST /api/governance/ai-draft', 200, { env: { ANTHROPIC_API_KEY: 'sk-test' }, fetch: SKILL_REPLY('{"line_items":[{"description":"sugar","qty":1}]}'), body: { skill_id: 'line-item-draft', context: { description: '1 kg sugar' } } }),
+  X('ai-draft-cut-off', 'POST /api/governance/ai-draft', 200, { env: { ANTHROPIC_API_KEY: 'sk-test' }, fetch: async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: 'Metrics: ste' }], usage: {}, stop_reason: 'max_tokens' }) }), body: { skill_id: 'metrics-narrate', context: {} } }),
+  X('clearance-gathered', 'POST /api/governance/compliance', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { standard_key: 'gst-registration', doc_key: 'gstn', evidence_ref: '27AAAAA0000A1Z5', status: 'gathered' } }),
+  X('registry-id-format-checked', 'POST /api/governance/verify', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { id_type: 'gstn', id_value: '27AAAAA0000A1Z5', standard_key: 'gst-registration', doc_key: 'gstn' } }),
+  X('registry-id-confirmed', 'POST /api/governance/verify', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED, { mod: 'lib/verify', fn: 'verifyRegistry', value: async () => ({ ok: true, method: 'registry', checked: 'registry', id_type: 'gstn', value: '27AAAAA0000A1Z5', provider: 'sandbox', registry: { legal_name: null, status: 'active' }, note: 'Confirmed active against sandbox.' }) }], body: { id_type: 'gstn', id_value: '27AAAAA0000A1Z5', standard_key: 'gst-registration', doc_key: 'gstn' } }),
+  X('profile-saved', 'PUT /api/governance/profile', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { trade_mode: 'export', markets: ['EU'], sectors: ['paint'], adopted: ['iso-9001'] } }),
+  X('profile-saved-first-time', 'PUT /api/governance/profile', 200, { body: { trade_mode: 'domestic' } }),
+  X('vault-filled-first-time', 'PUT /api/governance/profile/vault', 200, { setup: { sqlRows: ANSWERS([/INSERT INTO entity_profile/, [{ version: 'v2' }]], [/FROM identities/, [SHOP_ROW]]) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { vault: VAULT_BODY } }),
+  X('vault-filled-unversioned-write', 'PUT /api/governance/profile/vault', 200, { setup: { sqlRows: ANSWERS([/FROM identities/, [SHOP_ROW]]) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { vault: VAULT_BODY } }),
+  X('vault-patched', 'PUT /api/governance/profile/vault', 200, { setup: { sqlRows: OVER(ANSWERS([/INSERT INTO entity_profile/, [{ version: 'v3' }]]), READY_ROWS) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { version: '2026-10-01T00:00:00.000Z', patch: { sections: { 'identity|Business identity': { rows: { 'n:City': { name: 'City', value: 'Mumbai' } } } } } } }),
+  X('acceptance-recorded', 'POST /api/governance/supplier-acceptance', 200, { setup: { sqlRows: OVER(ANSWERS(SUPPLIER_ROW, [/INSERT INTO supplier_readiness_acceptance/, [ACCEPTED]]), READY_ROWS) }, patch: [TABLE_THERE], body: { supplier: 'BRG-2', note: ' seen ' } }),
+  X('acceptance-recorded-without-note', 'POST /api/governance/supplier-acceptance', 200, { setup: { sqlRows: OVER(ANSWERS(SUPPLIER_ROW, [/INSERT INTO supplier_readiness_acceptance/, [ACCEPTED]]), READY_ROWS) }, patch: [TABLE_THERE], body: { supplier: 'BRG-2' } }),
+  X('acceptance-read-latest', 'GET /api/governance/supplier-acceptance/:handle', 200, { setup: { sqlRows: ANSWERS(SUPPLIER_ROW, [/FROM supplier_readiness_acceptance a/, [ACCEPTANCE_READ]]) }, patch: [TABLE_THERE] }),
+  X('acceptance-read-no-note-no-name', 'GET /api/governance/supplier-acceptance/:handle', 200, { setup: { sqlRows: ANSWERS(SUPPLIER_ROW, [/FROM supplier_readiness_acceptance a/, [Object.assign({}, ACCEPTANCE_READ, { note: null, accepted_by_name: null })]]) }, patch: [TABLE_THERE] }),
+  X('acceptance-read-none-yet', 'GET /api/governance/supplier-acceptance/:handle', 200, { setup: { sqlRows: ANSWERS(SUPPLIER_ROW) }, patch: [TABLE_THERE] }),
+  X('acceptance-read-unknown-supplier', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [TABLE_THERE] }),
+  X('acceptance-read-not-switched-on', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] })
+];
+/* SEC-133: these three answer a shop 403, so their library faults are reached as the platform */
+const REFUSED_SQL = []; /* every statement the two refused-shop scenarios let through (must stay empty) */
+const PLATFORM_DOORS = ['POST /api/governance/conformance', 'GET /api/governance/boilerplate/:key', 'POST /api/governance/boilerplate/:key/adopt'];
+const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { setup: PLATFORM_DOORS.includes(route) ? { who: PLATFORM } : undefined, patch: FAIL(mod, fn) }));
 const SOURCE_BODY = { source_key: 'k' };
-const EXTRAS = faultExtras.concat([
+const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
+  /* B2 (4 Nov): a query value given twice, or a body that is a list, is refused 422 (new in B2, no old body) by the route's schema check */
+  X('readiness-destination-twice', 'GET /api/governance/readiness', 422, { after: true, url: MOUNT + '/readiness?destination=EU&destination=US' }),
+  X('lanes-vertical-twice', 'GET /api/governance/lanes', 422, { after: true, url: MOUNT + '/lanes?vertical=paint&vertical=tea' }),
+  X('instruments-incoterm-twice', 'GET /api/governance/instruments', 422, { after: true, url: MOUNT + '/instruments?incoterm=CIF&incoterm=FOB' }),
+  X('journey-incoterm-twice', 'GET /api/governance/journey', 422, { after: true, url: MOUNT + '/journey?incoterm=CIF&incoterm=FOB' }),
+  X('conformance-body-a-list', 'POST /api/governance/conformance', 422, { setup: { who: PLATFORM }, after: true, body: [] }),
+  /* K-1: the platform names an id that is not a uuid: the unknown id's 404, and the database is never asked (it would answer 22P02 and a 500) */
+  X('platform-reads-junk-id', 'GET /api/governance/entities/:id', 404, { setup: { who: PLATFORM, sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' }); return null; } }, url: MOUNT + '/entities/abc', after: true }),
+  X('platform-reattests-junk-id', 'POST /api/governance/entities/:id/reattest', 404, { setup: { who: PLATFORM, sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' }); return null; } }, url: MOUNT + '/entities/abc/reattest', after: true }),
   X('foreign-entity-id', 'GET /api/governance/entities/:id', 404, { url: MOUNT + '/entities/' + OTHER }),
   X('platform-reads-any-unknown-id', 'GET /api/governance/entities/:id', 404, { setup: { who: PLATFORM }, url: MOUNT + '/entities/' + OTHER }),
   X('entity-without-constitution', 'GET /api/governance/entities/:id', 503, { setup: { sqlRows: ANSWERS(ENTITY) } }),
@@ -129,14 +288,17 @@ const EXTRAS = faultExtras.concat([
   X('no-constitution-to-reattest', 'POST /api/governance/entities/:id/reattest', 503, { setup: { who: PLATFORM, sqlRows: ANSWERS(ENTITY) } }),
   X('stored-override-widens', 'POST /api/governance/entities/:id/reattest', 422, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: WIDENS }]]) } }),
   X('reattest-fault', 'POST /api/governance/entities/:id/reattest', 500, { setup: { who: PLATFORM, db: 'fail' } }),
-  X('no-such-boilerplate', 'GET /api/governance/boilerplate/:key', 404, {}),
-  X('no-such-boilerplate-to-adopt', 'POST /api/governance/boilerplate/:key/adopt', 404, {}),
+  /* SEC-133: a refused shop reaches no statement at all, so nothing is written to entity_governance */
+  X('shop-refused-adopt-writes-nothing', 'POST /api/governance/boilerplate/:key/adopt', 403, { after: true, setup: { sqlRows: (sql) => { REFUSED_SQL.push(String(sql)); return null; } } }),
+  X('shop-refused-conformance-reads-nothing', 'POST /api/governance/conformance', 403, { after: true, setup: { sqlRows: (sql) => { REFUSED_SQL.push(String(sql)); return null; } }, body: { data: {}, scope: 'chit' } }),
+  X('no-such-boilerplate', 'GET /api/governance/boilerplate/:key', 404, { setup: { who: PLATFORM } }),
+  X('no-such-boilerplate-to-adopt', 'POST /api/governance/boilerplate/:key/adopt', 404, { setup: { who: PLATFORM } }),
   X('no-such-source', 'GET /api/governance/source/:key', 404, {}),
   X('source-unnamed', 'POST /api/governance/source', 400, { setup: { who: PLATFORM }, body: {} }),
   X('source-fault', 'POST /api/governance/source', 500, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource') }),
   X('source-refused-by-the-library', 'POST /api/governance/source', 422, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource', LIB_REFUSAL(422)) }),
   X('no-such-supplier-readiness', 'GET /api/governance/readiness/:bridge_id', 404, {}),
-  X('supplier-readiness-fault', 'GET /api/governance/readiness/:bridge_id', 500, { setup: { sqlRows: ANSWERS([/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BRG-1' }]]) }, patch: FAIL('lib/readiness', 'resolveReadiness') }),
+  X('supplier-readiness-fault', 'GET /api/governance/readiness/:bridge_id', 500, { setup: { sqlRows: ANSWERS([/FROM customer_list/, [{ customer: false, supplier: true }]], [/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BRG-1' }]]) }, patch: FAIL('lib/readiness', 'resolveReadiness') }),
   X('acceptance-not-switched-on', 'POST /api/governance/supplier-acceptance', 503, { body: {}, patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] }),
   X('supplier-unnamed', 'POST /api/governance/supplier-acceptance', 400, { body: {}, patch: [TABLE_THERE] }),
   X('no-such-supplier', 'POST /api/governance/supplier-acceptance', 404, { body: { supplier: 'nobody' }, patch: [TABLE_THERE] }),
@@ -174,9 +336,22 @@ async function runScenario(port, scenario) {
   Object.assign(world, FRESH, scenario.setup);
   require(path.join(HERE, 'lib', 'confcache')).invalidate(); /* the active constitution is remembered for a minute; each scenario starts without it */
   const restore = applyPatch(scenario.patch);
+  const envBefore = {};
+  Object.keys(scenario.env || {}).forEach((name) => {
+    envBefore[name] = process.env[name];
+    process.env[name] = scenario.env[name];
+  });
+  require(path.join(HERE, 'lib', 'country-setup')).forget(SHOP); /* the gate remembers a shop's answer for a minute: each scenario starts without it */
+  const fetchBefore = global.fetch;
+  if (scenario.fetch) global.fetch = scenario.fetch; /* the model's reply, for the AI draft */
   const method = scenario.route.split(' ')[0];
   const answer = await kit.send(port, method, scenario.url, scenario.body === undefined && kit.BODY_METHODS.includes(method) ? {} : scenario.body);
   restore();
+  global.fetch = fetchBefore;
+  Object.keys(envBefore).forEach((name) => {
+    if (envBefore[name] === undefined) delete process.env[name];
+    else process.env[name] = envBefore[name];
+  });
   return answer;
 }
 
@@ -185,13 +360,13 @@ const inherited = (scenario, answer) => answer.status === 401 && scenario.id ===
 
 async function checkRoutes(port, scenarios, recording) {
   const tested = {};
-  const allowed = argv.includes('--capture') ? null : require(path.join(HERE, 'lib', 'governance-contract.js')).allowedStatuses();
+  const allowed = argv.includes('--capture') || argv.includes('--compare') ? null : require(path.join(HERE, 'lib', 'governance-contract.js')).allowedStatuses();
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } }; /* the request is kept so the shape tool can play it */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
-    if (argv.includes('--capture')) continue;
+    if (argv.includes('--capture') || argv.includes('--compare')) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
     if (scenario.expect) check(label + ': answers the status the scenario was made for (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.json]);
     if (answer.status < 400) continue;
@@ -199,7 +374,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (inherited(scenario, answer)) continue;
     kit.checkProblemBody(label, answer);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT secret|relation "/.test(answer.text), answer.text);
-    else kit.checkLegacy(label, answer, kit.legacyOf(scenario.route, scenario.id));
+    else if (!scenario.after) kit.checkLegacy(label, answer, kit.legacyOf(scenario.route, scenario.id));
   }
   return tested;
 }
@@ -228,12 +403,84 @@ function checkKitRefusals() {
   check('kit: a row with none allows only what it declares', !contract.allowedStatuses()('GET /api/x/plain').includes(429));
 }
 
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a governance route (read or write) whose success schema (200, or 201 for the governed create) is CLOSED (additionalProperties false, derived in
+ * docs/contracts/api-output-shapes.json) and whose recorded 200s ALL fit that schema with no key pruned — the ready side and the not-ready side of each handler both recorded
+ * above. → { route: { output_allowlist: true } } for the routes that held. A write counts the same way: its success scenes run the real handler over the stand-in db.
+ */
+function checkAllowList(recording) {
+  const proved = {};
+  const words = require(path.join(HERE, 'lib', 'governance-contract.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  Object.keys(words.OPERATIONS).sort().forEach((route) => {
+    const success = Object.keys(words.OPERATIONS[route].responses).find((code) => Number(code) < 300);
+    const schema = (((words.OPERATIONS[route].responses[success] || {}).content || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === Number(success) && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded ' + success + ' (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  /* under OUTPUT_ALLOWLIST=enforce the recorded answers are already cut, so the filter's own count is the proof that no scenario lost a key */
+  const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
+  return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
+}
+/** the governance routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/')).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
+/** --compare F: every answer now against a capture of the code before the change → the number of answers that differ (status or body bytes), each printed */
+function compareWith(file, recording) {
+  const before = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const different = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || JSON.stringify(recording[key].body) !== JSON.stringify(before[key].body));
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - different.length) + ' identical, ' + different.length + ' different');
+  different.forEach((key) => console.log('  different: ' + key));
+  return different.length;
+}
+
+/* Slice 1b (critic 6 Nov, class C): GET /entities/:id in the foreign-id world. Shop B asks for shop A's id: the handler refuses before it reads (a shop reads its own entity only), so a foreign id and an
+   unknown id are the same 404, byte for byte, and shop A's own id is not a 404. POST /entities/:id/reattest is NOT here: a shop gets 403 NOT_PLATFORM for ANY id (the platform gate speaks first, by design)
+   and the platform can reach every id, so no signed-in caller can be "another shop" there: it needs the public_ids / cannot_answer exemption. */
+const STRANGER = { identity_id: '33333333-3333-4333-8333-333333333333', identity_type: 'entity', display_name: 'Another shop' };
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a foreign entity id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const route = 'GET ' + MOUNT + '/entities/:id';
+  const failures = await FOREIGN.runCases([{ route, play: async (who, planted) => {
+    Object.assign(world, FRESH, { who: who === 'owner' ? OWNER : STRANGER, sqlRows: planted ? ANSWERS(ENTITY, ACTIVE) : null });
+    return kit.send(port, 'GET', MOUNT + '/entities/' + SHOP);
+  } }], recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: GET /entities/:id answers shop A\'s id to shop B exactly as an unknown id (404, same body) and the own id is not a 404', failures.length === 0, failures);
+  return recording.proved();
+}
+
 /** the whole sweep in a few sentences: who is refused, the foreign id, and that every recorded refusal was replayed */
 function checkAnswers(recording) {
   const answers = Object.values(recording);
   const keys = Object.keys(recording);
   check('a caller who is not signed in is refused with 401', keys.filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
-  const platformOnly = ['POST /api/governance/entities', 'POST /api/governance/entities/:id/reattest', 'POST /api/governance/source'];
+  const platformOnly = ['POST /api/governance/entities', 'POST /api/governance/entities/:id/reattest', 'POST /api/governance/source', 'POST /api/governance/conformance', 'GET /api/governance/boilerplate/:key', 'POST /api/governance/boilerplate/:key/adopt'];
+  const manualScripts = ['scripts/prove-lifecycle.js', 'scripts/demo-lifecycle.js'].map((file) => fs.readFileSync(path.join(HERE, file), 'utf8'));
+  check('SEC-133: both manual lifecycle scripts take a platform token (CB_PLATFORM_TOKEN) for the platform-only calls', manualScripts.every((text) => /process.env.CB_PLATFORM_TOKEN/.test(text) && /PLATFORM_TOKEN || token/.test(text)));
+  check('SEC-133: a shop refused at adopt or conformance reaches no statement: no INSERT or UPDATE of entity_governance, nothing read', REFUSED_SQL.length === 0 && !REFUSED_SQL.some((text) => /INSERT|UPDATE|entity_governance/i.test(text)), REFUSED_SQL);
   check('a shop login is refused with 403 NOT_PLATFORM at every platform-only door', platformOnly.every((route) => recording[route + '|shop-owner'] && recording[route + '|shop-owner'].status === 403 && recording[route + '|shop-owner'].body.code === 'NOT_PLATFORM'));
   check('a viewer is refused every trade write with 403 and the rail\'s word', ['PUT /api/governance/profile', 'POST /api/governance/compliance', 'POST /api/governance/verify'].every((route) => recording[route + '|viewer-asks'].status === 403 && recording[route + '|viewer-asks'].body.code === 'read_only'));
   const foreign = recording['GET /api/governance/entities/:id|foreign-entity-id'];
@@ -261,7 +508,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const server = app.listen(0);
   const recording = {};
   const tested = await checkRoutes(server.address().port, kit.scenariosOf(routes, WORLDS, EXTRAS, VALUES), recording);
+  const foreignProved = flagValue('--capture') || flagValue('--compare') ? {} : await checkForeignIds(server.address().port);
   server.close();
+  if (flagValue('--compare')) process.exit(compareWith(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {
     require('fs').writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
     console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');
@@ -271,7 +520,15 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkWords();
   checkKitRefusals();
   checkAnswers(recording);
+  const proved = checkAllowList(recording);
   kit.settleCoverage(tested, MINE);
+  if (argv.includes('--write')) {
+    writeAllowList(proved);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, foreignProved);
+  } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the governance routes that held here', kit.sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), foreignProved), foreignProved);
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the governance reads whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, proved: Object.keys(proved).length });
+  }
   console.log('\n  ' + counts.passed + ' checks, ' + counts.failed + ' failed');
   process.exit(counts.failed ? 1 : 0);
 })();

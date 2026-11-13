@@ -34,7 +34,7 @@ const CALLS = {
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
   parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
   relabelPeriods: [E, '2026-27', [{ period: 1, fiscal_year: '2026', start_date: '2026-01-01', end_date: '2026-01-31' }]],
-  nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], unreversedForChit: [E, U], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment']],
+  nextNo: [E, 'JV', '2026-27'], giveBackNo: [E, 'invoice', '-', 1], entryBySource: [E, 'chit:x'], entryDebitsByRole: [E, U], taxColumnsReady: [], taxPaymentsNaming: [E, 'gstr:1', ['output_cgst']], taxPaymentsWithoutPeriod: [E, '2026-10-01'], taxCloseOf: [E, 'gstclose:x', true], chitPosted: [E, 'x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment']],
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
@@ -42,18 +42,21 @@ const CALLS = {
   insertLines: [E, U, [{ line_no: 1, account_id: U, dr_minor: 1, cr_minor: 0, currency: 'INR' }, { line_no: 2, account_id: U, dr_minor: 0, cr_minor: 1, currency: 'INR' }]],
   addBalances: [E, [{ account_id: U, currency: 'INR', fiscal_year: '2026-27', period: 1, dr_minor: 1, cr_minor: 0, line_count: 1 }]],
   insertItems: [E, [{ party_id: U, account_id: U, side: 'receivable', ref: 'r', against_ref: 'r', ref_kind: 'bill', amount_minor: 1, currency: 'INR' }]],
-  periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], balanceDrift: [E], unbalancedEntries: [E],
-  items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], itemTotals: [E, U], accountNet: [E, U],
-  insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsOfChit: [E, U], lockParty: [E, U, U], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
-  queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], outboxClose: [E, [U], 'Rejected — not posted'], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'],
-  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
+  periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], soldByDay: [E], balanceDrift: [E], unbalancedEntries: [E],
+  items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], billParties: [E, U, 'r1'], itemTotals: [E, U], accountNet: [E, U],
+  insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsOfChit: [E, U], lockParty: [E, U, U], lockTaxHeads: [E, ['cgst']], lockOpening: [E, '2026-04-01'], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
+  queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], outboxClose: [E, [U], 'Rejected — not posted'], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'], lockTrail: [E, '2026-27'],
+  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], chitForFlip: [E, U], stampConfirmed: [E, U, 0, '2026-11-07T00:00:00Z'], partiesOn: [E, [U]], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
-  unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],
+  unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200],
+  unpostedInWindow: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 50, { skipWalkin: true, skipIds: [U] }], unpostedCount: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', { skipWalkin: true }], cancelledStillPosted: [E, 200], openDisputes: [E, U],
   /* M30 · the payment advice (b285) */
   adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E], bankRailChits: [E, '2026-10-01', '2026-10-31', 500],
   /* F5 A1 · the books to-do's bills_unrated: the shop's registration facts, and the sale bills in the books with an unrated line */
   taxRegistration: [E], unratedSaleBills: [E, '2025-04-01', '2026-10-24', 50],
+  /* ACC-206 B · the sales let through unbalanced, unresolved */
+  moneyOverrides: [E, 50], moneyOverrideState: [E, U],
 };
 
 (async () => {
@@ -100,6 +103,18 @@ const CALLS = {
     ok('STD1 · exactly one exact → the party, no near list; two exact → nobody, the near list (≤ 3, names + party_no only)',
       JSON.stringify([r1, r2]) === JSON.stringify([{ one: { party_id: U, name: 'Sri Ganesh Provisions', party_no: 'P-1' }, near: [] },
         { one: null, near: [{ name: 'Sri Ganesh', party_no: 'P-1' }, { name: 'Sri Ganesh', party_no: 'P-2' }, { name: 'Sri Ganesh Provisions', party_no: null }] }]), JSON.stringify([r1, r2]));
+  }
+  /* ── ACC-269: the expense chits' input tax is ONE statement for the month, bounded by posting date, reversal-aware ── */
+  {
+    seen.length = 0;
+    await S.inputTaxOfChits(db, E, [U, E, 'a0000000-0000-4000-8000-000000000003'], ['input_cgst', 'input_sgst'], '2026-04-01', '2026-05-01');
+    const q = seen[0];
+    ok('ACC-269 · inputTaxOfChits: ONE statement for every expense chit of the month (no per-chit read)', seen.length === 1 && Array.isArray(q.params[1]) && q.params[1].length === 3, JSON.stringify(q.params));
+    ok('ACC-269 · bounded to the month by posting date: [from, to)', q.params[3] === '2026-04-01' && q.params[4] === '2026-05-01' && /posting_date, 'YYYY-MM-DD'\) >= \$4/.test(q.text) && /posting_date, 'YYYY-MM-DD'\) < \$5/.test(q.text), q.text);
+    ok('ACC-269 · a reversal posted before the month end takes the entry away; a reversal entry is never summed', /NOT EXISTS \(SELECT 1 FROM journal_entry r WHERE r\.entity_id = x\.entity_id AND r\.reverses_entry_id = x\.entry_id AND to_char\(r\.posting_date, 'YYYY-MM-DD'\) < \$5\)/.test(q.text) && /x\.reverses_entry_id IS NULL/.test(q.text), q.text);
+    ok('ACC-269 · only the pack input roles, the shop fenced on the entry and the line', /a\.role = ANY\(\$3::text\[\]\)/.test(q.text) && /x\.entity_id = \$1/.test(q.text) && /l\.entity_id = x\.entity_id/.test(q.text), q.text);
+    const grouped = await S.inputTaxOfChits({ query: async () => ({ rows: [{ chit_id: U, role: 'input_cgst', minor: '900' }, { chit_id: U, role: 'input_sgst', minor: '900' }, { chit_id: E, role: 'input_cgst', minor: '0' }] }) }, E, [U, E], ['input_cgst', 'input_sgst'], '2026-04-01', '2026-05-01');
+    ok('ACC-269 · the rows come back by chit and role; a role that nets to 0 is absent', JSON.stringify(grouped) === JSON.stringify({ [U]: { input_cgst: 900, input_sgst: 900 } }), JSON.stringify(grouped));
   }
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks (' + seen.length + ' statements)\n');
   process.exit(fail ? 1 : 0);

@@ -158,6 +158,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* ADOPTION (W2-REW): counter-bill.js is one READ of the shop's own bill by its number — the duplicate check and the reward
      both ask it; it computes nothing (the money is picked off summary_json, the points are rewards.earnedOn's). */
   'counter-bill.js',
+  /* ADOPTION (ACC-206): send-money.js scopes WHICH chits the adopted tax engine bills at send, makes the one call, and reads the engine's bridge verdict as data; money-check.js compares
+     stored copies for equality and raises a support ticket when they differ. Neither computes money (tests/money-check.test.cjs scans both for arithmetic). */
+  'send-money.js',
+  'money-check.js',
   /* ADOPTION, same split again: inventory.js decides what a movement DOES to a balance; stock-store.js knows where
      the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
      rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
@@ -167,6 +171,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
+  'stock-sweep.js',
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
      govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
      same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
@@ -206,18 +212,56 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
+  'dispute-alert.js',
+  'line-shape.js',
+  'list-filters.js',
+  'team-member.js',
+  /* SHARED-CHECKS 0a (2026-11-09): the schema fragments a route names for a quantity, minor-unit amount, day, text, page and list bound (ceilings read off chit-ceiling). Decides no money, tax or rule. */
+  'bounds.js',
+  /* CUR-1 (2026-11-09, ACC-331/332): which cells of a bill or a journal can carry a currency and the one refusal of another currency (lib/money.assertSameCurrency decides). Decides no money rule. */
+  'currency-cells.js',
+  /* CAT-313 (2026-11-09): the SQL condition of the product search (named visible fields, literal LIKE). Decides no money, tax or rule. */
+  'catalogue-search.js',
+  /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */
+  'party-contact.js',
+  /* CRM-247/248 (2026-11-09): the one SQL predicate for a deleted party (hidden_at). Decides no money, tax or rule. */
+  'party-live.js',
+  /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
+     the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
+     No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */
+  'netcert.js',
+  'netmember.js',
+  'netsync.js',
+  'installer-token.js',
+  'network-search.js',
+  'business-search.js',
+  'remote-catalogue.js',
+  'message-limit.js',
+  'ctp-repair.js',
+  /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
+  /* S7 (2026-10-30): the API-key list and the counter register on an entity, moved out of routes/keys.js and routes/counters.js — per-shop state in policy_flags, no rule of the platform. */
+  'api-keys.js',
+  'counters-store.js',
   /* API-4 sweep: the contract of the ledger, tax and invoice routes (their OpenAPI operations and the words of their refusals) and the kit that builds an area's operations — the contract of a door, not a rule of the platform. (2026-10-23) */
   'contract-kit.js',
   /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */
   'output-allowlist.js',
   'books-contract.js',
   'tax-contract.js',
+  /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'marketing-contract.js',
+  'offers-contract.js',
+  'combo-templates-contract.js',
   /* API-4 sweep: the contract of the governance routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
   'till-contract.js',
+  /* API-4 sweep, the proposal doors: their OpenAPI operations (closed bodies and answers) and the library refusals they publish — the contract of a door, not a rule of the platform. (2026-10-25) */
+  'chit-proposals-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'folders-contract.js',
   'facts-contract.js',
@@ -227,8 +271,26 @@ const INFRA_LIBS = [
   'chits-input.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
+  /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
+  'schemas-contract.js',
   /* API-4 sweep, the CRM: the contract of the routes/crm.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-crm.test.cjs */
   'crm-contract.js',
+  /* API-4 sweep, the attachments: the contract of routes/attachments.js (its OpenAPI operations, the words of its refusals and the one 6 MB limit) — tests/api-problem-attachments.test.cjs */
+  'attachments-contract.js',
+  /* API-4 sweep, the supplies routes: the contract of routes/supplies.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-supplies.test.cjs */
+  'supplies-contract.js',
+  /* API-4 sweep, the privacy routes: the contract of routes/privacy.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-privacy.test.cjs */
+  'privacy-contract.js',
+  /* API-4 sweep, identity documents: the contract of routes/identity-docs.js (its OpenAPI operations and the way a fault and a library refusal are worded) — the contract of a door, not a rule of the platform. tests/api-problem-identity-docs.test.cjs */
+  'identity-docs-contract.js',
+  /* API-4 sweep, Know your business: the contract of routes/kyb.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-kyb.test.cjs */
+  'kyb-contract.js',
+  /* API-4 sweep, the channels: the contract of the routes/channels.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-channels.test.cjs */
+  'channels-contract.js',
+  /* API-4 sweep, the relationships: the contract of the routes/relationships.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-relationships.test.cjs */
+  'relationships-contract.js',
+  /* API-4 sweep, the quick-key groups: the contract of the routes/quick-keys.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-quick-keys.test.cjs */
+  'quick-keys-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
   'integrations-contract.js',
   /* API-4 sweep, the catalogue items: the contract of routes/products.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
@@ -245,6 +307,29 @@ const INFRA_LIBS = [
   'assist-contract.js',
   /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'testing-contract.js',
+  /* API-4 sweep, the bell: the contract of routes/events.js and routes/notifications.js (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. tests/api-problem-bell.test.cjs (2026-10-23) */
+  'bell-contract.js',
+  /* API-4 sweep, capture: the contract of the nine signed-in routes of routes/capture.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'capture-contract.js',
+  /* API-4 sweep, the connectors: the contract of routes/connectors.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'connectors-contract.js',
+  /* API-4 sweep, the definitions shelf: the contract of routes/definitions.js (its OpenAPI operations and the words of its refusals) — the contract of a door; the version writes, the freeze and the slab reads stay in the route. (2026-10-23) */
+  'definitions-contract.js',
+  /* API-4 sweep, the tour: the contract of routes/simulator.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-simulator.test.cjs (2026-10-24) */
+  'simulator-contract.js',
+  /* API-4 stage-2 sweep, the authority forms: the contract of routes/forms.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-forms.test.cjs (2026-10-23) */
+  'forms-contract.js',
+  /* Lane B2 small files 1 (#700, 2026-11-04): the contracts of routes/adopt.js, routes/people.js and routes/csp-report.js — the contract of a door, not a rule of the platform */
+  'adopt-contract.js',
+  'people-contract.js',
+  'csp-report-contract.js',
+  'plumbing-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/network-offers.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform */
+  'network-offers-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/signin.js — the contract of a door, not a rule of the platform */
+  'signin-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/service.js — the contract of a route file, not a rule of the platform */
+  'service-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
   /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
@@ -260,6 +345,8 @@ const INFRA_LIBS = [
   'shop-clock.js',
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
+  /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
+  'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
@@ -267,6 +354,7 @@ const INFRA_LIBS = [
   'books-cashflow.js',
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
+  'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
   'home-facts.js', 'till-summary.js', 'open-orders.js',   /* M168: the till's order list and Home's Orders card, one query (2026-10-10) */
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
@@ -280,6 +368,11 @@ const INFRA_LIBS = [
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */
   'knownerr.js',
+  /* the ONE sentence for a part that waits for a database update (503 not migrated): wording only, no rule (API-STANDARD S8a) */
+  'not-migrated.js',
+  'input-hygiene.js',
+  /* API-25: the router-level guard for a uuid path id (404 in the one error shape); transport shape, no business rule (12 Nov 2026) */
+  'id-guard.js',
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
   'limits.js',
@@ -318,7 +411,7 @@ const INFRA_LIBS = [
    * built. Classifying it engine today would lock a file that is expected to grow, and the engine lock means
    * default-no-change.
    */
-  'raida.js',
+  'raida.js', 'register-gate.js', /* RAIL-90: the per-shop switch of the register, infra beside it */
   'vaultcrypto.js', 'retention.js',
   /**
    * ⚠️⚠️ THIRTY-ONE FILES HAD DRIFTED OUT OF EVERY BUCKET, which is this test failing at the thing it exists
@@ -350,10 +443,16 @@ const INFRA_LIBS = [
   'bridgeid.js',           // id formatting
   'channels.js',           // channel binding lookup — plumbing for an inbound number
   'cost.js',               // arithmetic over line costs
+  'cost-view.js',          // RAIL-146: what a cost-blind co-assist may READ of a chit — an answer-side filter over the shop's own permission, never a rule about what the chit means
+  'dues-view.js',          // RAIL-146i: what a cost-blind co-assist may READ of a party's dues (finance's R1-R6) — the same answer-side filter; the figures stay the books', nothing computed
+  'cost-write.js',         // RAIL-147: what a cost-blind co-assist may WRITE on a chit (the amend and reprice doors) — a gate over the shop's own permission, never a rule about what the chit means
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
   'owner.js',              // is this request the owner — one test for every owner-only switch
+  'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
+  'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
   'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
+  'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
      flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
      sits here rather than being re-decided at either end. */
@@ -432,11 +531,18 @@ const INFRA_LIBS = [
      the invoice the counter computed (CBTax.determine) — it names a difference and never returns a figure anyone posts. The
      place-of-supply rule is the engine's (lib/tax.js placeOfSupply). It asserts no rate of CB's own. */
   'issued-invoice.js',     // the check that only names a difference
+  /* INFRA, THE SAME TEST (CTRY-76, 2026-10-30): `bill-paper.js` reads the SHOP's pack (country.packFor → pack.taxInvoice) over the
+     frozen invoice's own figures and says held / refused for the buyer line; it asserts no threshold, rate or sentence of CB's own.
+     Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
+  'bill-paper.js',         // the buyer line of a counter bill at send — the pack's rule, the one tax-id check
+  'cash-step.js',          // CTRY-77: a cash part off the pack's cashRounding step is refused at send — reads the SHOP's pack, no rule typed here
+  'credit-cap.js',        // ACC-286: a counter credit note cannot credit more than its bill — figures picked and compared, no rule typed here
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
   'ctp-contract.js',       // API-1 slice 1d: routes/ctp.js's OpenAPI operations and the old answers a peer reads — a contract, not an engine
   'storefront-contract.js', // API-1 slice 1e: the public storefront doors' OpenAPI operations and the old answers shop.html reads — a contract, not an engine
+  'erp-receipt.js',        // CON-ERP-IDEM: the receipt of an ERP document (the key, the claim, the finish) - table access of one door, not a rule of the platform
   'connector-rows.js',     // SET-35: the checked-in connectors - one statement, one row shape - read by GET /integrations/status and the Connectors Home card
   'match.js',              // matching helpers
   'measure.js',            // unit handling
@@ -447,6 +553,7 @@ const INFRA_LIBS = [
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'limiter-key.js',       // SEC-79: the limiters' bucket key (verified token id, else address); request plumbing, no business rule
+  'rate-limit.js',        // API-16: the one limiter factory and its 429 problem+json answer; request plumbing, no business rule
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders
@@ -460,6 +567,8 @@ const INFRA_LIBS = [
      classifications for one file is how a rule quietly becomes plumbing. Removed 2026-09-09 after checking that
      nothing reads it here: inventory.cjs tests TIER before INFRA, so the file already reported engine.tier. */
   'definition-check.js',   // the value a definition kind cannot do without (the form's sentences, refused by the API too)
+  'reward-check.js',       // CAT-272: the numbers of a reward programme the earning engine would misread; the reward branch of definition-check
+  'party-restore.js',      // CRM-247: a deleted party's list rows un-hidden (the way back from removeParty), kept out of party-live so the till's DB-free groups reader stays DB-free
   'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
   'offers-live.js',        // the seller's live offers applied to a set of lines — the one function the storefront order AND the send path call
@@ -480,6 +589,7 @@ const ENGINE_OTHER = [
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
+  'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
   'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */
@@ -496,6 +606,8 @@ const ENGINE_OTHER = [
      classification the inbox and the folders share; bill-steps.js — the bill lifecycle derived from existing records. CB's own
      decisions. folder-views.js — what a view folder holds (the rule's matches), plumbing over select + match. */
   'folder-inventory.js', 'bill-steps.js', 'folder-views.js',
+  /* shop-actors.js — SEC-103: is this actor one of the shop's own, asked before a write stores an actor id */
+  'shop-actors.js',
   /* bill-privacy.js — where a bill's step is written (the folder's messaging level) and what a holder may read of the other copy (2026-10-01) */
   'bill-privacy.js',
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
@@ -675,6 +787,12 @@ const ENGINE_OTHER = [
   /* CTP’s READ verb (2026-09-16): a signed question to a peer — resolve a handle, pull a public catalogue. Like
      the other ctp* files it leaves as a SPECIFICATION, not a library (docs/SOFTWARE-ASSETS.md). */
   'ctpquery.js',
+  /* sit/run6 (RAIL-106, 2026-10-25): the rail's own decisions across installations: the return path (a status, message, dispute or proposal told to the far side and
+     applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
+  'ctpreturn.js',
+  'chit-proposal.js',
+  'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
+  'price-note.js',    /* ACC-192 1b + 2: the credit or debit note an accepted price change on an issued invoice issues (changed lines only, one direction, idempotent, through the one send path) */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
@@ -801,15 +919,27 @@ const ENGINE_OTHER = [
   /* ⭐ T1-RAIL (2026-10-14) — rail-status.js is the ONE status write: read my copy → rail.move → UPDATE, on the caller's transaction.
      moveStatus and every door that moves a status call it; tests/rail-status.test.cjs holds every other SET current_status out. */
   'rail-status.js',
+  /* LEAN-PLAN §8 #3 (2026-10-31) — chit-move.js is moveStatus lifted out of routes/chits.js (the ONE status writer over rail-status, so lib no longer
+     requires a route); chit-crossing.js is the delivery-agent crossing + message copies it needs, lifted with it. CB's own plumbing, no engine rule. */
+  'chit-move.js', 'chit-crossing.js',
+  /* RAIL-205 (2026-11-09) — chit-ceiling.js: the widest total, quantity and price a chit's own columns hold, read off their declared precision; send and amend refuse past it. CB's own plumbing over its own schema, no engine rule. */
+  'chit-ceiling.js',
+  /* RAIL-216 (2026-11-09) — chit-paid.js: has money been applied to the invoice I sent (the seller's void asks it). A read over my own books, CB plumbing, no engine rule. */
+  'chit-paid.js',
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',
+  /* RAIL-187 (2026-11-08) — dispute-audience.js: who receives a dispute's message (roster or chit-wide), read once for the message route and the file route. CB's own rail rule. */
+  'dispute-audience.js',
   /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
      and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
   'workflow.js', 'work-rows.js',
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the
+     receivable rule is engine (books) or adoption (counter) needs cb-capability's call. */
+  'upi-waiting.js',
   /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
      endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
   'item-cost.js',

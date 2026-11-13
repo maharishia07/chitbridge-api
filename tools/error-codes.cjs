@@ -30,7 +30,8 @@ function sourceFiles(root) {
   const found = [];
   const visit = (target) => {
     if (!fs.existsSync(target)) return;
-    if (fs.statSync(target).isFile()) return target.endsWith('.js') && found.push(target);
+    /* an ADOPTED engine copy (engines.lock.json) holds the engines' own data words — a tax-line `code: 'GST'` is not an API error code */
+    if (fs.statSync(target).isFile()) return target.endsWith('.js') && !fs.readFileSync(target, 'utf8').startsWith('/* ADOPTED') && found.push(target);
     fs.readdirSync(target).forEach((name) => visit(path.join(target, name)));
   };
   SCAN_PLACES.forEach((place) => visit(path.join(root, place)));

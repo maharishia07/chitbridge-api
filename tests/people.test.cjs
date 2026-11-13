@@ -1,5 +1,6 @@
 'use strict';
 /**
+ * CARD  17-people-employees-hr-and-payroll/people-list-with-may-why
  * tests/people.test.cjs — P1: GET /api/people and lib/people.js. No DB, no network.
  *  · the pure view: owner may everything that is possible; a person who is off cannot be given a code or a cover; a non-owner is greyed WITH the sentence
  *  · the route: ONE statement (one trip), scoped to the caller's SHOP (an actor's parent, never their own id — the RLS/tenant rule), removed people never listed

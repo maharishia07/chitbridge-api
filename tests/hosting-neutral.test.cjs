@@ -9,6 +9,7 @@
  *   6 SEC0: no Supabase PROJECT REF in any tracked file — the rule is READ from .gitleaks.toml (id cb-supabase-project-ref), so gitleaks in
  *     CI and this offline guard run the one regex; proved on the four shapes it was found in (built at run time, never written here).
  * Offline: no database, no network (the sockets in 1 go to closed loopback ports).
+ * CARD      28-platform-and-operations/hosting-and-deploy
  */
 'use strict';
 const assert = require('assert');

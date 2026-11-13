@@ -29,6 +29,7 @@
  * engine missing the counter refuses the sale (never a ₹0 bill); the shop-PC program's chitOf carries the same invoice.
  * Broken once each by scripts/tax-truth-breaks.cjs.
  * Run: node tests/tax-truth.test.cjs
+ * CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
  */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -102,12 +103,12 @@ function fnText(src, sig) {
   return src.slice(at, end + 2);
 }
 /* STD-CATCH (14 Oct): the lifted functions' best-effort catches record through cbQuiet — lift the ring and the recorder with them */
-const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', 'function billMoney(', 'function moneyOf(', 'async function finish(', 'async function postRewardBehindBill(', 'function chitOf(',
+const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads the catalogue again before the number; not due on these bills, the recheck helpers it reaches are lifted with it */ 'function billLineOf(', 'function billLineFigures(', 'function billCustomerOf(', 'async function recheckBeforeBill(', 'function recheckBasis(', 'function recheckKeptList(', 'function recheckDue(', 'function recheckSetting(', 'function parkedTooLong(', 'function parkHoursOf(', 'function cartParkedAt(', 'function billMoney(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'async function moneyStopAsk(', 'function notInvoiceWhy(', 'function slipCheckedHTML(', 'function walkInNote(', 'function saleStopWords(', 'async function finish(', 'async function deliverAsk(', 'function deliverTo(', 'function paintDeliver(', 'async function postRewardBehindBill(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
   'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',
   /* round T1 (2026-10-10): the slip's head is one function for the bill and the credit note (M45), its time is shop time (M43) */
-  'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
+  'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function shopDayOf(', 'function bandWordsOf(', 'function pinBillMoment(', 'function rateNoteOf(', 'function slipRateOf(', 'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
   /* CX0 (2026-10-13): the pack's words on the paper — tax-id label, scheme, credit-note title — read from CBRegulation when the page has it */
   'function docCountry(', 'function shopPack(', 'function taxIdLabel(', 'function schemeWord(', 'function creditNoteTitle(',
   /* CX1 (2026-10-13): what the shop's law asks of the bill (pack.taxInvoice — none in India's pack, so nothing here changes) */
@@ -133,7 +134,7 @@ async function ring(o) {
          policy: { price_includes_tax: o.inclusive === false ? 'no' : 'yes' } },
     STATE: { till: { name: 'Counter 2' } }, ls: { get: (k, d) => d }, WHO: { id: 'u1', name: 'Athi', kind: 'entity' },
     CART: o.cart.map((c) => Object.assign({}, c)), PARTS: [], PAY_ASKED: false, PICKED: o.cust ? 'On credit' : 'Cash',
-    BILL_DELIVERY: o.delivery || null, BILL_ORDER: null, orderBilledDone: function(){}, RW: { holder: null, points: 0, worth: 0, spend: 0, says: null, seq: 0 }, LAST: null, LASTNO: null, EARLIER: [],
+    BILL_DELIVERY: o.delivery || null, BILL_DELIVERY_ASKED: false, packSplitsByState: () => true, sure: async () => false /* CTR-186: over the counter */, paintTotals() {}, draftSave() {}, BILL_ORDER: null, orderBilledDone: function(){}, RW: { holder: null, points: 0, worth: 0, spend: 0, says: null, seq: 0 }, LAST: null, LASTNO: null, EARLIER: [],
     shopTax: () => ({ charges: true, kind: 'tax' }), shopStateClash: () => null, counterName: () => 'Counter 2', O: () => ({ kindLabel: (k) => k }), modWordsPlain: (m) => m.map((x) => x.option).join(' · '), tillStopped: async () => false, dayReopenAsk: async () => true, booksOn: () => true,
     custKnown: () => (o.cust ? { identity_id: CUST, entity_id: CUST, name: o.cust.name, gstin: '29BBBBB0000B1Z5' } : null),
     creditSinceRefresh: async () => {}, creditLimitCheck: () => ({ known: false }), ownerApprove: async () => null,
@@ -359,8 +360,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     /* a bill with no invoice — an older bill, or another host */
     const O = await sixWays(port, { no: 'C2/26-27/0005', cart: CART_0007, cust: { name: 'Chola Auto Care' }, mutate: (c) => {
       delete c.business_json.invoice; return c; } });
-    ok('a bill with NO invoice keeps the old path: provisional, recomputed, total = the line nets (1118.15), no check',
-      O.sEntry && !O.sEntry.issued && O.sEntry.provisional && O.sEntry.tax_check === null && O.shopCopy.total_value === 1118.15, J([O.sEntry && O.sEntry.issued, O.shopCopy && O.shopCopy.total_value]));
+    ok('a bill with NO invoice keeps the old path for the books (provisional, recomputed, no check) and the header says NO total — unknown, never the line sum (ACC-206: the route adds nothing up)',
+      O.sEntry && !O.sEntry.issued && O.sEntry.provisional && O.sEntry.tax_check === null && (O.shopCopy.total_value === null || O.shopCopy.total_value === undefined), J([O.sEntry && O.sEntry.issued, O.shopCopy && O.shopCopy.total_value]));
     ok('…its place of supply is still the SHOP\'s state (33 → CGST + SGST), not the buyer\'s (29): both copies',
       O.sEntry.invoice.BuyerDtls.Pos === '33' && O.sEntry.invoice._cb.supply === 'intra' && O.cEntry.invoice.BuyerDtls.Pos === '33' && O.cEntry.invoice._cb.supply === 'intra',
       J([O.sEntry.invoice.BuyerDtls, O.sEntry.invoice._cb.supply, O.cEntry.invoice.BuyerDtls, O.cEntry.invoice._cb.supply]));
@@ -372,7 +373,13 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       const iv = c.business_json.invoice, it = iv.ItemList[0], sl = iv._cb.slabs.find((x) => x.GstRt === 12), v = iv.ValDtls;
       it.CgstAmt = r2(it.CgstAmt + 0.01); it.SgstAmt = r2(it.SgstAmt + 0.01); it.TotItemVal = r2(it.TotItemVal + 0.02);
       sl.CgstVal = r2(sl.CgstVal + 0.01); sl.SgstVal = r2(sl.SgstVal + 0.01);
-      v.CgstVal = r2(v.CgstVal + 0.01); v.SgstVal = r2(v.SgstVal + 0.01); v.TotInvVal = r2(v.TotInvVal + 0.02); return c; } });
+      v.CgstVal = r2(v.CgstVal + 0.01); v.SgstVal = r2(v.SgstVal + 0.01); v.TotInvVal = r2(v.TotInvVal + 0.02);
+      /* CTR-211: the engine writes the total TWICE (bridge step and TotInvVal); a stored figure the engine itself issued carries both, or the send refuses it as a pair mismatch */
+      const tot = iv._cb.bridge.steps.find((x) => x.name === 'total'); tot.amount = v.TotInvVal; tot.amount_minor = Math.round(v.TotInvVal * 100);
+      /* CTR-214: and the engine's heads rows carry the same two heads, in total and in the 12% slab, or the send refuses the bill as a head mismatch */
+      const hs = iv._cb.bridge.heads, hSlab = hs.find((x) => x.level === 'slab' && x.rate === 12);
+      [hs.find((x) => x.level === 'total'), hSlab].forEach((row) => { row.minor.CgstVal += 1; row.minor.SgstVal += 1; });
+      return c; } });
     const zf = figOfInv(Z.sEntry.invoice);
     ok('a stored figure the server\'s recompute DISAGREES with: the stored one is kept (tax 119.96, total 1118.17) on both copies, the money and the reprint',
       zf.tax === 119.96 && zf.total === 1118.17 && figOfInv(Z.cEntry.invoice).tax === 119.96 && Z.shopCopy.total_value === 1118.17

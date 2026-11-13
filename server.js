@@ -6,7 +6,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('./lib/rate-limit');
+const { intFromEnv } = require('./lib/limits');
 const log = require('./lib/logger');
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
@@ -160,7 +161,7 @@ app.use(
   })
 );
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
 
 // ── Security middleware ───────────────────────────────────────
 app.use(
@@ -220,7 +221,9 @@ app.use((req, res, next) => {
     log.info('request', {
       id: req.id,
       method: req.method,
-      path: req.path,
+      /* the FULL path, not the part a mounted router leaves, and no query string (the Servers heat map
+         counts by path: PM/SERVERS-STATUS.md, Athi 31 Oct) */
+      path: (req.originalUrl || req.url).split('?')[0],
       status: res.statusCode,
       ms: Date.now() - t0,
       code: (res.locals && res.locals.code) || null,
@@ -242,15 +245,15 @@ app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }))
 const authFirst = require('./middleware/auth-first');
 app.use(authFirst.parsers);
 
-// E01 · every request has a deadline (REQUEST_TIMEOUT_MS, default 30 s) → 503 REQUEST_TIMEOUT; the SSE stream is exempt (lib/limits.js)
-app.use(require('./lib/limits').requestTimeout);
+// PLT-85 / SPD-45 · over API_MAX_INFLIGHT requests inside the api the answer is 503 SERVER_BUSY + Retry-After at the door, before any claim or write (lib/limits.js admit)
+app.use(require('./lib/limits').admit);
 // E07 · the request in scope for the database layer (slow-query lines carry its id) — after the parsers, whose stream callbacks drop the context
 app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.locals, next));
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX || '500'),
+  max: intFromEnv('RATE_LIMIT_MAX', 500),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Please try again in 15 minutes' }
@@ -260,7 +263,7 @@ app.use('/api/', limiter);
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '30'),
+  max: intFromEnv('AUTH_RATE_LIMIT_MAX', 30),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many attempts', message: 'Too many login/OTP attempts — please try again in 15 minutes' }
@@ -289,7 +292,7 @@ app.use(
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
 const checkLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.CHECK_LOGIN_RATE_LIMIT_MAX || '120'),
+  max: intFromEnv('CHECK_LOGIN_RATE_LIMIT_MAX', 120),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many sign-in checks — please try again in a few minutes' }
@@ -327,7 +330,7 @@ app.use(
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
 const catalogueLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.CATALOGUE_RATE_LIMIT_MAX || '60'),
+  max: intFromEnv('CATALOGUE_RATE_LIMIT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many attempts — please try again in a few minutes' }
@@ -338,7 +341,7 @@ app.use('/api/catalogue', catalogueLimiter);
 // If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
 const assistLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.ASSIST_RATE_LIMIT_MAX || '40'),
+  max: intFromEnv('ASSIST_RATE_LIMIT_MAX', 40),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many assistant requests — please try again shortly.' }
@@ -348,6 +351,11 @@ app.use('/api/assist', assistLimiter);
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);
+/* API-15 (BH-3): a NUL byte in the path, query or body is refused 400 here, once — Postgres cannot store it (22021) and each route would answer 500 */
+app.use(require('./lib/input-hygiene').refuseNul);
+// E01 · every request has a deadline (REQUEST_TIMEOUT_MS, default 30 s) → 503 REQUEST_TIMEOUT; the SSE stream is exempt (lib/limits.js)
+// PLT-70 · ⚠️ STARTED AFTER THE BODY IS READ (the global parsers above, authThenParse here): a slow till uploading an 8 MB bill must not spend its 30 s on the upload, or its retry would time out the same way, forever
+app.use(require('./lib/limits').requestTimeout);
 
 // ── Idempotency (offline outbox, Phase 2) ─────────────────────
 // Opt-in per request (Idempotency-Key header) + self-healing (no-op until b109 is run). Placed before the routers so a
@@ -433,7 +441,7 @@ app.use('/api/combo-templates', comboTemplatesRouter); // b266 [OFFR-06] — per
 // (jest uses src/app.js; this exposes the same routers on the live server.js entry)
 app.use('/api/network', require('./src/routes/network'));
 // ARCHIVED 2026-08-06 — the cb_* catalogue routes. A network aggregates its members' catalogues and holds
-// none of its own; these served a third, unread catalogue model. See src/routes/catalogue.js and
+// none of its own; these served a third, unread catalogue model. See the former src/routes/catalogue.js (removed MNT-52) and
 // SPEC-network-storefront.md §6. cb_entity/cb_edge (the network TREE) stays mounted on the line above.
 // app.use('/api/network', require('./src/routes/catalogue'));
 
@@ -467,6 +475,7 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
+app.use('/api/books', require('./routes/books-money')); // ACC-206 B: closing an overridden sale's open item (the ledger's own gates, its own file)
 app.use('/api/facts', require('./routes/facts')); // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/work', require('./routes/work')); // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
 app.use('/api/crm', require('./routes/crm')); // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
@@ -483,40 +492,10 @@ app.use('/api/adopt', require('./routes/adopt'));
 // ── Static HTML pages (legacy — React replaces these) ────────
 
 // ── Health check ─────────────────────────────────────────────
-app.get('/health', async (req, res) => {
-  /* E07: one `SELECT 1`, given 2 s — db 'ok' under DB_SLOW_MS, 'slow' over it, 'down' when it fails or never answers.
-     The status stays 200 either way: this says how the database is, it does not take the API out of rotation. */
-  let db = 'down',
-    db_ms = null;
-  try {
-    const t0 = Date.now();
-    await Promise.race([require('./db').query('SELECT 1'), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 2000).unref())]);
-    db_ms = Date.now() - t0;
-    db = db_ms > require('./lib/dbwatch').slowMs() ? 'slow' : 'ok';
-  } catch (_) {
-    /* 'down' */
-  }
-  res.json({
-    status: 'OK',
-    platform: 'Chit and Bridge',
-    version: require('./package.json').version /* E07: from package.json, not a literal */,
-    db,
-    db_ms,
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    /* which build answers — Railway sets this; it is how a spec that fails right after a push tells 'not deployed yet' from 'broken' */
-    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT || null,
-    region: process.env.RAILWAY_REPLICA_REGION || process.env.RAILWAY_REGION || null,
-    web: require('./lib/public-base').webBase() || null /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */,
-    /* SEC-SMALL: IAM audit rows this process could not write since boot (lib/access-events.lostCount) — a reviewer wants to see 0 */
-    audit_lost: require('./lib/access-events').lostCount(),
-    /* S34: keys the output allow-list would drop (OUTPUT_ALLOWLIST=report, the default) or dropped (enforce) since boot — Athi switches production to enforce after 7 days at 0 */
-    output_dropped: require('./lib/output-allowlist').droppedCount(),
-    /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
-       Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
-    legacy_tokens: require('./lib/person-session').legacyCounts()
-  });
-});
+app.use('/health', require('./routes/health')); // GET /health — the uptime probe (moved to routes/health.js, byte for byte)
+
+/* API-25 · every router that did not check a uuid path id itself gets the one guard (lib/id-guard.js): a malformed id is a 404, never the database's 22P02 as a 500 */
+require('./lib/id-guard').guardRouters(app);
 
 // ── 404 handler ──────────────────────────────────────────────
 /* API-STANDARD S3: the one writer (lib/problem.js); the legacy keys are frozen exactly as this route answered before (docs/contracts/api-legacy.json) */
@@ -588,6 +567,12 @@ function startServing() {
       require('./lib/books-nightly').start();
     } catch (e) {
       console.warn('books nightly not started:', e.message);
+    }
+    /* ACC-266: the 30-second reconciler — a saved bill with no ledger entry is found and posted (lib/books-reconcile.js; BOOKS_RECONCILE=0 turns it off) */
+    try {
+      require('./lib/books-reconcile').start();
+    } catch (e) {
+      console.warn('books reconciler not started:', e.message);
     }
     /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
     try {

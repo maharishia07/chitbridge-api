@@ -12,6 +12,10 @@
  *   node tests/api-problem-integrations.test.cjs                    check
  *   node tests/api-problem-integrations.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json
  *   node tests/api-problem-integrations.test.cjs --capture F        (run against the code BEFORE the change, API_ROOT=<that checkout>) record each answer to file F
+ *
+ * API-8 (S34, output_allowlist): the GET routes' SUCCESS answers too. Their scenes (ok: true) read the ready branch of each route: rows with every column filled, then the nullable ones null,
+ * every branch of the pager (a page, a capped list) and of each library answer (a country with and without a pack, every reconcile state, a profile with checks failing).
+ * tools/api-allowlist.cjs derives each route's closed schema from the capture of those answers; checkAllowList holds every recorded 200 to it.
  */
 'use strict';
 const path = require('path');
@@ -23,8 +27,14 @@ const HERE = path.join(__dirname, '..');
 const API = process.env.API_ROOT ? path.resolve(process.env.API_ROOT) : HERE;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: this sweep runs the allow-list for real; production defaults to report */
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
+const ALLOW = require('./lib/allowlist-world.cjs');
+const APPROVE_ROUTE = 'POST /api/integrations/:actor_id/approve'; /* the one writer whose 200 the generator's stand-in database cannot reach: proved here, in the route file's own world */
+const PROFILE_ROUTE = 'POST /api/integrations/profile'; /* S33-T: its 200 is closed from the recorded answers (tools/api-allowlist.cjs --from-recordings), proved here by the one shared allowlist-world */
+const isApprove = (route) => route === APPROVE_ROUTE || route === PROFILE_ROUTE;
 const MINE = (route) => / \/api\/integrations\//.test(route);
 const argv = process.argv.slice(2);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
@@ -47,13 +57,21 @@ const mock = (relative, exported) => {
 const SHOP = { identity_id: 'e1', identity_type: 'entity', owner_scope: 'entity' };
 const CHIT = '11111111-2222-3333-4444-555555555555';
 const SECRET_SQL = 'relation "identities" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: SHOP, asKey: false, scopes: ['connector'], dbFails: false, fsFails: false, packFails: false, policyFails: false, policyRefuses: false, profileFails: false, country: null, actor: null };
+const FRESH = { heldKit: false, realAuth: false, who: SHOP, asKey: false, scopes: ['connector'], dbFails: false, fsFails: false, packFails: false, policyFails: false, policyRefuses: false, profileFails: false, country: null, actor: null, kitRows: [], chits: [], since: null, handle: false, stockRows: [], flags: {}, profileValues: {} };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: the shop's country, the connector actor to approve, and nothing for every update (so a chit is "not found") */
 function rowsFor(sql) {
   if (world.dbFails) throw new Error(SECRET_SQL);
   if (/SELECT country FROM identities/.test(sql)) return { rows: world.country ? [{ country: world.country }] : [], rowCount: 1 };
+  if (/MIN\(created_at\) AS t FROM identities/.test(sql)) return { rows: [{ t: world.since }], rowCount: 1 };
+  if (/connector_type IS NOT NULL AND status = 'active'/.test(sql)) {
+    const kits = world.heldKit ? [KIT_ROW] : world.kitRows; /* CON-110: a stream is handed to a kit this shop holds */
+    return { rows: kits, rowCount: kits.length };
+  }
+  if (/FROM chit_header ch/.test(sql)) return { rows: world.chits, rowCount: world.chits.length };
+  if (/WHERE \(user_id = \$1 OR bridge_id = \$1\)/.test(sql)) return world.handle ? { rows: [{ identity_id: 'e1' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  if (/FROM catalogue_items/.test(sql)) return { rows: world.stockRows, rowCount: world.stockRows.length };
   if (/SELECT identity_id, site, connector_config FROM identities/.test(sql)) return { rows: world.actor ? [world.actor] : [], rowCount: world.actor ? 1 : 0 };
   return { rows: [], rowCount: 0 };
 }
@@ -74,7 +92,7 @@ function installStubs() {
   mock('lib/policy', {
     get: async () => {
       if (world.policyFails) throw new Error(SECRET_SQL);
-      return {};
+      return Object.assign({}, world.flags);
     },
     set: async (id, patch) => {
       if (world.policyFails) throw new Error(SECRET_SQL);
@@ -82,11 +100,11 @@ function installStubs() {
       return patch;
     }
   });
-  mock('routes/keys', { listOf: async () => [], setEnrol: async () => ({}), mint: async () => ({ key: 'k', name: 'n', last4: '0000' }) });
+  mock('lib/api-keys', { listOf: async () => [], setEnrol: async () => ({}), mint: async () => ({ key: 'k', name: 'n', last4: '0000' }) });
   mock('lib/profile', {
     profileValues: async () => {
       if (world.profileFails) throw new Error(SECRET_SQL);
-      return {};
+      return world.profileValues;
     },
     applyProfileMap: async () => ({ rows: 0 })
   });
@@ -110,6 +128,7 @@ function installStubs() {
 /* ── the scenarios: every error answer of routes/integrations.js (and the shared gates in front of it) ──────────
    inherited = the sign-in middleware's own 401, or requireScope's 403: tested, not yet a Problem (the old body, as for routes/keys.js)
    fresh     = an answer the route did not give before slice 1c (its schema's refusal): a Problem, with no frozen keys to keep */
+const A1 = '44444444-4444-4444-8444-444444444444'; /* a connector actor id: uuid-shaped, as the guard on :actor_id requires */
 const I = '/api/integrations';
 const BAD_TOKEN = { authorization: 'Bearer not-a-token' };
 const SIGNED = { authorization: 'Bearer stand-in' }; /* catalogue and download sign in only when a credential is offered */
@@ -131,36 +150,46 @@ const SCENARIOS = [
   { id: 'heartbeat-wrong-scope', route: 'POST /api/integrations/heartbeat', status: 403, setup: { asKey: true, scopes: ['offers'] }, body: {}, inherited: true },
   { id: 'heartbeat-bad-body', route: 'POST /api/integrations/heartbeat', status: 400, body: { name: 12345 }, fresh: true },
   { id: 'heartbeat-db-fails', route: 'POST /api/integrations/heartbeat', status: 500, setup: { dbFails: true }, body: { name: 'kit' } },
-  { id: 'approve-no-token', route: 'POST /api/integrations/:actor_id/approve', status: 401, setup: { realAuth: true }, url: I + '/a1/approve', inherited: true },
-  { id: 'approve-key-asks', route: 'POST /api/integrations/:actor_id/approve', status: 403, setup: { asKey: true }, url: I + '/a1/approve' },
-  { id: 'approve-no-actor', route: 'POST /api/integrations/:actor_id/approve', status: 404, url: I + '/a1/approve' },
-  { id: 'approve-no-key', route: 'POST /api/integrations/:actor_id/approve', status: 400, setup: { actor: { identity_id: 'a1', site: 'PC', connector_config: {} } }, url: I + '/a1/approve' },
-  { id: 'approve-db-fails', route: 'POST /api/integrations/:actor_id/approve', status: 500, setup: { dbFails: true }, url: I + '/a1/approve' },
+  { id: 'approve-no-token', route: 'POST /api/integrations/:actor_id/approve', status: 401, setup: { realAuth: true }, url: I + '/' + A1 + '/approve', inherited: true },
+  { id: 'approve-key-asks', route: 'POST /api/integrations/:actor_id/approve', status: 403, setup: { asKey: true }, url: I + '/' + A1 + '/approve' },
+  { id: 'approve-no-actor', route: 'POST /api/integrations/:actor_id/approve', status: 404, url: I + '/' + A1 + '/approve' },
+  { id: 'approve-no-key', route: 'POST /api/integrations/:actor_id/approve', status: 400, setup: { actor: { identity_id: A1, site: 'PC', connector_config: {} } }, url: I + '/' + A1 + '/approve' },
+  { id: 'approve-bad-id', route: 'POST /api/integrations/:actor_id/approve', status: 404, url: I + '/abc/approve', fresh: true },
+  { id: 'approve-db-fails', route: 'POST /api/integrations/:actor_id/approve', status: 500, setup: { dbFails: true }, url: I + '/' + A1 + '/approve' },
   { id: 'books-no-token', route: 'POST /api/integrations/books', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'books-wrong-scope', route: 'POST /api/integrations/books', status: 403, setup: { asKey: true, scopes: ['offers'] }, body: {}, inherited: true },
   { id: 'books-no-chit', route: 'POST /api/integrations/books', status: 400, body: { kind: 'order' } },
+  { id: 'books-unknown-outcome', route: 'POST /api/integrations/books', status: 400, body: { chit_id: CHIT, outcome: 'maybe' }, fresh: true },
+  { id: 'books-unknown-kind', route: 'POST /api/integrations/books', status: 400, body: { chit_id: CHIT, kind: 'zzz' }, fresh: true },
+  { id: 'books-ref-not-text', route: 'POST /api/integrations/books', status: 400, body: { chit_id: CHIT, ref: { a: 1 } }, fresh: true },
   { id: 'books-not-found', route: 'POST /api/integrations/books', status: 404, body: { chit_id: CHIT } },
   { id: 'books-db-fails', route: 'POST /api/integrations/books', status: 500, setup: { dbFails: true }, body: { chit_id: CHIT } },
   { id: 'status-no-token', route: 'GET /api/integrations/status', status: 401, setup: { realAuth: true }, inherited: true },
+  { id: 'status-page-asked-twice', route: 'GET /api/integrations/status', status: 422, url: I + '/status?page=1&page=2', fresh: true },
   { id: 'status-db-fails', route: 'GET /api/integrations/status', status: 500, setup: { dbFails: true } },
   { id: 'streams-no-token', route: 'GET /api/integrations/streams', status: 401, setup: { realAuth: true }, inherited: true },
   { id: 'streams-policy-fails', route: 'GET /api/integrations/streams', status: 500, setup: { policyFails: true } },
   { id: 'putstreams-no-token', route: 'PUT /api/integrations/streams', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'putstreams-key-asks', route: 'PUT /api/integrations/streams', status: 403, setup: { asKey: true }, body: { order: 'kit@pc' } },
-  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: { colour: 'red' } },
-  { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true }, body: { order: 'kit@pc' } },
+  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: {} },
+  { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true, heldKit: true }, body: { order: 'kit@pc' } },
+  { id: 'putstreams-unknown-owner', route: 'PUT /api/integrations/streams', status: 422, setup: { heldKit: true }, body: { order: 'nobody@nowhere' }, fresh: true },
+  { id: 'putstreams-owner-too-long', route: 'PUT /api/integrations/streams', status: 422, setup: { heldKit: true }, body: { order: 'k'.repeat(121) }, fresh: true },
   { id: 'putstreams-bad-body', route: 'PUT /api/integrations/streams', status: 422, body: { order: 12345 }, fresh: true },
-  { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true }, body: { order: 'kit@pc' } },
+  { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true, heldKit: true }, body: { order: 'kit@pc' } },
   { id: 'skip-no-token', route: 'POST /api/integrations/books/skip', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'skip-key-asks', route: 'POST /api/integrations/books/skip', status: 403, setup: { asKey: true }, body: { chit_id: CHIT } },
   { id: 'skip-no-chit', route: 'POST /api/integrations/books/skip', status: 400, body: {} },
   { id: 'skip-not-found', route: 'POST /api/integrations/books/skip', status: 404, body: { chit_id: CHIT } },
   { id: 'skip-db-fails', route: 'POST /api/integrations/books/skip', status: 500, setup: { dbFails: true }, body: { chit_id: CHIT } },
   { id: 'reconcile-no-token', route: 'GET /api/integrations/reconcile', status: 401, setup: { realAuth: true }, inherited: true },
+  { id: 'reconcile-days-asked-twice', route: 'GET /api/integrations/reconcile', status: 422, url: I + '/reconcile?days=1&days=2', fresh: true },
   { id: 'reconcile-db-fails', route: 'GET /api/integrations/reconcile', status: 500, setup: { policyFails: true } },
   { id: 'ask-unknown-shop', route: 'POST /api/integrations/ask/:handle/stock', status: 404, url: I + '/ask/nobody/stock', body: {} },
+  { id: 'ask-nul-handle', route: 'POST /api/integrations/ask/:handle/stock', status: 404, url: I + '/ask/%00/stock', body: {}, fresh: true },
   { id: 'ask-db-fails', route: 'POST /api/integrations/ask/:handle/stock', status: 500, setup: { dbFails: true }, url: I + '/ask/nobody/stock', body: {} },
   { id: 'stock-unknown-shop', route: 'GET /api/integrations/stock/:handle', status: 404, url: I + '/stock/nobody' },
+  { id: 'stock-nul-handle', route: 'GET /api/integrations/stock/:handle', status: 404, url: I + '/stock/%00', fresh: true },
   { id: 'stock-db-fails', route: 'GET /api/integrations/stock/:handle', status: 500, setup: { dbFails: true }, url: I + '/stock/nobody' },
   { id: 'profilemap-no-token', route: 'GET /api/integrations/profile-map', status: 401, setup: { realAuth: true }, inherited: true },
   { id: 'profilemap-fails', route: 'GET /api/integrations/profile-map', status: 500, setup: { profileFails: true } },
@@ -168,6 +197,67 @@ const SCENARIOS = [
   { id: 'profile-wrong-scope', route: 'POST /api/integrations/profile', status: 403, setup: { asKey: true, scopes: ['offers'] }, body: {}, inherited: true },
   { id: 'profile-no-fields', route: 'POST /api/integrations/profile', status: 400, body: { fields: { colour: 'red' } } },
   { id: 'profile-fails', route: 'POST /api/integrations/profile', status: 500, setup: { profileFails: true }, body: { fields: { gstin: '29ABCDE1234F1Z5' } } }
+];
+
+/* ── the success scenes (API-8): the ready branch of each GET route, from the tables' own columns ───────────────── */
+const HOUR = 3600 * 1000;
+const NOW = Date.now();
+const ago = (hours) => new Date(NOW - hours * HOUR).toISOString();
+/** an identities row as KIT_ROWS selects it (lib/connector-rows.js; last_seen and connector_config are nullable): a kit that checked in, then a bare actor */
+const KIT_ROW = { identity_id: 'a1', display_name: 'Tally PC', site: 'PC1', last_seen: ago(0.01), connector_type: 'erp', connector_config: { kit: true, kit_id: 'kit@pc', adapter: 'tally', version: '1.4', key_jti: 'j1', source: { app: 'tally' }, counters: { sent: 2 }, note: 'ok', enrol: { approved: true, reason: 'gstin match', host: 'PC1' } }, status: 'active', created_at: ago(500) };
+const KIT_BARE = { identity_id: 'a2', display_name: 'File PC', site: null, last_seen: null, connector_type: 'csv', connector_config: null, status: 'active', created_at: ago(400) };
+const kitRowsOf = (count) => Array.from({ length: count }, (_, at) => Object.assign({}, KIT_ROW, { identity_id: 'a' + at }));
+/** a chit_header + chit_status row as SQL_RECONCILE selects it (business_json books / books_request / books_skip are written by the kit and the owner, never by a column) */
+const CHIT_ROW = { chit_id: CHIT, direction: 'received', purpose: 'order', auto_subject: 'Order 1', manual_subject: null, created_at: ago(30), all_recipients: [{ role: 'sender', display_name: 'Me' }, { display_name: 'Buyer' }], books: null, asked: false, skip: null, current_status: 'created', status_at: ago(30) };
+const BOOKED = (system) => ({ outcome: 'ok', system, ref: 'V-1', at: ago(5), host: 'PC1' });
+const CHITS = [
+  { books: { order: BOOKED('tally') }, current_status: 'completed', manual_subject: 'Called subject' },
+  { direction: 'sent', books: { purchase: { outcome: 'ok' } }, current_status: 'accepted', all_recipients: ['Raw Supplier'] },
+  { books: { order: { outcome: 'failed', system: 'zoho', why: 'invalid_client', at: ago(2), host: 'PC1' } }, current_status: 'accepted', auto_subject: null },
+  { skip: { at: ago(3), by: 'e1', why: null }, current_status: 'accepted', all_recipients: [] },
+  { current_status: 'cancelled' },
+  { current_status: 'created' },
+  { current_status: 'accepted', status_at: ago(24 * 20), created_at: ago(24 * 21) },
+  { current_status: 'accepted', status_at: ago(1), created_at: ago(2) },
+  { current_status: 'completed', status_at: ago(48), created_at: ago(50) },
+  { current_status: 'created', asked: true, status_at: ago(1), all_recipients: null }
+].map((part) => Object.assign({}, CHIT_ROW, part));
+const STOCK_ROW = { item_id: 'i1', avail: { qty: 4, source: 'connector', as_of: ago(1) } };
+const stockRowsOf = (count) => Array.from({ length: count }, (_, at) => Object.assign({}, STOCK_ROW, { item_id: 'i' + at }));
+/** the profile as lib/profile.profileValues holds it: fields a kit sent, a second system disagreeing on the trade name, a GSTIN, a PIN of another state */
+const HELD = {
+  legal_name: { value: 'Acme Pvt Ltd', source: 'tally', as_of: ago(5), rung: 'copied' },
+  trade_name: { value: 'Acme', source: 'profile', as_of: ago(5), rung: 'declared', other: { value: 'ACME Traders', source: 'tally' } },
+  gstin: { value: '29ABCDE1234F1Z5', source: 'tally', as_of: ago(5), rung: 'copied' },
+  state: { value: 'Delhi', source: 'tally', as_of: ago(5), rung: 'copied' },
+  pincode: { value: '600001', source: 'tally', as_of: ago(5), rung: 'copied' }
+};
+const OK = (id, route, setup, more) => Object.assign({ id, route, status: 200, ok: true, setup }, more);
+const SUCCESS = [
+  OK('kit-manifest', 'GET /api/integrations/kit', {}),
+  OK('catalogue-anonymous', 'GET /api/integrations/catalogue', {}),
+  OK('catalogue-india', 'GET /api/integrations/catalogue', { country: 'IN' }, { headers: SIGNED }),
+  OK('catalogue-australia', 'GET /api/integrations/catalogue', { country: 'AU' }, { headers: SIGNED }),
+  OK('status-none', 'GET /api/integrations/status', {}),
+  OK('status-rows', 'GET /api/integrations/status', { kitRows: [KIT_ROW, KIT_BARE] }),
+  OK('status-second-page', 'GET /api/integrations/status', { kitRows: [KIT_ROW, KIT_BARE] }, { url: I + '/status?limit=1&page=2' }),
+  OK('status-capped', 'GET /api/integrations/status', { kitRows: kitRowsOf(201) }, { url: I + '/status?limit=500' }),
+  OK('streams-unowned', 'GET /api/integrations/streams', {}),
+  OK('streams-owned', 'GET /api/integrations/streams', { kitRows: [KIT_ROW, KIT_BARE], flags: { stream_owner: { order: 'kit@pc' } } }),
+  OK('reconcile-empty', 'GET /api/integrations/reconcile', {}),
+  OK('reconcile-every-state', 'GET /api/integrations/reconcile', { chits: CHITS, since: ago(24 * 10), flags: { books_at: 'accepted', books_overdue_hours: 12 } }, { url: I + '/reconcile?days=60' }),
+  OK('reconcile-when-received', 'GET /api/integrations/reconcile', { chits: CHITS, since: ago(24 * 10), flags: { books_at: 'received' } }),
+  OK('stock-none', 'GET /api/integrations/stock/:handle', { handle: true }, { url: I + '/stock/shop-a' }),
+  OK('stock-rows', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: [STOCK_ROW] }, { url: I + '/stock/shop-a' }),
+  OK('stock-second-page', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: stockRowsOf(3) }, { url: I + '/stock/shop-a?limit=2&page=2' }),
+  OK('stock-capped', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: stockRowsOf(201) }, { url: I + '/stock/shop-a?limit=500' }),
+  OK('profile-map-empty', 'GET /api/integrations/profile-map', {}),
+  OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD }),
+  /* the writers' success answers: a request that reaches each one's 200 is the example the generated output_allowlist case plays (S34) */
+  OK('approve-connector', 'POST /api/integrations/:actor_id/approve', { actor: { identity_id: A1, site: 'PC', connector_config: { key_jti: 'j1' } } }, { url: I + '/' + A1 + '/approve', body: {} }),
+  OK('putstreams-clear', 'PUT /api/integrations/streams', {}, { body: { order: null, stock: false } }), /* CON-110: leaving a stream unowned needs no connector (and is the example the generated output case replays) */
+  OK('putstreams-give', 'PUT /api/integrations/streams', { heldKit: true }, { body: { order: 'kit@pc', stock: null } }),
+  OK('profile-write', 'POST /api/integrations/profile', { asKey: true, profileValues: HELD }, { body: { source: 'tally', fields: { legal_name: 'Acme Pvt Ltd', state: 'Delhi' } } })
 ];
 
 function send(port, method, urlPath, body, headers) {
@@ -224,11 +314,15 @@ function checkLegacy(label, answer, frozen) {
 async function checkRoutes(port, recording) {
   console.log('\n-- routes/integrations.js: every refusal is a Problem and keeps its old keys --');
   const tested = {};
-  for (const scenario of SCENARIOS) {
+  for (const scenario of SCENARIOS.concat(SUCCESS)) {
     const answer = await runScenario(port, scenario);
-    recording[scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
-    (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
+    recording[scenario.route + '|' + scenario.id] = Object.assign({ route: scenario.route, status: answer.status, body: answer.json }, scenario.ok ? { request: Object.assign({ url: scenario.url || scenario.route.split(' ')[1] }, scenario.body ? { body: scenario.body } : {}) } : {});
     const label = scenario.id;
+    if (scenario.ok) {
+      if (!argv.includes('--capture')) check(label + ': answers 200', answer.status === 200, answer.status);
+      continue;
+    }
+    (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (argv.includes('--capture')) continue;
     check(label + ': answers ' + scenario.status, answer.status === scenario.status, answer.status);
     if (scenario.inherited) continue;
@@ -262,6 +356,37 @@ function checkContract() {
   check('fail closed: a 5xx keeps its old keys and never says its cause', sameValue(contract.FAILED_LEGACY, { error: 'Failed', message: SAFE_SENTENCE }));
 }
 
+/**
+ * output_allowlist in this route file's own world (S34): every GET success schema is closed (additionalProperties false, derived from the recorded answers and the handler's own keys),
+ * holds every recorded 200, and the allow-list filter dropped nothing from any of them.
+ */
+function checkAllowList(recording) {
+  console.log('\n-- the closed success schemas hold every recorded 200 --');
+  const contract = require(path.join(HERE, 'lib', 'integrations-contract.js'));
+  const { prune, droppedCount } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const operations = {
+    'GET /api/integrations/kit': contract.KIT_OPERATION,
+    'GET /api/integrations/catalogue': contract.CATALOGUE_OPERATION,
+    'GET /api/integrations/status': contract.STATUS_OPERATION,
+    'GET /api/integrations/streams': contract.STREAMS_OPERATION,
+    'GET /api/integrations/reconcile': contract.RECONCILE_OPERATION,
+    'GET /api/integrations/stock/:handle': contract.STOCK_OPERATION,
+    'GET /api/integrations/profile-map': contract.PROFILE_MAP_OPERATION
+  };
+  Object.keys(operations).forEach((route) => {
+    const schema = operations[route].responses[200].content['application/json'].schema;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    check(route + ': the 200 schema is closed (additionalProperties false)', schema.additionalProperties === false, Object.keys(schema));
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its schema lists', held, { answers: answers.length, errors: fits.errors });
+  });
+  const proved = ALLOW.checkAllowList(recording, { [APPROVE_ROUTE]: contract.APPROVE_OPERATION, [PROFILE_ROUTE]: contract.PROFILE_OPERATION }, check); /* S34: the approve answer ({ ok, enrol }) is closed and every recorded 200 fits it */
+  check('the filter dropped no key of any answer these scenes gave', droppedCount() === 0, droppedCount());
+  return proved;
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   installStubs();
@@ -282,6 +407,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
+  const closedHeld = checkAllowList(recording);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -289,7 +415,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/integrations.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    ALLOW.writeEvidence(EVIDENCE_FILE, isApprove, closedHeld);
+  } else {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/integrations.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for the approve route exactly when its 200 held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, isApprove), closedHeld), closedHeld);
+  }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();

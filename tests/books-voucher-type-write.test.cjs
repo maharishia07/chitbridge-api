@@ -1,5 +1,6 @@
 /* books-voucher-type-write — since b279 ran (Athi, 2026-10-03), every new journal_entry row carries its voucher TYPE beside its series,
    so a MANUAL entry (series MJ) keeps its own kind: a manual Payment reads Payment, not Journal. Old rows stay NULL (derived from the series). */
+// CARD      14-accounting/voucher-series-and-document-numbers
 const S = require('../lib/books-store');
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ok  ' + m); } else { fail++; console.log('  XX  ' + m); } };

@@ -5,6 +5,7 @@
  *   3  a statement of more than 400 days is refused in words; the route makes ONE read of chits and ONE of parties (no per-row read)
  *   4  the engine (bank-recon v1.44.0) settles a statement line from the answer — the same objects the web passes it
  * Run: node tests/books-bank-rail.test.cjs
+ * CARD      16-finance/bank-reconciliation-and-bank-rail
  */
 'use strict';
 const path = require('path'), http = require('http');

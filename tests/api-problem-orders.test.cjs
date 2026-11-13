@@ -18,6 +18,7 @@
  *   node tests/api-problem-orders.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-orders.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-orders.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
+ *   node tests/api-problem-orders.test.cjs --compare F        the answers now against a capture F: byte for byte (status, content type, body)
  */
 'use strict';
 const path = require('path');
@@ -29,6 +30,28 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock, Math.random and uuid are held still, so a difference is the code's and not the run's */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+  let minted = 0;
+  const uuidFile = require.resolve('uuid');
+  const realUuid = require('uuid');
+  require.cache[uuidFile].exports = Object.assign({}, realUuid, { v4: () => '00000000-0000-4000-8000-' + String((minted += 1)).padStart(12, '0') });
+}
+const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
@@ -69,7 +92,7 @@ const STAFF = actorOf('editor');
 const VIEWER = actorOf('viewer');
 const COMMENTER = actorOf('commenter');
 const CUSTOMER_LOGIN = { identity_id: 'c-1', identity_type: 'customer', parent_entity_id: SHOP, display_name: 'A buyer' };
-const FRESH = { realAuth: false, who: OWNER, asKey: false, db: 'ok', repeatMigrated: true, flags: null, bookedAll: false, mintFails: null, moveAnswer: null, noWork: false, jsonThrows: false };
+const FRESH = { tables: false, realAuth: false, who: OWNER, asKey: false, db: 'ok', repeatMigrated: true, flags: null, bookedAll: false, mintFails: null, moveAnswer: null, noWork: false, jsonThrows: false };
 const world = Object.assign({}, FRESH);
 
 /* ── stand-ins: auth, db, the repeat store, the counters register, the work rows ── */
@@ -85,6 +108,7 @@ const failing = (run) => async (...args) => {
 /** the counters' register: policy_flags of the entity that asks (identities.policy_flags, read FOR UPDATE), nothing for a shop that has none */
 const registryOf = (entity) => clone((world.flags && world.flags[entity]) || {});
 async function registryAnswer(sql, params) {
+  if (/FROM information_schema\.tables/.test(sql)) return { rows: world.tables ? [{ '?column?': 1 }] : [], rowCount: 1 }; /* lib/schema hasTable: the line, delivery and assignment tables are there or not */
   if (/FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ policy_flags: registryOf(params[0]) }], rowCount: 1 };
   return { rows: [], rowCount: 1 };
 }
@@ -122,6 +146,7 @@ function freshRepeat() {
   const { memory } = require('./support/repeat-supply-memory.cjs');
   const R = require(path.join(HERE, 'lib', 'repeat-supply'));
   repeatMemory = memory();
+  repeatMemory.postgres = true; /* K-1 (B2): the store keeps the rules of Postgres a junk value breaks (a chit id is a uuid, a NUL byte is no text) */
   repeatMemory.migrated = world.repeatMigrated;
   R.use(repeatMemory.store);
   R.useSender(repeatMemory.sendAs);
@@ -184,6 +209,28 @@ const countered = { prep: () => seedAgreement({ state: 'countered', counter: { n
 const withBill = (body) => ({ body, prep: () => seedBill() });
 const SCHEDULE = { every: 1, unit: 'weekly', start_on: '2099-01-01', until: { runs: 3 }, mode: 'draft' };
 const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
+/** S34: the tables of the line, delivery and assignment reads are there (lib/schema hasTable says yes), so lines_n, lines_open_n and the assignments are numbers */
+const MIGRATED = { tables: true };
+/** a prep that changes shop e1's copy n of the stand-in Tasks & Orders rows (tests/support/work-stub.cjs) */
+const changeCopy = (n, over) => (S) => Object.assign(S.D.copies.find((row) => row.chit_id === S.U(n) && row.entity_id === SHOP), over);
+/** copy 3 as the copies table can hold it with every nullable column empty: status (chit_status.current_status), created_at (chit_header.created_at), the summary, the counterparty */
+const BARE_COPY = { current_status: null, created_at: null, summary_json: null, counterparty_id: null, counterparty_name: null, currency: null, value: null, alt_value: null, assigned_to_actor_id: null };
+/** a shop that holds more copies than one read takes (lib/work-rows LIMIT): the answer says truncated and gives no counts */
+const MANY = (S) => { S.D.bigRows = Array.from({ length: 5000 }, (nothing, at) => S.copy(1 + (at % 5), { chit_id: S.U(500 + at) })); };
+const onSheet = (n, extra) => X('sheet-' + n[0], 'GET ' + WK + '/:chit_id', 200, Object.assign({ url: WK + '/' + chitOf(n[1]), setup: MIGRATED }, extra));
+/* S34: the SUCCESS side of the 14 repeat routes API-8 closed: every nullable column of the agreement is held as null in one scene and filled in another */
+const THIRD_PARTY = { identity_id: 'e4', identity_type: 'entity', display_name: 'Third shop' };
+const MONEY = { gross: 1000, savings: 0, net: 1000, tax: 180, total: 1180, currency_code: 'INR', provisional: true };
+/** the agreement with every optional column filled: the bill it came from, the anchor day, the end, the cap, the last run, who moved it, the stamp, the update, the money and the subject */
+const FULL_ROW = { state: 'agreed', source_chit_id: BILL_CHIT, unit: 'monthly', anchor_day: 15, next_on: '2099-01-15', end_on: '2099-12-31', runs_max: 5, last_run_on: '2098-12-15', state_by: SHOP, state_at: '2026-10-02T00:00:00Z', state_note: 'Checked', created_by: SHOP, updated_at: '2026-10-03T00:00:00Z', terms: { lines: [{ line_id: 'l1', quantity: 3 }] } };
+const filled = { prep: async () => { await seedAgreement(FULL_ROW); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }], summary_json: { currency_code: 'INR', money: MONEY }, manual_subject: 'Repeat supply · every month' }); } };
+/** the agreement chit names nobody but the sender: the customer has no name on it */
+const unnamed = { prep: async () => { await seedAgreement({ state: 'agreed' }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }], all_recipients: [] }); } };
+const dueTwice = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 3 }); } };
+const refusedRun = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 1 }); repeatMemory.refuseSend = 'Not now'; } };
+const brokenRun = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 1 }); repeatMemory.sendAs = async () => { throw new Error(SECRET_SQL); }; require(path.join(HERE, 'lib', 'repeat-supply')).useSender(repeatMemory.sendAs); } };
+/** a third shop that holds the agreement chit reads the agreement and is told it is read only */
+const thirdParty = { url: RS + '/' + AGREEMENT + AT, setup: { who: THIRD_PARTY }, prep: async () => { await seedAgreement({ state: 'agreed' }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, 'e4', { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }] }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }] }); } };
 const EXTRAS = [
   /* repeat supply: the seller's side */
   X('migrated-empty-list', 'GET ' + RS, 200, {}),
@@ -244,7 +291,37 @@ const EXTRAS = [
   X('sweep-as-viewer', 'POST ' + RS + '/sweep', 403, { setup: { who: VIEWER } }),
   X('create-as-viewer', 'POST ' + RS, 403, { body: {}, setup: { who: VIEWER } }),
   N('body-not-an-object', 'POST ' + RS + '/:id/pause', 400, Object.assign({ body: [] }, agreed)),
+  X('list-filled', 'GET ' + RS, 200, filled),
+  X('list-unnamed-customer', 'GET ' + RS, 200, unnamed),
+  X('one-filled', 'GET ' + RS + '/:id', 200, filled),
+  X('one-unnamed-customer', 'GET ' + RS + '/:id', 200, unnamed),
+  X('one-read-only', 'GET ' + RS + '/:id', 200, thirdParty),
+  X('pause-filled', 'POST ' + RS + '/:id/pause', 200, Object.assign({ body: { reason: 'stock' } }, filled)),
+  X('end-with-a-reason', 'POST ' + RS + '/:id/end', 200, Object.assign({ body: { reason: 'closed' } }, agreed)),
+  X('refuse-with-a-reason', 'POST ' + RS + '/:id/refuse', 200, Object.assign({ body: { reason: 'no' } }, countered)),
+  X('agree-the-lines', 'POST ' + RS + '/:id/agree', 200, { prep: () => seedAgreement({ state: 'countered', counter: { lines: [{ line_id: 'l1', quantity: 3 }], every: 2, unit: 'weekly', start_on: '2099-02-01', note: 'more', by: CUSTOMER, at: '2026-10-02T00:00:00Z' } }) }),
+  X('counter-the-lines', 'POST ' + RS + '/:id/counter', 200, Object.assign({ url: RS + '/' + AGREEMENT + '/counter' + AT, body: { lines: [{ line_id: 'l1', quantity: 3 }] } }, proposed, { setup: asCustomer })),
+  X('accept-unnamed', 'POST ' + RS + '/:id/accept', 200, Object.assign({ url: RS + '/' + AGREEMENT + '/accept' + AT }, unnamed, { prep: async () => { await seedAgreement({ state: 'proposed' }); } }, { setup: asCustomer })),
+  X('skip-twice', 'POST ' + RS + '/:id/skip', 200, Object.assign({ body: { reason: 'holiday' } }, filled)),
+  X('run-catches-up', 'POST ' + RS + '/:id/run', 200, dueTwice),
+  X('run-again-same-day', 'POST ' + RS + '/:id/run', 200, { prep: () => seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 3, runs: { '2000-01-01': 'aaaaaaaa-0000-4000-8000-000000000009' } }) }),
+  X('run-refused-by-the-send', 'POST ' + RS + '/:id/run', 200, refusedRun),
+  X('run-breaks-in-the-send', 'POST ' + RS + '/:id/run', 200, brokenRun),
+  X('sweep-refused-by-the-send', 'POST ' + RS + '/sweep', 200, refusedRun),
+  X('sweep-breaks-in-the-send', 'POST ' + RS + '/sweep', 200, brokenRun),
+  X('sweep-catches-up', 'POST ' + RS + '/sweep', 200, dueTwice),
+  X('create-from-a-bare-bill', 'POST ' + RS, 200, { body: Object.assign({ chit_id: BILL_CHIT, anchor_day: 10, until: { on: '2099-12-31' }, mode: 'send' }, SCHEDULE, { until: { on: '2099-12-31' }, unit: 'monthly' }), prep: () => seedBill({ summary_json: {} }) }),
   N('body-not-an-object', 'POST ' + RS, 400, { body: [] }),
+  /* K-1 (B2): a chit id that is no uuid answers as one no shop holds (404, as an unknown bill or a chit the caller does not hold); text the database cannot store is a 400 in plain words */
+  N('create-bill-is-not-an-id', 'POST ' + RS, 404, { body: Object.assign({ chit_id: 'nope' }, SCHEDULE) }),
+  N('create-bill-with-a-nul-byte', 'POST ' + RS, 404, { body: Object.assign({ chit_id: 'a\u0000b' }, SCHEDULE) }),
+  N('one-chit-is-not-an-id', 'GET ' + RS + '/:id', 404, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=nope' }, agreed, { setup: { who: STRANGER } })),
+  N('one-chit-with-a-nul-byte', 'GET ' + RS + '/:id', 404, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a%00b' }, agreed, { setup: { who: STRANGER } })),
+  N('pause-reason-with-a-nul-byte', 'POST ' + RS + '/:id/pause', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('end-reason-with-a-nul-byte', 'POST ' + RS + '/:id/end', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('refuse-reason-with-a-nul-byte', 'POST ' + RS + '/:id/refuse', 400, Object.assign({ body: { reason: 'a\u0000b' } }, countered)),
+  N('skip-reason-with-a-nul-byte', 'POST ' + RS + '/:id/skip', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('counter-note-with-a-nul-byte', 'POST ' + RS + '/:id/counter', 400, Object.assign({ url: RS + '/' + AGREEMENT + '/counter' + AT, body: { every: 2, unit: 'weekly', start_on: '2099-02-01', note: 'a\u0000b' } }, proposed, { setup: asCustomer })),
   N('chit-given-twice', 'GET ' + RS + '/:id', 400, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a&chit=b' }, agreed)),
   /* work */
   X('list-orders-in', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in' }),
@@ -257,11 +334,35 @@ const EXTRAS = [
   X('sheet-not-an-id', 'GET ' + WK + '/:chit_id', 404, { url: WK + '/nope' }),
   X('sheet-unknown-chit', 'GET ' + WK + '/:chit_id', 404, { url: WK + '/20000000-0000-4000-8000-000000000999' }),
   X('sheet-of-another-shop', 'GET ' + WK + '/:chit_id', 404, { url: WK + '/' + chitOf(10) }),
+  /* S34: the READY branch of the work reads (the tables are there), and every nullable column held as null: the real handlers and libraries run over the stand-in rows */
+  X('list-orders-in-ready', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: MIGRATED }),
+  X('list-orders-out-ready', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_out', setup: MIGRATED }),
+  X('list-tasks-of-one-person', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=tasks&assigned=A1&status=pending', setup: MIGRATED }),
+  X('list-tasks-nobody-holds', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&assigned=none&q=customer', setup: MIGRATED }),
+  X('list-done', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=done', setup: MIGRATED }),
+  X('list-past-the-cap', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&page=9&limit=9999', setup: MIGRATED }),
+  X('list-bare-copy', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_out', setup: MIGRATED, prep: changeCopy(3, BARE_COPY) }),
+  X('list-too-many-copies', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: MIGRATED, prep: MANY }),
+  X('facts-too-many-copies', 'GET ' + WK + '/facts', 200, { prep: MANY }),
+  X('facts-unbilled-nothing-open', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', setup: { noWork: true } }),
+  X('facts-unbilled-two-currencies', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', prep: (S) => S.D.copies.push(S.copy(11, { currency: 'AED' })) }),
+  onSheet(['ready', 1]),
+  onSheet(['delivery-order', 1], { prep: (S) => { changeCopy(1, { summary_json: { order_details: { channel: 'online', fulfilment: 'delivery', address: '12 Main Road', requested_delivery: null, remark: null, name: null } } })(S); S.D.detail[S.U(1)].line_items[0].price = null; } }),
+  onSheet(['task', 4]),
+  onSheet(['order-i-bought', 2]),
+  onSheet(['order-with-no-lines', 3]),
+  onSheet(['bare-copy', 3], { prep: changeCopy(3, BARE_COPY) }),
+  X('sheet-bare-copy-no-tables', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(3), prep: changeCopy(3, BARE_COPY) }),
+  /* RAIL-146b: a co-assist WITHOUT can_see_costs — the cost-side rows lose their money (cost_hidden), the sheet and the unbilled figure too; no party is on a list here, so every row is unknown and hides */
+  X('list-orders-in-cost-blind', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('sheet-cost-blind', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(1), setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('facts-unbilled-cost-blind', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', setup: { who: STAFF }, prep: (S) => { S.D.canSeeCosts = false; } }),
   /* counters */
   X('counters-listed', 'GET ' + CT, 200, { setup: { flags: FREE } }),
   X('counters-listed-with-a-holder', 'GET ' + CT, 200, { setup: { flags: HELD } }),
   X('counters-listed-as-staff', 'GET ' + CT, 200, { setup: { flags: FREE, who: STAFF } }),
   X('counters-key-refused', 'GET ' + CT, 403, { setup: { asKey: true } }),
+  X('counter-make-unknown-key-refused', 'POST ' + CT, 400, { body: { colour: 'red', name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made', 'POST ' + CT, 201, { body: { name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made-unnamed', 'POST ' + CT, 201, { body: {}, setup: { flags: FREE } }),
   X('counter-none-left', 'POST ' + CT, 400, { body: {}, setup: { flags: FREE, bookedAll: true } }),
@@ -269,17 +370,20 @@ const EXTRAS = [
   X('counter-make-not-migrated', 'POST ' + CT, 503, { body: {}, setup: { flags: FREE, policyMissing: true } }),
   X('counter-make-as-staff', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, who: STAFF } }),
   X('counter-make-by-key', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, asKey: true } }),
+  X('counter-rename-unknown-key-refused', 'PATCH ' + CT + '/:id', 400, { body: { colour: 'red', name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-renamed', 'PATCH ' + CT + '/:id', 200, { body: { name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-rename-unnamed', 'PATCH ' + CT + '/:id', 400, { body: {}, setup: { flags: FREE } }),
   X('counter-rename-unknown', 'PATCH ' + CT + '/:id', 404, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/C9' }),
   X('counter-rename-lowercase-id', 'PATCH ' + CT + '/:id', 200, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/c1' }),
   X('counter-rename-fails', 'PATCH ' + CT + '/:id', 500, { body: { name: 'x' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-assign-unknown-key-refused', 'POST ' + CT + '/:id/assign', 400, { body: { colour: 'red', phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-assigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-unassigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '' }, setup: { flags: FREE } }),
   X('counter-assign-bad-phone', 'POST ' + CT + '/:id/assign', 400, { body: { phone: '12' }, setup: { flags: FREE } }),
   X('counter-assign-unknown', 'POST ' + CT + '/:id/assign', 404, { body: { phone: '' }, setup: { flags: FREE }, url: CT + '/C9/assign' }),
   X('counter-assign-as-staff', 'POST ' + CT + '/:id/assign', 403, { body: { phone: '' }, setup: { flags: FREE, who: STAFF } }),
   X('counter-assign-fails', 'POST ' + CT + '/:id/assign', 500, { body: { phone: '' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-open-unknown-key-refused', 'POST ' + CT + '/:id/open', 400, { body: { colour: 'red' }, setup: { flags: FREE, patchKeys: true } }),
   X('counter-opened', 'POST ' + CT + '/:id/open', 200, { body: {}, setup: { flags: FREE, patchKeys: true } }),
   X('counter-open-held', 'POST ' + CT + '/:id/open', 409, { body: {}, setup: { flags: HELD } }),
   X('counter-open-unknown', 'POST ' + CT + '/:id/open', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/open' }),
@@ -287,6 +391,7 @@ const EXTRAS = [
   X('counter-open-mint-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: new Error(SECRET_SQL) } }),
   X('counter-open-mint-refuses', 'POST ' + CT + '/:id/open', 400, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: Object.assign(new Error('Too many keys.'), { status: 400 }) } }),
   X('counter-open-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-release-unknown-key-refused', 'POST ' + CT + '/:id/release', 400, { body: { colour: 'red' }, setup: { flags: HELD } }),
   X('counter-released', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: HELD } }),
   X('counter-released-free', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: FREE } }),
   X('counter-release-unknown', 'POST ' + CT + '/:id/release', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/release' }),
@@ -346,7 +451,7 @@ function applyPatch(setup) {
     undo.push([owner, name, owner[name]]);
     owner[name] = given;
   };
-  const keys = require(path.join(HERE, 'routes', 'keys'));
+  const keys = require(path.join(HERE, 'lib', 'api-keys'));
   if (setup.patchKeys || setup.mintFails) {
     swap(keys, 'mint', async () => {
       if (setup.mintFails) throw setup.mintFails;
@@ -364,7 +469,7 @@ function applyPatch(setup) {
   if (setup.policyMissing) {
     const policy = require(path.join(HERE, 'lib', 'policy'));
     swap(policy, 'patchKey', async () => {
-      throw Object.assign(new Error('Policy flags are not migrated on this environment (b130).'), { status: 503 });
+      throw Object.assign(new Error('Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings.'), { status: 503 });
     });
   }
   return () => undo.reverse().forEach(([owner, name, original]) => (owner[name] = original));
@@ -375,12 +480,25 @@ async function runScenario(port, scenario, S) {
   S.seed();
   if (world.noWork) S.D.copies = [];
   freshRepeat();
-  if (scenario.prep) await scenario.prep();
+  require(path.join(HERE, 'lib', 'schema'))._reset(); /* a table probe answered once is not remembered into the next scenario */
+  if (scenario.prep) await scenario.prep(S);
   const restore = applyPatch(scenario.setup || {});
   const method = scenario.route.split(' ')[0];
   const answer = await send(port, method, scenario.url, scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body);
   restore();
   return answer;
+}
+
+/** a body's random ids and clock stamps are the same answer on every run: masked before a body is hashed */
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
+const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
+/** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
+function compare(captureFile, recording) {
+  const before = JSON.parse(fs.readFileSync(captureFile, 'utf8'));
+  const differing = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || recording[key].type !== before[key].type || recording[key].sha !== before[key].sha);
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - differing.length) + ' identical, ' + differing.length + ' different');
+  differing.forEach((key) => console.log('  ' + key + ' [' + before[key].status + ' -> ' + (recording[key] && recording[key].status) + ']'));
+  return differing.length;
 }
 
 const legacyOf = (key, scenario) => (JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes[key] || { answers: [] }).answers.find((answer) => answer.scenario === scenario);
@@ -409,12 +527,13 @@ const allowedFor = () => require(path.join(HERE, 'lib', 'orders-contract.js')).a
 
 async function checkRoutes(port, scenarios, recording, S) {
   const tested = {};
-  const allowed = argv.includes('--capture') ? null : allowedFor();
+  const allowed = argv.includes('--capture') || argv.includes('--compare') ? null : allowedFor();
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario, S);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, after: !!scenario.after };
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, body: answer.json, after: !!scenario.after, sha: shaOf(answer), request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
+    if (argv.includes('--compare')) continue;
     if (argv.includes('--capture')) {
       if (scenario.expect !== undefined && answer.status !== scenario.expect) console.log('  built for ' + scenario.expect + ', answered ' + answer.status + ': ' + label + ' ' + answer.text.slice(0, 120));
       continue;
@@ -499,6 +618,7 @@ function checkOrdersWords() {
   const req = { id: 'r1' };
   const refused = words.repeatFault(Object.assign(new Error('Because.'), { refused: true, code: 'REPEAT_ENDED', status: 422 }), req);
   check('repeatFault: a refusal keeps its own code and sentence, 422', refused.status === 422 && refused.code === 'REPEAT_ENDED' && sameValue(refused.legacy, { code: 'REPEAT_ENDED', error: 'Because.', message: 'Because.' }), refused);
+  check('repeatFault: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 REPEAT_BAD_REQUEST in plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.repeatFault(sqlError(code), req); return one.status === 400 && one.code === 'REPEAT_BAD_REQUEST' && sameValue(one.legacy, { error: 'Bad request', message: 'Cannot save this text. Type it again.' }); }));
   const bare = words.repeatFault(Object.assign(new Error('Because.'), { refused: true, status: 422 }), req);
   check('repeatFault: a refusal with no code is REPEAT_REFUSED', bare.code === 'REPEAT_REFUSED' && bare.legacy.code === 'REPEAT_REFUSED', bare);
   const odd = words.repeatFault(Object.assign(new Error('Closed.'), { status: 409, body: { why: 'wrong_step' } }), req);
@@ -522,6 +642,58 @@ function checkContractShape() {
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
 }
 
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a work read or a repeat-supply route whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * and whose recorded 200s all fit it (types and nullable columns included) is proved here; the generator's proxy world holds no Tasks & Orders rows, so it answers the sheet 404.
+ * → { route: { output_allowlist: true } } for the routes that held
+ */
+/** S41 (K-1, B2): a chit id that is no uuid (or holds a NUL byte) answers exactly as one no shop holds: the same status, the same body but for the request id */
+function checkJunkAnswersAsUnknown(recording) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const bodyOf = (key) => JSON.stringify(Object.assign({}, (recording[key] || {}).body, { request_id: null }));
+  const pairs = [
+    ['GET /api/repeat/:id|', 'one-chit-is-not-an-id', 'one-as-a-stranger'],
+    ['GET /api/repeat/:id|', 'one-chit-with-a-nul-byte', 'one-as-a-stranger'],
+    ['POST /api/repeat|', 'create-bill-is-not-an-id', 'create-bill-unknown'],
+    ['POST /api/repeat|', 'create-bill-with-a-nul-byte', 'create-bill-unknown']
+  ];
+  pairs.forEach(([route, junk, unknown]) => {
+    check(junk + ': answers exactly as ' + unknown + ' (404, same body)', (recording[route + junk] || {}).status === 404 && (recording[route + unknown] || {}).status === 404 && bodyOf(route + junk) === bodyOf(route + unknown), { junk: (recording[route + junk] || {}).status, unknown: (recording[route + unknown] || {}).status });
+  });
+}
+
+function checkAllowList(recording, routes) {
+  const proved = {};
+  const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => [RS, CT].includes(mountOf(route)))).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
+    const shape = shapeOf(route);
+    const answers = Object.values(recording).filter((one) => one.route === route && String(one.status) === String((shape || {}).status || 200) && one.body);
+    const fits = shape && engine.compile(shape.schema);
+    const held = !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body));
+    check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return FOREIGN.ownedBy(proved, (route) => [RS, WK, CT].includes(mountOf(route))); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
+}
+/** the work reads the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK, CT].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter((route) => [RS, WK, CT].includes(mountOf(route))).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
@@ -539,6 +711,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const port = server.address().port;
   const recording = {};
   const tested = await checkRoutes(port, scenariosOf(routes), recording, S);
+  if (flagValue('--compare')) {
+    server.close();
+    process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
+  }
   if (flagValue('--capture')) {
     server.close();
     fs.writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
@@ -553,6 +729,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
+  check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
+  checkJunkAnswersAsUnknown(recording);
+  const allowed = checkAllowList(recording, routes);
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
@@ -566,7 +745,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
+    writeAllowList(allowed);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads, repeat-supply and counters routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }

@@ -15,6 +15,8 @@
  */
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
+/* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
+const NOT_REGISTERED = { tax: { registered: false } };
 const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
 const RUN = 'cr' + (Date.now() % 1e10).toString(36);
 let pg = null;
@@ -33,7 +35,7 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
   ok(await j('/health'), 'health');
   pg = new Client({ connectionString: DB }); await pg.connect();
   try {
-    const A = await freshShop(RUN + 'a', 'Crm truth');
+    const A = await freshShop(RUN + 'a', 'Crm truth', NOT_REGISTERED);
     ok(await j('/api/books/enable', { method: 'POST', token: A.token }), 'books on');   /* the Ledger is what says "dues" — a precondition, through its own route */
     const r = ok(await j('/api/products', { method: 'POST', token: A.token, body: { item_data: { name: 'Rice', unit: 'piece', price: 60 } } }), 'product').b;
     const P = { id: r.item.item_id, name: 'Rice', unit: 'piece', price: 60 };
@@ -95,6 +97,15 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       const i = ok(await j('/api/crm/leads/import', { method: 'POST', token: A.token, body: { rows: [{ name: 'Import Twin', phone: '9876510077' }, { name: 'Import New', phone: '9876510078' }] } }), 'import').b;
       expect(i.added === 1 && i.skipped.length === 1 && i.rows[0].party_id === base.party_id && /already/i.test(i.skipped[0].why || '') && await count('9876510077') === 1, JSON.stringify({ added: i.added, skipped: i.skipped }).slice(0, 220));
     });
+    await kase('CR-06d', 'B10: five leads with the SAME phone sent at once (real Postgres) -> one 201, four 409, no 500, one party', async () => {
+      const rs = await Promise.all([1, 2, 3, 4, 5].map((n) => lead(A, 'Burst Phone ' + n, '9876520011')));
+      const made = rs.filter((x) => x.status === 201).length, refused = rs.filter((x) => x.status === 409).length;
+      expect(made === 1 && refused === 4 && await count('9876520011') === 1, 'statuses ' + rs.map((x) => x.status).join(',') + ' · parties with that phone ' + await count('9876520011'));
+    });
+    await kase('CR-06e', 'B10: five leads with the SAME name and different phones sent at once -> one 201, four 409, no 500', async () => {
+      const rs = await Promise.all([1, 2, 3, 4, 5].map((n) => lead(A, 'Burst Name', '98765200' + (20 + n))));
+      expect(rs.filter((x) => x.status === 201).length === 1 && rs.filter((x) => x.status === 409).length === 4, 'statuses ' + rs.map((x) => x.status).join(','));
+    });
     await kase('CR-06c', 'the same phone typed with +91 and spaces is the same party', async () => {
       const c = await lead(A, 'Format Twin', '+91 98765 10077');
       expect(c.status === 409 && await count('9876510077') === 1, 'lead ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 140) + ' · parties with that phone ' + await count('9876510077'));
@@ -108,7 +119,7 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       expect(rec.may_trade && rec.may_trade.ok === false && rec.may_trade.why === 'local' && rec.on_chitbridge === false && row && row.may_trade.why === 'local', 'record ' + JSON.stringify(rec.may_trade) + ' · list ' + JSON.stringify(row && row.may_trade));
       expect(/not on ChitBridge/.test(added.message || '') && added.customer.on_rail === false && /not on ChitBridge/.test((added.customer.one_sided || {}).why || ''), 'add answer ' + JSON.stringify(added).slice(0, 200));
     });
-    const B = await freshShop(RUN + 'b', 'Crm truth trader');
+    const B = await freshShop(RUN + 'b', 'Crm truth trader', NOT_REGISTERED);
     await kase('CR-07b', 'a business on the rail in the same sandbox MAY trade: added by User ID, on_rail true, no one-sided note, may_trade ok', async () => {
       const added = ok(await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { handle: RUN + 'b' } }), 'add by user id').b;
       const rec = ok(await j('/api/crm/parties/' + added.customer.customer_identity_id, { token: A.token }), 'record').b;
@@ -136,6 +147,15 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       const tl = ok(await j('/api/crm/parties/' + first.party_id + '/timeline', { token: A.token }), 'timeline').b;
       expect((tl.entries || []).some((x) => x.kind === 'interaction' && JSON.stringify(x).indexOf(said) >= 0), 'timeline kinds ' + (tl.entries || []).map((x) => x.kind).join(','));
     }, 'R82: the walk saw logged calls not listed; GET /calls is the to-call queue, not the log (owner cb-crm decides where the log lists)');
+
+    /* K-1 Q2 (laptop1, 4 Nov): a rewards holder value is bound as TEXT; Postgres refuses a NUL in text (22021). lib/reward-store binds the holder only when the shop runs a live reward programme: on main this shop (none) answers 200 points 0, a shop WITH one answers 500 (22021).
+       With lib/problem textParam the answer is 400 INVALID_INPUT naming the field either way, before any query. */
+    await kase('CR-K1-NUL', 'GET /relationships/customers/:id/rewards with a NUL in the holder answers 400 INVALID_INPUT, never a 500 with the database words', async () => {
+      const r = await j('/api/relationships/customers/a%00b/rewards', { token: A.token });
+      expect(r.status === 400 && (r.b || {}).code === 'INVALID_INPUT' && (r.b || {}).field === 'id' && !/22021|invalid byte sequence/i.test(JSON.stringify(r.b)), 'answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+      const plain = await j('/api/relationships/customers/holder-' + RUN + '/rewards', { token: A.token });
+      expect(plain.status === 200, 'a plain unknown holder still answers 200, got ' + plain.status);
+    });
   } finally { await pg.end(); }
   finish('crm-truth', process.env.CRM_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('crm truth could not run:', e && e.message); process.exit(2); });

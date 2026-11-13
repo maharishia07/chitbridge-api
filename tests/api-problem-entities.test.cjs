@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * api-problem-entities.test.cjs — API-4 sweep, the entities: every answer of routes/entities.js (25 routes: sign-up and sign-in, the profile, policy, routing, populations, erasure).
+ * api-problem-entities.test.cjs — API-4 sweep, the entities: every answer of routes/entities.js (23 routes: sign-up and sign-in, the profile, policy, routing, populations, erasure).
  *
  * OWNS      the proof that each refusal of the entities routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses
@@ -34,15 +34,20 @@ process.env.PLATFORM_ROOT_ENTITY = SHOP; /* the shop that signs in is the deploy
 const MOUNT = '/api/entities';
 const ROUTE_FILE = 'routes/entities.js';
 /** sign-in and sign-up: recorded byte for byte, never judged (their refusals are routes/signin.js's, an area of its own) */
-const SIGN_IN = ['POST ' + MOUNT + '/register', 'POST ' + MOUNT + '/verify'];
-const ANY_STATUS = [400, 401, 403, 404, 409, 422, 429, 500, 503];
+/** POST /register is the sign-up (routes/signin.js's ask handler, a sweep of its own): run, not judged. POST /verify is JUDGED since the 7 Nov pass: the contract declares it and every status is tested; it has no frozen body to replay. */
+const SIGN_IN = ['POST ' + MOUNT + '/register'];
+const VERIFY = 'POST ' + MOUNT + '/verify';
+/** CMP-30: an erasure that matched no entity now answers 404 where it answered 200 "done", so the worlds that reach an empty store (staff-asks, nothing-found) meet a refusal the sweep adds: nothing was frozen */
+const ERASE_NOW_404 = (route, scenario) => route === 'PATCH ' + MOUNT + '/:id/erase' && ['staff-asks', 'nothing-found'].includes(scenario);
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: ROUTE_FILE },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
-  inherited: (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || SIGN_IN.includes(scenario.route),
-  notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario) || SIGN_IN.includes(one.route),
+  before: () => require(path.join(HERE, 'lib', 'schema'))._reset(), /* every scenario meets the column probes (lib/schema.js caches a yes for good) as the first read of a fresh process does */
+  inherited: (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || SIGN_IN.includes(scenario.route) || scenario.route === VERIFY,
+  added: ERASE_NOW_404,
+  notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario) || ERASE_NOW_404(one.route, scenario) || SIGN_IN.includes(one.route) || one.route === VERIFY,
   cannotRide: (route, scenario) => (HINT_SCENES.includes(scenario) && route.endsWith('/routing') ? ['hint'] : HINT_SCENES.includes(scenario) && route.endsWith('/desk') ? ['hint'] : []) /* the Problem owns `hint`: a null hint cannot ride */
 });
 const { check, world } = lab;
@@ -63,8 +68,13 @@ const sources = () => ({
   platform: require(path.join(HERE, 'lib', 'platformroot')),
   header: require(path.join(HERE, 'lib', 'entity-header')),
   sides: require(path.join(HERE, 'lib', 'sides')),
-  plans: require(path.join(HERE, 'lib', 'plans'))
+  plans: require(path.join(HERE, 'lib', 'plans')),
+  govresolve: require(path.join(HERE, 'lib', 'govresolve')),
+  identityAuth: require(path.join(HERE, 'lib', 'identity-auth')),
+  countrySetup: require(path.join(HERE, 'lib', 'country-setup')), /* the sign-up choices: its installation read, so the 500 of GET /constitutions can be shown */
+  search: require(path.join(HERE, 'lib', 'network-search')) /* NET-39: the Where picker's places, so its 500 can be shown */
 });
+const ALLOW = require('./lib/allowlist-world.cjs');
 const contractModule = () => require(path.join(HERE, 'lib', 'entities-contract.js'));
 
 /** lib/platformroot.js as a deployment with NO root configured: loaded fresh with the variable unset (it reads it once, when it loads), then the real one put back */
@@ -120,9 +130,9 @@ function checkContractShape(routes) {
   console.log('\n-- the contract and the router agree --');
   const contract = contractModule();
   const operations = Object.keys(contract.OPERATIONS);
-  const swept = Object.keys(routes).filter((key) => !SIGN_IN.includes(key));
-  check('every route the router holds but sign-in has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 23 operations: the 25 routes less POST /register and POST /verify', operations.length === 23 && Object.keys(routes).length === 25, [operations.length, Object.keys(routes).length]);
+  const swept = Object.keys(routes);
+  check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
+  check('the contract holds 24 operations: all 24 routes (POST /register since SEC-130 (A))', operations.length === 24 && Object.keys(routes).length === 24, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that is an object (a list is the schema\'s 400)', bodies.every((key) => contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
@@ -156,6 +166,34 @@ async function checkForeignIds(port) {
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
+/**
+ * output_allowlist in the shop's own world (API-8, S34): the generator's stand-in database cannot reach the sign-in, the root-only reads or the lib-backed reads of these routes, so here every route whose
+ * 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and the allow-list filter drops nothing from it:
+ * a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
+ */
+function checkAllowList(recording) {
+  console.log('\n-- the closed success schemas hold every recorded success answer --');
+  const operations = contractModule().OPERATIONS;
+  return FOREIGN.ownedBy(ALLOW.checkAllowList(recording, operations, check), lab.mine); /* only the routes this test owns */
+}
+/** the shop's routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => lab.mine(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter(lab.mine).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
   lab.installStubs();
@@ -165,7 +203,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');
   const declared = capturing ? () => [] : contractModule().allowedStatuses();
-  const allowed = (route) => (SIGN_IN.includes(route) ? ANY_STATUS : declared(route));
+  const allowed = (route) => declared(route); /* SEC-130 (A): POST /register is judged too since it is declared in the contract (its refusals stay recorded byte for byte) */
   const scenarios = lab.scenariosOf(routes, WORLDS, extrasList());
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
   if (lab.flagValue('--capture')) {
@@ -179,6 +217,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   const foreign = await checkForeignIds(server.address().port);
+  const allowed200 = checkAllowList(recording);
   server.close();
   checkWords();
   checkCodesRegistered(contractModule());
@@ -186,7 +225,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
-  check('a caller who is not signed in is refused with 401 on every route that asks for a sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out') && !key.includes('/constitutions') && !SIGN_IN.some((route) => key.startsWith(route + '|'))).every((key) => recording[key].status === 401));
+  check('a caller who is not signed in is refused with 401 on every route that asks for a sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out') && !key.includes('/constitutions') && !SIGN_IN.some((route) => key.startsWith(route + '|')) && !key.startsWith(VERIFY + '|')).every((key) => recording[key].status === 401));
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
@@ -197,13 +236,15 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
-  const judged = Object.fromEntries(Object.keys(coverage).filter((route) => !SIGN_IN.includes(route)).map((route) => [route, coverage[route]]));
+  const judged = Object.fromEntries(Object.keys(coverage).map((route) => [route, coverage[route]]));
   if (lab.argv.includes('--write')) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, judged);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+    writeAllowList(allowed200);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the shop routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/entities.js (sign-in apart)', sameValue(mine, judged), { onDisk: Object.keys(mine).length, covered: Object.keys(judged).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }

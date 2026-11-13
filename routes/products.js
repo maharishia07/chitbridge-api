@@ -1,5 +1,5 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search.   CARD storefront-and-catalogue/products-routes
-// OWNS the products door: list · search · create · bulk · update · retire · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter.
+// OWNS the products door: list · search · create · bulk · update · retire · import · export · schedule · media · versions · starter columns · ready-made lists · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter. An id in the address is judged before the database: router.param (uuidParam for :id and :item_id; the two schedule routes judge theirs in the handler).
 // FLOW  auth → schema check (lib/products-contract.js) → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged;
 //       a refusal → problem(req, res, { status, ...words.x() } | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 const express = require('express');
@@ -8,7 +8,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withEntity, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer · K-1: the one guard for an id in the address
 const { words, faultOf, failed, badStatus, schemaOptionsFor, operationFor, pathsOf } = require('../lib/products-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const money = require('../lib/money'); // a price is never a bare number — stamped on write
@@ -26,6 +26,9 @@ const csv = require('../lib/csv'); // catalogue export — a merchant can leave 
 const catcols = require('../lib/catalogue-columns');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
+const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
+const refLists = require('../lib/reference-store-lists'); /* CAT-124: the Product Lab's lists come from their stores */
+const catSearch = require('../lib/catalogue-search'); /* CAT-313: the one search condition for GET / */
 /* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
 const defaults = require('../lib/defaults');
 /* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
@@ -33,7 +36,8 @@ const sheet = require('../lib/sheet');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
 const xlsxRead = require('../lib/xlsx-read'); // ⭐ and the same, from a workbook ([TILL-109])
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('../lib/rate-limit');
+const { intFromEnv } = require('../lib/limits');
 
 /**
  * ── ⚠️⚠️ THE IMPORT IS THE EXPENSIVE DOOR ([TILL-112]) ───────────────────────────────
@@ -54,7 +58,7 @@ const rateLimit = require('express-rate-limit');
 const { callerKey: importKey } = require('../lib/limiter-key');
 const preflightLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.IMPORT_PREFLIGHT_MAX || '60'),
+  max: intFromEnv('IMPORT_PREFLIGHT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: importKey,
@@ -63,7 +67,7 @@ const preflightLimiter = rateLimit({
 /* ⚠️ the paste-a-list door: smaller per request than the import, larger than a single add */
 const bulkLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.PRODUCTS_BULK_MAX || '60'),
+  max: intFromEnv('PRODUCTS_BULK_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: importKey,
@@ -71,7 +75,7 @@ const bulkLimiter = rateLimit({
 });
 const importLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.IMPORT_COMMIT_MAX || '20'),
+  max: intFromEnv('IMPORT_COMMIT_MAX', 20),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: importKey,
@@ -213,6 +217,8 @@ function statusSafeMessage(e) {
  * every catch below answers `problem(req, res, faultOf(e, req, 'Add failed'))`.
  */
 const ctx = (req) => auth.entityOf(req);
+/** who the status stamp names (the signed-in person's display name; null for a till key with none) */
+const whoOf = (req) => ({ actor_name: req.identity && req.identity.display_name });
 /** the schema check of one route (its own operation in lib/products-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = operationFor(route);
@@ -248,11 +254,15 @@ const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or man
 const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 /** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
-/** strips item_data.cost from every row in place — the one place a list response leaves this file */
+/** a co-assist — the entity login and a paired counter are never gated by cost.writeRefusal */
+const isActor = (req) => !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-235: the writer's `watchKeys` for this caller — cost.costKeysPlanned for a cost-blind co-assist, undefined for everyone else (the owner pays no read) */
+const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity_id)) ? cost.costKeysPlanned : undefined);
+/** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row. PATCH /:id and POST /bulk-update ask it. */
+const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
+/** strips cost (and every nested cost / cost_* key) from every row's item_data in place — the ONE rule every cost-blind answer of this file uses */
 function stripCosts(items) {
-  items.forEach((item) => {
-    if (item && item.item_data && 'cost' in item.item_data) delete item.item_data.cost;
-  });
+  items.forEach((item) => item && cost.dropCostKeys(item.item_data));
   return items;
 }
 /**
@@ -302,9 +312,9 @@ async function defaultSchemaId(entity_id) {
  */
 const { schemaFieldsOf, validateAgainst } = catwrite;
 
-async function validateItem(schema_id, item_data) {
+async function validateItem(schema_id, item_data, stored) {
   if (!schema_id) return null;
-  return validateAgainst(await schemaFieldsOf(schema_id), item_data);
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
@@ -396,6 +406,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
+    const watchKeys = await costWatch(req, entity_id); /* CAT-235: a cost-blind co-assist adds the item, never its cost — judged on the writer's own plan */
     const schema_id = await defaultSchemaId(entity_id);
     /**
      * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
@@ -418,8 +429,11 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
       schema_id,
       item_data: req.body.item_data,
       rid: req.id,
-      validate: (data, rows) => validateAgainst(rows, data)
+      validate: (data, rows) => validateAgainst(rows, data),
+      watchKeys,
+      who: whoOf(req)
     });
+    if (made.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(made.watched)) });
     if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
@@ -472,7 +486,8 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items });
+    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
+    if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
@@ -540,6 +555,46 @@ router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, r
 });
 
 /**
+ * QA-130: ADD OR REMOVE A CATEGORY, PER PRODUCT — { ids, add?, remove? }. A category is a classification, many per product, mostly set once, so the
+ * request names the category and the products, never the whole record (POST /bulk-update's replace). Adding one already there or removing one that is
+ * absent answers 'unchanged' and writes nothing: safe to repeat, so a half-finished run is resumed by sending it again, and no other key of a product
+ * is written, so a newer edit of its price is never overwritten. The gate is the single attach's: the editor hat (auth) and, for a co-assist, the cost
+ * gate over the keys written (a cost-blind caller may touch status only). The rate door is not entered: no item rate key is written (lib/product-categories).
+ */
+const CATEGORY_KEYS = ['categories', 'category_names'];
+const isIdList = (list) => Array.isArray(list) && list.every((id) => typeof id === 'string' && id);
+/** the request read into { ids, add, remove } (each once, order kept), or the refusal that names what is wrong */
+function categoryChangeOf(body) {
+  const once = (list) => Array.from(new Set(list || []));
+  const lists = [body.ids, body.add || [], body.remove || []];
+  if (!lists.every(isIdList)) return { refusal: words.notStrings() };
+  const change = { ids: once(body.ids), add: once(body.add), remove: once(body.remove) };
+  if (change.ids.length > BULK_MAX) return { refusal: words.tooMany(BULK_MAX) };
+  if (!change.add.length && !change.remove.length) return { refusal: words.noCategoryChange() };
+  if (change.add.some((id) => change.remove.indexOf(id) >= 0)) return { refusal: words.categoryBothWays() };
+  return { change };
+}
+/** the count of results with this word */
+const countOf = (results, word) => results.filter((line) => line.result === word).length;
+router.post('/categories/bulk', auth, ...checked('POST /categories/bulk'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const read = categoryChangeOf(req.body);
+    if (read.refusal) return problem(req, res, { status: 400, ...read.refusal });
+    const blocked = await cost.writeRefusal(req, entity_id, CATEGORY_KEYS);
+    if (blocked) return problem(req, res, { status: 403, ...words.costBlind(blocked) });
+    const out = await withEntity(entity_id, (db) => productCategories.changeCategories(db, entity_id, read.change));
+    if (out.unknown) return problem(req, res, { status: 400, ...words.unknownCategories(out.unknown) });
+    const { results } = out;
+    const done = countOf(results, productCategories.RESULT.DONE);
+    if (done) shopChanged(entity_id, 'product categories');
+    res.json({ message: done + ' updated', done, unchanged: countOf(results, productCategories.RESULT.UNCHANGED), refused: countOf(results, productCategories.RESULT.REFUSED), results });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Bulk categories failed'));
+  }
+});
+
+/**
  * ⭐⭐ MANY EDITS, ONE ROUND TRIP — and this is the one Athi actually meant.
  *
  * *"assigning a category to a set of products, why it takes loads of time, are you going round trip for each
@@ -582,15 +637,27 @@ async function editorImportRateRows(req, entity_id, applied, ident) {
     return changed ? rows.concat(applied.lines[index]) : rows;
   }, []);
 }
-/** CAT-210: does any whole-record edit change a rate against what is stored? ONE read for the lot (an owner or manager never pays it) */
-async function editorChangesRate(req, entity_id, items) {
-  if (rateDoor.setsRate(req)) return false;
+/** the whole-file refusal of an import by a co-assist, before any write: a rate (CAT-210) first, then a cost column (CAT-235) — null when the file may go ahead.
+ *  The cost half reads the sheet rows as parsed; a new row and an update-by-key row are asked alike (the update merges prior+row, so no stored key is ever dropped) */
+async function importRefusal(req, entity_id, applied, ident) {
+  const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+  if (rateRows.length) return rateRefusal(rateRows);
+  const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
+  return blind ? { status: 403, ...words.costBlind(blind) } : null;
+}
+/** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
+ *  (a co-assist, CAT-235) and the status check (CAT-323: a word the row already holds is not a change, so the owner needs the row too) */
+async function storedForEdits(req, entity_id, items) {
   const found = await withEntity(entity_id, (db) =>
     db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, items.map((item) => item.id).filter((id) => UUID.test(id))])
   );
-  const stored = new Map(found.rows.map((row) => [row.item_id, row.item_data]));
-  return items.some((item) => rateDoor.rateChanged(item.item_data, stored.get(item.id)));
+  return new Map(found.rows.map((row) => [row.item_id, row.item_data]));
 }
+/** CAT-210: does any whole-record edit change a rate against what is stored? (an owner or manager never does: false) */
+const editorChangesRate = (req, items, stored) => !rateDoor.setsRate(req) && items.some((item) => rateDoor.rateChanged(item.item_data, stored.get(item.id)));
+/** CAT-235: every key a bulk edit writes — the ones each body names plus the stored ones it leaves out (a replace erases them, CAT-237) — once each, for the lot.
+ *  Only item_data goes to erasedKeys: this door ALWAYS replaces, so an item's own `merge: true` must not read as a merge here */
+const bulkWrittenKeys = (items, stored) => Array.from(new Set(items.flatMap((item) => Object.keys(item.item_data).concat(erasedKeys({ item_data: item.item_data }, stored && stored.get(item.id))))));
 /** one bulk-update entry is { id, item_data } with item_data a plain object */
 const isEditShape = (item) => !!item && typeof item.id === 'string' && !!item.item_data && typeof item.item_data === 'object' && !Array.isArray(item.item_data);
 router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, res) => {
@@ -604,14 +671,22 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
       return problem(req, res, { status: 400, ...words.badShape() });
     }
 
-    if (await editorChangesRate(req, entity_id, items)) return problem(req, res, rateRefusal());
+    const stored = await storedForEdits(req, entity_id, items);
+    if (editorChangesRate(req, items, stored)) return problem(req, res, rateRefusal());
+    /* CAT-235: this door REPLACES each record, so it writes the keys a body names AND the stored keys it leaves out (CAT-237's erase rule) — the
+       SAME gate PATCH /:id goes through — a cost-blind co-assist may touch status only — over the lot, all or nothing like the rate and the rules above.
+       The workshop's categorise sends back the list it was given, which for such a caller came WITHOUT cost (GET / strips it), so until now
+       that click silently erased every stored cost; now it is refused in words, `blocked` naming cost among the keys. The owner and a
+       cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
+    const refused = await cost.writeRefusal(req, entity_id, bulkWrittenKeys(items, stored));
+    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
 
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
 
     const list = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i].item_data);
+      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
     if (list.length) {
@@ -625,7 +700,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
       catwrite.patchItems(
         db,
         entity_id,
-        items.map((item) => ({ item_id: item.id, replace: money.stampItem(item.item_data, currency) }))
+        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency) }))
       )
     );
 
@@ -675,7 +750,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     } else if (wantRaw) return problem(req, res, { status: 400, ...words.listStatus() });
 
     const base = q
-      ? { where: `entity_id=$1 AND is_active=true AND item_data::text ILIKE $2`, params: [entity_id, `%${q}%`] }
+      ? catSearch.shelfWhere(entity_id, q) /* CAT-313/314: named visible fields only, % _ \ literal — never the whole record */
       : { where: `entity_id=$1 AND is_active=true`, params: [entity_id] };
     const listParams = base.params.concat(statusParams);
     const listSql = {
@@ -898,7 +973,7 @@ async function catalogueRows(entity_id, canCost) {
     items.forEach((item) => {
       if (item)
         Object.keys(item).forEach((k) => {
-          if (/^cost(_|$)/.test(k)) delete item[k];
+          if (cost.isCostKey(k)) delete item[k];
         });
     });
     if (schema && schema.properties) delete schema.properties.cost;
@@ -1029,7 +1104,7 @@ router.get('/export.csv', auth, async (req, res) => {
 router.get('/template', auth, async (req, res) => {
   try {
     const { template, orderInput: oi } = await catalogueShape(ctx(req));
-    res.json({ ...template, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
+    res.json({ columns: template.columns, optional: template.optional, csv: template.csv, notes: template.notes, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Template failed'));
   }
@@ -1168,8 +1243,8 @@ router.post(
         return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
-      const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
-      if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
+      const refusal = await importRefusal(req, entity_id, applied, ident);
+      if (refusal) return problem(req, res, refusal);
 
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
@@ -1287,7 +1362,7 @@ router.post(
           // The SAME validation the single-add form runs. Without this a bulk upload could create products that
           // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
           // not a rule at all.
-          const verr = validateAgainst(ruleRows, merged);
+          const verr = validateAgainst(ruleRows, merged, prior?.item_data);
           if (verr) {
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
@@ -1314,8 +1389,8 @@ router.post(
           if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
         });
       }
-
-      res.json(importAnswer(outcome, created));
+      const answer = importAnswer(outcome, created);
+      res.json({ message: answer.message, created_columns: answer.created_columns, outcome: answer.outcome, summary: answer.summary });
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }
@@ -1331,7 +1406,9 @@ router.post(
 router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
   try {
     const v = req.query.vertical;
-    res.json(v ? { starter: starter.starterFor(v), verticals: starter.list() } : { verticals: starter.list() });
+    if (Array.isArray(v)) return problem(req, res, { status: 400, ...words.queryGivenTwice('vertical') }); // B2 (K-1): a value given twice has no one meaning
+    if (!v) return res.json({ verticals: starter.list() });
+    res.json({ starter: starter.starterFor(v), verticals: starter.list() });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not list the standard sets'));
   }
@@ -1428,14 +1505,16 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
   }
 });
 
-/** does this edit need the stored row? a merge, a server-owned key, or an editor (whose rate is compared with the stored one, CAT-210) */
-const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data);
+/** CAT-237: a co-assist's replace (no merge:true) writes every stored key it leaves out, so the stored row is read to name them; the owner never pays this */
+const actorReplace = (req, payload) => payload.merge !== true && isActor(req);
+/** does this edit need the stored row? a merge, a server-owned key, an editor (whose rate is compared with the stored one, CAT-210) or a co-assist's replace (CAT-237) */
+const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data) || actorReplace(req, payload);
 /** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */
-async function readStoredForEdit(req, entity_id, item_id, payload) {
+async function readStoredForEdit(db, req, entity_id, item_id, payload) {
   if (!needsStored(req, payload)) return { stored: null, bodyItem: payload.item_data };
-  const current = await withEntity(entity_id, (db) =>
-    db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [item_id, entity_id])
-  );
+  /* CAT-282: FOR UPDATE on the caller's own transaction (the row lock the sibling doors take), so a second edit of this product waits here and merges onto
+     what the first one WROTE; read in one transaction and written in another, parallel merges lost each other with 200 answers */
+  const current = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 FOR UPDATE`, [item_id, entity_id]);
   if (!current.rows.length) return { refusal: { status: 404, ...words.notFound() } };
   const stored = current.rows[0].item_data || {};
   const bodyItem = payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data;
@@ -1464,6 +1543,34 @@ router.mergePatch = mergePatch;
 router.gtinCheck = gtinCheck; /* T3-FIXES: the preflight's code check, for tests/t3-fixes */
 router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
+/**
+ * CAT-282: read (FOR UPDATE) → merge → refuse or declare → write, ALL on one transaction, so parallel edits of one product queue on the row instead of overwriting
+ * each other. → { refusal } (a problem body) or { result } (the patchItems answer).
+ */
+async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
+  const read = await readStoredForEdit(db, req, entity_id, req.params.id, req.body);
+  if (read.refusal) return { refusal: read.refusal };
+  /* CAT-237: a replace (no merge:true) also writes every stored key the body leaves out: it ERASES them. Those keys go through the SAME gate as the keys the body
+     names (one rule: a cost-blind co-assist may touch status only), so a status-only replace by such a caller is refused in words, naming the keys it would have
+     wiped. The owner and a cost-allowed caller never enter (writeRefusal answers null for them). */
+  const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
+  if (erased) return { refusal: { status: 403, ...words.costBlindErase(erased) } };
+  /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN: an EDIT declares what it stores like POST, /bulk and the import (same writer, same rule) */
+  const decl = await catcols.ensureDeclared({
+    query: (text, params) => db.query(text, params),
+    entity_id,
+    schema_id,
+    item_data: read.bodyItem,
+    stored: read.stored,
+    ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+    validate: (data, rows, stored) => validateAgainst(rows, data, stored)
+  });
+  if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
+  /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
+  /* CAT-316: a changed status is recorded by itemstatus.stamp (who, when, until, replaced_by), as PUT /:id/status does; an unchanged echo is left as it came */
+  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency);
+  return { result: await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }) };
+}
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
    one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
 router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
@@ -1487,29 +1594,16 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     /* ⭐ C4: media/image are SERVER-OWNED (catalogue-columns.SERVER_OWNED). The stored row is read when merge:true asks for
        it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
        no extra trip. */
-    const read = await readStoredForEdit(req, entity_id, req.params.id, req.body);
-    if (read.refusal) return problem(req, res, read.refusal);
-    const stored = read.stored,
-      bodyItem = read.bodyItem;
-    /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
-       validated and wrote the raw body, so a key added on edit — through the API, or through a form that renders
-       declared columns and will one day render one more — could land undeclared again. Same writer, same rule. */
-    const decl = await catcols.ensureDeclared({
-      query,
-      entity_id,
-      schema_id: await defaultSchemaId(entity_id),
-      item_data: bodyItem,
-      stored,
-      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-      validate: (data, rows) => validateAgainst(rows, data)
-    });
-    if (decl.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', decl) });
-    // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
-    // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
-    const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
-    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
+    /* CAT-282: the schema and currency are read BEFORE the transaction (they use the pool; a transaction that holds a connection while it waits for a second one can starve the pool) */
+    const schema_id = await defaultSchemaId(entity_id),
+      currency = await regional.currencyFor(entity_id);
+    const done = await withEntity(entity_id, (db) => editProductLocked(db, req, { entity_id, schema_id, currency }));
+    if (done.refusal) return problem(req, res, done.refusal);
+    const r = done.result;
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product updated');
+    /* CAT-234: the answer is the stored row — a cost-blind co-assist, who may flip status, gets it without cost, as GET / strips it */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(r.rows);
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Update failed'));
@@ -1532,9 +1626,20 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
  * checking and writing.
  */
 /* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
+/* ⭐ K-1 (API-10): an item id that is not a uuid names no item (catalogue_items.item_id is uuid) — answered as a uuid that names none, before the database puts its own words in a 500.
+   The two schedule routes below answer an unknown id with a 200 (an empty list · a cancel that cancelled nothing), so they judge it in their own handler. */
+const noSuchItem = uuidParam((req) => (req.method === 'PUT' ? words.noSuchItem() : words.notFound()));
+const answersUnknownIdItself = (req) => (req.method === 'GET' && /[/]schedule$/.test(req.path)) || (req.method === 'DELETE' && /[/]schedule[/]/.test(req.path));
+router.param('id', (req, res, next, value, name) => (answersUnknownIdItself(req) ? next() : noSuchItem(req, res, next, value, name)));
+router.param('item_id', uuidParam(() => words.noSuchPicture())); // the public picture read: an unknown item is "no such picture"
 router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
-    res.json({ enabled: await schedule.enabled(), pending: await schedule.pending(ctx(req), req.params.id) });
+    const entity_id = ctx(req);
+    const pending = UUID.test(req.params.id) ? await schedule.pending(entity_id, req.params.id) : []; // K-1: not a uuid names no item: nothing parked
+    /* CAT-234: a parked patch may carry the owner's cost — a cost-blind co-assist reads the list without it, the same strip as GET /.
+       The wrapper { item_data: row.patch } shares the reference, so stripCosts deletes on row.patch itself (in place); nothing is copied. */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(pending.map((row) => ({ item_data: row.patch })));
+    res.json({ enabled: await schedule.enabled(), pending });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not read the schedule'));
   }
@@ -1545,6 +1650,8 @@ async function writeRefusalOf(req, entity_id, item_data) {
   if (refused) return { status: 403, ...words.costBlind(refused) };
   return editorNamesRate(req, [item_data]) ? rateRefusal() : null;
 }
+/** the problem body for a parked change the catalogue's validator refused: its sentence at 400 (as PATCH answers), another status (a price in the wrong currency) as the library's own refusal */
+const changeRefusal = (req, verdict) => (verdict.status === 400 ? { status: 400, ...words.declined('Invalid change', { error: verdict.message }) } : faultOf(verdict, req, 'Invalid change'));
 router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1565,10 +1672,12 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
       db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id])
     );
     if (!cur.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
-    const patch = schedule.diff(
-      cur.rows[0].item_data,
-      money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id))
-    );
+    /* CAT-317: the item as it will read once the change lands is judged by the SAME validator an edit answers to (catwrite.judgeItem), and parked changes are judged again when due (lib/schedule) */
+    const next = Object.assign({}, cur.rows[0].item_data, decl.item_data);
+    const verdict = await catwrite.judgeItem(entity_id, next, cur.rows[0].item_data);
+    if (verdict) return problem(req, res, changeRefusal(req, verdict));
+    itemstatus.stampInto(next, decl.item_data, cur.rows[0].item_data, whoOf(req)); /* a status that cannot be stamped (a redundant with no replaced_by) is refused now; the stamp itself is cut when the change lands */
+    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id)));
     const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
     if (r.error === 'not_enabled') return problem(req, res, { status: 409, ...words.scheduleRefused(r) });
     if (r.error) return problem(req, res, { status: 400, ...words.scheduleRefused(r) });
@@ -1579,7 +1688,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
 });
 router.delete('/:id/schedule/:sid', auth, ...checked('DELETE /:id/schedule/:sid'), async (req, res) => {
   try {
-    res.json({ cancelled: await schedule.cancel(ctx(req), req.params.sid) });
+    res.json({ cancelled: UUID.test(req.params.sid) ? await schedule.cancel(ctx(req), req.params.sid) : false }); // K-1: not a uuid names no parked change
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not cancel the change'));
   }
@@ -1618,7 +1727,8 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
           unknown++;
           continue;
         }
-        const rec = availability.stamp({ qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location });
+        const figure = { qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location };
+        const rec = availability.refusal(figure) ? null : availability.stamp(figure); /* CAT-232: a broken row is counted bad (this row only, the rest of the feed lands), never stored as a figure nobody sent */
         if (!rec) {
           count++;
           continue;
@@ -1630,7 +1740,7 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
       await catwrite.patchItems(db, entity_id, edits);
       return { written, unknown, bad: count };
     });
-    res.json(Object.assign({ message: 'Availability updated' }, out));
+    res.json({ message: 'Availability updated', written: out.written, unknown: out.unknown, bad: out.bad });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Availability bulk update failed'));
   }
@@ -1639,6 +1749,8 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
 router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
   try {
     const entity_id = ctx(req);
+    const unclear = availability.refusal(req.body); /* CAT-232: say what stamp() would have quietly changed */
+    if (unclear) return problem(req, res, { status: 400, ...words.badAvailability(unclear) });
     const rec = availability.stamp(req.body);
     if (!rec) {
       return problem(req, res, { status: 400, ...words.badQuantity() });
@@ -1791,7 +1903,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
       if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
       const nestedMid = require('crypto').randomUUID();
       const nestedOut = await withEntity(entity_id, async (db) => {
-        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [
+        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
           req.params.id,
           entity_id
         ]);
@@ -1825,7 +1937,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
     const key = objStore.objectKey(entity_id, mid);
     await objStore.put(key, buffer, mime || 'application/octet-stream');
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
         req.params.id,
         entity_id
       ]);
@@ -1850,7 +1962,7 @@ router.delete('/:id/media/:mid', auth, ...checked('DELETE /:id/media/:mid'), asy
   try {
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]);
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 FOR UPDATE`, [req.params.id, entity_id]);
       if (!cur.rows.length) return null;
       const d = Object.assign({}, cur.rows[0].item_data || {});
       const media = Array.isArray(d.media) ? d.media : [];
@@ -2051,35 +2163,19 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
     }
 
     const trade = await require('../lib/govresolve').verticalOf(entity_id); /* one trip; an unreadable trade answers key null (logged) */
+    const stored = await refLists.readStoreLists({ query, withEntity }); /* CAT-124 C2: one card per reference store */
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
       have: mine.filter((x) => x.active).length,
       currency,
+      /* CTRY-72: a shop nobody gave money (no country) is told so in the ONE sentence (country-setup.MONEY_UNSTATED, code NO_MONEY - the till snapshot's shop.money_why shape); the lab shows it where the price would be and never the rupee figures of its starter lists */
+      money_why: currency ? null : { code: 'NO_MONEY', why: require('../lib/country-setup').MONEY_UNSTATED },
       /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
          ticks, so it needs every row's name, unit, price, category and local names to render at all. */
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
       vertical: trade.key,
       pick: BP.forVertical(trade.key),
-      lists: Object.keys(BP.BLUEPRINTS).map((item) => {
-        const bp = BP.blueprint(item);
-        return {
-          key: bp.key,
-          label: bp.label,
-          outcome: bp.outcome,
-          pin: BP.pin(bp),
-          categories: bp.categories,
-          units: bp.units,
-          languages: BP.languagesOf(item),
-          count: bp.starter.length,
-          rows: bp.starter.map((x) => ({
-            name: x.name,
-            unit: x.unit || bp.defaultUnit,
-            price: x.price,
-            category: x.category || null,
-            names: x.names || null
-          }))
-        };
-      }),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(BP, item, stored.get(item))),
       /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
       language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
       mine
@@ -2098,6 +2194,21 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
  *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
  *   languages   which synonym packs       skip_existing  default true
  */
+/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) → { kept, dropped: how many rows lost one } */
+function withoutServerOwned(items) {
+  const kept = [];
+  let dropped = 0;
+  for (const item of items) {
+    const copy = Object.assign({}, item);
+    const owned = catcols.SERVER_OWNED.filter((key) => key in copy);
+    for (const key of owned) delete copy[key];
+    dropped += owned.length ? 1 : 0;
+    kept.push(copy);
+  }
+  return { kept, dropped };
+}
+/** CAT-207: the starter list's pictures are not copied (a picture is minted by the server from an upload, never taken from a link in a row): said in words, never silently */
+const photosNote = (dropped) => (dropped ? ' · the list’s photos were not copied: add each from the product’s Media' : '');
 /** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
  *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
  *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
@@ -2122,7 +2233,6 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
   try {
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
-    const cats = require('../lib/categories');
     const b = req.body || {};
 
     const bp = BP.blueprint(b.list);
@@ -2174,7 +2284,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    items = await dropForeignListPrices(items, req);
+    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = stripped.kept; /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
     if (Array.isArray(b.names) && b.names.length) {
       /* R57: list prices out first, then the page's own */
       const priceBy = new Map();
@@ -2228,26 +2338,10 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
       });
     }
 
-    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the
-       product. If this and routes/till.js ever differ, they are two opinions about one act. */
-    const wantCats = [...new Set(items.map((x) => x.categoryName).filter(Boolean))];
-    let catIds = new Map();
-    if (wantCats.length) {
-      try {
-        catIds = await cats.ensureCategories(entity_id, wantCats, { withEntity, by: (req.identity && req.identity.identity_id) || null });
-      } catch (e) {
-        return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(e)) });
-      }
-    }
-    items = items.map((x) => {
-      const out = Object.assign({}, x);
-      const id = x.categoryName ? catIds.get(x.categoryName) : null;
-      delete out.categoryName;
-      if (id) out.categories = [id];
-      return out;
-    });
-
-    const w = await catwrite.writeItems({ entity_id, items });
+    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the product — and both are written in ONE
+       transaction (catwrite.writeCitedItems), so a refused adopt leaves no category behind (CAT-124 F1). */
+    const w = await catwrite.writeCitedItems({ entity_id, items, by: (req.identity && req.identity.identity_id) || null });
+    if (w.categoriesFailed) return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(w.categoriesFailed)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
 
     shopChanged(entity_id, 'product list adopted');
@@ -2268,7 +2362,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
         (n === 1 ? '' : 's') +
         ' added' +
         (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') +
-        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') +
+        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + photosNote(stripped.dropped) +
         '.'
     });
   } catch (e) {

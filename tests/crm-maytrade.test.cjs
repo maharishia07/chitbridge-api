@@ -3,8 +3,10 @@
  * with the verdict as a word (local · inactive · shopper · other_population) and the sentence beside it. Offline: the
  * database is a stand-in that answers the one question from ROW. Also the mint of kind 'cus' (~owner.cus-NNNN).
  * Run: node tests/crm-maytrade.test.cjs
+ * CARD      28-platform-and-operations/worlds-regions-data-residency-test-vs-production
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
@@ -29,8 +31,8 @@ it('another population → why "other_population", both sandboxes named', async 
 it('nobody by that id → never a throw, why "unknown"', async () => { ROW = null; const v = await L.mayTrade('ME', 'P'); assert.strictEqual(v.ok, false); assert.strictEqual(v.why, 'unknown'); });
 it('the SQL is istest\'s, not a copy (one rule)', () => { assert.strictEqual(L.mayTradeSql('i', '$1'), istest.mayTradeSql('i', '$1')); });
 it('tillMaySend and the till snapshot ask local-identity, not a second rule', () => {
-  const chits = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8'), till = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(/localIdentity\.mayTradeSql\('i', '\$1'\)/.test(chits) && /localIdentity\.mayTrade\(sender_id, eid\)/.test(chits), 'chits.js tillMaySend');
+  const chits = CF.read(API), till = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(/localIdentity\.mayTradeSql\('i', '\$1'\)/.test(chits) && /localIdentity\.mayTrade\(sender_id, customerId\)/.test(chits), 'chits.js tillMaySend');
   assert.ok(/local-identity'\)\.mayTradeSql\('i', '\$1'\)/.test(till), 'till.js snapshot');
 });
 it('mint kind "cus" hands out ~owner.cus-NNNN (the same mint as a supplier, a different series)', async () => {

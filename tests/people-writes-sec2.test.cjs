@@ -35,6 +35,7 @@ const CHIT = '44444444-4444-4444-8444-444444444444';
 /* ── the store: any SELECT answers one row of the columns it names; otp_code is always the secret ── */
 const WRITES = [];
 let throwOn = null;
+let ON_MY_LIST = true; /* SEC-145: does the e-mail the owner typed already sit on the owner's own list (their sign-in or a person they added)? */
 const splitTop = (s) => { const out = []; let d = 0, cur = ''; for (const c of s) { if (c === '(') d++; else if (c === ')') d--; if (c === ',' && d === 0) { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out.map((x) => x.trim()).filter(Boolean); };
 let BREAK = 'active';   /* what identities.break_status holds for Bala: section 6 switches her off or removes her */
 let STORED_EMAIL = 'bala@shop.test';   /* what identities.email holds for Bala — section 5 sets a real address, or none */
@@ -71,6 +72,7 @@ async function q(sql, params) {
     return { rows: ret ? [rowOf('SELECT ' + ret[1] + ' FROM x')] : [], rowCount: 1 };
   }
   if (/^SELECT 1 FROM identities WHERE actor_key/i.test(s)) return { rows: [], rowCount: 0 };   // the key is free
+  if (/^SELECT 1 FROM identities WHERE LOWER[(]email/i.test(s)) return { rows: ON_MY_LIST ? [{ '?column?': 1 }] : [], rowCount: ON_MY_LIST ? 1 : 0 };   // SEC-145
   if (/FROM access_events/i.test(s)) return { rows: [rowOf(s)], rowCount: 1 };
   if (/^SELECT/i.test(s)) return { rows: [rowOf(s)], rowCount: 1 };
   return { rows: [], rowCount: 0 };
@@ -107,7 +109,7 @@ const call = (method, url, body) => new Promise((resolve, reject) => { if (!KEEP
 
 /* every route routes/actors.js answers, with a body each validator accepts */
 const READS = [['GET', '/'], ['GET', '/?status=all'], ['GET', '/settings'], ['GET', '/' + BALA + '/tasks'], ['GET', '/access-events'],
-  ['POST', '/suggest-key', { display_name: 'Bala Kumar' }], ['POST', '/check-key', { actor_key: 'bala' }]];
+  ['POST', '/suggest-key', { display_name: 'Bala Kumar' }]];
 const WRITES_PEOPLE = [
   ['POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'Bala@Shop.TEST' }],
   ['PATCH', '/' + BALA, { display_name: 'Bala K' }],
@@ -255,7 +257,14 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     t('a taken e-mail on PATCH → 409 EMAIL_TAKEN in words', taken.status === 409 && taken.body.code === 'EMAIL_TAKEN' && /another account/.test(taken.body.message), taken.raw);
     const taken2 = await call('POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'owner@shop.test' });
     t('…and on Add → 409 EMAIL_TAKEN (never "Key taken")', taken2.status === 409 && taken2.body.code === 'EMAIL_TAKEN', taken2.raw);
-    throwOn = null;
+    /* SEC-145: held by someone ELSE on the platform → one sentence that names nobody, and the SAME for add and edit */
+    ON_MY_LIST = false; throwOn = (s, p) => /email/.test(s) && p.includes('elsewhere@other.test');
+    const away = await call('PATCH', '/' + BALA, { email: 'elsewhere@other.test' });
+    const away2 = await call('POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'elsewhere@other.test' });
+    t('SEC-145: an e-mail held elsewhere on PATCH → 409 EMAIL_UNAVAILABLE, no another-account words, no who', away.status === 409 && away.body.code === 'EMAIL_UNAVAILABLE' && !/another account|already|signs in/i.test(away.body.message), away.raw);
+    t('SEC-145: …and on Add the same status, code and words', away2.status === 409 && away2.body.code === away.body.code && away2.body.message === away.body.message, away2.raw);
+    t('SEC-145: the honest words (EMAIL_TAKEN) stay for an address on the owners own list', taken.body.code === 'EMAIL_TAKEN' && taken2.body.code === 'EMAIL_TAKEN');
+    ON_MY_LIST = true; throwOn = null;
 
     say('\n5 · W2-PEOPLE — a sealed host resets through the stored e-mail (the code to the mailbox, the answer says where)');
     WHO = OWNER; await proveSealedReset();
@@ -280,6 +289,14 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     const remote = devOtp();
     const a = remote.generateOTP('connector');
     t('anywhere else: a random 6-digit code, never a fixed one', /^\d{6}$/.test(a) && a !== require(path.join(API, 'lib', 'dev-otp')).DEFAULTS.connector);
+    say('\n8 · SEC-145: the per-owner cap on e-mail writes (last, it spends the owner hourly budget)');
+    WHO = OWNER; ON_MY_LIST = false; throwOn = null;
+    /* SEC-145: a per-owner hourly cap on Add/Edit calls that carry an e-mail, so the 409 cannot be walked down a list */
+    let capped = null, tries = 0;
+    while (!capped && tries < 60) { tries++; const r = await call('PATCH', '/' + BALA, { email: 'walk' + tries + '@other.test' }); if (r.status === 429) capped = r; }
+    t('SEC-145: after about 40 e-mail writes in an hour the owner gets the one 429 RATE_LIMITED (try ' + tries + ')', !!capped && capped.body.code === 'RATE_LIMITED' && tries > 5 && tries <= 45, capped && capped.raw);
+    const noEmail = await call('PATCH', '/' + BALA, { display_name: 'Bala K' });
+    t('SEC-145: a call WITHOUT an e-mail is never counted: still answered (not 429)', noEmail.status !== 429, noEmail.raw);
   } finally { server.close(); }
   say('\n' + (pass + fail) + ' checks · ' + fail + ' failed');
   process.exitCode = fail ? 1 : 0;

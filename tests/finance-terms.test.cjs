@@ -1,9 +1,11 @@
 /**
+ * CARD  16-finance/terms-and-credit
  * finance-terms.test.cjs — CB FINANCE · TERMS (F2): shop default + per-party override (resolver), the limit check, one change event per
  * changed key, the routes before b298 has run (words, not a 500), and b298 itself (no new table, RLS stated, no policy to add).
  * Needs the books engines for the route half. Run: node tests/finance-terms.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs'), path = require('path'), http = require('http');
 const H = require('./support/books-harness.cjs');
 const T = require('../lib/finance-terms');
@@ -86,7 +88,7 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   const lim = (m) => ({ query: async () => { touched++; return { rows: [{ credit_days: null, credit_limit_minor: m == null ? null : String(m) }] }; } });
   let LIMIT = 100000;
   D.withEntity = async (e, fn) => fn(lim(LIMIT));
-  hooks.isOn = async () => true; B.controlOf = async () => ({ account_id: 'A' }); B.partyItems = async () => [];
+  hooks.isOn = async () => ({ enabled: true, country: 'IN', functional_currency: 'INR' }); B.controlOf = async () => ({ account_id: 'A' }); B.partyItems = async () => [];
   const bill = (how, amount, cust) => ({ currency: 'INR', customer: cust === null ? undefined : { entity_id: 'C1' }, payment: { parts: [{ how, amount }] } });
   let k = await T.creditSaleCheck('E1', bill('On credit', 1500));
   ok('credit ₹1500 against a ₹1000 limit → over, with the figures', k.over === true && k.party_id === 'C1' && k.limit_minor === 100000 && k.after_minor === 150000, JSON.stringify(k));
@@ -98,8 +100,9 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   ok('no limit anywhere → never over', (await T.creditSaleCheck('E1', bill('On credit', 999999))).over === false);
   hooks.isOn = async () => null; LIMIT = 100000;
   ok('ledger off → no check', (await T.creditSaleCheck('E1', bill('On credit', 1500))).over === false);
-  const chits = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
-  ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /ov\.by && \(req\.till \|\| isOwner\(req\)\)/.test(chits));
+  const chits = CF.read(path.join(__dirname, '..'));
+  const financeTermsSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'finance-terms.js'), 'utf8');
+  ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /overrideBy\(req, business_json\.credit_override\)/.test(chits) && /if \(!allowedBy\)\s*\n?\s*return problem\(req, res, \{ status: 409/.test(chits) && (/isOwner\(req\)/.test(financeTermsSrc) && /holder\.kind === 'key' && holder\.counter/.test(financeTermsSrc))); /* the who-may-override rule moved into lib/finance-terms overrideBy (SEC-FIX3 S3): the owner's login or a counter key, never a bare req.till */
 
   /* ── the routes before b298 has run ── */
   console.log('\n── routes before b298 ──');
@@ -132,12 +135,12 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
 
   /* ── b298: the SQL file ── */
   console.log('\n── b298_finance_terms.sql ──');
-  const dir = path.join(__dirname, '..', 'migrations'), sql = fs.readFileSync(path.join(dir, 'b298_finance_terms.sql'), 'utf8');
+  const dir = path.join(__dirname, '..', 'migrations'), sql = fs.readFileSync(path.join(dir, 'archive', 'b298_finance_terms.sql'), 'utf8'); /* b298 was folded into the 21 Oct baseline; its file is archived */
   ok('no new table', !/CREATE TABLE/i.test(sql));
   ok('adds exactly the three terms columns, idempotently', (sql.match(/ADD COLUMN IF NOT EXISTS terms jsonb/g) || []).length === 3);
   ok('RLS is stated (WITHOUT a new policy — the tables already carry theirs)', /RLS: WITHOUT/.test(sql));
-  const earlier = fs.readdirSync(dir).filter((f) => f < 'b298').map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
-  ok('the three tables carry RLS in earlier migrations', ['books_setting', 'customer_list', 'supplier_list'].every((t) => new RegExp('ALTER TABLE ' + t + '\\s+(ENABLE|FORCE) ROW LEVEL SECURITY', 'i').test(earlier)));
+  const earlier = fs.readFileSync(path.join(dir, '000_baseline_2026-10-21.sql'), 'utf8'); /* the baseline holds what the earlier migrations created */
+  ok('the three tables carry RLS in earlier migrations', ['books_setting', 'customer_list', 'supplier_list'].every((t) => new RegExp('ALTER TABLE (?:public\\.)?' + t + '\\s+(ENABLE|FORCE) ROW LEVEL SECURITY', 'i').test(earlier)));
 
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n'); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log(e && e.stack || e); process.exit(1); });

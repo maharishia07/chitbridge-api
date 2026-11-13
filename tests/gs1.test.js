@@ -4,6 +4,7 @@
  *
  * The interesting assertions are not "a valid GTIN validates". They are: an internal SKU must NOT be called
  * invalid, a transposition must be caught, and a green tick must never be reported as "GS1 verified".
+ * CARD      06-catalogue-pim/units-conversion-codes
  */
 const assert = require('assert');
 const GS1 = require('../lib/gs1');

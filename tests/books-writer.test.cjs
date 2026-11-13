@@ -12,8 +12,10 @@
  *   6. cb_app may DELETE the ledger's setup tables (or the server starts to), a SQL file stops saying who runs it
  *      (as postgres, WITHOUT RLS), or a file the shop downloads says "accounting".
  * Run: node tests/books-writer.test.cjs
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -37,7 +39,8 @@ const FILES = ['lib', 'routes', 'db', 'scripts', 'tools', 'backfill', 'middlewar
 const JOURNAL = ['journal_entry', 'journal_line', 'account_balance', 'party_item'];
 const WRITE_RE = new RegExp('\\b(INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+(' + JOURNAL.join('|') + ')\\b', 'i');
 const STORE_WRITES = ['insertEntry', 'insertLines', 'addBalances', 'insertItems'];
-const HELPERS = ['writeLines', 'writeJournal', 'writeAllocation', 'writeStatus', 'writeChequeReceived', 'writeChequeStep', 'writeReversal'];
+/* writeEvent is the one dispatch of an event to its writer (ACC-266 split it out of postEntry so the savepoint wraps it): it calls the helpers, never the store, and is not exported, so it is a legitimate helper */
+const HELPERS = ['writeEvent', 'writeLines', 'writeJournal', 'writeAllocation', 'writeStatus', 'writeChequeReceived', 'writeChequeStep', 'writeReversal'];
 
 console.log('\n══ ONE WRITER OF THE LEDGER ══\n');
 
@@ -74,7 +77,7 @@ ok('b273: cb_app loses UPDATE and DELETE on the insert-only five', /REVOKE UPDAT
 ok('b273: the trigger function refuses, it does not ignore', /RAISE EXCEPTION/.test(b273));
 
 /* 4 · the chit never waits on the ledger */
-const chits = read('routes/chits.js');
+const chits = CF.read(ROOT);
 const hook = chits.slice(chits.indexOf("require('../lib/books-hooks')") - 400, chits.indexOf("require('../lib/books-hooks')") + 700);
 ok('routes/chits.js calls the ledger hook', chits.indexOf("require('../lib/books-hooks')") > 0);
 ok('…inside try, in setImmediate, never awaited', /try \{/.test(hook) && /setImmediate\(/.test(hook) && !/await\s+hooks\./.test(hook) && !/await\s+require\('\.\.\/lib\/books-hooks'\)/.test(hook));

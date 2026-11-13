@@ -18,11 +18,11 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a pa
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
+const ownerOnly = require('../lib/owner').ownerOnly; // CAT-277: the one owner gate (a co-assist or a key is refused in words)
 const { query, withEntity, readBatch } = require('../db'); // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth = require('../middleware/auth'); // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb'); // server-side grounding (cacheable, tamper-proof)
@@ -35,6 +35,7 @@ const money = require('../lib/money'); // adoption commercials are the SECOND pr
 // The honest, no-oversell guardrail lives in lib/ai.js as the `assist-ask` skill (T1-AI) — server-side, never shipped to
 // the client — so it runs through the one model caller with the wallet, the platform daily cap and the usage ledger.
 const ai = require('../lib/ai');
+const access = require('../lib/access'); // b173 viewer / commenter / editor: the one test of what a login may do
 /* ⚠️ ASSIST_LLM_PROVIDER stays the ON-switch for CB Assist (dormant by default); the key and the model are the one
    caller's (ANTHROPIC_API_KEY · ai_skill.model / AI_MODEL). The entity is who pays: no signed-in entity → no model
    call, because a call that cannot be metered must not spend (lib/ai.js S1) — the caller's floor answers instead. */
@@ -59,20 +60,14 @@ const CONTEXT_HINTS = {
 // Optional auth: if a valid Bearer token is present, attach a minimal identity so the real model can ground on
 // the caller's own (tenant-scoped) context. Absent/invalid token → anonymous (the assistant is available
 // pre-auth on welcome/login/register), grounded on the public KB only. Never throws.
-function softIdentity(req) {
-  try {
-    const text = req.headers.authorization;
-    if (!text || !text.startsWith('Bearer ')) return null;
-    const d = require('../lib/jwt-verify').verifyJwt(text.split(' ')[1]).claims; // E10 — the ONE verifier
-    // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
-    // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
-    if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
-    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null };
-  } catch (e) {
-    log.fellBack('assist softIdentity: the helper failed — answered with nothing', e);
-    return null;
-  }
+async function softIdentity(req) {
+  const caller = await auth.softIdentity(req); // SEC-149: the SAME decision auth runs (session listing, status, current level) — a valid signature alone is a stranger
+  if (!caller) return null;
+  return { identity_id: caller.identity_id, parent_entity_id: caller.parent_entity_id, identity_type: caller.identity_type, access_level: caller.access_level }; // a draft that costs money asks lib/access with the CURRENT level
 }
+
+/** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */
+const sourceOf = (req) => (req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1');
 
 router.post('/', ...contract.checked('POST /'), async (req, res) => {
   try {
@@ -81,7 +76,7 @@ router.post('/', ...contract.checked('POST /'), async (req, res) => {
     if (!q) return problem(req, res, { status: 422, ...words.askNothing() });
     if (q.length > 500) return problem(req, res, { status: 422, ...words.askTooLong() });
 
-    const identity = softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
+    const identity = await softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
 
     // ── The model call. It MUST:
     //    1) run under the `assist-ask` skill (the no-oversell guardrail, lib/ai.js) through invokeSkill;
@@ -140,7 +135,7 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
     if (!tpl) return problem(req, res, { status: 404, ...words.unknownStandard(compliance.listTemplates()) });
 
     const verdict = compliance.evaluate(tpl, payload); // ← deterministic floor; ALWAYS the source of truth
-    const identity = softIdentity(req);
+    const identity = await softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
 
     // The Crux-2 deputy stamp. delegator = the invoking human (invoked mode); grant per-act; NOT confirmed here
@@ -185,10 +180,22 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
 });
 
 // GET /api/assist/standards — the conform-check standards available to check against (drives the UI picker).
-router.get('/standards', (req, res) => res.json({ ok: true, data: compliance.listTemplates() }));
+router.get('/standards', (req, res) => {
+  try {
+    res.json({ ok: true, data: compliance.listTemplates() });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
+});
 
 // GET /api/assist/catalogue-sources — the catalogue sources the handler can structure (drives the UI picker).
-router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: await catalogueBuild.listSources() }));
+router.get('/catalogue-sources', async (req, res) => {
+  try {
+    res.json({ ok: true, data: await catalogueBuild.listSources() });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
+});
 
 // POST /api/assist/catalogue-structure — the `ai:catalogue-structure@v1` slot. Body: { source }. Returns the
 // DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
@@ -196,11 +203,11 @@ router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: 
 // stamp. Does NOT persist to a catalogue yet — this is the draft the business confirms before publishing.
 router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structure'), async (req, res) => {
   try {
-    const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
+    const source = sourceOf(req);
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource(await catalogueBuild.listSources()) });
 
-    const identity = softIdentity(req);
+    const identity = await softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
     const acted_by = {
       deputy: 'ai:catalogue-structure@v1',
@@ -216,7 +223,8 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
     // Designer intro — model-drafted RUNG-summarise layer, best-effort. It describes the ALREADY-structured
     // collection; it never invents items. Absent a key, the structure still stands (intro: null).
     let intro = null;
-    if (assistOn() && identity) {
+    /* PPL-27 (Q42): a View-only or Comment-only login keeps the free draft but never spends the shop's AI money: it gets the anonymous answer. lib/access is the ONE level test. */
+    if (assistOn() && identity && access.canEdit(identity)) {
       try {
         const out = await ai.invokeSkill(
           payerOf(identity),
@@ -252,7 +260,7 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
 router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
+    const source = sourceOf(req);
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource() });
     // STAMP the adoption's commercials. This is the SECOND price home — `{ "Tussar": { price, unit, … } }` — and the
@@ -368,7 +376,9 @@ router.get('/catalogue-mine', auth, ...contract.checked('GET /catalogue-mine'), 
         }))
       )
     ).filter((item) => item.resolved);
-    res.json(Object.assign({ ok: true, count: catalogues.length }, PL.pageOut('catalogues', catalogues, pg)));
+    const answer = PL.pageOut('catalogues', catalogues, pg);
+    /* S34: the pager's keys named (capped and cap_note only when it cut the list); `resolved` is lib/catalogue-build's own record and stays open */
+    res.json({ ok: true, count: catalogues.length, catalogues: answer.catalogues, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.plain));
@@ -385,12 +395,15 @@ function sourceRefusal(row, owner) {
   return require('../lib/platformroot').isRoot(String(owner)) ? null : words.sourceOfThePlatform();
 }
 
-router.put('/catalogue-source', auth, ...contract.checked('PUT /catalogue-source'), async (req, res) => {
+const SOURCE_KEY_MAX = 200;
+/** the problem spec when the key is missing (422) or longer than a label should be (400, CAT-246: a 60k-character one was stored with 200), else null */
+const keyRefusal = (key) => (!key ? { status: 422, ...words.sourceKeyNeeded() } : key.length > SOURCE_KEY_MAX ? { status: 400, ...words.sourceKeyTooLong(SOURCE_KEY_MAX) } : null);
+router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the catalogue source.'), ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
     const source_key = typeof b.source_key === 'string' && b.source_key.trim() ? b.source_key.trim() : '';
-    if (!source_key) return problem(req, res, { status: 422, ...words.sourceKeyNeeded() });
+    if (keyRefusal(source_key)) return problem(req, res, keyRefusal(source_key));
     let exists;
     try {
       exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]);
@@ -464,7 +477,7 @@ router.put('/container', auth, ...contract.checked('PUT /container'), async (req
         schema_version: b.schema_version
       });
     } catch (e) {
-      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/container.js:29 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/container.js: another brand's id, said as an unknown one (S6) */
       return problem(req, res, { status: 503, ...words.containerStoreMissing() });
     }
     log.info('container authored', { id: req.id, container_id, version: out.version, is_new: out.is_new_container });
@@ -526,8 +539,7 @@ router.put('/region-override', auth, ...contract.checked('PUT /region-override')
     try {
       await regional.setRegionOverride(owner, container_id, region, overrides);
     } catch (e) {
-      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/regional.js:39 — a fixed sentence */
-      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer(e.message) }); /* lib/regional.js:34 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/regional.js: unknown or another brand's (S6) */
       return problem(req, res, { status: 503, ...words.regionStoreMissing() });
     }
     res.json({ ok: true, container_id, region });
@@ -547,7 +559,8 @@ router.get('/regions', async (req, res) => {
     } catch (e) {
       log.fellBack('assist GET /regions: the read failed — carried on without it', e); /* b81 absent */
     }
-    res.json({ ok: true, regions: rows });
+    /* S34: a region is the columns the statement selects (region_layer: migrations/000_baseline_2026-10-21.sql; jurisdiction is jsonb, any value) */
+    res.json({ ok: true, regions: rows.map((x) => ({ region_code: x.region_code, currency: x.currency, units: x.units, language: x.language, jurisdiction: x.jurisdiction })) });
   } catch (err) {
     problem(req, res, failed(err, req, FAULTS.plain));
   }
@@ -576,7 +589,8 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
     const owner = auth.entityOf(req);
     let rows = [];
     try {
-      const r = await query(
+      /* SEC-75c: source_penetration is RLS-closed (b831) — the brand sees rows of sources it owns, so bind it */
+      const r = await withEntity(owner, (db) => db.query(
         `SELECT sp.source_key, sp.locality,
                 count(*)::int AS orders,
                 count(DISTINCT sp.distributor_entity_id)::int AS distributors
@@ -586,14 +600,15 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
           GROUP BY sp.source_key, sp.locality
           ORDER BY orders DESC, sp.locality ASC`,
         [owner]
-      );
+      ));
       rows = r.rows;
     } catch (dbErr) {
       return problem(req, res, { status: 503, ...words.penetrationStoreMissing() });
     }
     const total_orders = rows.reduce((total, x) => total + x.orders, 0);
     const localities = Array.from(new Set(rows.map((x) => x.locality)));
-    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows });
+    /* S34: a locality is the four columns the statement selects (aggregates only: no customer, no distributor id) */
+    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows.map((x) => ({ source_key: x.source_key, locality: x.locality, orders: x.orders, distributors: x.distributors })) });
   } catch (err) {
     log.error('assist/penetration failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.plain));
@@ -643,27 +658,6 @@ router.get('/questions', ...contract.checked('GET /questions'), async (req, res)
   } catch (err) {
     log.error('assist/questions failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.questions));
-  }
-});
-
-// POST /api/assist/gap — DEPRECATED under B1 RLS (2026-07-04). It used to write a DRAFT into the HELP entity's
-// catalogue (entity_id = help) from an outside/anonymous caller — a cross-entity write the owner-only rule now
-// forbids ("nobody writes another entity's catalogue"). The sanctioned capture is a CHIT to the help desk: the web
-// client's "Send to help desk" (askHelpDesk → POST /chits/send) lands the question in GOV-01-Help's Task inbox,
-// where it is answered and Published to the KB. Kept as a no-op ack (so the old fire-and-forget caller doesn't
-// error) that only LOGS the unanswered question as an analytics signal — it writes nothing.
-router.post('/gap', ...contract.checked('POST /gap'), async (req, res) => {
-  try {
-    const question = req.body && typeof req.body.q === 'string' ? req.body.q.trim() : '';
-    const context = req.body && typeof req.body.context === 'string' ? req.body.context.slice(0, 64) : '';
-    if (!question || question.length < 3) return problem(req, res, { status: 422, ...words.questionNeeded() });
-    if (question.length > 400) return problem(req, res, { status: 422, ...words.questionTooLong() });
-    // No catalogue write. Real capture is the chit flow (Send to help desk → a chit in GOV-01-Help's Task inbox).
-    log.info('assist gap (deprecated — capture is now the chit flow)', { id: req.id, context, len: question.length });
-    res.json({ ok: true, noted: true, via: 'chit' });
-  } catch (err) {
-    log.error('assist/gap failed', { id: req.id, err: err.message });
-    problem(req, res, failed(err, req, FAULTS.gap));
   }
 });
 
@@ -721,20 +715,6 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
 
 // ── Review / triage (#3) — auth-gated (TODO: tighten to owner_scope='platform' before production) ──
 
-// GET /api/assist/gaps — DEPRECATED under B1 RLS. The gap-review flow is superseded by chit→Task: questions arrive
-// as CHITS in GOV-01-Help's Task inbox (not as catalogue drafts), so there are no catalogue "gaps" to list. Returns
-// empty and reads nothing (the cross-read of the help catalogue is no longer needed).
-router.get('/gaps', auth, ...contract.checked('GET /gaps'), async (req, res) => {
-  res.json({ ok: true, data: [], deprecated: true });
-});
-
-// POST /api/assist/resolve — DEPRECATED under B1 RLS. It updated the HELP entity's catalogue from an outside caller
-// (a cross-entity write, now forbidden). Answering is done on the question's CHIT in GOV-01-Help's Task inbox, then
-// Published via POST /api/assist/publish (own catalogue). This endpoint writes nothing.
-router.post('/resolve', auth, ...contract.checked('POST /resolve'), async (req, res) => {
-  problem(req, res, { status: 410, ...words.reviewRetired() });
-});
-
 // GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
 // (generalises off the hardcoded 'GOV-01-Help' name). Never throws.
 router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res) => {
@@ -745,7 +725,7 @@ router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res)
     /* T3-DISPUTES-ASSIST: may I publish an answer — the SAME test POST /publish refuses with (403 below), as a code the CB Assist screen greys on */
     res.json({ ok: true, is_helpdesk: hd, actions: { publish: hd ? { ok: true } : { ok: false, why: 'not_helpdesk', say: PUBLISH_NO } } });
   } catch (err) {
-    log.warn('assist/whoami could not read the help-desk schema — answered as not a help desk', { id: req.id, err: err.message });
+    softFault(req, err); /* the read failed: logged with the request id; the answer below is 200 'not a help desk' by design (never 500) */
     res.json({ ok: true, is_helpdesk: false, actions: { publish: { ok: false, why: 'not_read', say: 'Could not check who may publish. Try again.' } } });
   }
 });

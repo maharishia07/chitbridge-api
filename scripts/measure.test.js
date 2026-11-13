@@ -12,7 +12,6 @@
  *
  * RUN:  node scripts/measure.test.js
  */
-const assert = require('assert');
 const measure = require('../lib/measure');
 const money = require('../lib/money');
 

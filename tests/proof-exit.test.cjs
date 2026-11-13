@@ -57,7 +57,7 @@ for (const f of files) {
 console.log('\n── a proof cannot report success while counting failures ──');
 console.log(`  scanned ${files.length} script(s); ${pass} keep score and exit on it`);
 fails.forEach((m) => console.error('  x ' + m));
-if (!fails.length) console.log('  OK — no proof contradicts its own exit code\n');
+if (!fails.length) console.log('  OK — no proof contradicts its own exit code (' + files.length + ' checks)\n');
 else console.error(`\n  ${fails.length} problem(s). Use process.exit(F ? 1 : 0), and exit(1) from the catch.\n`);
 
 process.exit(fails.length ? 1 : 0);

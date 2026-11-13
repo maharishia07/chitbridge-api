@@ -10,6 +10,7 @@
  *   · a language-only guess is labelled as such (never "your time zone"); a registration with NO guess names no country and stores no label
  *     (the DEFAULT stays — owner decision GOV-AU1 — but it is never called the owner's)
  * Run: node tests/register-country-guess.test.cjs
+ * CARD      19-onboarding-and-shop-setup/register-a-business-and-verify
  */
 'use strict';
 const path = require('path');

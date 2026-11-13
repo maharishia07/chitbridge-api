@@ -43,11 +43,17 @@ const KINDS = {
 /* public: no sign-in, so the only refusal is a fault of ours */
 router.get('/kinds', (req, res) => {
   try {
-    res.json(KINDS);
+    res.json({ engine: KINDS.engine, version: KINDS.version, order: KINDS.order, kinds: KINDS.kinds });
   } catch (e) {
     problem(req, res, internalSpec(req, e, { error: 'Failed', message: SAFE_SENTENCE }));
   }
 });
+
+/** ⭐ CAT-258: the total is the sum of the PRICED rows only; when a row has no price it says so (total_partial, which keys, in words) — an unknown is never added as 0 */
+function partialTotal(out) {
+  const keys = out.filter((item) => item.unit_price == null).map((item) => String(item.key));
+  return keys.length ? { total_partial: true, unpriced_lines: keys, total_words: 'The total leaves out ' + keys.length + ' line' + (keys.length === 1 ? '' : 's') + ' with no price set: ' + keys.join(', ') + '.' } : {};
+}
 
 router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /price'), async (req, res) => {
   try {
@@ -56,7 +62,7 @@ router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /pric
     const needShelf = lines.some((item) => !item.pricing || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(auth.entityOf(req)) : null;
     const out = lines.map((item) => S.priceLine(item, sh ? sh.productOf(item) : null));
-    res.json({ engine: 'chitbridge-pricing', version: 1, lines: out, total: S.R2(out.reduce((total, item) => total + (item.unit_price || 0) * item.qty, 0)) });
+    res.json({ engine: 'chitbridge-pricing', version: 1, lines: out, total: S.R2(out.reduce((total, item) => total + (item.unit_price || 0) * item.qty, 0)), ...partialTotal(out) });
   } catch (e) {
     problem(req, res, internalSpec(req, e, { error: 'Failed', message: SAFE_SENTENCE }));
   }

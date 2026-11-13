@@ -46,7 +46,6 @@ const WRITE_ALLOW = {
   'POST /api/assist': 'asking the assistant (public KB when anonymous); creates nothing on the rail',
   'POST /api/assist/conform': 'a deterministic check, returned not saved',
   'POST /api/assist/catalogue-structure': 'a proposed structure, returned not saved',
-  'POST /api/assist/gap': 'deprecated no-op: logs a line, writes nothing',
   /* customer-side logins (the shop\'s buyers), not co-assists */
   'POST /api/catalogue/network-store/:networkId/order': 'a buyer\'s order through the network store (customer token checked in the handler)',
   'POST /api/catalogue/:bridge_id/order/start': 'a buyer starts an order (OTP to their own phone/e-mail)',
@@ -59,10 +58,8 @@ const WRITE_ALLOW = {
   'POST /api/privacy/me/requests': 'a buyer files THEIR OWN privacy request (customerAuth)',
   /* behind auth AND a path hat-gate lets a viewer through — each is the caller\'s own, or refuses inside */
   'PUT /api/actors/break': 'the caller\'s own break; naming someone else is owner-only (ownerWhenOther)',
-  'POST /api/assist/resolve': 'resolving a governed view — a read, writes nothing',
   'POST /api/chits/:chit_id/messages': 'internal messaging for a commenter; the handler refuses an EXTERNAL thread for a read-only login',
   'PATCH /api/entities/me/prefs/:kind': 'the caller\'s own appearance/locale preference, not a record',
-  'PATCH /api/entities/me/locale': 'the caller\'s own locale, not a record',
   'PUT /api/identity/documents/:scheme': 'the caller\'s own identity document (the subject is always req.identity)',
   'POST /api/identity/documents/:scheme/code': 'the caller\'s own identity document code',
   'POST /api/identity/documents/:scheme/verify': 'the caller\'s own identity document check',
@@ -94,9 +91,10 @@ function mountsOf(src) {
 function writeRoutes() {
   const auth = require(path.join(API, 'middleware', 'auth')), access = require(path.join(API, 'lib', 'access'));
   const mounts = mountsOf(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));
-  const rows = [], unmounted = [];
+  const rows = [], unmounted = [], parts = require(path.join(API, 'tools', 'server-mounts.cjs')).partParents(path.join(API, 'routes'));
   for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWith('.js'))) {
     const base = f.replace(/\.js$/, ''), router = require(path.join(API, 'routes', f));
+    if (!mounts[base] && parts[f]) continue; /* a part of a split router (chits-trace of chits): its parent mounts it, and walk() below goes into the parent's sub-router */
     if (!mounts[base]) { unmounted.push(f); continue; }
     const walk = (r) => (r && r.stack ? r.stack : []).forEach((l) => {
       if (l.handle && l.handle.stack && !l.route) return walk(l.handle);
@@ -133,6 +131,10 @@ function verdict(r, selfScoped) {
   const { rows, unmounted } = writeRoutes();
   ok('every routes/*.js file is mounted in server.js (a new router must be mounted to be swept)', unmounted.length === 0, unmounted.join(', '));
   ok('the sweep sees the write routes (> 300)', rows.length > 300, rows.length);
+  /* F2 (critic 25 Oct): routes/chit-proposals.js is mounted inside the chits router — its four write doors must be IN the swept rows, not exempted from them */
+  const seen = new Set(rows.map((r) => r.method + ' ' + r.full));
+  const proposalDoors = ['POST /api/chits/:chit_id/proposals', 'POST /api/chits/:chit_id/proposals/:proposal_id/accept', 'POST /api/chits/:chit_id/proposals/:proposal_id/reject', 'POST /api/chits/:chit_id/proposals/:proposal_id/counter'];
+  ok('the proposal doors (a router mounted inside the chits router) are swept', proposalDoors.every((d) => seen.has(d)), proposalDoors.filter((d) => !seen.has(d)).join(', '));
 
   /* 1 · the GUARD: no write route is uncovered */
   const bad = rows.map((r) => [r, verdict(r, selfScoped)]).filter(([, v]) => !['gated', 'default', 'allowed'].includes(v));

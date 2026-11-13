@@ -4,20 +4,22 @@
  *       rail's `actions`), moveStatus (the ONE status writer, through lib/rail-status), amend · reprice · assign · deliver,
  *       disputes, and the housekeeping of MY copy (delete · restore · archive · unarchive · purge · star · unread).
  * called by: the web app (EP map in app.html · cap-chit2.js · chit-sheet.js), the till, lib/autoraise, CTP's deliver door.
- * FLOW  auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
+ * FLOW  (an id in the address that is no uuid is answered first, after sign-in: router.param → CHIT_GONE · RAIDA_GONE · SUBJECT_GONE, the route's own words) auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
  * INIT  express → lib (logger · money · rail-actions · dispute-may · rail-status · assign-chit) → db → the routes in file order
  *       (every literal path — /sent · /folder · /raida/report — is mounted BEFORE /:chit_id, so a word is never read as an id)
  * // CARD 01-rail-core-the-chit/chits-routes
  */
 const express = require('express');
 const cbLog = require('../lib/logger');
-const {
-  round: roundMoney
-} = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
+const { waiting } = require('../lib/not-migrated');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
+const { moveStatus, stampCancelRequested, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
+const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
+const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
@@ -38,36 +40,43 @@ const CLOCK = require('../lib/shop-clock'); // ⭐ Y1b — a chit's sent_at/crea
  * ⚠️ Five minutes, not forever: a shop that corrects its country should not have to wait for a deploy.
  */
 const _countryMemo = new Map();
+/** the country of an entity (identities.country, else its GST number), remembered five minutes; null when it cannot be read */
 async function countryOfEntity(entity_id) {
-  const hit = _countryMemo.get(entity_id);
-  if (hit && hit.at > Date.now() - 300000) return hit.c;
-  let c = null;
+  const cached = _countryMemo.get(entity_id);
+  if (cached && cached.at > Date.now() - 300000) return cached.c;
+  let countryCode = null;
   try {
-    const r = await query(`SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
-    const row = r.rows[0] || {};
-    c = require('../lib/profile').countryOf({ country: row.country, gstin: row.gstn });
+    const found = await query(`SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
+    const row = found.rows[0] || {};
+    countryCode = require('../lib/profile').countryOf({ country: row.country, gstin: row.gstn });
   } catch (e) {
     cbLog.fellBack('chits countryOfEntity: the read failed — carried on without it', e); /* ⚠️ a bill must never fail because we could not look up a country */
   }
-  _countryMemo.set(entity_id, { c: c, at: Date.now() });
-  return c;
+  _countryMemo.set(entity_id, { c: countryCode, at: Date.now() });
+  return countryCode;
 }
 /* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
-const { sanitise, schemaValidate } = require('../middleware/validate'); // S9: a request is checked against the route's own schema (validate stays for the routes not yet moved)
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { said, failed, faultOf, codeOfStatus, railSaid, schemaOptionsFor, operationFor, pathsOf } = require('../lib/chits-contract');
-const { PRIORITIES, trimmedBody, recipientsRule } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
+const { sanitise } = require('../middleware/validate'); // S9: a request is checked against the route's own schema, by routeChecks (lib/chits-contract)
+const { problem, uuidParam, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, routeChecks: checked } = require('../lib/chits-contract');
+const listFilters = require('../lib/list-filters'); // RAIL-135: the list filters that are cast in SQL, read first
+const disputeAlert = require('../lib/dispute-alert'); // RAIL-79: the sentence under a raised dispute
+const lineShape = require('../lib/line-shape'); // RAIL-177 · RAIL-81: a bad line_id is refused, a figure key the engine does not read is named
+const { PRIORITIES, RETENTION_MAX_DAYS, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
-const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
+const amend = require('../lib/amend');
+const chitCeiling = require('../lib/chit-ceiling'); /* RAIL-205: the largest total, quantity and price a chit's columns hold; the send and amend doors refuse past it */
+const invoiceIssued = require('../lib/invoice-issued'); // ACC-192 — an issued invoice's money is refused an amendment // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
 const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
 const cost = require('../lib/cost');
 const raida = require('../lib/raida'); // b182 — the register on a line
+const { requireRegister } = require('../lib/register-gate'); // RAIL-90 — the register is a per-shop capability: off for a shop that never used it
 const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch'); // ⚠️ THE one matcher — same resolution the raise path used
 /* TAX ON THE CHIT (STUDY-gst-structure §6, 2026-09-04): the shelf that rates a line at send, the line rater, the freeze at completed. */
@@ -75,8 +84,13 @@ const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
+const services = require('../lib/services'); // ACC-271: rateOrNull, the one reading of a blank rate
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
+const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
+const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
+const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
+const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
@@ -84,6 +98,10 @@ const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySampl
 const FOLDER_INV = require('../lib/folder-inventory');
 /* ⭐⭐ A BILL'S STEPS STAY WITH THE SHOP THAT TOOK THEM, at its folder's messaging level (lib/bill-privacy, Athi 2026-10-01) */
 const billPrivacy = require('../lib/bill-privacy');
+/* ⭐ RAIL-146: what a cost-blind co-assist may READ of a chit — the five reads (GET /:chit_id · /inbox · /folder · /sent · /rollup) answer through it, answer-side only */
+const costView = require('../lib/cost-view');
+/* ⭐ RAIL-147: what such a co-assist may WRITE — POST /:chit_id/amend and /reprice ask lib/cost-write (403 COST_BLIND on a cost-side chit's money, an omitted price kept from the stored line) */
+const costWrite = require('../lib/cost-write');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -91,36 +109,76 @@ const entityId = (req) => auth.entityOf(req);
 /* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
 const holdsCopy = async (entity_id, chit_id) =>
   (await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]))).rows.length > 0;
-/** the schema check of one route (its own operation in lib/chits-contract.js), as a list to spread after the gates: a route that takes no input has none */
-function checked(route) {
-  const operation = operationFor(route);
-  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptionsFor(route))] : [];
-}
 
-// ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
-// A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,
-// propagate a cancel/void, set the customer flag). Under RLS those are served by the b50/b51 SECURITY DEFINER
-// "delivery-agent" fns. `crossing()` runs the definer inside withEntity(caller); if the delivery layer isn't
-// applied yet (pre-b50), it runs a legacy direct-SQL fallback in its OWN transaction — so a missing-function
-// error can't poison a shared tx, and the feature keeps working before/after the migration. Under FORCE without
-// the fn the fallback fails closed (degraded, never a cross-tenant leak). Once b50 is applied the definer wins.
-// Are the b50/b51/b52 delivery-agent fns installed? Latches true once seen; keeps re-probing while false, so it
-// self-heals when the migration lands (no restart needed). A tenant-table-free probe -> the RLS guard stays silent.
-let _definersReady = false;
-async function definersReady() {
-  if (_definersReady) return true;
-  try {
-    const r = await query(
-      `SELECT (to_regprocedure('chit_deliver(uuid,boolean,jsonb)') IS NOT NULL
-           AND to_regprocedure('chit_log_targets(uuid,uuid[],text,uuid,text,text)') IS NOT NULL
-           AND to_regprocedure('chit_participant_parity(uuid,uuid)') IS NOT NULL) AS ok`
-    );
-    _definersReady = !!(r.rows[0] && r.rows[0].ok);
-  } catch (e) {
-    cbLog.fellBack('chits definersReady: the read failed — carried on without it', e); /* leave false — fall back to legacy */
-  }
-  return _definersReady;
-}
+/**
+ * ⭐ K-1 (API-10) — AN ID IN THE ADDRESS THAT IS NOT A UUID NAMES NO ROW. chit_header.chit_id · register_entry.raida_id · register_subject.subject_id · chit_disputes.dispute_id
+ * are all uuid columns, so the cast failed in the database and came back a 500. Each route now answers it EXACTLY as it answers a uuid that names nothing (S41: same status,
+ * same code, same old body), before the body and before the database, through the ONE guard (lib/problem uuidParam). The words are the route's own, by "METHOD path";
+ * a route not listed here (it answers an unknown id 200, or never reads the id) is left as it was. Signed-out callers still get their 401 first: a junk id is judged after sign-in.
+ * tests/k1-chits-guard.test.cjs proves each entry equals the answer of an unknown uuid on the same route, so the two cannot drift.
+ */
+const chitPaid = require('../lib/chit-paid'); /* RAIL-216: the paid fact + the buyer's notice */
+const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
+const notHere = (message) => said404({ error: 'Not found', message });
+const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
+/** S35: a chit this login holds no copy of, unknown or another shop's, is the one 404; a verdict of the rail on a copy it does hold stays its own refusal */
+const refuseUnlessHeld = (req, res, held, refusal) => problem(req, res, held ? refusal : { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
+const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
+const registerSays = (label, message, status = 404) => (req) => faultOf(Object.assign(new Error(message), { status }), req, label, { words: true }); /* lib/raida's own refusal, the sentence it always gave: S35 a register, entry or issue this shop holds none of is a 404 (a missing dispute id stays the 400) */
+const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
+const CHIT_GONE = {
+  'GET /:chit_id': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/use': notHere('Chit not found'),
+  'GET /:chit_id/messages': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/disputes': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/diagnosis': notHere('Chit not found or you do not have access'),
+  'PUT /:chit_id/use': said404({ error: 'Not saved', message: 'Chit not found' }),
+  'PUT /:chit_id/status': said404({ error: 'Not found', message: 'Chit not found', why: 'not_received' }),
+  'PUT /:chit_id/void': notHere('Chit not found'),
+  'PUT /:chit_id/priority': notHere('Chit not found for this entity'),
+  'PUT /:chit_id/priority-flag': notHere('Chit not found for this entity'),
+  'PUT /:chit_id/star': notHere('Chit not found'),
+  'PUT /:chit_id/disputes/:dispute_id/resolve': said404({ error: 'Dispute not found' }),
+  'POST /:chit_id/amend': ownCopyOf(canAmend),
+  'POST /:chit_id/reprice': ownCopyOf(canAmend),
+  'POST /:chit_id/assign-lines': ownCopyOf((copy, caller) => railActions.can(copy, caller, 'assign')),
+  'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
+  'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
+  'POST /:chit_id/messages': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/disputes': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
+  'POST /:chit_id/archive': notHere('Chit not found or already archived'),
+  'POST /:chit_id/unarchive': notHere('Chit not found or not archived'),
+  'POST /:chit_id/restore': notHere('Chit not found in Trash'),
+  'POST /:chit_id/unread': notHere('Chit not found'),
+  'DELETE /:chit_id': notHere('Chit not found or already deleted'),
+  'DELETE /:chit_id/payment': said404({ error: 'Not found' }),
+  'DELETE /:chit_id/purge': notHere('Draft not found')
+};
+const RAIDA_GONE = {
+  'POST /register/entries/:raida_id/accept': registerSays('Failed to record the acceptance', 'No such entry.'),
+  'POST /register/entries/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
+  'POST /register/entries/:raida_id/revise': registerSays('Failed to revise it', 'No such entry.'),
+  'POST /:chit_id/raida/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
+  'POST /:chit_id/raida/:raida_id/dispute': (req) => (req.body && req.body.dispute_id ? registerSays('Failed to link the dispute', 'No issue with that id.') : registerSays('Failed to link the dispute', 'A dispute id is required.', 400))(req)
+};
+const SUBJECT_GONE = {
+  'POST /register/subjects/:subject_id/close': registerSays('Cannot close yet', 'No such register.')
+};
+const DISPUTE_GONE = { 'PUT /:chit_id/disputes/:dispute_id/resolve': CHIT_GONE['PUT /:chit_id/disputes/:dispute_id/resolve'] }; /* both its ids name the same dispute copy: one answer */
+const routeKey = (req) => req.method + ' ' + req.route.path;
+/** router.param callback: a uuid, or a route with no words here, goes on; anything else is answered by uuidParam with the route's words, after sign-in (the 401 stays first) */
+const junkIdGuard = (table) => {
+  const judge = uuidParam((req) => table[routeKey(req)](req));
+  return (req, res, next, id, name) =>
+    trace.UUID_RE.test(String(id)) || !table[routeKey(req)] ? next() : auth(req, res, (err) => (err ? next(err) : judge(req, res, next, id, name)));
+};
+router.param('chit_id', junkIdGuard(CHIT_GONE));
+router.param('raida_id', junkIdGuard(RAIDA_GONE));
+router.param('subject_id', junkIdGuard(SUBJECT_GONE));
+router.param('dispute_id', junkIdGuard(DISPUTE_GONE));
+
 
 /**
  * ⭐⭐ THE ONE THING A TILL KEY MAY SEND BEYOND ITSELF — the two-sided counter bill (Athi, 2026-10-01: *"naming a connected
@@ -142,36 +200,56 @@ async function definersReady() {
  * ⚠️ Before this, both were a bare 403 that the counter read as "key refused" — two bills sat pending with the network green.
  */
 async function tillMaySend(sender_id, outward, payload) {
-  const b = payload || {},
-    bj = b.business_json || {};
-  if (outward.length !== 1) return { refuse: 'a counter bill can go to one customer only' };
-  const r = outward[0];
-  if (String(r.role || 'to').toLowerCase() !== 'to') return { refuse: 'a counter bill can only be addressed "to" its customer' };
-  if (String(b.purpose || 'order') !== 'order' || !taxCopy.counterIssued(bj)) return { refuse: 'it is not a counter bill (no bill number or counter on it)' };
-  const eid = String(r.entity_id || '');
-  if (!/^[0-9a-f-]{36}$/i.test(eid)) return { refuse: 'the customer has no ChitBridge id on this bill' };
-  if (!bj.customer || String(bj.customer.entity_id || '') !== eid) return { refuse: 'the bill names a different customer from the one it is sent to' };
-  const who = r.name || (bj.customer && bj.customer.name) || 'this customer';
+  const billBody = payload || {},
+    businessJson = billBody.business_json || {};
+  const shapeRefusal = counterBillShapeRefusal(outward, billBody, businessJson);
+  if (shapeRefusal) return shapeRefusal;
+  const recipient = outward[0];
+  const customerId = String(recipient.entity_id || '');
+  const customerName = customerNameOf(recipient, businessJson);
   try {
     const ok = await withEntity(sender_id, (db) =>
       db.query(
         `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
         WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${localIdentity.mayTradeSql('i', '$1')}
         LIMIT 1`,
-        [sender_id, eid]
+        [sender_id, customerId]
       )
     );
     if (ok.rows.length === 1) return null;
     /* the second look only says WHICH rule failed, so the words on the bill are the true ones */
     const listed = await withEntity(sender_id, (db) =>
-      db.query(`SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, eid])
+      db.query(`SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, customerId])
     );
-    if (!listed.rows.length) return { oneSided: who + " is not on this shop's customer list" };
-    const v = await localIdentity.mayTrade(sender_id, eid);
-    return { oneSided: v.ok ? who + ' could not be sent their copy' : v.say };
-  } catch (_) {
+    if (!listed.rows.length) return { oneSided: customerName + " is not on this shop's customer list" };
+    const verdict = await localIdentity.mayTrade(sender_id, customerId);
+    return { oneSided: verdict.ok ? customerName + ' could not be sent their copy' : verdict.say };
+  } catch (error) {
+    cbLog.fellBack('chits tillMaySend: the customer check could not run — answered one-sided', error); /* the sale stays the shop's own record; only the customer's copy is dropped */
     return { oneSided: 'the customer could not be checked just now' };
   }
+}
+/** the words that name the customer on a counter bill: the recipient's name, else the bill's customer, else "this customer" */
+function customerNameOf(recipient, businessJson) {
+  return recipient.name || (businessJson.customer && businessJson.customer.name) || 'this customer';
+}
+/** the first shape rule a counter bill breaks on its way to ONE customer (one recipient · "to" · an order with a counter number · a ChitBridge id · the named customer), or null when the shape is right */
+function counterBillShapeRefusal(outward, billBody, businessJson) {
+  if (outward.length !== 1) return { refuse: 'a counter bill can go to one customer only' };
+  const recipient = outward[0];
+  if (String(recipient.role || 'to').toLowerCase() !== 'to') return { refuse: 'a counter bill can only be addressed "to" its customer' };
+  if (!isCounterOrder(billBody, businessJson)) return { refuse: 'it is not a counter bill (no bill number or counter on it)' };
+  return counterCustomerRefusal(String(recipient.entity_id || ''), businessJson);
+}
+/** is this send an order the counter numbered (purpose `order`, a bill number and counter on it)? */
+function isCounterOrder(billBody, businessJson) {
+  return String(billBody.purpose || 'order') === 'order' && !!taxCopy.counterIssued(businessJson);
+}
+/** a refusal when the recipient is no ChitBridge id, or is not the customer the bill names; null when they match */
+function counterCustomerRefusal(customerId, businessJson) {
+  if (!/^[0-9a-f-]{36}$/i.test(customerId)) return { refuse: 'the customer has no ChitBridge id on this bill' };
+  if (!businessJson.customer || String(businessJson.customer.entity_id || '') !== customerId) return { refuse: 'the bill names a different customer from the one it is sent to' };
+  return null;
 }
 
 // Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
@@ -181,11 +259,12 @@ async function tillMaySend(sender_id, outward, payload) {
 // is a QUERY, not data movement — the chit stays put; Task just excludes what's filed) WITHOUT ever erroring if the
 // migration isn't applied yet. Self-heals the moment the column exists.
 let _folderColReady = null;
+/** does chit_status have its folder_id column yet — read once, then remembered */
 async function folderColReady() {
   if (_folderColReady !== null) return _folderColReady;
   try {
-    const r = await query(`SELECT 1 FROM information_schema.columns WHERE table_name = 'chit_status' AND column_name = 'folder_id' LIMIT 1`);
-    _folderColReady = r.rows.length > 0;
+    const probe = await query(`SELECT 1 FROM information_schema.columns WHERE table_name = 'chit_status' AND column_name = 'folder_id' LIMIT 1`);
+    _folderColReady = probe.rows.length > 0;
   } catch (e) {
     cbLog.fellBack('chits folderColReady: the read failed — answered no', e);
     _folderColReady = false;
@@ -193,12 +272,6 @@ async function folderColReady() {
   return _folderColReady;
 }
 
-async function crossing(entity, definerSql, definerParams, fallback) {
-  if (await definersReady()) {
-    return await withEntity(entity, (db) => db.query(definerSql, definerParams));
-  }
-  return await withEntity(entity, fallback);
-}
 
 // Connection check removed — existence check only
 // Sender can send to any entity that exists in the system
@@ -219,33 +292,13 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
   return `${label} from ${senderName} — ${dateStr}`;
 };
 
-// ─── Helper: Calculate summary ───────────────────────────────
-const calculateSummary = (lineItems) => {
-  if (!lineItems || !Array.isArray(lineItems)) {
-    return { line_item_count: 0, total_value: 0 };
-  }
-  /**
-   * ⚠️⚠️ A TOTAL OF ZERO IS A TOTAL. `item.total || item.price * item.quantity` treats 0 as absent and falls
-   * through to the full price — so a line given away FREE was silently charged for in the chit's value.
-   *
-   * Athi, 2026-09-03: *"many of the products are sold based on what is coming as free… the chit should
-   * automatically make the oil price as zero and should be informed as freebie."* A freebie is exactly the line
-   * whose total is 0, so this coalesce was wrong precisely where it mattered most, and nowhere else — which is
-   * why nothing caught it: every line anyone had ever sent had a non-zero total.
-   *
-   * ⭐ Same rule this codebase keeps re-learning: ABSENT IS NOT ZERO, and the inverse is just as true — zero is
-   * not absent. `availability.countedZero`, `sheet.fromSheet`'s blank cell, `itemstatus`: same line, drawn again.
-   */
-  const total = lineItems.reduce((sum, item) => {
-    const explicit = item.total !== undefined && item.total !== null && String(item.total).trim() !== '';
-    const t = explicit ? parseFloat(item.total) : (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
-    return sum + (Number.isFinite(t) ? t : 0);
-  }, 0);
-  return {
-    line_item_count: lineItems.length,
-    total_value: roundMoney(total)
-  };
-};
+// ─── Helper: summary counts ──────────────────────────────────
+/**
+ * ⭐ ACC-206 (Athi 2026-10-30): "if you compute anything anywhere, it is wrong." This used to add up the lines' totals into total_value — a SECOND
+ * calculator beside the engine, with its own meaning (the lines' basis: ex-tax for one shop, tax-in for another). The chit's money is the ENGINE'S,
+ * computed once at send (sendMoney) and copied; the only figure counted here is how many lines there are.
+ */
+const calculateSummary = (lineItems) => ({ line_item_count: Array.isArray(lineItems) ? lineItems.length : 0 });
 
 // ─── D1 auto-assign on receipt ─────────────────────────────────
 // Walk the delegate chain when the chosen actor is on leave / not-assignable. Returns an assignable
@@ -253,21 +306,21 @@ const calculateSummary = (lineItems) => {
 // NOT re-checked here — the default/overflow assignee absorbs excess by design (D1).
 async function resolveDelegateTarget(client, entity_id, actorId) {
   const seen = new Set();
-  let cur = actorId;
+  let current = actorId;
   let depth = 0;
-  while (cur && depth < 12) {
-    if (seen.has(cur)) return null; // cycle → give up (set-time check is the primary guard)
-    seen.add(cur);
-    const r = (
+  while (current && depth < 12) {
+    if (seen.has(current)) return null; // cycle → give up (set-time check is the primary guard)
+    seen.add(current);
+    const actor = (
       await client.query(
         `SELECT identity_id, break_status, hat, delegate_actor_id
          FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-        [cur, entity_id]
+        [current, entity_id]
       )
     ).rows[0];
-    if (!r) return null;
-    if (r.break_status === 'active' && (r.hat === 'act' || r.hat === 'manager')) return r.identity_id;
-    cur = r.delegate_actor_id;
+    if (!actor) return null;
+    if (actor.break_status === 'active' && (actor.hat === 'act' || actor.hat === 'manager')) return actor.identity_id;
+    current = actor.delegate_actor_id;
     depth++; // on leave / not assignable → try their delegate
   }
   return null;
@@ -278,70 +331,79 @@ async function resolveDelegateTarget(client, entity_id, actorId) {
 async function autoAssignReceived(entity_id, chit_id) {
   // B1 RLS: the receiver auto-assigns within its OWN roster -> withEntity(receiver), not withTransaction.
   await withEntity(entity_id, async (client) => {
-    const st = (
-      await client.query(
-        `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
-         FROM entity_actor_settings WHERE entity_id = $1`,
-        [entity_id]
-      )
-    ).rows[0];
-    const mode = (st && st.auto_assign_mode) || 'off';
+    const settings = await readAutoAssignSettings(client, entity_id);
+    const mode = (settings && settings.auto_assign_mode) || 'off';
     if (mode === 'off') return;
-    const defMax = (st && st.default_max_tasks) || 10;
-    const defaultAssignee = (st && st.default_assignee_actor_id) || null;
 
     // Idempotency + scope: only the actionable received copy, still unassigned.
-    const cs = (
-      await client.query(
-        `SELECT assigned_to_actor_id, current_status FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
-        [chit_id, entity_id]
-      )
-    ).rows[0];
-    if (!cs || cs.assigned_to_actor_id) return;
+    const copyStatus = await readReceivedCopyStatus(client, entity_id, chit_id);
+    if (!copyStatus || copyStatus.assigned_to_actor_id) return;
 
-    let target = null;
-    if (mode === 'default_assignee') {
-      target = defaultAssignee;
-    } else if (mode === 'least_loaded') {
-      const cand = (
-        await client.query(
-          `SELECT identity_id, max_tasks, current_task_count FROM identities
-           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND break_status = 'active'
-             AND hat IN ('act','manager')
-           ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
-           LIMIT 10`,
-          [entity_id]
-        )
-      ).rows;
-      const room = cand.find((item) => (item.current_task_count || 0) < (item.max_tasks || defMax));
-      target = room ? room.identity_id : defaultAssignee; // all full → overflow to the default assignee
-    }
+    let target = await pickAutoAssignTarget(client, entity_id, mode, settings);
     if (!target) return; // no eligible actor + no default → stays in the pool
 
     target = await resolveDelegateTarget(client, entity_id, target); // route past anyone on leave
     if (!target) return;
 
-    const t = (
+    const assignee = (
       await client.query(
         `SELECT identity_id, display_name FROM identities
          WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
         [target, entity_id]
       )
     ).rows[0];
-    if (!t) return;
+    if (!assignee) return;
 
     /* ⭐ W1-RAIL: the one assignment writer (lib/assign-chit) — my received copy, then back to pending through the ONE status write
        (T1-RAIL, rail-status statusGate), never a bare SET. The status was read with the row above — no second read. The shop's own
        automation moves it as SYSTEM. */
-    await assignChit(client, entity_id, chit_id, t, 'auto', { copy: 'received', me: railStatus.SYSTEM, from: cs.current_status });
-    await taskCount(client, t.identity_id, 'take'); /* TA1 */
+    await assignChit(client, entity_id, chit_id, assignee, 'auto', { copy: 'received', me: railStatus.SYSTEM, from: copyStatus.current_status });
+    await taskCount(client, assignee.identity_id, 'take'); /* TA1 */
     await client.query(
       `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
        VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
-      [chit_id, entity_id, `Auto-assigned to ${t.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]
+      [chit_id, entity_id, `Auto-assigned to ${assignee.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]
     );
   });
+}
+/** the entity's auto-assign settings row (mode · default assignee · default max tasks), or undefined when it has none */
+async function readAutoAssignSettings(client, entity_id) {
+  return (
+    await client.query(
+      `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
+         FROM entity_actor_settings WHERE entity_id = $1`,
+      [entity_id]
+    )
+  ).rows[0];
+}
+/** this entity's received copy of the chit (its assignee and status), or undefined when there is none to act on */
+async function readReceivedCopyStatus(client, entity_id, chit_id) {
+  return (
+    await client.query(
+      `SELECT assigned_to_actor_id, current_status FROM chit_status
+         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
+      [chit_id, entity_id]
+    )
+  ).rows[0];
+}
+/** the actor the entity's mode picks: its default assignee, or the least-loaded active actor with room (all full → the default); null when none */
+async function pickAutoAssignTarget(client, entity_id, mode, settings) {
+  const defaultMax = (settings && settings.default_max_tasks) || 10;
+  const defaultAssignee = (settings && settings.default_assignee_actor_id) || null;
+  if (mode === 'default_assignee') return defaultAssignee;
+  if (mode !== 'least_loaded') return null;
+  const candidates = (
+    await client.query(
+      `SELECT identity_id, max_tasks, current_task_count FROM identities
+           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND break_status = 'active'
+             AND hat IN ('act','manager')
+           ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
+           LIMIT 10`,
+      [entity_id]
+    )
+  ).rows;
+  const room = candidates.find((item) => (item.current_task_count || 0) < (item.max_tasks || defaultMax));
+  return room ? room.identity_id : defaultAssignee; // all full → overflow to the default assignee
 }
 
 // ─── POST /chits/send ─────────────────────────────────────────
@@ -413,7 +475,7 @@ router.post(
          as "Send failed" (lib/knownerr, external review §23) */
       const _known = require('../lib/knownerr').known(err);
       if (_known) return problem(req, res, { status: _known.status, ...said(_known.body, codeOfStatus(_known.status)) });
-      console.error('Send chit error:', err.message);
+      cbLog.error('chits/send failed', { id: req.id, err: err.message });
       problem(req, res, failed(err, req, 'Send failed'));
     }
   }
@@ -423,26 +485,59 @@ router.post(
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
+/**
+ * ⭐ ACC-192: A DEBIT NOTE IS NEVER SENT BY HAND. It is a raise of an issued invoice and exists only when the payer accepts the proposed change (lib/price-note.issue sends it over the shop's own
+ * loopback token, kind auto). Any other caller naming purpose debit_note is refused in words (409 DEBIT_NOTE_NEEDS_ACCEPT): nothing here can raise a bill the payer never confirmed.
+ */
+async function sendDebitNoteGate(sendState, req, res) {
+  if (String((req.body && req.body.purpose) || '') !== 'debit_note') return;
+  if (require('../lib/price-note').isShopOwnSend(req)) return;
+  res.locals.code = 'DEBIT_NOTE_NEEDS_ACCEPT';
+  return problem(req, res, { status: 409, ...said({ code: 'DEBIT_NOTE_NEEDS_ACCEPT', error: 'A debit note is issued on acceptance', message: 'A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.' }, 'CHIT_CONFLICT') });
+}
+
+/**
+ * ⭐ RAIL-205 · RAIL-191: a total or a line past the width of the column it is written to is refused HERE, with its sentence, before the write transaction opens. chit_deliver's INSERT
+ * into chit_detail.total_value numeric(15,2) / chit_line.quantity numeric(18,3) / chit_line.price numeric(18,2) overflowed (22003) after the whole send had been built and answered 500.
+ * The ceiling is read off the columns (lib/chit-ceiling), on the total the engine just computed (moneyBlock.total) and on the lines as sent; the refusal carries the currency beside the maximum.
+ */
+async function sendCeiling(sendState, req, res) {
+  const { moneyBlock, line_items, currency_code } = sendState;
+  const over = chitCeiling.overOf({ total: moneyBlock && moneyBlock.total, lines: line_items });
+  if (!over) return;
+  res.locals.code = 'CHIT_AMOUNT_TOO_LARGE';
+  return problem(req, res, { status: 400, ...said(chitCeiling.bodyFor(over, currency_code), codeOfStatus(400)) });
+}
+
 const SEND_STEPS = [
   sendSender,
   sendMoneyStated,
+  sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
   sendTillClaim,
   sendReplay,
   sendTillGate,
+  sendLineShape,
   sendBody,
+  sendSourceCarry,
   sendCredit,
   sendSource,
   sendFanOut,
   sendTrace,
   sendPrefs,
   sendRecipients,
+  sendOwnSpend,
   sendSuspended,
   sendSeller,
   sendOffers,
   sendMoney,
+  sendCeiling,
+  sendPartCurrency,
   sendIssued,
+  sendPaper,
+  sendCashStep,
+  sendBridge,
   sendCopyPolicy,
   sendPromote,
   sendParticipants,
@@ -463,26 +558,31 @@ const SEND_STEPS = [
 ];
 
 /** who is sending — the entity (an actor acts FOR it), its bridge id and name, read fresh when the claim is stale */
-async function sendSender(st, req, res) {
+/**
+ * ⚠️⚠️ THE TOKEN'S bridge_id IS A CACHE; THE DATABASE IS THE TRUTH — AND A KEY CACHES IT FOR A YEAR.
+ *
+ * Athi, 2026-09-16: *"how many chits I create, it is creating the receipt, but not able to sync."* On one PC
+ * only. An api key is minted with `bridge_id: identity.bridge_id || null` (routes/keys.js) and that claim is
+ * then FROZEN for the life of the key. Pair a counter before the shop has a bridge_id and every send from it
+ * puts NULL into sender_entity_bridge_id — `character varying(32) NOT NULL` — so it 500s, for ever, on that
+ * counter alone. The receipt prints because the counter prints locally; the sale never reaches ChitBridge and
+ * no amount of retrying will change that. A counter paired later works, which is what made it look like a
+ * sick PC rather than a stale claim.
+ *
+ * ⚠️ So the lookup is no longer an ACTOR special case. Anything missing the claim asks the database, which is
+ * one query on a path that already opens a transaction, and it cannot be wrong the way a year-old claim can.
+ */
+/**
+ * ⚠️ AND IF IT IS STILL MISSING, REFUSE IN WORDS. A 500 from a NOT NULL constraint tells a shopkeeper that
+ * "something went wrong" and tells the counter to keep retrying something that can never work. This says what
+ * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
+ */
+async function sendSender(sendState, req, res) {
   // Uniform actor model: an actor acts FOR its entity, so the chit is ALWAYS owned by the entity, never the actor.
   // (created_by_actor_id below records WHO pressed send — the only actor-specific bit, for audit.)
   const sender_id = entityId(req);
   let sender_bridge_id = req.identity.bridge_id;
   let sender_display_name = req.identity.display_name;
-  /**
-   * ⚠️⚠️ THE TOKEN'S bridge_id IS A CACHE; THE DATABASE IS THE TRUTH — AND A KEY CACHES IT FOR A YEAR.
-   *
-   * Athi, 2026-09-16: *"how many chits I create, it is creating the receipt, but not able to sync."* On one PC
-   * only. An api key is minted with `bridge_id: identity.bridge_id || null` (routes/keys.js) and that claim is
-   * then FROZEN for the life of the key. Pair a counter before the shop has a bridge_id and every send from it
-   * puts NULL into sender_entity_bridge_id — `character varying(32) NOT NULL` — so it 500s, for ever, on that
-   * counter alone. The receipt prints because the counter prints locally; the sale never reaches ChitBridge and
-   * no amount of retrying will change that. A counter paired later works, which is what made it look like a
-   * sick PC rather than a stale claim.
-   *
-   * ⚠️ So the lookup is no longer an ACTOR special case. Anything missing the claim asks the database, which is
-   * one query on a path that already opens a transaction, and it cannot be wrong the way a year-old claim can.
-   */
   const staleClaim = !sender_bridge_id || !sender_display_name;
   if (staleClaim || (req.identity.identity_type === 'actor' && req.identity.parent_entity_id)) {
     const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
@@ -491,11 +591,6 @@ async function sendSender(st, req, res) {
       sender_display_name = _ent.rows[0].display_name;
     }
   }
-  /**
-   * ⚠️ AND IF IT IS STILL MISSING, REFUSE IN WORDS. A 500 from a NOT NULL constraint tells a shopkeeper that
-   * "something went wrong" and tells the counter to keep retrying something that can never work. This says what
-   * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
-   */
   if (!sender_bridge_id) {
     return problem(req, res, { status: 409, ...said({
       error: 'no_bridge_id',
@@ -504,7 +599,7 @@ async function sendSender(st, req, res) {
         "Open ChitBridge → Settings and set the shop's bridge id, then send this bill again."
     }, 'CHIT_NO_BRIDGE_ID') });
   }
-  Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
+  Object.assign(sendState, { sender_id, sender_bridge_id, sender_display_name });
 }
 
 /**
@@ -532,60 +627,60 @@ async function sendMoneyStated(state, req, res) {
  * boundary and istest.mayTrade already refuse a copy across populations. A population the database cannot state is LIVE (fail safe).
  * The refusal carries a CODE the client branches on (`code`, `why`); the sentence is for the person.
  */
-async function sendLab(st, req, res) {
-  const bj = req.body && req.body.business_json;
-  if (!istest.isLabChit(bj)) return;
-  const r = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [st.sender_id]);
-  const population = r.rows[0] && r.rows[0].population != null ? String(r.rows[0].population) : null;
-  const may = istest.maySample(population);
-  if (!may.ok) return problem(req, res, { status: 409, ...said({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: may.why, message: may.say }, 'CHIT_CONFLICT') });
-  st.lab = true;
+async function sendLab(sendState, req, res) {
+  const businessJson = req.body && req.body.business_json;
+  if (!istest.isLabChit(businessJson)) return;
+  const identityRow = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [sendState.sender_id]);
+  const population = identityRow.rows[0] && identityRow.rows[0].population != null ? String(identityRow.rows[0].population) : null;
+  const sampleAllowed = istest.maySample(population);
+  if (!sampleAllowed.ok) return problem(req, res, { status: 409, ...said({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: sampleAllowed.why, message: sampleAllowed.say }, 'CHIT_CONFLICT') });
+  sendState.lab = true;
 }
 
 /** the bill number on the paper, checked against this shop's country rule — recorded, never refused */
-async function sendNumberCheck(st, req, res) {
-  const { sender_id } = st;
-  /**
-   * ⭐⭐⭐ THE NUMBER ON THE PAPER, CHECKED AGAINST THE RULE FOR THIS SHOP'S COUNTRY.
-   *
-   * The counter now asks lib/docnumber for the shape it issues (vendored as /engine/docnumber.js), but the
-   * SERVER held the same rule and accepted anything — so a counter on older code, or one whose till id was
-   * set before the cap existed, could post a number that is too long and nothing would notice.
-   *
-   * ⚠️⚠️ IT RECORDS, IT DOES NOT REFUSE, and that is the whole judgement rather than a shortcut.
-   *
-   * A bill number is not a request — it is already printed and already in a customer's hand. Refusing it
-   * does not un-print it; it wedges the counter's queue forever and loses the sale from the books, which is
-   * strictly worse than a long number. The physical world happened first, and a server does not get a vote
-   * on it. What a server CAN do is say so, and put the finding where the shop will read it.
-   *
-   * ⚠️ ONLY FOR A COUNTER DOCUMENT. `client_ref` carries an ERP's own reference, a WhatsApp id, a connector's
-   * key — none of which are document numbers and none of which this rule governs. The till id is the marker
-   * that this one is a bill, and without it nothing is checked.
-   */
-  /**
-   * ⚠️⚠️ DECLARED HERE BECAUSE THE NUMBER CHECK BELOW READS IT. It used to be declared ~17 lines further down,
-   * and on 2026-09-11 the document-number check was added ABOVE it — so every POST to this route died in the
-   * temporal dead zone with "Cannot access 'client_ref' before initialization", and the screen showed nothing
-   * at all: no toast, no error, the composer simply stayed open.
-   *
-   * ⭐ FOUND BY PRESSING "Save draft" IN A REAL SHOP AND READING THE NETWORK TAB: 500, silently. A `const` read
-   * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
-   * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
-   */
+/**
+ * ⭐⭐⭐ THE NUMBER ON THE PAPER, CHECKED AGAINST THE RULE FOR THIS SHOP'S COUNTRY.
+ *
+ * The counter now asks lib/docnumber for the shape it issues (vendored as /engine/docnumber.js), but the
+ * SERVER held the same rule and accepted anything — so a counter on older code, or one whose till id was
+ * set before the cap existed, could post a number that is too long and nothing would notice.
+ *
+ * ⚠️⚠️ IT RECORDS, IT DOES NOT REFUSE, and that is the whole judgement rather than a shortcut.
+ *
+ * A bill number is not a request — it is already printed and already in a customer's hand. Refusing it
+ * does not un-print it; it wedges the counter's queue forever and loses the sale from the books, which is
+ * strictly worse than a long number. The physical world happened first, and a server does not get a vote
+ * on it. What a server CAN do is say so, and put the finding where the shop will read it.
+ *
+ * ⚠️ ONLY FOR A COUNTER DOCUMENT. `client_ref` carries an ERP's own reference, a WhatsApp id, a connector's
+ * key — none of which are document numbers and none of which this rule governs. The till id is the marker
+ * that this one is a bill, and without it nothing is checked.
+ */
+/**
+ * ⚠️⚠️ DECLARED HERE BECAUSE THE NUMBER CHECK BELOW READS IT. It used to be declared ~17 lines further down,
+ * and on 2026-09-11 the document-number check was added ABOVE it — so every POST to this route died in the
+ * temporal dead zone with "Cannot access 'client_ref' before initialization", and the screen showed nothing
+ * at all: no toast, no error, the composer simply stayed open.
+ *
+ * ⭐ FOUND BY PRESSING "Save draft" IN A REAL SHOP AND READING THE NETWORK TAB: 500, silently. A `const` read
+ * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
+ * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
+ */
+async function sendNumberCheck(sendState, req, res) {
+  const { sender_id } = sendState;
   const client_ref = refOf(req); /* ⚠️ one reader — the route's catch asks the same question again */
 
   let number_check = null;
   if (client_ref) {
-    const _b = req.body && req.body.business_json;
-    if (_b && _b.till && _b.till.id) {
-      const v = docnumber.check(client_ref, await countryOfEntity(sender_id));
+    const businessJson = req.body && req.body.business_json;
+    if (businessJson && businessJson.till && businessJson.till.id) {
+      const verdict = docnumber.check(client_ref, await countryOfEntity(sender_id));
       /* ⚠ an unstudied country passes on the only rule everyone agrees on, and `verified` says so — a green
          tick there would be the platform claiming something nobody checked. */
-      if (!v.ok) number_check = { ok: false, reason: v.reason, verified: v.verified, number: client_ref };
+      if (!verdict.ok) number_check = { ok: false, reason: verdict.reason, verified: verdict.verified, number: client_ref };
     }
   }
-  Object.assign(st, { client_ref, number_check });
+  Object.assign(sendState, { client_ref, number_check });
 }
 
 /**
@@ -608,23 +703,28 @@ function refOf(req) {
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
  * reading the counter's screen, slip and reprint use — window.CBTax.moneyOf), never worked out again (Athi, 2026-10-02).
  * The header keeps its own names, which are moneyOf's: gross · savings · net · taxable · tax · total · round_off. Picked,
- * not added up. `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
+ * not added up. ⭐ ACC-191: `tax` is null when the supply is undecided (supply unknown, a rate above 0, no head figure): "not decided", copied as it is, never turned into 0; the total stays the price.
+ * `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
  * makes for other chits.
  */
-function moneyOfInvoice(inv, currency_code) {
-  const m = taxEngine.moneyOf(inv, currency_code);
-  return {
-    gross: m.gross,
-    savings: m.savings,
-    net: m.net,
-    taxable: m.taxable,
-    tax: m.tax,
-    total: m.total,
-    round_off: m.round_off,
-    currency_code,
-    provisional: false,
-    issued: true
-  };
+function moneyOfInvoice(invoice, currency_code) {
+  const money = taxEngine.moneyOf(invoice, currency_code);
+  return Object.assign(
+    {
+      gross: money.gross,
+      savings: money.savings,
+      net: money.net,
+      taxable: money.taxable,
+      tax: money.tax,
+      total: money.total,
+      round_off: money.round_off,
+      currency_code,
+      provisional: false,
+      issued: true
+    },
+    /* ACC-206 (engines v1.74.0): the engine's own walk from gross to total — each applied offer, and its verdict (ok, or the first step that does not add up). COPIED, never rebuilt. */
+    money.bridge ? { offers: money.offers, bridge: money.bridge } : {}
+  );
 }
 /**
  * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
@@ -670,8 +770,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
 }
 
 /** a phone's bill names its device and person — checked BEFORE the dedupe */
-async function sendTillClaim(st, req, res) {
-  const { client_ref } = st;
+async function sendTillClaim(sendState, req, res) {
+  const { client_ref } = sendState;
   /**
    * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
    * comes back; a replay that arrived twice would bill the customer twice and put two vouchers in the books. 'client_ref' is the
@@ -690,86 +790,90 @@ async function sendTillClaim(st, req, res) {
 }
 
 /** the same bill twice is the same chit — a retry answered with the chit that exists, a collision refused and named */
-async function sendReplay(st, req, res) {
-  const { sender_id, client_ref } = st;
-  if (client_ref) {
-    try {
-      const seen = await sameRefLook(sender_id, client_ref);
-      if (seen) {
-        /**
-         * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
-         *
-         * Athi, 2026-09-11, planning two testers at once: *"we cannot have same receipt number if the same
-         * login opens from couple of places?"* — and the answer was that we could.
-         *
-         * The counter numbers its bills LOCALLY as `<till>/<FY>/<nnnn>`, and the till prefix defaults to
-         * `C1` and is only ever set by hand. So two counters nobody renamed both produce C1/26-27/0041.
-         * Returning the first chit is exactly right for a RETRY from the same device — which is what this
-         * guard was built for — and exactly wrong for two devices: the second shop's real sale is absorbed,
-         * the counter is told it succeeded, and it hands back somebody else's chit id.
-         *
-         * ⚠⚠ AND IT IS NOT MERELY A LOST RECORD. An invoice number must be a consecutive serial UNIQUE for
-         * the financial year, so two counters on one number is two tax invoices carrying one number.
-         *
-         * ⭐ THE TILL ID TELLS THEM APART, and it is already on the chit. Same till — or either side missing
-         * one, which is every chit that is not a counter bill — behaves exactly as before. Different tills
-         * is REFUSED AND NAMED, because a number that two devices both think is theirs is a thing a person
-         * has to settle, not something a server may quietly pick a winner for.
-         */
-        /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
-            here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
-        const _bj = req.body && req.body.business_json;
-        const mine = (_bj && _bj.till && _bj.till.id) || null;
-        const theirs = seen.till_id || null;
-        /**
-         * ── ⚠️⚠️⚠️ THE GUARD ABOVE NEVER FIRED FOR THE ONE CASE ITS OWN COMMENT DESCRIBES ────────────────
-         *
-         * Athi, 2026-09-17: *"from this PC the bills are pushed, but still not happening from the other PC."*
-         * Only three counter bills had reached ChitBridge in five days — C1/26-27/0005, 0006, 0007 — and his
-         * two PCs, on 152.233.15.121 and .123, were BOTH counter `C1`, because nobody had renamed either.
-         *
-         * The comment above says, in so many words, "two counters nobody renamed both produce C1/26-27/0041".
-         * The code then compared TILL IDS — and two unrenamed counters have the SAME till id, so every
-         * collision between them read as a same-device RETRY. The second PC's real sale was absorbed, the
-         * server answered 200 with the FIRST PC's chit id, and the counter recorded that as its receipt and
-         * showed "✓ sent". Nothing failed anywhere, which is why no log, no queue and no panel caught it — and
-         * why the acknowledgement added on 2026-09-16 was fooled too: it received a real chit id, just
-         * somebody else's.
-         *
-         * ⭐ `billed_at` IS WHAT TELLS THEM APART, and every counter already sends it. A retry is the SAME
-         * bill, so it carries the same moment it was taken. Two devices issuing one number carry two different
-         * moments — they would have to be billed in the same millisecond. So: same moment → a retry, answered
-         * as before; different moments → a collision, refused and named, whatever the till ids say.
-         * ⚠️ Either side missing it — every chit that is not a counter bill, and anything older — behaves
-         * exactly as before. This only ever turns a silent absorption into a spoken refusal.
-         */
-        const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
-        const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-        const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
-        if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
-        return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
-      }
-    } catch (e) {
-      cbLog.fellBack(
-        'chits: failed — carried on without it',
-        e
-      ); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */
-    }
+/**
+ * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
+ *
+ * Athi, 2026-09-11, planning two testers at once: *"we cannot have same receipt number if the same
+ * login opens from couple of places?"* — and the answer was that we could.
+ *
+ * The counter numbers its bills LOCALLY as `<till>/<FY>/<nnnn>`, and the till prefix defaults to
+ * `C1` and is only ever set by hand. So two counters nobody renamed both produce C1/26-27/0041.
+ * Returning the first chit is exactly right for a RETRY from the same device — which is what this
+ * guard was built for — and exactly wrong for two devices: the second shop's real sale is absorbed,
+ * the counter is told it succeeded, and it hands back somebody else's chit id.
+ *
+ * ⚠⚠ AND IT IS NOT MERELY A LOST RECORD. An invoice number must be a consecutive serial UNIQUE for
+ * the financial year, so two counters on one number is two tax invoices carrying one number.
+ *
+ * ⭐ THE TILL ID TELLS THEM APART, and it is already on the chit. Same till — or either side missing
+ * one, which is every chit that is not a counter bill — behaves exactly as before. Different tills
+ * is REFUSED AND NAMED, because a number that two devices both think is theirs is a thing a person
+ * has to settle, not something a server may quietly pick a winner for.
+ */
+/**
+ * ── ⚠️⚠️⚠️ THE GUARD ABOVE NEVER FIRED FOR THE ONE CASE ITS OWN COMMENT DESCRIBES ────────────────
+ *
+ * Athi, 2026-09-17: *"from this PC the bills are pushed, but still not happening from the other PC."*
+ * Only three counter bills had reached ChitBridge in five days — C1/26-27/0005, 0006, 0007 — and his
+ * two PCs, on 152.233.15.121 and .123, were BOTH counter `C1`, because nobody had renamed either.
+ *
+ * The comment above says, in so many words, "two counters nobody renamed both produce C1/26-27/0041".
+ * The code then compared TILL IDS — and two unrenamed counters have the SAME till id, so every
+ * collision between them read as a same-device RETRY. The second PC's real sale was absorbed, the
+ * server answered 200 with the FIRST PC's chit id, and the counter recorded that as its receipt and
+ * showed "✓ sent". Nothing failed anywhere, which is why no log, no queue and no panel caught it — and
+ * why the acknowledgement added on 2026-09-16 was fooled too: it received a real chit id, just
+ * somebody else's.
+ *
+ * ⭐ `billed_at` IS WHAT TELLS THEM APART, and every counter already sends it. A retry is the SAME
+ * bill, so it carries the same moment it was taken. Two devices issuing one number carry two different
+ * moments — they would have to be billed in the same millisecond. So: same moment → a retry, answered
+ * as before; different moments → a collision, refused and named, whatever the till ids say.
+ * ⚠️ Either side missing it — every chit that is not a counter bill, and anything older — behaves
+ * exactly as before. This only ever turns a silent absorption into a spoken refusal.
+ */
+async function sendReplay(sendState, req, res) {
+  const { sender_id, client_ref } = sendState;
+  if (!client_ref) return;
+  try {
+    const seen = await sameRefLook(sender_id, client_ref);
+    /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
+    if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
+    if (seen) return answerReplay(req, res, seen, client_ref);
+  } catch (e) {
+    cbLog.fellBack(
+      'chits: failed — carried on without it',
+      e
+    ); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */
   }
+}
+/** a chit already exists under this client_ref: 409 when it is two devices on one number (named), else 200 with the chit that exists (a retry) */
+function answerReplay(req, res, seen, client_ref) {
+  /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
+     here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
+  const businessJson = req.body && req.body.business_json;
+  const mine = (businessJson && businessJson.till && businessJson.till.id) || null;
+  const theirs = seen.till_id || null;
+  const myAt = businessJson && businessJson.billed_at ? String(businessJson.billed_at) : null;
+  const theirAt = seen.billed_at ? String(seen.billed_at) : null;
+  const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
+  if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
+  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
 }
 
 /** a till key may only bill itself — or one listed customer (one-sided when their copy cannot go) */
-async function sendTillGate(st, req, res) {
-  const { sender_id } = st;
+async function sendTillGate(sendState, req, res) {
+  const { sender_id } = sendState;
   /**
    * ⚠️ A TILL KEY MAY ONLY BILL ITSELF. The key lives on a shop PC where anyone can pick it up; a counter sale is the shop's own
    * record and never addresses another business. The scope opens the send route; this closes it to one shape.
    */
   let oneSided = null; /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
-  const tk = req.till && req.till.key; /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
-  if (tk && tk.scopes.indexOf('till') >= 0 && !tk.scopes.includes('connector')) {
-    const list = Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : [];
-    const outward = list.filter((item) => item && item.self !== true && String(item.entity_id || '') !== String(sender_id));
+  const tillKey = req.till && req.till.key; /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
+  if (tillKey && tillKey.scopes.indexOf('till') >= 0 && !tillKey.scopes.includes('connector')) {
+    const list = recipientListOf(req.body);
+    const isOutward = (item) => item && item.self !== true && String(item.entity_id || '') !== String(sender_id);
+    const outward = list.filter(isOutward);
     const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
     if (gate && gate.refuse) {
       /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL's shape, not of the key — the counter keeps it and sends the rest */
@@ -782,18 +886,34 @@ async function sendTillGate(st, req, res) {
     if (gate && gate.oneSided) {
       /* ⭐ ONE-SIDED: the sale and its ledger are recorded; only the customer's copy is dropped. The bill keeps naming its
          customer (business_json.customer) — it is still their bill, they simply do not receive a copy on ChitBridge. */
-      const keep = list.filter((item) => !(item && item.self !== true && String(item.entity_id || '') !== String(sender_id)));
-      if (!keep.some((item) => item && item.self === true)) keep.push({ self: true, name: 'self' });
-      if (Array.isArray(req.body.recipients)) req.body.recipients = keep;
-      else req.body.receivers = keep;
+      keepOnlySelfRecipients(req.body, list.filter((item) => !isOutward(item)));
       oneSided = { why: gate.oneSided };
     }
   }
-  Object.assign(st, { oneSided });
+  Object.assign(sendState, { oneSided });
+}
+/** the recipient list a send body carries (`recipients`, else `receivers`), or none */
+function recipientListOf(body) {
+  return Array.isArray(body.recipients) ? body.recipients : Array.isArray(body.receivers) ? body.receivers : [];
+}
+/** put `keep` back as the body's recipient list (under the key it came in), with the sender's own copy among them */
+function keepOnlySelfRecipients(body, keep) {
+  if (!keep.some((item) => item && item.self === true)) keep.push({ self: true, name: 'self' });
+  if (Array.isArray(body.recipients)) body.recipients = keep;
+  else body.receivers = keep;
 }
 
+/**
+ * the shape of the lines, read before they are stamped. RAIL-177: a top-level line_id that is no uuid or is repeated is a 400 naming the line (the counter sends none: its ids sit in item_data).
+ * RAIL-81: a price or quantity under a name the engine does not read is NAMED in the answer (state.ignored), never refused: the counter's queue would retry a refusal for ever.
+ */
+async function sendLineShape(sendState, req, res) {
+  const badId = lineShape.refusalOf(req.body.line_items);
+  if (badId) return problem(req, res, { status: 400, ...said(badId, 'BAD_LINE_ID') });
+  sendState.ignored = lineShape.ignoredFigures(req.body.line_items);
+}
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
-async function sendBody(st, req, res) {
+async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
   const purpose = req.body.purpose || 'order';
   const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
@@ -803,8 +923,7 @@ async function sendBody(st, req, res) {
      mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-  const business_json =
-    req.body.business_json || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
+  const business_json = businessJsonOf(req.body);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
@@ -826,47 +945,120 @@ async function sendBody(st, req, res) {
      refused each one ("an entry in INR needs its rate to AUD"), so no sale ever posted. Decided below from the sender's row that
      the self-copy preference already reads (one query, not two). */
   const currency_code = (business_json && business_json.currency) || null;
-  Object.assign(st, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code });
+  Object.assign(sendState, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code });
+}
+/** the business data a send body carries: its business_json, else its Compose-panel schema_values wrapped as one, else null */
+function businessJsonOf(body) {
+  const hasSchemaValues = body.schema_values && Object.keys(body.schema_values).length;
+  return body.business_json || (hasSchemaValues ? { schema_values: body.schema_values } : null);
+}
+
+/** the draft this send promotes (the id the body names), or null — read by sendFanOut and, earlier, by sendSourceCarry */
+const promoteIdOf = (req) => (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null);
+
+/**
+ * RAIL-146c — the SOURCE a blind sender's lines are carried from: the draft a send promotes (RAIL-149), or the ORDER a goods receipt names (business_json.against.chit_id: a receipt is a new
+ * chit whose lines match the order's by the line_id the till sends in item_data). A receipt is the shop's spend whatever the order's party list says (options.cost), so it is carried even
+ * when it names no order (nothing to take, and a figure of its own is still a 403): its own money (goods · extras · landed_total · costs · their bill's total) rides in options.extra.
+ */
+function sourceOf(state, req) {
+  const draft = promoteIdOf(req);
+  if (draft) return { id: draft, options: {} };
+  if (state.purpose !== 'receipt') return null;
+  const against = state.business_json && state.business_json.against;
+  const order = against && typeof against.chit_id === 'string' && /^[0-9a-f-]{36}$/i.test(against.chit_id) ? against.chit_id : null;
+  return { id: order, options: { cost: true, extra: state.business_json } };
+}
+
+/** before the definers (b50) the write is the legacy fan-out, which cannot re-check the carried money under the lock: a blind promote is refused there, nothing written */
+const legacyRefusal = () => Object.assign(new Error('not sent'), { status: 409, refused: true, code: 'CHIT_CONFLICT', body: { error: 'Not sent', code: 'CHIT_CONFLICT', message: 'This draft cannot be sent with this access until the system update finishes; ask the account owner to send it.' } });
+
+/**
+ * RAIL-149 — a cost-blind co-assist re-sending a draft (promote_draft_id): the stored money of the draft's lines is carried onto the lines sent, never null over it. One named step so a
+ * later source (RAIL-146c, a receipt sent against an order) widens the same call. The owner, a cost-allowed actor and a paired till pay nothing (isCostBlind is false); a sale-side draft is as it was.
+ * Answers the 403 COST_BLIND (blocked = key names) or a 400 for a shifted list in the refusal's own words; the write transaction re-checks the stamp (sendWrite).
+ */
+async function sendSourceCarry(state, req, res) {
+  const { sender_id, line_items } = state;
+  const source = sourceOf(state, req);
+  if (!source || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
+  return carryAnswer(state, req, res, source, (db) => costWrite.carryFromSource(db, sender_id, source.id, line_items, req.body.line_items, source.options));
+}
+
+/** runs one carry (`carry(db)` → null or { lines, stamp }) in the sender's scope; a refusal is answered (403 COST_BLIND, 400, 409), a carry replaces the lines and sets the stamp sendWrite re-checks */
+async function carryAnswer(state, req, res, source, carry) {
+  try {
+    const carried = await withEntity(state.sender_id, carry);
+    if (carried && !(await definersReady())) throw legacyRefusal();
+    if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp, sourceId: source.id, sourceOptions: source.options });
+  } catch (e) {
+    if (!e.refused) throw e;
+    return problem(req, res, { status: e.status, ...said(e.body, codeOfStatus(e.status)) });
+  }
+  return false;
+}
+
+/**
+ * RAIL-156 — a cost-blind co-assist sending a chit that is the shop's SPEND with no source (a purchase order, a supplier bill: the receiver is a supplier on the shop's own list, or the
+ * document kind is a buy): any figure he sends is the SAME 403 COST_BLIND a receipt gets (carryFromSource with options.cost and no source id), nothing written. Runs after the receivers
+ * are resolved because the side is judged from them (lib/cost-write sideOfCopy, the reader's own lists). Only a positive buy is judged: a sale, a walk-in, or a party on neither list is as before.
+ */
+async function sendOwnSpend(state, req, res) {
+  const { sender_id, line_items, purpose, business_json, receiverDetails } = state;
+  if (!line_items.length || sourceOf(state, req) || !(await cost.isCostBlind(req, sender_id))) return false;
+  const copy = { purpose, sender_entity_id: sender_id, business_json, all_recipients: receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role })) };
+  const source = { id: null, options: { cost: true, extra: business_json } };
+  return carryAnswer(state, req, res, source, async (db) =>
+    (await costWrite.sideOfCopy(db, sender_id, copy)) === 'buy' ? costWrite.carryFromSource(db, sender_id, null, line_items, req.body.line_items, source.options) : null);
 }
 
 /** the credit limit (F2) and the bill's own facts stamped on the chit */
-async function sendCredit(st, req, res) {
-  const { sender_id, client_ref, number_check, purpose, business_json } = st;
+async function sendCredit(sendState, req, res) {
+  const { sender_id, client_ref, number_check, purpose, business_json } = sendState;
   /* ⭐ CB FINANCE · TERMS (F2) — THE SERVER ENFORCES THE CREDIT LIMIT. A credit bill to a known customer that would take them past
      the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
      counter carries business_json.credit_override = { by } (the owner's counter PIN, checked at the till), and only a counter key or
      the owner's own login may carry it. An allowed bill is recorded (books_change_log 'credit_limit'). Not a credit bill, no named
      customer, ledger off or no limit → no query at all. */
-  if (!req.body.is_draft && purpose === 'order' && business_json && typeof business_json === 'object') {
-    const F = require('../lib/finance-terms');
-    const chk = await F.creditSaleCheck(sender_id, business_json);
-    if (chk.over) {
-      const allowedBy = F.overrideBy(req, business_json.credit_override);
+  if (!req.body.is_draft && purpose === 'order' && isJsonObject(business_json)) {
+    const financeTerms = require('../lib/finance-terms');
+    const creditCheck = await financeTerms.creditSaleCheck(sender_id, business_json);
+    if (creditCheck.over) {
+      const allowedBy = financeTerms.overrideBy(req, business_json.credit_override);
       if (!allowedBy)
-        return problem(req, res, { status: 409, ...said({
-          code: 'OVER_LIMIT',
-          error: 'Over the credit limit.',
-          message: F.overSentence(chk),
-          limit_minor: chk.limit_minor,
-          owed_minor: chk.owed_minor,
-          after_minor: chk.after_minor,
-          party_id: chk.party_id
-        }, 'CHIT_CONFLICT') });
-      F.noteOverride(sender_id, chk, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
+        return problem(req, res, { status: 409, ...said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT') });
+      financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
-
+  stampBillFacts(business_json, client_ref, number_check);
+}
+/** is this value a JSON object (not null, not a scalar)? an array passes, as before */
+const isJsonObject = (value) => !!value && typeof value === 'object';
+/** the 409 body for a credit bill over the customer's limit: the sentence and the figures */
+function overLimitBody(financeTerms, creditCheck) {
+  return {
+    code: 'OVER_LIMIT',
+    error: 'Over the credit limit.',
+    message: financeTerms.overSentence(creditCheck),
+    limit_minor: creditCheck.limit_minor,
+    owed_minor: creditCheck.owed_minor,
+    after_minor: creditCheck.after_minor,
+    party_id: creditCheck.party_id
+  };
+}
+/** the bill facts that travel ON the chit: the client_ref and the number check */
+function stampBillFacts(business_json, client_ref, number_check) {
   /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
-  if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
+  if (client_ref && isJsonObject(business_json)) business_json.client_ref = client_ref;
   /* ⭐ ON THE CHIT, not only in the reply. The counter may be offline when the answer comes back, the person
      who reads the books is not the person who pressed the key, and a finding that lives only in an HTTP
      response is a finding nobody will ever see again. */
-  if (number_check && business_json && typeof business_json === 'object') business_json.number_check = number_check;
+  if (number_check && isJsonObject(business_json)) business_json.number_check = number_check;
 }
 
 /** the sender's declared trade travels with the goods */
-async function sendSource(st, req, res) {
-  const { sender_id, sender_display_name, purpose, business_json } = st;
+async function sendSource(sendState, req, res) {
+  const { sender_id, sender_display_name, purpose, business_json } = sendState;
   /**
    * ── ⭐⭐⭐ THE SENDER'S TRADE TRAVELS WITH THE GOODS (2026-09-10) ──────────────────────────────────────
    *
@@ -885,14 +1077,14 @@ async function sendSource(st, req, res) {
    * ⚠️ AND IT IS WHAT THE SENDER HAS DECLARED PUBLICLY ABOUT THEIR TRADE — the sector already shown on their
    * passport — never the profile itself, and never the vault.
    */
-  if (business_json && typeof business_json === 'object' && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
+  if (needsSourceTrade(purpose, business_json)) {
     try {
       /* ⚠️⚠️ withEntity, NOT query. entity_profile is RLS-isolated, and a bare query() runs with no
          app.current_entity set — under which every policy is false and the read returns ZERO ROWS.
          Not an error: an empty answer that looks exactly like a shop that declared no trade. This is
          the quietest failure on the platform and it cost an hour here. */
-      const sp = await withEntity(sender_id, (db) => db.query(`SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
-      const row = sp.rows[0] || {};
+      const profileRows = await withEntity(sender_id, (db) => db.query(`SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
+      const row = profileRows.rows[0] || {};
       const sectors = row.sectors || [];
       if (sectors && sectors.length) {
         business_json.source = { name: sender_display_name || null, sectors, vertical: require('../lib/adopt').verticalOf(sectors) };
@@ -906,29 +1098,34 @@ async function sendSource(st, req, res) {
   }
 }
 
+/** does this chit still need the sender's trade stamped: goods (receipt · delivery note · order) whose business data names no source yet */
+function needsSourceTrade(purpose, business_json) {
+  return isJsonObject(business_json) && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source;
+}
+
 /** draft or send, and the recipient caps re-checked (To/CC/For) */
-async function sendFanOut(st, req, res) {
-  const { line_items } = st;
+async function sendFanOut(sendState, req, res) {
+  const { line_items } = sendState;
   const is_draft = !!req.body.is_draft;
   // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
   // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
-  const promote_draft_id = typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null;
+  const promote_draft_id = promoteIdOf(req);
 
   // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
   const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
   const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
-  const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : []).map((item) => ({
+  const rawList = recipientListOf(req.body).map((item) => ({
     ...item,
     kind: String(item.role || 'to').toLowerCase()
   }));
 
   // Server-side LIMITS re-check — never trust the client (ATH-120).
   const counts = { to: 0, cc: 0, for: 0 };
-  for (const r of rawList) {
-    if (!(r.kind in counts)) {
-      return problem(req, res, { status: 400, ...said({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${r.kind}"` }, 'CHIT_BAD_REQUEST') });
+  for (const rawRecipient of rawList) {
+    if (!(rawRecipient.kind in counts)) {
+      return problem(req, res, { status: 400, ...said({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${rawRecipient.kind}"` }, 'CHIT_BAD_REQUEST') });
     }
-    counts[r.kind]++;
+    counts[rawRecipient.kind]++;
   }
   if (counts.to > LIMITS.to || counts.cc > LIMITS.cc || counts.for > LIMITS.for) {
     return problem(req, res, { status: 400, ...said({ error: 'Limit exceeded', message: `Recipient caps — to:${LIMITS.to}, cc:${LIMITS.cc}, for:${LIMITS.for}` }, 'CHIT_BAD_REQUEST') });
@@ -936,12 +1133,12 @@ async function sendFanOut(st, req, res) {
   if (line_items.length > LIMITS.items) {
     return problem(req, res, { status: 400, ...said({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` }, 'CHIT_BAD_REQUEST') });
   }
-  Object.assign(st, { is_draft, promote_draft_id, ROLE_MAP, rawList, counts });
+  Object.assign(sendState, { is_draft, promote_draft_id, ROLE_MAP, rawList, counts });
 }
 
 /** the traceability edge — only when the sender declares one, its parents co-held */
-async function sendTrace(st, req, res) {
-  const { sender_id, is_draft } = st;
+async function sendTrace(sendState, req, res) {
+  const { sender_id, is_draft } = sendState;
   // ── Traceability edge (Fragment 1): a doubly-linked, co-held, FROZEN handoff edge that rides in
   //    summary_json.trace. Present ONLY when the sender declares `trace` — normal chits are untouched (every
   //    existing send path behaves exactly as before). HARDENING on the new path: a non-origin handoff MUST carry
@@ -960,13 +1157,32 @@ async function sendTrace(st, req, res) {
       if (missing.length) return problem(req, res, { status: 400, ...said({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` }, 'CHIT_BAD_REQUEST') });
     }
   }
-  Object.assign(st, { traceEdge });
+  Object.assign(sendState, { traceEdge });
 }
 
 /** the sender's money and self-copy preference — one read */
-async function sendPrefs(st, req, res) {
-  const { sender_id, sender_bridge_id, sender_display_name, ROLE_MAP } = st;
-  let { currency_code } = st;
+/**
+ * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
+ * no two copies, and you would be very specific about direction."*
+ *
+ * The default was 'both', so every self-chit wrote TWO rows for the SAME entity — a `sent` copy and a
+ * `received` copy. That is not a display quirk: it doubles chit_header, chit_detail AND chit_line, so every
+ * cross-chit read counts the same work twice. It is what made the worklist show four lines per person where
+ * two were assigned, and it made `due_on` and `actor_id` look broken when both were filtering correctly.
+ *
+ * ⚠️ WHY `received` AND NOT `sent`. A self-chit exists because there is work to do. The Order/Sent list is
+ * the record of obligations placed on SOMEONE ELSE, and a self-chit places none — filing it there asserts
+ * "I sent this to a counterparty", which is false. Task asserts "this is mine to act on", which is true. It
+ * is also what the capture path already does: a WhatsApp message becomes a Task, never an Order.
+ *
+ * ⚠️ NARROWED, NOT SILENT. The suppression is declared on the chit as `copy_policy` with its source, exactly
+ * as before — an absence that cannot be told from a gap is not governed. An entity that has explicitly set
+ * `self_copy_pref` keeps its choice; only the unset default moves. Inter-entity chits are untouched: both
+ * copies stay mandatory there, because the co-held transfer is the whole point.
+ */
+async function sendPrefs(sendState, req, res) {
+  const { sender_id, sender_bridge_id, sender_display_name, ROLE_MAP } = sendState;
+  let { currency_code } = sendState;
   // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
   const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
   /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
@@ -974,114 +1190,109 @@ async function sendPrefs(st, req, res) {
   currency_code = statedMoney
     ? String(statedMoney).toUpperCase()
     : null; /* N1: none stated → null (sendMoneyStated refuses a document first), never 'INR' by name */
-  /**
-   * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
-   * no two copies, and you would be very specific about direction."*
-   *
-   * The default was 'both', so every self-chit wrote TWO rows for the SAME entity — a `sent` copy and a
-   * `received` copy. That is not a display quirk: it doubles chit_header, chit_detail AND chit_line, so every
-   * cross-chit read counts the same work twice. It is what made the worklist show four lines per person where
-   * two were assigned, and it made `due_on` and `actor_id` look broken when both were filtering correctly.
-   *
-   * ⚠️ WHY `received` AND NOT `sent`. A self-chit exists because there is work to do. The Order/Sent list is
-   * the record of obligations placed on SOMEONE ELSE, and a self-chit places none — filing it there asserts
-   * "I sent this to a counterparty", which is false. Task asserts "this is mine to act on", which is true. It
-   * is also what the capture path already does: a WhatsApp message becomes a Task, never an Order.
-   *
-   * ⚠️ NARROWED, NOT SILENT. The suppression is declared on the chit as `copy_policy` with its source, exactly
-   * as before — an absence that cannot be told from a gap is not governed. An entity that has explicitly set
-   * `self_copy_pref` keeps its choice; only the unset default moves. Inter-entity chits are untouched: both
-   * copies stay mandatory there, because the co-held transfer is the whole point.
-   */
   const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'received';
-  const makeSelfReceiver = (k) => ({
+  const makeSelfReceiver = (partyKind) => ({
     entity_id: sender_id,
     bridge_id: sender_bridge_id,
     display_name: sender_display_name,
-    kind: k,
-    role: ROLE_MAP[k],
-    all_role: k === 'to' ? 'receiver' : k
+    kind: partyKind,
+    role: ROLE_MAP[partyKind],
+    all_role: partyKind === 'to' ? 'receiver' : partyKind
   });
   const hasSelf = false;
-  Object.assign(st, { currency_code, selfCopyPref, makeSelfReceiver, hasSelf });
+  Object.assign(sendState, { currency_code, selfCopyPref, makeSelfReceiver, hasSelf });
 }
 
 /** every recipient resolved by id before name, de-duplicated; self becomes the Task copy */
-async function sendRecipients(st, req, res) {
-  const { sender_id, is_draft, ROLE_MAP, rawList, makeSelfReceiver } = st;
-  let { hasSelf } = st;
+/**
+ * ⚠️⚠️ A MINTED PARTY IS NOT A RECIPIENT. Athi, 2026-09-10: *"he is not a recipient, so you can't bring
+ * him to the rail or something."* `~acmetraders.sup-0001` is an ordinary active entity in every other
+ * respect — which was the whole design — so all four lookups below would resolve it happily, and the chit
+ * would then sit as sent for ever because nobody can sign in to open it. The sender would be waiting on an
+ * answer that cannot come.
+ * ⭐ One test on whatever was typed, before any lookup runs. The id path is fenced separately below,
+ * because a screen holding a supplier row would pass the uuid rather than the handle.
+ */
+async function sendRecipients(sendState, req, res) {
+  const { sender_id, is_draft, ROLE_MAP, rawList, makeSelfReceiver } = sendState;
+  let { hasSelf } = sendState;
   // Existence check — connection NOT required. Resolve + de-dupe (one row per entity per direction).
   const receiverDetails = [];
   const seen = new Set();
-  for (const r of rawList) {
+  const addSelfOnce = (partyKind) => {
+    if (!hasSelf) receiverDetails.push(makeSelfReceiver(partyKind));
+    hasSelf = true;
+  };
+  for (const wanted of rawList) {
     // Self recipient ("+ Self" or your own name): always create the entity's 'received' (Task)
     // copy here; the 'sent' (Order) copy is the SENDER block below. Two copies, always.
-    if (
-      r.self === true ||
-      ['self', 'me'].includes(
-        String(r.name || '')
-          .trim()
-          .toLowerCase()
-      )
-    ) {
-      if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
-      hasSelf = true;
+    if (isSelfRecipient(wanted)) {
+      addSelfOnce(wanted.kind);
       continue;
     }
-    /**
-     * ⚠️⚠️ A MINTED PARTY IS NOT A RECIPIENT. Athi, 2026-09-10: *"he is not a recipient, so you can't bring
-     * him to the rail or something."* `~acmetraders.sup-0001` is an ordinary active entity in every other
-     * respect — which was the whole design — so all four lookups below would resolve it happily, and the chit
-     * would then sit as sent for ever because nobody can sign in to open it. The sender would be waiting on an
-     * answer that cannot come.
-     * ⭐ One test on whatever was typed, before any lookup runs. The id path is fenced separately below,
-     * because a screen holding a supplier row would pass the uuid rather than the handle.
-     */
-    const typedAny = String(r.user_id || r.bridge || r.bridge_id || r.display_name || r.name || '').trim();
+    const typedAny = typedRecipientText(wanted);
     if (require('../lib/handle').isMinted(typedAny)) {
-      return problem(req, res, { status: 404, ...said({ error: 'Not found', message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` }, 'NOT_FOUND') });
+      return mintedRecipientRefused(req, res, typedAny);
     }
-    const rec = await sendLookupRecipient(r);
-
+    const rec = await sendLookupRecipient(wanted);
     if (!rec || rec.rows.length === 0) {
-      if (is_draft) {
-        // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
-        receiverDetails.push({
-          entity_id: null,
-          bridge_id: null,
-          display_name: (r.display_name || r.name || '').toString().trim(),
-          kind: r.kind,
-          role: ROLE_MAP[r.kind],
-          all_role: r.kind === 'to' ? 'receiver' : r.kind
-        });
-        continue;
-      }
-      return problem(req, res, { status: 404, ...said({
-        error: 'Not found',
-        message: `Recipient "${r.entity_id || r.display_name || r.name}" not found in the platform`
-      }, 'NOT_FOUND') });
-    }
-
-    const rid = rec.rows[0].identity_id;
-    // Resolved to self (you typed your own name): same as "+ Self" — create the received copy.
-    if (rid === sender_id) {
-      if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
-      hasSelf = true;
+      if (!is_draft) return recipientNotFound(req, res, wanted);
+      // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
+      receiverDetails.push(recipientRow(null, null, draftRecipientName(wanted), wanted, ROLE_MAP));
       continue;
     }
-    if (seen.has(rid)) continue; // de-dupe external recipients
-    seen.add(rid);
-
-    receiverDetails.push({
-      entity_id: rid,
-      bridge_id: rec.rows[0].bridge_id,
-      display_name: rec.rows[0].display_name,
-      kind: r.kind, // to | cc | for
-      role: ROLE_MAP[r.kind], // Act | Info | For (chit_header.role)
-      all_role: r.kind === 'to' ? 'receiver' : r.kind // for the all_recipients snapshot
-    });
+    const recipientId = rec.rows[0].identity_id;
+    // Resolved to self (you typed your own name): same as "+ Self" — create the received copy.
+    if (recipientId === sender_id) {
+      addSelfOnce(wanted.kind);
+      continue;
+    }
+    if (seen.has(recipientId)) continue; // de-dupe external recipients
+    seen.add(recipientId);
+    receiverDetails.push(recipientRow(recipientId, rec.rows[0].bridge_id, rec.rows[0].display_name, wanted, ROLE_MAP));
   }
-  Object.assign(st, { hasSelf, receiverDetails });
+  Object.assign(sendState, { hasSelf, receiverDetails });
+}
+/** the 404 for a recipient that is a minted party (a local record, not a ChitBridge business) */
+function mintedRecipientRefused(req, res, typedAny) {
+  return problem(req, res, { status: 404, ...said({ error: 'Not found', message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` }, 'NOT_FOUND') });
+}
+/** the 404 for a recipient the platform could not resolve (a draft keeps it instead) */
+function recipientNotFound(req, res, wanted) {
+  return problem(req, res, { status: 404, ...said({
+    error: 'Not found',
+    message: `Recipient "${wanted.entity_id || wanted.display_name || wanted.name}" not found in the platform`
+  }, 'NOT_FOUND') });
+}
+/** whatever was typed to name a recipient (user id, bridge id, display name or name), trimmed */
+function typedRecipientText(wanted) {
+  return String(wanted.user_id || wanted.bridge || wanted.bridge_id || wanted.display_name || wanted.name || '').trim();
+}
+/** the name a draft keeps for a recipient that did not resolve */
+function draftRecipientName(wanted) {
+  return (wanted.display_name || wanted.name || '').toString().trim();
+}
+/** is this recipient the sender itself — flagged `self`, or named "self" / "me"? */
+function isSelfRecipient(wanted) {
+  return (
+    wanted.self === true ||
+    ['self', 'me'].includes(
+      String(wanted.name || '')
+        .trim()
+        .toLowerCase()
+    )
+  );
+}
+/** one recipient as the copies need it: who, its kind (to | cc | for), its chit_header role (Act | Info | For) and its all_recipients role */
+function recipientRow(entity_id, bridge_id, display_name, wanted, ROLE_MAP) {
+  return {
+    entity_id,
+    bridge_id,
+    display_name,
+    kind: wanted.kind, // to | cc | for
+    role: ROLE_MAP[wanted.kind], // Act | Info | For (chit_header.role)
+    all_role: wanted.kind === 'to' ? 'receiver' : wanted.kind // for the all_recipients snapshot
+  };
 }
 
 /**
@@ -1118,63 +1329,112 @@ function answerStandingReadFailed(res, e, entity_id, receivers) {
 }
 
 /** one recipient → its identity row, by id, bridge id, user id, then typed name — never a minted party (sendRecipients) */
-async function sendLookupRecipient(r) {
+async function sendLookupRecipient(recipient) {
   let rec;
-  if (r.entity_id) {
+  if (recipient.entity_id) {
     rec = await query(
       `SELECT identity_id, bridge_id, display_name FROM identities
        WHERE identity_id = $1 AND status = 'active'
        AND COALESCE(user_id, '') NOT LIKE '~%'`,
-      [r.entity_id]
+      [recipient.entity_id]
     );
-  } else if (r.bridge || r.bridge_id) {
+  } else if (recipient.bridge || recipient.bridge_id) {
     /* ⭐ BY IDENTITY BEFORE BY NAME (Athi, 2026-09-06: renamed tallytest to "Tally Test Shop" on the profile — "now I couldn't send the chit,
        it says Tally Test Shop not found"). A display name is a VIEW name, free to change; the bridge id and the user id are set once
        (project-user-id-rule). The Suppliers checkout and Compose now send the id; a name alone is the last resort, kept for typed recipients. */
     rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE bridge_id = $1 AND status = 'active' AND identity_type = 'entity'`, [
-      String(r.bridge || r.bridge_id).trim()
+      String(recipient.bridge || recipient.bridge_id).trim()
     ]);
-  } else if (r.user_id) {
+  } else if (recipient.user_id) {
     rec = await query(
       `SELECT identity_id, bridge_id, display_name FROM identities WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`,
-      [String(r.user_id).trim()]
+      [String(recipient.user_id).trim()]
     );
-  } else if (r.display_name || r.name) {
-    const typed = (r.display_name || r.name).trim();
-    /* a typed handle may be a user id or a bridge id as easily as a name — try those first, then the name */
+  } else if (recipient.display_name || recipient.name) {
+    rec = await lookupByTypedName((recipient.display_name || recipient.name).trim());
+  }
+  return rec;
+}
+/** a typed name → its identity row: tried as a user id or bridge id first, then as a display name (never a minted party) */
+async function lookupByTypedName(typed) {
+  let rec;
+  /* a typed handle may be a user id or a bridge id as easily as a name — try those first, then the name */
+  rec = await query(
+    `SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`,
+    [typed]
+  );
+  if (!rec.rows.length)
     rec = await query(
-      `SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`,
-      [typed]
-    );
-    if (!rec.rows.length)
-      rec = await query(
-        `SELECT identity_id, bridge_id, display_name FROM identities
+      `SELECT identity_id, bridge_id, display_name FROM identities
        WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
        AND identity_type = 'entity'
        /* ⚠️ never a minted party. Their display names are ordinary shop names — "Corner Hardware" — so
           without this a name typed by ANY business could resolve to another one's private supplier record.
           The typed-handle test above cannot catch this one: what was typed is a name, not a handle. */
        AND COALESCE(user_id, '') NOT LIKE '~%'`,
-        [typed]
-      );
-  }
+      [typed]
+    );
   return rec;
 }
 
 /** who sells (an order: the recipient; anything else: the sender) and the rate on every line the shelf can answer */
-async function sendSeller(st, req, res) {
-  const { sender_id, purpose, business_json, receiverDetails } = st;
-  let { line_items } = st;
+/**
+ * ⭐ THE SELLER'S CURRENCY (Athi, 25 Oct, DECISIONS 14:50, walk W24: "always use the seller currency"). An order is priced in the money of the business that SELLS it: Sydney (AUD) ordering ₹650 goods
+ * from Chennai (INR) was stored as 13000.00 AUD on both copies because the chit took the SENDER's money. For an order-like send (seller ≠ sender) the seller's own money is, in order:
+ *   1. the seller's identities.currency_code, when this installation holds it;
+ *   2. lib/regional.currencyFor(seller) — the one resolver — when the seller lives on THIS installation;
+ *   3. nothing: a seller on another installation is a stub with NULL money on purpose (the business is elsewhere; regional would invent this installation's default). The caller then keeps what the
+ *      buyer's screen stated (business_json.currency, the seller's price list as it showed it). With none stated sendMoney REFUSES the send (400 CURRENCY_REQUIRED, F7, 25 Oct): it never files the sender's money.
+ * A self-chit, a counter bill, and anything that is not an order never come here (sendSeller decides who sells).
+ * @returns {Promise<string|null>} an upper-case code, or null when this installation does not know the seller's money
+ */
+async function sellerMoney(sellerId) {
+  const row = await query('SELECT currency_code FROM identities WHERE identity_id = $1', [sellerId]);
+  const stated = row.rows[0] && row.rows[0].currency_code;
+  if (stated) return String(stated).toUpperCase();
+  if ((await require('../lib/ctpaddress').resolve(sellerId)).local === false) return null;
+  const known = await require('../lib/regional').currencyFor(sellerId);
+  return known ? String(known).toUpperCase() : null;
+}
+
+/** who sells (the sender, or the recipient of an order) and the rate each line gets from that seller's shelf — fails open */
+/**
+ * ⭐⭐ WHO SELLS. Athi, 2026-09-06 10:19 (Chola's order to tallytest: list prices, no offer, no rate — "it has to be the exact cart"):
+ * the rate and the live offers were read from the SENDER's shelf, and the offers only for self/counter/captured chits. An ORDER
+ * is sent by the buyer to the seller — the recipient's shelf and the recipient's offers are the ones that price it, exactly as
+ * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
+ */
+/**
+ * ⭐ ACC-271: a BLANK tax rate is no rate (null, services.rateOrNull), so the shelf may answer — decorate asks it only of undefined / null, and a blank would reach invoiceFor as 0%.
+ * → { lines, at } : the lines with each blank rate / cess made null, and the indexes that sent a blank gst_rate or rate. A blank-rated line the shelf does not rate stays refused (BAD_RATE, in sendMoney).
+ */
+function blankRatesToNone(lines) {
+  const at = [];
+  const keys = ['gst_rate', 'rate', 'cess_rate'];
+  const out = lines.map((item, index) => {
+    const blank = (key) => !!item && typeof item === 'object' && typeof item[key] === 'string' && item[key].trim() === '';
+    if (!keys.some(blank)) return item;
+    if (blank('gst_rate') || blank('rate')) at.push(index);
+    const next = { ...item };
+    for (const key of keys) if (blank(key)) next[key] = services.rateOrNull(item[key]);
+    return next;
+  });
+  return { lines: out, at };
+}
+/**
+ * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
+ * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
+ * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
+ * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
+ * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
+ */
+async function sendSeller(sendState, req, res) {
+  const { sender_id, purpose, business_json, receiverDetails } = sendState;
+  let { line_items } = sendState;
   // ── self_copy_pref (policy-flag #1) — copy suppression is a SELF-CHIT-ONLY affordance. On any inter-entity chit
   //    BOTH copies are mandatory (sender's Order + receiver's Task = the co-held transfer, cb-core-principle), so we
   //    only ever suppress on a PURE self-chit (self is the sole recipient). Every suppression is DECLARED on the chit
   //    via summary_json.copy_policy — the absence is governed + auditable, never a silent gap. ──
-  /**
-   * ⭐⭐ WHO SELLS. Athi, 2026-09-06 10:19 (Chola's order to tallytest: list prices, no offer, no rate — "it has to be the exact cart"):
-   * the rate and the live offers were read from the SENDER's shelf, and the offers only for self/counter/captured chits. An ORDER
-   * is sent by the buyer to the seller — the recipient's shelf and the recipient's offers are the ones that price it, exactly as
-   * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
-   */
   const orderLike = /^(order|offer)$/.test(String(purpose || ''));
   const toIds = receiverDetails
     .filter((item) => item.kind === 'to' && item.entity_id && String(item.entity_id) !== String(sender_id))
@@ -1184,17 +1444,13 @@ async function sendSeller(st, req, res) {
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
-  /**
-   * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
-   * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
-   * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
-   * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
-   * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
-   */
+  if (sellerId !== sender_id) sendState.currency_code = (await sellerMoney(sellerId)) || sendState.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
+  const blankRated = blankRatesToNone(line_items);
+  line_items = blankRated.lines;
   try {
     const shelf = await taxShelf.readShelf(
       sellerId,
-      { withEntity, query, regionLayer: regional.regionLayer, getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) },
+      { withEntity, query, regionLayer: regional.regionLayer, getFace: (faceEntityId) => catalogueView.getFace({ entity_id: faceEntityId, withEntity }) },
       { withItems: true }
     );
     if (shelf)
@@ -1207,264 +1463,443 @@ async function sendSeller(st, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
   }
-  Object.assign(st, { line_items, orderLike, toIds, counterBill, sellerId });
+  const unratedBlank = blankRated.at.filter((at) => line_items[at] && line_items[at].gst_rate == null && line_items[at].rate == null);
+  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId, unratedBlank });
 }
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
-async function sendOffers(st, req, res) {
-  const { sender_id, purpose, business_json, orderLike, sellerId } = st;
-  let { line_items } = st;
-  /**
-   * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
-   * through WhatsApp? check there also — the offer and tax applied correctly"). A counter bill (business_json.customer) and
-   * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
-   * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
-   * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
-   *
-   * ⚠️⚠️ [REV-02] "a bill the customer has paid is re-priced at today's offers when it syncs." Send time is not
-   * always sale time — a till bill queued offline can reach here days later, after the shop launches a new
-   * offer. offers-live.js already skips a line that carries `it.offer` (an offer the till itself applied);
-   * what it never skipped was a PLAIN line with none, which is exactly what a later, unrelated offer attaches
-   * itself to — the customer's ₹500 slip becomes a server-side ₹450 chit, and a credit note for the same
-   * bill gets over-refunded the same way. `business_json.billed_at` is the tell: ONLY till.html/till.js ever
-   * set it (grep confirms — no compose/capture/storefront path does), so it names a document that was
-   * ALREADY priced and printed at a real moment in the past, not a sale being priced here for the first time.
-   * A captured/typed sale (no billed_at) still needs these live offers — that path is what this block exists
-   * for — so the guard is additive, not a new refusal.
-   */
+/**
+ * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
+ * through WhatsApp? check there also — the offer and tax applied correctly"). A counter bill (business_json.customer) and
+ * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
+ * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
+ * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
+ *
+ * ⚠️⚠️ [REV-02] "a bill the customer has paid is re-priced at today's offers when it syncs." Send time is not
+ * always sale time — a till bill queued offline can reach here days later, after the shop launches a new
+ * offer. offers-live.js already skips a line that carries `it.offer` (an offer the till itself applied);
+ * what it never skipped was a PLAIN line with none, which is exactly what a later, unrelated offer attaches
+ * itself to — the customer's ₹500 slip becomes a server-side ₹450 chit, and a credit note for the same
+ * bill gets over-refunded the same way. `business_json.billed_at` is the tell: ONLY till.html/till.js ever
+ * set it (grep confirms — no compose/capture/storefront path does), so it names a document that was
+ * ALREADY priced and printed at a real moment in the past, not a sale being priced here for the first time.
+ * A captured/typed sale (no billed_at) still needs these live offers — that path is what this block exists
+ * for — so the guard is additive, not a new refusal.
+ */
+async function sendOffers(sendState, req, res) {
+  const { sender_id, purpose, business_json, orderLike, sellerId } = sendState;
+  let { line_items } = sendState;
   let offersApplied = []; /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
   try {
-    const bj = business_json || {};
-    const alreadyBilled = require('../lib/offers-live').alreadyBilled(bj);
-    const toSelf =
-      Array.isArray(req.body.recipients) &&
-      req.body.recipients.length &&
-      req.body.recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'));
+    const businessJson = orEmptyObject(business_json);
+    const alreadyBilled = require('../lib/offers-live').alreadyBilled(businessJson);
+    const toSelf = onlySelfRecipients(req.body.recipients);
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
-    if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike) && require('../lib/offers-live').isSalesDocument(purpose, bj)) {
-      const cur = await require('../lib/regional')
-        .currencyFor(sellerId)
-        .catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
-      const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, {
-        withEntity,
-        viewer: orderLike ? sender_id : null
-      }); /* an order's buyer may hold a customer-only offer with this seller */
-      if (r && r.items) {
-        line_items = r.items;
-        offersApplied = Array.isArray(r.applied) ? r.applied : [];
+    if (!alreadyBilled && (businessJson.customer || businessJson.via || toSelf || orderLike) && require('../lib/offers-live').isSalesDocument(purpose, businessJson)) {
+      const liveOffers = await applySellerOffers(sellerId, sender_id, orderLike, line_items);
+      if (liveOffers && liveOffers.items) {
+        line_items = liveOffers.items;
+        offersApplied = appliedOffersOf(liveOffers);
       }
     }
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* no offers, no change */
   }
-  Object.assign(st, { line_items, offersApplied });
+  Object.assign(sendState, { line_items, offersApplied });
+}
+/** the value, or an empty object when it is null / undefined / falsy */
+const orEmptyObject = (value) => value || {};
+/** what the seller's live offers did to the lines (line + cart scope): the list they report, else none */
+function appliedOffersOf(liveOffers) {
+  return Array.isArray(liveOffers.applied) ? liveOffers.applied : [];
+}
+/** the seller's live offers applied to these lines, in the seller's money (read; a failed read applies none); an order's buyer (the sender) may hold a customer-only offer with this seller */
+async function applySellerOffers(sellerId, sender_id, orderLike, line_items) {
+  const currency = await require('../lib/regional')
+    .currencyFor(sellerId)
+    .catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
+  return require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: currency }, line_items, null, {
+    withEntity,
+    viewer: orderLike ? sender_id : null
+  });
+}
+/** is every recipient in this list the sender itself (a non-empty list of `self` entries)? */
+function onlySelfRecipients(recipients) {
+  return (
+    Array.isArray(recipients) &&
+    recipients.length &&
+    recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'))
+  );
 }
 
-/** the header's money — gross · savings · net · tax · total, provisional */
-async function sendMoney(st, req, res) {
-  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
-  /**
-   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
-   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
-   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
-   *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
-   *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
-   *     ONE query for both identities (his "why do you need another query?"), never one per line.
-   * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
-   * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
-   * "—" is honest, a column showing zero tax is a lie.
-   */
-  let moneyBlock = null;
-  try {
-    const r2m = (n) => roundMoney(Number(n) || 0);
-    const li = Array.isArray(line_items) ? line_items : [];
-    const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
-    const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
-    const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
-    const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
-    let tax = null,
-      total = null;
-    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
-    const buyerId = counterBill ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
-    if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
-      const ids = [String(sellerId), String(buyerId)];
-      const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
-      const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
-      const sRow = rowOf(sellerId),
-        bRow = rowOf(buyerId);
-      if (sRow && bRow) {
-        /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
-           so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
-           if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
-           the SELLER's own setting from it, no second query. */
-        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
-        /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
-           reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
-           later must say when it was actually billed, same reasoning as the offers guard just above. */
-        const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
-        const inv = taxLines.invoiceFor({
-          lines: li,
-          seller: taxLines.partyOf(sRow),
-          buyer: taxLines.partyOf(bRow),
-          currency: currency_code,
-          at: invAt,
-          priceIncludesTax
-        });
-        const h = taxLines.heads(inv.invoice);
-        if (h && Number.isFinite(h.tax)) {
-          tax = r2m(h.tax);
-          total = r2m(h.total || net + tax);
-        }
-      }
-    }
-    moneyBlock = {
-      gross,
-      savings: r2m(gross - net),
-      net,
-      tax,
-      total: total != null ? total : tax != null ? r2m(net + tax) : null,
-      currency_code,
-      provisional: true
-    };
-  } catch (e) {
-    cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
+/**
+ * ⭐⭐⭐ THE MONEY THE HEADER CARRIES — THE ENGINE'S, COMPUTED ONCE, HERE AT THE ORIGIN (ACC-206 A, Athi 2026-10-30 and ACC-192, 2026-10-25).
+ * "it cannot compute, the compute engine does it, afterwards, everything is data, no computation anywhere." A billing document that carries no
+ * invoice gets the engine's invoice now (lib/send-money): the seller's own flags, the buyer's identity — or the walk-in of the seller's country
+ * when nobody is named — and the header's gross · savings · net · taxable · tax · total · round-off are COPIED off that answer by moneyOfInvoice.
+ * There is no gross/net/savings/total arithmetic in this route any more (the 7 Sep note that called the pre-tax total "right" is retired: that was
+ * the second calculator, and it made one field mean two things). total_value is money.total, held in two places (sendRetention).
+ * The SAME engine call prices a change order (lib/chit-proposal priceMoney → lib/send-money invoiceOfLines, RAIL-106): one calculation, two doors.
+ *   · not a billing document (an offer, a note, a receipt), no lines, or several recipients → money is NOT APPLICABLE: null, never 0 (mint.js:35)
+ *   · a seller on ANOTHER installation prices it (RAIL-106): this installation runs no tax on its goods — a QUOTATION, money null, never 0 (sendQuotation)
+ *   · a draft carries provisional figures and never carries an invoice (sendIssued)
+ *   · the engine could not be READ (a party missing, the engine threw) → 503 MONEY_NOT_COMPUTED: a chit with no engine figures is a chit with no
+ *     money, and "a chit never fails to send over its summary" was the rule Athi overruled; a line the engine cannot read → 422 first
+ */
+async function sendMoney(sendState, req, res) {
+  const sellerPlace = await sellerPlaceOf(sendState).catch(cbLog.orElse('chits sendMoney: where the seller lives was not read — priced here', null));
+  sendState.sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
+  const scope = sendMoneyScope.scopeOf(sendState);
+  sendState.moneyScope = scope;
+  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items, sendState.unratedBlank); /* ahead of the scope split (ACC-271): whatever the chit is, a text figure is refused, not saved */
+  if (unreadable) {
+    return problem(req, res, { status: 400, ...said({ code: unreadable.code, error: 'A line could not be read', message: unreadable.message, line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') }); /* ACC-271: the quote routes' codes (BAD_QTY · BAD_PRICE · BAD_RATE) */
   }
-  Object.assign(st, { moneyBlock });
+  if (scope.kind === 'quotation') return sendQuotation(sendState, sellerPlace, req, res);
+  if (scope.kind !== 'engine') return;
+  let invoice;
+  try {
+    invoice = await sendMoneyScope.invoiceAtSend(sendState);
+  } catch (e) {
+    cbLog.fellBack('chits sendMoney: the engine was not read — the send is refused (503 MONEY_NOT_COMPUTED)', e);
+    return problem(req, res, { status: 503, ...said({ code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' }, codeOfStatus(503)) });
+  }
+  const block = moneyOfInvoice(invoice, sendState.currency_code);
+  Object.assign(sendState, { originInvoice: invoice, moneyBlock: sendState.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });
+}
+
+/**
+ * ⭐ CUR-1 · ACC-331 — EVERY MONEY CELL OF THE BILL IS IN THE BILL'S MONEY. The bill-level currency was refused already; a payment, a payment part, a refund part or a line
+ * naming another currency was booked as the shop's. One check (lib/currency-cells), over the cells the chit carries, BEFORE anything is written: 409 CURRENCY_MISMATCH naming the field.
+ * A cell that names no currency is the bill's own (the till sends none). Runs on the final currency (sendSeller / sendMoney have spoken), a draft included: a wrong cell is wrong.
+ */
+async function sendPartCurrency(sendState, req, res) {
+  const cells = require('../lib/currency-cells');
+  try {
+    cells.assertSame(cells.billCellsOf(sendState.business_json, sendState.line_items), sendState.currency_code);
+  } catch (e) {
+    if (e.code !== 'CURRENCY_MISMATCH') throw e;
+    res.locals.code = 'CURRENCY_MISMATCH';
+    return problem(req, res, { status: 409, ...said({ code: 'CURRENCY_MISMATCH', error: 'Wrong currency', message: e.message, field: e.field, claimed: e.claimed, governed: e.governed }, 'CHIT_CONFLICT') });
+  }
+}
+
+/**
+ * ⭐ RAIL-106 (Athi, 25 Oct 12:05; DECISIONS 13:10): a seller on ANOTHER installation prices its own goods — price, currency and tax by its own pack, at its side
+ * (lib/chit-proposal). This installation sends what and how many, runs no tax of its own on someone else's goods, and carries NO money: null, never 0 (ACC-206).
+ * The request is stamped a QUOTATION; F7: with no money stated by the sender's screen the send is refused (a draft is the author's own copy and is let through).
+ */
+async function sendQuotation(sendState, sellerPlace, req, res) {
+  Object.assign(sendState, { originInvoice: null, moneyBlock: null });
+  await stampQuotation(sendState.business_json, sendState.sender_id, sellerPlace).catch(cbLog.orElse('chits sendQuotation: the quotation stamp was not written', null));
+  if (!statedCurrencyOf(sendState.business_json) && !req.body.is_draft) return refuseCurrencyRequired(req, res);
+}
+
+/**
+ * ⭐ F7 (critic 25 Oct, Athi: "if the stuff is not there, we should not fall back, rather reject"): an order to a seller on ANOTHER installation, with no money stated by the sender's screen
+ * (business_json.currency), is refused in words. This installation holds a stub with NULL money for that seller on purpose, so it cannot know the money of their price list and must not
+ * file the order in the sender's money. A draft is the author's own copy and is let through.
+ */
+function refuseCurrencyRequired(req, res) {
+  return problem(req, res, {
+    status: 400,
+    ...said({ error: 'Currency required', code: 'CURRENCY_REQUIRED', message: 'Say which money their price list is in, then send again.' }, codeOfStatus(400))
+  });
+}
+
+/** RAIL-106: where the seller of this send lives (lib/ctpaddress resolve) — null for a counter bill or when I am the seller myself */
+async function sellerPlaceOf(sendState) {
+  if (sendState.counterBill || String(sendState.sellerId) === String(sendState.sender_id)) return null;
+  return require('../lib/ctpaddress').resolve(sendState.sellerId);
+}
+
+/** the currency the sender stated on the chit (business_json.currency), or '' */
+const statedCurrencyOf = (business_json) => (business_json && typeof business_json === 'object' ? String(business_json.currency || '').trim() : '');
+
+/**
+ * ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (nobody's tax engine is asked here); the request and every priced round before acceptance are a QUOTATION.
+ * The chit says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's.
+ */
+async function stampQuotation(business_json, sender_id, sellerPlace) {
+  if (!business_json || typeof business_json !== 'object' || business_json.jurisdiction) return;
+  business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
 }
 
 /** a counter bill carries its invoice — the header maps it, the server only checks it */
-async function sendIssued(st, req, res) {
-  const { sender_id, purpose, line_items, business_json, currency_code, is_draft, receiverDetails, counterBill } = st;
-  let { moneyBlock } = st;
-  /**
-   * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
-   * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
-   * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
-   * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice → the engine's moneyOf) — ₹1,118.16 for bill
-   * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
-   * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
-   * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
-   */
-  let issuedTotal = null;
+/**
+ * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
+ * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
+ * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
+ * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice → the engine's moneyOf) — ₹1,118.16 for bill
+ * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
+ * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
+ * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
+ */
+async function sendIssued(sendState, req, res) {
+  const { currency_code, is_draft, counterBill } = sendState;
+  /* the invoice the engine computed at send travels in business_json — a send that came with none gets the object to carry it */
+  const business_json = businessJsonToCarry(sendState);
+  /* ⭐⭐⭐ ACC-192 (Athi 2026-10-25): "the computation happens in only one place where it originates, rest of the places it just displays it as
+     a record". The invoice sendMoney computed at send travels with the chit exactly as a counter bill's does — business_json.invoice, read by
+     tax-copy and carried over CTP — so no copy computes it again. Never over an invoice already carried, never on a draft. */
+  if (business_json && !business_json.invoice && sendState.originInvoice && !is_draft) business_json.invoice = sendState.originInvoice;
   const carried = business_json && business_json.invoice;
-  if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
-    moneyBlock = moneyOfInvoice(carried, currency_code);
-    issuedTotal = moneyBlock.total;
-    try {
-      const e = await taxCopy.entryFor(
-        {
-          chit_id: null,
-          sender_entity_id: sender_id,
-          purpose,
-          business_json,
-          line_items,
-          currency_code,
-          all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
-            receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
-          ),
-          sent_at: business_json.billed_at || null
-        },
-        sender_id
-      );
-      if (e && e.tax_check && !e.tax_check.ok) {
-        business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-        require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-      }
-    } catch (e) {
-      cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
+  /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
+     counter's is checked, because only the counter computed it somewhere other than here */
+  const mapped = !is_draft && hasInvoiceTotal(carried);
+  Object.assign(sendState, { moneyBlock: mapped ? moneyOfInvoice(carried, currency_code) : sendState.moneyBlock, business_json });
+  if (counterBill && mapped) await checkCounterInvoice(sendState);
+}
+/** the send's business data, or an empty object to carry the invoice sendMoney computed when the send came with none (never on a draft) */
+function businessJsonToCarry(sendState) {
+  return sendState.business_json || (sendState.originInvoice && !sendState.is_draft ? {} : sendState.business_json);
+}
+/** does this invoice carry the engine's total? (the one test before a chit's header is mapped off it) */
+const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' && !!invoice.ValDtls && Number.isFinite(Number(invoice.ValDtls.TotInvVal));
+
+/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
+async function checkCounterInvoice(sendState) {
+  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
+  try {
+    const e = await taxCopy.entryFor(
+      {
+        chit_id: null,
+        sender_entity_id: sender_id,
+        purpose,
+        business_json,
+        line_items,
+        currency_code,
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
+          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
+        ),
+        sent_at: business_json.billed_at || null
+      },
+      sender_id
+    );
+    if (e && e.tax_check && !e.tax_check.ok) {
+      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
     }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
   }
-  Object.assign(st, { moneyBlock, issuedTotal });
+}
+
+/**
+ * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
+ * The ENGINE checked its own bridge (gross → offers → net → taxable → tax → round-off → total, in minor units) before it answered; this step
+ * only READS that verdict (lib/send-money stopOf — no sum here). An invoice whose bridge did not balance is refused BEFORE anything is written:
+ * 409 MONEY_UNBALANCED { step, unexplained_minor, words, gross_minor, total_minor } — the OVER_LIMIT shape. The OWNER may let it through
+ * (the owner's own login, or a counter key after the owner's counter PIN — finance-terms.overrideBy, the credit-limit helper, widened to need a typed
+ * reason): business_json.money_override = { by, at, why, step, unexplained_minor }, written once, sealed with the chit. The chit is then SENT AND OPEN —
+ * the books post it at the issued figures and list it as an item to address (money_unbalanced, ACC-206 B); it never disappears into the books.
+ * A draft is never stopped (it is not issued). An invoice frozen before v1.74.0 carries no bridge: nothing to read, nothing to stop.
+ */
+async function sendBridge(sendState, req, res) {
+  const { business_json, is_draft } = sendState;
+  if (!business_json || typeof business_json !== 'object') return;
+  const invoice = business_json.invoice || sendState.originInvoice;
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), engine: sendMoneyScope.engineStampOf(business_json, sendState.moneyScope), bill: business_json.bill_no });
+  if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
+  const stop = sendMoneyScope.stopOf(invoice);
+  const asked = business_json.money_override;
+  if (!stop || is_draft) {
+    if (asked !== undefined && !is_draft) delete business_json.money_override; /* an override claimed on a bill that balances means nothing and opens no item */
+    return;
+  }
+  const allowedBy = require('../lib/finance-terms').overrideBy(req, asked, { needWhy: true });
+  if (!allowedBy) {
+    res.locals.code = 'MONEY_UNBALANCED';
+    return problem(req, res, {
+      status: 409,
+      ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: stop.words + ' Check the bill, or the owner can let it through.', step: stop.step, line: stop.line, unexplained_minor: stop.unexplained_minor, words: stop.words, gross_minor: stop.gross_minor, total_minor: stop.total_minor }, 'CHIT_CONFLICT')
+    });
+  }
+  business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
+  cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
+}
+
+/**
+ * CTR-211 — the carried invoice says one engine figure two ways (a bridge step and its ValDtls figure): a FAULT, so refused before anything is stored, with
+ * NO override, and ONE service ticket (lib/money-check.raisePair). Both values are read, never worked out.
+ */
+async function sendPairRefusal(sendState, pair, req, res) {
+  const { sender_id, business_json } = sendState;
+  const filed = await require('../lib/money-check').raisePair(sender_id, pair, { bill: business_json.bill_no, client_ref: sendState.client_ref, engine: 'tax@' + sendMoneyScope.engineVersion() });
+  const words = pairWords(pair, filed);
+  res.locals.code = 'MONEY_UNBALANCED';
+  return problem(req, res, {
+    status: 409,
+    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
+  });
+}
+
+/** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
+function pairWords(pair, filed) {
+  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || (/^(total|slab|heads)[:]?/.test(pair.pair) ? 'tax amount' : 'amount');
+  const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
+  return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
+}
+
+/**
+ * ⭐ CTRY-76 (Round 1 E2; Athi Q1 30 Oct: HELD, refuse only a bad buyer tax id) — THE PAPER A COUNTER BILL IS, read once at send from the
+ * SHOP's pack (lib/bill-paper: reg-au from A$1,000 the buyer's identity or ABN, GST Act s.29-70(1)(c)(ii)). Its own step, OUTSIDE sendIssued's
+ * fail-open try, because a refusal here must reach the counter. A buyer tax id that fails the pack's one check (profile.taxIdRefusal — the same
+ * call shop setup runs) → 400 BUYER_TAX_ID_BAD. A sale the pack wants the buyer on, with nobody named → the sale stands, recorded under the
+ * counter's own name (business_json.not_invoice 'buyer_identity', the till's M41 slot — a reason the counter already wrote stands) and the
+ * answer says so (not_invoice.code INVOICE_HELD_BUYER + the pack's sentence), so the counter can ask for the buyer before "Tax invoice" is printed.
+ * The frozen invoice and the money are never touched. A draft, a non-counter chit, a shop with no pack rule: nothing.
+ */
+async function sendPaper(sendState, req, res) {
+  const { sender_id, business_json, currency_code, is_draft } = sendState;
+  if (is_draft || !taxCopy.counterIssued(business_json)) return;
+  const paper = billPaper.paperOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code });
+  if (paper.refusal) {
+    res.locals.code = paper.refusal.code;
+    return problem(req, res, {
+      status: 400,
+      ...said({ error: 'Buyer tax number not accepted', code: paper.refusal.code, field: paper.refusal.field, message: paper.refusal.why }, 'CHIT_BAD_REQUEST')
+    });
+  }
+  if (paper.held) {
+    if (!business_json.not_invoice) business_json.not_invoice = paper.held.reason;
+    sendState.paper = { code: 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
+  }
+}
+
+/**
+ * ⭐ CTRY-77 (AU-02b; Athi 5 Nov: REFUSE) — a CASH part the shop's pack says no coin can make is refused by name: 400 CASH_ROUNDING_STEP with the
+ * pack's cite (lib/cash-step: pack.cashRounding step_minor, AU 5c). The till rounds before it sends (TILL-B2); this is the door for a caller that
+ * did not. Card, UPI and every other tender are exact; a shop whose pack has no cashRounding (India, UAE) is untouched. A draft or a chit without
+ * a counter tender: nothing. A bill struck more than 15 minutes before it arrives is an OFFLINE REPLAY of a printed sale: accepted and said (cash_step on
+ * the answer), so a queued bill is never wedged. Its own step, outside any try, because a refusal must reach the counter.
+ */
+async function sendCashStep(sendState, req, res) {
+  const { sender_id, business_json, currency_code, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.payment) return;
+  const refusal = cashStep.verdictOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code }, Date.now());
+  if (!refusal) return;
+  /* an OFFLINE REPLAY of a bill already printed is accepted, said on the answer (cash_step) - never a wedged queue; the books take the gap as round-off */
+  if (refusal.accepted) {
+    sendState.cashStep = { code: refusal.code, accepted: refusal.accepted, why: refusal.why, cite: refusal.cite };
+    business_json.cash_step = sendState.cashStep; /* recorded ON the chit, not only on the answer: the books and a later reader see why the cash is off the step */
+    return;
+  }
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 400,
+    ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
 }
 
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
-async function sendCopyPolicy(st, req, res) {
-  const { sender_id, client_ref, is_draft, promote_draft_id, selfCopyPref, hasSelf, receiverDetails } = st;
-  const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every((item) => item.entity_id === sender_id);
-  /**
-   * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
-   *
-   * Athi, 2026-08-09: *"we can create a self chit and you can make the order copy none, it will create a task."*
-   * That is the right shape for an inbound request: the entity did NOT send it — someone outside asked — so a
-   * copy sitting in their Order/Sent list would be a lie about who asked. Task-only is the truthful record.
-   *
-   * The account-wide setting could not express this: it would have flipped EVERY self-chit they ever author.
-   * A single send needs to say it for itself.
-   *
-   * WHAT THIS DOES NOT DO — it lives INSIDE the pureSelfChit branch and nowhere else, so it cannot reach an
-   * inter-entity chit. Both copies stay mandatory there (cb-core-principle: the co-held transfer is the point),
-   * and both suppressed copies here belong to the SAME entity, so nobody loses a record they hold. The choice is
-   * DECLARED on the chit exactly as the setting's is, with `source` recording which of the two decided it — a
-   * suppression that cannot be told apart from a gap is not governed.
-   */
-  const reqSelfCopy = ['both', 'sent', 'received'].includes(String(req.body.self_copy || '')) ? String(req.body.self_copy) : null;
+async function sendCopyPolicy(sendState, req, res) {
+  const { sender_id, client_ref, is_draft, promote_draft_id, selfCopyPref, hasSelf, receiverDetails } = sendState;
+  const pureSelfChit = isPureSelfChit(sendState);
+  const reqSelfCopy = requestedSelfCopy(req.body);
   const effSelfCopy = reqSelfCopy || selfCopyPref;
   const copySource = reqSelfCopy ? 'request' : 'setting';
   let copyPolicy = null,
     suppressSentCopy = false;
   if (pureSelfChit) {
-    // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
-    if (effSelfCopy === 'sent') {
-      // ORDER-only → drop the self Task (received) copy
-      const si = receiverDetails.findIndex((item) => item.entity_id === sender_id);
-      if (si >= 0) receiverDetails.splice(si, 1);
-      copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource };
-    } else if (effSelfCopy === 'received') {
-      // TASK-only → drop the sender Order (sent) copy
-      suppressSentCopy = true;
-      copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource };
-    } else if (client_ref) {
-      /**
-       * ── ⚠⚠⚠ A NUMBERED DOCUMENT IS ONE ROW PER ENTITY, WHATEVER THE COPY SETTING SAYS ──────────
-       *
-       * b263 puts a UNIQUE INDEX on (entity_id, client_ref). 'both' writes the sender copy AND the recipient
-       * copy — and on a pure self-chit those are the SAME entity — so a shop whose self_copy_pref is 'both'
-       * would have every counter bill refused with a 23505 and **be unable to sell**. The column defaults to
-       * 'received' so nothing is broken today; this is the trap the index arms for the day somebody changes
-       * it, and it is armed silently, which is the worst kind.
-       *
-       * ⭐ AND IT IS THE RIGHT ANSWER ON ITS OWN MERITS, not merely a way round the constraint. Two rows in
-       * one shop's books both claiming to BE invoice C1/26-27/0033 is not a copy, it is a second voucher —
-       * the exact thing the index exists to prevent. A self-copy is a useful idea for a message; for a
-       * numbered tax document it is a duplicate with a nicer name.
-       * ⚠ DECLARED, NEVER SILENT — copyPolicy is how this file records a suppression, and `source` says who
-       * decided it. A suppression that cannot be told apart from a gap is not governed (see the note above).
-       */
-      suppressSentCopy = true;
-      copyPolicy = {
-        scope: 'self',
-        kept: ['received'],
-        suppressed: ['sent'],
-        reason:
-          'Order copy suppressed — ' +
-          client_ref +
-          ' is a numbered document, and a number ' +
-          "may appear once in a shop's books (b263). The setting asked for both.",
-        source: 'numbered-document'
-      };
-    } else {
-      // BOTH → keep both copies, but STILL declare the self-chit identity
-      copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
-    }
+    ({ copyPolicy, suppressSentCopy } = selfChitCopyPolicy(effSelfCopy, copySource, client_ref, receiverDetails, sender_id));
   } else if (client_ref && hasSelf && !is_draft && !promote_draft_id) {
-    /**
-     * ⚠️⚠️ THE SAME RULE WHEN THE NUMBERED DOCUMENT ALSO GOES OUT (the two-sided counter bill, 2026-10-01). A counter bill
-     * to an on-rail customer is self + the customer: not a PURE self chit, so the branch above never ran and the shop got
-     * TWO rows — its 'sent' Order copy and its self Task copy — both carrying client_ref, which b263's unique index refuses:
-     * the counter could not sell to a connected customer at all. The shop keeps the ONE row it keeps for every counter bill
-     * (the self copy); the customer holds their own. Declared, like every suppression here.
-     */
-    suppressSentCopy = true;
-    copyPolicy = {
+    ({ copyPolicy, suppressSentCopy } = numberedBillToCustomerPolicy(client_ref));
+  }
+  Object.assign(sendState, { copyPolicy, suppressSentCopy });
+}
+/** is self the ONLY recipient of a chit that is being sent (not a draft, not a promoted draft)? */
+function isPureSelfChit({ sender_id, is_draft, promote_draft_id, hasSelf, receiverDetails }) {
+  return hasSelf && !is_draft && !promote_draft_id && receiverDetails.every((item) => item.entity_id === sender_id);
+}
+/** the per-send self-copy choice a body names (both | sent | received), or null */
+function requestedSelfCopy(body) {
+  return ['both', 'sent', 'received'].includes(String(body.self_copy || '')) ? String(body.self_copy) : null;
+}
+/**
+ * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
+ *
+ * Athi, 2026-08-09: *"we can create a self chit and you can make the order copy none, it will create a task."*
+ * That is the right shape for an inbound request: the entity did NOT send it — someone outside asked — so a
+ * copy sitting in their Order/Sent list would be a lie about who asked. Task-only is the truthful record.
+ *
+ * The account-wide setting could not express this: it would have flipped EVERY self-chit they ever author.
+ * A single send needs to say it for itself.
+ *
+ * WHAT THIS DOES NOT DO — it lives INSIDE the pureSelfChit branch and nowhere else, so it cannot reach an
+ * inter-entity chit. Both copies stay mandatory there (cb-core-principle: the co-held transfer is the point),
+ * and both suppressed copies here belong to the SAME entity, so nobody loses a record they hold. The choice is
+ * DECLARED on the chit exactly as the setting's is, with `source` recording which of the two decided it — a
+ * suppression that cannot be told apart from a gap is not governed.
+ */
+/** the copy policy of a PURE self-chit (self is the only recipient): its policy and whether the sender's own 'sent' copy is dropped; 'sent' (Order only) also removes the self Task copy from \`receiverDetails\` */
+function selfChitCopyPolicy(effSelfCopy, copySource, client_ref, receiverDetails, sender_id) {
+  // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
+  if (effSelfCopy === 'sent') {
+    // ORDER-only → drop the self Task (received) copy
+    const senderIndex = receiverDetails.findIndex((item) => item.entity_id === sender_id);
+    if (senderIndex >= 0) receiverDetails.splice(senderIndex, 1);
+    return { copyPolicy: { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource }, suppressSentCopy: false };
+  }
+  if (effSelfCopy === 'received') {
+    // TASK-only → drop the sender Order (sent) copy
+    return { copyPolicy: { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource }, suppressSentCopy: true };
+  }
+  if (client_ref) return numberedSelfChitPolicy(client_ref);
+  // BOTH → keep both copies, but STILL declare the self-chit identity
+  return { copyPolicy: { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource }, suppressSentCopy: false };
+}
+/**
+ * ── ⚠⚠⚠ A NUMBERED DOCUMENT IS ONE ROW PER ENTITY, WHATEVER THE COPY SETTING SAYS ──────────
+ *
+ * b263 puts a UNIQUE INDEX on (entity_id, client_ref). 'both' writes the sender copy AND the recipient
+ * copy — and on a pure self-chit those are the SAME entity — so a shop whose self_copy_pref is 'both'
+ * would have every counter bill refused with a 23505 and **be unable to sell**. The column defaults to
+ * 'received' so nothing is broken today; this is the trap the index arms for the day somebody changes
+ * it, and it is armed silently, which is the worst kind.
+ *
+ * ⭐ AND IT IS THE RIGHT ANSWER ON ITS OWN MERITS, not merely a way round the constraint. Two rows in
+ * one shop's books both claiming to BE invoice C1/26-27/0033 is not a copy, it is a second voucher —
+ * the exact thing the index exists to prevent. A self-copy is a useful idea for a message; for a
+ * numbered tax document it is a duplicate with a nicer name.
+ * ⚠ DECLARED, NEVER SILENT — copyPolicy is how this file records a suppression, and `source` says who
+ * decided it. A suppression that cannot be told apart from a gap is not governed (see the note above).
+ */
+function numberedSelfChitPolicy(client_ref) {
+  return {
+    suppressSentCopy: true,
+    copyPolicy: {
+      scope: 'self',
+      kept: ['received'],
+      suppressed: ['sent'],
+      reason:
+        'Order copy suppressed — ' +
+        client_ref +
+        ' is a numbered document, and a number ' +
+        "may appear once in a shop's books (b263). The setting asked for both.",
+      source: 'numbered-document'
+    }
+  };
+}
+/**
+ * ⚠️⚠️ THE SAME RULE WHEN THE NUMBERED DOCUMENT ALSO GOES OUT (the two-sided counter bill, 2026-10-01). A counter bill
+ * to an on-rail customer is self + the customer: not a PURE self chit, so the branch above never ran and the shop got
+ * TWO rows — its 'sent' Order copy and its self Task copy — both carrying client_ref, which b263's unique index refuses:
+ * the counter could not sell to a connected customer at all. The shop keeps the ONE row it keeps for every counter bill
+ * (the self copy); the customer holds their own. Declared, like every suppression here.
+ */
+function numberedBillToCustomerPolicy(client_ref) {
+  return {
+    suppressSentCopy: true,
+    copyPolicy: {
       scope: 'sender',
       kept: ['received'],
       suppressed: ['sent'],
       reason: 'One copy for the sender — ' + client_ref + ' is a numbered document, and a number may appear once ' + "in a shop's books (b263).",
       source: 'numbered-document'
-    };
-  }
-  Object.assign(st, { copyPolicy, suppressSentCopy });
+    }
+  };
 }
 
 /**
@@ -1474,13 +1909,13 @@ async function sendCopyPolicy(st, req, res) {
  * would be refused on the CUSTOMER's row, and the whole send with it — retried for ever. The bill's number travels as
  * bill_no on every copy; only the dedupe key is withheld.
  */
-function sendBjFor(st, eid) {
-  const { client_ref, business_json, sender_id } = st;
-  return client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id)
+function sendBjFor(sendState, receiverId) {
+  const { client_ref, business_json, sender_id } = sendState;
+  return client_ref && business_json && typeof business_json === 'object' && String(receiverId) !== String(sender_id)
     ? (() => {
-        const o = Object.assign({}, business_json);
-        delete o.client_ref;
-        return o;
+        const copy = Object.assign({}, business_json);
+        delete copy.client_ref;
+        return copy;
       })()
     : business_json;
 }
@@ -1492,24 +1927,24 @@ function sendBjFor(st, eid) {
  * kept, its own subject ("Bill C1/26-27/0041 from Mayur Traders") and, on its summary, what the list row shows — who
  * it is from, the number, and what is owed. The SHOP's own copy is untouched. One chit, each copy in its holder's words.
  */
-function sendBillCopyFor(st, receiver) {
-  const { counterBill, is_draft, sender_id, sender_display_name } = st;
+function sendBillCopyFor(sendState, receiver) {
+  const { counterBill, is_draft, sender_id, sender_display_name } = sendState;
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
-  const bj = Object.assign({}, sendBjFor(st, receiver.entity_id), { counter_bill: true });
-  const parts = bj.payment && Array.isArray(bj.payment.parts) ? bj.payment.parts : [];
-  const total = roundMoney(parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0));
+  const copyBusiness = Object.assign({}, sendBjFor(sendState, receiver.entity_id), { counter_bill: true });
+  /* ACC-252: what the bill comes to is the bill's own engine figure, picked by the ONE reader (counter-bill.pickOf: the carried invoice's TotInvVal, else summary_json.money.total), never what was paid (the parts) */
+  const total = ownBill.pickOf({ summary_json: sendState.summary_json, business_json: copyBusiness }).total;
   return {
     purpose: 'invoice',
-    business_json: bj,
-    manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
-    bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total }
+    business_json: copyBusiness,
+    manual_subject: 'Bill ' + copyBusiness.bill_no + ' from ' + (sender_display_name || 'the seller'),
+    bill_received: { from: sender_display_name || null, no: String(copyBusiness.bill_no), total }
   };
 }
 
 /** promoting a draft: it must be this entity's draft, and its page goes with it */
-async function sendPromote(st, req, res) {
-  const { sender_id, pageAsked, promote_draft_id } = st;
-  let { pageStamp } = st;
+async function sendPromote(sendState, req, res) {
+  const { sender_id, pageAsked, promote_draft_id } = sendState;
+  let { pageStamp } = sendState;
   // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
   //    and other send-time rules will plug in here when we build Suppliers.) ──
   if (promote_draft_id) {
@@ -1525,18 +1960,32 @@ async function sendPromote(st, req, res) {
       if (kept.ok) pageStamp = kept;
     }
   }
-  Object.assign(st, { pageStamp });
+  Object.assign(sendState, { pageStamp });
 }
 
 /** the chit id, the moment, the bell, and every participant (the operator too) */
-async function sendParticipants(st, req, res) {
-  const { sender_id, sender_bridge_id, sender_display_name, purpose, is_draft, promote_draft_id, traceEdge, receiverDetails } = st;
+async function sendParticipants(sendState, req, res) {
+  const { sender_id, sender_bridge_id, sender_display_name, purpose, is_draft, promote_draft_id, traceEdge, receiverDetails } = sendState;
   // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
   const chit_id = promote_draft_id || uuidv4();
   const now = CLOCK.now(); /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
 
+  ringTheBell(res, receiverDetails, chit_id, sender_display_name, purpose);
   // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
-  /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
+  const all_recipients = [
+    participantOf(sender_id, sender_bridge_id, sender_display_name, 'sender'),
+    ...receiverDetails.map((item) => participantOf(item.entity_id, item.bridge_id, item.display_name, item.all_role))
+  ];
+  const operatorInfo = await resolveOperator(traceEdge, is_draft, sender_id, receiverDetails);
+  if (operatorInfo) all_recipients.push(participantOf(operatorInfo.identity_id, operatorInfo.bridge_id, operatorInfo.display_name, 'operator'));
+  Object.assign(sendState, { chit_id, now, all_recipients, operatorInfo });
+}
+/** one entry of the all_recipients snapshot */
+function participantOf(entity_id, bridge_id, display_name, role) {
+  return { entity_id, bridge_id, display_name, role };
+}
+/** ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js; a failed signal never stops the send */
+function ringTheBell(res, receiverDetails, chit_id, sender_display_name, purpose) {
   try {
     require('../lib/events').notifyAfter(
       res,
@@ -1546,118 +1995,111 @@ async function sendParticipants(st, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the signal was not sent — carried on without it', e);
   }
-  const all_recipients = [
-    {
-      entity_id: sender_id,
-      bridge_id: sender_bridge_id,
-      display_name: sender_display_name,
-      role: 'sender'
-    },
-    ...receiverDetails.map((item) => ({
-      entity_id: item.entity_id,
-      bridge_id: item.bridge_id,
-      display_name: item.display_name,
-      role: item.all_role
-    }))
-  ];
-
-  // ── Operator mandate (Fragment 2): a network handoff names an OPERATOR that is mandated to CO-HOLD the edge
-  //    for oversight, so it can walk its whole subtree (visibility ≡ co-holding — no god-view, no BYPASSRLS).
-  //    Resolve it here so the participant snapshot lists it; its REDACTED oversight copy (edge only, no
-  //    commercial terms — TR-6) is appended alongside the receiver copies below. Additive on the trace path. ──
-  let operatorInfo = null;
-  if (traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft) {
-    const opId = traceEdge.network.operator;
-    if (opId !== sender_id && !receiverDetails.some((item) => item.entity_id === opId)) {
-      const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
-      if (opRow.rows[0]) {
-        operatorInfo = opRow.rows[0];
-        all_recipients.push({
-          entity_id: operatorInfo.identity_id,
-          bridge_id: operatorInfo.bridge_id,
-          display_name: operatorInfo.display_name,
-          role: 'operator'
-        });
-      }
-    }
-  }
-  Object.assign(st, { chit_id, now, all_recipients, operatorInfo });
+}
+// ── Operator mandate (Fragment 2): a network handoff names an OPERATOR that is mandated to CO-HOLD the edge
+//    for oversight, so it can walk its whole subtree (visibility ≡ co-holding — no god-view, no BYPASSRLS).
+//    Resolve it here so the participant snapshot lists it; its REDACTED oversight copy (edge only, no
+//    commercial terms — TR-6) is appended alongside the receiver copies below. Additive on the trace path. ──
+async function resolveOperator(traceEdge, is_draft, sender_id, receiverDetails) {
+  if (!(traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft)) return null;
+  const opId = traceEdge.network.operator;
+  if (opId === sender_id || receiverDetails.some((item) => item.entity_id === opId)) return null;
+  const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
+  return opRow.rows[0] || null;
 }
 
 /** the subject, the summary, the priority and the retention each copy keeps */
-async function sendRetention(st, req, res) {
-  const { sender_display_name, purpose, line_items, issuedTotal, now } = st;
+async function sendRetention(sendState, req, res) {
+  const { sender_display_name, purpose, line_items, moneyBlock, now } = sendState;
   // Generate auto subject
-  const auto_subject = generateAutoSubject(purpose, sender_display_name, now, st.clock);
+  const auto_subject = generateAutoSubject(purpose, sender_display_name, now, sendState.clock);
 
-  // Calculate summary from line items
+  /* ⭐ ACC-206: total_value IS the engine's total — money.total, the same number held in two places (and in the chit_detail column). Not applicable
+     (no money block: an offer, a note, no lines) is null, never 0 (mint.js:35). The lines are only COUNTED here. */
   const summary = calculateSummary(line_items);
-  /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
-  if (issuedTotal != null) summary.total_value = issuedTotal;
+  summary.total_value = moneyBlock && Number.isFinite(Number(moneyBlock.total)) ? moneyBlock.total : null;
   // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
   const ext_priority = PRIORITIES.includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
-  // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
-  //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
-  //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
+  const retention = declaredRetention(req.body);
+  const retainDaysFor = retainDaysForOwner(retention);
+  Object.assign(sendState, { auto_subject, summary, ext_priority, retention, retainDaysFor });
+}
+// ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
+//    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
+//    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
+/** RAIL-212: the refusal of an expiry past the hundred years a sender may ask a copy to be kept (thrown, answered 400 in words by lib/knownerr thrownRefusal) */
+function refuseTooLong(expiresAt) {
+  if (Date.parse(expiresAt) <= Date.now() + RETENTION_MAX_DAYS * 86400000) return;
+  throw Object.assign(new Error('A chit cannot be kept for more than a hundred years. Choose an earlier expiry date. Nothing was saved.'), { code: 'RETENTION_TOO_LONG', title: 'Kept too long', refused: true, status: 400 });
+}
+/** the retention / expiry the sender declares on the chit ({ expires_at, retention_days, source }), or null when none is asked */
+function declaredRetention(body) {
   const DEFAULT_RETENTION_DAYS = null; // governed default resolves from the cascade later
   let retention = null;
-  {
-    const rd = Number.isFinite(+req.body.retention_days) && +req.body.retention_days > 0 ? Math.floor(+req.body.retention_days) : null;
-    let exp = null,
-      src = null,
-      days = null;
-    if (typeof req.body.expires_at === 'string' && !isNaN(Date.parse(req.body.expires_at))) {
-      exp = new Date(req.body.expires_at).toISOString();
-      src = 'manual';
-    } else if (rd) {
-      exp = new Date(Date.now() + rd * 86400000).toISOString();
-      src = 'manual';
-      days = rd;
-    } else if (DEFAULT_RETENTION_DAYS) {
-      exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString();
-      src = 'default';
-      days = DEFAULT_RETENTION_DAYS;
-    }
-    if (exp) retention = { expires_at: exp, retention_days: days, source: src };
+  const retentionDays = Number.isFinite(+body.retention_days) && +body.retention_days > 0 ? Math.floor(+body.retention_days) : null;
+  let expiresAt = null,
+    retentionSource = null,
+    days = null;
+  if (typeof body.expires_at === 'string' && !isNaN(Date.parse(body.expires_at))) {
+    expiresAt = new Date(body.expires_at).toISOString();
+    refuseTooLong(expiresAt);
+    retentionSource = 'manual';
+  } else if (retentionDays) {
+    expiresAt = new Date(Date.now() + retentionDays * 86400000).toISOString();
+    retentionSource = 'manual';
+    days = retentionDays;
+  } else if (DEFAULT_RETENTION_DAYS) {
+    expiresAt = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString();
+    retentionSource = 'default';
+    days = DEFAULT_RETENTION_DAYS;
   }
-  /**
-   * ⚠️⚠️ RETENTION IS PER COPY, AND EACH COPY'S OWNER SETS ITS FLOOR (backlog 11).
-   *
-   * `retention` above rides on the SHARED summary — it is the sender's DECLARATION, and until now that is
-   * all it was: nothing in the codebase wrote `chit_status.retention_expires_at`, so every copy silently
-   * took the schema default. Applying the declaration without a floor would have handed a sender the power
-   * to set an expiry on the RECEIVER's copy, which is the spoofing route this guards.
-   *
-   * ⚠️ MAX, NEVER MIN. A counterparty may ask you to keep a record longer than your floor and you will; they
-   * can never make your copy disappear sooner. And it is computed PER COPY on purpose — the two parties may
-   * legitimately differ, which is the entire point of a per-copy model.
-   *
-   * ⚠️ Nothing deletes yet (retire is Ph2, purge Ph3, both human-gated), so this ships the guard BEFORE the
-   * thing it guards — which is the only order in which it is worth building.
-   */
+  if (expiresAt) retention = { expires_at: expiresAt, retention_days: days, source: retentionSource };
+  return retention;
+}
+/**
+ * ⚠️⚠️ RETENTION IS PER COPY, AND EACH COPY'S OWNER SETS ITS FLOOR (backlog 11).
+ *
+ * `retention` above rides on the SHARED summary — it is the sender's DECLARATION, and until now that is
+ * all it was: nothing in the codebase wrote `chit_status.retention_expires_at`, so every copy silently
+ * took the schema default. Applying the declaration without a floor would have handed a sender the power
+ * to set an expiry on the RECEIVER's copy, which is the spoofing route this guards.
+ *
+ * ⚠️ MAX, NEVER MIN. A counterparty may ask you to keep a record longer than your floor and you will; they
+ * can never make your copy disappear sooner. And it is computed PER COPY on purpose — the two parties may
+ * legitimately differ, which is the entire point of a per-copy model.
+ *
+ * ⚠️ Nothing deletes yet (retire is Ph2, purge Ph3, both human-gated), so this ships the guard BEFORE the
+ * thing it guards — which is the only order in which it is worth building.
+ */
+/* SET-26 (K-DB, 21 Oct 2026): the copy's days AND the rule that set them, declared the way copy_policy declares its source —
+   records_law (CO3, RECORDS_FLOOR_DAYS) · own_floor (the owner's retention_floor_days) · sender_asked (the sender's retention_days).
+   `stamp`: chit_status.retention_source exists (b771), so the copy row carries the source; before b771 the days alone, as before. */
+function retainDaysForOwner(retention) {
   const _reqDays = retention && retention.retention_days ? +retention.retention_days : null;
-  /* SET-26 (K-DB, 21 Oct 2026): the copy's days AND the rule that set them, declared the way copy_policy declares its source —
-     records_law (CO3, RECORDS_FLOOR_DAYS) · own_floor (the owner's retention_floor_days) · sender_asked (the sender's retention_days).
-     `stamp`: chit_status.retention_source exists (b771), so the copy row carries the source; before b771 the days alone, as before. */
-  const retainDaysFor = async (owner_id) => {
+  return async (owner_id) => {
     let floor = 90;
     try {
-      const f = await policy.get(owner_id);
-      if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days;
+      const policyRow = await policy.get(owner_id);
+      if (Number.isFinite(+policyRow.retention_floor_days)) floor = +policyRow.retention_floor_days;
     } catch (e) {
       cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */
     }
     return copyRetention(floor, _reqDays, await schema.hasColumn('chit_status', 'retention_source')); /* CO3: MAX over the records-law floor */
   };
-  Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
 }
 
 /** the governed lineage, the held clearances and the commercial cover — folded, frozen */
-async function sendFolds(st, req, res) {
-  const { sender_id, summary } = st;
-  // ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
-  //    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
-  //    assimilating a per-brand context AND a shared source into one chit (routes send-chit through the seam). ──
+async function sendFolds(sendState, req, res) {
+  const { sender_id, summary } = sendState;
+  const governed = await governedLineageOf(sender_id);
+  const folded_clearances = await foldedClearancesOf(sender_id);
+  const folded_commercial = await foldedCommercialCover(summary, folded_clearances);
+  Object.assign(sendState, { governed, folded_clearances, folded_commercial });
+}
+// ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
+//    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
+//    assimilating a per-brand context AND a shared source into one chit (routes send-chit through the seam). ──
+async function governedLineageOf(sender_id) {
   let governed = null;
   try {
     const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
@@ -1673,13 +2115,16 @@ async function sendFolds(st, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the helper failed — carried on without it', e); /* seam is best-effort */
   }
-  // ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
-  //    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
-  //    Best-effort — never blocks the send. ──
+  return governed;
+}
+// ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
+//    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
+//    Best-effort — never blocks the send. ──
+async function foldedClearancesOf(sender_id) {
   let folded_clearances = null;
   try {
-    const rd = await require('../lib/readiness').resolveReadiness(sender_id);
-    const held = (rd.clearances || [])
+    const readiness = await require('../lib/readiness').resolveReadiness(sender_id);
+    const held = (readiness.clearances || [])
       .filter((item) => item.status === 'gathered' || item.status === 'expiring')
       .map((item) => ({
         standard: item.standard,
@@ -1694,150 +2139,169 @@ async function sendFolds(st, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */
   }
-  // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
-  //    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
-  //    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
-  //    Buyer sees "💳 Commercial cover" beside "🛡 Supplier clearances", frozen. Best-effort — never blocks the send. ──
+  return folded_clearances;
+}
+// ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
+//    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
+//    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
+//    Buyer sees "💳 Commercial cover" beside "🛡 Supplier clearances", frozen. Best-effort — never blocks the send. ──
+async function foldedCommercialCover(summary, folded_clearances) {
   let folded_commercial = null;
   try {
     if (folded_clearances) {
-      const inc = (summary && summary.incoterm) || 'CIF';
-      const ci = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: inc });
-      const areas = (ci.cluster || []).map((item) => ({
+      const incotermCode = (summary && summary.incoterm) || 'CIF';
+      const crossBorderInstruments = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: incotermCode });
+      const areas = (crossBorderInstruments.cluster || []).map((item) => ({
         label: item.label,
         frm_class: item.frm_class,
         on_rail: !!item.covered_onrail,
         instruments: (item.instruments || []).map((entry) => entry.name)
       }));
-      if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
+      if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: incotermCode, areas };
     }
   } catch (e) {
     cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */
   }
-  Object.assign(st, { governed, folded_clearances, folded_commercial });
+  return folded_commercial;
 }
 
 /* The whitelist for the provenance rider above. A string field is trimmed and capped; `sender_verified` is
    forced to a real boolean, because "the sender is verified" is a claim that must never arrive as a truthy
    string. Unknown keys are dropped rather than carried. */
 function sendViaOf(business_json) {
-  const v = business_json && business_json.via;
-  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
-  const str = (x, n) => (x === null || x === undefined || x === '' ? null : String(x).slice(0, n || 120));
+  const viaIn = business_json && business_json.via;
+  if (!viaIn || typeof viaIn !== 'object' || Array.isArray(viaIn)) return null;
   const out = {
-    channel: str(v.channel, 24),
-    from: str(v.from, 64),
-    from_name: str(v.from_name, 120),
-    to: str(v.to, 64),
-    provider_msg_id: str(v.provider_msg_id, 128),
-    capture_id: str(v.capture_id, 64),
-    received_at: str(v.received_at, 40),
-    read_by: str(v.read_by, 40),
+    channel: capText(viaIn.channel, 24),
+    from: capText(viaIn.from, 64),
+    from_name: capText(viaIn.from_name, 120),
+    to: capText(viaIn.to, 64),
+    provider_msg_id: capText(viaIn.provider_msg_id, 128),
+    capture_id: capText(viaIn.capture_id, 64),
+    received_at: capText(viaIn.received_at, 40),
+    read_by: capText(viaIn.read_by, 40),
     /* Order-level facts that have no column of their own. `unplaced` is what the reader could not place at
        all — surfaced, never dropped: a request that quietly lost 'deliver at 7pm' looks correct and is not. */
-    delivery_at: str(v.delivery_at, 120),
-    delivery_address: str(v.delivery_address, 300),
-    notes: str(v.notes, 800),
-    unplaced: str(v.unplaced, 800),
-    sender_verified: v.sender_verified === true,
+    delivery_at: capText(viaIn.delivery_at, 120),
+    delivery_address: capText(viaIn.delivery_address, 300),
+    notes: capText(viaIn.notes, 800),
+    unplaced: capText(viaIn.unplaced, 800),
+    sender_verified: viaIn.sender_verified === true,
     // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
-    raw_excerpt: str(v.raw_excerpt, 400),
-    media_count: Number.isFinite(+v.media_count) ? Math.max(0, Math.min(20, +v.media_count)) : 0,
-    label: str(v.label, 40),
-    /* How each line got its price. Re-read key by key rather than spread: the counts must be numbers and the
-       lists must be short, whatever a caller sends. */
-    priced: (() => {
-      const p = v.priced;
-      if (!p || typeof p !== 'object') return undefined;
-      const n = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
-      const arr = (a, f) => (Array.isArray(a) ? a.slice(0, 5).map(f) : []);
-      return {
-        from_catalogue: n(p.from_catalogue),
-        unpriced: n(p.unpriced),
-        catalogue_used: p.catalogue_used !== false,
-        ambiguous: arr(p.ambiguous, (x) => ({ name: str(x && x.name, 200), matches: n(x && x.matches) })),
-        asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 }))
-      };
-    })()
+    raw_excerpt: capText(viaIn.raw_excerpt, 400),
+    media_count: Number.isFinite(+viaIn.media_count) ? Math.max(0, Math.min(20, +viaIn.media_count)) : 0,
+    label: capText(viaIn.label, 40),
+    priced: pricedProvenanceOf(viaIn.priced)
   };
   return out.channel ? out : null; // no channel, no provenance — a `via` naming nothing is noise
 }
+/** a text field of the rider: null when empty, else trimmed to `maxLength` characters (120 by default) */
+const capText = (x, maxLength) => (x === null || x === undefined || x === '' ? null : String(x).slice(0, maxLength || 120));
+/** a count of the rider: a whole number from 0 to 999, else 0 */
+const clampCount = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
+/** the first five entries of a list, each mapped; an empty list when it is no list */
+const firstFive = (list, mapItem) => (Array.isArray(list) ? list.slice(0, 5).map(mapItem) : []);
+/* How each line got its price. Re-read key by key rather than spread: the counts must be numbers and the
+   lists must be short, whatever a caller sends. */
+function pricedProvenanceOf(pricedBlock) {
+  if (!pricedBlock || typeof pricedBlock !== 'object') return undefined;
+  return {
+    from_catalogue: clampCount(pricedBlock.from_catalogue),
+    unpriced: clampCount(pricedBlock.unpriced),
+    catalogue_used: pricedBlock.catalogue_used !== false,
+    ambiguous: firstFive(pricedBlock.ambiguous, (x) => ({ name: capText(x && x.name, 200), matches: clampCount(x && x.matches) })),
+    asked_differs: firstFive(pricedBlock.asked_differs, (x) => ({ name: capText(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 }))
+  };
+}
 
 /** each party's detail-page reading, resolved once per party */
-async function sendDesigns(st, req, res) {
-  const { sender_id, is_draft, receiverDetails } = st;
-  /**
-   * The sending entity's detail-page preference, resolved once and stamped below.
-   *
-   * ⚠️ `undefined` WHEN IT IS THE DEFAULT, deliberately: `mint.summary()` adds a rider only when it is
-   * neither undefined nor null, so an entity that never chose does not get a stamp claiming it did. That
-   * chit then falls back to whatever its reader prefers — which is the honest reading of "never chosen".
-   *
-   * ⚠️ Best-effort: a policy read that fails must not stop a chit being sent. No stamp is a recoverable
-   * state; a refused send is not.
-   */
+/**
+ * The sending entity's detail-page preference, resolved once and stamped below.
+ *
+ * ⚠️ `undefined` WHEN IT IS THE DEFAULT, deliberately: `mint.summary()` adds a rider only when it is
+ * neither undefined nor null, so an entity that never chose does not get a stamp claiming it did. That
+ * chit then falls back to whatever its reader prefers — which is the honest reading of "never chosen".
+ *
+ * ⚠️ Best-effort: a policy read that fails must not stop a chit being sent. No stamp is a recoverable
+ * state; a refused send is not.
+ */
+/**
+ * ⭐⭐ ONE LOOKUP PER PARTY, and each copy is stamped with ITS OWN owner's choice — see the note at the
+ * recipient insert. `detail_design` is the single key in summary_json that is allowed to differ between
+ * copies, because it is not a fact about the trade: it is how the holder reads their own work.
+ *
+ * ⚠️ Cached per send. A chit to eight recipients must not be eight extra round trips on the hottest
+ * write in the product, and two recipients are frequently the same entity in different roles.
+ */
+async function sendDesigns(sendState, req, res) {
+  const { sender_id, is_draft, receiverDetails } = sendState;
   let _detailDesign;
-  /**
-   * ⭐⭐ ONE LOOKUP PER PARTY, and each copy is stamped with ITS OWN owner's choice — see the note at the
-   * recipient insert. `detail_design` is the single key in summary_json that is allowed to differ between
-   * copies, because it is not a fact about the trade: it is how the holder reads their own work.
-   *
-   * ⚠️ Cached per send. A chit to eight recipients must not be eight extra round trips on the hottest
-   * write in the product, and two recipients are frequently the same entity in different roles.
-   */
   const _designCache = new Map();
-  const _designFor = async (eid) => {
-    if (!eid) return undefined;
-    if (_designCache.has(eid)) return _designCache.get(eid);
-    let d;
+  /** a party's detail design (read once, then remembered); undefined when it keeps the default or the read failed */
+  const _designFor = async (receiverId) => {
+    if (!receiverId) return undefined;
+    if (_designCache.has(receiverId)) return _designCache.get(receiverId);
+    let design;
     try {
-      const _pf = await policy.get(eid);
-      if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') d = _pf.detail_design;
+      const receiverPolicy = await policy.get(receiverId);
+      if (receiverPolicy && receiverPolicy.detail_design && receiverPolicy.detail_design !== 'chit') design = receiverPolicy.detail_design;
     } catch (e) {
       cbLog.fellBack('chits _designFor: failed — carried on without it', e); /* no stamp; Order level, which is the default anyway */
     }
-    _designCache.set(eid, d);
-    return d;
+    _designCache.set(receiverId, design);
+    return design;
   };
   _detailDesign = await _designFor(sender_id);
   /* Resolved for every recipient BEFORE the transaction opens — an await inside it would hold a connection
      open across a policy read for each party. */
   if (!is_draft) for (const r of receiverDetails) await _designFor(r.entity_id);
-  Object.assign(st, { _detailDesign, _designCache });
+  Object.assign(sendState, { _detailDesign, _designCache });
 }
 
 /** The shared summary, with only this copy's reading swapped in. */
-function sendSummaryFor(st, eid) {
-  const { _designCache, _detailDesign, summary_json } = st;
-  const d = _designCache.get(eid);
-  if (d === _detailDesign) return summary_json; // identical — share the object
-  const s = Object.assign({}, summary_json);
-  if (d) s.detail_design = d;
-  else delete s.detail_design;
-  return s;
+function sendSummaryFor(sendState, receiverId) {
+  const { _designCache, _detailDesign, summary_json } = sendState;
+  const cachedDesign = _designCache.get(receiverId);
+  if (cachedDesign === _detailDesign) return summary_json; // identical — share the object
+  const summary = Object.assign({}, summary_json);
+  if (cachedDesign) summary.detail_design = cachedDesign;
+  else delete summary.detail_design;
+  return summary;
 }
 
 /** the shared summary every copy carries */
-async function sendSummary(st, req, res) {
-  const {
-    purpose,
-    business_json,
-    currency_code,
-    traceEdge,
-    offersApplied,
-    moneyBlock,
-    copyPolicy,
-    now,
-    summary,
-    ext_priority,
-    retention,
-    governed,
-    folded_clearances,
-    folded_commercial,
-    _detailDesign
-  } = st;
+/**
+ * ⭐⭐ THE DESIGN IS STAMPED HERE AND KEPT FOR LIFE. Athi, 2026-08-24: *"attach design 1 or design 2 as
+ * per the choice in the settings, in the header record — so we avoid the complication of moving from
+ * one record type to another and both can be tested independently."*
+ *
+ * ⚠️ A STAMP, NOT A LOOKUP. Reading the preference at render time would mean every existing job silently
+ * changed shape the moment someone touched Settings — a chit reading one way on Monday and another on
+ * Tuesday, with no event to explain it. Written once, at creation, from whatever the preference then was.
+ *
+ * ⚠️ ONLY THE SENDER'S OWN COPY IS STAMPED, and that is a boundary, not an oversight: the design belongs
+ * to the entity that INTERPRETS the work, and one entity may not read another's settings. A recipient's
+ * copy carries no stamp and falls back to their own preference until they have one of their own.
+ *
+ * ⭐ Migration-free — it rides `summary_json` exactly as `copy_policy` and `retention` do.
+ */
+/**
+ * ⚠️ ENGINE TOUCH #2, ADDITIVE — channel PROVENANCE, echoed onto the summary so it rides every copy and is
+ * readable from a list without opening the chit. Present only when declared, exactly like `trace`; a chit
+ * sent without it is byte-identical to before.
+ *
+ * It belongs on summary_json rather than only on business_json because provenance that has to be dug for is
+ * provenance nobody reads. Six weeks after a disputed order, "where did this come from" is the first
+ * question, and business_json is not on the list row.
+ *
+ * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
+ * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
+ */
+async function sendSummary(sendState, req, res) {
+  const { purpose, business_json, currency_code, traceEdge, offersApplied, moneyBlock, copyPolicy, now, summary } = sendState;
+  const { ext_priority, retention, governed, folded_clearances, folded_commercial, _detailDesign } = sendState;
   /* the provenance rider, whitelisted (sendViaOf) */
-  const via = sendViaOf(business_json);
+  const viaBlock = sendViaOf(business_json);
   /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
      only when it is neither undefined nor null — the same test the conditional spreads made by hand, four
      times, in four files. */
@@ -1845,58 +2309,33 @@ async function sendSummary(st, req, res) {
     line_item_count: summary.line_item_count,
     total_value: summary.total_value,
     money: moneyBlock,
+    /* ACC-206: the figures name their writer (who computed, who copied, when) — what a later disagreement is reported from */
+    stamps: moneyBlock ? sendMoneyScope.stampsOf(now.toISOString(), sendMoneyScope.whereOf(sendState.moneyScope)) : undefined,
     offers: offersApplied,
     currency_code,
     priority_external: ext_priority,
     purpose,
     is_promotion: !!(business_json && business_json.is_promotion),
     /* RAIL-LAB-SRV1: a lab chit says so on every copy (sendLab proved the shop may; mint.summary keeps the rider only when true) */
-    lab: st.lab ? true : undefined,
+    lab: sendState.lab ? true : undefined,
     // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
     forwarded_from: typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64 ? req.body.forwarded_from : null,
     copy_policy: copyPolicy,
     retention,
-    /**
-     * ⭐⭐ THE DESIGN IS STAMPED HERE AND KEPT FOR LIFE. Athi, 2026-08-24: *"attach design 1 or design 2 as
-     * per the choice in the settings, in the header record — so we avoid the complication of moving from
-     * one record type to another and both can be tested independently."*
-     *
-     * ⚠️ A STAMP, NOT A LOOKUP. Reading the preference at render time would mean every existing job silently
-     * changed shape the moment someone touched Settings — a chit reading one way on Monday and another on
-     * Tuesday, with no event to explain it. Written once, at creation, from whatever the preference then was.
-     *
-     * ⚠️ ONLY THE SENDER'S OWN COPY IS STAMPED, and that is a boundary, not an oversight: the design belongs
-     * to the entity that INTERPRETS the work, and one entity may not read another's settings. A recipient's
-     * copy carries no stamp and falls back to their own preference until they have one of their own.
-     *
-     * ⭐ Migration-free — it rides `summary_json` exactly as `copy_policy` and `retention` do.
-     */
     detail_design: _detailDesign,
     governed,
     clearances: folded_clearances,
     commercial: folded_commercial,
     // Traceability edge — frozen onto every co-held copy (Fragment 1). parents is a SET (forward fan-out is the spread).
     trace: traceEdge ? { ...traceEdge, sealed_at: now.toISOString() } : null,
-    /**
-     * ⚠️ ENGINE TOUCH #2, ADDITIVE — channel PROVENANCE, echoed onto the summary so it rides every copy and is
-     * readable from a list without opening the chit. Present only when declared, exactly like `trace`; a chit
-     * sent without it is byte-identical to before.
-     *
-     * It belongs on summary_json rather than only on business_json because provenance that has to be dug for is
-     * provenance nobody reads. Six weeks after a disputed order, "where did this come from" is the first
-     * question, and business_json is not on the list row.
-     *
-     * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
-     * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
-     */
-    via
+    via: viaBlock
   });
-  Object.assign(st, { summary_json });
+  Object.assign(sendState, { summary_json });
 }
 
 /** freeze-at-send: the governing schema */
-async function sendFreeze(st, req, res) {
-  const { sender_id } = st;
+async function sendFreeze(sendState, req, res) {
+  const { sender_id } = sendState;
   // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
   const schemaRow = await query(
     `SELECT schema_id, schema_version
@@ -1909,32 +2348,13 @@ async function sendFreeze(st, req, res) {
   const frozen_schema_id = schemaRow.rows[0]?.schema_id || null;
   const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
   const created_by_actor_id = req.identity.identity_id; // who actually pressed send
-  Object.assign(st, { frozen_schema_id, frozen_schema_version, created_by_actor_id });
+  Object.assign(sendState, { frozen_schema_id, frozen_schema_version, created_by_actor_id });
 }
 
 /** every participant's copy — the sender's, each receiver's in its holder's words */
-async function sendCopies(st, req, res) {
-  const {
-    sender_id,
-    sender_bridge_id,
-    sender_display_name,
-    purpose,
-    manual_subject,
-    line_items,
-    pageStamp,
-    is_draft,
-    receiverDetails,
-    now,
-    all_recipients,
-    auto_subject,
-    summary,
-    summary_json,
-    frozen_schema_id,
-    frozen_schema_version,
-    created_by_actor_id,
-    suppressSentCopy
-  } = st;
-  let { business_json } = st;
+async function sendCopies(sendState, req, res) {
+  const { line_items, pageStamp, is_draft, receiverDetails, suppressSentCopy } = sendState;
+  let { business_json } = sendState;
   // ── Compose the per-participant copies for the delivery layer (SENDER always; RECEIVERS unless draft).
   //    Every copy carries the SAME sender = the caller, which is chit_deliver's isolation gate. ──
   /* ⚠️ SHAPE from lib/mint.js — and ONLY the shape. Everything above this line (recipient resolution, the caps,
@@ -1943,11 +2363,31 @@ async function sendCopies(st, req, res) {
   /* ⭐ THE PAGE STAMP (N03): on the header of every copy that carries business data — sender, receivers, a bill copy.
      Added onto what the sender sent, never a rewrite of it; set ONCE here and written by no route afterwards. */
   business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { page: pageStamp.page });
-  st.business_json = business_json; /* the page-stamped business data — what bjFor / billCopyFor read from here on */
-  const _summaryFor = (eid) => sendSummaryFor(st, eid),
-    bjFor = (eid) => sendBjFor(st, eid),
-    billCopyFor = (receiver) => sendBillCopyFor(st, receiver);
-  const headerCommon = mint.header({
+  sendState.business_json = business_json; /* the page-stamped business data — what bjFor / billCopyFor read from here on */
+  const headerCommon = commonHeaderOf(sendState);
+  const mkCopy = copyMakerOf(headerCommon, business_json, line_items);
+  const copies = suppressSentCopy ? [] : [senderCopyOf(mkCopy, sendState)];
+  if (!is_draft) for (const receiver of receiverDetails) copies.push(receiverCopyOf(mkCopy, sendState, receiver));
+  Object.assign(sendState, { business_json, headerCommon, copies });
+}
+/** the header every participant's copy shares: the sender, the recipients snapshot, the subject, the summary and the moment */
+function commonHeaderOf(sendState) {
+  const {
+    sender_id,
+    sender_bridge_id,
+    sender_display_name,
+    purpose,
+    manual_subject,
+    now,
+    all_recipients,
+    auto_subject,
+    summary,
+    summary_json,
+    frozen_schema_id,
+    frozen_schema_version,
+    created_by_actor_id
+  } = sendState;
+  return mint.header({
     sender_entity_id: sender_id,
     sender_entity_bridge_id: sender_bridge_id,
     sender_entity_display_name: sender_display_name,
@@ -1966,7 +2406,10 @@ async function sendCopies(st, req, res) {
     created_at: now,
     sent_at: now /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
   });
-  const mkCopy = (extra) =>
+}
+/** a function that makes one participant's copy: the shared header, the page-stamped business data and the lines, plus what is particular to that copy */
+function copyMakerOf(headerCommon, business_json, line_items) {
+  return (extra) =>
     mint.party(
       headerCommon,
       Object.assign(
@@ -1979,75 +2422,76 @@ async function sendCopies(st, req, res) {
         extra
       )
     );
-  const copies = suppressSentCopy
-    ? []
-    : [
-        mkCopy({
-          entity_id: sender_id,
-          direction: 'sent',
-          role: is_draft ? 'Draft' : 'Act',
-          current_status: railActions.SENT_STATUS,
-          priority_flag: 'normal',
-          payload_delivered: true,
-          log: {
-            action: 'created',
-            action_by_identity_id: sender_id,
-            action_by_display_name: sender_display_name,
-            new_status: railActions.SENT_STATUS,
-            detail: `Chit created and sent to ${receiverDetails.map((item) => item.display_name).join(', ')}`
-          }
-        })
-      ];
-  if (!is_draft)
-    for (const receiver of receiverDetails) {
-      const rcv_status = railActions.arrivalStatus(receiver.kind); // the one table: To acts (pending); CC/For are informed (delivered)
-      const billCopy = billCopyFor(receiver); /* the customer's copy of a counter bill — a bill, in their words */
-      copies.push(
-        mkCopy(
-          Object.assign(
-            {
-              /**
-               * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
-               * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
-               * not a fact about the trade but how the holder of THIS copy reads their own work.
-               *
-               * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
-               * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
-               */
-              summary_json: _summaryFor(receiver.entity_id),
-              business_json: bjFor(receiver.entity_id) || undefined /* the sender's replay key stays on the sender's row (bjFor) */,
-              entity_id: receiver.entity_id,
-              direction: 'received',
-              role: receiver.role,
-              current_status: rcv_status,
-              priority_flag: 'normal',
-              log: {
-                action: 'delivered',
-                action_by_identity_id: sender_id,
-                action_by_display_name: sender_display_name,
-                new_status: rcv_status,
-                detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`
-              }
-            },
-            billCopy
-              ? {
-                  purpose: billCopy.purpose,
-                  detail_type: billCopy.purpose,
-                  manual_subject: billCopy.manual_subject,
-                  business_json: billCopy.business_json,
-                  summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
-                }
-              : {}
-          )
-        )
-      );
+}
+/** the sender's own copy (Act, or Draft): sent, with the log line that says to whom */
+function senderCopyOf(mkCopy, sendState) {
+  const { sender_id, sender_display_name, is_draft, receiverDetails } = sendState;
+  return mkCopy({
+    entity_id: sender_id,
+    direction: 'sent',
+    role: is_draft ? 'Draft' : 'Act',
+    current_status: railActions.SENT_STATUS,
+    priority_flag: 'normal',
+    payload_delivered: true,
+    log: {
+      action: 'created',
+      action_by_identity_id: sender_id,
+      action_by_display_name: sender_display_name,
+      new_status: railActions.SENT_STATUS,
+      detail: `Chit created and sent to ${receiverDetails.map((item) => item.display_name).join(', ')}`
     }
-  Object.assign(st, { business_json, headerCommon, copies });
+  });
+}
+/** one receiver's copy: the shared record in their own reading (design, replay key, a counter bill's words) */
+/**
+ * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor below. Every other key
+ * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
+ * not a fact about the trade but how the holder of THIS copy reads their own work.
+ *
+ * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
+ * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
+ */
+function receiverCopyOf(mkCopy, sendState, receiver) {
+  const { sender_id, sender_display_name } = sendState;
+  const _summaryFor = (receiverId) => sendSummaryFor(sendState, receiverId),
+    bjFor = (receiverId) => sendBjFor(sendState, receiverId),
+    billCopyFor = (copyReceiver) => sendBillCopyFor(sendState, copyReceiver);
+  const rcv_status = railActions.arrivalStatus(receiver.kind); // the one table: To acts (pending); CC/For are informed (delivered)
+  const billCopy = billCopyFor(receiver); /* the customer's copy of a counter bill — a bill, in their words */
+  return mkCopy(
+    Object.assign(
+      {
+        summary_json: _summaryFor(receiver.entity_id),
+        business_json: bjFor(receiver.entity_id) || undefined /* the sender's replay key stays on the sender's row (bjFor) */,
+        entity_id: receiver.entity_id,
+        direction: 'received',
+        role: receiver.role,
+        current_status: rcv_status,
+        priority_flag: 'normal',
+        log: {
+          action: 'delivered',
+          action_by_identity_id: sender_id,
+          action_by_display_name: sender_display_name,
+          new_status: rcv_status,
+          detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`
+        }
+      },
+      billCopy
+        ? {
+            purpose: billCopy.purpose,
+            detail_type: billCopy.purpose,
+            manual_subject: billCopy.manual_subject,
+            business_json: billCopy.business_json,
+            summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
+          }
+        : {}
+    )
+  );
 }
 
 /** the network operator's redacted oversight copy — the edge, never the terms */
-async function sendOperatorCopy(st, req, res) {
-  const { sender_id, sender_display_name, is_draft, operatorInfo, summary_json, headerCommon, copies } = st;
+async function sendOperatorCopy(sendState, req, res) {
+  const { sender_id, sender_display_name, is_draft, operatorInfo, summary_json, headerCommon, copies } = sendState;
   // Operator's REDACTED oversight copy — co-holds the EDGE (product/qty/topology) but NOT commercial terms:
   // no business_json, no line_items, total_value nulled. That is TR-6 at write time — the operator physically
   // never holds a rival deal's price, it only holds the traceable edge.
@@ -2078,8 +2522,8 @@ async function sendOperatorCopy(st, req, res) {
 }
 
 /** the guaranteed write — every row commits together (the definer, or the legacy fan-out before b50) */
-async function sendWrite(st, req, res) {
-  const { sender_id, business_json, is_draft, promote_draft_id, receiverDetails, chit_id, now, copies } = st;
+async function sendWrite(sendState, req, res) {
+  const { sender_id, business_json, is_draft, promote_draft_id, receiverDetails, chit_id, now, copies } = sendState;
   // ── Guaranteed write: every row for this chit commits together, or none do (INV-2). Delivery is a substrate
   //    op (writes each participant's copy, incl. receivers) -> the b50 SECURITY DEFINER fn chit_deliver, run in
   //    withEntity(sender). Fallback to the legacy in-tx fan-out when b50 isn't applied. ──
@@ -2093,19 +2537,22 @@ async function sendWrite(st, req, res) {
      */
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
     const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
-    await withEntity(sender_id, async (c) => {
-      await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
-      if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
+    await withEntity(sender_id, async (entityClient) => {
+      await creditCap.holdUnderLock(entityClient, sendState); /* ACC-286: under the bill's lock, in this transaction, before anything is written */
+      if (sendState.sourceCarry) await costWrite.verifySourceCarry(entityClient, sender_id, sendState.sourceId, sendState.sourceCarry, sendState.sourceOptions); /* RAIL-149: the draft's money is still what was carried, read under the lock */
+      await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: entityClient });
+      if (namedParty && !isRecipient) await trySavepoint(entityClient, () => require('../lib/crm').traded(entityClient, sender_id, namedParty, now), null);
     });
   } else {
-    await sendLegacyWrite(st);
+    await sendLegacyWrite(sendState);
   }
 }
 
 /** the legacy fan-out (before b50's definer): every row in one transaction, the draft's own rows cleared first when promoting */
-async function sendLegacyWrite(st) {
-  const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = st;
+async function sendLegacyWrite(sendState) {
+  const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = sendState;
   await withTransaction(async (client) => {
+    await creditCap.holdUnderLock(client, sendState); /* ACC-286 */
     if (promote_draft_id) {
       // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
       await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
@@ -2114,36 +2561,24 @@ async function sendLegacyWrite(st) {
       await client.query('DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
     }
     // SENDER (suppressed for a task-only self-chit — no Order copy needed)
-    if (!suppressSentCopy) await sendLegacySenderRows(client, st);
+    if (!suppressSentCopy) await sendLegacySenderRows(client, sendState);
 
     // RECIPIENTS (skipped for drafts — a draft is the author's copy only)
-    if (!is_draft) for (const receiver of receiverDetails) await sendLegacyReceiverRows(client, st, receiver);
+    if (!is_draft) for (const receiver of receiverDetails) await sendLegacyReceiverRows(client, sendState, receiver);
   });
 }
 
 /** the legacy fan-out: the sender's own four rows */
-async function sendLegacySenderRows(client, st) {
-  const {
-    chit_id,
-    sender_id,
-    sender_bridge_id,
-    sender_display_name,
-    all_recipients,
-    purpose,
-    auto_subject,
-    manual_subject,
-    summary_json,
-    business_json,
-    frozen_schema_version,
-    frozen_schema_id,
-    created_by_actor_id,
-    is_draft,
-    now,
-    summary,
-    line_items,
-    retainDaysFor,
-    receiverDetails
-  } = st;
+async function sendLegacySenderRows(client, sendState) {
+  await legacySenderHeader(client, sendState);
+  await legacySenderDetail(client, sendState);
+  await legacySenderStatus(client, sendState);
+  await legacySenderLog(client, sendState);
+}
+/** the legacy fan-out: the sender's chit_header row */
+async function legacySenderHeader(client, sendState) {
+  const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, purpose, auto_subject, manual_subject } = sendState;
+  const { summary_json, business_json, frozen_schema_version, frozen_schema_id, created_by_actor_id, is_draft, now } = sendState;
   await client.query(
     `INSERT INTO chit_header
      (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
@@ -2172,6 +2607,10 @@ async function sendLegacySenderRows(client, st) {
       now
     ]
   );
+}
+/** the legacy fan-out: the sender's chit_detail row */
+async function legacySenderDetail(client, sendState) {
+  const { chit_id, sender_id, purpose, summary, summary_json, line_items } = sendState;
   await client.query(
     `INSERT INTO chit_detail
      (chit_id, entity_id, detail_type, line_item_count,
@@ -2188,6 +2627,10 @@ async function sendLegacySenderRows(client, st) {
       'sent'
     ]
   );
+}
+/** the legacy fan-out: the sender's chit_status row, kept for the days its own floor sets */
+async function legacySenderStatus(client, sendState) {
+  const { chit_id, sender_id, retainDaysFor } = sendState;
   const kept = await retainDaysFor(sender_id); // internal priority starts normal; each party sets its own (external rides on summary_json)
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
@@ -2195,6 +2638,10 @@ async function sendLegacySenderRows(client, st) {
      VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
     [chit_id, sender_id, 'normal', String(kept.days)].concat(kept.params)
   );
+}
+/** the legacy fan-out: the sender's state_log line */
+async function legacySenderLog(client, sendState) {
+  const { chit_id, sender_id, sender_display_name, receiverDetails } = sendState;
   await client.query(
     `INSERT INTO state_log
      (chit_id, entity_id, action, action_by_identity_id,
@@ -2205,28 +2652,19 @@ async function sendLegacySenderRows(client, st) {
 }
 
 /** the legacy fan-out: one receiver's four rows, in its holder's words */
-async function sendLegacyReceiverRows(client, st, receiver) {
-  const {
-    chit_id,
-    sender_id,
-    sender_bridge_id,
-    sender_display_name,
-    all_recipients,
-    purpose,
-    auto_subject,
-    manual_subject,
-    frozen_schema_version,
-    frozen_schema_id,
-    created_by_actor_id,
-    now,
-    summary,
-    summary_json,
-    line_items,
-    retainDaysFor
-  } = st;
-  const _summaryFor = (eid) => sendSummaryFor(st, eid),
-    bjFor = (eid) => sendBjFor(st, eid),
-    billCopyFor = (r) => sendBillCopyFor(st, r);
+async function sendLegacyReceiverRows(client, sendState, receiver) {
+  const reading = receiverReadingOf(sendState, receiver);
+  await legacyReceiverHeader(client, sendState, receiver, reading);
+  await legacyReceiverDetail(client, sendState, receiver, reading);
+  await legacyReceiverStatus(client, sendState, receiver, reading);
+  await legacyReceiverLog(client, sendState, receiver, reading);
+}
+/** how one receiver's copy reads on the legacy path: its status on arrival, and its purpose, business data and summary in its holder's words */
+function receiverReadingOf(sendState, receiver) {
+  const { purpose } = sendState;
+  const _summaryFor = (receiverId) => sendSummaryFor(sendState, receiverId),
+    bjFor = (receiverId) => sendBjFor(sendState, receiverId),
+    billCopyFor = (billReceiver) => sendBillCopyFor(sendState, billReceiver);
   const rcv_status = railActions.arrivalStatus(receiver.kind); // the one table (rail-actions ARRIVAL), as the live path above
   const billCopy = billCopyFor(receiver); /* the same per-copy reading as the live path above */
   const rcvPurpose = billCopy ? billCopy.purpose : purpose;
@@ -2234,6 +2672,26 @@ async function sendLegacyReceiverRows(client, st, receiver) {
   const rcvSummary = billCopy
     ? Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
     : _summaryFor(receiver.entity_id);
+  return { rcv_status, billCopy, rcvPurpose, rcvBj, rcvSummary };
+}
+/** the legacy fan-out: one receiver's chit_header row */
+/**
+ * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
+ * and supplier copy should be the same, but the interpretation can be in another tab — how the
+ * customer request is interpreted can stay within the receiving end."*
+ *
+ * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
+ * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
+ * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
+ * the sender's choice here would let a customer decide how a workshop organises its mechanics.
+ *
+ * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
+ * ever sees it — it is the server writing each copy the way its own owner asked to read it.
+ */
+async function legacyReceiverHeader(client, sendState, receiver, reading) {
+  const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, auto_subject, manual_subject } = sendState;
+  const { frozen_schema_version, frozen_schema_id, created_by_actor_id, now } = sendState;
+  const { billCopy, rcvPurpose, rcvBj, rcvSummary } = reading;
   await client.query(
     `INSERT INTO chit_header
      (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
@@ -2251,19 +2709,6 @@ async function sendLegacyReceiverRows(client, st, receiver) {
       rcvPurpose,
       auto_subject,
       (billCopy ? billCopy.manual_subject : manual_subject) || null,
-      /**
-       * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
-       * and supplier copy should be the same, but the interpretation can be in another tab — how the
-       * customer request is interpreted can stay within the receiving end."*
-       *
-       * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
-       * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
-       * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
-       * the sender's choice here would let a customer decide how a workshop organises its mechanics.
-       *
-       * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
-       * ever sees it — it is the server writing each copy the way its own owner asked to read it.
-       */
       JSON.stringify(rcvSummary),
       rcvBj ? JSON.stringify(rcvBj) : null,
       frozen_schema_version,
@@ -2275,6 +2720,11 @@ async function sendLegacyReceiverRows(client, st, receiver) {
       now
     ]
   );
+}
+/** the legacy fan-out: one receiver's chit_detail row */
+async function legacyReceiverDetail(client, sendState, receiver, reading) {
+  const { chit_id, summary, summary_json, line_items } = sendState;
+  const { rcvPurpose } = reading;
   await client.query(
     `INSERT INTO chit_detail
      (chit_id, entity_id, detail_type, line_item_count,
@@ -2291,6 +2741,11 @@ async function sendLegacyReceiverRows(client, st, receiver) {
       'received'
     ]
   );
+}
+/** the legacy fan-out: one receiver's chit_status row, kept for the days its own floor sets */
+async function legacyReceiverStatus(client, sendState, receiver, reading) {
+  const { chit_id, retainDaysFor } = sendState;
+  const { rcv_status } = reading;
   const kept = await retainDaysFor(receiver.entity_id); /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's: each recipient's copy keeps its own minimum */
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
@@ -2298,6 +2753,11 @@ async function sendLegacyReceiverRows(client, st, receiver) {
      VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
     [chit_id, receiver.entity_id, rcv_status, String(kept.days)].concat(kept.params)
   );
+}
+/** the legacy fan-out: one receiver's state_log line */
+async function legacyReceiverLog(client, sendState, receiver, reading) {
+  const { chit_id, sender_id, sender_display_name } = sendState;
+  const { rcv_status } = reading;
   await client.query(
     `INSERT INTO state_log
      (chit_id, entity_id, action, action_by_identity_id,
@@ -2308,61 +2768,63 @@ async function sendLegacyReceiverRows(client, st, receiver) {
 }
 
 /** after the commit: the customer lists (the sender's, and an order's seller's) */
-async function sendCustomers(st, req, res) {
-  const { sender_id, is_draft, receiverDetails, orderLike, sellerId } = st;
+async function sendCustomers(sendState, req, res) {
+  const { sender_id, is_draft, receiverDetails, orderLike, sellerId } = sendState;
   // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
   // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
   // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
-  if (!is_draft)
-    for (const receiver of receiverDetails) {
-      try {
-        await withEntity(sender_id, async (db) => {
-          const isSupplier = await db.query(
+  if (!is_draft) for (const receiver of receiverDetails) await addReceiverToCustomerList(sender_id, receiver);
+  /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
+     RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
+     (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
+  if (!is_draft && orderLike) for (const receiver of receiverDetails) await addSenderToSellerCustomerList(sellerId, sender_id, receiver);
+}
+/** the sender's customer list gains (or counts again) this receiver — unless the receiver is one of its suppliers; a failure is logged, never raised */
+async function addReceiverToCustomerList(sender_id, receiver) {
+  try {
+    await withEntity(sender_id, async (db) => {
+      const isSupplier = await db.query(
             `SELECT 1 FROM supplier_list
             WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-            [sender_id, receiver.entity_id]
-          );
-          if (isSupplier.rows.length === 0) {
-            await db.query(
+        [sender_id, receiver.entity_id]
+      );
+      if (isSupplier.rows.length === 0) {
+        await db.query(
               `INSERT INTO customer_list
                (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
              VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
              ON CONFLICT (owner_entity_id, customer_identity_id)
              DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-              [sender_id, receiver.entity_id]
-            );
-          }
-        });
-      } catch (e) {
-        console.log('customer auto-add skipped:', e.message);
+          [sender_id, receiver.entity_id]
+        );
       }
-    }
-  /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
-     RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
-     (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
-  if (!is_draft && orderLike)
-    for (const receiver of receiverDetails) {
-      if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) continue;
-      try {
-        await withEntity(sellerId, (db) =>
-          db.query(
+    });
+  } catch (e) {
+    cbLog.fellBack('chits send: the customer was not added to the party list — the chit is sent without it', e);
+  }
+}
+/** an order's seller (the receiver who sells, not the sender) gains the sender as a customer; a failure is logged, never raised */
+async function addSenderToSellerCustomerList(sellerId, sender_id, receiver) {
+  if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) return;
+  try {
+    await withEntity(sellerId, (db) =>
+      db.query(
             `INSERT INTO customer_list
            (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
          VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
          ON CONFLICT (owner_entity_id, customer_identity_id)
          DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-            [sellerId, sender_id]
-          )
-        );
-      } catch (e) {
-        console.log('seller customer auto-add skipped:', e.message);
-      }
-    }
+        [sellerId, sender_id]
+      )
+    );
+  } catch (e) {
+    cbLog.fellBack('chits send: the seller was not added to the party list — the chit is sent without it', e);
+  }
 }
 
 /** after the commit: auto-assign each actionable copy by its own entity */
-async function sendAssign(st, req, res) {
-  const { is_draft, receiverDetails, chit_id } = st;
+async function sendAssign(sendState, req, res) {
+  const { is_draft, receiverDetails, chit_id } = sendState;
   // ── Best-effort auto-assign on receipt (D1) — AFTER commit; never fails the guaranteed chit ──
   // Only the actionable 'to' copy is auto-assigned; CC/For stay informational. Each receiver entity
   // resolves against ITS OWN settings/roster (the receiver decides how its inbox auto-assigns).
@@ -2372,40 +2834,40 @@ async function sendAssign(st, req, res) {
       try {
         await autoAssignReceived(receiver.entity_id, chit_id);
       } catch (e) {
-        console.log('auto-assign skipped:', e.message);
+        cbLog.fellBack('chits send: the chit was not auto-assigned — it is sent unassigned', e);
       }
     }
 }
 
 /** meter the send — after the work, never able to fail it */
-async function sendMeter(st, req, res) {
-  const { sender_id, purpose, is_draft, chit_id, summary, summary_json } = st;
-  /**
-   * ⭐⭐ METER THE SEND. b99 named `chit.send` in its own header two months ago and nothing ever wrote it,
-   * so the ledger has billed AI drafts and KYB lookups while the platform's central act was free.
-   *
-   * ⚠️ AFTER THE WORK, NEVER BEFORE, AND IT CANNOT FAIL THE SEND — `meter()` swallows and warns. A chit
-   * that failed because its meter failed would lose a person's work to protect a fraction of a cent, and
-   * `chit_header` still evidences the send either way.
-   *
-   * ⚠️ DRAFTS ARE NOT METERED. A draft is not an act on the rail — nothing was sent, nobody received a
-   * copy, and billing for one would charge a person for changing their mind.
-   *
-   * ⚠️ NOT AWAITED, deliberately: the response should not wait on a billing row. The `.catch` is belt and
-   * braces — `meter()` already never rejects — but an unhandled rejection here would take the process
-   * down, and this is the hottest path in the product.
-   */
+/**
+ * ⭐⭐ METER THE SEND. b99 named `chit.send` in its own header two months ago and nothing ever wrote it,
+ * so the ledger has billed AI drafts and KYB lookups while the platform's central act was free.
+ *
+ * ⚠️ AFTER THE WORK, NEVER BEFORE, AND IT CANNOT FAIL THE SEND — `meter()` swallows and warns. A chit
+ * that failed because its meter failed would lose a person's work to protect a fraction of a cent, and
+ * `chit_header` still evidences the send either way.
+ *
+ * ⚠️ DRAFTS ARE NOT METERED. A draft is not an act on the rail — nothing was sent, nobody received a
+ * copy, and billing for one would charge a person for changing their mind.
+ *
+ * ⚠️ NOT AWAITED, deliberately: the response should not wait on a billing row. The `.catch` is belt and
+ * braces — `meter()` already never rejects — but an unhandled rejection here would take the process
+ * down, and this is the hottest path in the product.
+ */
+/**
+ * ⭐ THE BASIS TRAVELS WITH THE CHARGE. Athi's reason for wanting cost recorded per chit was that a
+ * later model — profit share, percentage-of-value, tiered — needs the BASIS and the RATE together.
+ * The trade's value is right here at send; carrying it into the ledger row means switching model is
+ * a rate-card change rather than a data-archaeology exercise.
+ *
+ * ⚠️ It is what the value WAS at send, which is the only figure that can be charged against. A later
+ * amend changes the chit and must not retro-change what was billed.
+ */
+async function sendMeter(sendState, req, res) {
+  const { sender_id, purpose, is_draft, chit_id, summary, summary_json } = sendState;
   if (!is_draft) {
     try {
-      /**
-       * ⭐ THE BASIS TRAVELS WITH THE CHARGE. Athi's reason for wanting cost recorded per chit was that a
-       * later model — profit share, percentage-of-value, tiered — needs the BASIS and the RATE together.
-       * The trade's value is right here at send; carrying it into the ledger row means switching model is
-       * a rate-card change rather than a data-archaeology exercise.
-       *
-       * ⚠️ It is what the value WAS at send, which is the only figure that can be charged against. A later
-       * amend changes the chit and must not retro-change what was billed.
-       */
       require('../lib/meter')
         .meter(sender_id, 'chit.send', {
           detail: chit_id,
@@ -2423,25 +2885,24 @@ async function sendMeter(st, req, res) {
 }
 
 /** stock moves when goods move — after the commit, not awaited */
-async function sendStock(st, req, res) {
-  const { sender_id, purpose, line_items, business_json, is_draft, chit_id, now } = st;
-  /**
-   * ── ⭐⭐⭐ STOCK MOVES WHEN GOODS MOVE (2026-09-10) ─────────────────────────────────────────────────────
-   *
-   * Athi: *"wire goods-in and sales to post movements."* Goods received put stock IN at its landed cost; a
-   * counter bill takes it OUT. lib/stock-from-chit.js decides which chits qualify and returns [] for the
-   * great majority — an order is a promise, a draft is nothing, and a despatch note is deliberately not
-   * wired because for a counter shop it would take the same goods out twice.
-   *
-   * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
-   * is the hottest path in the product and a sale that has already happened must not fail because a stock
-   * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
-   * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
-   * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
-   * rebuild() can check against the log.
-   *
-   * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
-   */
+/**
+ * ── ⭐⭐⭐ STOCK MOVES WHEN GOODS MOVE (2026-09-10) ─────────────────────────────────────────────────────
+ *
+ * Athi: *"wire goods-in and sales to post movements."* Goods received put stock IN at its landed cost; a
+ * counter bill takes it OUT. lib/stock-from-chit.js decides which chits qualify and returns [] for the
+ * great majority — an order is a promise, a draft is nothing, and a despatch note is deliberately not
+ * wired because for a counter shop it would take the same goods out twice.
+ *
+ * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
+ * is the hottest path in the product and a sale that has already happened must not fail because a stock
+ * row could not be written. The trade is real and worth naming: a failure here is posted again by lib/stock-sweep
+ * (CTR-178: derived from the chit at any time, with the same ref and the same idempotency — retried, healed by the shop's next sale or the till's replay, SAID if it still fails) — and because the balance is a cache that
+ * rebuild() can check against the log.
+ *
+ * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
+ */
+async function sendStock(sendState, req, res) {
+  const { sender_id, purpose, line_items, business_json, is_draft, chit_id, now } = sendState;
   if (!is_draft) {
     try {
       require('../lib/stock-from-chit')
@@ -2449,6 +2910,9 @@ async function sendStock(st, req, res) {
           actor_id: req.identity && req.identity.identity_id
         })
         .then((reply) => {
+          /* CTR-178: a line that failed is posted again (lib/stock-sweep: derived from the chit, idempotent) and any older gap of this shop heals with it */
+          if (reply && reply.failed.length) require('../lib/stock-sweep').retryLater(sender_id, withEntity);
+          require('../lib/stock-sweep').healSoon(sender_id, withEntity);
           if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
@@ -2477,8 +2941,8 @@ async function sendStock(st, req, res) {
 }
 
 /** the ledger hears about it — each side that holds a copy posts its own view */
-async function sendBooks(st, req, res) {
-  const { sender_id, is_draft, receiverDetails, chit_id } = st;
+async function sendBooks(sendState, req, res) {
+  const { sender_id, is_draft, receiverDetails, chit_id } = sendState;
   /**
    * ⭐⭐ THE LEDGER HEARS ABOUT IT (SPEC-books-v2 §3) — AFTER the commit, never awaited, never able to fail the chit:
    * lib/books-hooks.afterChit swallows everything and parks what cannot post in books_outbox, named. Off (the
@@ -2488,9 +2952,9 @@ async function sendBooks(st, req, res) {
   if (!is_draft) {
     try {
       const hooks = require('../lib/books-hooks');
-      const who = req.identity && req.identity.identity_id;
+      const callerId = req.identity && req.identity.identity_id;
       setImmediate(() => {
-        hooks.afterChit(sender_id, chit_id, who);
+        hooks.afterChit(sender_id, chit_id, callerId);
         for (const r of receiverDetails)
           if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
       });
@@ -2500,10 +2964,15 @@ async function sendBooks(st, req, res) {
   }
 }
 
+/** ⭐ OPS-6: present only when a receipt line carried no product of mine and so moved no stock → { stock_not_posted: [{ line_ref, particulars, code, why }] }, {} when every line moved stock (or the chit is no receipt) */
+function stockNotPostedOf(sendState) {
+  const unstocked = require('../lib/stock-from-chit').unstockedLines({ purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items });
+  return unstocked.length ? { stock_not_posted: unstocked } : {};
+}
 /** the answer, then the counter's place in its series */
-async function sendAnswer(st, req, res) {
-  const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = st;
-  res.json({
+async function sendAnswer(sendState, req, res) {
+  const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = sendState;
+  res.json(costWrite.hideSendAnswer(sendState.sourceCarry, { /* RAIL-149: a blind sender who carried the draft money is not told it */
     message: is_draft ? 'Draft saved' : 'Chit sent successfully',
     chit_id,
     auto_subject,
@@ -2513,10 +2982,18 @@ async function sendAnswer(st, req, res) {
     summary: summary_json,
     /* ⚠ present only when something is wrong, so a caller can treat its absence as silence rather than as
        a claim that the number was checked and approved. */
-    ...(number_check ? { number_check } : {}),
+    number_check: number_check || undefined,
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
-    ...(oneSided ? { one_sided: oneSided } : {})
-  });
+    one_sided: oneSided || undefined,
+    /* ⭐ CTRY-76: present only when this bill went out as NOT a tax invoice because the buyer is not named (sendPaper) — the counter asks for the buyer */
+    not_invoice: sendState.paper || undefined,
+    /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
+    cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
+    /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
+    credit_cap: sendState.creditCap,
+    /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */
+    ...lineShape.answerOf(sendState.ignored), ...stockNotPostedOf(sendState)
+  }));
 
   /**
    * ⭐⭐ THE COUNTER'S PLACE IN ITS SERIES, KEPT IN THE CLOUD (2026-09-17). Athi: *"the system should be updated
@@ -2527,7 +3004,7 @@ async function sendAnswer(st, req, res) {
    */
   if (!is_draft && client_ref && business_json && business_json.series) {
     setImmediate(() => {
-      require('./counters')
+      require('../lib/counters-store')
         .noteBill(sender_id, business_json.series, business_json.billed_at, client_ref)
         .catch(cbLog.orElse('chits: the helper failed — carried on without it'));
     });
@@ -2542,8 +3019,6 @@ async function sendAnswer(st, req, res) {
 // All parameterised (no injection). Used by /inbox, /sent, /folder. (Criteria set can become schema-driven later.)
 /* ── PERF1 · the chit lists' page: a server-side maximum, and keyset paging in the default (newest-first) order ── */
 const PAGE_LIMIT = require('../lib/page-limit');
-const LIST_MAX = 200; /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
-const LIST_PAGE = 20; /* the page a chit list answers when asked for one without a size */
 /** a chit list's page — ALWAYS a page (inbox · sent · folder were never answered whole): the one clamp, and whether the asked size
  *  was cut, so the answer can say so (W2-RAIL R2: PAGE_LIMIT.capOf → `capped` + `cap_note`, never a silent 200-row ceiling) */
 function listPage(req) {
@@ -2553,15 +3028,15 @@ function listPage(req) {
  * ?after=<created_at, µs, UTC>|<chit_id> — the `next` the page before answered. Only in the default order (newest first): any other sort keeps
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
  */
-function keysetOf(req, params, a) {
+function keysetOf(req, params, alias) {
   if ((req.query.sort && req.query.sort !== 'date') || String(req.query.dir || '').toLowerCase() === 'asc') return { where: '' };
-  const m = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(String(req.query.after || ''));
-  if (!m) return { where: '' };
-  params.push(m[1], m[2]);
-  return { where: ` AND (${a}.created_at::timestamptz, ${a}.chit_id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)` };
+  const cursorMatch = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(String(req.query.after || ''));
+  if (!cursorMatch) return { where: '' };
+  params.push(cursorMatch[1], cursorMatch[2]);
+  return { where: ` AND (${alias}.created_at::timestamptz, ${alias}.chit_id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)` };
 }
 /** the cursor column a list selects (its last row's becomes `next`), printed in the session's zone — db/index.js pins it to UTC */
-const keyCol = (a) => `to_char(${a}.created_at::timestamptz, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') || '|' || ${a}.chit_id::text AS _after`;
+const keyCol = (alias) => `to_char(${alias}.created_at::timestamptz, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') || '|' || ${alias}.chit_id::text AS _after`;
 /** `next` from a page's rows (null on a short page, or in another order) — and the cursor column taken off every row */
 function afterOf(rows, limit, req) {
   const last = rows[rows.length - 1],
@@ -2573,26 +3048,52 @@ function afterOf(rows, limit, req) {
   return next;
 }
 
+/**
+ * ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; else its country pack's zone, else UTC) — the
+ * same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
+ * affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
+ * before b301 (naive, read as UTC by the pinned session zone) and after it (timestamptz).
+ */
+/** the shared list filters (folder · amount · day range · abroad · priority · status bucket · assignment · dispute) appended to a list's WHERE, params pushed in the same order */
 function chitFilters(req, where, params) {
-  /**
-   * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
-   * folder name and filter data accordingly, so the same panel works for each folder."*
-   *
-   * It lives in the SHARED filter builder so Task and Order both get it from one line — a folder under Order is
-   * the Order list filtered, exactly as a folder under Task is the Task list filtered. Putting it in each route
-   * separately is how the two would drift.
-   */
-  const fid = String(req.query.folder_id || '').trim();
-  if (/^[0-9a-f-]{36}$/i.test(fid)) {
-    params.push(fid);
-    where += ` AND cs.folder_id = $${params.length}::uuid`;
+  where += folderFilter(req, params) + amountFilter(req, params);
+  if (isPlainDate(req.query.date_from) || isPlainDate(req.query.date_to)) {
+    params.push(entityId(req)); /* the SHOP (an actor's parent entity), whose zone it is */
+    const zone = `COALESCE((SELECT COALESCE(z.timezone, ${require('../lib/country-setup').zoneCaseSql('z')}) FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'UTC')`;
+    where += shopDayFromFilter(req, params, zone) + shopDayToFilter(req, params, zone);
+  } else {
+    where += instantRangeFilter(req, params);
   }
-  const num = (v) => {
-    const n = parseFloat(v);
-    return isFinite(n) ? n : null;
-  };
-  const amin = num(req.query.amount_min),
-    amax = num(req.query.amount_max);
+  where += abroadFilter(req, params) + priorityFilter(req, params) + statusBucketFilter(req, params) + assignmentFilter(req, params);
+  if (req.query.dispute === 'open' || req.query.dispute === 'active') {
+    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open')`; /* SEC-127: my copies named in the SQL, not RLS alone. D4: chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies) */
+  }
+  return where;
+}
+/**
+ * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
+ * folder name and filter data accordingly, so the same panel works for each folder."*
+ *
+ * It lives in the SHARED filter builder so Task and Order both get it from one line — a folder under Order is
+ * the Order list filtered, exactly as a folder under Task is the Task list filtered. Putting it in each route
+ * separately is how the two would drift.
+ */
+function folderFilter(req, params) {
+  const folderId = String(req.query.folder_id || '').trim();
+  if (!/^[0-9a-f-]{36}$/i.test(folderId)) return '';
+  params.push(folderId);
+  return ` AND cs.folder_id = $${params.length}::uuid`;
+}
+/** a number from a query value, or null when it is not one */
+const numberOrNull = (rawValue) => {
+  const parsed = parseFloat(rawValue);
+  return isFinite(parsed) ? parsed : null;
+};
+/** ?amount_min / ?amount_max → the bounds on the chit's total value */
+function amountFilter(req, params) {
+  let where = '';
+  const amin = numberOrNull(req.query.amount_min),
+    amax = numberOrNull(req.query.amount_max);
   if (amin !== null) {
     params.push(amin);
     where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`;
@@ -2601,56 +3102,81 @@ function chitFilters(req, where, params) {
     params.push(amax);
     where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`;
   }
-  /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; else its country pack's zone, else UTC) — the
-     same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
-     affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
-     before b301 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
-  const dateQ = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '').trim());
-  if (dateQ(req.query.date_from) || dateQ(req.query.date_to)) {
-    params.push(entityId(req)); /* the SHOP (an actor's parent entity), whose zone it is */
-    const zone = `COALESCE((SELECT COALESCE(z.timezone, ${require('../lib/country-setup').zoneCaseSql('z')}) FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'UTC')`;
-    if (dateQ(req.query.date_from)) {
-      params.push(String(req.query.date_from).trim());
-      where += ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`;
-    }
-    if (dateQ(req.query.date_to)) {
-      params.push(String(req.query.date_to).trim());
-      where += ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`;
-    }
-  } else {
-    /* a full timestamp: as before, an instant */
-    if (req.query.date_from) {
-      params.push(req.query.date_from);
-      where += ` AND ch.created_at >= $${params.length}::timestamptz`;
-    }
-    if (req.query.date_to) {
-      params.push(req.query.date_to);
-      where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`;
-    }
+  return where;
+}
+/** is this query value a plain calendar day (YYYY-MM-DD)? */
+const isPlainDate = (rawValue) => /^\d{4}-\d{2}-\d{2}$/.test(String(rawValue || '').trim());
+/** ?date_from as a plain day → the chits made at or after midnight of that day in the shop's zone (the SQL `zone` expression of chitFilters) */
+function shopDayFromFilter(req, params, zone) {
+  if (!isPlainDate(req.query.date_from)) return '';
+  params.push(String(req.query.date_from).trim());
+  return ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`;
+}
+/** ?date_to as a plain day → the chits made before the end of that day in the shop's zone (see shopDayFromFilter) */
+function shopDayToFilter(req, params, zone) {
+  if (!isPlainDate(req.query.date_to)) return '';
+  params.push(String(req.query.date_to).trim());
+  return ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`;
+}
+/** ?date_from / ?date_to as full timestamps: as before, an instant */
+function instantRangeFilter(req, params) {
+  let where = '';
+  if (req.query.date_from) {
+    params.push(req.query.date_from);
+    where += ` AND ch.created_at >= $${params.length}::timestamptz`;
   }
-  /* ⭐ TRADE-SRV1 G3: ?abroad=1 → only the trades across a border (another currency, or a party in another country) — ONE fragment
-     (country-setup.abroadSql, beside shopCountrySql), so Task, Order and every folder answer the same */
+  if (req.query.date_to) {
+    params.push(req.query.date_to);
+    where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`;
+  }
+  return where;
+}
+/**
+ * ⭐ TRADE-SRV1 G3: ?abroad=1 → only the trades across a border (another currency, or a party in another country) — ONE fragment
+ * (country-setup.abroadSql, beside shopCountrySql), so Task, Order and every folder answer the same
+ */
+function abroadFilter(req, params) {
   if (req.query.abroad === '1' || req.query.abroad === 'true') {
     params.push(entityId(req));
-    where += ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`;
+    return ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`;
   }
-  if (req.query.priority) {
-    params.push(req.query.priority);
-    where += ` AND cs.priority_flag = $${params.length}`;
-  }
-  if (req.query.fstatus) {
-    /* ⭐ W2-RAIL R2: the buckets are the ONE table (lib/rail-actions BUCKETS, read off the engine's transitions) — never spelled here */
-    const list = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
-    const ph = list
-      .map((item) => {
-        params.push(item);
-        return '$' + params.length;
-      })
-      .join(',');
-    where += ` AND cs.current_status IN (${ph})`;
-  }
-  // Delegation scope: unassigned = the entity's own pool; assigned = delegated to a co-assist. assigned_to=me|<id>
-  // scopes to one actor (fixes actor "My Task"). No param = everything (back-compat).
+  return '';
+}
+/** ?priority → the chits flagged with that priority */
+function priorityFilter(req, params) {
+  if (!req.query.priority) return '';
+  params.push(req.query.priority);
+  return ` AND cs.priority_flag = $${params.length}`;
+}
+/**
+ * RAIL-135: the list filters that reach a cast (?assigned_to a uuid, ?date_from / ?date_to a day or an instant) are read BEFORE the query, so a bad one is a 400 naming it
+ * and not the database's 22P02 / 22007 answered 500. A day is books-period's one isCalendarDay; an instant is anything Date can read.
+ */
+function filtersReadable(req, res, next) {
+  const names = listFilters.unreadable(req.query);
+  if (!names.length) return next();
+  const message = names.join(' and ') + (names.length > 1 ? ' are' : ' is') + ' not a value this list can use. Use a real day (2026-11-12) for a date and the id of a person for assigned_to.';
+  return problem(req, res, { status: 400, ...said({ error: 'Invalid filter', code: 'FILTER_INVALID', message, field: names[0] }, 'FILTER_INVALID') });
+}
+/** ?fstatus → the chits whose status is in that bucket (⭐ W2-RAIL R2: the buckets are the ONE table, lib/rail-actions BUCKETS, read off the engine's transitions — never spelled here) */
+function statusBucketFilter(req, params) {
+  if (!req.query.fstatus) return '';
+  const asked = String(req.query.fstatus);
+  const list = Object.prototype.hasOwnProperty.call(railActions.BUCKETS, asked) ? railActions.BUCKETS[asked] : [asked]; /* RAIL-135: 'constructor' is not a bucket */
+  const placeholders = list
+    .map((item) => {
+      params.push(item);
+      return '$' + params.length;
+    })
+    .join(',');
+  return ` AND cs.current_status IN (${placeholders})`;
+}
+/**
+ * Delegation scope: unassigned = the entity's own pool; assigned = delegated to a co-assist. assigned_to=me|<id>
+ * scopes to one actor (fixes actor "My Task"). No param = everything (back-compat).
+ */
+function assignmentFilter(req, params) {
+  let where = '';
   if (req.query.assignment === 'unassigned') where += ` AND cs.assigned_to_actor_id IS NULL`;
   else if (req.query.assignment === 'assigned') where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
   const at = req.query.assigned_to;
@@ -2661,21 +3187,29 @@ function chitFilters(req, where, params) {
     params.push(at);
     where += ` AND cs.assigned_to_actor_id = $${params.length}`;
   }
-  // D4: dispute filter — chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies).
-  if (req.query.dispute === 'open' || req.query.dispute === 'active') {
-    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open')`;
-  }
   return where;
 }
 
-router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
+/**
+ * S34: a chit of the three mailbox lists, as each statement selects it and in its order — the allow-list of the answer, named once per list (the cancel
+ * columns only when cancelCols named them: undefined is left out). summary_json and all_recipients are documents whose keys are the chit's own, so the
+ * answer schema leaves the row open (listed in docs/contracts/api-output-shapes.json) and this mapping is what keeps an unnamed column out.
+ */
+// prettier-ignore
+const sentRow = (x) => ({ chit_id: x.chit_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, priority_flag: x.priority_flag, customer_priority: x.customer_priority, star_flag: x.star_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count });
+// prettier-ignore
+const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, deleted_at: x.deleted_at, archived_at: x.archived_at, direction: x.direction, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, message_count: x.message_count });
+// prettier-ignore
+const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type });
+
+router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
     const pg = listPage(req),
       page = pg.page,
       limit = pg.limit;
-    const q_search = (req.query.q || '').trim();
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146: ONE cost read per request; a blind reader's amount filter and sort are taken off and named back */
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
     const params = [entity_id];
@@ -2696,7 +3230,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     if (ks.where) where += ks.where;
     const offset = ks.where ? 0 : (page - 1) * limit;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
       const nestedCountResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
 
       const limIdx = params.length + 1,
@@ -2709,22 +3243,24 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
               /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+                WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
-              ${keyCol('ch')}
+                WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
+              ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
-      return { countResult: nestedCountResult, result: outcome };
+      return { countResult: nestedCountResult, result: outcome, roles: await costView.rolesFor(db, entity_id, outcome.rows, blind) };
     });
 
     const next = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null;
-    res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
+    /* S34: a chit is sentRow (the statement above, in its order); capped and cap_note only when the pager cut the page */
+    res.json({ chits: costView.listRows(result.rows, sentRow, { blind, shopId: entity_id, roles }), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Sent list error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get sent items'));
@@ -2733,14 +3269,14 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
 
 // GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
-router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
+router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
     const pg = listPage(req),
       { page, limit, offset } = pg;
     const view = req.query.view || 'drafts';
-    const q_search = (req.query.q || '').trim();
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146: ONE cost read per request; a blind reader's amount filter and sort are taken off and named back */
 
     const params = [entity_id];
     let where = `cs.entity_id = $1`;
@@ -2761,7 +3297,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     // dedupe self-chits (both copies in trash/archive) to one row per chit, preferring the sent copy
     where = chitFilters(req, where, params);
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
       const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
       const orderBy =
@@ -2785,10 +3321,10 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
               ch.role,
-              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction,
+              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
-                WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
+                WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count
            ${joinFrom}
           WHERE ${where}
           ORDER BY ch.chit_id, (ch.direction = 'sent') DESC
@@ -2797,17 +3333,34 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, limit, offset]
       );
-      return { countResult: nestedCountResult, result: outcome };
+      return { countResult: nestedCountResult, result: outcome, roles: await costView.rolesFor(db, entity_id, outcome.rows, blind) };
     });
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
     const total = parseInt(countResult.rows[0].count);
-    res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
+    /* S34: a chit is folderRow (the DISTINCT ON statement above, in its order); capped and cap_note only when the pager cut the page */
+    res.json({ chits: costView.listRows(result.rows, folderRow, { blind, shopId: entity_id, roles }), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Folder error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get folder'));
   }
 });
+
+/** REP-50: (key, currency) rows → one group per key, busiest first: { key, chits, total_value (null when it mixes currencies), by_currency[] } */
+function rollupGroups(rows) {
+  const byKey = new Map();
+  for (const row of rows) {
+    const group = byKey.get(row.key) || { key: row.key, chits: 0, by_currency: [] };
+    group.chits += row.chits;
+    group.by_currency.push({ currency_code: row.currency_code || null, chits: row.chits, total_value: row.total_value });
+    if (row.cost_hidden) group.cost_hidden = true; /* RAIL-146: a blind actor's stripped row marks the whole group */
+    byKey.set(row.key, group);
+  }
+  return [...byKey.values()]
+    .map((group) => Object.assign(group, { total_value: group.by_currency.length === 1 ? group.by_currency[0].total_value : null }))
+    .sort((first, second) => second.chits - first.chits);
+}
 
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
@@ -2815,7 +3368,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const groupBy = req.query.group_by === 'state' ? 'state' : 'counterparty';
-    const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name';
+    const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name', blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read; a blind actor's sum leaves the cost-side chits out (lib/cost-view) */
     // direction scopes the rollup to Task (received) or Order (sent); omit for both. Without it, self-chits
     // (sent+received held by one entity) would double-count.
     const dir = req.query.direction === 'sent' || req.query.direction === 'received' ? req.query.direction : null;
@@ -2835,17 +3388,21 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
       where += ` AND cs.assigned_to_actor_id = $${params.length}`;
     }
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { result, disp } = await withEntity(entity_id, async (db) => {
-      const outcome = await db.query(
-        `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
-              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
+    const { result, disp, roles } = await withEntity(entity_id, async (db) => {
+      /* REP-50 (SIT 2026-10-25): summed PER CURRENCY, never across. One SUM over every chit added an IN chit's rupees to an AU shop's
+         dollars at face value. Each group carries by_currency [{ currency_code, chits, total_value }]; total_value stays for the old
+         readers but only where the group holds one currency, and is null where it mixes (a sum across currencies is no number).
+         RAIL-146 rides on the same rows: a blind actor's (key, currency) row is stripped by lib/cost-view first, then folded by key. */
+      const perCur = await db.query(
+        `SELECT ${keyExpr} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
+              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
-        GROUP BY ${keyExpr}
-        ORDER BY chits DESC`,
+        GROUP BY 1, 2`,
         params
       );
+      const outcome = perCur;
       // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
       // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
       const nestedDisp = await db
@@ -2854,13 +3411,16 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
-          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open')`,
+          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.entity_id = cs.entity_id AND cd.status = 'open')`,
           params
         )
         .catch(() => ({ rows: [{ n: 0 }] }));
-      return { result: outcome, disp: nestedDisp };
+      return { result: outcome, disp: nestedDisp, roles: await costView.rollupRoles(db, entity_id, outcome.rows, blind) };
     });
-    res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
+    /* S34: a group is the three columns its statement selects; a blind actor's is lib/cost-view rollupGroup (the same three, cost_hidden when the sum left some out) */
+    /* each (key, currency) row for its reader (lib/cost-view rollupGroups: the statement's columns, or a blind actor's stripped sum), then one group per key (REP-50 rollupGroups) */
+    const perReader = costView.rollupGroups(result.rows, blind, entity_id, roles).map((row, index) => Object.assign({ currency_code: result.rows[index].currency_code }, row));
+    res.json({ group_by: groupBy, direction: dir, groups: rollupGroups(perReader), dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
     problem(req, res, failed(err, req, 'Rollup failed'));
@@ -2905,7 +3465,7 @@ async function cancelCols() {
   return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
-router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
+router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
@@ -2914,7 +3474,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
       page = pg.page,
       limit = pg.limit;
     const status_filter = req.query.status || null;
-    const q_search = (req.query.q || '').trim();
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146: ONE cost read per request; a blind reader's amount filter and sort are taken off and named back */
 
     let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
@@ -2985,7 +3545,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
     const offset = ks.where ? 0 : (page - 1) * limit;
     paramCount = params.length;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
       const nestedCountResult =
         page === 1 && !ks.where
           ? await db.query(
@@ -3018,13 +3578,13 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
-          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
+          WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
-          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
+          WHERE cm2.chit_id = ch.chit_id AND cm2.entity_id = ch.entity_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
          (SELECT sl.action_by_display_name FROM state_log sl
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_name,
@@ -3032,7 +3592,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
           LEFT JOIN identities i ON i.identity_id = sl.action_by_identity_id
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type,
-         ${keyCol('ch')}
+         ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
@@ -3042,26 +3602,15 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
-      return { countResult: nestedCountResult, result: outcome };
+      return { countResult: nestedCountResult, result: outcome, roles: await costView.rolesFor(db, entity_id, outcome.rows, blind) };
     });
 
     const inboxNext = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null; /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
-    res.json(
-      Object.assign(
-        {
-          chits: result.rows,
-          // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
-          total,
-          page,
-          limit,
-          next: inboxNext /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
-          /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
-         way in. Two spellings of one fact is how they start disagreeing. */
-        },
-        PAGE_LIMIT.capOf(pg, result.rows.length, total)
-      )
-    ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` (absent otherwise) */
+    /* S34: a chit is inboxRow (the statement above, in its order). Top-level total/page/limit mirror /sent so the web pager treats both lists the same; next is the ?after= of the next page (newest-first only; null on
+       the last). ⚠️ the `pagination` object said the same three numbers a second time: two spellings of one fact is how they start disagreeing. */
+    res.json({ chits: costView.listRows(result.rows, inboxRow, { blind, shopId: entity_id, roles }), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Inbox error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get inbox'));
@@ -3125,7 +3674,7 @@ router.get('/pulse', auth, async (req, res) => {
      * watermark and, depending on how it reads that, either refreshing forever or never again. `null` is an
      * explicit "cannot tell" — the client falls back to refreshing, which is exactly today's behaviour.
      */
-    console.error('pulse:', e.message);
+    softFault(req, e); /* logged with the request id; the answer is still the 200 below */
     res.json({ w: null });
   }
 });
@@ -3159,6 +3708,12 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
+/** RAIL-106: the changes of mine on this chit the party on another installation has not confirmed yet (lib/ctpreturn unconfirmed) — null, and no query, when nothing is hosted elsewhere; null when the read fails (logged) */
+const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id: the read failed — answered with none', null));
+
+/** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
+const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
+
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -3174,7 +3729,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
-    const entity_id = entityId(req);
+    const entity_id = entityId(req), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read; a blind actor's answer is reshaped LAST (lib/cost-view), the rows never */
 
     // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
     const data = await withEntity(entity_id, async (db) => {
@@ -3237,7 +3792,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
         `SELECT action, action_by_identity_id, action_by_display_name, previous_status,
                 new_status, detail, created_at
          FROM state_log
-         WHERE chit_id = $1 AND entity_id = $2 AND action != 'read'
+         WHERE chit_id = $1 AND entity_id = $2 AND action NOT IN ('read', 'payment_marked') /* RAIL-216: the payment marker is the withdraw check's fact, not a history line */
          ORDER BY created_at ASC`,
         [chit_id, entity_id]
       );
@@ -3362,7 +3917,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
            SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
                   d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note,
-                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at,
+                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.recorded_by_actor_id, d.delivered_at,
                   -- b152, read through to_jsonb so the columns may not exist yet: naming d.kind directly raises
                   -- 42703, which deliverline treats as "not migrated" and turns into a null progress — the whole
                   -- delivery display would vanish between deploying this and running b152.
@@ -3395,7 +3950,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
           books_wait: g.books_wait || null,
-          order_billed: g.order_billed /* W36: orderBilledSql */,
+          order_billed: g.order_billed /* W36: orderBilledSql */, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], g.deliveries)) /* RAIL-146: a blind actor's party role and the delivery rows (his own adds); {} for everyone else */,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -3470,7 +4025,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
               .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
           null
         );
-        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait };
+        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], null)) };
       });
 
     _mark('bundle_6_reads');
@@ -3523,7 +4078,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
             db.query(
               `SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
                     d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note, d.recorded_by_entity_id, d.recorded_by_name,
-                    d.recorded_by_actor_name, d.delivered_at, to_jsonb(d)->>'kind' AS dkind, (to_jsonb(d)->>'amount')::numeric AS damount,
+                    d.recorded_by_actor_name, d.recorded_by_actor_id, d.delivered_at, to_jsonb(d)->>'kind' AS dkind, (to_jsonb(d)->>'amount')::numeric AS damount,
                     to_jsonb(d)->>'particulars' AS dparticulars
                FROM chit_line l LEFT JOIN chit_line_delivery d ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
               WHERE l.entity_id = $1 AND l.chit_id = $2 AND (d.delivery_id IS NULL OR d.recorded_by_entity_id = $1)
@@ -3587,23 +4142,23 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     } catch (e) {
       cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
     }
-
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
-    res.json({
-      ...(_wantTiming ? { _timing: _T } : {}),
+    res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
+      _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
+      ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
       participants: _red.participants,
       state_log: _red.state_log,
-      ...(_red.private ? { bill_private: true } : {}),
+      bill_private: _red.private ? true : undefined,
       attachments,
       amendments: amd.amendments,
       /* ⚠️ THE UI GATES THE ✎ ON THIS. Without it the pen renders on every line before b138 is applied, and the
          only way to discover that is to tap it and get a 503 — an affordance that exists solely to fail. */
       amendments_migrated: amd.migrated !== false,
       /* ⭐⭐ R01 — MAY I DO X ON THIS COPY, answered by the rail engine (lib/rail.js) over the facts of MY copy: one verdict per
-         action, { ok:true } or { ok:false, why } with why from the engine's vocabulary. The writing routes ask the same
+         action, { ok:true } or { ok:false, why } with why from the vocabulary of the engine. The writing routes ask the same
          engine before they write, so a ✓ here is never refused there. A host paints this; it never computes it. */
       actions: railActions.forBill(
         _doc,
@@ -3625,7 +4180,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
-      ...(Array.isArray(_lines) ? { live_set: _live } : {}),
+      live_set: Array.isArray(_lines) ? _live : undefined,
       /* ⚠️ WHICH PATH ANSWERED, said out loud. Before b142 the live set is REPLAYED from the frozen payload plus
          the audit trail; after it, the live rows are read directly. Both give the same answer — which is exactly
          why a test can pass without touching the new table and look like it proved it. Naming the source is what
@@ -3633,11 +4188,11 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       lines_from: _rows ? 'chit_line' : 'payload',
       /* ⚠️ b143 — MY side only. This is a per-copy read under FORCE RLS, so a counterparty calling the same
          endpoint on their own copy gets their own (empty) map, never mine. Assignment is the private half. */
-      ...(_assigned && _assigned.size ? { line_assignment: Object.fromEntries(_assigned) } : {}),
+      line_assignment: whenFilled(_assigned, Object.fromEntries),
       /* ⚠️ b144 — SHARED, so this is present on BOTH copies. Each side sees its own claims and the other's,
          attributed; nothing is merged into one number. Totals are summed here, never stored. */
-      ...(_prog && _prog.size ? { line_delivery: Object.fromEntries(_prog), delivery_summary: deliverline.summarise(_prog) } : {})
-    });
+      line_delivery: whenFilled(_prog, Object.fromEntries), delivery_summary: whenFilled(_prog, deliverline.summarise)
+    }, blind, data.header.rows[0], entity_id, bundle, req.identity.identity_id));
   } catch (err) {
     console.error('Chit detail error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get chit'));
@@ -3665,17 +4220,20 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
-    const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
-    if (req.body.preview) return res.json(await reprice.plan(entity_id, chit_id, opts));
-    res.json(
-      await reprice.apply(entity_id, chit_id, opts, {
-        actor_id: req.identity.identity_id,
-        actor_name: req.identity.display_name
-      })
-    );
+    const opts = await costWrite.repriceOpts(req, entity_id, chit_id, { line_ids: ids, only_unpriced: !!req.body.only_unpriced }); /* RAIL-147: a cost-blind co-assist is refused on a cost-side chit (preview too); the options of everyone else are as before */
+    /* S34: lib/reprice preview answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
+    if (req.body.preview) {
+      const previewed = await reprice.plan(entity_id, chit_id, opts);
+      return res.json({ has_catalogue: previewed.has_catalogue, will_price: previewed.will_price, needs_price: previewed.needs_price, unchanged: previewed.unchanged, totals: previewed.totals });
+    }
+    const priced = await reprice.apply(entity_id, chit_id, opts, {
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name
+    });
+    res.json({ has_catalogue: priced.has_catalogue, will_price: priced.will_price, needs_price: priced.needs_price, unchanged: priced.unchanged, totals: priced.totals, applied: priced.applied });
   } catch (err) {
     cbLog.error('chits/reprice failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
-    problem(req, res, faultOf(err, req, 'Reprice failed'));
+    problem(req, res, faultOf(err, req, 'Reprice failed', { words: true })); /* API-6 (SIT 25 Oct): the library's own 400 reaches the person */
   }
 });
 
@@ -3695,15 +4253,14 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
     const chit_id = req.params.chit_id;
     const held = await holdsCopy(entity_id, chit_id);
     if (!held) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
-    res.json(
-      await cost.record(entity_id, chit_id, req.body.rows || req.body, {
-        actor_id: req.identity.identity_id,
-        actor_name: req.identity.display_name
-      })
-    );
+    const recorded = await cost.record(entity_id, chit_id, req.body.rows || req.body, {
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name
+    });
+    res.json({ costs: recorded.costs });
   } catch (err) {
     cbLog.error('chits/costs record failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
-    problem(req, res, faultOf(err, req, 'Failed to record cost'));
+    problem(req, res, faultOf(err, req, 'Failed to record cost', { words: true })); /* API-6 (SIT 25 Oct): the library's own 400 reaches the person */
   }
 });
 
@@ -3713,8 +4270,9 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
     const entity_id = entityId(req);
     const permitted = await cost.canRead(req, entity_id);
     const out = await cost.read(entity_id, req.params.chit_id, { permitted, actor_id: req.identity.identity_id });
-    if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' }, 'CHIT_NOT_MIGRATED') });
-    res.json(out);
+    if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: waiting('Cost and margin', false, 'They are not shown meanwhile.') }, 'CHIT_NOT_MIGRATED') });
+    /* S34: the owner's answer holds the totals; a worker's holds only the rows (mine_only), and mixed_currency appears only when two currencies were summed */
+    res.json({ costs: out.costs, mine_only: out.mine_only, can_see_totals: out.can_see_totals, by_kind: out.by_kind, by_currency: out.by_currency, invoiced: out.invoiced, currency: out.currency, spent: out.spent, margin: out.margin, margin_pct: out.margin_pct, mixed_currency: out.mixed_currency });
   } catch (err) {
     cbLog.error('chits/costs read failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, failed(err, req, 'Failed to read costs'));
@@ -3736,37 +4294,39 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
 // answer EMPTY rather than 404 — a silent wrong answer, which is the worse failure.
 
 /** What a register may be attached to. A registry, so a new kind is data. */
-router.get('/register/attachables', auth, async (req, res) => {
+router.get('/register/attachables', auth, requireRegister('Failed'), async (req, res) => {
   try {
-    res.json(await raida.attachables());
+    const found = await raida.attachables();
+    /* S34: an attachable is the three columns lib/raida selects (register_attachable); degraded names why the list is empty (absent · no-grant · rls-no-policy · empty), else null */
+    res.json({ attachables: found.attachables.map((x) => ({ type_key: x.type_key, label: x.label, points_at: x.points_at })), degraded: found.degraded });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
 });
 
-router.get('/register/subjects', auth, ...checked('GET /register/subjects'), async (req, res) => {
+router.get('/register/subjects', auth, requireRegister('Failed to list registers'), ...checked('GET /register/subjects'), async (req, res) => {
   try {
-    res.json(
-      await raida.listSubjects(entityId(req), {
-        type_key: req.query.type_key || undefined,
-        open_only: req.query.open === '1'
-      })
-    );
+    const found = await raida.listSubjects(entityId(req), {
+      type_key: req.query.type_key || undefined,
+      open_only: req.query.open === '1'
+    });
+    /* S34: a register is the columns lib/raida listSubjects selects (register_subject, open_count a COUNT: text) */
+    // prettier-ignore
+    res.json({ subjects: found.subjects.map((x) => ({ subject_id: x.subject_id, type_key: x.type_key, ref_id: x.ref_id, ref_label: x.ref_label, name: x.name, opened_at: x.opened_at, closed_at: x.closed_at, closed_by_name: x.closed_by_name, open_count: x.open_count })), migrated: found.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list registers'));
   }
 });
 
-router.post('/register/subjects', auth, ...checked('POST /register/subjects'), async (req, res) => {
+router.post('/register/subjects', auth, requireRegister('Failed to open the register'), ...checked('POST /register/subjects'), async (req, res) => {
   try {
-    res.json(
-      await raida.subjectFor(entityId(req), {
-        type_key: req.body.type_key,
-        ref_id: req.body.ref_id,
-        ref_label: req.body.ref_label,
-        name: req.body.name
-      })
-    );
+    const subject = await raida.subjectFor(entityId(req), {
+      type_key: req.body.type_key,
+      ref_id: req.body.ref_id,
+      ref_label: req.body.ref_label,
+      name: req.body.name
+    });
+    res.json({ subject_id: subject.subject_id, closed_at: subject.closed_at });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to open the register', { words: true }));
   }
@@ -3776,26 +4336,31 @@ router.post('/register/subjects', auth, ...checked('POST /register/subjects'), a
  * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
  * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
  */
-router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
+router.post('/register/subjects/:subject_id/close', auth, requireRegister('Cannot close yet'), ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
-    res.json(await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name }));
+    const closed = await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name });
+    res.json({ closed: closed.closed, at: closed.at, migrated: closed.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Cannot close yet', { words: true, extra: err.outstanding ? { outstanding: err.outstanding } : undefined }));
   }
 });
 
 /** The library — the same risk turns up everywhere, worded slightly differently. */
-router.get('/register/templates', auth, async (req, res) => {
+router.get('/register/templates', auth, requireRegister('Failed to read the library'), async (req, res) => {
   try {
-    res.json(await raida.templates(entityId(req)));
+    const found = await raida.templates(entityId(req));
+    /* S34: a template is the columns lib/raida templates selects (register_template; raised and closed are COUNTs: text; standards an array_agg, NULL when none) */
+    // prettier-ignore
+    res.json({ templates: found.templates.map((x) => ({ template_id: x.template_id, kind: x.kind, title: x.title, body: x.body, likelihood: x.likelihood, severity: x.severity, treatment: x.treatment, verification_method: x.verification_method, applies_to: x.applies_to, raised: x.raised, closed: x.closed, standards: x.standards })), migrated: found.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to read the library'));
   }
 });
 
-router.post('/register/templates', auth, ...checked('POST /register/templates'), async (req, res) => {
+router.post('/register/templates', auth, requireRegister('Failed to save it'), ...checked('POST /register/templates'), async (req, res) => {
   try {
-    res.json(await raida.addTemplate(entityId(req), req.body || {}));
+    const added = await raida.addTemplate(entityId(req), req.body || {});
+    res.json({ template_id: added.template_id, migrated: added.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to save it', { words: true }));
   }
@@ -3813,18 +4378,18 @@ router.post('/register/templates', auth, ...checked('POST /register/templates'),
  * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
  * subject: the register is attached to the THING, and an order is only one kind of thing.
  */
-router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
+router.post('/register/subjects/:subject_id/entries', auth, requireRegister('Failed to record it'), ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
-    res.json(
-      await raida.add(
-        entityId(req),
-        null,
-        Object.assign({}, req.body, {
-          subject_id: req.params.subject_id,
-          by_name: req.identity.display_name
-        })
-      )
+    const made = await raida.add(
+      entityId(req),
+      null,
+      Object.assign({}, req.body, {
+        subject_id: req.params.subject_id,
+        by_name: req.identity.display_name
+      })
     );
+    /* S34: an entry as lib/raida add() answers it; subject_id and standards only on a b185 register */
+    res.json({ raida_id: made.raida_id, at: made.at, kind: made.kind, subject_id: made.subject_id, standards: made.standards, migrated: made.migrated, full: made.full });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
   }
@@ -3836,42 +4401,46 @@ router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /re
  * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
  * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
  */
-router.post('/register/entries/:raida_id/close', auth, ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
+router.post('/register/entries/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
-    res.json(await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
+    const ended = await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
+    /* S34: an ending as lib/raida close() answers it; disposition only on a b185 register */
+    res.json({ closed: ended.closed, closing_row: ended.closing_row, disposition: ended.disposition, at: ended.at, migrated: ended.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
   }
 });
 
-router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'), async (req, res) => {
+router.get('/register/walk/:from', auth, requireRegister('Failed to walk it'), ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
-    res.json(await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth }));
+    const walked = await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth });
+    /* S34: lib/impact walk() answers hops · depth_reached · truncated · backwards; a register not on this environment answers hops [] and migrated false */
+    res.json({ hops: walked.hops, depth_reached: walked.depth_reached, truncated: walked.truncated, backwards: walked.backwards, migrated: walked.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to walk it'));
   }
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
-router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
+router.post('/register/entries/:raida_id/revise', auth, requireRegister('Failed to revise it'), ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
-    res.json(await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
+    const revised = await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
+    res.json({ revised: revised.revised, revision: revised.revision, changed: revised.changed, migrated: revised.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to revise it', { words: true }));
   }
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
-router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
+router.post('/register/entries/:raida_id/accept', auth, requireRegister('Failed to record the acceptance'), ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
-    res.json(
-      await raida.accept(entityId(req), req.params.raida_id, {
-        accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
-        authority_level: req.body.authority_level,
-        rationale: req.body.rationale,
-        review_by: req.body.review_by
-      })
-    );
+    const accepted = await raida.accept(entityId(req), req.params.raida_id, {
+      accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
+      authority_level: req.body.authority_level,
+      rationale: req.body.rationale,
+      review_by: req.body.review_by
+    });
+    res.json({ acceptance_id: accepted.acceptance_id, at: accepted.at, entry_severity: accepted.entry_severity, migrated: accepted.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to record the acceptance', { words: true }));
   }
@@ -3885,35 +4454,39 @@ router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /regist
  * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
-router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, res) => {
+router.get('/raida/report', auth, requireRegister('Failed to read the register'), ...checked('GET /raida/report'), async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
-    res.json(
-      await raida.report(entityId(req), {
-        subject_id: req.query.subject_id || undefined,
-        standard_key: req.query.standard || undefined
-      })
-    );
+    const report = await raida.report(entityId(req), {
+      subject_id: req.query.subject_id || undefined,
+      standard_key: req.query.standard || undefined
+    });
+    /* S34: every key lib/raida report answers (all but entries and migrated only once the register is migrated); an entry and a kind count are the library's
+       own literals and by_disposition is keyed by the dispositions found, so those stay open and listed */
+    // prettier-ignore
+    res.json({ entries: report.entries, by_kind: report.by_kind, by_disposition: report.by_disposition, migrated: report.migrated, full: report.full, resp: report.resp, open: report.open, closed: report.closed, closed_by_order: report.closed_by_order });
   } catch (err) {
     console.error('Raida report error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to read the register'));
+    problem(req, res, faultOf(err, req, 'Failed to read the register', { words: true }));
   }
 });
 
-router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (req, res) => {
+router.get('/:chit_id/raida', auth, requireRegister('Failed to read the register'), ...checked('GET /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* line_id absent = the whole chit; a uuid = that line PLUS the order-level entries it inherits. */
     const line_id = req.query.line_id ? String(req.query.line_id) : undefined;
-    res.json(await raida.list(entity_id, req.params.chit_id, line_id));
+    const listed = await raida.list(entity_id, req.params.chit_id, line_id);
+    /* S34: entries · open · closed come from the fold (absent when the register is not on this environment: migrated false); full says which column set was read */
+    res.json({ entries: listed.entries, open: listed.open, closed: listed.closed, migrated: listed.migrated, full: listed.full });
   } catch (err) {
     console.error('Raida read error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to read the register'));
+    problem(req, res, faultOf(err, req, 'Failed to read the register', { words: true }));
   }
 });
 
-router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (req, res) => {
+router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...checked('POST /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
@@ -3959,7 +4532,7 @@ router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (
         db
       });
     });
-    res.json(out);
+    res.json({ raida_id: out.raida_id, at: out.at, kind: out.kind, subject_id: out.subject_id, standards: out.standards, migrated: out.migrated, full: out.full });
   } catch (err) {
     console.error('Raida add error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
@@ -3969,13 +4542,14 @@ router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (
 /* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
    closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
    different endings and a flag cannot tell them apart. */
-router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
     /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
        them every close of a full register answered 400 "An ending needs a disposition" (cap-worklist sends { body, disposition }) */
     const { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash } = req.body || {};
-    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
-      { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash, by_name: req.identity.display_name }));
+    const ended = await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
+      { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash, by_name: req.identity.display_name });
+    res.json({ closed: ended.closed, closing_row: ended.closing_row, disposition: ended.disposition, at: ended.at, migrated: ended.migrated });
   } catch (err) {
     console.error('Raida close error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
@@ -3988,9 +4562,10 @@ router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/
  * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
  * of that lifecycle here would be a second answer to a question that already has one.
  */
-router.post('/:chit_id/raida/:raida_id/dispute', auth, ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/dispute', auth, requireRegister('Failed to link the dispute'), ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
-    res.json(await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id));
+    const linked = await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id);
+    res.json({ raida_id: linked.raida_id, dispute_id: linked.dispute_id, migrated: linked.migrated });
   } catch (err) {
     console.error('Raida dispute link error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to link the dispute', { words: true }));
@@ -4016,12 +4591,17 @@ router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, r
     if (!taxCopy.billReceived(copy, entity_id))
       return problem(req, res, { status: 409, ...said({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' }, 'CHIT_NOT_A_BILL') });
     const eff = await require('../lib/bill-use').forCopy(entity_id, copy);
-    res.json(
-      Object.assign(
-        { chit_id: req.params.chit_id, status: copy.current_status, changeable: railActions.BUCKETS.open.includes(String(copy.current_status || '')) },
-        eff
-      )
-    );
+    /* S34: bill · lines · uses are always there; asset_class and put_to_use only when the buyer chose them (lib/bill-use effective) */
+    res.json({
+      chit_id: req.params.chit_id,
+      status: copy.current_status,
+      changeable: railActions.BUCKETS.open.includes(String(copy.current_status || '')),
+      bill: eff.bill,
+      lines: eff.lines,
+      uses: eff.uses,
+      asset_class: eff.asset_class,
+      put_to_use: eff.put_to_use
+    });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
@@ -4030,7 +4610,8 @@ router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, r
   try {
     const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
     if (!r.ok) return problem(req, res, { status: r.status || 400, ...said({ error: 'Not saved', message: r.message }, codeOfStatus(r.status || 400)) });
-    res.json(r);
+    /* S34: lib/bill-use set() answers ok · use · effective, and party when a supplier was named */
+    res.json({ ok: r.ok, use: r.use, effective: r.effective, party: r.party });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
@@ -4068,15 +4649,16 @@ router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-
       private: _bill
     });
     /* H6 — a replay of rows already recorded is answered with the first result and does not announce, advance or accept again */
-    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ...out, replayed: true });
+    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ok: out.ok, delivered: out.delivered, replayed: true });
     await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
     await deliverProgress(entity_id, chit_id, out);
     await goodsInAccept(req, entity_id, chit_id, out);
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
-    res.json(out);
+    /* S34: delivered from the library (a stand-in library may add ok, kept first), then what each step wrote on it in its order: step · progress · summary · accepted · use */
+    res.json({ ok: out.ok, delivered: out.delivered, step: out.step, progress: out.progress, summary: out.summary, accepted: out.accepted, use: out.use });
   } catch (err) {
-    console.error('Deliver lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to record delivery'));
+    /* RAIL-133: a library's own 400 ('quantity must be a non-zero number') reaches the person; a fault still says the safe sentence, and faultOf logs it */
+    problem(req, res, faultOf(err, req, 'Failed to record delivery', { words: true }));
   }
 });
 
@@ -4095,6 +4677,30 @@ async function deliverUse(req, entity_id, chit_id) {
 }
 
 /** after the lines are recorded: a bill's private step, or the delivery announced to every party */
+/**
+ * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
+ *
+ * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
+ * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
+ * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
+ * badge stayed at zero and the event never appeared in the feed at all.
+ *
+ * That is the most important event this product has. Goods moved, and the other side was not told.
+ *
+ * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
+ * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
+ * (b150 wrote every delivery twice for exactly this reason).
+ *
+ * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
+ * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
+ * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
+ * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
+ * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
+ * from the chit's participants and is never a parameter.
+ *
+ * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
+ * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
+ */
 async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
   if (_bill) {
     try {
@@ -4105,42 +4711,18 @@ async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
         { id: req.identity.identity_id, name: req.identity.display_name }
       );
     } catch (e) {
-      console.error('bill step (goods-in) not written:', e.message);
+      cbLog.fellBack('chits deliver-lines: the goods-in bill step was not written — the delivery stands without it', e);
     }
   } else
     try {
-      const d = out.delivered.map((x) => x.quantity).join(', ');
-      /**
-       * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
-       *
-       * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
-       * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
-       * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
-       * badge stayed at zero and the event never appeared in the feed at all.
-       *
-       * That is the most important event this product has. Goods moved, and the other side was not told.
-       *
-       * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
-       * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
-       * (b150 wrote every delivery twice for exactly this reason).
-       *
-       * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
-       * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
-       * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
-       * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
-       * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
-       * from the chit's participants and is never a parameter.
-       *
-       * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
-       * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
-       */
+      const deliveredText = out.delivered.map((x) => x.quantity).join(', ');
       await withEntity(entity_id, (db) =>
         db.query('SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n', [
           chit_id,
           'delivered_line',
           req.identity.identity_id,
           req.identity.display_name,
-          out.delivered.length + ' line(s) delivered: ' + d
+          out.delivered.length + ' line(s) delivered: ' + deliveredText
         ])
       )
         /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
@@ -4151,12 +4733,12 @@ async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
             db.query(
               `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
            VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
-              [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, out.delivered.length + ' line(s) delivered: ' + d]
+              [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, out.delivered.length + ' line(s) delivered: ' + deliveredText]
             )
           );
         });
     } catch (e) {
-      console.error('deliver state_log skipped:', e.message);
+      cbLog.fellBack('chits deliver-lines: the history line was not written — the delivery stands without it', e);
     }
 }
 
@@ -4201,23 +4783,21 @@ async function deliverProgress(entity_id, chit_id, out) {
  */
 async function goodsInAccept(req, entity_id, chit_id, out) {
   try {
-    const s = out.summary;
-    if (s && s.lines > 0 && s.complete === s.lines) {
-      const mine = await taxCopy.copyOf(chit_id, entity_id);
-      if (mine && taxCopy.billReceived(mine, entity_id) && railActions.BUCKETS.open.includes(String(mine.current_status || ''))) {
-        const mv = await moveStatus(
-          entity_id,
-          chit_id,
-          'accepted',
-          { id: req.identity.identity_id, name: req.identity.display_name },
-          'Goods received in full — accepted at goods-in',
-          railActions.meOf(req)
-        );
-        if (mv.moved) out.accepted = true;
-      }
-    }
+    const outSummary = out.summary;
+    if (!(outSummary && outSummary.lines > 0 && outSummary.complete === outSummary.lines)) return;
+    const mine = await taxCopy.copyOf(chit_id, entity_id);
+    if (!(mine && taxCopy.billReceived(mine, entity_id) && railActions.BUCKETS.open.includes(String(mine.current_status || '')))) return;
+    const movedStatus = await moveStatus(
+      entity_id,
+      chit_id,
+      'accepted',
+      { id: req.identity.identity_id, name: req.identity.display_name },
+      'Goods received in full — accepted at goods-in',
+      railActions.meOf(req)
+    );
+    if (movedStatus.moved) out.accepted = true;
   } catch (e) {
-    console.error('goods-in accept skipped:', e.message);
+    cbLog.fellBack('chits deliver-lines: the bill was fully received but NOT accepted — accept it by hand', e); /* RAIL-133: this one failed in silence */
   }
 }
 
@@ -4260,13 +4840,12 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
         )
       );
     } catch (e) {
-      console.error('assign state_log skipped:', e.message);
+      cbLog.fellBack('chits assign-lines: the history line was not written — the assignment stands without it', e);
     }
 
-    res.json(out);
+    res.json({ assignments: out.assignments });
   } catch (err) {
-    console.error('Assign lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to assign'));
+    problem(req, res, faultOf(err, req, 'Failed to assign', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
 });
 
@@ -4282,6 +4861,101 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
 //                        reason_code, reason }] }
 // ⚠️ `line: null` REMOVES the line — Athi: "old line deleted and new line is nothing". It stays visible on the
 //    chit and counts in nothing. That is NOT quantity:0, which is a real zero and would leak into totals.
+/** the amend route's edits as a proposal (lib/chit-proposal propose); null when the chit has nobody else on it */
+async function proposeAmendment(entity_id, chit_id, edits, req) {
+  if (!(await schema.hasTable('chit_proposal'))) return null; /* b796 not run: an amendment is direct, as it always was */
+  if (!(await require('../lib/chit-proposal').usesRfq(entity_id, chit_id))) return null; /* a domestic chit that was not made a proposal deal is amended directly, exactly as before 25 Oct (DECISIONS 14:10) */
+  const lines = edits.map((item) => ({ line_index: item.line_index, line_id: item.line_id, line: item.line === undefined ? undefined : item.line, price: item.line && item.line.price, quantity: item.line && item.line.quantity, requested_price: item.line && item.line.price, remove: item.line === null, note: item.reason || null }));
+  return require('../lib/chit-proposal').propose(entity_id, chit_id, { lines, note: null }, { id: req.identity.identity_id, name: req.identity.display_name });
+}
+/**
+ * ⭐ RAIL-106 (Athi, 25 Oct 11:15): an amendment is a change order. With another party on the chit it is PROPOSED (the seller prices it at the seller's installation; anyone else asks) and the agreed record
+ * stands until it is accepted — lib/chit-proposal. Answered here (the proposal, or the library's refusal in its words and code) → true; false: a chit with nobody else on it is amended directly, as it always was.
+ */
+async function answeredAsProposal(req, res, { entity_id, chit_id, edits }) {
+  let proposed;
+  try {
+    proposed = await proposeAmendment(entity_id, chit_id, edits, req);
+  } catch (err) {
+    if (!(err && err.refused)) throw err;
+    problem(req, res, { status: err.status, ...said({ error: 'Not done', message: err.message, code: err.code }, err.code) });
+    return true;
+  }
+  if (!proposed) return false;
+  res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+  return true;
+}
+
+/** the edits an amend body carries: { edits: [...] }, or the array (or one edit) as the body itself */
+const editsOf = (body) => [].concat(body.edits || body).filter(Boolean);
+
+/**
+ * the amend refusals the library means → the Problem spec, or null (anything else goes on to the catch below):
+ *  · a settled line is a deliberate refusal, not a failure — say which line and what to do instead. b152: three narrower refusals replaced the old blanket
+ *    "any delivery locks the line". Each keeps its own code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery,
+ *    while a unit change wants the line left alone. One code for all three would send people to the wrong remedy.
+ *  · an input the caller can fix (lib/amend AMEND_*: a line with no item, a quantity that is not a number, nothing to amend, a bad line number): the sentence
+ *    reaches the screen under its own code (API-6 finding, 25 Oct)
+ */
+function knownAmendSpec(err) {
+  if (!err) return null;
+  if (['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
+    return { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') };
+  }
+  if (err.code === 'INVOICE_MONEY_LOCKED') return { status: 409, ...said({ error: 'Already invoiced', message: err.message, code: err.code }, 'CHIT_CONFLICT') }; /* ACC-192: an issued invoice's money is changed by a credit or debit note */
+  if (err.status === 400 && /^AMEND_/.test(String(err.code))) return { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) };
+  return null;
+}
+
+/**
+ * logAmended(req, entity_id, chit_id, out) — the amendment's line in the chit's own history (state_log), beside every other action. Best-effort by design: a missing log must not lose a
+ * correction that already committed; the failure is logged. (Moved out of the amend handler unchanged, ACC-192, to keep the handler inside the readability limit.)
+ */
+async function logAmended(req, entity_id, chit_id, out) {
+  /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
+     every other action. Best-effort: a missing log must not lose a correction that already committed. */
+  try {
+    const detail = out.amendments
+      .map((item) =>
+        item.line === null
+          ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
+          : 'line ' +
+            (item.line_index + 1) +
+            ' → ' +
+            [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
+            ' (' +
+            item.reason_code +
+            ')'
+      )
+      .join('; ');
+    await withEntity(entity_id, (db) =>
+      db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+       VALUES ($1,$2,'amended',$3,$4,$5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+      )
+    );
+  } catch (e) {
+    console.error('amend state_log skipped:', e.message);
+  }
+}
+
+/** amendSpecOf(err, req) → the spec of a refusal the amend door knows by name (knownAmendSpec, then the too-large one), or null */
+async function amendSpecOf(err, req) {
+  return knownAmendSpec(err) || (await amountTooLargeSpec(err, req));
+}
+/** amountTooLargeSpec(refusal, req) → the 400 spec with this chit's currency (chit_detail.currency_code) beside the maximum, or null for any other error; the read is made only now because amend.prepare is pure and shared (change orders), and a failed read is logged and answers without a currency */
+async function amountTooLargeSpec(refusal, req) {
+  if (!refusal || refusal.code !== 'CHIT_AMOUNT_TOO_LARGE') return null;
+  let currency = null;
+  try {
+    const row = await withEntity(entityId(req), (db) => db.query('SELECT currency_code FROM chit_detail WHERE chit_id = $1 AND entity_id = $2 LIMIT 1', [req.params.chit_id, entityId(req)]));
+    currency = (row.rows[0] && row.rows[0].currency_code) || null;
+  } catch (err) {
+    cbLog.warn('chits/amend: the chit currency was not read for the too-large refusal; it answers without one', { id: req.id, err: err.message });
+  }
+  return faultOf(chitCeiling.inCurrency(refusal, currency), req, 'Failed to amend', { words: true });
+}
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4295,37 +4969,15 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
-    const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
+    const edits = editsOf(req.body);
+    if (await answeredAsProposal(req, res, { entity_id, chit_id, edits })) return;
+    await invoiceIssued.refuseMoneyAmend(entity_id, chit_id, edits); /* ACC-192: an issued invoice's money is never amended; a credit or debit note is the way */
+    const out = await costWrite.recordAmend(req, entity_id, chit_id, edits, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
 
-    /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
-       every other action. Best-effort: a missing log must not lose a correction that already committed. */
-    try {
-      const detail = out.amendments
-        .map((item) =>
-          item.line === null
-            ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
-            : 'line ' +
-              (item.line_index + 1) +
-              ' → ' +
-              [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
-              ' (' +
-              item.reason_code +
-              ')'
-        )
-        .join('; ');
-      await withEntity(entity_id, (db) =>
-        db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1,$2,'amended',$3,$4,$5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
-        )
-      );
-    } catch (e) {
-      console.error('amend state_log skipped:', e.message);
-    }
+    await logAmended(req, entity_id, chit_id, out);
 
     /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
        exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
@@ -4348,7 +5000,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
       .filter((item) => item.was && item.now && norm(item.was) !== norm(item.now))
       .map((item) => ({ amendment_id: item.amendment_id, term: item.was, means: item.now }));
 
-    res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
+    res.json({ amendments: out.amendments, synonym_candidates: candidates.length ? candidates : undefined });
   } catch (err) {
     /**
      * ⚠️ A CHECK-CONSTRAINT VIOLATION IS NOT AN INTERNAL FAILURE, AND REPORTING IT AS ONE COST THREE ROUNDS OF
@@ -4357,17 +5009,10 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    /**
-     * A settled line is a deliberate refusal, not a failure — say which line and what to do instead.
-     * b152: three narrower refusals replaced the old blanket "any delivery locks the line". Each keeps its own
-     * code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery, while a
-     * unit change wants the line left alone. One code for all three would send people to the wrong remedy.
-     */
-    if (err && ['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
-      return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
-    }
+    const known = await amendSpecOf(err, req);
+    if (known) return problem(req, res, known);
     if (err && err.code === '23514') {
-      console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
+      cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
       return problem(req, res, { status: 409, ...said({
         error: 'Not an accepted value',
         message: /reason_code/.test(err.constraint || '')
@@ -4375,8 +5020,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
           : 'The database refused one of these values: ' + (err.constraint || 'constraint violation')
       }, 'CHIT_VALUE_NOT_ACCEPTED') });
     }
-    console.error('Amend error:', err.code || '', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to amend'));
+    problem(req, res, faultOf(err, req, 'Failed to amend', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
 });
 
@@ -4392,12 +5036,17 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
 //
 // ⚠️ READS THE CATALOGUE, WRITES NOTHING TO IT. Standing rule since the raise path: a message never creates a
 // product. Here it does not create one either — a human picks from what exists, or types free text.
+/** S34: the three keys the overlay adds only when the matcher could not pick one item: ambiguous (how many answer to the name), candidates (the shortlist), unmatched (why); each undefined, so absent, otherwise */
+function overlayPicks(found, shortlist) {
+  if (!found) return {};
+  return { ambiguous: found.ambiguous ? found.matches : undefined, candidates: found.ambiguous || found.variant_unspecified ? shortlist(found) : undefined, unmatched: found.unmatched ? found.reason : undefined };
+}
+
 router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const q = String(req.query.q || '').trim();
     const cat = await itemmatch.loadCatalogue(entity_id);
-
     /* No catalogue is a normal state, not an error — the farmer sending "milk 10 l" has none, and the amend box
        must still work as free text. Saying so explicitly stops the UI inventing an empty picker. */
     if (!cat.items.length) return res.json({ has_catalogue: false, items: [], match: null });
@@ -4409,6 +5058,7 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
        Currency travels beside it rather than being dropped: a bare 100 with no code is how two currencies
        eventually get added together. */
     const money = require('../lib/money');
+    /** a line item as the printed copy shows it: name, variant, unit and price */
     const full = (it) => ({
       name: it.name,
       variant: it.variant || null,
@@ -4442,7 +5092,7 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
         .filter(Boolean);
 
     const m = q ? itemmatch.match(q, req.query.comment || '', cat) : null;
-    const nq = itemmatch.norm(q);
+    const nq = itemmatch.norm(q), picks = overlayPicks(m, shortlist);
     const items = (
       nq
         ? cat.items.filter(
@@ -4474,47 +5124,41 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
          "matches 2 catalogue lines", leaving the person to hunt those two out of a 200-row picker themselves. The
          matcher knew which two; it just did not say. `shortlist()` shapes them exactly like every other pickable
          row, so the picker renders one kind of thing whether it is a shortlist or the whole catalogue. */
-      ...(m && m.ambiguous ? { ambiguous: m.matches, candidates: shortlist(m) } : {}),
+      ambiguous: picks.ambiguous,
       /* Same treatment for "the catalogue has grades and you named none" — one picker, two causes. */
-      ...(m && m.variant_unspecified ? { candidates: shortlist(m) } : {}),
-      ...(m && m.unmatched ? { unmatched: m.reason } : {})
+      candidates: picks.candidates,
+      unmatched: picks.unmatched
     });
   } catch (err) {
     console.error('Catalogue overlay error:', err.message);
     problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
-/** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
-function quotedTotalOf(copy) {
-  const summary = copy.summary_json || {},
-    invoice = (copy.business_json || {}).invoice;
-  if (summary.total_value != null) return Number(summary.total_value);
-  return invoice && invoice.grand_total != null ? Number(invoice.grand_total) : null;
-}
 /**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
- * → null (no copy) · { parts } (the bill carries its own tender) · { over } (above the quote, no note) · { books }
+ * → null (no copy) · { parts } (the bill carries its own tender) · { books }
+ * An amount above what the bill owes is NOT judged here (FIN-53, Athi 2026-10-29): the books' one rule (`excess`, 409) asks, the
+ * owner confirms once with `acknowledge`, and the rest records as an advance — no tolerance, no note path, no second calculation.
  */
 async function markChitPaid(db, press) {
   const { entity_id, chit_id, payment, hooks } = press;
   const copy = await taxCopy.copyOn(db, chit_id, entity_id);
   if (!copy) return null;
-  const bj = copy.business_json || {};
+  const copyBusiness = copy.business_json || {};
   /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
-  if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
-  /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
-  const quoted = quotedTotalOf(copy);
-  if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
-  const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }), {
+  if (copyBusiness.payment && Array.isArray(copyBusiness.payment.parts)) return { parts: true };
+  const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, copyBusiness, { payment }) }), {
     by: payment.by,
-    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [],
-    name: (bj.customer && bj.customer.name) || undefined
+    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge : [] /* a code, or { code, over_minor } — books.acknowledgements reads both */,
+    name: (copyBusiness.customer && copyBusiness.customer.name) || undefined
   });
   const marked = await db.query(
     `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
     [JSON.stringify(payment), chit_id, entity_id]
   );
-  return marked.rows.length ? { books } : null;
+  if (!marked.rows.length) return null;
+  await chitPaid.tellPaid(db, entity_id, chit_id); /* RAIL-216: the sender's own timeline learns it (its withdraw asks) */
+  return { books };
 }
 /** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
 function pressPayment(req, entity_id) {
@@ -4532,14 +5176,24 @@ function pressPayment(req, entity_id) {
 }
 /** a Mark-paid that failed: the books' own refusals in words (already paid · a locked month · …), else a 500 */
 function payFailure(req, res, err) {
-  const BR = require('./books');
-  if (err && err.code === 'ALREADY_PAID') return BR.alreadyPaid(res, err);
-  if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return BR.fail(res, err);
+  const booksRoutes = require('./books');
+  if (err && err.code === 'ALREADY_PAID') return booksRoutes.alreadyPaid(res, err);
+  if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return booksRoutes.fail(res, err);
   return problem(req, res, failed(err, req, 'Payment failed'));
 }
+/**
+ * ⭐ FIN-51 (7 Nov): "MARK PAID" TAKES ONE KEY PER ATTEMPT, the same gate as the books' money doors (FIN-63, routes/books.js onceOnly).
+ * client_ref stops a second press of the sheet, but a retry that lost its answer and carried no client_ref booked the payment again.
+ * Now no Idempotency-Key → 422 IDEMPOTENCY_KEY_REQUIRED; the same key and body → the first answer (X-Idempotent-Replay), recorded once;
+ * the same key and another body → 422 IDEMPOTENCY_CONFLICT; two at once → one runs (the other 409 IDEMPOTENCY_IN_PROGRESS).
+ * The web already sends it (app.html EP chitPay idem:'attempt').
+ */
+/* idem3 (7 Nov): "Mark unpaid" (DELETE below) rides the same gate — a retry answers the first clear and never names the books entries twice; the web sends idem:'attempt' (EP chitUnpay) */
+const payOnce = require('../middleware/idempotency').requireKey();
 router.post(
   '/:chit_id/payment',
   auth,
+  payOnce,
   ...checked('POST /:chit_id/payment'),
   trimmedBody(['ref', 'note', 'client_ref']),
   async (req, res) => {
@@ -4550,19 +5204,14 @@ router.post(
        "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
       const payment = pressPayment(req, entity_id);
       const hooks = require('../lib/books-hooks');
-      const out = await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks }));
+      /* an id that is no uuid names no bill: the unknown bill's 404, never a 500 from the cast (gorilla pack 2, GP-8: not-a-bill-N) */
+      const out = trace.UUID_RE.test(chit_id) ? await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks })) : null;
       if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
       if (out.parts)
         return problem(req, res, { status: 422, ...said({
           error: 'The tender is on the bill',
           message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
         }, 'PAYMENT_TENDER_ON_BILL') });
-      if (out.over != null)
-        return problem(req, res, { status: 422, ...said({
-          error: 'Above the quoted amount',
-          message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.',
-          quoted: out.over
-        }, 'PAYMENT_ABOVE_QUOTE') });
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
       if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
@@ -4579,15 +5228,16 @@ router.post(
     }
   }
 );
-router.delete('/:chit_id/payment', auth, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
+router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const r = await withEntity(entity_id, (db) =>
-      db.query(
+    const r = await withEntity(entity_id, async (db) => {
+      const cleared = await db.query(
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
-      )
-    );
+      );
+      return cleared;
+    });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
     /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
     let books = null;
@@ -4658,7 +5308,7 @@ router.post('/:chit_id/books-request', auth, ...checked('POST /:chit_id/books-re
  */
 function withdrawFailure(req, res, err) {
   if (!require('../lib/books-hooks').isBooksRefusal(err)) {
-    console.error('Void error:', err.message);
+    cbLog.error('chits/void failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     return problem(req, res, failed(err, req, 'Void failed'));
   }
   return problem(req, res, { status: 409, ...said({
@@ -4668,294 +5318,9 @@ function withdrawFailure(req, res, err) {
     message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.'
   }, 'CHIT_CANNOT_WITHDRAW') });
 }
-/**
- * the sender's own cancel leg (T1-RAIL + H3): my SENT copy goes through the same rail gate, the sale it posted is reversed in that SAME
- * transaction (a books refusal is SAID on the answer — { refused }, never swallowed), and the withdrawal message goes to the recipients.
- * → the books' answer for the cancel (the reversal · { none } · { refused }) or undefined. A sent copy the rail will not cancel stays, said in the log.
- */
-async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
-  const hooks = require('../lib/books-hooks');
-  const sent = await withEntity(entity_id, async (db) => {
-    const gate = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', viewer, { copy: 'sent' });
-    if (!gate.ok) return gate;
-    await gate.write();
-    gate.books = await hooks.chitWithdrawnSaid(db, entity_id, chit_id, note, by.id);
-    return gate;
-  });
-  if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
-  await postMessageCopies({
-    chit_id,
-    sender_entity_id: entity_id,
-    sender_display_name: by.name,
-    thread_type: 'external',
-    msg_type: 'action',
-    message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}`
-  });
-  return sent.books;
-}
-/**
- * ⭐⭐ ONE TRANSITION, MANY DOORS (Athi, 2026-10-01: "one fact, three doors"). The body of PUT /:chit_id/status, lifted
- * out unchanged so that goods-in (POST /:chit_id/deliver-lines, all lines received) moves a bill to `accepted` through the
- * SAME validation, timeline row, ledger hook and cancel legs as Intake — never a second status writer.
- * → { code, body, moved?, noop? }  — the caller answers with code/body; `moved` = a status actually changed.
- */
-/** ORD-FIX O6: write the caller's OWN received copy (the gate said yes) — compare-and-set, so someone who moved it a moment ago wins; → `done` for the writer, a `conflict` stop for the loser */
-async function writeOrConflict(verdict, done) {
-  try {
-    await verdict.write();
-    return done;
-  } catch (e) {
-    if (e && e.code === 'status_conflict') return { stop: 'conflict', message: e.message };
-    throw e;
-  }
-}
-/** the first half of a status move, inside the transaction: the verdict (rail-status statusGate), the open-dispute count, the copy the freeze reads, then the write — or a marker saying why it stopped */
-/** the copy the freeze reads, or the narrow header read: one statement either way */
-async function readMoveHeader(db, chit_id, entity_id, new_status) {
-  /**
-   * ⭐ THE FREEZE'S COPY, READ HERE RATHER THAN IN ITS OWN TRANSACTION. G3 stamps the invoice when this
-   * copy reaches `completed`, and it was re-reading the very row this transaction has open — a second
-   * BEGIN · set_config · SELECT · COMMIT for chit_header, four trips to fetch what was already in hand.
-   * ⚠️ Only on `completed`; every other status takes the narrow read below and nothing more.
-   */
-  const copy = new_status === 'completed' ? await taxCopy.copyOn(db, chit_id, entity_id) : undefined;
-  /* ⚠️ AND THE NARROW READ IS THE ELSE, NOT AN EXTRA. The wide copy already carries sender_entity_id, so
-     reading chit_header twice in one transaction — which is what the first cut of this left behind — was
-     a statement spent on a column already on the row above. */
-  const header =
-    copy !== undefined
-      ? { rows: copy ? [copy] : [] }
-      : await db.query(
-          /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
-          `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-          [chit_id, entity_id]
-        );
-  return { copy, header };
-}
-async function readThenWriteMove(db, press) {
-  const { entity_id, chit_id, new_status, note, checkDisputes } = press;
-  /* B1 RLS: own received-copy read — and the gate for everything below it */
-  /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js move): level → my received copy → the transition table. This route reads
-     ONLY my received copy, so "no copy" and "only the sent copy" are one answer here: not_received, said as the 404 it
-     always was. ⭐ T1-RAIL: the read, the verdict and the write are lib/rail-status statusGate — the same one every door uses. */
-  const verdict = await railStatus.statusGate(db, entity_id, chit_id, new_status, press.me);
-  const previous_status = verdict.from;
-  if (!verdict.ok && verdict.why === 'not_received') return { stop: 'missing', why: verdict.why };
-  if (!verdict.ok && verdict.why !== 'wrong_step') return { stop: 'level', why: verdict.why };
-
-  /* Idempotent: advancing to the status it is already in is a no-op success, not a 400. Fixes the
-     "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. */
-  if (verdict.noop) return { stop: 'noop', previous_status };
-
-  if (!verdict.ok) return { stop: 'invalid', previous_status, allowed: verdict.allowed, why: verdict.why };
-
-  /* the ONE open-dispute count (lib/dispute-may openOn, W2-RAIL R2). Closing never blocks on a dispute (C1 above), so an
-     unreadable count (null, logged there) only loses the warning — delete and archive, which DO block, refuse on it. */
-  const openCount = checkDisputes ? (await disputeMay.openOn(db, chit_id)) || 0 : 0;
-  const { copy, header } = await readMoveHeader(db, chit_id, entity_id, new_status);
-  /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
-     reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
-  if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(header.rows[0], entity_id) === 'bill_received')
-    return { stop: 'reason', previous_status };
-  return writeOrConflict(verdict, { previous_status, openCount, header, copy });
-}
-async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
-  const action_by_id = by.id,
-    action_by_name = by.name;
-  let disputeWarning = null;
-  let booksOnCancel = null; /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
-  /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
-         decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
-  if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
-
-  // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
-  // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
-  const _checkDisputes = ['completed', 'cancelled'].includes(new_status) && (await schema.hasTable('chit_disputes'));
-
-  const _pre = await withEntity(entity_id, (db) => readThenWriteMove(db, { entity_id, chit_id, new_status, me, note, checkDisputes: _checkDisputes }));
-
-  /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
-  if (_pre.stop === 'missing') {
-    return { code: 404, body: { error: 'Not found', message: 'Chit not found', why: _pre.why } };
-  }
-  /* the hat gate refuses a viewer / commenter before this route runs; the engine says the same if one ever gets here */
-  if (_pre.stop === 'level') {
-    return { code: 403, body: { error: 'Not permitted', message: railActions.WHY[_pre.why], why: _pre.why } };
-  }
-  if (_pre.stop === 'noop') {
-    return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
-  }
-  if (_pre.stop === 'conflict') return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message } };
-  if (_pre.stop === 'reason') {
-    return {
-      code: 400,
-      body: {
-        error: 'Reason required',
-        code: 'reason_required',
-        message: 'Say why you are rejecting this bill — the reason goes on the bill.',
-        why: 'reason_required'
-      }
-    };
-  }
-  if (_pre.stop === 'invalid') {
-    return {
-      code: 400,
-      body: {
-        error: 'Invalid transition',
-        message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
-        allowed_transitions: _pre.allowed,
-        why: _pre.why
-      }
-    };
-  }
-  const previous_status = _pre.previous_status;
-  /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
-  if (new_status === 'completed') {
-    try {
-      await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy);
-    } catch (e) {
-      cbLog.fellBack('chits moveStatus: failed — carried on without it', e);
-    }
-  }
-  /**
-   * ⭐⭐ THE BUYER'S ACCEPTANCE REACHES THE LEDGER (Athi, 2026-10-01: "a checking mechanism in the rail to allow it to the
-   * sundry creditor"). A bill I RECEIVED posts as my purchase only once MY copy is accepted / in_progress / completed
-   * (lib/books-hooks buyerGate) — and THIS is the one transition that says so. After the commit, never awaited, never
-   * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
-   * second door firing the same acceptance posts nothing twice.
-   */
-  /* FX-F10W2: a rejection / cancellation reaches the books too — it never posts, and the bill's Waiting row closes as "Rejected — not posted" */
-  if (/^(accepted|in_progress|completed|rejected|cancelled)$/.test(new_status)) {
-    try {
-      const hooks = require('../lib/books-hooks');
-      setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id));
-    } catch (e) {
-      require('../lib/logger').warn('books.hook-not-reached', {
-        entity_id,
-        chit_id,
-        status: new_status,
-        error: String((e && e.message) || e),
-        then: 'the nightly sweep posts or closes it'
-      });
-    }
-  }
-
-  if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
-
-  // (chit_status was updated inside the transaction above)
-
-  // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
-  // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
-  const detail = (note || `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`) + (disputeWarning ? ` ⚠ ${disputeWarning}` : '');
-
-  /**
-   * ⭐⭐ A BILL'S STATUS IS THE HOLDER'S OWN STEP (Athi, 2026-10-01: "goods verified and accounted are internal status, not
-   * between two shops"). On a bill copy the change is written ONCE, as a bill_step at the level of the folder that owns it
-   * (B-2100 for a bill I received, B-1300 for one I issued — internal by default, never external): my history only, or
-   * nothing. It is no longer fanned into the other shop's timeline, feed or bell. Every other chit logs as it always did.
-   */
-  const _hrow = (_pre.header && _pre.header.rows && _pre.header.rows[0]) || null;
-  if (_hrow && billPrivacy.isBill(_hrow, entity_id)) {
-    try {
-      await billPrivacy.writeStep(
-        entity_id,
-        chit_id,
-        { code: billPrivacy.ownerCode(_hrow, entity_id), step: new_status, label: billPrivacy.STATUS_LABEL[new_status] || new_status, note: note || undefined },
-        { id: action_by_id, name: action_by_name }
-      );
-    } catch (e) {
-      console.error('bill step (status) not written:', e.message);
-    }
-  } else
-    await crossing(
-      entity_id,
-      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-      [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail],
-      (db) =>
-        db.query(
-          `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, previous_status, new_status, detail)
-           SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
-           FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
-          [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail]
-        )
-    );
-
-  // The header came back with the same transaction, above — read to check sender and propagate a cancel.
-  const header = _pre.header;
-
-  const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
-
-  // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
-  // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
-  if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
-
-  /**
-   * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
-   * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
-   *
-   * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
-   * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
-   * one the person who withdrew is actually holding.
-   *
-   * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
-   * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
-   * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
-   *
-   * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
-   * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
-   * mistake b195 shipped with, caught only by the end-to-end spec.
-   */
-  if (!isSender && new_status === 'cancelled') {
-    try {
-      if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
-        const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
-        const asked = await withEntity(entity_id, (db) =>
-          db.query(`SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
-        );
-        const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
-        if (senderId && senderId !== entity_id && wasAsked) {
-          await withEntity(senderId, (db) =>
-            db.query(
-              `UPDATE chit_status
-                    SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
-                  WHERE chit_id = $1 AND entity_id = $3`,
-              [chit_id, action_by_name, senderId]
-            )
-          );
-          await postMessageCopies({
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: action_by_name,
-            thread_type: 'external',
-            msg_type: 'action',
-            message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.`
-          });
-        }
-      }
-    } catch (e) {
-      console.error('cancel confirm:', e.message);
-    }
-  }
-
-  return {
-    code: 200,
-    moved: true,
-    body: {
-      message: `Chit ${new_status}`,
-      warning: disputeWarning, // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
-      chit_id,
-      previous_status,
-      new_status,
-      ...(booksOnCancel ? { books: booksOnCancel } : {}) // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
-    }
-  };
-}
-
 /** the answer of PUT /status: a refusal of the rail as a Problem (its old body kept), else the 200 of a move or of the no-op of a status already held; true when the status really moved */
 function answerMoved(req, res, moved) {
-  if (moved.code >= 400) problem(req, res, { status: moved.code, ...said(moved.body, codeOfStatus(moved.code)) });
+  if (moved.code >= 400) problem(req, res, { status: moved.code, ...said(moved.body, moved.body.why === 'has_credit_note' ? 'CHIT_HAS_CREDIT_NOTE' : codeOfStatus(moved.code)) }); /* ACC-265: the same registered code as the void door */
   else res.json(moved.body);
   return !!moved.moved;
 }
@@ -4963,7 +5328,7 @@ router.put(
   '/:chit_id/status',
   auth,
   ...checked('PUT /:chit_id/status'),
-  trimmedBody(['status', 'note']),
+  trimmedBody(['status', 'note', 'from']),
   async (req, res) => {
     try {
       const chit_id = req.params.chit_id;
@@ -5022,7 +5387,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req));
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use }); /* QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
       /**
@@ -5050,7 +5415,7 @@ router.put(
         ); /* outbound is never allowed to affect the status change */
       }
     } catch (err) {
-      console.error('Update status error:', err.message);
+      cbLog.error('chits/status failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
       problem(req, res, failed(err, req, 'Update failed'));
     }
   }
@@ -5062,44 +5427,58 @@ router.put(
 
 // ─── POST /chits/:chit_id/messages ───────────────────────────
 // thread_type: 'external' (all parties see) | 'internal' (sender entity only)
-// ── b67: post a message as PER-ENTITY copies via the SECURITY DEFINER deliver fn (audience computed server-side:
-//   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
-//   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
-async function postMessageCopies(msg, db) {
-  const message_id = uuidv4();
-  // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
-  // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
-  // passed, establish withEntity(sender) here (all callers pass sender = their authenticated entity_id).
-  /* b155 — a message may name the LINE it is about. The audience is decided by the 9-arg form exactly as before;
-     the 10-arg form only stamps line_id onto the copies it created, so this cannot widen who sees anything. */
-  const args = [
-    message_id,
-    msg.chit_id,
-    msg.sender_entity_id,
-    msg.sender_display_name || null,
-    msg.thread_type,
-    msg.message_text,
-    msg.msg_type || 'info',
-    !!msg.is_dispute,
-    msg.dispute_id || null
-  ];
-  const call = (runner) => runner(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS created_at`, args.concat([msg.line_id || null]));
-  /* ⚠️ FALL BACK TO THE 9-ARG FORM ONLY WHEN NO LINE WAS NAMED. Code ships before the migration by standing
-     order, so between this deploy and b155 the 10-arg function does not exist (42883). Retrying without it is
-     right for a chit-level message and WRONG for a line-scoped one — that would post the message to the thread
-     while silently losing which line it was about, which is worse than refusing it. */
-  const run = async (q) => {
-    try {
-      return await call(q);
-    } catch (e) {
-      if (e && e.code === '42883' && !msg.line_id) {
-        return q(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`, args);
+
+/** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
+ *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
+ *  per-participant loop when b50 isn't applied. RAIL-136 (d): one tx with the copies, so a failed timeline write leaves no
+ *  message behind and a retry posts it once. */
+async function logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster }) {
+  if (roster) {
+    // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
+    await crossingIn(
+      db,
+      `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
+      [chit_id, roster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
+      async (db) => {
+        for (const pid of roster) {
+          await db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
       }
-      throw e;
-    }
-  };
-  const r = db ? await run((t, p) => db.query(t, p)) : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
-  return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
+    );
+  } else {
+    await crossingIn(
+      db,
+      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+      [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
+      async (db) => {
+        // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
+        const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
+        for (const p of participants.rows) {
+          await db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
+      }
+    );
+  }
+}
+
+/**
+ * RAIL-106: a message just posted, told to the parties on another installation → what was queued (ctpReturn.answerOf says it on the answer).
+ * A dispute message goes to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide); any other message by RAIL-106 x RAIL-136 (sit/run6):
+ * the copies are written inside the transaction, so the crossing is queued once it has committed.
+ */
+function tellMessageElsewhere(entity_id, chit_id, result, posted) {
+  const { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type } = posted;
+  const line_id = posted.line_id || null;
+  if (isDispute) return ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type, sender_display_name: senderName, line_id, to_ids: disputeRoster });
+  return ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type, sender_display_name: senderName, line_id }, result);
 }
 
 router.post(
@@ -5154,7 +5533,7 @@ router.post(
       );
       const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
       if (!_v.ok) {
-        return problem(req, res, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
+        return refuseUnlessHeld(req, res, held.rows.length > 0, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
@@ -5169,22 +5548,11 @@ router.post(
          chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
       let disputeRoster = null;
       if (isDispute && disputeId) {
-        const party = await withEntity(entity_id, (db) =>
-          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id])
-        );
-        if (party.rows.length === 0) {
+        const audience = await disputeAudience.audienceOf(entity_id, chit_id, disputeId); /* RAIL-187: the one reading of the audience, shared with the file route */
+        if (!audience) {
           return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
         }
-        if ((party.rows[0].scope || 'targeted') !== 'chit_wide') {
-          // fail closed: a roster that cannot be read means the poster's own timeline only, and no bell
-          disputeRoster = [entity_id];
-          try {
-            const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
-            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((item) => String(item.entity_id))))];
-          } catch (e) {
-            cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */
-          }
-        }
+        disputeRoster = audience.ids; /* null for a chit-wide dispute */
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
       let senderName = display_name;
@@ -5196,54 +5564,27 @@ router.post(
       }
 
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
-      const result = await postMessageCopies({
-        chit_id,
-        sender_entity_id: entity_id,
-        sender_display_name: senderName,
-        thread_type,
-        message_text,
-        msg_type: req.body.msg_type,
-        is_dispute: isDispute,
-        dispute_id: disputeId,
-        line_id: req.body.line_id || null
+      /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
+         posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
+      const result = await withEntity(entity_id, async (db) => {
+        const posted = await postMessageCopies(
+          {
+            chit_id,
+            sender_entity_id: entity_id,
+            sender_display_name: senderName,
+            thread_type,
+            message_text,
+            msg_type: req.body.msg_type,
+            is_dispute: isDispute,
+            dispute_id: disputeId,
+            line_id: req.body.line_id || null
+          },
+          db
+        );
+        if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
+        return posted;
       });
-
-      // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
-      // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
-      if (thread_type === 'external' && disputeRoster) {
-        // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-        await crossing(
-          entity_id,
-          `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-          [chit_id, disputeRoster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
-          async (db) => {
-            for (const pid of disputeRoster) {
-              await db.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
-              );
-            }
-          }
-        );
-      } else if (thread_type === 'external') {
-        await crossing(
-          entity_id,
-          `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-          [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
-          async (db) => {
-            // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-            const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
-            for (const p of participants.rows) {
-              await db.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-              );
-            }
-          }
-        );
-      }
+      result.ctp = await tellMessageElsewhere(entity_id, chit_id, result, { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type: req.body.msg_type, line_id: req.body.line_id });
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
          Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
@@ -5268,16 +5609,18 @@ router.post(
         thread_type,
         message_text,
         sender_display_name: display_name,
-        created_at: result.created_at
+        created_at: result.created_at,
+        ...ctpReturn.answerOf(result.ctp) // RAIL-106: queued for the party on another installation (resent until it accepts), or the words saying it could not be
       });
     } catch (err) {
-      console.error('Send message error:', err.message);
-      problem(req, res, failed(err, req, 'Send message failed'));
+      answerSendFailure(req, res, err);
     }
   }
 );
 
 // ─── GET /chits/:chit_id/messages ────────────────────────────
+/** true only for "the chit_messages table does not exist yet" (42P01 naming it): the one failure an empty thread is honest for */
+const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
 router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
@@ -5297,7 +5640,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
       if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
       /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
          raises 42703 and would take the whole message panel down before the migration runs. */
-      const params = [chit_id];
+      const params = [chit_id, entity_id]; /* SEC-127c: $2 = my shop, named in the SQL below (not row security alone) */
       /* ⚠️ THE PLACEHOLDER IS "$" + THE INDEX. Written through a shell the dollar was eaten, leaving
          `= 2` — a uuid compared against the integer two, which matches nothing and returns an empty thread
          rather than an error. A filter that silently finds nothing looks exactly like "there are no notes". */
@@ -5305,9 +5648,9 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
         params.push(req.query.line_id);
         cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length;
       }
-      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
     });
-    if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (result === null) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: a chit this login holds no copy of, unknown or another shop's, is the one 404 */
 
     const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
@@ -5318,10 +5661,18 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     for (const m of result.rows) {
       m.attachments = byMsg[m.message_id] || [];
     }
-    res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
+    ctpReturn.markMessages(result.rows, await ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id/messages: the read failed — answered with none', null))); // RAIL-106: a message of mine the other installation has not confirmed carries ctp_unconfirmed (the sentence to show)
+    const thread = PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
+    /* S34: count, then the page envelope (lib/page-limit pageOut); capped and cap_note only when the pager cut the thread */
+    res.json({ count: result.rows.length, messages: thread.messages, total: thread.total, page: thread.page, limit: thread.limit, capped: thread.capped, cap_note: thread.cap_note });
   } catch (err) {
     console.error('Get messages error:', err.message);
-    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    /* RAIL-136 (e): an empty thread ONLY while the table does not exist yet (42P01, before its migration). Any other failure that
+       names chit_messages (a permission, a constraint, a missing column) is a fault and answers so: it used to say "no messages". */
+    if (isNoMessagesTable(err)) {
+      cbLog.fellBack('chits GET /:chit_id/messages: no chit_messages table yet — answered an empty thread', err);
+      return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    }
     problem(req, res, failed(err, req, 'Get messages failed'));
   }
 });
@@ -5333,21 +5684,22 @@ const WIDEN_CATEGORIES = (process.env.CB_DISPUTE_WIDEN_CATEGORIES || '')
   .map((item) => item.trim())
   .filter(Boolean);
 
+/** is the other party's copy of this chit still there — its parity state, mode and whether a question to them can be answered */
 async function probeParity(chit_id, target_entity_id, caller_entity_id) {
   if (!target_entity_id) return { parity_state: null, mode: 'two_sided', answerable: true, target_display_name: null };
-  const idn = await query(`SELECT display_name, status, is_erased FROM identities WHERE identity_id=$1`, [target_entity_id]);
-  if (idn.rows.length === 0) return { parity_state: 'absent', mode: 'one_sided', answerable: false, target_display_name: '[unknown]' };
-  const t = idn.rows[0];
-  if (t.is_erased) return { parity_state: 'erased', mode: 'one_sided', answerable: false, target_display_name: '[erased]' };
-  if (t.status !== 'active') return { parity_state: 'defunct', mode: 'one_sided', answerable: false, target_display_name: t.display_name };
+  const identity = await query(`SELECT display_name, status, is_erased FROM identities WHERE identity_id=$1`, [target_entity_id]);
+  if (identity.rows.length === 0) return { parity_state: 'absent', mode: 'one_sided', answerable: false, target_display_name: '[unknown]' };
+  const target = identity.rows[0];
+  if (target.is_erased) return { parity_state: 'erased', mode: 'one_sided', answerable: false, target_display_name: '[erased]' };
+  if (target.status !== 'active') return { parity_state: 'defunct', mode: 'one_sided', answerable: false, target_display_name: target.display_name };
   // Cross-entity read of the counterparty's copy -> b52 chit_participant_parity (validated participant);
   // fallback to the legacy direct read pre-b52. Same row-presence semantics either way.
-  const cs = await crossing(caller_entity_id, `SELECT * FROM chit_participant_parity($1,$2)`, [chit_id, target_entity_id], (db) =>
+  const parity = await crossing(caller_entity_id, `SELECT * FROM chit_participant_parity($1,$2)`, [chit_id, target_entity_id], (db) =>
     db.query(`SELECT deleted_at FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, target_entity_id])
   );
-  if (cs.rows.length === 0) return { parity_state: 'absent', mode: 'one_sided', answerable: false, target_display_name: t.display_name };
-  if (cs.rows[0].deleted_at) return { parity_state: 'archived', mode: 'two_sided', answerable: true, target_display_name: t.display_name };
-  return { parity_state: 'present', mode: 'two_sided', answerable: true, target_display_name: t.display_name };
+  if (parity.rows.length === 0) return { parity_state: 'absent', mode: 'one_sided', answerable: false, target_display_name: target.display_name };
+  if (parity.rows[0].deleted_at) return { parity_state: 'archived', mode: 'two_sided', answerable: true, target_display_name: target.display_name };
+  return { parity_state: 'present', mode: 'two_sided', answerable: true, target_display_name: target.display_name };
 }
 
 /** the businesses a dispute names: the checklist, else the single target of a targeted dispute */
@@ -5355,12 +5707,161 @@ function askedPartyIds(checklist, targetId) {
   return checklist.length ? [...new Set(checklist)] : targetId ? [targetId] : [];
 }
 
+/** every entity that holds a copy of the chit (chit_participants, callable by a holder only) */
+async function holdersOf(callerEntity, chit_id) {
+  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
+  return participants.rows.map((row) => row.entity_id);
+}
+
+/**
+ * ⭐ RAIL-162 — the parties of a dispute. A TARGETED one names them (the checklist or the target); a CHIT-WIDE one is the whole chit, so every OTHER holder is a party.
+ * Since b68 each party reads only its own chit_disputes copy, so a chit-wide raise that named nobody wrote the raiser's copy alone: the other side saw an empty list, was refused its
+ * reply (403 "Not a party") and never saw the resolve. The roster this feeds also tells the other installations (lib/ctpreturn builds the remote copies from it).
+ */
+async function disputeParties(callerEntity, chit_id, scope, named) {
+  if (scope !== 'chit_wide') return holdersAmong(callerEntity, chit_id, named);
+  return (await holdersOf(callerEntity, chit_id)).filter((id) => String(id) !== String(callerEntity));
+}
+
 /** SEC-FIX3 S4 — which of these entity ids HOLD a copy of the chit (chit_participants, callable by a holder only); a stranger gets no copy, no reason text */
 async function holdersAmong(callerEntity, chit_id, ids) {
   if (!ids.length) return [];
-  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
-  const holding = new Set(participants.rows.map((row) => String(row.entity_id)));
+  const holding = new Set((await holdersOf(callerEntity, chit_id)).map(String));
   return ids.filter((id) => holding.has(String(id)));
+}
+
+/**
+ * ⭐ RAIL-106 — THE ONE WRITER OF A RAISED DISPUTE: the per-party copies (chit_dispute_deliver), the raiser's timeline row, the parties' notices and the reason as a roster-scoped message.
+ * POST /:chit_id/disputes runs it for the person who raised it; lib/ctpreturn runs the SAME function on the installation that is told of it (as the remote raiser's stub, with the ids mapped
+ * to its own rows). The permission and scope decisions are made once, by the route, where the dispute originates — this only records.
+ * client = a transaction under withEntity(raiser). → { reason_message_id }
+ */
+async function recordRaise(client, args) {
+  await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
+    args.dispute_id, args.chit_id, args.raiser_id, args.raiser_name, args.target_id, args.target_name, args.scope, args.parity.mode, args.parity.answerable, args.parity.parity_state, args.via, args.category, args.reason,
+    JSON.stringify(args.evidence), JSON.stringify(args.roster), args.audience
+  ]);
+  // raiser's own timeline
+  await client.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+    [args.chit_id, args.raiser_id, args.raiser_id, args.actor_name, `Dispute raised — ${args.category} (${args.parity.mode === 'one_sided' ? 'record-only' : args.scope}): ${args.reason.slice(0, 80)}`]
+  );
+  // per-party timeline notices — CROSS write into each party's own state_log copy
+  if (args.partyIds.length) {
+    const notice = `Dispute raised against you — ${args.category}: ${args.reason.slice(0, 80)}`;
+    if (args.ready !== undefined ? args.ready : await definersReady()) {
+      await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [args.chit_id, args.partyIds, 'dispute_raised', args.raiser_id, args.actor_name, notice]);
+    } else {
+      for (const pid of args.partyIds) {
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+          [args.chit_id, pid, args.raiser_id, args.actor_name, notice]
+        );
+      }
+    }
+  }
+  // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
+  const reason_message_id = args.reason_message_id || uuidv4();
+  await postMessageCopies(
+    { message_id: reason_message_id, chit_id: args.chit_id, sender_entity_id: args.raiser_id, sender_display_name: args.raiser_name, thread_type: 'external', message_text: `[${args.category}] ${args.reason}`, is_dispute: true, dispute_id: args.dispute_id },
+    client
+  );
+  return { reason_message_id };
+}
+
+/**
+ * ⭐ RAIL-106 — THE ONE WRITER OF A RESOLUTION: the definer that clears the party copy(ies) (and the raiser's when none is left open), the resolver's timeline row, the note as a roster-scoped
+ * message and the parties' notices. PUT …/resolve runs it after its own permission check; lib/ctpreturn runs the same function where the resolution is told of. client = a transaction under withEntity(resolver).
+ * → { allResolved, resolvedPartyIds, resolve_message_id }
+ */
+async function recordResolve(client, args) {
+  let resolvedPartyIds;
+  if (args.targetParty) resolvedPartyIds = [args.targetParty];
+  else {
+    const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [args.dispute_id]);
+    resolvedPartyIds = openR.rows.map((item) => item.entity_id);
+  }
+  // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
+  const resolved = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [args.dispute_id, args.resolver_id, args.targetParty || null, args.resolution_note]);
+  const allResolved = resolved.rows[0].all_resolved;
+  await client.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+    [args.chit_id, args.resolver_id, args.resolver_id, args.actor_name, `Dispute resolved — ${args.category}: ${args.resolution_note.slice(0, 100)}`]
+  );
+  const resolve_message_id = args.resolve_message_id || uuidv4();
+  await postMessageCopies(
+    { message_id: resolve_message_id, chit_id: args.chit_id, sender_entity_id: args.resolver_id, sender_display_name: args.resolver_name, thread_type: 'external', message_text: `[resolved] ${args.resolution_note}`, is_dispute: true, dispute_id: args.dispute_id },
+    client
+  );
+  if (resolvedPartyIds.length) {
+    const notice = `Dispute resolved — ${args.category}: ${args.resolution_note.slice(0, 100)}`;
+    if (await definersReady()) {
+      await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [args.chit_id, resolvedPartyIds, 'dispute_resolved', args.resolver_id, args.actor_name, notice]);
+    } else {
+      for (const pid of resolvedPartyIds) {
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+          [args.chit_id, pid, args.resolver_id, args.actor_name, notice]
+        );
+      }
+    }
+  }
+  return { allResolved, resolvedPartyIds, resolve_message_id };
+}
+
+/** ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits). The dispute carries no "in whose favour"; the buyer's own status says it. */
+function releaseAfterResolve(out, chit_id, extraIds) {
+  if (!out.allResolved) return;
+  try {
+    const hooks = require('../lib/books-hooks');
+    setImmediate(() => {
+      for (const party of (extraIds || []).concat(out.resolvedPartyIds || [])) hooks.afterChit(party, chit_id, null);
+    });
+  } catch (e) {
+    cbLog.fellBack('chits dispute resolve: the helper failed — carried on without it', e);
+  }
+}
+
+/** RAIL-106: a message longer than lib/message-limit allows is refused 413 in words (the writer threw it); true when it answered */
+/** POST /messages could not send: a message over the one limit is 413 MESSAGE_TOO_LONG in its words; anything else is the fault answer (logged with the request id) */
+function answerSendFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Send message error:', err.message);
+  problem(req, res, failed(err, req, 'Send message failed'));
+}
+
+/** a targeted dispute names its target (id and the name parity read); a chit-wide one names nobody */
+const targetOf = (scope, target_entity_id, parity) => (scope === 'targeted' ? { id: target_entity_id, name: parity.target_display_name } : { id: null, name: null });
+
+/** RAIL-106: on an international or proposal deal only, the parties named on it are rung here; those elsewhere when it arrives */
+async function ringDisputeRaised(entity_id, chit_id, partyIds, byName) {
+  if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: byName });
+}
+
+/** POST /disputes could not raise: too long (413, its words), the disputes tables missing (500 DISPUTES_TABLE_MISSING, says which migrations), else the fault answer */
+function answerRaiseFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Raise dispute error:', err.message);
+  if (err.message.includes('chit_disputes'))
+    return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
+  problem(req, res, failed(err, req, 'Raise dispute failed'));
+}
+
+/** PUT /disputes/:id/resolve could not resolve: too long (413, its words), else the fault answer */
+function answerResolveFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Resolve dispute error:', err.message);
+  problem(req, res, failed(err, req, 'Resolve failed'));
+}
+
+function answeredTooLong(req, res, err) {
+  if (!err || err.code !== 'MESSAGE_TOO_LONG') return false;
+  problem(req, res, { status: 413, ...said({ error: 'Message too long', message: err.message, code: 'MESSAGE_TOO_LONG', limit: err.limit }, 'MESSAGE_TOO_LONG') });
+  return true;
 }
 
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
@@ -5379,7 +5880,8 @@ router.post(
       const access = await withEntity(entity_id, (db) =>
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
-      if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
+      if (access.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: no copy here, unknown or another shop's: the one 404 */
+      await ctpReturn.ensureShadows(entity_id, chit_id); // RAIL-106: a party on another installation is a participant here (its shadow row), so the roster below can hold it
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
@@ -5418,7 +5920,7 @@ router.post(
       const dup = await withEntity(entity_id, (db) =>
         db.query(
           `SELECT dispute_id FROM chit_disputes
-          WHERE chit_id=$1 AND raised_by_entity_id=$2 AND status='open' AND category=$3
+          WHERE chit_id=$1 AND entity_id=$2 AND raised_by_entity_id=$2 AND status='open' AND category=$3
             AND COALESCE(target_entity_id::text,'') = COALESCE($4::text,'')`,
           [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]
         )
@@ -5427,7 +5929,7 @@ router.post(
 
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
-      const partyIds = await holdersAmong(entity_id, chit_id, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
+      const partyIds = await disputeParties(entity_id, chit_id, scope, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
       const partyNames = {};
       if (partyIds.length) {
         const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
@@ -5441,7 +5943,7 @@ router.post(
         db.query(
           `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
            FROM chit_header ch JOIN chit_status cs ON cs.chit_id=ch.chit_id AND cs.entity_id=$2
-          WHERE ch.chit_id=$1`,
+          WHERE ch.chit_id=$1 AND ch.entity_id=$2`,
           [chit_id, entity_id]
         )
       );
@@ -5458,66 +5960,13 @@ router.post(
         partyIds.map((pid) => ({ entity_id: pid, display_name: partyNames[pid] || null, role: 'party' }))
       );
       const audience = [...new Set([entity_id, ...partyIds])];
-      await withEntity(entity_id, async (client) => {
-        await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
-          dispute_id,
-          chit_id,
-          entity_id,
-          entityName,
-          scope === 'targeted' ? target_entity_id : null,
-          scope === 'targeted' ? parity.target_display_name : null,
-          scope,
-          parity.mode,
-          parity.answerable,
-          parity.parity_state,
-          via,
-          category,
-          reason,
-          JSON.stringify(evidence),
-          JSON.stringify(roster),
-          audience
-        ]);
-        // raiser's own timeline
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-          [
-            chit_id,
-            entity_id,
-            entity_id,
-            display_name,
-            `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0, 80)}`
-          ]
-        );
-        // per-party timeline notices — CROSS write into each party's own state_log copy
-        if (partyIds.length) {
-          const notice = `Dispute raised against you — ${category}: ${reason.slice(0, 80)}`;
-          if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, partyIds, 'dispute_raised', entity_id, display_name, notice]);
-          } else {
-            for (const pid of partyIds) {
-              await client.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]
-              );
-            }
-          }
-        }
-        // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
-        await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: entityName,
-            thread_type: 'external',
-            message_text: `[${category}] ${reason}`,
-            is_dispute: true,
-            dispute_id
-          },
-          client
-        );
-      });
+      const target = targetOf(scope, target_entity_id, parity);
+      const raised = await withEntity(entity_id, (client) =>
+        recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: target.id, target_name: target.name, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
+      );
+      await ringDisputeRaised(entity_id, chit_id, partyIds, display_name);
+      /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
+      const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: target.id, target_name: target.name, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
         dispute_id,
         mode: parity.mode,
@@ -5537,19 +5986,12 @@ router.post(
         parity_state: d.parity_state,
         target_display_name: d.target_display_name,
         raised_by_display_name: entityName,
-        alert:
-          d.mode === 'one_sided'
-            ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
-            : widened
-              ? 'This category notifies all parties — raised chit-wide.'
-              : 'Dispute raised with the selected party.',
-        message: 'Dispute raised'
+        alert: disputeAlert.said(d, widened),
+        message: 'Dispute raised',
+        ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
-      console.error('Raise dispute error:', err.message);
-      if (err.message.includes('chit_disputes'))
-        return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
-      problem(req, res, failed(err, req, 'Raise dispute failed'));
+      answerRaiseFailure(req, res, err);
     }
   }
 );
@@ -5564,17 +6006,17 @@ router.post(
  *   mine          I raised it
  *   actions.resolve  { ok } | { ok:false, why, say } — lib/dispute-may.resolve, the same verdict PUT …/resolve refuses with
  */
-async function finishDisputes(rows, entity_id, me) {
+async function finishDisputes(rows, entity_id, viewer) {
   const ids = rows.map((item) => item.dispute_id);
   const statusBy = {};
   let rosterRead = false;
   if (ids.length) {
     try {
-      const rr = await query(
+      const rosterRows = await query(
         `SELECT u.did AS dispute_id, r.entity_id, r.role, r.status FROM unnest($1::uuid[]) AS u(did) CROSS JOIN LATERAL chit_dispute_roster(u.did) r`,
         [ids]
       );
-      rr.rows.forEach((item) => {
+      rosterRows.rows.forEach((item) => {
         statusBy[item.dispute_id + '|' + item.entity_id] = item.status;
       });
       rosterRead = true;
@@ -5582,23 +6024,23 @@ async function finishDisputes(rows, entity_id, me) {
       log.warn('dispute roster read failed — the snapshot is shown', { err: err.message, n: ids.length });
     }
   }
-  const lvl = railActions.can({ held: true }, me, 'dispute');
-  return rows.map(({ evidence_snapshot, roster, ...d }) => {
-    const parts = (roster || d.participants || []).map((item) => ({
-      dispute_id: d.dispute_id,
+  const mayDispute = railActions.can({ held: true }, viewer, 'dispute');
+  return rows.map(({ evidence_snapshot, roster, ...disputeRow }) => {
+    const parts = (roster || disputeRow.participants || []).map((item) => ({
+      dispute_id: disputeRow.dispute_id,
       entity_id: item.entity_id,
       display_name: item.display_name,
       role: item.role,
-      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + item.entity_id]) || item.dispute_status || 'open'
+      dispute_status: (rosterRead && statusBy[disputeRow.dispute_id + '|' + item.entity_id]) || item.dispute_status || 'open'
     }));
-    const mine = d.raised_by_entity_id === entity_id;
+    const mine = disputeRow.raised_by_entity_id === entity_id;
     return {
-      ...d,
+      ...disputeRow,
       has_evidence: evidence_snapshot != null,
       participants: parts,
       others: parts.filter((item) => item.entity_id !== entity_id),
       mine,
-      actions: { resolve: disputeMay.resolve(lvl, { open: d.status === 'open', raisedByMe: mine }) }
+      actions: { resolve: disputeMay.resolve(mayDispute, { open: disputeRow.status === 'open', raisedByMe: mine }) }
     };
   });
 }
@@ -5612,11 +6054,11 @@ router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), asy
       const access = await db.query(`SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (access.rows.length === 0) return null;
       // B3.10 + D4 — scoped: per-copy (b68): RLS returns MY OWN dispute copies for this chit
-      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]);
+      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 AND entity_id = $2 ORDER BY created_at ASC`, [chit_id, entity_id]);
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
-    if (!own) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!own) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35 */
     const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
@@ -5660,7 +6102,7 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
       const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       return { hdr: nestedHdr, det: nestedDet };
     });
-    if (!rls) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
+    if (!rls) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: as GET /:chit_id/messages */
     const { hdr, det } = rls;
     let itemLabel = null;
     try {
@@ -5686,9 +6128,9 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
               target_display_name, scope, mode, answerable, parity_state, via,
               (evidence_snapshot IS NOT NULL) AS has_evidence
          FROM chit_disputes
-        WHERE chit_id=$1
+        WHERE chit_id=$1 AND entity_id=$2
         ORDER BY created_at ASC`,
-        [chit_id]
+        [chit_id, entity_id]
       )
     );
 
@@ -5750,7 +6192,7 @@ router.put(
     try {
       // b68 — per-copy: read the raiser's OWN dispute copy (RLS), then resolve across copies via the definer.
       const dispute = await withEntity(entity_id, (db) =>
-        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`, [dispute_id, chit_id])
+        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3`, [dispute_id, chit_id, entity_id])
       );
       if (dispute.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Dispute not found' }, 'NOT_FOUND') });
 
@@ -5775,71 +6217,12 @@ router.put(
         }
       }
 
-      const ready = await definersReady();
-      const out = await withEntity(entity_id, async (client) => {
-        // who is being cleared (for their timeline notice): the target party, or every still-open party.
-        let resolvedPartyIds;
-        if (targetParty) resolvedPartyIds = [targetParty];
-        else {
-          const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [dispute_id]);
-          resolvedPartyIds = openR.rows.map((item) => item.entity_id);
-        }
-        // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
-        const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [
-          dispute_id,
-          entity_id,
-          targetParty || null,
-          resolution_note
-        ]);
-        const allResolved = rr.rows[0].all_resolved;
-        // resolver's own timeline
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`]
-        );
-        // resolution note as a per-copy dispute message (roster-scoped)
-        await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: entityName,
-            thread_type: 'external',
-            message_text: `[resolved] ${resolution_note}`,
-            is_dispute: true,
-            dispute_id
-          },
-          client
-        );
-        // notify the cleared parties on their own timeline
-        if (resolvedPartyIds.length) {
-          const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`;
-          if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, resolvedPartyIds, 'dispute_resolved', entity_id, display_name, notice]);
-          } else {
-            for (const pid of resolvedPartyIds) {
-              await client.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]
-              );
-            }
-          }
-        }
-        return { allResolved, resolvedPartyIds };
-      });
-      /* ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits).
-         The dispute carries no "in whose favour"; the buyer's own status says it — accepted posts, rejected never does. */
-      if (out.allResolved) {
-        try {
-          const hooks = require('../lib/books-hooks');
-          setImmediate(() => {
-            for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null);
-          });
-        } catch (e) {
-          cbLog.fellBack('chits PUT /:chit_id/disputes/:dispute_id/resolve: the helper failed — carried on without it', e);
-        }
-      }
+      const out = await withEntity(entity_id, (client) =>
+        recordResolve(client, { dispute_id, chit_id, resolver_id: entity_id, resolver_name: entityName, actor_name: display_name, targetParty, resolution_note, category: d.category })
+      );
+      releaseAfterResolve(out, chit_id, [entity_id]);
+      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(out.resolvedPartyIds || [], { kind: 'dispute', id: chit_id, what: 'resolved', who: display_name }); /* RAIL-106: an international or proposal deal only: the cleared parties are rung */
+      const crossed = await ctpReturn.onDisputeResolved(entity_id, chit_id, { dispute_id, scope: d.scope, target_id: targetParty, resolution_note, category: d.category, actor_name: display_name, resolver_name: entityName, resolve_message_id: out.resolve_message_id });
 
       res.json({
         dispute_id,
@@ -5848,11 +6231,11 @@ router.put(
         fully_resolved: out.allResolved,
         resolution_note,
         resolved_by: display_name,
-        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others'
+        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others',
+        ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
-      console.error('Resolve dispute error:', err.message);
-      problem(req, res, failed(err, req, 'Resolve failed'));
+      answerResolveFailure(req, res, err);
     }
   }
 );
@@ -5881,6 +6264,7 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
   const dir = list.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
+    // SEC-105: my own copies named in the SQL too (entity_id = $1), not left to RLS alone.
     // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me). per-copy: RLS returns only MY OWN dispute copies.
     const got = await withEntity(entity_id, async (db) => {
       const r = await db.query(
@@ -5891,7 +6275,7 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
                   (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
                     WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
              FROM chit_disputes cd
-            WHERE ($2::text = 'all' OR ($2::text = 'open' AND cd.status = 'open') OR ($2::text = 'resolved' AND cd.status <> 'open'))
+            WHERE cd.entity_id = $1 AND ($2::text = 'all' OR ($2::text = 'open' AND cd.status = 'open') OR ($2::text = 'resolved' AND cd.status <> 'open'))
               AND ($3::text IS NULL OR ($3::text = 'mine' AND cd.raised_by_entity_id = $1) OR ($3::text = 'against' AND cd.raised_by_entity_id <> $1))
          ) x
          WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
@@ -5900,17 +6284,20 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
         [entity_id, status, side, like, limit, pageAsked.offset]
       );
       const c = await db.query(
-        `SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`
-      );
+        `SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes WHERE entity_id = $1`, [entity_id]);
       return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
     });
     const total = got.rows.length ? Number(got.rows[0]._total) : 0;
     // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
-    const rows = await finishDisputes(
+    const finished = await finishDisputes(
       got.rows.map(({ _total, ...d }) => d),
       entity_id,
       railActions.meOf(req)
     );
+    /* S34: a dispute is chit_disputes' columns (cd.*, in table order: migrations/000_baseline_2026-10-21.sql and after) less evidence_snapshot and roster,
+       the three subselects, then what finishDisputes adds. Named here, so a column added to the table later is not answered until it is named. */
+    // prettier-ignore
+    const rows = finished.map((x) => ({ dispute_id: x.dispute_id, chit_id: x.chit_id, raised_by_entity_id: x.raised_by_entity_id, raised_by_display_name: x.raised_by_display_name, category: x.category, reason: x.reason, status: x.status, resolution_note: x.resolution_note, resolved_by_entity_id: x.resolved_by_entity_id, resolved_at: x.resolved_at, created_at: x.created_at, target_entity_id: x.target_entity_id, target_display_name: x.target_display_name, scope: x.scope, mode: x.mode, answerable: x.answerable, parity_state: x.parity_state, via: x.via, entity_id: x.entity_id, role: x.role, auto_subject: x.auto_subject, purpose: x.purpose, sender_display_name: x.sender_display_name, has_evidence: x.has_evidence, participants: x.participants, others: x.others, mine: x.mine, actions: x.actions }));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes = rows.filter((item) => item.raised_by_entity_id === entity_id);
     const otherDisputes = rows.filter((item) => item.raised_by_entity_id !== entity_id);
@@ -5961,7 +6348,7 @@ async function housekeepFacts(db, chit_id, entity_id) {
     [chit_id, entity_id]
   );
   if (copy.rows.length === 0) return null;
-  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) };
+  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) };
 }
 router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res) => {
   try {
@@ -6122,7 +6509,7 @@ router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), asy
       chit_id = req.params.chit_id;
     // B1 RLS: caller archives only its own copy -> withEntity(me). Per-copy: my own open dispute copies.
     await withEntity(entity_id, async (db) => {
-      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id) });
+      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id, entity_id) });
       if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       const r = await db.query(
         `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
@@ -6233,7 +6620,7 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
       const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (chk.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Draft not found' }, 'NOT_FOUND') });
       /* W2-RAIL R2: the same draft rule the trash door now enforces (canHousekeep: a sent/received copy → 409 co_held_record) */
-      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) });
+      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) });
       if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       if (chk.rows[0].created_by_actor_id !== req.identity.identity_id)
         return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'You can only delete drafts you created.' }, 'CHIT_NOT_PERMITTED') });
@@ -6255,6 +6642,31 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
   }
 });
 
+/**
+ * ⭐ RAIL-106: each copy of mine the withdrawal moved is told to the parties on other installations, by the same event a status move sends (the rail decided it in the route);
+ * a withdrawal rings the recipients, as a cancelled status does. → what each was queued as (the route answers the first that says something)
+ */
+async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
+  if (!moved || !moved.length) return [];
+  const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
+  await ringStatus(entity_id, chit_id, 'cancelled', header, byName);
+  const told = [];
+  for (const copy of moved) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: byName, note: reason }));
+  return told;
+}
+
+/** the problem a refused withdrawal says: RAIL-216 money is on the invoice (409 CHIT_CONFLICT, why paid — a credit note, not a withdrawal) · ACC-265 a live credit note stands against the bill (409 CHIT_HAS_CREDIT_NOTE) · a level the rail refused (403) · a status that cannot be withdrawn (409, what happened · what it means · what to do; `why` is the code a screen branches on, never this sentence) */
+function withdrawRefusalSpec(refusal) {
+  if (refusal.why === 'paid') return { status: 409, ...said({ ...railStatus.paidSaid(), from: refusal.from }, 'CHIT_CONFLICT') };
+  if (refusal.why === 'has_credit_note') return { status: 409, ...said({ ...railStatus.creditNoteSaid(refusal.notes), from: refusal.from }, 'CHIT_HAS_CREDIT_NOTE') };
+  if (refusal.why !== 'wrong_step') return railSaid(railActions.refusalOf(refusal, 403, { error: 'Not permitted', message: railActions.WHY[refusal.why] }));
+  return railSaid(railActions.refusalOf(refusal, 409, {
+    error: 'Cannot withdraw',
+    message: `This chit is already ${refusal.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
+    from: refusal.from,
+    allowed_transitions: refusal.allowed
+  }));
+}
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
 //
 // ⚠️⚠️ THIS HEADER SAID THE OPPOSITE OF WHAT THE CODE DOES, and said it in the one line anybody skims. It read
@@ -6317,27 +6729,19 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       }
       const refusedBy = gates.find((item) => !item.ok);
       if (refusedBy) return { refused: refusedBy };
-      for (const g of gates) await g.write();
+      const moved = [];
+      for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
       await db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
         [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
       ); // own timeline only
-      return { refused: null, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
+      return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
     });
     if (gate.refused) {
-      const g = gate.refused;
-      if (g.why !== 'wrong_step') {
-        return problem(req, res, railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] })));
-      }
-      /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
-      return problem(req, res, railSaid(railActions.refusalOf(g, 409, {
-        error: 'Cannot withdraw',
-        message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
-        from: g.from,
-        allowed_transitions: g.allowed
-      })));
+      return problem(req, res, withdrawRefusalSpec(gate.refused));
     }
+    const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
       chit_id,
@@ -6403,15 +6807,9 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
         /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
              timestamp for no reason. */
         for (const rid of [...new Set(parties)]) {
-          await withEntity(rid, (db) =>
-            db.query(
-              `UPDATE chit_status
-                  SET cancel_requested_at = NOW(), cancel_requested_by = $2, cancel_reason = $3
-                WHERE chit_id = $1 AND entity_id = $4`,
-              [chit_id, req.identity.display_name, reason, rid]
-            )
-          );
+          await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
         }
+        told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
       }
     } catch (e) {
       console.error('cancel flag:', e.message);
@@ -6419,7 +6817,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 
     /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
+    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books, ...ctpReturn.answerOf(ctpReturn.firstOf(told)) });
   } catch (err) {
     withdrawFailure(req, res, err);
   }
@@ -6518,483 +6916,27 @@ router.post(
   }
 );
 
-// ─── GET /chits/:id/children ──────────────────────────────────────────────────────────────────────────────
-// Forward-link resolver (Fragment 1): the immediate children of a handoff = every chit whose trace.parents SET
-// contains :id. RLS-scoped — the caller sees only children they CO-HOLD, so a rival's downstream edge is invisible
-// by construction (the TR-6 privacy floor). Proves the forward link is a SET: a fan-out node returns all N children.
-// The cross-entity, multi-hop operator WALK (past parties you don't co-hold) is Fragment 2's participant-gated definer.
-router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, res) => {
-  try {
-    const me = entityId(req);
-    const id = req.params.id;
-    if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
-              summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace'->'parents' @> $1::jsonb
-        ORDER BY created_at ASC`,
-        [JSON.stringify(id)]
-      )
-    );
-    res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Failed to get children'));
-  }
-});
-
-// ─── GET /chits/:id/trace?dir=forward|backward ──────────────────────────────────────────────────────────────
-// The recall WALK (Fragment 2). RLS-scoped, so the caller only ever traverses edges it CO-HOLDS: an ordinary
-// entity sees one hop each way, while the mandated network OPERATOR (co-held onto every network edge) sees its
-// whole subtree — and a rival sees nothing of another's chain (TR-6, the moat, by construction). forward =
-// exposure / recall set (BFS; the visited-set collapses diamonds + cycles); backward = provenance to source.
-// A hop the caller doesn't co-hold is an honest dead-end (the branch stops), never a silent skip to grandchildren.
-router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) => {
-  try {
-    const me = entityId(req);
-    const id = req.params.id;
-    if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
-    const dir = req.query.dir === 'backward' ? 'backward' : 'forward';
-    const MAX_NODES = 2000,
-      MAX_DEPTH = 40;
-    // Optional network scope: when given, the walk follows ONLY edges tagged with this network id, so an entity in
-    // several networks never bleeds one into another (the multi-network leak). Omit to walk all co-held edges.
-    const net = typeof req.query.network === 'string' && req.query.network.trim() ? req.query.network.trim() : null;
-    const g = traceGraph(me, net);
-    const seed = await g.fetch1(id);
-    if (!seed.rows[0]) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not visible to you' }, 'NOT_FOUND') });
-    g.put(seed.rows[0], 0);
-
-    if (dir === 'forward') {
-      await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
-      const { nodes, edges } = g;
-      const nodeArr = [...nodes.values()];
-      const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
-      // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
-      //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
-      //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
-      const flagged = traceBalance(nodeArr, (n) =>
-        edges
-          .filter((e) => e.from === n.chit_id)
-          .map((e) => nodes.get(e.to))
-          .filter(Boolean)
-      );
-      return res.json({
-        dir,
-        start: id,
-        reachable_count: nodeArr.length,
-        depth_max: nodeArr.reduce((total, item) => Math.max(total, item.depth), 0),
-        flagged,
-        terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
-        nodes: nodeArr,
-        edges
-      });
-    }
-
-    // backward: follow parents toward the origin (records every visible parent edge; advances along the first visible parent).
-    const path = await traceBackward(g, id, MAX_DEPTH);
-    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges });
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Trace walk failed'));
-  }
-});
-
-/* ═══ THE TRACE WALK'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the graph · forward · the mass balance · backward. ═══ */
-
-// The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
-// came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
-// co-holds — not commercial terms — so this stays within the TR-6 lens.
-function traceToName(row) {
-  let list = row.all_recipients;
-  if (typeof list === 'string') {
-    try {
-      list = JSON.parse(list);
-    } catch (e) {
-      cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug');
-      list = [];
-    }
-  }
-  list = Array.isArray(list) ? list : [];
-  const rec = list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator');
-  return rec ? rec.display_name : null;
-}
-/** a node's edge facts off its frozen summary_json.trace */
-function traceEdgeOf(t) {
-  t = t || {};
-  return {
-    product: t.product || null,
-    qty: t.qty ?? null,
-    unit: t.unit || null,
-    base_qty: t.base_qty ?? null,
-    base_unit: t.base_unit || null,
-    is_origin: !!t.is_origin,
-    parents: Array.isArray(t.parents) ? t.parents : []
-  };
-}
-
-/** the walk's graph: nodes by chit, each edge once, and the one RLS-scoped read a hop makes (`net` = one network only) */
-function traceGraph(me, net) {
-  const fetch1 = (cid) =>
-    withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-       FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`,
-        net ? [cid, net] : [cid]
-      )
-    );
-  const nodes = new Map();
-  const edges = [];
-  const seenEdge = new Set();
-  const addEdge = (from, to) => {
-    const k = `${from}|${to}`;
-    if (!seenEdge.has(k)) {
-      seenEdge.add(k);
-      edges.push({ from, to });
-    }
-  };
-  const put = (row, depth) => {
-    if (!nodes.has(row.chit_id))
-      nodes.set(row.chit_id, {
-        chit_id: row.chit_id,
-        entity_id: row.entity_id,
-        depth,
-        sender_name: row.sender_entity_display_name || null,
-        to_name: traceToName(row),
-        network: (row.trace && row.trace.network && row.trace.network.id) || null,
-        ...traceEdgeOf(row.trace)
-      });
-  };
-  return { nodes, edges, fetch1, addEdge, put };
-}
-
-/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles).
- *  DB-59 / K-DB: `parents ?| frontier` is served by b770's GIN (chit_header_trace_parents_gin, jsonb_ops); the old
- *  jsonb_array_elements_text EXISTS read every chit_header row once per depth. Same rows for an array of chit-id strings. */
-async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
-  const { nodes, addEdge, put } = g;
-  let frontier = [id],
-    depth = 0;
-  while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace'->'parents' ?| $1::text[]${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
-        net ? [frontier, net] : [frontier]
-      )
-    );
-    const next = [];
-    for (const row of r.rows) {
-      const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
-      for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
-      if (!nodes.has(row.chit_id)) {
-        put(row, depth + 1);
-        next.push(row.chit_id);
-      }
-    }
-    frontier = next;
-    depth++;
-  }
-}
-
-/** the mass balance on every node — the walk's AND by-batch's (one rule; `kidsOf(n)` → its child nodes). Returns how many are RED. */
-function traceBalance(nodeArr, kidsOf) {
-  let flagged = 0;
-  for (const n of nodeArr) {
-    const kids = kidsOf(n);
-    if (!kids.length || n.base_qty == null) {
-      n.balance = null;
-      continue;
-    } // a leaf, or no quantity to balance
-    if (!kids.every((item) => item.base_qty != null && item.base_unit === n.base_unit)) {
-      n.balance = { status: 'unknown' };
-      continue;
-    }
-    const out = kids.reduce((total, item) => total + item.base_qty, 0);
-    const delta = out - n.base_qty;
-    const red = delta > 1e-9;
-    if (red) flagged++;
-    n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
-  }
-  return flagged;
-}
-
-/** backward = provenance toward the origin — returns the path walked */
-async function traceBackward(g, id, MAX_DEPTH) {
-  const { nodes, fetch1, addEdge, put } = g;
-  let current = id,
-    depth = 0;
-  const path = [id];
-  while (depth < MAX_DEPTH) {
-    const cur = nodes.get(current);
-    const parents = cur ? cur.parents : [];
-    if (!parents || !parents.length) break; // origin — or an honest dead-end where provenance isn't co-held
-    let advanced = null;
-    for (const p of parents) {
-      const pr = await fetch1(p);
-      if (pr.rows[0]) {
-        addEdge(p, current);
-        put(pr.rows[0], depth + 1);
-        if (!advanced) advanced = p;
-      }
-    }
-    if (!advanced) break;
-    path.push(advanced);
-    current = advanced;
-    depth++;
-  }
-  return path;
-}
-
-// ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
-// List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
-// RLS-scoped — the operator sees its network's batches, a party sees only its own; origins listed first.
-router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req, res) => {
-  try {
-    const me = entityId(req);
-    const toName = traceToName; /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at
-         FROM chit_header
-        WHERE summary_json->'trace' IS NOT NULL
-        ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC
-        LIMIT 200`
-      )
-    );
-    const seen = new Set();
-    const batches = [];
-    for (const row of r.rows) {
-      if (seen.has(row.chit_id)) continue;
-      seen.add(row.chit_id);
-      const t = row.trace || {};
-      batches.push({
-        chit_id: row.chit_id,
-        product: t.product || null,
-        qty: t.qty ?? null,
-        unit: t.unit || null,
-        is_origin: !!t.is_origin,
-        network: (t.network && t.network.id) || null,
-        sender_name: row.sender_entity_display_name || null,
-        to_name: toName(row)
-      });
-    }
-    res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Failed to list batches'));
-  }
-});
-
-// ─── GET /chits/trace/by-batch?q=<batch> ────────────────────────────────────────────────────────────────────
-// Reconstruct the chain from SHARED DATA (a batch number) instead of the parent links — proves the graph survives
-// even if the explicit links weren't followed. Finds the caller's chits carrying that batch, then rebuilds the
-// directed chain by PARTY-CHAINING: X → Y when the receiver of X is the sender of Y. No parent_chit_ids used.
-// RLS-scoped (you match only within what you hold). Same response shape as the walk, so the tree render is reused.
-router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (req, res) => {
-  try {
-    const me = entityId(req);
-    const q = String(req.query.q || '').trim();
-    if (!q) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'A batch value (q) is required' }, 'CHIT_BAD_REQUEST') });
-    const { r, matched_on } = await batchRows(me, q);
-    const items = batchItems(r.rows);
-    const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
-    // mass-balance, same invariant as the walk — the ONE rule (traceBalance)
-    const flagged = traceBalance(nodeArr, (n) => (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean));
-    const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
-    res.json({
-      dir: 'forward',
-      by_batch: q,
-      reconstructed: true,
-      /* ⚠️ THE CALLER MUST BE ABLE TO TELL THESE APART. 'batch' = these shipments carried this lot. 'product' =
-         no lot data was found anywhere, so this is every movement of a product with that name — a much wider and
-         much weaker answer, and the one a recall must never be shown without the caveat. */
-      matched_on,
-      matched_note:
-        matched_on === 'batch'
-          ? 'Matched on the lot recorded on each line — GS1 (10) batch or (21) serial.'
-          : 'No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.',
-      start: (nodeArr[0] && nodeArr[0].chit_id) || null,
-      reachable_count: nodeArr.length,
-      depth_max: nodeArr.reduce((total, item) => Math.max(total, item.depth), 0),
-      flagged,
-      terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
-      nodes: nodeArr,
-      edges
-    });
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Batch trace failed'));
-  }
-});
-
-/* ═══ BY-BATCH'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the rows · the items · the chain; the balance is the walk's own. ═══ */
-
-/** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
-function traceRecipientOf(row) {
-  let list = row.all_recipients;
-  if (typeof list === 'string') {
-    try {
-      list = JSON.parse(list);
-    } catch (e) {
-      cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug');
-      list = [];
-    }
-  }
-  list = Array.isArray(list) ? list : [];
-  return list.find((x) => x.role === 'receiver') || list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
-}
-
-/**
- * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
- * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
- * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
- * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
- * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
- * failing to tell the six who hold the bad lot which lot it was.
- *
- * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
- * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
- *
- * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
- * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
- * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
- * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
- * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
- * apart will present the second as the first.
- */
-async function batchRows(me, q) {
-  let matched_on = 'batch';
-  let r = await withEntity(me, (db) =>
-    db.query(
-      `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
-            h.summary_json->'trace' AS trace
-       FROM chit_header h
-       JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
-      WHERE h.summary_json->'trace' IS NOT NULL
-        AND l.removed = false
-        AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
-      [q]
-    )
-  ).catch((e) => {
-    // pre-b142 there is no chit_line to join — fall through, do not fail
-    require('../lib/logger').warn('trace.by-batch-no-lines', { err: e && e.message });
-    return { rows: [] };
-  });
-
-  if (!r.rows.length) {
-    matched_on = 'product';
-    r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace' IS NOT NULL
-          AND lower(summary_json->'trace'->>'product') = lower($1)`,
-        [q]
-      )
-    );
-  }
-  return { r, matched_on };
-}
-
-/** one item per chit (the lot join can return a chit once per matching line) */
-function batchItems(rows) {
-  const seen = new Set();
-  const items = [];
-  for (const row of rows) {
-    if (seen.has(row.chit_id)) continue;
-    seen.add(row.chit_id);
-    const rec = traceRecipientOf(row);
-    const t = row.trace || {};
-    items.push({
-      chit_id: row.chit_id,
-      sender_entity_id: row.sender_entity_id,
-      sender_name: row.sender_entity_display_name || null,
-      to_entity_id: rec ? rec.entity_id : null,
-      to_name: rec ? rec.display_name : null,
-      product: t.product || null,
-      qty: t.qty ?? null,
-      unit: t.unit || null,
-      base_qty: t.base_qty ?? null,
-      base_unit: t.base_unit || null
-    });
-  }
-  return items;
-}
-
-/** the chain rebuilt from the data alone, and each node's depth from the roots */
-function batchChain(items) {
-  // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
-  const bySender = {};
-  items.forEach((item) => {
-    (bySender[item.sender_entity_id] = bySender[item.sender_entity_id] || []).push(item);
-  });
-  const edges = [];
-  const hasParent = new Set();
-  items.forEach((x) =>
-    (bySender[x.to_entity_id] || []).forEach((y) => {
-      if (y.chit_id !== x.chit_id) {
-        edges.push({ from: x.chit_id, to: y.chit_id });
-        hasParent.add(y.chit_id);
-      }
-    })
-  );
-  const nmap = {};
-  items.forEach((item) => {
-    nmap[item.chit_id] = Object.assign({}, item, { depth: 0, is_origin: !hasParent.has(item.chit_id) });
-  });
-  // BFS depth from the roots
-  const kidsMap = {};
-  edges.forEach((e) => {
-    (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to);
-  });
-  let frontier = items.filter((item) => !hasParent.has(item.chit_id)).map((item) => item.chit_id);
-  const seenD = new Set(frontier);
-  let count = 0;
-  while (frontier.length && count < 60) {
-    const next = [];
-    frontier.forEach((id) =>
-      (kidsMap[id] || []).forEach((item) => {
-        if (!seenD.has(item)) {
-          seenD.add(item);
-          nmap[item].depth = count + 1;
-          next.push(item);
-        }
-      })
-    );
-    frontier = next;
-    count++;
-  }
-  const nodeArr = Object.values(nmap);
-  return { edges, nodeArr, kidsMap, nmap };
-}
-
-// ─── GET /chits/trace/networks ──────────────────────────────────────────────────────────────────────────────
-// The networks the caller participates in (derived from the edges it co-holds — migration-free registry seed).
-// Supports "an entity can be in many networks" + "see where you are": lists each network id, whether the caller
-// is its operator, and how many edges it holds there. RLS-scoped, so you only see networks you're actually in.
-router.get('/trace/networks', auth, async (req, res) => {
-  try {
-    const me = entityId(req);
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT summary_json->'trace'->'network'->>'id' AS network_id,
-              bool_or((summary_json->'trace'->'network'->>'operator') = $1) AS is_operator,
-              count(DISTINCT chit_id) AS edges
-         FROM chit_header
-        WHERE summary_json->'trace'->'network'->>'id' IS NOT NULL
-        GROUP BY 1
-        ORDER BY edges DESC`,
-        [me]
-      )
-    );
-    res.json({ networks: r.rows.map((x) => ({ network_id: x.network_id, is_operator: !!x.is_operator, edges: Number(x.edges) })) });
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Failed to list networks'));
-  }
-});
+router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes, mounted where they sat so no path changes its order */
 
 router.openapi = { paths: pathsOf(), schemas: {} };
-router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
+router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
+router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
+router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
+router.moneyOfInvoice = moneyOfInvoice;
+router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
+router.recordResolve = recordResolve;
+router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
+module.exports.sendBillCopyFor = sendBillCopyFor; /* OPS-83: tests/ops83-match-money.test.cjs pins the till-written order.from on the buyer invoice copy */
+module.exports.refOf = refOf; /* PLT-70: lib/limits asks the one reader whether a send carries a bill number */
+module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
+module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
+module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
+module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
+module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
+module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
+module.exports.statusBucketFilter = statusBucketFilter;
+module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
+module.exports.declaredRetention = declaredRetention; /* RAIL-212 */
