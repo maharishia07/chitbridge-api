@@ -455,15 +455,9 @@ router.post(
           const who = entityId(req);
           const seen = await sameRefLook(who, raceRef);
           if (seen) {
-            const _bj = req.body && req.body.business_json;
-            const mine = (_bj && _bj.till && _bj.till.id) || null;
-            const theirs = seen.till_id || null;
-            const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
-            const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
-               longer drift from it (it used to: this branch had no sameName wording at all). */
-            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
-            if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
+            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — one function both callers share, so this cannot drift from it */
+            const refusal = await replayRefusal(req, who, seen, raceRef);
+            if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
             return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
           }
@@ -839,7 +833,7 @@ async function sendReplay(sendState, req, res) {
     const seen = await sameRefLook(sender_id, client_ref);
     /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
     if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
-    if (seen) return answerReplay(req, res, seen, client_ref);
+    if (seen) return await answerReplay(req, res, seen, client_ref, sender_id);
   } catch (e) {
     cbLog.fellBack(
       'chits: failed — carried on without it',
@@ -848,17 +842,48 @@ async function sendReplay(sendState, req, res) {
   }
 }
 /** a chit already exists under this client_ref: 409 when it is two devices on one number (named), else 200 with the chit that exists (a retry) */
-function answerReplay(req, res, seen, client_ref) {
+async function answerReplay(req, res, seen, client_ref, sender_id) {
+  const refusal = await replayRefusal(req, sender_id, seen, client_ref);
+  if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
+  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
+}
+/** the refusal body (409) a replay earns — two counters on one number first, then another sale under the same number — or null for a true replay */
+async function replayRefusal(req, sender_id, seen, client_ref) {
   /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
      here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
   const businessJson = req.body && req.body.business_json;
   const mine = (businessJson && businessJson.till && businessJson.till.id) || null;
-  const theirs = seen.till_id || null;
   const myAt = businessJson && businessJson.billed_at ? String(businessJson.billed_at) : null;
-  const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-  const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
-  if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
-  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
+  const verdict = tillCollisionVerdict(mine, seen.till_id || null, myAt, seen.billed_at ? String(seen.billed_at) : null, client_ref);
+  return verdict.collision ? verdict.body : await replayOtherSale(req, sender_id, client_ref);
+}
+/** what differed, in the words of the refusal */
+const DIFFERS_WORDS = { total: 'a different total', currency: 'a different currency', lines: 'different items' };
+/**
+ * ⭐ CTR-204 · SAME NUMBER, SAME TILL, SAME MOMENT, DIFFERENT SALE. The check above cannot tell it from a retry (it reads till id and billed_at only), so the
+ * second sale was answered "duplicate" and never stored — lost, with the till told it was sent. Here the held bill's carried total and lines are compared with the
+ * replay's (counter-bill.replayDiffers — two carried figures, nothing recomputed) and a different sale is refused 409 CHIT_REPLAY_DIFFERS, in words. Industry
+ * practice is the same: an idempotency key reused with different parameters is an error, not a replay (Stripe). Null = a true replay (200 duplicate:true).
+ * ⚠ Called only after a bill exists under this number; a lookup that fails answers null — the worst case is the old answer, never a blocked sale.
+ */
+async function replayOtherSale(req, sender_id, client_ref) {
+  try {
+    const held = await withEntity(sender_id, (db) => ownBill.byRef(db, sender_id, client_ref, { lines: true }));
+    const verdict = held && ownBill.replayDiffers(held, { business_json: req.body && req.body.business_json, line_items: req.body && req.body.line_items });
+    if (!verdict) return null;
+    return {
+      error: 'Bill number already holds a different sale',
+      code: 'CHIT_REPLAY_DIFFERS',
+      client_ref,
+      differs: verdict.differs,
+      message:
+        'Bill ' + client_ref + ' was already recorded with ' + DIFFERS_WORDS[verdict.differs] +
+        '. This is a different sale using the same number. It is kept on the counter, unsent — nothing has been lost.'
+    };
+  } catch (e) {
+    cbLog.fellBack('chits: replay body check failed — answered as a replay', e);
+    return null;
+  }
 }
 
 /** a till key may only bill itself — or one listed customer (one-sided when their copy cannot go) */
