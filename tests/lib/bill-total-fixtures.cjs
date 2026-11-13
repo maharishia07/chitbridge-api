@@ -38,4 +38,18 @@ const INVOICE_FIXTURES = [
   { id: 'withheld-with-invoice', column: 'TR-6 copy that still holds an invoice: no figure', summary: { oversight: true, total_value: 189 }, business: invoiceOf(189), total: null }
 ];
 
-module.exports = { FIXTURES, INVOICE_FIXTURES };
+/**
+ * The NOT-A-FIGURE rows (ACC-206 review): one rule for "is this stored value a number" in pickOf and in billTotalSql — a finite number or a plain signed decimal
+ * string. Number() would take every one of these as a figure (true as 1, "1e3" as 1000, [5] as 5, " 5", ".5", "+5", "0x10" as 16). Each is placed in each of the three
+ * copies; `total` is null (no figure), and a row where the junk copy sits above a real one answers the real one.
+ */
+const JUNK = [true, false, '1e3', [5], ' 5', '.5', '+5', '0x10', '5.', '--5', {}, ''];
+const JUNK_FIXTURES = [];
+JUNK.forEach((junk, i) => {
+  const tag = 'junk-' + i + '-' + JSON.stringify(junk);
+  JUNK_FIXTURES.push({ id: tag + '-total_value', column: 'top-level total_value ' + JSON.stringify(junk), summary: { total_value: junk }, business: null, total: null });
+  JUNK_FIXTURES.push({ id: tag + '-money', column: 'money.total ' + JSON.stringify(junk) + ' beside a real total_value 50', summary: { total_value: 50, money: { total: junk } }, business: null, total: 50 });
+  JUNK_FIXTURES.push({ id: tag + '-invoice', column: 'invoice TotInvVal ' + JSON.stringify(junk) + ' beside a real money.total 189', summary: { money: { total: 189 } }, business: invoiceOf(junk), total: 189 });
+});
+
+module.exports = { FIXTURES, INVOICE_FIXTURES, JUNK_FIXTURES };

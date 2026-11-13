@@ -3091,10 +3091,7 @@ const numberOrNull = (rawValue) => {
 };
 /** the detail answer's total_value is the header's one pick (ACC-206 C4), in the column's own two-place text; the key keeps its name (RAIL-146 drops it by name) */
 function detailWithPickedTotal(detail, header) {
-  if (!detail) return null;
-  const picked = ownBill.pickOf(header);
-  if (picked.source === 'withheld' || picked.total === null) return detail;
-  return Object.assign({}, detail, { total_value: picked.total.toFixed(2) });
+  return detail ? Object.assign({}, detail, { total_value: costView.detailTotalOf(detail.total_value, header) }) : null;
 }
 /** ?amount_min / ?amount_max → the bounds on the chit's total value */
 function amountFilter(req, params) {
