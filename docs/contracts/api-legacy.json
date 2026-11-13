@@ -2991,36 +2991,36 @@
      "scenario": "key-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner may do this.",
-      "message": "Only the owner may do this."
+      "error": "Only the owner or the shop's auditor may read the returns.",
+      "message": "Only the owner or the shop's auditor may read the returns."
      },
      "fixture": {
-      "error": "Only the owner may do this.",
-      "message": "Only the owner may do this."
+      "error": "Only the owner or the shop's auditor may read the returns.",
+      "message": "Only the owner or the shop's auditor may read the returns."
      }
     },
     {
      "scenario": "staff-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner may do this.",
-      "message": "Only the owner may do this."
+      "error": "Only the owner or the shop's auditor may read the returns.",
+      "message": "Only the owner or the shop's auditor may read the returns."
      },
      "fixture": {
-      "error": "Only the owner may do this.",
-      "message": "Only the owner may do this."
+      "error": "Only the owner or the shop's auditor may read the returns.",
+      "message": "Only the owner or the shop's auditor may read the returns."
      }
     },
     {
      "scenario": "viewer-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner may do this.",
-      "message": "Only the owner may do this."
+      "error": "Only the owner or the shop's auditor may read the returns.",
+      "message": "Only the owner or the shop's auditor may read the returns."
      },
      "fixture": {
-      "error": "Only the owner may do this.",
-      "message": "Only the owner may do this."
+      "error": "Only the owner or the shop's auditor may read the returns.",
+      "message": "Only the owner or the shop's auditor may read the returns."
      }
     },
     {

@@ -126,6 +126,20 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('ACC-229 a key-bearer is refused (403)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED', String(r.status));
   r = await as(AUDITOR); WHO = AUDITOR; const close = await q('POST', '/gst/close', { fy: '2026-27', period: '2026-Q1' }); WHO = owner(AU, 'Bondi Grocer');
   ok('ACC-229 the auditor still cannot close or pay GST (POST /gst/close stays owner only: 403 OWNER_ONLY)', close.status === 403 && close.body.code === 'OWNER_ONLY', String(close.status) + ' ' + JSON.stringify(close.body).slice(0, 120));
+  /* ACC-229 (status half): GET /status is a READ too — owner and auditor 200 with the same answer; every other reader gets the one refusal; POST /enable stays owner only */
+  const asS = async (who) => { WHO = who; try { return await q('GET', '/status'); } finally { WHO = owner(AU, 'Bondi Grocer'); } };
+  const stOwner = await q('GET', '/status');
+  eq('ACC-229 status: the owner reads enabled true, migrated true, the AU books (the ledger was switched on above)', [stOwner.status, stOwner.body.migrated, stOwner.body.enabled], [200, true, true]);
+  r = await asS(AUDITOR);
+  eq('ACC-229 status: the auditor (whole-entity + can_see_costs) reads the very same answer as the owner', [r.status, JSON.stringify(r.body)], [200, JSON.stringify(stOwner.body)]);
+  for (const [name, who] of [['reports preset (can_see_costs false)', REPORTS], ['editor (not whole-entity)', EDITOR], ['viewer', VIEWER], ['no identity row (fails closed)', NOROW]]) {
+    r = await asS(who);
+    ok('ACC-229 status ' + name + ': 403 BOOKS_RETURN_READ_NOT_ALLOWED in words', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+  }
+  WHO = Object.assign({}, owner(AU, 'Bondi Grocer'), { via_key: 'k' }); r = await q('GET', '/status'); WHO = owner(AU, 'Bondi Grocer');
+  ok('ACC-229 status: a key-bearer is refused (403)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED', String(r.status));
+  WHO = AUDITOR; r = await q('POST', '/enable', {}); WHO = owner(AU, 'Bondi Grocer');
+  ok('ACC-229 status: the auditor still cannot switch the books on (POST /enable stays owner only: 403 OWNER_ONLY)', r.status === 403 && r.body.code === 'OWNER_ONLY', String(r.status));
   X.db.query = realQuery;
 
   /* ── a UAE shop: the ledger on under the AE pack; a March day and an April purchase (stagger 1: Feb–Apr) ── */
