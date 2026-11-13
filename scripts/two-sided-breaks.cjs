@@ -8,7 +8,7 @@
 const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
-const R = process.argv[2] || path.join(__dirname, '..');
+const repoRoot = process.argv[2] || path.join(__dirname, '..');
 const CHITS = require('../tools/chits-files.cjs'); /* the ONE list of chits files: a break finds its anchor wherever the code lives now */
 const BREAKS = [
   /* who sells, on each copy (lib/tax-copy.js) */
@@ -237,9 +237,9 @@ const BREAKS = [
 let caught = 0;
 const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {
-  const abs = path.join(R, CHITS.anchorFile(R, file, from)),
-    copy = abs + '.breakcopy';
-  const orig = fs.readFileSync(abs, 'utf8');
+  const sourcePath = path.join(repoRoot, CHITS.anchorFile(repoRoot, file, from)),
+    copy = sourcePath + '.breakcopy';
+  const orig = fs.readFileSync(sourcePath, 'utf8');
   fs.writeFileSync(copy, orig);
   const crlf = orig.includes('\r\n');
   let text = crlf ? orig.replace(/\r\n/g, '\n') : orig;
@@ -250,15 +250,15 @@ for (const [test, file, from, to, what] of BREAKS) {
     continue;
   }
   text = text.replace(from, () => to);
-  fs.writeFileSync(abs, crlf ? text.replace(/\n/g, '\r\n') : text);
-  const list = ['.test.cjs', '.test.js'].map((x) => path.join(R, 'tests', test + x)).find((item) => fs.existsSync(item));
-  const r = spawnSync(process.execPath, [list], { encoding: 'utf8', timeout: 120000, env: process.env });
-  fs.writeFileSync(abs, fs.readFileSync(copy, 'utf8'));
+  fs.writeFileSync(sourcePath, crlf ? text.replace(/\n/g, '\r\n') : text);
+  const list = ['.test.cjs', '.test.js'].map((x) => path.join(repoRoot, 'tests', test + x)).find((item) => fs.existsSync(item));
+  const testRun = spawnSync(process.execPath, [list], { encoding: 'utf8', timeout: 120000, env: process.env });
+  fs.writeFileSync(sourcePath, fs.readFileSync(copy, 'utf8'));
   fs.unlinkSync(copy);
-  const red = r.status !== 0;
-  if (red) caught++;
+  const wentRed = testRun.status !== 0;
+  if (wentRed) caught++;
   else missed.push(test + ': ' + what);
-  console.log('  ' + (red ? 'caught' : 'MISSED') + '  ' + test.padEnd(24) + what);
+  console.log('  ' + (wentRed ? 'caught' : 'MISSED') + '  ' + test.padEnd(24) + what);
 }
 console.log('\n' + caught + '/' + BREAKS.length + ' caught' + (missed.length ? ' · MISSED: ' + missed.join(' | ') : ''));
 process.exit(missed.length ? 1 : 0);
