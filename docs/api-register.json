@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 3,
-  "meets": 628,
+  "partial": 1,
+  "meets": 630,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -31417,11 +31417,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c95af0652a6cfec6"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1167 stage2: handler diff read, 13 columns pass; owner e-mail write cap answers the one 429 RATE_LIMITED (gate, only on calls carrying an e-mail); EMAIL_UNAVAILABLE 409 registered with its plain sentence and names nobody, EMAIL_TAKEN kept for the owner's own list; /entities/register: same 200 words for held and new address, per-address cap one 429; old keys and statuses kept",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-employees.js",
@@ -31526,11 +31525,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "88c05cc1b9fd315d"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1154 (independent review: PPL-40 reset ends listed sessions via the one closeBy writer before the new code, owner-only door unchanged, bite proven, 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-workforce.js"
    ],
@@ -31624,7 +31622,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1171 stage2: re-read, hash unchanged, 13 columns pass; answers unchanged: the tester-code 'in' event row and pending_user_id applied at verify are written to the shop's own records only, no key, status or sentence added",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
     "lifecycle": "stable"
    },
    "status": "meets standard",
