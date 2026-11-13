@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 4,
+  "meets": 627,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -9287,7 +9287,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5046,
-   "hash": "8c5c87ac7afd70af",
+   "hash": "59dbb14661b522a1",
    "does": "",
    "errors": {
     "count": 0,
@@ -9359,10 +9359,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2 re-review c15cf4e8: all 13 columns true; overlay 500 scene reaches the catch with no database text, no false cannot_answer left; replay unchanged (no route or lib change since 663/663)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "59dbb14661b522a1"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -20423,7 +20424,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 458,
-   "hash": "b259205974030f54",
+   "hash": "53a27e30bddb0acd",
    "does": "",
    "errors": {
     "count": 0,
@@ -20497,10 +20498,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1157 stage2: handler and contract re-read after the hash moved (searchWholeNetwork extract; NET-53 closed shops now left out of the answer rows, owned by cb-network, answer shape and statuses unchanged); one error shape, additive/narrowing only, no key renamed; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "53a27e30bddb0acd"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-network-member.js"
    ],
@@ -22273,7 +22275,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2112,
-   "hash": "90e163f95d15ad4a",
+   "hash": "ee025dd2836cc0db",
    "does": "",
    "errors": {
     "count": 1,
@@ -22342,10 +22344,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign) 2026-11-11 CTRY-72: handler+contract read; money_why added as a new key only (null when the shop has a currency, so unchanged; {code:NO_MONEY, why:MONEY_UNSTATED} only for a shop with no country, same shape as till snapshot shop.money_why); NO_MONEY registered in error-codes.json; schema_out lists it required; currency, auth, errors unchanged; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ee025dd2836cc0db"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -38905,7 +38908,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 818,
-   "hash": "1f2b998c43f174b9",
+   "hash": "b21145b61d5797d5",
    "does": "",
    "errors": {
     "count": 7,
@@ -38987,10 +38990,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b21145b61d5797d5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

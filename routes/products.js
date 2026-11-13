@@ -2132,7 +2132,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
        * file's own warning is that the front end's prevailing `+d.price || 0` idiom turns an absent price
        * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
        */
-      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price), active: x.is_active !== false }));
+      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price, { stored: true }), active: x.is_active !== false }));
     } catch (e) {
       log.fellBack('products GET /lists: the read failed — answered with none', e);
       mine = [];

@@ -28,7 +28,7 @@
     "orders": "1.5.0",
     "orderhub": "1.5.0",
     "rollup": "1.93.0",
-    "convert": "1.5.0",
+    "convert": "1.93.0",
     "accounts-packs": "1.79.0",
     "receivables": "1.78.0",
     "posting": "1.87.0",
@@ -219,7 +219,7 @@
     ]
   },
   "sha256": {
-    "money": "d372552d68f8f37e838bc3cb743ff063266c8e548cfd4276c55af10f0805ea37",
+    "money": "7910439dd6ebf8de8877956854398eac79d3155c97d48e5a7579e53d5aa22618",
     "tax-packs": "060e6c5883026c040b0e0d8fc979ae2563f5b992f01946b02e941acbc221bb80",
     "tax-slab": "80c25b62bb08491b8116ddf95090e93f24a700dc57132683be0b4fd4be6ec8fc",
     "tax": "da87a58d052162ce580c0e5e079fd6fe471a7a1e2fb6106460f5f6e2223947c4",
@@ -246,7 +246,7 @@
     "orders": "a8e4417ed369e5b6e18bb5bf90eaf57e1097c112744566a47ebc46af0d3ba069",
     "orderhub": "c70a78a6839c10d41f6c43901f0557bd782463460e4af3f2e99d369a5012e9e5",
     "rollup": "3cf37376bcc687cfffda634eb25b055204ca844e507f3d4a3c7cf8c34a445a58",
-    "convert": "31b4b4d40a211f0a437ad1b5f4ff394bfb6f63637f05c24323b9846a1e51a5ba",
+    "convert": "55ecf63631a76502f85b36bb33f14432176ff014a64654b8548d2fd1503947eb",
     "accounts-packs": "08ee7a753735b46bd480582cf2035e88f4f676f0442ddf585c279616a9c3775a",
     "receivables": "180e6f8728f4e88c0a8a6fbac647fceb40c3c6174b12faf184fef98bf75b862d",
     "posting": "eb0b68011284ea6431c67452484533619bf23955fe104526c982608f314b0153",

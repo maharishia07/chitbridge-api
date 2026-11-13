@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.93.0 · money · sha256 d372552d68f8f37e838bc3cb743ff063266c8e548cfd4276c55af10f0805ea37 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.93.0 · money · sha256 7910439dd6ebf8de8877956854398eac79d3155c97d48e5a7579e53d5aa22618 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · money. Edited ONLY in chitbridge-engines/src/money.js; every platform adopts a released version of it. */
 /*
  * OWNS      the one money type: an amount with its currency (the value type, ISO 4217 list and minor units, plus/minus/compare/times/allocate/round/format, assertMoneyShape), the one rounder and the one price reader; never converts
@@ -476,6 +476,9 @@
    * 9-year record floor, but are refused for any NEW money. Kept apart from ISO_4217 on purpose: isIsoCurrency (every write door) is the
    * ACTIVE list only. Their exponent is ISO's (all 2). Funds (XDR ...) are on neither list: never a shop's money. */
   const WITHDRAWN_4217 = Object.freeze({ BGN: 2, HRK: 2, CUC: 2, SLL: 2, ZWL: 2 });
+  /* The successor ISO names for each withdrawn code (ISO 4217 historical codes: HRK 2023-01-01 EUR; BGN 2025-12-31 EUR; CUC 2021-06-30 CUP; ZWL 2024-09-01 ZWG;
+   SLL redenominated 1000:1 to SLE on 1 Jul 2022). Only a POINTER for the owner's words: nothing is ever converted or switched for them. */
+  const SUCCESSOR_4217 = Object.freeze({ BGN: 'EUR', HRK: 'EUR', CUC: 'CUP', SLL: 'SLE', ZWL: 'ZWG' });
   /** Is this EXACT string a withdrawn (historic) code? */
   function isWithdrawnCurrency(code) {
     return typeof code === 'string' && Object.prototype.hasOwnProperty.call(WITHDRAWN_4217, code);
@@ -486,7 +489,7 @@
   }
   /** The sentence for a code a NEW amount may not use; withdrawn codes say so (same code MONEY_CURRENCY_UNKNOWN, plus withdrawn: true). */
   function newMoneyWords_(code) {
-    if (isWithdrawnCurrency(code)) return `${code} has been withdrawn from ISO 4217, so it cannot be used for new money. Old records in it stay readable.`;
+    if (isWithdrawnCurrency(code)) return `${code} has been withdrawn from ISO 4217 and replaced by ${SUCCESSOR_4217[code]}, so it cannot be used for new money. Change the shop currency to ${SUCCESSOR_4217[code]}; nothing is converted, and old records in ${code} stay readable as written.`;
     return `${JSON.stringify(code)} is not an ISO 4217 currency code.`;
   }
   /** refuseNewCurrency(code) → the upper-cased ACTIVE code, or a worded 422 MONEY_CURRENCY_UNKNOWN (withdrawn:true for a withdrawn one). The ONE call every write door that takes a currency makes. */
@@ -981,6 +984,7 @@
     isReadableCurrency,
     refuseNewCurrency,
     WITHDRAWN_4217,
+    SUCCESSOR_4217,
     exponentOf,
     decimalsShimCount,
     decimalsShimReset,

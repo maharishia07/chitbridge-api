@@ -44,6 +44,31 @@ const minorOf = (v, cur) => Math.round(money.round(Number(v), cur || null) * Mat
     assert.strictEqual(await cs.currencyLockRefusal({}, 'e', 'BGN', { cur: shop('BGN') }), null, 'the held code is no change');
     assert.strictEqual(cs.guessOf({ country: 'BG', currency_code: 'BGN', timezone: 'Europe/Sofia' }).currency, null, 'a guess is never a withdrawn money');
   });
+  await it('a shop whose own money is withdrawn issues no NEW document; the words name the successor and nothing is converted (the one document gate)', () => {
+    const cs = require('../lib/country-setup');
+    const want = { HRK: 'EUR', BGN: 'EUR', CUC: 'CUP', SLL: 'SLE', ZWL: 'ZWG' };
+    Object.keys(want).forEach((c) => {
+      const refusal = cs.documentRefusal({ country: 'IN', currency_code: c });
+      assert.ok(refusal && refusal.status === 422 && refusal.code === 'NO_MONEY', c);
+      assert.ok(refusal.message.indexOf('replaced by ' + want[c]) >= 0 && /nothing is converted/.test(refusal.message), c);
+    });
+    assert.strictEqual(cs.documentRefusal({ country: 'DE', currency_code: 'EUR' }), null);
+    assert.strictEqual(cs.activeCurrency('hrk'), null);
+    assert.strictEqual(cs.activeCurrency('eur'), 'EUR');
+  });
+  await it('every stored-money reader the api has reads an old BGN record (stored opt-in), and new BGN money is still refused', () => {
+    const old = { amount: 12.5, currency: 'BGN' };
+    const conv = require('../lib/convert');
+    const rates = conv.table([{ from: 'BGN', to: 'EUR', rate: 0.5, as_of: '2025-12-31', source: 'official' }]);
+    assert.strictEqual(conv.convertMoney(old, 'EUR', rates).amount.amount, 6.25, 'convert (reprice, capture, reports)');
+    assert.strictEqual(money.amountOf(old, { stored: true }), 12.5, 'capture, reprice, chits items, products supplies');
+    assert.strictEqual(money.currencyOf(old, { stored: true }), 'BGN', 'chits items, capture, reprice');
+    assert.strictEqual(money.isMoney(old, { stored: true }), true, 'catalogue-blueprint, network-design');
+    assert.deepStrictEqual(money.sum([old, old], { stored: true }), { amount: 25, currency: 'BGN' }, 'catalogue network price check');
+    assert.strictEqual(money.isMoney(old), false);
+    assert.throws(() => money.amountOf(old), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN');
+    assert.throws(() => money.make(1, 'BGN'), (e) => e.withdrawn === true);
+  });
   await it('fx-rates refuses a new rate in a withdrawn code in words, and in a fund', () => {
     const why = fx.rowOf({ date: '2026-11-01', from: 'BGN', to: 'INR', rate: '45.1' }, 'INR', 'manual');
     assert.ok(why.why && /withdrawn/.test(why.why));
