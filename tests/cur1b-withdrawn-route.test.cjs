@@ -67,8 +67,10 @@ const server = app.listen(0, async () => {
         assert.ok(JSON.stringify(answer.body).indexOf('replaced by ' + SUCCESSOR[code]) >= 0, code + ' words name ' + SUCCESSOR[code]);
       }
     });
-    await it('an unlisted own money is still the 500 fault (nothing the owner can fix by picking a successor)', async () => {
-      assert.strictEqual((await ask(port, '/price/ZZZ')).status, 500);
+    await it('an unlisted own money on a priced write is refused 422 MONEY_CURRENCY_UNKNOWN (engines #123: stampItem reads decimals(currency) first, which refuses it; was the 500 fault of stampPrice)', async () => {
+      const unlisted = await ask(port, '/price/ZZZ');
+      assert.strictEqual(unlisted.status, 422);
+      assert.strictEqual(unlisted.body.code, 'MONEY_CURRENCY_UNKNOWN');
     });
     await it('the lock door answers a NEW withdrawn money 422 over http, and passes the money the shop already holds', async () => {
       const refused = await ask(port, '/lock/BGN?held=INR');
