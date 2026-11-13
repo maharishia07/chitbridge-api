@@ -68,6 +68,7 @@ const GUARDS = [
   'cat124-reference-store-lists.test.cjs', // ⭐ CAT-124 C1+C2: the Product Lab's six cards come from the six reference stores (fallback to the constant where unloaded)
   'vertical-resolver.test.cjs', // ⭐ VERT-1/VERT-8: ONE answer to the shop's trade (govresolve.verticalOf); the five readers ask it; the Price Lab opens on the trade's list
   'trade-srv1.test.cjs', // ⭐ TRADE-SRV1: AU/AE lanes (b538), origin/sector stated or ASKED (never IN/paint), ?abroad=1, papers by deal, the day's rate, may/why on trade writes
+  'money-m13-ctry.test.cjs', // ⭐ CTRY-20 + CTRY-29 (M13): profile-map jurisdiction layer, AU shop never INR, ABN modulus-89 check; kyb risk by_currency one group per currency, null/zero/no-currency stated in excluded
   'profile-write-gate.test.cjs', // ⭐ SEC-71: PUT /profile, PUT /profile/vault, PATCH /entities/profile sit behind lib/access.writeGate — a viewer/commenter is refused with the rail's sentence, owner and editor pass
   'write-route-gate.test.cjs', // ⭐ SEC-72: every write route is gated (writeGate), behind auth (hat-gate fails closed), or allow-listed with a reason — a new public/viewer-writable write route fails here
   'migration-numbers.test.cjs', // ⭐⭐ one number, one migration — two parallel rounds both wrote b299 (12 Oct); a clash fails here
