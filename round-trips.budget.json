@@ -4381,8 +4381,8 @@
     },
     "POST /api/signin/ask": {
       "file": "signin.js",
-      "trips": 7,
-      "wire": 7,
+      "trips": 9,
+      "wire": 9,
       "fired": true,
       "status": 200,
       "registered_only": true,
@@ -4441,8 +4441,8 @@
     },
     "POST /api/signin/verify": {
       "file": "signin.js",
-      "trips": 6,
-      "wire": 9,
+      "trips": 7,
+      "wire": 10,
       "fired": true,
       "status": 200,
       "registered_only": true,
