@@ -13,6 +13,8 @@ const express = require('express');
 const http = require('http');
 
 const API = path.join(__dirname, '..');
+/* QA-122: the chit and actor ids in a path must now be real uuids (the contract answers any other id with the not-found a missing row gets), so the 403 is what is measured, not the id shape */
+const CHIT_ID = '22222222-2222-2222-2222-222222222222', ACTOR_X = '33333333-3333-3333-3333-333333333333', A1_ID = '44444444-4444-4444-4444-444444444444';
 let pass = 0, fail = 0;
 const t = (label, got, want) => {
   const ok = String(got) === String(want);
@@ -90,7 +92,7 @@ async function routeCases() {
   const post = (thread_type, hat) => new Promise((ok) => {
     HAT = { identity_id: '11111111-1111-1111-1111-111111111111', identity_type: 'actor', hat, display_name: 'T' };
     const body = JSON.stringify({ message_text: 'hello', thread_type });
-    const r = http.request({ host: '127.0.0.1', port, path: '/api/chits/c1/messages', method: 'POST',
+    const r = http.request({ host: '127.0.0.1', port, path: '/api/chits/' + CHIT_ID + '/messages', method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } },
       (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
     r.end(body);
@@ -137,7 +139,7 @@ async function provisioningCases() {
     r.end(b);
   });
 
-  const ACTOR  = { identity_id: 'a1', identity_type: 'actor', hat: 'act', parent_entity_id: 'e1', display_name: 'A' };
+  const ACTOR  = { identity_id: A1_ID, identity_type: 'actor', hat: 'act', parent_entity_id: 'e1', display_name: 'A' };
   const ENTITY = { identity_id: 'e1', identity_type: 'entity', display_name: 'E' };
 
   /**
@@ -148,8 +150,8 @@ async function provisioningCases() {
    */
   t('act co-assist  POST /actors      403 — not 404, which is what the bug looked like',
     await call('POST', '/api/actors', ACTOR, { display_name: 'New Person', actor_key: 'newp' }), 403);
-  t('act co-assist  PATCH /actors/x   403', await call('PATCH', '/api/actors/x', ACTOR, { hat: 'manager' }), 403);
-  t('  …including promoting THEMSELVES', await call('PATCH', '/api/actors/a1', ACTOR, { hat: 'manager' }), 403);
+  t('act co-assist  PATCH /actors/x   403', await call('PATCH', '/api/actors/' + ACTOR_X, ACTOR, { hat: 'manager' }), 403);
+  t('  …including promoting THEMSELVES', await call('PATCH', '/api/actors/' + ACTOR.identity_id, ACTOR, { hat: 'manager' }), 403);
   t('entity login   POST /actors      NOT 403',
     (await call('POST', '/api/actors', ENTITY, { display_name: 'New Person', actor_key: 'newp' })) === 403 ? 403 : 'not-403', 'not-403');
 
@@ -226,7 +228,7 @@ async function createLevelCases() {
       (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
     r.end(b);
   });
-  const levelSaved = async (body) => { INSERTS.length = 0; await post(body); const i = INSERTS[0]; return i && /access_level/.test(i.sql) ? i.params[13] + ' ' + i.params[14] : 'no level written'; };   /* SEC2: $13 is the e-mail now (PEOPLE-EMAIL) */
+  const levelSaved = async (body) => { INSERTS.length = 0; await post(body); const i = INSERTS[0]; return i && /access_level/.test(i.sql) ? i.params[11] + ' ' + i.params[12] : 'no level written'; };   /* QA-122: the INSERT is $12 access_level, $13 whole_entity (array 11 and 12; the e-mail is $11, the shop country a sub-select) — was SEC2: $13 is the e-mail now (PEOPLE-EMAIL) */
   t('Viewer picked            -> viewer saved', await levelSaved({ display_name: 'Viewer Vani', actor_key: 'vani', access_level: 'viewer', hat: 'view_only' }), 'viewer false');
   t('Commenter, whole shop    -> commenter, reach', await levelSaved({ display_name: 'Audit Anu', actor_key: 'anua', access_level: 'commenter', hat: 'audit', whole_entity: true }), 'commenter true');
   t('only an old hat          -> the hat\'s level', await levelSaved({ display_name: 'Old Client', actor_key: 'oldc', hat: 'view_only' }), 'commenter false');

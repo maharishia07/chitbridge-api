@@ -916,6 +916,12 @@ const GUARDS = [
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it
   'assist-resolve-retired-gone-mutation.test.cjs', // API-49: with the route put back the test above goes red
+  /* QA-122 (14 Nov, enrolled from the known-red list; the test was stale, the behaviour held): */
+  'iam-access.test.cjs', // IAM-SPEC §12/§18/§27/§29: closed hides the catalogue, read-only may message internally and never externally, only the entity provisions an actor, the level picked on create is the level saved
+  'products-bulk.test.cjs', // CAT-W1: the bulk routes hand the set to the one writer once, validate every row before writing any, are capped and ordered before /:id; categorise is one request (reads the web app)
+  'requirements.test.js', // a requirement raised while testing needs both evidence and rule, a rejection its reason, the list defaults to not-actioned and sorts as a backlog
+  'test-board.test.js', // the test board: run kinds the screens offer are the route's, append-only results, identity from the token, the panel movable and its header balanced (reads the web panel)
+  'tier2-record.test.js', // T2: an offer carries no total, captured fields are the shop's own and fail closed, the storefront pager is capped, an unsupported declaration is refused when written
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

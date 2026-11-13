@@ -74,7 +74,8 @@ it('⚠️ every run kind the two screens offer is one the route accepts', () =>
    * tester nothing. ⭐ The fix is to read the new shape — the VALUE is the first element of each pair — not to
    * loosen the check until it passes.
    */
-  const m = panel.match(/\[\s*\[\s*'manual'[\s\S]*?\]\]\.map\(function \(k\)/);
+  /* QA-122: prettier broke the pairs over lines and the map callback is named item now: same list, read with whitespace allowed */
+  const m = panel.match(/\[\s*\[\s*'manual'[\s\S]*?\]\s*\]\s*\.map\(function \((?:k|item)\)/);
   assert.ok(m, 'the panel no longer builds its run-kind options from a list this guard can read');
   /* ⚠ only the first string of each pair is a value; the second is prose and must NOT be checked as one */
   const offered = (m[0].match(/\['([a-z0-9]+)',/g) || []).map((s) => s.replace(/\['|',/g, ''));
@@ -252,7 +253,7 @@ it('⭐⭐⭐ the IDENTITY comes from the token and cannot be sent in the body',
   assert.ok(!/tested_by[^,)]*req\.body|r\.tested_by|body\.tested_by/.test(route),
     'tested_by can be supplied by the caller — authorship would be forgeable');
   /* SEC-FIX3 S10 (QA-14): neither the id NOR the name may come from the row; the label is the login's, off the token */
-  assert.ok(/tester_name:\s*who\.name/.test(route) && !/r\.tester_name \|\|/.test(route),
+  assert.ok(/tester_name:\s*tester\.name/.test(route) && /function resultRowOf\(item, by, tester\)/.test(route) && /recordResults\([^\n]*testerOf\(req\)/.test(route) && !/r\.tester_name \|\|/.test(route),   /* QA-122: the row is built by resultRowOf from its tester argument, which the route fills with testerOf(req) (the token), was inline who.name */
     'the tester label must be stamped from the token (who.name), never read from the posted row');
 });
 
@@ -285,7 +286,7 @@ it('⭐⭐ the panel asks makeMovable for minimise AND a body to fit', () => {
 it('⚠️ a size preset writes makeMovable\'s OWN saved shape, not a second one', () => {
   /* ⚠️ Two stores for one panel disagree the first time somebody picks a preset and then drags the corner, and
      the panel jumps to the stale one on next open. */
-  assert.ok(/localStorage\.setItem\('cb_testpanel'/.test(panel),
+  assert.ok(/localStorage\.setItem\(\s*'cb_testpanel'/.test(panel),
     'the size presets no longer persist through the same key makeMovable restores from');
   assert.ok(/TEST_SIZES/.test(panel), 'the size presets are gone');
 });
@@ -302,7 +303,7 @@ it('⚠️⚠️ the panel header opens and closes the same number of divs', () 
    * ⚠️ THIS IS THE COST OF BUILDING MARKUP BY STRING CONCATENATION, which the panel does because a capability
    * ships as one file with no template layer. The guard is the price of that choice.
    */
-  const start = panel.indexOf("var hd = ''");
+  const start = panel.indexOf('var hd =');   /* QA-122: the opening '' was dropped by a reformat; the string still starts at var hd */
   const end = panel.indexOf('head.innerHTML = hd');
   assert.ok(start > 0 && end > start, 'the panel header is no longer built where this guard looks');
   const hd = panel.slice(start, end);

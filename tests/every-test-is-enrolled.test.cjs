@@ -27,21 +27,16 @@ const TESTS = __dirname;
 
 /** the files that are red today, each with WHY and the backlog line that owns the fix. Delete a row when the file is fixed and enrolled; never add one. */
 const KNOWN_NOT_ENROLLED = {
-  'bill-checks.test.js': 'QA-122: the test lifts till.html functions by name and the chain grew (shopPack, dayWarnWords, cbQuiet); the slip-title and finish() pins moved to slipTitleOf / notInvoiceWhy: re-lift, then enrol',
+  'bill-checks.test.js': 'QA-122 (STALE, left: counter area): 15 of 28 checks fail on the vm lift of till.html (unratedLines, packSplitsByState are now separate functions the lift list lacks; the slip-title and finish() pins moved to slipTitleOf / notInvoiceWhy): the lift chain and the pins are the cb-counter till master, re-lift there, then enrol',
   'books-reconcile.test.cjs': 'ACC-302 (PRODUCT): lib/tax-copy.js ledgerFor reads expenseItcPack(h) outside the per-copy try, so one unreadable copy throws the whole month instead of landing in `dropped` (T-C5)',
   'env-posture.test.cjs': 'RAIL-208 (PRODUCT): lib/ctpreturn.js:199 compares process.env.NODE_ENV to a literal untrimmed; the assertion (one trimmed reader, isSealed) is right',
   'gherkin.test.js': 'QA-123: the case key `governance.nightly` (data/test-cases.json) is lowercase and dotted, the Gherkin key grammar is capitals-and-hyphens: rename the key or widen the grammar',
   'governed-currency.test.js': 'QA-122: tests 11 and 12 are static regexes (API-58, RAIL-63); replace by a behavioural case on the resolved currency, then enrol (closes CTRY-28)',
-  'iam-access.test.cjs': 'QA-122: 8 of 36 rows disagree with the spec (read-only and editable external 403; PATCH /actors/x answers 404 not 403; the Viewer/Commenter rows): judge test-stale vs product (cb-security) before any change',
-  'products-bulk.test.cjs': 'QA-122: the bulk route moved behind catalogue-write.patchItems (CAT-W1); 8 static route pins to re-aim',
-  'query-shape.test.js': 'QA-122: the per-file query budget names files that changed, an EISDIR on a path that became a folder, the LIKE trigram check: refresh the budget with reasons',
-  'requirements.test.js': 'QA-122: 3 pins (the rule half, the default filter, the backlog sort) predate the Test board decisions: fix to the current board',
-  'test-board.test.js': 'QA-122: 4 static pins of the panel (run-kind options, token identity, size preset key, header divs) lost their anchors: re-aim to the current panel',
-  'tier2-record.test.js': 'QA-122: 5 regex pins lost their text to reformatting and moves (offer total_value, allow-list catch, field-first read, face-save, MY_PAGE_MAX): re-aim each; behaviour unchanged on a first read',
-  'type-tokens.test.js': 'QA-122: the type scale moved to appearanceApply; raw pixel sizes in 26 capability files become a budget (UX pack 12)'
+  'query-shape.test.js': 'QA-170 (REGRESSION, not stale): 19 files now run more per-item queries than their budget (books-hooks 3, party-fields 3, api-keys 2, books-store 2 and 15 more, each budgeted 0, src/services/network.js 2 of 1), 3 budget rows name files now clean, and the trigram check hits an EISDIR on a path that became a folder; each loop is judged N+1 or per-tenant read, then the budget is refreshed with its reason (cb-speed)',
+  'type-tokens.test.js': 'QA-122 (LEFT: a UX decision): the type scale moved to appearanceApply and 139 raw pixel sizes in 26 capability files need a budget, which cb-ux-locale sets (UX pack 12); not a pin to re-aim'
 };
 /** the list may not grow: lower this when a row is deleted */
-const MAX_KNOWN = 12;
+const MAX_KNOWN = 7;
 
 const read = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
 const guardsText = read(path.join(API, 'scripts', 'guards.cjs'));

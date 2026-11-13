@@ -63,8 +63,9 @@ it("⚠️⚠️ the lifecycle uses the shelf vocabulary b160 already documents"
 it('⚠️⚠️ both halves are required: the evidence AND the rule', () => {
   /* Only the second is the requirement. Without the first, in six months nobody can tell whether it was ever
      real — the fraction work of the same day is the proof: the rule was obvious BECAUSE the line vanished. */
-  assert.ok(/if \(!requirement\) return res\.status\(400\)/.test(SRC), 'a requirement with no rule is accepted');
-  assert.ok(/if \(!observed\) return res\.status\(400\)/.test(SRC), 'a requirement with no evidence is accepted');
+  /* QA-122: the refusals answer through problem() with badRequest(...) words now, same two gates */
+  assert.ok(/if \(!requirement\) return problem\(req, res, \{ status: 400, \.\.\.badRequest\('Nothing to raise'/.test(SRC), 'a requirement with no rule is accepted');
+  assert.ok(/if \(!observed\) return problem\(req, res, \{ status: 400, \.\.\.badRequest\('No evidence'/.test(SRC), 'a requirement with no evidence is accepted');
 });
 
 it('⚠️⚠️ a rejection carries its reason, or it is refused', () => {
@@ -93,13 +94,16 @@ it("⭐ raising CITES the case that found it — the citation the board never ha
 
 it('⭐ the default filter is what is NOT ACTIONED, and that includes accepted-but-unbuilt', () => {
   /* An accepted requirement nobody has built is exactly the one that gets forgotten, so "open" is both. */
-  assert.ok(/state === 'raised' \|\| q\.state === 'accepted'/.test(SRC), 'open no longer means not-actioned');
+  /* QA-122: the filter is one list (REQ_OPEN) fed to stateWhere, no longer an inline comparison (960d18ba, T2-PAGING) */
+  assert.ok(/const REQ_OPEN = \['raised', 'accepted'\]/.test(SRC), 'open no longer means not-actioned');
+  assert.ok(/stateWhere\([^\n]*REQ_OPEN\)/.test(SRC), 'the requirements list no longer filters by REQ_OPEN');
 });
 
 it('⭐ it sorts as a BACKLOG: priority first, oldest first inside it', () => {
   /* Newest-first is right for a log and wrong for a worklist — the oldest High must not sink. */
-  assert.ok(/RANK\s*=\s*\{\s*High: 0/.test(SRC), 'the priority ranking is gone');
-  assert.ok(/RANK\[a\.priority\] - RANK\[b2\.priority\]/.test(SRC), 'the list no longer sorts by priority');
+  /* QA-122: the sort moved into the query (960d18ba, T2-PAGING): the rank list is REQ_PRI, High first, and the ORDER BY ranks by it, then the oldest raised_at */
+  assert.ok(/const REQ_PRI = \['High', 'Medium', 'Low'\]/.test(SRC), 'the priority ranking is gone');
+  assert.ok(/rankOrder\([^\n]*'priority'[^\n]*REQ_PRI\)\}, v\.rules->>'raised_at' NULLS LAST/.test(SRC), 'the list no longer sorts by priority, oldest first inside it');
 });
 
 if (APP && PANEL) {
