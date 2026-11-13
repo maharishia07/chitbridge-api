@@ -35,6 +35,8 @@ const { problem } = require('../lib/problem');
 
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
+/** SEC-150: the moment co-assist keys became their own (IDEMPOTENCY_ACTOR_SCOPE_AT, ISO); the legacy bridge looks only at rows older than this, for one replay window */
+const ACTOR_SCOPE_AT = process.env.IDEMPOTENCY_ACTOR_SCOPE_AT || '2026-11-13T00:00:00Z';
 const { intFromEnv } = require('../lib/limits');
 const { isPoolBusy } = require('../lib/knownerr');
 const DEFAULT_WINDOW_HOURS = 48;
@@ -75,7 +77,9 @@ function scopeOf(req) {
   try {
     const claims = require('../lib/jwt-verify').verifyJwt(header.split(' ')[1]).claims; // E10 — the ONE verifier
     if (!claims.identity_id) return { entity: null, why: 'the token names no identity' };
-    return { entity: claims.parent_entity_id || claims.identity_id, why: null };
+    const entity = claims.parent_entity_id || claims.identity_id;
+    /* SEC-150: a co-assist's key is its own — `who` is set only when the caller is not the entity, so an owner's keys keep their old form */
+    return { entity, who: claims.identity_id !== entity ? claims.identity_id : null, why: null };
   } catch (e) {
     return { entity: null, why: 'the token could not be read: ' + (e && e.message) };
   }
@@ -140,6 +144,22 @@ const dbStore = {
         key
       ]);
       return { existing: raced.rows[0] }; // lost the insert race → treat as replay
+    });
+  },
+  /**
+   * SEC-150 bridge: the PLAIN key a co-assist used before keys were scoped to the co-assist. A settled, in-window row with the SAME body fingerprint, written
+   * BEFORE the cutover (ACTOR_SCOPE_AT), answers as a replay, so a retry across the deploy never runs a money write twice. Rows carry no identity, so the
+   * cutover is what keeps an owner's later row from answering a co-assist; the bridge ends by itself ACTOR_SCOPE_AT + the replay window.
+   */
+  async legacy(entity, key, hash, windowHrs) {
+    return withEntity(entity, async (db) => {
+      const found = await db.query(
+        `SELECT idem_key, req_hash, state, status, response FROM idempotency_key
+          WHERE entity_id = $1 AND idem_key = $2 AND req_hash = $3 AND state = 'done'
+            AND created_at < $4::timestamptz AND created_at > now() - ($5 || ' hours')::interval`,
+        [entity, key, hash, ACTOR_SCOPE_AT, String(windowHrs)]
+      );
+      return found.rows[0] || null;
     });
   },
   async finalize(entity, key, status, body) {
@@ -257,8 +277,9 @@ function holdKey(req, res, next, claim) {
   if (res.locals && res.locals.clientGone) return log.info('idempotency: the client left before the claim — nothing claimed, nothing run', { id: req.id, method: req.method, path: req.path });
   req.idempotencyHeld = claim.key;
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
-  return dbStore
-    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
+  const bridge = claim.legacyKey && Date.now() < Date.parse(ACTOR_SCOPE_AT) + claim.windowHrs * HOUR_MS ? dbStore.legacy(claim.entity, claim.legacyKey, claim.hash, claim.windowHrs).catch(() => null) : Promise.resolve(null);
+  return bridge
+    .then((old) => (old ? { existing: old } : dbStore.begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)))
     .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, true) : runAndRecord(req, res, next, dbStore, claim)))
     .catch((e) => (isPoolBusy(e) ? answerBusyStore(req, res, e) : runUnverified(req, res, next, claim, storeWhy(e))));
 }
@@ -291,7 +312,7 @@ module.exports = function idempotency(req, res, next) {
       log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
     return next();
   }
-  return holdKey(req, res, next, { entity: scoped.entity, key: String(key), hash: fingerprint(req), windowHrs: windowHours(), needsAuth: true });
+  return holdKey(req, res, next, { entity: scoped.entity, legacyKey: scoped.who ? String(key) : null, key: (scoped.who ? 'as ' + scoped.who + ' ' : '') + String(key), hash: fingerprint(req), windowHrs: windowHours(), needsAuth: true });
 };
 
 /* ── ⭐ API-3 S36 · THE PUBLIC MONEY DOORS (laptop1, 23 Oct). A storefront order carries no bearer, so the pass above leaves it
@@ -319,7 +340,8 @@ async function publicClaim(req, key, { shopOf, contactOf }) {
 function bearerClaim(req, key) {
   if (req.idempotencyHeld) return null;
   const entity = req.identity ? require('./auth').entityOf(req) : null;
-  return entity ? { entity, key, hash: fingerprint(req), windowHrs: windowHours() } : null;
+  const who = entity && req.identity.identity_id !== entity ? 'as ' + req.identity.identity_id + ' ' : '';
+  return entity ? { entity, legacyKey: who ? key : null, key: who + key, hash: fingerprint(req), windowHrs: windowHours() } : null;
 }
 /**
  * requireKey(reader?) → the gate a money door mounts; tools/api-register.cjs finds it by its name (requireIdempotencyKey).

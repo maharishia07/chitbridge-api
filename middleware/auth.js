@@ -291,6 +291,7 @@ const auth = async (req, res, next) => {
       req.identity.hat = judged.actor.hat || 'act';
       req.identity.access_level = judged.actor.access_level;
       req.identity.whole_entity = judged.actor.whole_entity === true;
+      req.identity.can_see_costs = judged.actor.can_see_costs === true; /* SEC-119: the SAME row judge() read (never the token) — lib/cost canRead spends no second trip */
     }
 
     /**
