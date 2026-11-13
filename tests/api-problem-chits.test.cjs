@@ -386,6 +386,9 @@ const EXTRAS = [
   /* ── send ── */
   X('send-to-self', 'POST ' + C + '/send', 200, { body: SELF_BILL, setup: { sqlRows: knowsSeller } }),
   X('send-draft-saved', 'POST ' + C + '/send', 200, { body: { is_draft: true, purpose: ' order ' } }),
+  /* CUR-1b: a bill that names a withdrawn money (BGN) is refused in words naming the successor: 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true */
+  X('send-money-withdrawn', 'POST ' + C + '/send', 422, { body: Object.assign({}, SELF_BILL, { business_json: { currency: 'BGN' } }), setup: { sqlRows: knowsSeller } }),
+  X('send-shop-money-withdrawn', 'POST ' + C + '/send', 422, { body: SELF_BILL, setup: { sqlRows: (sql) => (/^SELECT country, currency_code, timezone FROM identities WHERE identity_id = \$1$/.test(sql) ? { rows: [{ country: 'BG', currency_code: 'BGN', timezone: null }], rowCount: 1 } : knowsSeller(sql)) } }),
   X('send-fails', 'POST ' + C + '/send', 500, { body: SELF_BILL, setup: { db: 'fail' } }),
   X('send-purpose-not-known', 'POST ' + C + '/send', 400, { body: { recipients: [{ self: true }], purpose: 'nope' } }),
   X('send-wrong-twice', 'POST ' + C + '/send', 400, { body: { purpose: 'nope', self_copy: 'all', line_items: 'tea', business_json: [] } }),
@@ -855,6 +858,14 @@ const ALLOWLIST_BY_AREA_TEST = [
   'PUT /api/chits/:chit_id/use',
   'PUT /api/chits/:chit_id/void'
 ];
+/** CUR-1b: a withdrawn money is refused in words on the live send door: the bill's own money (MONEY_CURRENCY_UNKNOWN, withdrawn: true) and the shop's own money (the document gate, NO_MONEY); both name the successor */
+function checkWithdrawnSend(recording) {
+  const named = (answer) => /replaced by EUR/.test(String(answer.body && answer.body.detail)) && /nothing is converted/.test(String(answer.body && answer.body.detail));
+  const bill = recording['POST /api/chits/send|send-money-withdrawn'] || {};
+  const shop = recording['POST /api/chits/send|send-shop-money-withdrawn'] || {};
+  check('send: a bill naming BGN is 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor (EUR) named', bill.status === 422 && bill.body.code === 'MONEY_CURRENCY_UNKNOWN' && bill.body.withdrawn === true && named(bill), bill);
+  check('send: a shop whose own money is BGN issues no new document: 422 NO_MONEY, the successor (EUR) named', shop.status === 422 && shop.body.code === 'NO_MONEY' && named(shop), shop);
+}
 function checkAllowList(recording) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
@@ -1132,6 +1143,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a caller who is not signed in is refused with 401 on every route that asks for sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
+  checkWithdrawnSend(recording);
   const allowed = checkAllowList(recording);
   const { prune, shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist'));
   const statusAnswers = Object.values(recording).filter((one) => one.route === 'PUT ' + C + '/:chit_id/status' && one.status === 200 && one.body);

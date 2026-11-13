@@ -560,7 +560,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           city: r.city || null,
           entity_id: r.entity_id,
           price: Number.isFinite(amt) ? amt : null,
-          price_currency: (money.isMoney(d.price) && d.price.currency) || r.currency_code || null,
+          price_currency: (money.isMoney(d.price, { stored: true }) && d.price.currency) || r.currency_code || null,
           lat: r.lat == null ? null : Number(r.lat),
           lng: r.lng == null ? null : Number(r.lng),
           service_km: r.service_km == null ? null : Number(r.service_km),
@@ -658,7 +658,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           // this viewer, and the supplier route hands out the same field for exactly the same reason.
           entity_id: nestedEnt.identity_id,
           price: Number.isFinite(amt) ? amt : null,
-          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || nestedEnt.currency_code || null,
+          price_currency: (money.isMoney(rawPrice, { stored: true }) && rawPrice.currency) || nestedEnt.currency_code || null,
           lat: nestedEnt.lat == null ? null : Number(nestedEnt.lat),
           lng: nestedEnt.lng == null ? null : Number(nestedEnt.lng),
           service_km: nestedEnt.service_km == null ? null : Number(nestedEnt.service_km),

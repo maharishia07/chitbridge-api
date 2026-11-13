@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.78.0 · rollup · sha256 2290a93074d6c87bed048ea8e09e90c7b932c119613bc997c528079584f37d57 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.93.0 · rollup · sha256 3cf37376bcc687cfffda634eb25b055204ca844e507f3d4a3c7cf8c34a445a58 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · rollup. Edited ONLY in chitbridge-engines/src/rollup.js; every platform adopts a released version of it. */
 (function (root) {
   'use strict';
@@ -604,12 +604,20 @@
     return period === 'quarter' ? year + '-Q' + m[3] : year;
   }
 
-  /* ⚠️ money.decimals' rule, without require('./money') (see roundMoney_): CBMoney on a page, else the same Intl lookup.
-   tests/rollup.test.js holds the two equal. The currency is checked as an ISO code before this is reached. */
+  /* ⭐ ONE CALCULATION (CUR-1b): the minor-unit digits are money.decimals' answer and no second table — CBMoney on a page, else money.js beside this file.
+   There is no Intl lookup here any more: Intl (CLDR) answered IQD 0, LBP/YER/SYP 0 where ISO 4217 says 3, 2, 2, 2. No money engine at all is a loud error, never a guess. */
+  var MONEY_ = null;
   function decimalsOf_(currency) {
-    if (typeof CBMoney !== 'undefined' && CBMoney.decimals) return CBMoney.decimals(currency);
-    const d = new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits;
-    return Number.isInteger(d) && d >= 0 && d <= 4 ? d : 2;
+    var money = typeof CBMoney !== 'undefined' && CBMoney.decimals ? CBMoney : MONEY_;
+    if (money === null && typeof require === 'function') {
+      try {
+        money = MONEY_ = require('./money');
+      } catch (_) {
+        money = MONEY_ = false;
+      }
+    }
+    if (!money) throw new Error('rollup needs the money engine (CBMoney or ./money) to know the minor unit of ' + currency);
+    return money.decimals(currency);
   }
   /** a summary's major-unit figure → whole minor units of its currency (₹12.34 → 1234, ¥1234 → 1234), half away from zero */
   function toMinor_(major, currency) {

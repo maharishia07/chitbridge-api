@@ -2413,6 +2413,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/connections/request": [
@@ -3071,6 +3072,7 @@
   403,
   404,
   409,
+  422,
   500
  ],
  "POST /api/products/availability/bulk": [
@@ -3088,6 +3090,7 @@
   400,
   401,
   403,
+  422,
   500
  ],
  "POST /api/products/categories/bulk": [
@@ -3102,6 +3105,7 @@
   403,
   409,
   413,
+  422,
   500
  ],
  "POST /api/products/import/preflight": [

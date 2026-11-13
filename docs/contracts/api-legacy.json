@@ -14621,6 +14621,21 @@
      "note": "ORD-65 (2026-10-23): new answer. Before, deliverEdge called NO_CURRENCY_SAYS() on a string and the operator with no currency got a 500."
     },
     {
+     "scenario": "norder-withdrawn-currency",
+     "status": 422,
+     "body_keys": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. An operator whose stated money is a code ISO 4217 withdrew is refused in words naming the successor; withdrawn: true travels with the refusal (lib/knownerr thrownRefusal)."
+    },
+    {
      "scenario": "norder-fails",
      "status": 500,
      "body_keys": {
@@ -27618,6 +27633,38 @@
       "error": "Not a draft",
       "message": "This chit has already been sent"
      }
+    },
+    {
+     "scenario": "send-money-withdrawn",
+     "status": 422,
+     "body_keys": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "code": "MONEY_CURRENCY_UNKNOWN",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "code": "MONEY_CURRENCY_UNKNOWN",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. A bill that names a withdrawn money is refused in words naming the successor; withdrawn: true travels."
+    },
+    {
+     "scenario": "send-shop-money-withdrawn",
+     "status": 422,
+     "body_keys": {
+      "error": "refused",
+      "code": "NO_MONEY",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written."
+     },
+     "fixture": {
+      "error": "refused",
+      "code": "NO_MONEY",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written."
+     },
+     "note": "CUR-1b (2026-11-13): new answer. A shop whose own money is withdrawn issues no new document: the one document gate (country-setup.documentRefusal) answers NO_MONEY with the successor named."
     }
    ]
   },
@@ -61187,6 +61234,21 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "combo-push-shop-money-withdrawn",
+     "status": 422,
+     "body_keys": {
+      "error": "Could not push this combo to your products",
+      "message": "Cannot stamp a price: BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Could not push this combo to your products",
+      "message": "Cannot stamp a price: BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. A shop whose own money is a code ISO 4217 withdrew pushes no combo as a product; it is told the successor, withdrawn: true travels."
     }
    ]
   },

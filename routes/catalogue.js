@@ -746,7 +746,7 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
     refusal.refused = true;
     throw refusal;
   }
-  const currency_code = String(currency).toUpperCase();
+  const currency_code = money.refuseNewCurrency(currency); /* CUR-1b: a NEW network order never carries a withdrawn or unlisted money (worded 422 naming the successor) */
   // TOTAL_VALUE was hard-coded 0 here, so every network order and fulfilment fragment claimed to be worth nothing
   // while carrying real line items — and lib/kyb.js sums this column as trade value. A currency with no value is
   // meaningless; state both or state neither. null means "not applicable", which 0 never did.
@@ -862,8 +862,8 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
     // Stores whose price is still an unstamped bare number contribute no currency, so a wholly unmigrated network
     // totals exactly as it did before. Once ANY store is stamped, a genuine mismatch surfaces as a 409 rather than
     // a plausible figure — which is the entire reason for doing this.
-    const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item));
-    if (perStore.length) money.sum(perStore); // throws 409 naming both currencies
+    const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item, { stored: true }));
+    if (perStore.length) money.sum(perStore, { stored: true }); // throws 409 naming both currencies
     const total = money.round2(items.reduce((sum, item) => sum + item.price * item.qty, 0));
     // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
     // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
