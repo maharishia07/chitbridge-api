@@ -3066,7 +3066,7 @@ async function spreadSample(entity_id, total) {
   ).catch(log.orElse('till GET /verify: the read failed — answered with none', { rows: [] }));
   return sampleRows.rows.map((row) => {
     const data = row.item_data || {};
-    return { at_offset: row.n, item_id: row.item_id, name: data.name || null, price: amountOf(data.price), tax_slab: data.tax_slab || null };
+    return { at_offset: row.n, item_id: row.item_id, name: data.name || null, price: sellablePrice.soldAt(amountOf(data.price)), tax_slab: data.tax_slab || null };
   });
 }
 

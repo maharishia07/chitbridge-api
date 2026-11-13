@@ -48,6 +48,16 @@ const t = (name, cond, extra) => { if (cond) { pass++; console.log('  ok   ' + n
 t('the rule: 60 and 0 sell, -0.01 is negative, NaN and null are unset', sellable.fault(60) === null && sellable.fault(0) === null && sellable.fault(-0.01) === 'negative' && sellable.fault(NaN) === 'unset' && sellable.fault(null) === 'unset');
 t('soldAt: -5 becomes null, 0 stays 0', sellable.soldAt(-5) === null && sellable.soldAt(0) === 0 && sellable.soldAt(60) === 60);
 
+/* the shop window: adopted lines with no price, a bare 0, a negative one (number, string, { amount }) and per-litre fall-back. Hand count: kept 60 · 0 · 12.5/l, hidden -5 · "-3" · {amount:-1} · none = 4 */
+const finishes = [{ items: [{ commercials: { price: 60 } }, { commercials: { price: 0 } }, { commercials: { price: -5 } }, { commercials: { price: '-3' } }] },
+  { items: [{ commercials: { price: { amount: -1, currency: 'INR' } } }, { commercials: {} }, { commercials: { price_per_litre: 12.5 } }] }];
+const hidden = require(path.join(API, 'lib', 'catalogue-view')).hideUnsellable(finishes);
+t('shop window: negatives are hidden and counted in unpriced_hidden with the unpriced (4), 3 kept', hidden === 4 && finishes[0].items.length === 2 && finishes[1].items.length === 1, hidden + ' ' + finishes.map((f) => f.items.length));
+t('shop window: zero is still shown (a free sample)', finishes[0].items.some((i) => i.commercials.price === 0));
+const catSrc = require('fs').readFileSync(path.join(API, 'routes', 'catalogue.js'), 'utf8');
+const tillSrc = require('fs').readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+t('the public list, the verify sample and the network order read the one rule', catSrc.includes('price: sellablePrice.soldAt(money.amountOfLoose(d.price))') && tillSrc.includes('price: sellablePrice.soldAt(amountOf(data.price)), tax_slab') && catSrc.includes('if (sellablePrice.fault(amt)) {'));
+
 const srv = app.listen(0, '127.0.0.1', async () => {
   try {
     const r = await fetch(`http://127.0.0.1:${srv.address().port}/api/till/snapshot`);

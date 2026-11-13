@@ -705,7 +705,7 @@ router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId
         name: d.name || d.particulars || '(unnamed)',
         category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
-        price: Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null,
+        price: sellablePrice.soldAt(money.amountOfLoose(d.price)),
         unit: d.unit || null,
         image: d.image || null
       };
@@ -850,7 +850,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
       const d = item.item_data || {};
       // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
       const amt = money.amountOfLoose(d.price);
-      if (!Number.isFinite(amt)) {
+      if (sellablePrice.fault(amt)) { /* CAT-324: unset or negative — never totalled */
         const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`);
         e.status = 422;
         throw e;
