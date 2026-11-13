@@ -82,6 +82,9 @@ function resolveApi(env) {
 
 /** the call every api script makes at load: the api base, else REFUSED on stderr + exit before any request. label = the script's name */
 function apiBase(label, env) {
+  /* loaded as a library by a test (the entry file is not in scripts/): no target, no refusal, and no request can be made with '' */
+  const entry = !env && require.main && require.main.filename;
+  if (entry && path.basename(path.dirname(entry)) !== 'scripts') return '';
   const v = resolveApi(env);
   if (!v.ok) { console.error('REFUSED' + (label ? ' (' + label + ')' : '') + ': ' + v.why); process.exit(v.code); }
   return v.base;

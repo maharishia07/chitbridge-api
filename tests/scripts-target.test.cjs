@@ -20,6 +20,19 @@ check('no script in scripts/ names the production api host', () => {
   const bad = files.filter((f) => LIVE_HOST.test(fs.readFileSync(path.join(SCRIPTS, f), 'utf8')));
   assert.deepStrictEqual(bad, [], 'hard-coded production host in: ' + bad.join(', ') + ' — use require("../tests/lib/run-target.cjs").apiBase(name)');
 });
+const NETWORKED = /\bfetch\(|https?\.request|https?\.get\(|require\('(https?|node-fetch|axios|undici)'\)/;
+check('every networked script takes its target from run-target (or _proof, which does)', () => {
+  const bad = files.filter((f) => { const t = fs.readFileSync(path.join(SCRIPTS, f), 'utf8'); return NETWORKED.test(t) && !/run-target|require\('\.\/_proof'\)/.test(t) && f !== 'vendor-till.cjs'; });   /* vendor-till: 'fetch(' is service-worker text it writes out */
+  assert.deepStrictEqual(bad, [], 'networked without apiBase(): ' + bad.join(', '));
+});
+check('a script loaded by a test (entry file outside scripts/) gets no target and is not refused', () => {
+  const entry = path.join(require('os').tmpdir(), 'plt101-entry-' + process.pid + '.cjs');
+  fs.writeFileSync(entry, 'process.stdout.write(JSON.stringify(require(' + JSON.stringify(path.join(__dirname, 'lib', 'run-target.cjs')) + ').apiBase("x.js")))');
+  const env = Object.assign({}, process.env); delete env.CB_API;
+  const r = spawnSync(process.execPath, [entry], { env, encoding: 'utf8' });
+  fs.unlinkSync(entry);
+  assert.strictEqual(r.status, 0, r.stderr); assert.strictEqual(r.stdout, '""');
+});
 check('apiBase: unset is refused with code 2 (no default)', () => {
   const v = RT.resolveApi({}); assert.strictEqual(v.ok, false); assert.strictEqual(v.code, 2);
   assert.strictEqual(RT.resolveApi({ CB_API: '   ' }).code, 2);

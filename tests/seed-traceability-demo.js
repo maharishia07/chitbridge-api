@@ -1,5 +1,5 @@
 // tests/seed-traceability-demo.js — seed a demo traceability chain for the on-screen recall drama.
-// Run:  TEST_URL=https://chitbridge-api-production.up.railway.app node tests/seed-traceability-demo.js
+// Run:  TEST_URL=http://localhost:3000 node tests/seed-traceability-demo.js
 //
 // Creates a real pharma-shaped chain (Aurex API batch → Meridian tablets → 3 distributors → pharmacies + a
 // govt hospital → a 380-patient ward), all mandated-co-held by ONE OPERATOR you can sign into. Prints the

@@ -6,11 +6,8 @@ const http = require('http');
 const https = require('https');
 const { URL } = require('url');
 
-const BASE = (process.argv[2] || process.env.API_BASE || '').replace(/\/+$/, '');
-if (!BASE) {
-  console.error('Usage: node scripts/test-dev.js https://<dev-api>');
-  process.exit(2);
-}
+/* the target: argv[2] or API_BASE or CB_API, judged by the one helper (no default; production only with CB_ALLOW_PROD=1) */
+const BASE = require('../tests/lib/run-target.cjs').apiBase('test-dev.js', { CB_API: process.argv[2] || process.env.API_BASE || process.env.CB_API, CB_ALLOW_PROD: process.env.CB_ALLOW_PROD });
 const DEV_OTP = process.env.DEV_OTP || '123456';
 const TS = Date.now();
 let PASS = 0,

@@ -13,10 +13,10 @@
 //
 // Concept proof on realistic data — NOT a proof on real manufacturing data (that's the pilot). Never sell it as live proof.
 //
-// Run:  TEST_URL=http://localhost:3000 node scripts/akums-demo.js
+// Run:  CB_API=http://localhost:3000 node scripts/akums-demo.js
 
 require('dotenv').config();
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = require('../tests/lib/run-target.cjs').apiBase('akums-demo.js');
 const C = { g: '\x1b[32m', r: '\x1b[31m', y: '\x1b[33m', dim: '\x1b[2m', z: '\x1b[0m', bold: '\x1b[1m', cyan: '\x1b[36m' };
 const results = [];
 const ok = (t) => {

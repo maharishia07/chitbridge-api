@@ -48,6 +48,7 @@ function apiBase(env, argv) {
   if (u.protocol === 'http:' && !local) return { refuse: 'plain http is allowed only for localhost — use https for ' + u.hostname };
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return { refuse: 'API_BASE must be http(s): ' + base };
   if (base === PRODUCTION && !wantProd) return { refuse: 'this is the PRODUCTION api — pass --production to write into it on purpose' };
+  if ((base === PRODUCTION || require('../tests/lib/run-target.cjs').PRODUCTION.test(base)) && env.CB_ALLOW_PROD !== '1') return { refuse: 'the production api also needs CB_ALLOW_PROD=1 (set by Athi): the one rule of tests/lib/run-target.cjs' };
   return { base };
 }
 module.exports = { apiBase };

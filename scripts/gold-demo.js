@@ -18,10 +18,10 @@
 // single party (not even the launderer) holds or controls both sides. Concept proof on realistic data — NOT a
 // proof on a refiner's real data (that's the pilot). Never present it as a live proof.
 //
-// Run:  TEST_URL=http://localhost:3000 node scripts/gold-demo.js
+// Run:  CB_API=http://localhost:3000 node scripts/gold-demo.js
 
 require('dotenv').config();
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = require('../tests/lib/run-target.cjs').apiBase('gold-demo.js');
 const C = { g: '\x1b[32m', r: '\x1b[31m', y: '\x1b[33m', dim: '\x1b[2m', z: '\x1b[0m', bold: '\x1b[1m', cyan: '\x1b[36m' };
 const SPOT_USD_PER_OZ = 2900,
   G_PER_OZT = 31.1035;
