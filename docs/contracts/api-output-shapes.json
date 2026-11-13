@@ -3219,8 +3219,7 @@
           "required": [
             "kind",
             "count",
-            "words",
-            "action"
+            "words"
           ],
           "properties": {
             "kind": {
