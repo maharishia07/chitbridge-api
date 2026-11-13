@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 1,
-  "meets": 630,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -12838,11 +12838,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d0628c294c8f8b38"
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1218 stage2 (re-sign; 13 of 13 read; additive unbilled {n,minor,currency,by_currency,no_currency,unpriced} = the list row's one sum over lib/money summarise, mixed currencies minor null, currency-less order counted not summed, blind reader hidden whole; every current web reader reads n/minor/currency only; JPY 500 and KWD 12.345+0.005=12350 minor checked by hand)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js",
     "cap-crm-record.js"
