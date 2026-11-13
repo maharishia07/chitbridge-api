@@ -761,6 +761,13 @@ const GUARDS = [
   'catalogue-columns.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'catalogue-read.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'catalogue-visibility.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'cat-81-db-query-log.test.cjs', // CAT-81 (proof 2026-11-14): DB_QUERY_LOG=true is the only switch that logs a query
+  'cat-83-logger-critical.test.cjs', // CAT-83 (proof 2026-11-14): onCritical fires for critical events only
+  'cat-84-profile-visibility.test.cjs', // CAT-84 (proof 2026-11-14): PATCH /entities/profile saves identities.catalogue_visibility
+  'cat-93-group-offers-link.test.cjs', // CAT-93 (proof 2026-11-14): customer-group offers shown per viewer group over the supplier link
+  'cat-120-one-validator.test.cjs', // CAT-120 (proof 2026-11-14): no route carries its own product-schema validator
+  'cat-167-cors-allowlist.test.cjs', // CAT-167 (proof 2026-11-14): CORS allows only the ALLOWED_ORIGINS set
+  'cat-201-reprice.test.cjs', // CAT-201 (proof 2026-11-14): a tampered client price is replaced by repriceAgainstCatalogue
   'column-parity.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'column-rules.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'conf-cache.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
