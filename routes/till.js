@@ -3204,12 +3204,12 @@ const objectOr = (body) => (body && typeof body === 'object' ? body : {});
 
 /** CTR-174: what the shop's header carries is checked before it is stored: the e-mail, the phone and the PIN/ZIP the way every other door reads them; the tax number last. → the refusal's spec, or null */
 function checkSentShop(body, before) {
-  return checkSentContact(body) || checkSentTaxId(body, before);
+  return checkSentContact(body, before) || checkSentTaxId(body, before);
 }
 
 /** a blank is left alone (a blank never clears, see shopChanges); a filled e-mail, phone or PIN/ZIP that does not read right is refused 400 with the field named. → the refusal's spec, or null */
-function checkSentContact(body) {
-  const why = require('../lib/party-fields').shopHeaderWhy(body);
+function checkSentContact(body, before) {
+  const why = require('../lib/party-fields').shopHeaderWhy(body, before);
   return why ? said('TILL_BAD_REQUEST', 'validation', why.words, { field: why.field }) : null;
 }
 
@@ -3692,9 +3692,9 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
  * the shop's own counter bills inside the window, newest first (the comments sit inside the statement: they are part of the text the database receives).
  * ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08)
  */
-const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json, false AS withdrawn, count(*) OVER () AS total_rows /* CTR-225: the window's count before the page cuts it */
+const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.line_items, page.summary_json, false AS withdrawn, page.total_rows
+         FROM (SELECT h.chit_id, h.created_at, h.business_json, h.summary_json, count(*) OVER () AS total_rows /* CTR-225: the window's count, taken on the header alone (no detail join) before the page cuts it */
          FROM chit_header h
-         LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
        /**
         * ⚠️⚠️ NO DIRECTION TEST — AND THAT IS THE WHOLE BUG. A counter bill is a chit the shop sends to ITSELF, and a SELF chit
         * lands with direction 'received', not 'sent'. We knew that: it is why business_json.side exists and why sideOf() was
@@ -3718,9 +3718,11 @@ const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_item
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
           /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out of the list and the day, as the day close leaves it out */
           ${counterBill.NOT_WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3 OFFSET $6)
+        ORDER BY h.created_at DESC LIMIT $3 OFFSET $6) page
+         LEFT JOIN chit_detail d ON d.chit_id = page.chit_id AND d.entity_id = $1 /* the lines are joined for the cut page only */
+        ORDER BY page.created_at DESC)
       UNION ALL
-       /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. */
+       /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. CTR-225: NOT paged (no OFFSET) on purpose: this is the list the counter drops its own copies by, not a page of the day, so every page repeats the newest $3 of it. */
        (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')

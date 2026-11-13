@@ -7,7 +7,7 @@
  *           answers config as an object, always), CTR-225 (GET /api/till/bills reads `page`: distinct pages, the true total, a page past the end).
  * CALLED BY scripts/guards.cjs · CI. No database, no network.
  * FLOW      hand-computed expectation -> real app -> status and body -> table of results
- * MIN       contract - 30 checks; each fails on the main it was cut from.
+ * MIN       contract - 34 checks; the junk, screen-config, paging and re-save ones fail on the base it was cut from.
  * CARD      09-counter/till-api
  * HAND      58 bills, limit 5: page 1 = bills 1-5, page 2 = 6-10 (10 distinct over two pages), page 12 = 56-58 (3 bills), page 13 = 0 bills; total 58 on every page.
  */
@@ -41,6 +41,7 @@ const billOf = (n) => ({
 });
 const WINDOW = Array.from({ length: BILLS }, (unused, index) => billOf(index + 1));
 
+let storedShop = { phone: '98765 43210', email: 'shop@example.com' };
 let storedStyle = { config: -1, updated_at: '2026-11-01T00:00:00Z' };
 const answer = (sql, params) => {
   const text = String(sql).replace(/\s+/g, ' ');
@@ -51,7 +52,7 @@ const answer = (sql, params) => {
   }
   if (/FROM device_screen_config/.test(text)) return { rows: storedStyle ? [storedStyle] : [], rowCount: storedStyle ? 1 : 0 };
   if (/SELECT capabilities FROM identities/.test(text)) return { rows: [{ capabilities: ['register'] }], rowCount: 1 };
-  if (/FROM identities WHERE identity_id/.test(text)) return { rows: [{ display_name: 'Shop', gstn: null, address: '1 Main Rd', phone: '98765 43210', email: 'shop@example.com', country: 'IN', currency_code: 'INR', policy_flags: {} }], rowCount: 1 };
+  if (/FROM identities WHERE identity_id/.test(text)) return { rows: [{ display_name: 'Shop', gstn: null, address: '1 Main Rd', phone: storedShop.phone, email: storedShop.email, country: 'IN', currency_code: 'INR', policy_flags: {} }], rowCount: 1 };
   if (/information_schema/.test(text)) return { rows: [{ x: 1 }], rowCount: 1 };
   return { rows: [], rowCount: 0 };
 };
@@ -98,6 +99,23 @@ async function shopCases(port, token) {
   }
 }
 
+/** CTR-174 re-save: the dialog re-posts every box; an unchanged stored value (even a junk one) is not judged, so fixing the tax number saves */
+async function resaveCases(port, token) {
+  console.log('CTR-174 re-save · an unchanged stored value is not re-judged');
+  const junkShop = { phone: 'abcdefgh', email: 'not-an-email' };
+  storedShop = junkShop;
+  const named = (got) => /"field":"(email|phone|pincode)"/.test(got.raw);
+  const same = await send(port, token, 'POST', '/api/till/shop', Object.assign({ gstin: '27AAPFU0939F1ZV' }, junkShop));
+  check('stored junk phone and e-mail re-posted unchanged, only the GSTIN new: not refused for them', !named(same), { status: same.status, raw: same.raw.slice(0, 200) });
+  const changed = await send(port, token, 'POST', '/api/till/shop', { phone: 'abcdefghi', email: junkShop.email });
+  check('the same shop with the phone changed to another junk value is refused 400 naming phone', changed.status === 400 && /"field":"phone"/.test(changed.raw), changed.raw.slice(0, 200));
+  const header = require(path.join(ROOT, 'lib', 'party-fields')).shopHeaderWhy;
+  check('a stored junk PIN re-posted unchanged is not judged (unit)', header({ pincode: 'abcdef' }, { pincode: 'abcdef' }) === null);
+  check('a stored PIN changed to another junk value is refused (unit)', !!header({ pincode: 'abcdeg' }, { pincode: 'abcdef' }) && header({ pincode: 'abcdeg' }, { pincode: 'abcdef' }).field === 'pincode');
+  check('a stored junk e-mail and phone unchanged are not judged (unit)', header({ email: 'x', phone: 'y' }, { email: ' x ', phone: 'y' }) === null);
+  storedShop = { phone: '98765 43210', email: 'shop@example.com' };
+}
+
 /** CTR-190: whatever the column holds, config answers an object */
 async function styleCases(port, token) {
   console.log('CTR-190 · screen-config: config is an object, always');
@@ -138,6 +156,7 @@ async function billCases(port, token) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const port = server.address().port;
   await shopCases(port, token);
+  await resaveCases(port, token);
   await styleCases(port, token);
   await billCases(port, token);
   server.close();
