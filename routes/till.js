@@ -82,6 +82,7 @@ const countrySetup = require('../lib/country-setup'); /* W1-TILL: shopMoney + MO
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus'); /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
+const units = require('../lib/units');
 /* ⭐ BOOKS v2: is this shop's ledger on (the hooks' one cached read), and the ledger's one reader of a `date` column */
 const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
@@ -3984,25 +3985,29 @@ function receiptOf(row, business) {
  * one order beside its receipts and their invoice, or null when it has no lines.
  * ⭐ THE VERDICT IS ABOUT WHAT IS KNOWN, not about who is right.
  *   awaited   nothing has arrived yet
- *   open      some has, some has not
+ *   open      some has, some has not: waiting for the rest (OPS-100: a short line on an order the shop has not closed is not a difference)
  *   agreed    everything arrived as ordered, and the money agrees
  *   differs   something does not agree, and the line says what
  */
 function matchOrder(head, detail, business, progress, receipts, invoices, tolerance, currency) {
-  const lines = (Array.isArray(detail.line_items) ? detail.line_items : []).map((item) => matchLine(item, progress, receipts, tolerance));
+  const ordered_lines = Array.isArray(detail.line_items) ? detail.line_items : [];
+  const billed = billedByLine(ordered_lines, billedLines(head, invoices));
+  const lines = ordered_lines.map((item) => matchLine(item, progress, receipts, tolerance, billed.byLine.get(item.line_id)));
   if (!lines.length) return null;
   const invoice = theirInvoice(head, receipts, invoices);
   const ordered_total = roundMoney(lines.reduce((total, item) => total + item.ordered * (item.rate || 0), 0));
   const received_total = roundMoney(lines.reduce((total, item) => total + item.received * (item.rate || 0), 0));
-  const differences = lines.filter((item) => item.difference !== 0 && !item.absorbed).length;
+  const closed = String(head.current_status) === 'completed';
+  const differences = lines.filter((item) => countsAsDifference(item, closed)).length;
   const money = matchMoney(invoice, receipts, currency);
   return {
     chit_id: head.chit_id,
     at: head.created_at,
     ...orderParty(head, business),
     lines,
+    billed_unmatched: billed.unmatched,
     differences,
-    verdict: matchVerdict(lines, differences, money.code),
+    verdict: matchVerdict(lines, differences, money, closed),
     ordered_total,
     received_total,
     invoiced_total: invoice.total,
@@ -4029,6 +4034,12 @@ function orderParty(head, business) {
   };
 }
 
+/** the invoices THIS counterparty sent that name THIS order (business_json.order.from), the one reading theirInvoice and billedLines share */
+function billingInvoices(head, invoices) {
+  return invoices.filter((invoice) => head.counterparty_id && String(invoice.sender_entity_id) === String(head.counterparty_id)
+    && String(((invoice.business_json || {}).order || {}).from || '') === String(head.chit_id));
+}
+
 /**
  * their invoice: the chit THIS counterparty sent that bills THIS order, else the figure keyed off their paper bill at the door → { total, from, currency } (null when there is none; currency only when the invoice states one).
  * ⭐ OPS-82: a bill belongs to an order by what it names, never by being the first from the same supplier. The link is the one the books read
@@ -4036,8 +4047,7 @@ function orderParty(head, business) {
  * the match picks neither, names both in `from`, and the figure stays unknown. A bill whose total_value is not stated is an unknown figure, never 0.
  */
 function theirInvoice(head, receipts, invoices) {
-  const billing = invoices.filter((invoice) => head.counterparty_id && String(invoice.sender_entity_id) === String(head.counterparty_id)
-    && String(((invoice.business_json || {}).order || {}).from || '') === String(head.chit_id));
+  const billing = billingInvoices(head, invoices);
   if (billing.length > 1) return { total: null, from: 'several invoices name this order: ' + billing.map(invoiceNo).join(', ') };
   if (billing.length) {
     const picked = counterBill.pickOf(billing[0]);
@@ -4105,16 +4115,74 @@ function invoiceNo(invoice) {
   return String(business.bill_no || business.invoice_no || business.doc_no || invoice.chit_id);
 }
 
+/**
+ * OPS-351 · the lines of THE invoice that bills this order, or null: more than one invoice, copies that disagree (pickOf agree false), no lines (a total-only bill) and a bill keyed at the door
+ * all leave the billed quantity unknown. Carried as the supplier wrote them (quantity · unit · particulars); nothing is converted or recomputed here.
+ */
+function billedLines(head, invoices) {
+  const billing = billingInvoices(head, invoices);
+  if (billing.length !== 1 || !counterBill.pickOf(billing[0]).agree) return null;
+  return Array.isArray(billing[0].line_items) && billing[0].line_items.length ? billing[0].line_items : null;
+}
+
+/**
+ * OPS-351 · join the invoice's lines to the order's by the EXACT name (the join doorReason uses; the supplier's item ids are their own catalogue, so none joins).
+ * → { byLine: Map(line_id → { qty, unit, unit_differs }), unmatched }. A line gets NO entry (billed stays null: unknown, never 0) when its name is duplicated on either side,
+ * the invoice names no such line, or the quantity is not a positive number. A unit that is not the ordered one (units.sameUnit; blank = as ordered) gives unit_differs: no conversion
+ * is guessed. `unmatched` counts the invoice lines naming no order line: said, never judged.
+ */
+function billedByLine(orderLines, invoiceLines) {
+  const byLine = new Map();
+  if (!invoiceLines) return { byLine, unmatched: 0 };
+  const unmatched = invoiceLines.filter((bill) => !namedIn(orderLines, lineName(bill))).length;
+  for (const ordered of orderLines) {
+    const billed = billedFor(ordered, orderLines, invoiceLines);
+    if (billed) byLine.set(ordered.line_id, billed);
+  }
+  return { byLine, unmatched };
+}
+
+/** the name a line is joined on: exact, as written (the door's own join) */
+const lineName = (line) => String(line.particulars || line.name || '');
+const namedIn = (list, name) => list.filter((line) => lineName(line) === name).length;
+
+/** one order line's billed figure { qty, unit, unit_differs }, or null when it is unknown: no name, the name twice on either side, no invoice line, or a quantity that is not a positive number */
+function billedFor(ordered, orderLines, invoiceLines) {
+  const name = lineName(ordered);
+  const mine = invoiceLines.filter((bill) => lineName(bill) === name);
+  if (!name || namedIn(orderLines, name) !== 1 || mine.length !== 1) return null;
+  const billed_qty = Number(mine[0].quantity);
+  if (!isFinite(billed_qty) || billed_qty <= 0) return null;
+  const unit = mine[0].unit == null ? '' : String(mine[0].unit).trim();
+  return { qty: billed_qty, unit, unit_differs: !!unit && !units.sameUnit(ordered.unit || 'piece', unit) };
+}
+
+/**
+ * OPS-100 · is this line a difference to chase? An excess always is; a short only once the shop has closed the order (rail status completed). While the order is open a short line
+ * is the rest still to come, and one this trade absorbs (matchLine, lib/lotfields tolerance) never is. The same matchLine figures: no second compare.
+ */
+function countsAsDifference(item, closed) {
+  if (item.billed_more) return true; /* OPS-351: billed above what was received, a difference whatever the status */
+  if (item.difference === 0 || item.absorbed) return false;
+  return item.difference > 0 || closed;
+}
+
+/** OPS-100 · an invoice above the goods received is a variance whatever the order's status (reason: billed more than received): the carried code and gap, nothing recomputed */
+function billedMoreThanReceived(money) {
+  return money.code === 'apart' && money.gap < 0;
+}
+
 /** awaited · differs · open · agreed — see matchOrder */
-function matchVerdict(lines, differences, money_code) {
+function matchVerdict(lines, differences, money, closed) {
+  if (lines.some((item) => item.billed_more)) return 'differs'; /* OPS-351 (Oracle Qty Rec hold, SAP DQ/DW keys): billed more than received, even when nothing has arrived: before 'awaited' */
   if (lines.every((item) => item.received === 0 && !item.counted_in_another_unit)) return 'awaited';
   if (differences || lines.some((item) => item.state === 'other_unit')) return 'differs';
-  if (lines.some((item) => item.received < item.ordered)) return 'open';
-  return money_code === 'apart' || money_code === 'currency_mismatch' ? 'differs' : 'agreed'; /* a round-off or an unknown figure is not a difference */
+  if (!closed && lines.some((item) => item.received < item.ordered)) return billedMoreThanReceived(money) ? 'differs' : 'open';
+  return money.code === 'apart' || money.code === 'currency_mismatch' ? 'differs' : 'agreed'; /* a round-off or an unknown figure is not a difference */
 }
 
 /** one ordered line beside what was received: the difference, the reason the door gave, and whether this trade absorbs it */
-function matchLine(item, progress, receipts, tolerance) {
+function matchLine(item, progress, receipts, tolerance, bill) {
   const ordered = Number(item.quantity) || 0;
   const received = receivedOf(progress, item);
   const otherUnits = otherUnitsOf(progress, item);
@@ -4123,6 +4191,7 @@ function matchLine(item, progress, receipts, tolerance) {
      not a difference to chase — and both figures still show, because tolerance decides what is worth a conversation, never
      what is true. */
   const absorbed = diff !== 0 && lotfields.withinTolerance(diff, ordered, item.unit, tolerance);
+  const billed = billedFigures(bill, received, ordered, item.unit, tolerance);
   return {
     line_id: item.line_id,
     name: item.particulars || item.name || '',
@@ -4130,12 +4199,20 @@ function matchLine(item, progress, receipts, tolerance) {
     rate: item.price == null ? null : Number(item.price),
     ordered,
     received,
+    ...billed,
     difference: diff,
     reason: doorReason(item, receipts),
     absorbed,
     ...(otherUnits.length ? { counted_in_another_unit: true, other_units: otherUnits } : {}),
     state: lineState(diff, received, absorbed, otherUnits.length > 0)
   };
+}
+
+/** the billed keys of a line: `billed` (null = unknown) · `billed_unit` only when the units differ · `billed_more` only when billed is above received outside the trade's tolerance (OPS-351) */
+function billedFigures(bill, received, ordered, unit, tolerance) {
+  const billed = bill && !bill.unit_differs ? bill.qty : null;
+  const more = billed != null && billed > received && !lotfields.withinTolerance(billed - received, ordered, unit, tolerance);
+  return { billed, ...(bill && bill.unit_differs ? { billed_unit: bill.unit } : {}), ...(more ? { billed_more: true } : {}) };
 }
 
 /** how much of the line has been received, from the delivery events (lib/deliverline progress) */
