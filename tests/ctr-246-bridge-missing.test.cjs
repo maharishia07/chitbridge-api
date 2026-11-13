@@ -121,11 +121,12 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
 
 const fs = require('fs');
 const sendOf = require(path.join(API, 'lib', 'send-money'));
-const BUILD = '2026-11-13.ctr246';
 const withBuild = (build) => ({ till: { id: 'C1', build } });
 const noBridge = () => invoiceWith((i) => { delete i._cb; });
 const noSteps = () => invoiceWith((i) => { delete i._cb.bridge; });
 const tillHtml = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+const BUILD = (/var TILL_BUILD = '([^']+)';/.exec(tillHtml) || [])[1];   /* read from the till master, never a literal: the stamp the till sends is the one it carries */
+if (!BUILD) throw new Error('till.html declares no TILL_BUILD');
 const tillJs = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
 
 (async () => {

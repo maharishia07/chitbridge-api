@@ -335,7 +335,7 @@ const nosOf = (g) => g.rows.map((r) => r.no);
   });
 
   /* the build stamp moved, so a stale page reloads (pageStale) */
-  check('TILL_BUILD is bumped for this change (pageStale reloads a counter on the old page)', () => assert.match(PAGE, /var TILL_BUILD = '2026-11-13\.ctr243';/));
+  check('TILL_BUILD is bumped for this change (pageStale reloads a counter on the old page)', () => { const b = /var TILL_BUILD = '([^']+)';/.exec(PAGE); assert.ok(b && b[1] !== '2026-11-11.ctry139', 'TILL_BUILD is declared in the till master and moved off the pre-change build: ' + (b && b[1])); });
 
   console.log('\n' + (fail ? '  FAIL ' + fail + ' failed' : '  ok ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
