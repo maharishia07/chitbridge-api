@@ -455,18 +455,9 @@ router.post(
           const who = entityId(req);
           const seen = await sameRefLook(who, raceRef);
           if (seen) {
-            const _bj = req.body && req.body.business_json;
-            const mine = (_bj && _bj.till && _bj.till.id) || null;
-            const theirs = seen.till_id || null;
-            const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
-            const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
-               longer drift from it (it used to: this branch had no sameName wording at all). */
-            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
-            if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
-            /* CTR-204: the same number, till and moment but ANOTHER sale — named, never answered as a duplicate */
-            const other = await replayOtherSale(req, who, raceRef);
-            if (other) return problem(req, res, { status: 409, ...said(other, 'CHIT_CONFLICT') });
+            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — one function both callers share, so this cannot drift from it */
+            const refusal = await replayRefusal(req, who, seen, raceRef);
+            if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
             return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
           }
@@ -852,18 +843,19 @@ async function sendReplay(sendState, req, res) {
 }
 /** a chit already exists under this client_ref: 409 when it is two devices on one number (named), else 200 with the chit that exists (a retry) */
 async function answerReplay(req, res, seen, client_ref, sender_id) {
+  const refusal = await replayRefusal(req, sender_id, seen, client_ref);
+  if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
+  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
+}
+/** the refusal body (409) a replay earns — two counters on one number first, then another sale under the same number — or null for a true replay */
+async function replayRefusal(req, sender_id, seen, client_ref) {
   /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
      here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
   const businessJson = req.body && req.body.business_json;
   const mine = (businessJson && businessJson.till && businessJson.till.id) || null;
-  const theirs = seen.till_id || null;
   const myAt = businessJson && businessJson.billed_at ? String(businessJson.billed_at) : null;
-  const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-  const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
-  if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
-  const other = await replayOtherSale(req, sender_id, client_ref);
-  if (other) return problem(req, res, { status: 409, ...said(other, 'CHIT_CONFLICT') });
-  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
+  const verdict = tillCollisionVerdict(mine, seen.till_id || null, myAt, seen.billed_at ? String(seen.billed_at) : null, client_ref);
+  return verdict.collision ? verdict.body : await replayOtherSale(req, sender_id, client_ref);
 }
 /**
  * ⭐ CTR-204 · SAME NUMBER, SAME TILL, SAME MOMENT, DIFFERENT SALE. The check above cannot tell it from a retry (it reads till id and billed_at only), so the
