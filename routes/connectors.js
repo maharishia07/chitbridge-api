@@ -65,6 +65,49 @@ const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH; /* ⭐ one bound, dec
  */
 const stableStringify = (v) => require('../lib/canon').canon(v);
 const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
+
+/**
+ * CON-159 · the replay key of POST /ingest: the caller's Idempotency-Key header, else the body's event_id (CloudEvents: source + id, the source being this device, so its bridge_id is part of the key).
+ * No key = null = no dedupe: a sensor reading is an event, and byte-identical readings seconds apart are real. Never the payload hash (claimReceipt hashFallback:false).
+ */
+function ingestReplayKey(req, bridge_id) {
+  const header = String(req.get('idempotency-key') || '').trim();
+  if (header) return header;
+  const eventId = req.body.event_id ? String(req.body.event_id).trim() : '';
+  return eventId ? 'event:' + (bridge_id || '') + '|' + eventId : null;
+}
+/** claim the receipt of one reading (lib/erp-receipt, the same seam as /erp-ingest): the claim ({ receipt_id } or null when no key was sent), or null after answering a replay (200) or a refusal (422 · 409 · 503) */
+async function claimIngestReceipt(req, res, actor, bridge_id) {
+  const claim = await claimReceipt({ entityId: actor.parent_entity_id, actorId: actor.identity_id, docType: 'device_signal', docRef: null, payloadHash: hashPayload(req.body), idempotencyKey: ingestReplayKey(req, bridge_id), hashFallback: false });
+  if (claim.state === 'duplicate') return void res.json(ingestReplay(claim.held));
+  const refusal = erpReceiptRefusal({ state: claim.state }, actor);
+  return refusal ? void problem(req, res, refusal) : claim;
+}
+/** the outcome of one reading's receipt; a failed receipt is claimed again by the device's retry. Never throws: the chit is already made or refused */
+async function settleIngestReceipt(entityId, receiptId, outcome, chitId) {
+  if (!receiptId) return;
+  try {
+    await finishReceipt(entityId, receiptId, outcome, chitId);
+  } catch (e) {
+    log.warn('connectors.ingest: the receipt outcome was not written', { receipt: receiptId, why: String((e && e.message) || e).slice(0, 200) });
+  }
+}
+/** the edge image (base64) of a reading, attached to its chit for every participant (PER-ENTITY, b66); bytes are fetched on demand via GET /api/attachments/:id → { proof_id, proof_err } */
+async function attachIngestProof(req, actor, chit_id, participants) {
+  try {
+    const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
+    if (buf.length === 0 || buf.length > 6 * 1024 * 1024) return { proof_id: null, proof_err: null };
+    const proof_id = await storage.putForParticipants({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200), mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf, uploaded_by: actor.identity_id, participants, forEntity: actor.parent_entity_id });
+    return { proof_id, proof_err: null };
+  } catch (e) {
+    log.warn('connectors.ingest: the signal chit was raised but its proof was not kept', { why: String((e && e.message) || e).slice(0, 200) });
+    return { proof_id: null, proof_err: INGEST_NOTES.proofNotKept };
+  }
+}
+/** the 200 of a replay: the first call's chit, marked as a replay the way /erp-ingest marks it (message 'duplicate', idempotent true) */
+function ingestReplay(held) {
+  return { message: 'duplicate', health: 'live', last_seen: new Date().toISOString(), chit_id: held.chit_id || null, proof_id: null, filed: null, file_err: null, proof_err: null, note: 'A replay of a reading already received: no second chit.', assigned: null, money_why: null, receipt_id: held.receipt_id || null, idempotent: true };
+}
 /**
  * ⭐ THE ONE health(last_seen) of a connector: never / stale >15m = offline, >3m = slow, else live. The co-assist rail (here) and the
  * kit's status (routes/integrations.js) read THIS function — a second copy is how two screens disagree about one kit (T2-HONEST).
@@ -541,7 +584,8 @@ router.post(
     body('folder').optional().trim().isLength({ max: 80 }),
     body('bridge_id').optional().trim(),
     body('unit').optional().trim().isLength({ max: 16 }),
-    body('device_id').optional().trim().isLength({ max: 64 })
+    body('device_id').optional().trim().isLength({ max: 64 }),
+    body('event_id').optional().trim().isLength({ max: 128 })
   ],
   validateAsProblem,
   ...checked('POST /ingest'),
@@ -582,6 +626,7 @@ router.post(
         filed = null,
         file_err = null,
         proof_err = null,
+        claimedReceipt = null,
         assigned = null,
         money_why = null;
       /* ⚠️ SEC3: `to` (or the configured counterparty) must be the shop or one of its own parties — before anything is minted */
@@ -592,6 +637,9 @@ router.post(
       if (req.body.heartbeat_only) {
         note = 'Heartbeat only — health refreshed, no chit raised.';
       } else {
+        const claim = await claimIngestReceipt(req, res, actor, bridge_id);
+        if (!claim) return undefined; /* a replay or a refusal was answered */
+        claimedReceipt = claim.receipt_id || null;
         try {
           const emit = await emitSignalChit({
             entity_id,
@@ -612,33 +660,14 @@ router.post(
             bridge_id
           });
           chit_id = emit.chit_id;
+          await settleIngestReceipt(entity_id, claimedReceipt, 'processed', chit_id);
           filed = emit.folder_id;
           file_err = emit.folder_error;
           assigned = emit.assigned_to;
           money_why = emit.money_why; // filed = folder it landed in; assigned = resolved default-assignee (if any)
-          // PROOF — attach the edge image (base64) to the chit; bytes fetched on demand via GET /api/attachments/:id.
-          if (chit_id && req.body.proof) {
-            try {
-              const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
-              if (buf.length > 0 && buf.length <= 6 * 1024 * 1024) {
-                // PER-ENTITY: replicate the proof to every participant (owner + CC) — each holds its own copy.
-                proof_id = await storage.putForParticipants({
-                  chit_id,
-                  name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200),
-                  mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120),
-                  size: buf.length,
-                  buffer: buf,
-                  uploaded_by: actor.identity_id,
-                  participants: emit.participants,
-                  forEntity: entity_id
-                });
-              }
-            } catch (e) {
-              proof_err = INGEST_NOTES.proofNotKept;
-              log.warn('connectors.ingest: the signal chit was raised but its proof was not kept', { why: String((e && e.message) || e).slice(0, 200) });
-            }
-          }
+          if (chit_id && req.body.proof) ({ proof_id, proof_err } = await attachIngestProof(req, actor, chit_id, emit.participants));
         } catch (e) {
+          await settleIngestReceipt(entity_id, claimedReceipt, 'failed', null);
           /* ⚠️ SEC3: NOT a 200. The agent moves a 2xx event to sent/ — a 200 here lost the event for good. The real status, with a
              code; the device keeps the event and retries. A refusal the database makes on purpose keeps its own words (lib/knownerr). */
           log.error('connectors.ingest: signal chit not delivered — the device keeps the event', {
@@ -661,7 +690,9 @@ router.post(
         proof_err,
         note,
         assigned,
-        money_why
+        money_why,
+        receipt_id: claimedReceipt,
+        idempotent: false /* CON-159: the same two keys a replay carries, so the 200 has ONE shape */
       });
     } catch (err) {
       problem(req, res, failed(err, req, 'Ingest failed'));

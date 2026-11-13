@@ -31094,7 +31094,9 @@
           "proof_err",
           "note",
           "assigned",
-          "money_why"
+          "money_why",
+          "receipt_id",
+          "idempotent"
         ],
         "properties": {
           "message": {
@@ -31143,7 +31145,16 @@
             ]
           },
           "assigned": {},
-          "money_why": {}
+          "money_why": {},
+          "receipt_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "idempotent": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },

@@ -115272,6 +115272,34 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-14T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/con-159-ingest-replay.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CON-159: POST /INGEST REPLAY DEDUPE ON THE CALLER'S OWN KEY ONLY (IDEMPOTENCY-KEY OR EVENT_ID); NO KEY, NO DEDUPE.",
+   "claim": "CON-159: POST /INGEST REPLAY DEDUPE ON THE CALLER'S OWN KEY ONLY (IDEMPOTENCY-KEY OR EVENT_ID); NO KEY, NO DEDUPE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 119 lines. Run: node chitbridge-api/tests/con-159-ingest-replay.test.cjs",
+   "layer": "engine",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [
+    "lib/erp-receipt.js",
+    "routes/connectors.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }
