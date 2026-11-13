@@ -945,6 +945,9 @@ const PENDING_LIBS = [
   /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
      endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
   'item-cost.js',
+  /* CTR-181 (2026-11-13): a summary closed again under a held reference is a retry or the next version. It compares two CARRIED totals (no engine run, no money computed);
+     whether that verdict is a counter adoption rule or a rail rule needs cb-capability's call. */
+  'summary-reclose.js',
 ];
 
 /**
