@@ -8,9 +8,9 @@
 -- WHY. identities has no row security today because a login looks a person up by what they TYPED (e-mail, handle, name, mobile, a verified contact) before any shop is
 --    bound (db/rls-baseline.json: class "shared"). Row security on that table (SEC-184 step B) needs ONE door that still works for the sign-in lookup.
 --    SECURITY DEFINER runs as the owner (postgres, BYPASSRLS), so FORCE ROW LEVEL SECURITY does not bind it. So the door is narrow:
---      · seven exact-match kinds, no LIKE / ILIKE / wildcard: 'email' 'handle' 'name' 'phone' 'contact' 'id', and 'doc' (a VERIFIED identity document by SCHEME:hash[,hash], up to the 10 hashes the spellings of one contact make).
+--      · six exact-match kinds, no LIKE / ILIKE / wildcard: 'email' 'handle' 'name' 'phone' 'contact', and 'doc' (a VERIFIED PHONE or EMAIL identity document by SCHEME:hash[,hash]; any other scheme, PAN or GSTIN, finds nothing, up to the 10 hashes the spellings of one contact make).
 --        'doc' reads identity_documents, which is already FORCE RLS (entity policy idoc_tenant): a pre-binding sign-in cannot read it as cb_app.
---      · a key shorter than 3 characters (any kind but 'id') answers no rows; an unknown kind raises 22023.
+--      · a key shorter than 3 characters answers no rows; an unknown kind raises 22023.
 --      · eight columns only: no otp_code, otp_code_hash, pin_hash, pin_attempts, policy_flags, connector_config, no phone. Credentials are read afterwards BY ID.
 --      · ORDER BY identity_id LIMIT 10: no dump is possible (an ambiguous name needs 2).
 --      · STABLE, SET search_path = '' and every object schema-qualified (Postgres CREATE FUNCTION, "Writing SECURITY DEFINER Functions Safely").
@@ -41,10 +41,10 @@ SET search_path = ''
 AS $fn$
 #variable_conflict use_column
 BEGIN
-  IF p_kind IS NULL OR p_kind NOT IN ('email', 'handle', 'name', 'phone', 'contact', 'id', 'doc') THEN
+  IF p_kind IS NULL OR p_kind NOT IN ('email', 'handle', 'name', 'phone', 'contact', 'doc') THEN
     RAISE EXCEPTION 'ops.signin_candidates: unknown kind' USING ERRCODE = '22023';
   END IF;
-  IF p_key IS NULL OR (p_kind <> 'id' AND pg_catalog.length(pg_catalog.btrim(p_key)) < 3) THEN
+  IF p_key IS NULL OR pg_catalog.length(pg_catalog.btrim(p_key)) < 3 THEN
     RETURN;
   END IF;
 
@@ -68,13 +68,10 @@ BEGIN
     RETURN QUERY SELECT i.identity_id, i.identity_type::text, i.parent_entity_id, i.bridge_id::text, i.display_name::text, i.user_id::text, i.email::text, i.status::text
       FROM public.identities i
       WHERE i.identity_id IN (SELECT d.identity_id FROM public.identity_documents d
-                              WHERE d.scheme = pg_catalog.split_part(p_key, ':', 1)
+                              WHERE d.scheme IN ('PHONE', 'EMAIL') AND d.scheme = pg_catalog.split_part(p_key, ':', 1)
                                 AND d.value_hash = ANY ((pg_catalog.string_to_array(pg_catalog.substr(p_key, pg_catalog.strpos(p_key, ':') + 1), ','))[1:10])
                                 AND d.status = 'verified' AND d.verified_at IS NOT NULL)
       ORDER BY i.identity_id LIMIT 10;
-  ELSE
-    RETURN QUERY SELECT i.identity_id, i.identity_type::text, i.parent_entity_id, i.bridge_id::text, i.display_name::text, i.user_id::text, i.email::text, i.status::text
-      FROM public.identities i WHERE i.identity_id = p_key::uuid ORDER BY i.identity_id LIMIT 10;
   END IF;
 END
 $fn$;

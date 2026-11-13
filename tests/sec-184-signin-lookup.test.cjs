@@ -36,7 +36,7 @@ function problemsOf(text) {
   if (!/RETURNS TABLE \(identity_id uuid, identity_type text, parent_entity_id uuid, bridge_id text, display_name text, user_id text, email text, status text\)/.test(c)) out.push('columns are not the eight');
   if (/\bLIKE\b|\bILIKE\b|~~/i.test(c)) out.push('a wildcard match');
   const selects = c.match(/RETURN QUERY SELECT[\s\S]*?LIMIT 10;/g) || [];
-  if (selects.length !== 7) out.push('expected 7 branches, found ' + selects.length);
+  if (selects.length !== 6) out.push('expected 6 branches, found ' + selects.length);
   if (selects.some((b) => !/ORDER BY i\.identity_id LIMIT 10;/.test(b))) out.push('a branch without ORDER BY and LIMIT 10');
   if (selects.some((b) => /\b(otp_code|otp_code_hash|pin_hash|pin_attempts|policy_flags|connector_config|provision_key_hash)\b/.test(b.replace(/i\.otp_contact/g, '')))) out.push('a secret column is selected');
   if (selects.some((b) => /\bphone\b/.test(b.split('FROM')[0]))) out.push('phone is returned');
@@ -58,7 +58,7 @@ check('b857: it lives in schema ops, never public (the Data API exposes public)'
 check('b857: anon and authenticated are revoked only when the role exists (a fresh CI database has none) and the ROLL BACK is written', () => { assert(/pg_roles WHERE rolname = 'anon'/.test(SQL)); assert(/DROP FUNCTION IF EXISTS ops\.signin_candidates\(text, text\)/.test(SQL)); });
 check('b857: every kind the api can send is a branch, and an unknown kind raises 22023', () => {
   const lookup = require('../lib/signin-lookup');
-  for (const k of lookup.KINDS) assert(new RegExp("p_kind = '" + k + "'").test(code(SQL)) || k === 'id', k);
+  for (const k of lookup.KINDS) assert(new RegExp("p_kind = '" + k + "'").test(code(SQL)) , k);
   assert(/ERRCODE = '22023'/.test(SQL));
   assert.deepStrictEqual(lookup.COLUMNS.split(',').map((c) => c.trim()), ['identity_id', 'identity_type', 'parent_entity_id', 'bridge_id', 'display_name', 'user_id', 'email', 'status']);
 });
@@ -80,15 +80,15 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
     assert.deepStrictEqual(rows, [ROW]); assert.strictEqual(sent.length, 1);
     assert.strictEqual(sent[0][0], 'SELECT * FROM ops.signin_candidates($1, $2)'); assert.deepStrictEqual(sent[0][1], ['email', 'a@x.com']);
   });
-  await checkAsync('lookup: a key under three characters answers nothing and sends nothing (the function does the same); id is exempt', async () => {
+  await checkAsync('lookup: a key under three characters answers nothing and sends nothing (the function does the same)', async () => {
     lookup.reset(); let n = 0; const run = async () => { n++; return { rows: [ROW] }; };
     assert.deepStrictEqual(await lookup.candidates(run, 'handle', 'ab'), []); assert.deepStrictEqual(await lookup.candidates(run, 'name', '  x '), []); assert.deepStrictEqual(await lookup.candidates(run, 'email', null), []);
-    assert.strictEqual(n, 0); await lookup.candidates(run, 'id', ROW.identity_id); assert.strictEqual(n, 1);
+    assert.strictEqual(n, 0);
   });
   await checkAsync('lookup: an unknown kind throws (a programming error, as the function raises)', async () => {
     await assert.rejects(() => lookup.candidates(async () => ({ rows: [] }), 'like', 'abc'), /unknown kind/);
   });
-  for (const code of ['42883', '3F000', '42501']) {
+  for (const code of ['42883']) {
     await checkAsync('fallback: ' + code + ' → today\'s read of the same eight columns, ONE warning, no second trip per call, no second warning', async () => {
       lookup.reset(); warnings.length = 0; const sent = [];
       const run = async (sql, p) => { sent.push(sql); if (/ops\.signin_candidates/.test(sql)) throw missing(code); return { rows: [ROW] }; };
@@ -105,6 +105,23 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
     await lookup.candidates(run, 'email', 'a@x.com'); there = true;
     const realNow = Date.now; Date.now = () => realNow() + lookup.RETRY_MS + 5;
     try { assert.deepStrictEqual(await lookup.candidates(run, 'email', 'a@x.com'), [ROW]); } finally { Date.now = realNow; }
+  });
+  await checkAsync('42501 (a real grant fault) is NOT read as missing: it is thrown, logged LOUDLY on every call, never falls back', async () => {
+    lookup.reset(); const errors = []; const realError = logger.error; logger.error = (msg, meta) => { errors.push({ msg, meta }); }; warnings.length = 0; let direct = 0;
+    const run = async (sql) => { if (/ops.signin_candidates/.test(sql)) throw missing('42501'); direct++; return { rows: [ROW] }; };
+    try {
+      await assert.rejects(() => lookup.candidates(run, 'email', 'a@x.com'), /does not exist/); await assert.rejects(() => lookup.candidates(run, 'email', 'a@x.com'), /does not exist/);
+    } finally { logger.error = realError; }
+    assert.strictEqual(direct, 0, 'no direct read'); assert.strictEqual(errors.length, 2, 'one error line per occurrence'); assert.strictEqual(errors[0].msg, 'signin.lookup.permission_denied'); assert.strictEqual(warnings.length, 0);
+  });
+  await checkAsync('3F000 (invalid schema) is not read as missing either: thrown', async () => {
+    lookup.reset(); await assert.rejects(() => lookup.candidates(async () => { throw missing('3F000'); }, 'email', 'a@x.com'), /does not exist/);
+  });
+  await checkAsync('doc kind: a PAN or GSTIN hash finds nothing (stand-in, the SQL text and the fallback text all name PHONE and EMAIL only)', async () => {
+    const stub = require('./lib/signin-lookup-stub.cjs');
+    const docs = [{ identity_id: ROW.identity_id, scheme: 'PAN', value_hash: 'hp', status: 'verified', verified_at: 'x' }, { identity_id: ROW.identity_id, scheme: 'PHONE', value_hash: 'hh', status: 'verified', verified_at: 'x' }];
+    assert.deepStrictEqual(stub.lookup([ROW], 'doc', 'PAN:hp', docs), []); assert.deepStrictEqual(stub.lookup([ROW], 'doc', 'GSTIN:hp', docs), []); assert.strictEqual(stub.lookup([ROW], 'doc', 'PHONE:hh', docs).length, 1);
+    assert(code(SQL).includes("d.scheme IN ('PHONE', 'EMAIL')")); assert(lookup.DIRECT.doc.sql.includes("scheme IN ('PHONE', 'EMAIL')"));
   });
   await checkAsync('fallback: any OTHER error is thrown, not swallowed (a broken database is not "no account")', async () => {
     lookup.reset(); await assert.rejects(() => lookup.candidates(async () => { throw Object.assign(new Error('boom'), { code: '57P01' }); }, 'email', 'a@x.com'), /boom/);
@@ -187,7 +204,7 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
   check('break: REVOKE from authenticated removed → caught', () => assert(problemsOf(mutated('REVOKE ALL ON FUNCTION ops.signin_candidates(text, text) FROM authenticated;', '')).includes('no REVOKE from authenticated')));
   check('break: REVOKE from PUBLIC removed → caught', () => assert(problemsOf(mutated('REVOKE ALL ON FUNCTION ops.signin_candidates(text, text) FROM PUBLIC;', '')).includes('no REVOKE from PUBLIC')));
   check('break: GRANT EXECUTE to PUBLIC added → caught', () => assert(problemsOf(mutated('TO cb_app;\n\nCOMMIT', 'TO cb_app;\nGRANT EXECUTE ON FUNCTION ops.signin_candidates(text, text) TO PUBLIC;\n\nCOMMIT')).includes('EXECUTE granted to a closed role')));
-  check('break: LIMIT 10 removed from a branch → caught', () => assert(problemsOf(mutated('WHERE i.identity_id = p_key::uuid ORDER BY i.identity_id LIMIT 10;', 'WHERE i.identity_id = p_key::uuid;')).length > 0));
+  check('break: LIMIT 10 removed from a branch → caught', () => assert(problemsOf(mutated("i.otp_contact = p_key ORDER BY i.identity_id LIMIT 10;", "i.otp_contact = p_key;")).length > 0));
   check('break: pin_hash added to a branch → caught', () => assert(problemsOf(mutated("i.email::text, i.status::text\n      FROM public.identities i WHERE i.email", 'i.email::text, i.pin_hash::text\n      FROM public.identities i WHERE i.email')).includes('a secret column is selected')));
   check('break: a LIKE match added → caught', () => assert(problemsOf(mutated('WHERE i.email = pg_catalog.lower(p_key)', "WHERE i.email LIKE p_key || '%'")).includes('a wildcard match')));
   check('break: an unqualified function (lower) → caught', () => assert(problemsOf(mutated('i.email = pg_catalog.lower(p_key)', 'i.email = lower(p_key)')).includes('an unqualified function (path is empty)')));
@@ -197,6 +214,7 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
     assert(directLookups(src).length > 0);
     assert.strictEqual(directLookups(read('lib/iddoc-verify.js').replace('/* SEC-184:', "const x = 'SELECT identity_id FROM identity_documents WHERE value_hash = ANY($1)';\n  /* SEC-184:")).length > 0, true);
   });
+  check('break: the doc kind open to any scheme → caught', () => assert(!code(mutated("d.scheme IN ('PHONE', 'EMAIL') AND ", '')).includes("d.scheme IN ('PHONE', 'EMAIL')")));
   check('break: a role that bypasses RLS is not "ok"', () => assert.notStrictEqual(dbRole.verdict({ current_user: 'x', rolsuper: false, rolbypassrls: true }, false).level, 'ok'));
   logger.warn = realWarn;
   console.log('\n' + pass + ' checks');
