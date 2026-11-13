@@ -40,6 +40,7 @@ const GUARDS = [
   'till-who-signin.test.cjs', // R132: a picked name carries who they are (PIN or first code, never "type your ID"), the refusal names what to use, one PIN ask, no "connect to a shop" under a signed-in box
   't3-fixes.test.cjs', // T3-FIXES: one cost gate on every price write · each received batch its own lot · profile writes the shop · sign-in keeps the constitution
   'till-rcv-batches.test.cjs', // STK-FIX1b: at the till a second scanned batch of the same product is its own receiving line (rcvLineFor), never merged onto line 1
+  'governed-currency.test.js', // RAIL-63: network and storefront chits take the shop's own currency, never INR by name; a non-monetary chit carries none
   'governance-entity-own.test.cjs', // SEC (23 Oct): a shop's governance view is its own; another shop's id answers the unknown id's 404
   'shop-clock-guard.test.cjs', // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
   'register-sums.test.cjs', // W4 (30 Oct): the endpoint count cannot drift — register total = Σ route files = Σ API groups, each exception a named row
