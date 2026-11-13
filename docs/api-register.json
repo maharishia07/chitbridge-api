@@ -930,7 +930,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1016,
+   "line": 1047,
    "hash": "b29edcd26a079e31",
    "does": "",
    "errors": {
@@ -4573,7 +4573,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1095,
-   "hash": "18214f6b305f2798",
+   "hash": "70123dfc64f713b5",
    "does": "",
    "errors": {
     "count": 1,
@@ -4647,7 +4647,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -5224,7 +5224,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 548,
-   "hash": "2daeb6cb953ee12c",
+   "hash": "4773ad4ef4f0bf40",
    "does": "",
    "errors": {
     "count": 1,
@@ -5304,7 +5304,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -6762,7 +6762,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1041,
-   "hash": "69865c3857e8949b",
+   "hash": "a9487c3d4e5cb4f0",
    "does": "",
    "errors": {
     "count": 1,
@@ -6835,7 +6835,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7285,7 +7285,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2473,
-   "hash": "c62c1a4a50d4fa0b",
+   "hash": "14517722ba33ac6d",
    "does": "",
    "errors": {
     "count": 2,
@@ -7359,7 +7359,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1238 stage2: re-read after ACC-342; the output shape now lists action as optional (kind, count, words stay required, every other key closed) because the new bills_not_in_books row has no button; the 11 earlier kinds still carry action, older web readers unchanged; recorded in tests/books-todo-unposted.test.cjs T7; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14d: handler and diff re-read (routes/books.js); two merges moved the hash: #1238 ACC-342 earlier shape and #1166 RAIL-146o (the answer passes the one forBooksDoor cost-blind filter: cost fields null with cost_hidden for a door without cost.read, Athi chose ACC-292 (a)); response keys, statuses and codes unchanged for a reader with cost.read; items typed nullable with cost_hidden; all 13 machine columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7391,7 +7391,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1015,
-   "hash": "14f2fbecc8a741fd",
+   "hash": "8d26f9ee74655c85",
    "does": "",
    "errors": {
     "count": 1,
@@ -7464,7 +7464,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11945,7 +11945,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 781,
+   "line": 812,
    "hash": "d821ffddceedd12f",
    "does": "",
    "errors": {
@@ -12047,7 +12047,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 965,
+   "line": 996,
    "hash": "01a7db15cfab548e",
    "does": "",
    "errors": {
@@ -12151,7 +12151,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 805,
+   "line": 836,
    "hash": "f86e2da68f562da9",
    "does": "",
    "errors": {
@@ -12255,7 +12255,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 721,
+   "line": 752,
    "hash": "11be9936f414911a",
    "does": "",
    "errors": {
@@ -29245,7 +29245,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 986,
+   "line": 1017,
    "hash": "95bd74f445e029d9",
    "does": "",
    "errors": {
@@ -43196,7 +43196,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 195,
+   "line": 238,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -43299,7 +43299,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 925,
+   "line": 956,
    "hash": "707e9f5c98b659b8",
    "does": "",
    "errors": {
@@ -43404,7 +43404,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 746,
+   "line": 777,
    "hash": "f427329066062d46",
    "does": "",
    "errors": {
@@ -43509,7 +43509,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 910,
+   "line": 941,
    "hash": "91d36164392e3e40",
    "does": "",
    "errors": {
@@ -43614,7 +43614,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 863,
+   "line": 894,
    "hash": "5c5dd3f7f0c7925f",
    "does": "",
    "errors": {
@@ -43718,7 +43718,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 677,
+   "line": 708,
    "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
@@ -43827,8 +43827,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 536,
-   "hash": "9383cee1b059687e",
+   "line": 579,
+   "hash": "3dfaa3ae6cb85896",
    "does": "",
    "errors": {
     "count": 0,
@@ -43838,6 +43838,7 @@
      403,
      404,
      409,
+     422,
      500,
      503
     ],
@@ -43890,6 +43891,7 @@
     403,
     404,
     409,
+    422,
     500,
     503
    ],
@@ -43913,7 +43915,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14d: handler and diff re-read (routes/connectors.js, lib/erp-receipt); #1270 CON-159 adds replay dedupe on the caller's own Idempotency-Key header or body event_id (never a payload hash): a replay answers 200 message duplicate with the first chit_id, idempotent true; a first call carries receipt_id and idempotent false so the 200 has one shape; event_id optional, max 128; no key = no dedupe; no status, code or refusal removed; ingest named in api-hardening-scope money_reviewed_not_about; all 13 machine columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43938,7 +43940,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 838,
+   "line": 869,
    "hash": "5321fbf8637c444b",
    "does": "",
    "errors": {

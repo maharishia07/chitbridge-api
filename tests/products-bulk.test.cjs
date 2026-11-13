@@ -90,7 +90,7 @@ console.log('\n-- ⚠️ and the caller no longer loops --');
  * wizard: it was "no front end adds products one request at a time in a loop". That is asserted across the whole web
  * app now — app.html and every app/*.js — so the next screen that adds many products cannot quietly loop either.
  */
-const WEBP = require('path').join(API, '..', 'chitbridge-web', 'public');
+const WEBP = require('path').join(process.env.CB_WEB_DIR || require('path').join(API, '..', 'chitbridge-web'), 'public');
 const webFiles = [WEBP + '/app.html'].concat(fs.readdirSync(WEBP + '/app').filter((f) => /\.js$/.test(f)).map((f) => WEBP + '/app/' + f));
 const loops = [];
 for (const f of webFiles) {

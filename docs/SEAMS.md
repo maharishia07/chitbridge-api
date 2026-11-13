@@ -120,11 +120,11 @@ of file each thing is; this says what already does the job.
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `update` | `folder-rules.js` |  |
+| 24 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 24 | `governance` | `home-facts.js` |  |
 | 23 | `form` | `accounts-shell.js` |  |
 | 23 | `says` | `adopt.js` |  |
 | 23 | `entries` | `books-store.js` |  |
-| 23 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `keep` | `signin.js` | see. |
 | 22 | `summary` | `catalogue-read.js` | A count a person can act on: |
@@ -139,12 +139,12 @@ of file each thing is; this says what already does the job.
 | 21 | `reason` | `lab-kit.js` | W9: |
 | 21 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 21 | `chart` | `fx-rates.js` |  |
+| 21 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `next` | `cap-stock.js` | the next level: |
 | 20 | `chip` | `screen-id.js` | var S = { app: |
 | 20 | `panel` | `sides.js` |  |
 | 20 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
-| 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `move` | `rail.js` | Order = the order the server refused in: |
 | 20 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 19 | `renderApp` | `app.html` |  |
