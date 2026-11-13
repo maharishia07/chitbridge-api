@@ -22234,6 +22234,37 @@ function isExpenseRow(b){
   if (window.CBRollup && CBRollup.isExpense) return CBRollup.isExpense(b);
   return !!(b && b.kind === 'expense');
 }
+/** ONE bill into the day sheet's totals: the sales run (first, last), the money columns, the tax kind (moved whole from dayCloseSheet's per-bill loop, MR) */
+function dayAddTotals(sheet, bill){
+  /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series, and so —
+     [till expenses] — does an expense's ('EXP') */
+  if (!isReturnRow(bill) && !isExpenseRow(bill)) { if (!sheet.first) sheet.first = bill.no; sheet.last = bill.no; }
+  sheet.total = rmoney(sheet.total + (bill.total||0)); sheet.saved = rmoney(sheet.saved + (bill.saved||0));
+  sheet.gross = rmoney(sheet.gross + (bill.total||0) + (bill.saved||0));
+  sheet.taxable = rmoney(sheet.taxable + (bill.taxable||0)); sheet.tax = rmoney(sheet.tax + (bill.tax||0));
+  if (bill.kind === 'tax') sheet.taxed = true;
+}
+/** ONE bill into the day sheet's money taken per tender, and the habit of not asking for payment (moved whole from dayCloseSheet's per-bill loop, MR) */
+function dayAddTenders(sheet, bill){
+  (bill.payments||[]).forEach(function(p){ sheet.modes[p.how] = rmoney((sheet.modes[p.how]||0) + (p.amount||0)); });
+  /* ⭐ the habit, as a number. A drawer that is short by exactly these bills is not a mystery, it is a routine. */
+  if (bill.payment_asked === false) { sheet.unasked = (sheet.unasked || 0) + 1; sheet.unasked_total = rmoney((sheet.unasked_total || 0) + (bill.total || 0)); }
+}
+/** ONE bill into the day sheet's per-person rows (moved whole from dayCloseSheet's per-bill loop, MR) */
+function dayAddPerson(sheet, bill){
+  /**
+   * ⚠️⚠️⚠️ NEVER FOLD "NOBODY" INTO SOMEBODY ([design-handoff/A-screens/04-todays-bills §6.3]). This used
+   * to name the bucket 'the shop' for a bill with no `by` at all — the exact hole the package's `desktop3`
+   * finding is about, just landing here instead: a bill nobody signed for, silently merged into a label
+   * that reads like an answer. `whoNow()` already fixed the header the same way ([TILL-159]).
+   */
+  var who = (bill.by && bill.by.name) || 'No person recorded';
+  sheet.people[who] = sheet.people[who] || { bills:0, total:0 };
+  /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not — [till expenses] nor
+     is paying rent a sale, however it went through the same person's hands */
+  if (!isReturnRow(bill) && !isExpenseRow(bill)) sheet.people[who].bills++;
+  sheet.people[who].total = rmoney(sheet.people[who].total + (bill.total||0));
+}
 /** ⭐ COMPUTE ONCE, READ AFTER: add the rate-wise figures a bill was ISSUED with (by_rate — a credit note's are negative, so it nets) to the
     day. Working the tax out again with TODAY's inclusive flag disagreed with the bills whenever the flag had changed (17 Oct audit).
     Answers the bill's by_rate, or null for a bill saved before by_rate existed (dayAddSplit then does its lines). */
@@ -22308,28 +22339,9 @@ function dayCloseSheet(rows){
     });
   });
   (rows||[]).slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at)); }).forEach(function(b){
-    /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series, and so —
-       [till expenses] — does an expense's ('EXP') */
-    if (!isReturnRow(b) && !isExpenseRow(b)) { if (!d.first) d.first = b.no; d.last = b.no; }
-    d.total = rmoney(d.total + (b.total||0)); d.saved = rmoney(d.saved + (b.saved||0));
-    d.gross = rmoney(d.gross + (b.total||0) + (b.saved||0));
-    d.taxable = rmoney(d.taxable + (b.taxable||0)); d.tax = rmoney(d.tax + (b.tax||0));
-    if (b.kind === 'tax') d.taxed = true;
-    (b.payments||[]).forEach(function(p){ d.modes[p.how] = rmoney((d.modes[p.how]||0) + (p.amount||0)); });
-    /* ⭐ the habit, as a number. A drawer that is short by exactly these bills is not a mystery, it is a routine. */
-    if (b.payment_asked === false) { d.unasked = (d.unasked || 0) + 1; d.unasked_total = rmoney((d.unasked_total || 0) + (b.total || 0)); }
-    /**
-     * ⚠️⚠️⚠️ NEVER FOLD "NOBODY" INTO SOMEBODY ([design-handoff/A-screens/04-todays-bills §6.3]). This used
-     * to name the bucket 'the shop' for a bill with no `by` at all — the exact hole the package's `desktop3`
-     * finding is about, just landing here instead: a bill nobody signed for, silently merged into a label
-     * that reads like an answer. `whoNow()` already fixed the header the same way ([TILL-159]).
-     */
-    var who = (b.by && b.by.name) || 'No person recorded';
-    d.people[who] = d.people[who] || { bills:0, total:0 };
-    /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not — [till expenses] nor
-       is paying rent a sale, however it went through the same person's hands */
-    if (!isReturnRow(b) && !isExpenseRow(b)) d.people[who].bills++;
-    d.people[who].total = rmoney(d.people[who].total + (b.total||0));
+    dayAddTotals(d, b);
+    dayAddTenders(d, b);
+    dayAddPerson(d, b);
     var issued = dayAddIssued(d, b);
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
