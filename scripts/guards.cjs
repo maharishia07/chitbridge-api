@@ -815,6 +815,7 @@ const GUARDS = [
   'sec-126-network-store-public.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec105-dispute-queue.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec127-dispute-reads.test.cjs', // SEC-127: every dispute read names the caller's shop in its own SQL (two shops, row security off)
+  'acc-237-actors-list-level.test.cjs', // ACC-237
   'sec116-actors-connector-config.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec118-employee-code.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec91-supplier-catalogue.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline

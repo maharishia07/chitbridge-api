@@ -812,6 +812,11 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
 // the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
 router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /login'), signin.verifyChecks, validate, signin.handlers.verify);
 
+/** ACC-237: the level and the reach for the list's SELECT, so the owner sees a viewer / commenter login is read-only; before b173 the columns are absent (lib/schema) and it is nothing */
+async function levelColumns() {
+  return (await schema.hasColumn('identities', 'access_level')) ? ' access_level, whole_entity,' : '';
+}
+
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
@@ -838,7 +843,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     const result = await db(
       `SELECT
            identity_id, bridge_id, display_name,
-           actor_key, actor_role, actor_type, hat,
+           actor_key, actor_role, actor_type, hat,${await levelColumns()}
            break_status, break_type, break_started_at,
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,
