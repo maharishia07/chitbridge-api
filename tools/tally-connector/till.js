@@ -616,7 +616,7 @@ function chitOf(bill) {
     client_ref: bill.no,
     business_json: {
       customer: bill.customer && bill.customer.name ? bill.customer : { name: 'Walk-in' },
-      till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname(), by: bill.by || null },
+      till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname(), by: bill.by || null, build: bill.till_build },   /* CTR-246: the build that finished the bill (undefined = none, dropped by JSON) */
       bill_no: bill.no, billed_at: bill.at,
       catalogue_version: bill.catalogue_version || null,
       payment: { mode: (bill.payments || []).map((p) => p.how).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments || [] },

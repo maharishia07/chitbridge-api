@@ -6196,7 +6196,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-11.ctry139';
+var TILL_BUILD = '2026-11-13.ctr246';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6505,9 +6505,9 @@ function tillHostWord(){ return (typeof HOST !== 'undefined' && HOST && HOST.mod
  *              and routes/books.js reads both shapes.
  *   by_name    the person's display name for the books and the receipt, whatever shape `by` has.
  */
-function tillStamp(id, by){
+function tillStamp(id, by, build){
   var who = (by && typeof by === 'object') ? by : null;
-  var t = { id: id, name: counterName(), host: tillHostWord() };
+  var t = { id: id, name: counterName(), host: tillHostWord(), build: build };   /* CTR-246: the build that FINISHED this bill (bill.till_build; undefined = none, dropped by JSON) — never the running page's build, or an old bill would be re-stamped */
   if (!onAgent()) t.device_id = deviceId();
   var p = personOn() ? CloudHost.person : null;
   if (p) {
@@ -6707,7 +6707,7 @@ function chitOf(bill){
     client_ref: bill.no,
     business_json: {
       customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
-      till: tillStamp(bill.till, bill.by),
+      till: tillStamp(bill.till, bill.by, bill.till_build),
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
       /* ⭐ the number on the customer's paper, when the shop had to record the sale under another — see renumberBill */
       printed_as: bill.printed_as || null,
@@ -22163,7 +22163,7 @@ async function finish(){
     heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round, delivery: BILL_DELIVERY || null,
     /* ⭐⭐⭐ THE INVOICE — CBTax.determine()'s own result, from billMoney(); every figure above was read off it. The chit
        carries this object unchanged (chitOf) and the server stores and posts it as it is. */
-    invoice: m.invoice,
+    invoice: m.invoice, till_build: TILL_BUILD,   /* CTR-246: the page build that finished this bill, set ONCE here (never at chitOf time); the server reads it as 'this build always sends the bridge' */
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
@@ -25065,7 +25065,7 @@ async function openStuck(){
         var waitW = qWaitWords(q);
         var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted')
                 + (waitW ? ' · ' + waitW : '');
-        h += '<div class="t' + (q._why ? ' warnrow' : '') + (q._code === 'MONEY_UNBALANCED' ? ' stoprow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
+        h += '<div class="t' + (q._why ? ' warnrow' : '') + ((q._code === 'MONEY_UNBALANCED' || q._code === 'BRIDGE_MISSING') ? ' stoprow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
           + '<span>' + esc(why)
           + ' <button class="pill" style="margin-inline-start:8px" data-testid="till-stuck-aside-' + esc(q.no)
           + '" onclick="setAside(\'' + esc(q.no) + '\')">set aside</button></span></div>';
