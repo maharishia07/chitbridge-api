@@ -42,3 +42,12 @@ test('the adopted country table (engines v1.88.0) shows the menu in force for In
   const row = require('../lib/country').rulesTable().rules.find((r) => r.key === 'rates');
   assert.strictEqual(row.values.IN, '0% · 0.25% · 1.5% · 3% · 5% · 18% · 40%');
 });
+
+test('Sydney: 12 Nov 13:30Z is 13 Nov 00:30 AEDT (hand: 13:30 + 11:00 = 24:30), the previous UTC day; the slab effective 13 Nov is in force', () => {
+  clock.set('2026-11-12T13:30:00Z');
+  try {
+    const r = lines.resolveItem(item, shelf({ country: 'AU', timezone: 'Australia/Sydney' }));
+    assert.strictEqual(r.pending, false, 'the Sydney shop day is 2026-11-13');
+    assert.strictEqual(lines.resolveItem(item, shelf(null)).pending, true, 'no zone set: falls to the UTC day, 12 Nov, not yet');
+  } finally { clock.reset(); }
+});
