@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6353,
+   "line": 6357,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5231,
+   "line": 5235,
    "hash": "8289e954b5c807d1",
    "does": "",
    "errors": {
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6614,
+   "line": 6618,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -9138,8 +9138,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3717,
-   "hash": "5b3b7b59d1faaf33",
+   "line": 3721,
+   "hash": "919a89e41fcf6d6a",
    "does": "",
    "errors": {
     "count": 0,
@@ -9221,7 +9221,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 batch contract3 (#1111)",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -9286,7 +9286,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5045,
+   "line": 5049,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9388,7 +9388,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4268,
+   "line": 4272,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9488,7 +9488,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6093,
+   "line": 6097,
    "hash": "ad2b481cd5b97231",
    "does": "",
    "errors": {
@@ -9587,7 +9587,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6047,
+   "line": 6051,
    "hash": "db87c3b5029337bc",
    "does": "",
    "errors": {
@@ -9697,7 +9697,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5625,
+   "line": 5629,
    "hash": "82ed2a6878097cdb",
    "does": "",
    "errors": {
@@ -9911,7 +9911,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4475,
+   "line": 4479,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10011,7 +10011,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4586,
+   "line": 4590,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10309,7 +10309,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6254,
+   "line": 6258,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10417,8 +10417,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3272,
-   "hash": "8dafbdfc875c70c5",
+   "line": 3276,
+   "hash": "4b1e8c7d6854ebeb",
    "does": "",
    "errors": {
     "count": 1,
@@ -10493,7 +10493,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10524,8 +10524,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3468,
-   "hash": "158440f72b9764bf",
+   "line": 3472,
+   "hash": "b68583466f70c281",
    "does": "",
    "errors": {
     "count": 1,
@@ -10602,7 +10602,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10635,7 +10635,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3655,
+   "line": 3659,
    "hash": "77f9463c104b2ef9",
    "does": "",
    "errors": {
@@ -10732,7 +10732,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4457,
+   "line": 4461,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10830,7 +10830,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4297,
+   "line": 4301,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -10926,7 +10926,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4307,
+   "line": 4311,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11024,7 +11024,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4349,
+   "line": 4353,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11119,7 +11119,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4414,
+   "line": 4418,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11219,8 +11219,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3367,
-   "hash": "717bda3d3a5a7b88",
+   "line": 3371,
+   "hash": "261faa3885535292",
    "does": "",
    "errors": {
     "count": 0,
@@ -11290,7 +11290,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11321,8 +11321,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3205,
-   "hash": "28854d3230999418",
+   "line": 3209,
+   "hash": "0bf524b7b2407696",
    "does": "",
    "errors": {
     "count": 1,
@@ -11403,7 +11403,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11745,7 +11745,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3682,
+   "line": 3686,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -21118,8 +21118,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 58,
-   "hash": "c3cc73e1b867722e",
+   "line": 59,
+   "hash": "d5e1d1845aa4a670",
    "does": "",
    "errors": {
     "count": 0,
@@ -21188,7 +21188,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39805,7 +39805,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4959,
+   "line": 4963,
    "hash": "b5bf1ff993c4dff3",
    "does": "",
    "errors": {
@@ -39915,7 +39915,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6506,
+   "line": 6510,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40023,7 +40023,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4810,
+   "line": 4814,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40129,7 +40129,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5283,
+   "line": 5287,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40235,7 +40235,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4250,
+   "line": 4254,
    "hash": "380c285599bb79c1",
    "does": "",
    "errors": {
@@ -40331,7 +40331,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4620,
+   "line": 4624,
    "hash": "2230812987fb9ca7",
    "does": "",
    "errors": {
@@ -40441,7 +40441,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5868,
+   "line": 5872,
    "hash": "d6eb5545b4017d0b",
    "does": "",
    "errors": {
@@ -40561,7 +40561,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5484,
+   "line": 5488,
    "hash": "acb999f6908ec147",
    "does": "",
    "errors": {
@@ -40668,7 +40668,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5193,
+   "line": 5197,
    "hash": "fd0d3624e4edb5a0",
    "does": "",
    "errors": {
@@ -41167,7 +41167,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4489,
+   "line": 4493,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -41267,7 +41267,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4545,
+   "line": 4549,
    "hash": "a6c3059bcdab231a",
    "does": "",
    "errors": {
@@ -41367,7 +41367,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4565,
+   "line": 4569,
    "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
@@ -41463,7 +41463,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4211,
+   "line": 4215,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -41563,7 +41563,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6585,
+   "line": 6589,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -41668,7 +41668,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6564,
+   "line": 6568,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -41772,7 +41772,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6546,
+   "line": 6550,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -41876,7 +41876,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6827,
+   "line": 6831,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -41982,7 +41982,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4435,
+   "line": 4439,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42078,7 +42078,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4404,
+   "line": 4408,
    "hash": "b4db7e428e83b4b7",
    "does": "",
    "errors": {
@@ -42178,7 +42178,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4425,
+   "line": 4429,
    "hash": "614db4519036ff5d",
    "does": "",
    "errors": {
@@ -42278,7 +42278,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4321,
+   "line": 4325,
    "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
@@ -42379,7 +42379,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4339,
+   "line": 4343,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -42479,7 +42479,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4381,
+   "line": 4385,
    "hash": "89b46078bdc9bea1",
    "does": "",
    "errors": {
@@ -42579,7 +42579,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4360,
+   "line": 4364,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -51441,7 +51441,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 236,
+   "line": 237,
    "hash": "e8e590e17a17c1da",
    "does": "",
    "errors": {
@@ -51547,7 +51547,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 185,
+   "line": 186,
    "hash": "2d4ccaf0dddfb510",
    "does": "",
    "errors": {
@@ -62190,7 +62190,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6172,
+   "line": 6176,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62302,7 +62302,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6398,
+   "line": 6402,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62407,7 +62407,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6454,
+   "line": 6458,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -62514,7 +62514,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6529,
+   "line": 6533,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -62619,7 +62619,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5327,
+   "line": 5331,
    "hash": "b7cf1cbeb711e833",
    "does": "",
    "errors": {
@@ -62778,7 +62778,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4609,
+   "line": 4613,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -62882,7 +62882,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6684,
+   "line": 6688,
    "hash": "bca9bf272f4bc0fc",
    "does": "",
    "errors": {
