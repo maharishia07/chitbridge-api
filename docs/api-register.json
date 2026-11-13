@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 4,
-  "meets": 627,
+  "partial": 0,
+  "meets": 631,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -2574,11 +2574,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f3b5356c80fe1afe"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; re-signed after the batch re-read: hash moved with ACC-237 follow-ups 30560a1e and 2f6e7fd7 (level columns read off the row JSON, no schema probe), NOT with #1151; the list items (access_level string, whole_entity boolean) are typed in lib/actors-contract.js, 13 columns true, additive keys only",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -49326,11 +49325,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "513487b278538b70"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; a line with a quantity not above 0 or blank, a price below 0 or blank-unreadable, a figure above 1e12 or a line that is not an object now answers 400 BAD_QTY / BAD_PRICE / BAD_BOUND / BAD_LINE in the one problem shape via the shared lineRefusal before any shelf read (was priced, or a 500 for a non-object); no second calculation, no raw text; web has no app caller (e2e sends valid bodies); a keyed external client that sent qty 0 now gets a refusal (client-visible, catalogue/country-owned rule, named in the PR)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51925,11 +51923,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "50d14d8dfd03e1cd"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; items no longer typed object in the contract so a non-object line answers 400 BAD_LINE (was 422) and qty x price above 1e12 answers 400 BAD_BOUND, same problem shape, same one guard; the absent-qty BAD_QTY and offers-no-price BAD_PRICE differences came with #1223/CAT-312, not this PR; web has no app caller",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -57008,11 +57005,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7fcda0c8f8fc9bbd"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; a non-object line, a figure above 1e12, a price below 0 or a quantity GIVEN as 0 now answer 400 BAD_LINE / BAD_BOUND / BAD_PRICE / BAD_QTY via the one guard (qtyOptional: an ABSENT qty still passes, a rate lookup takes none); a keyed client that sent a negative price or an explicit qty 0 gets a refusal where the rate was read; no raw text",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
