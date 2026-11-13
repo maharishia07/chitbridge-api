@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 133 | `rows` | `crm.js` | still in them: |
 | 126 | `words` | `variant.browser.js` |  |
 | 120 | `read` | `books-cashflow.js` | Trips: |
-| 117 | `withEntity` | `books-hooks.js` |  |
+| 118 | `withEntity` | `books-hooks.js` |  |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 104 | `answer` | `availability.js` | from March; then nearest. |
 | 97 | `money` | `bill-privacy.js` |  |
@@ -61,10 +61,10 @@ of file each thing is; this says what already does the job.
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 42 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 42 | `facts` | `bill-steps.js` | MY state_log — |
+| 42 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 42 | `live` | `receivables.js` | the allocations that still count: |
 | 41 | `host` | `chit-sheet.js` |  |
 | 41 | `gate` | `country-setup.js` | gate(h, entity): |
-| 41 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 41 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 41 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 40 | `status` | `books-engines.js` | what the health screen says about the engines — |
@@ -127,6 +127,7 @@ of file each thing is; this says what already does the job.
 | 23 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `keep` | `signin.js` | see. |
+| 22 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
@@ -135,7 +136,6 @@ of file each thing is; this says what already does the job.
 | 21 | `cblog` | `core.js` | const __cblog = []; |
 | 21 | `note` | `device-id.js` | note(where, problem) — |
 | 21 | `reason` | `lab-kit.js` | W9: |
-| 21 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
 | 20 | `card` | `cap-shop.js` |  |
@@ -163,6 +163,7 @@ of file each thing is; this says what already does the job.
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 18 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
+| 18 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 17 | `close` | `avatar.js` |  |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
@@ -184,9 +185,9 @@ of file each thing is; this says what already does the job.
 | 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 16 | `where` | `istest.js` | READING is_test is fine and stays — |
+| 16 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 16 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 16 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
-| 16 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
 | 15 | `bkDate` | `cap-books.js` |  |
@@ -195,7 +196,6 @@ of file each thing is; this says what already does the job.
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
-| 15 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 15 | `fault` | `sellable-price.js` | Zero IS a price (a free sample). |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 14 | `cols` | `cap-catalogue.js` |  |
