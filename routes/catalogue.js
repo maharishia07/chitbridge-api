@@ -119,6 +119,7 @@ const orderInput = require('../lib/order-input');
 const itemstatus = require('../lib/itemstatus');
 const catalogueView = require('../lib/catalogue-view'); // ONE catalogue read, shared with the B2B/supplier view
 const taxSlab = require('../lib/tax-slab'); // ⚠️ which slab answers for a line — resolution only, never a rate table
+const shopClock = require('../lib/shop-clock'); // M3: the shop's day for a slab's effective_from check
 const taxShelf = require('../lib/tax-shelf'); // the one reader of slabs (own + governed) · categories · face, shared with the send path
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const MAX_FORMS_PER_SUBMISSION = 5; // one purpose, several forms (an export bundle, a loan pack) — but bounded
@@ -327,7 +328,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
    * can carry a rate; until then it carries none, which is honest.
    */
   const withTax = (line, item_data) =>
-    taxCtx ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face, slabs: taxCtx.slabs, categories: taxCtx.categories })) : line;
+    taxCtx ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face, slabs: taxCtx.slabs, categories: taxCtx.categories, asOf: shopClock.today(taxCtx.zone) })) : line;
   // Finish map (reference catalogue) — resolve the shop's VISIBLE adoptions → norm(name) -> {price, combos, source}.
   // Priced from the adoption commercials, SERVER-side (never the customer). Empty if the shop has no finishes.
   const finishMap = new Map(); // STONE 3: keyed 'source|name' so same-named finishes from DIFFERENT brands don't collide
