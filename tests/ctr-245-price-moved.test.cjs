@@ -3,6 +3,7 @@
  * (equality of two carried figures, lib/price-moved over lib/price-drift); a PERSON waiting gets 409 PRICE_MOVED; the shop's own loopback (auto) and a till body are never refused.
  * Hand computation (engine, 2 x 100.00 excl @18% intra-state): 200.00 + 18.00 + 18.00 = 236.00; at 120.00: 240.00 + 21.60 + 21.60 = 283.20; at 12%, 100.00: 200.00 + 12.00 + 12.00 = 224.00.
  * The draft was made 40 days before T0 = 2026-11-13T10:00Z; the row moved at T0. The server sends no total; the figures here are typed by hand and the engine run is only for the actual.
+ * The 409 also carries the total before (the send's own engine run, 236.00) and after (the same engine door at 120.00, 283.20) and who gets the bill; the ack is a signed token bound to draft and person.
  * Run: node tests/ctr-245-price-moved.test.cjs
  */
 'use strict';
@@ -11,6 +12,8 @@ const fs = require('fs');
 const API = path.join(__dirname, '..');
 process.env.DATABASE_URL = '';
 process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'ctr245-test-secret';
+const jsonWebToken = require('jsonwebtoken');
 let pass = 0,
   fail = 0;
 const ok = (name, cond, why) => {
@@ -146,7 +149,7 @@ const DRAFT = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 function promote(opts) {
   const o = opts || {};
   const lines = o.lines || [mkLine()];
-  const body = { purpose: 'order', subject: 'Order', recipients: [{ self: true, name: 'self' }], line_items: lines, is_draft: false, promote_draft_id: o.fresh ? undefined : DRAFT };
+  const body = { purpose: 'order', subject: 'Order', recipients: [{ self: true, name: 'self' }], line_items: lines, is_draft: false, promote_draft_id: o.fresh ? undefined : o.draft || DRAFT };
   if (o.ack !== undefined) body.price_ack = o.ack;
   if (o.business) body.business_json = o.business;
   return body;
@@ -159,6 +162,8 @@ const storedTotal = (copies) => {
 const storedPrices = (copies) => [...J(copies).matchAll(/"price":(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
 const facts = (r) => r.tickets[0] && r.tickets[0].t.money_mismatch;
 const ackFrom = (r) => r.answer && r.answer.ack;
+/** an ack as the server would sign it, for a test that needs another draft, another person, an old one */
+const mintAck = (claims, opts) => jsonWebToken.sign(Object.assign({ kind: 'price_ack', draft: DRAFT, actor: SHOP, lines: [{ item_id: ITEM, changed_at: T0 }] }, claims), process.env.JWT_SECRET, Object.assign({ algorithm: 'HS256', expiresIn: 300 }, opts || {}));
 
 (async () => {
   const server = app.listen(0);
@@ -170,8 +175,11 @@ const ackFrom = (r) => r.answer && r.answer.ack;
     ok('1 person, no ack: 409 PRICE_MOVED, nothing stored, no ticket', r1.status === 409 && r1.answer.code === 'PRICE_MOVED' && r1.copies === null && r1.tickets.length === 0, J([r1.status, r1.answer.code]));
     const l1 = (r1.answer.lines || [])[0] || {};
     ok('1 ONE line: price_moved, was 10000 now 12000 minor, the item and the stamp named', r1.answer.lines.length === 1 && l1.kind === 'price_moved' && l1.was_minor === 10000 && l1.now_minor === 12000 && l1.item_id === ITEM && l1.changed_at === T0, J(l1));
-    ok('1 the body carries the lines and an ack, never a total; a price-only move may go as drafted', r1.answer.can_send_as_drafted === true && r1.answer.ack && r1.answer.ack.lines[0].changed_at === T0 && !/total/i.test(J(Object.keys(r1.answer))), J(Object.keys(r1.answer)));
+    ok('1 the body carries the lines and a signed ack; a price-only move may go as drafted', r1.answer.can_send_as_drafted === true && typeof r1.answer.ack === 'string', J(Object.keys(r1.answer)));
     ok('1 ONE catalogue read on a promote', r1.reads === 1, String(r1.reads));
+    ok('1 reach: the total before 236.00 (the send\'s own engine run) and after 283.20 (the same engine door at 120.00), in the bill\'s currency, copied never worked out in the route', r1.answer.total && r1.answer.total.before === 236 && r1.answer.total.after === 283.2 && 'currency' in r1.answer.total, J(r1.answer.total));
+    ok('1 reach: who gets it (a self bill names no one) and how many lines', r1.answer.reach && Array.isArray(r1.answer.reach.recipients) && r1.answer.reach.lines === 1, J(r1.answer.reach));
+    ok('1 the ack is a signed token string, not an object the person could edit', typeof r1.answer.ack === 'string' && r1.answer.ack.split('.').length === 3, String(r1.answer.ack).slice(0, 30));
 
     /* row 2: "use new prices": the web re-prices once and sends 120.00; the rows now equal the line */
     const r2 = await send(promote({ lines: [mkLine({ price: 120, list_price: 120, total: 240 })] }));
@@ -184,21 +192,23 @@ const ackFrom = (r) => r.answer && r.answer.ack;
     ok('3 send as drafted with the ack: sent, no second 409, stored at 100', r3.status === 200 && r3.copies !== null && storedPrices(r3.copies).includes(100) && !storedPrices(r3.copies).includes(120), J([r3.status, r3.answer]));
     if (storedTotal(r3.copies) !== null) ok('3 stored total is 236.00 as drafted', storedTotal(r3.copies) === 236, J(storedTotal(r3.copies)));
     const kept = /"ack":\{[^}]*"via":"send_as_drafted"/.test(J(r3.copies)) || /"via":"send_as_drafted"/.test(J(r3.copies));
-    ok('3 the ack is recorded on the bill: price_basis.ack with by, at, via and the line with its stamp', kept && J(r3.copies).includes('"price_basis"') && J(r3.copies).includes('"changed_at":"' + T0 + '"'), J(r3.copies).slice(0, 400));
+    ok('3 the ack is recorded on the bill: price_basis.ack with by (the person), at, via and the line with its stamp', kept && J(r3.copies).includes('"price_basis"') && J(r3.copies).includes('"changed_at":"' + T0 + '"') && J(r3.copies).includes('"by":"' + SHOP + '"'), J(r3.copies).slice(0, 400));
     ok('3 no ticket: the person decided', r3.tickets.length === 0, J(r3.tickets.length));
 
     /* row 4: the ack is bound */
-    const old = Object.assign({}, ack, { issued_at: new Date(Date.now() - 6 * 60000).toISOString() });
-    ok('4 an ack older than 5 minutes: 409 again', (await send(promote({ ack: old }))).status === 409, '');
-    const fresh = Object.assign({}, ack, { issued_at: new Date(Date.now() - 4 * 60000).toISOString() });
-    ok('4 an ack 4 minutes old is good', (await send(promote({ ack: fresh }))).status === 200, '');
+    ok('4 an ack that expired (signed, 10 seconds past its exp): 409 again', (await send(promote({ ack: mintAck({}, { expiresIn: -10 }) }))).status === 409, '');
+    ok('4 a good ack made by hand with the right secret, draft, person and stamp is accepted (the check is the claims, not the 409 we issued)', (await send(promote({ ack: mintAck({}) }))).status === 200, '');
+    ok('4 an ack signed with another secret, or with its signature cut, is refused', (await send(promote({ ack: jsonWebToken.sign({ kind: 'price_ack', draft: DRAFT, actor: SHOP, lines: [{ item_id: ITEM, changed_at: T0 }] }, 'not-our-secret') }))).status === 409 && (await send(promote({ ack: ack.slice(0, -4) + 'AAAA' }))).status === 409, '');
+    ok('4 a token that is no ack (a session-like token, kind other): 409', (await send(promote({ ack: mintAck({ kind: 'session' }) }))).status === 409, '');
     ROWS = [row(125, 18, at(60000))];
     const again = await send(promote({ ack }));
     ok('4 a stamp that moved again since the ack was shown: 409 again, naming 12500', again.status === 409 && again.answer.lines[0].now_minor === 12500 && again.answer.lines[0].changed_at === at(60000), J([again.status, again.answer.lines]));
     ROWS = [row(120, 18, T0)];
-    const other = { issued_at: ack.issued_at, lines: [{ item_id: GONE, changed_at: T0 }] };
-    ok('4 an ack for another item does not cover this line: 409', (await send(promote({ ack: other }))).status === 409, '');
-    ok('4 a junk ack (empty object, text) is no ack: 409', (await send(promote({ ack: {} }))).status === 409 && (await send(promote({ ack: 'yes' }))).status !== 200, '');
+    ok('4 an ack for another item does not cover this line: 409', (await send(promote({ ack: mintAck({ lines: [{ item_id: GONE, changed_at: T0 }] }) }))).status === 409, '');
+    ok('4 junk (empty text, plain text, an object) is no ack: never a 200', (await send(promote({ ack: '' }))).status === 409 && (await send(promote({ ack: 'yes' }))).status === 409 && (await send(promote({ ack: {} }))).status !== 200, '');
+    const askedA = await send(promote({ draft: DRAFT }));
+    ok('4 BOUND TO THE DRAFT: the ack the server gave for draft A is refused on draft B (409), and still good on A', (await send(promote({ ack: ackFrom(askedA), draft: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' }))).status === 409 && (await send(promote({ ack: ackFrom(askedA) }))).status === 200, '');
+    ok('4 BOUND TO THE PERSON: an ack signed for another actor is refused (409)', (await send(promote({ ack: mintAck({ actor: 'someone-else' }) }))).status === 409, '');
 
     /* row 5: nobody is waiting: the shop's own loopback and any key go as authored plus ONE ticket */
     MODE = 'auto';
@@ -218,6 +228,9 @@ const ackFrom = (r) => r.answer && r.answer.ack;
     const r6b = await send(promote());
     ok('6 a till KEY alone (no price_basis) is a till too: never a 409', r6b.status === 200, J([r6b.status, r6b.answer]));
     MODE = 'person';
+    const claim = await send(promote({ business: { till: { id: 'C1', build: 'test-build' }, billed_at: at(HOUR), price_basis: { checked: true, at: at(HOUR) } } }));
+    ok('6 WHO IS A TILL is the KEY, never the body: a PERSON whose body claims price_basis and a till build still gets the 409', claim.status === 409 && claim.answer.code === 'PRICE_MOVED', J([claim.status, claim.answer.code]));
+    ok('6 unit: whoAsks reads the key scope only (till scope, not connector), a key without it is unattended, no key is a person', moved.whoAsks({ till: { key: { scopes: ['till'] } } }) === 'till' && moved.whoAsks({ till: { key: { scopes: ['till', 'connector'] } }, api_key: {} }) === 'unattended' && moved.whoAsks({ api_key: {} }) === 'unattended' && moved.whoAsks({}) === 'person', '');
 
     /* row 7: a rate that moved: 18 -> 12 at T0, price unchanged */
     ROWS = [row(100, 12, T0)];
@@ -268,7 +281,7 @@ const ackFrom = (r) => r.answer && r.answer.ack;
     /* row 12: a price and a withdrawn line together: both named, an ack refused for the set */
     ok('12 unit: movedOf names a price and a withdrawn line together and ackVerdict refuses the set', (() => {
       const two = moved.movedOf([mkLine(), mkLine({ item_id: GONE })], new Map([[ITEM, row(120, 18, T0)], [GONE, row(100, 18, T0, { item_id: GONE, is_active: false })]]), Date.parse(DRAFT_MADE), 'INR');
-      return two.lines.length === 2 && two.lines[1].kind === 'withdrawn' && !moved.ackVerdict({ issued_at: new Date().toISOString(), lines: [] }, two, Date.now()).ok;
+      return two.lines.length === 2 && two.lines[1].kind === 'withdrawn' && !moved.ackVerdict(mintAck({}), two, { draft: DRAFT, actor: SHOP }).ok && moved.repricedLines([mkLine(), mkLine({ item_id: GONE })], two).length === 1;
     })(), '');
 
     /* guards: the steps' places, and a till body returns before any read */
