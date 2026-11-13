@@ -42,6 +42,8 @@ const minorOf = (v, cur) => Math.round(money.round(Number(v), cur || null) * Mat
     const shop = (currency) => ({ currency, constituted: false, country: { code: 'IN' } });
     await assert.rejects(() => cs.currencyLockRefusal({}, 'e', 'BGN', { cur: shop('INR') }), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN' && e.withdrawn === true);
     assert.strictEqual(await cs.currencyLockRefusal({}, 'e', 'BGN', { cur: shop('BGN') }), null, 'the held code is no change');
+    await assert.rejects(() => cs.currencyLockRefusal({}, 'e', 'ZZZ', { cur: shop(null) }), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN' && e.status === 422, 'an unlisted shop currency fails in words at setup, so the till never reaches rmoney with one');
+    assert.ok((await gov.currencyRefusal('no-such-entity', 'ZZZ')).code === 'CURRENCY_NOT_ALLOWED');
     assert.strictEqual(cs.guessOf({ country: 'BG', currency_code: 'BGN', timezone: 'Europe/Sofia' }).currency, null, 'a guess is never a withdrawn money');
   });
   await it('a shop whose own money is withdrawn issues no NEW document; the words name the successor and nothing is converted (the one document gate)', () => {
