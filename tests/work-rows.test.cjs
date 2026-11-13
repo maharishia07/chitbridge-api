@@ -95,7 +95,7 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
 
   /* W11: the open orders in no bill names yet — asked for by Finance only; the plain facts (the till pill) carry none and cost no batch */
   r = await get('/api/work/facts?unbilled=1');
-  ok('W11: facts?unbilled=1 → the one open order in, not billed, its own value in minor units', JSON.stringify(r.body.figures.unbilled) === JSON.stringify({ n: 1, minor: 120050, currency: 'INR' }), JSON.stringify(r.body.figures.unbilled));
+  ok('W11: facts?unbilled=1 → the one open order in, not billed, its own value in minor units', JSON.stringify(r.body.figures.unbilled) === JSON.stringify({ n: 1, minor: 120050, currency: 'INR', by_currency: [{ currency: 'INR', minor: 120050, n: 1 }], no_currency: 0, unpriced: 0 }), JSON.stringify(r.body.figures.unbilled));
   /* W36: the one chit's billed scalar (routes/chits ONE_SHOT) is the SAME test as MARKS_SQL - one fragment, never a second copy */
   { const OO = require(path.join(API, 'lib', 'open-orders')), frag = "business_json->>'bill_no' IS NOT NULL AND business_json->'order'->>'from' = ";
     ok('W36: billedOfChitSql and MARKS_SQL share the one billed test', OO.billedOfChitSql('$1', '$2').includes(frag + '$2::text') && OO.MARKS_SQL.includes(frag + 'ANY($2::text[])'), OO.billedOfChitSql('$1', '$2')); }
@@ -106,7 +106,7 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
     D.copies.push(copy(20, { counterparty_id: 'cust-1', value: '300.00' }), copy(21, { counterparty_id: 'cust-9', value: '50.00' }), copy(22, { counterparty_id: 'cust-10', currency: 'AED', value: '10.00' }));
     D.marks = D.marks.concat([{ against: null, billed: U(21) }]);
     reset(); const by = await W.unbilledByParty(ctx0);
-    ok('CRM-32: two unbilled orders of one party are summed (1200.50 + 300.00), in minor units', JSON.stringify(by.get('cust-1')) === JSON.stringify({ n: 2, minor: 150050, currency: 'INR' }), JSON.stringify([...by]));
+    ok('CRM-32: two unbilled orders of one party are summed (1200.50 + 300.00), in minor units', JSON.stringify(by.get('cust-1')) === JSON.stringify({ n: 2, minor: 150050, currency: 'INR', by_currency: [{ currency: 'INR', minor: 150050, n: 2 }], no_currency: 0, unpriced: 0 }), JSON.stringify([...by]));
     ok('CRM-32: a billed order is not counted - its party is absent, so the list shows none', !by.has('cust-9'));
     ok('CRM-32: a party in another currency keeps its own currency (never summed across)', by.get('cust-10').currency === 'AED' && by.get('cust-10').minor === 1000);
     ok('CRM-32: ONE select read + ONE marks statement for the whole list, never a query per party', D.batches === 1 && D.statements.filter((s) => /SELECT DISTINCT CASE/.test(s)).length === 1, D.batches + ' batches');
