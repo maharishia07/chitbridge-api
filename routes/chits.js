@@ -3073,8 +3073,8 @@ async function sendPriceMoved(sendState, req, res) {
   const priceMoved = require('../lib/price-moved');
   const lines = asSentLines(sendState, req);
   const ids = priceMoved.idsOf(lines);
-  const who = ids.length ? priceMoved.whoAsks(req, business_json) : 'till';
-  if (who === 'till') return false;
+  const asker = ids.length ? priceMoved.whoAsks(req, business_json) : 'till';
+  if (asker === 'till') return false;
   let found;
   try {
     const read = await priceMoved.readFor(sendState.sender_id, ids, promote_draft_id, withEntity);
@@ -3086,7 +3086,7 @@ async function sendPriceMoved(sendState, req, res) {
     return false;
   }
   if (!found.lines.length) return false;
-  if (who === 'unattended') {
+  if (asker === 'unattended') {
     sendState.movedLines = found;
     return false;
   }

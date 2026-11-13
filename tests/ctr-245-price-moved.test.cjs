@@ -276,7 +276,7 @@ const ackFrom = (r) => r.answer && r.answer.ack;
     const chitsSrc = strip(require(path.join(API, 'tools', 'chits-files.cjs')).read(API));
     ok('13 guard: sendPriceMoved sits after sendPromote and before sendWrite (nothing stored when it answers 409)', /sendPromote,\s*sendPriceMoved,[\s\S]*sendWrite,/.test(chitsSrc), '');
     ok('13 guard: the ticket is filed AFTER the store: sendMovedTicket follows sendPriceDrift', /sendPriceDrift,\s*sendMovedTicket,\s*sendBooks/.test(chitsSrc), '');
-    ok('13 guard: a till body returns before any read (whoAsks till)', /who === 'till'\) return false/.test(chitsSrc), '');
+    ok('13 guard: a till body returns before any read (whoAsks till)', /asker === 'till'\) return false/.test(chitsSrc), '');
   } catch (e) {
     fail++;
     console.log('   FAIL the harness threw: ' + (e && e.stack));
