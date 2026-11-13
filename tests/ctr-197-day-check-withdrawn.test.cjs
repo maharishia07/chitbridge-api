@@ -25,14 +25,14 @@ function lift(name) {
   throw new Error('unbalanced ' + name);
 }
 
-const NAMES = ['dayKeyOf', 'isDocRow', 'isExpenseRow', 'isReturnRow', 'withdrawnNos', 'dayMarkWithdrawn', 'dayServerCheck', 'dayCheckThenRefresh'];
+const NAMES = ['shopTz', 'dayInZone', 'shopDayOf', 'dayKeyOf', 'isDocRow', 'isExpenseRow', 'isReturnRow', 'withdrawnNos', 'dayMarkWithdrawn', 'dayServerCheck', 'dayCheckThenRefresh'];
 const today = new Date().toISOString();
 
 /** a fresh page context: a local store, a server answer, the lifted functions */
 function scene(local, serverAnswer) {
   const store = local.map((b) => Object.assign({}, b));
   const ctx = {
-    window: {}, Date, Object, Array, String, Number, isNaN, Promise,
+    window: {}, shopPack: () => null, Intl, Date, Object, Array, String, Number, isNaN, Promise,
     DB: { all: async () => store, put: async (name, row) => { const at = store.findIndex((b) => b.no === row.no); if (at >= 0) store[at] = row; } },
     HOST: { history: async () => serverAnswer, cred: () => true },
     dayClose: () => { ctx.reopened = (ctx.reopened || 0) + 1; },
