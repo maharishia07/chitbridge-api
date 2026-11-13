@@ -155,7 +155,9 @@ t('10. deliverEdge accepts a currency and both call sites pass one', () => {
 });
 
 t('11. the order and its fragments resolve the currency ONCE', () => {
-  const block = route.slice(route.indexOf('router.post(\'/network-store'));
+  // The order route only: from its router.post to the next route (slicing to end of file also counted the storefront chit's own resolve, a different route).
+  const from = route.indexOf("router.post('/network-store");
+  const block = route.slice(from, route.indexOf("router.get('/network/:bridge_id'", from));
   const resolves = block.match(/regional\.currencyFor\(/g) || [];
   assert.strictEqual(resolves.length, 1, `resolved ${resolves.length} times — the order and fragments must not drift`);
 });
@@ -164,8 +166,11 @@ t('12. the storefront currency is governed AND conditional on the pipeline', () 
   // Previously asserted the bare `currency_code: entity.currency_code || 'INR'`. That was correct as far as it went,
   // but it stamped a currency on help-desk and form chits too. A chit with no currency now MEANS something — it is
   // not about money — so the storefront must withhold one rather than default it.
-  assert.match(route, /currency_code: monetary \? \(entity\.currency_code \|\| 'INR'\) : null/,
-    'a non-monetary chit must carry NO currency, and a monetary one must take the entity\'s');
+  // CX4 (1a3f5b5d, 13 Oct) replaced the `|| 'INR'` default with the shop's pack (N1: never INR by name): a monetary chit takes the entity's own
+  // currency, else the regional layer's, else null; a non-monetary chit carries null. The literal must NOT come back.
+  assert.match(route, /currency_code: monetary \? entity\.currency_code \|\| \(await regional\.currencyFor\(entity\.identity_id\)\) : null/,
+    "a non-monetary chit must carry NO currency, and a monetary one must take the entity's, else the regional layer's");
+  assert.ok(!/currency_code: monetary \? [^\n]*'INR'/.test(route), 'the storefront chit must never default a currency to INR by name');
 });
 
 t('13. the three states are distinguishable on a chit', () => {

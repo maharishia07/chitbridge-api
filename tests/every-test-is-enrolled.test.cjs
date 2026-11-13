@@ -31,7 +31,6 @@ const KNOWN_NOT_ENROLLED = {
   'books-reconcile.test.cjs': 'ACC-302 (PRODUCT): lib/tax-copy.js ledgerFor reads expenseItcPack(h) outside the per-copy try, so one unreadable copy throws the whole month instead of landing in `dropped` (T-C5)',
   'env-posture.test.cjs': 'RAIL-208 (PRODUCT): lib/ctpreturn.js:199 compares process.env.NODE_ENV to a literal untrimmed; the assertion (one trimmed reader, isSealed) is right',
   'gherkin.test.js': 'QA-123: the case key `governance.nightly` (data/test-cases.json) is lowercase and dotted, the Gherkin key grammar is capitals-and-hyphens: rename the key or widen the grammar',
-  'governed-currency.test.js': 'QA-122: tests 11 and 12 are static regexes (API-58, RAIL-63); replace by a behavioural case on the resolved currency, then enrol (closes CTRY-28)',
   'iam-access.test.cjs': 'QA-122: 8 of 36 rows disagree with the spec (read-only and editable external 403; PATCH /actors/x answers 404 not 403; the Viewer/Commenter rows): judge test-stale vs product (cb-security) before any change',
   'products-bulk.test.cjs': 'QA-122: the bulk route moved behind catalogue-write.patchItems (CAT-W1); 8 static route pins to re-aim',
   'query-shape.test.js': 'QA-122: the per-file query budget names files that changed, an EISDIR on a path that became a folder, the LIKE trigram check: refresh the budget with reasons',
@@ -41,7 +40,7 @@ const KNOWN_NOT_ENROLLED = {
   'type-tokens.test.js': 'QA-122: the type scale moved to appearanceApply; raw pixel sizes in 26 capability files become a budget (UX pack 12)'
 };
 /** the list may not grow: lower this when a row is deleted */
-const MAX_KNOWN = 12;
+const MAX_KNOWN = 11;
 
 const read = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
 const guardsText = read(path.join(API, 'scripts', 'guards.cjs'));
