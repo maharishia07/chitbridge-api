@@ -3986,7 +3986,7 @@ function matchOrder(head, detail, business, progress, receipts, invoices, tolera
     ...orderParty(head, business),
     lines,
     differences,
-    verdict: matchVerdict(lines, differences, money.code, closed),
+    verdict: matchVerdict(lines, differences, money, closed),
     ordered_total,
     received_total,
     invoiced_total: invoice.total,
@@ -4098,12 +4098,17 @@ function countsAsDifference(item, closed) {
   return item.difference > 0 || closed;
 }
 
+/** OPS-100 · an invoice above the goods received is a variance whatever the order's status (reason: billed more than received): the carried code and gap, nothing recomputed */
+function billedMoreThanReceived(money) {
+  return money.code === 'apart' && money.gap < 0;
+}
+
 /** awaited · differs · open · agreed — see matchOrder */
-function matchVerdict(lines, differences, money_code, closed) {
+function matchVerdict(lines, differences, money, closed) {
   if (lines.every((item) => item.received === 0 && !item.counted_in_another_unit)) return 'awaited';
   if (differences || lines.some((item) => item.state === 'other_unit')) return 'differs';
-  if (!closed && lines.some((item) => item.received < item.ordered)) return 'open';
-  return money_code === 'apart' || money_code === 'currency_mismatch' ? 'differs' : 'agreed'; /* a round-off or an unknown figure is not a difference */
+  if (!closed && lines.some((item) => item.received < item.ordered)) return billedMoreThanReceived(money) ? 'differs' : 'open';
+  return money.code === 'apart' || money.code === 'currency_mismatch' ? 'differs' : 'agreed'; /* a round-off or an unknown figure is not a difference */
 }
 
 /** one ordered line beside what was received: the difference, the reason the door gave, and whether this trade absorbs it */

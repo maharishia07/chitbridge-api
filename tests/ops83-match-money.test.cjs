@@ -98,7 +98,7 @@ const get = (port, p) => new Promise((ok, bad) => http.get({ host: '127.0.0.1', 
 
   world(12, 6, [receipt(21, { taxable: 60, tax: 3 })], [bill126(38)]);
   o = await read();
-  t('7 partial: 6 of 12 received (60 + 3 = 63) vs the whole bill 126: gap -63 carried, OPS-100: the order is still open, so the verdict waits for the rest (open), the line says short', [...seen(o), o.lines[0].state], [63, -63, 'apart', 'open', 'short']);
+  t('7 partial: 6 of 12 received (60 + 3 = 63) vs the whole bill 126: gap -63 carried, the verdict is the short line (differs), the line says short', [...seen(o), o.lines[0].state], [63, -63, 'apart', 'differs', 'short']);
 
   world(12, 12, [receipt(21, { taxable: 60, tax: 3 }, { no: 'A-1', total: 63 }), receipt(22, { taxable: 60, tax: 3 }, { no: 'A-2', total: 63 })], []);
   o = await read();
