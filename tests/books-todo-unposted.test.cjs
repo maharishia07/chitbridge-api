@@ -134,6 +134,24 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     ok('every row produced is a listed KIND and fits (a future kind that breaks the shape goes red here)', wire.every((x) => S.BT.KINDS.includes(x.kind)) && fits(wire));
   });
 
+  await section('T8 · every kind but bills_not_in_books is coded WITH its button (action is optional in the shape, so nothing else would notice a lost one)', async () => {
+    /* STATIC, over lib/books-todo.js: a world that makes all twelve kinds needs GST, a closed year, recurring and accrual templates, a parked advice and a rated-less bill at once — too heavy for one fixture;
+       books-todo.test.cjs already asserts a live row of its kinds carries its action. Here each add-call is cut at its kind literal and must hold { label, screen, call }. */
+    const src = require('fs').readFileSync(path.join(H.API, 'lib', 'books-todo.js'), 'utf8');
+    const calls = {};
+    const re = /(?:^|[^\w])(?:add|addRow)\(\s*'([a-z_]+)',/g;
+    const starts = []; let m;
+    while ((m = re.exec(src))) starts.push({ kind: m[1], at: m.index });
+    starts.forEach((c, i) => { calls[c.kind] = src.slice(c.at, i + 1 < starts.length ? starts[i + 1].at : src.length); });
+    const BT = require(path.join(H.API, 'lib', 'books-todo'));
+    const withButton = (text) => /\{\s*label:\s*'[^']+',\s*screen:\s*'[^']+',\s*call:\s*'[^']+'/.test(text || '');
+    const listed = BT.KINDS.filter((k) => k !== KIND);
+    ok('every listed KIND but ' + KIND + ' has an add-call in the file (a kind built another way is not guarded: this goes red)', listed.every((k) => calls[k]), JSON.stringify(listed.filter((k) => !calls[k])));
+    const lost = Object.keys(calls).filter((k) => k !== KIND && !withButton(calls[k]));
+    ok('each of them passes { label, screen, call } to add — ' + (Object.keys(calls).length - 1) + ' kinds', Object.keys(calls).length >= 12 && lost.length === 0, 'no button on: ' + lost.join(', '));
+    ok(KIND + ' passes none (its add-call has no action literal)', calls[KIND] && !withButton(calls[KIND]) && !/screen:/.test(calls[KIND]));
+  });
+
   console.log('\n' + (fail ?'  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
