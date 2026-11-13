@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 0,
-  "partial": 3,
-  "meets": 631,
+  "partial": 0,
+  "meets": 634,
   "columns": {
    "strict_input": {
     "applies": 323,
@@ -7253,11 +7253,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ead8b943a45d6da0"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2 | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; a party_id that is no uuid now answers the shared 404 NOT_FOUND (lib/id-guard words; the house answer for an id that names no row: path-id-guard FIN-86 rows, CAT-230 till/price item_id, ACC-217) where it answered 400 Which party?; fin-books-doors-strict and path-id-guard pass; legacy error/message keys kept",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-finance-terms.js"
@@ -37309,11 +37308,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ebe27a3f5db0bb14"
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2 | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; a party_id that is no uuid now answers the shared 404 NOT_FOUND (lib/id-guard words; the house answer for an id that names no row: path-id-guard FIN-86 rows, CAT-230 till/price item_id, ACC-217) where it answered 400 Which party?; fin-books-doors-strict and path-id-guard pass; legacy error/message keys kept",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-finance-cheques.js",
     "cap-finance-terms.js"
@@ -49425,11 +49423,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d0db3038b018c925"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; a line with a quantity not above 0 or blank, a price below 0 or blank-unreadable, a figure above 1e12 or a line that is not an object now answers 400 BAD_QTY / BAD_PRICE / BAD_BOUND / BAD_LINE in the one problem shape via the shared lineRefusal before any shelf read (was priced, or a 500 for a non-object); no second calculation, no raw text; web has no app caller (e2e sends valid bodies); a keyed external client that sent qty 0 now gets a refusal (client-visible, catalogue/country-owned rule, named in the PR) | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; POST /build split into offersEcho/ratesEcho and services lineRefusal/normLine helpers, same answer and same order of checks; m3-invoice-one-builder, cat-249, cat-258, acc-282, api-8 pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
