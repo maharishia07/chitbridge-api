@@ -43,7 +43,7 @@ const ALLOWED = [
   { file: 'lib/chit-proposal.js', has: 'priced2.block.total', why: 'writer: the change order stores the engine block total (ACC-206 A)' },
   { file: 'lib/issued-invoice.js', any: true, why: 'a CHECK: compares one issued invoice\'s TotInvVal with the sum of its own heads and names a difference; no total is shown' },
   { file: 'lib/bill-paper.js', has: 'invoice.ValDtls.TotInvVal', why: 'a validity test (is the carried invoice a number-bearing one), not a figure shown' },
-  { file: 'lib/books-hooks.js', has: 'invoice.ValDtls.TotInvVal', why: 'the books post the frozen invoice\'s OWN total (R6 "both ledgers post what the invoice says"): the standing copy, the first arm of pickOf\'s order; the mismatch against money.total is raised by lib/money-check' },
+  { file: 'lib/books-hooks.js', has: 'invoice.ValDtls.TotInvVal', why: 'ACC-349 (open): the debit-note books posting reads `TotInvVal || byRate.total`, a per-rate recompute fallback when TotInvVal is absent (lines ~1047, ~1243); it should read the carried total or refuse (mismatch, not recompute)' },
   { file: 'lib/gst-returns.js', has: 'toPaise_(money.total)', why: 'the return line\'s own tax-lines money document (engine output), not a chit copy' },
   { file: 'lib/credit-cap.js', has: "'TotInvVal' AS invoice_total", why: 'selects the three copies and hands them to pickOf (credit-cap.js:58): no total of its own' },
   { file: 'lib/credit-cap.js', has: 'TotInvVal: row.invoice_total', why: 'rebuilds the header shape from the selected copies for pickOf' },
