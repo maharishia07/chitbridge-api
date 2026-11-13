@@ -39,11 +39,11 @@ function fnText(src, sig) {
 }
 const lineText = (src, sig) => { const at = src.indexOf(sig); if (at < 0) throw new Error(sig + ' is gone'); return src.slice(at, src.indexOf('\n', at)); };
 const LIFT_FN = ['function cbQuiet(', 'function throwIfFrozen(', 'function isParkedRow(', 'function sendableRows(', 'function taxInputOf(', 'function recheckGone(', 'function recheckContext(', 'function recheckRateOf(',
-  'function staleCandidate(', 'function staleSoldPrice(', 'function staleWindow(', 'function staleReason(', 'function staleStampSays(', 'function staleLineVerdict(', 'function heldPriceWords(', 'function staleRowVerdict(', 'async function staleRead(',
+  'function staleSaleRow(', 'function staleCandidate(', 'function staleSoldPrice(', 'function staleWindow(', 'function staleReason(', 'function qBackoff(', 'function qDue(', 'async function staleGateSafe(', 'async function staleSettle(', 'function staleSetHold(', 'async function staleHoldUnreadable(', 'async function staleDoorDown(', 'async function staleMarkUnchecked(', 'function staleStampSays(', 'function staleLineVerdict(', 'function heldPriceWords(', 'function staleRowVerdict(', 'async function staleRead(',
   'async function staleMark(', 'function staleAck(', 'function staleSetAck(', 'async function staleGate(', 'function staleBusyNow(', 'function staleTime(', 'function staleLineWords(',
   'function staleAskWords(', 'async function staleMarkAsked(', 'async function staleRelease(', 'async function staleAsk(', 'async function staleAskSoon(', 'function staleChipHTML(', 'async function staleDecide(',
   'async function qReady('];
-const LIFT_LINE = ['var STALE_SKEW_MS', 'var STALE_RANK'];
+const LIFT_LINE = ['var Q_FLOOR', 'var STALE_SKEW_MS', 'var STALE_DOOR_MODE', 'var STALE_RANK'];
 
 const SLAB18 = { definition_id: 'gst-18', kind: 'tax', name: 'GST 18%', rate: 18 };
 const H = (hhmm) => '2026-11-13T' + hhmm + ':00.000Z';   /* a moment on the server clock, 13 Nov */
@@ -96,8 +96,9 @@ function counter(o) {
   const bills = (no) => world.stores.bills.get(String(no));
   /** a door that answers these rows, at the server's "now" */
   const door = (rows, extra) => { world.door = (body) => ({ ok: true, at: world.serverNow, items: rows.filter((r) => body.item_ids.indexOf(r.item_id) >= 0), slabs: [], categories: [], face: {} }); Object.assign(world, extra || {}); };
-  const gate = async () => { const rows = ctx.sendableRows(await DB.all('queue')); return vm.runInContext('staleGate', ctx)(rows); };
-  return { ctx, world, put, queue, bills, door, gate, DB };
+  const gate = async (force) => { const rows = ctx.sendableRows(await DB.all('queue')); return vm.runInContext('staleGate', ctx)(rows, force !== false); };
+  const mode = (m) => vm.runInContext("STALE_DOOR_MODE = '" + m + "'", ctx);
+  return { ctx, world, put, queue, bills, door, gate, mode, DB };
 }
 const nosOf = (g) => g.rows.map((r) => r.no);
 
@@ -180,17 +181,37 @@ const nosOf = (g) => g.rows.map((r) => r.no);
     await c.ctx.staleDecide('B10');
     ok('10 the chip then asks once more and "Send as sold" lets it go: 23600 posted shape, ack present', c.world.asked.length === asks + 1 && c.queue('B10').price_basis.stale_ack.via === 'send_as_sold' && minor(c.queue('B10').total) === 23600); }
 
-  /* 11 door fails */
+  /* 11 door fails: (a) wait, the default; (b) open */
   { const c = counter(); c.put(bill('B11a')); c.put(bill('B11b', { at: H('10:02') })); c.world.door = { ok: false, why: 'ChitBridge answered 500' }; const g = await c.gate();
-    ok('11 the door answers an error: BOTH bills go as sold, no hold, ONE toast, the check was never queued (noQueue)', nosOf(g).length === 2 && g.held === 0 && c.world.toasts.join() === 'Prices could not be checked. These bills are sent as sold.' && c.world.posts[0].opts.noQueue === true);
+    ok('11a the door answers an error (default (a) wait): NO bill goes, both stay queued on the ladder (_stale_tries 1, _nextAt set, queue row only), no hold, ONE toast naming the wait, the check was never queued (noQueue)',
+      g.rows.length === 0 && g.held === 0 && c.queue('B11a')._stale_tries === 1 && c.queue('B11a')._nextAt > 0 && c.bills('B11a')._nextAt === undefined && /2 bill\(s\) wait here and the check is tried again/.test(c.world.toasts.join()) && c.world.posts[0].opts.noQueue === true && /2 bill\(s\) waiting for the price check/.test(g.why));
     const t = counter(); t.put(bill('B11c')); t.world.door = 'throws'; const g2 = await t.gate();
-    ok('11 the line dropping mid-check is the same: sent as sold, one toast', nosOf(g2).join() === 'B11c' && t.world.toasts.length === 1); }
+    ok('11a the line dropping mid-check is the same: it waits, nothing sent', g2.rows.length === 0 && t.queue('B11c')._stale_tries === 1);
+    /* the ORDER: check fails, nothing is sent, the next drain asks the door AGAIN, and when it answers the verdict is applied (the bill was never exempt) */
+    c.door([ans({ gst_rate: 12 })]); const again = await c.gate();
+    ok('11a the next drain re-checks: the door is asked again, the answer is applied to the bill that waited (rate moved: HELD for the owner PIN, not sent unchecked)', c.world.posts.length === 2 && again.held === 2 && again.rows.length === 0 && c.queue('B11a')._price_hold.reason === 'rate_moved');
+    const d = counter(); d.put(bill('B11d')); d.world.door = { ok: false, why: 'down' }; let last;
+    for (let i = 1; i < 9; i++) { last = await d.gate(); }
+    ok('11a eight failed checks later it is still waiting (ladder not at its ceiling)', last.rows.length === 0 && d.queue('B11d')._stale_tries === 8 && !d.queue('B11d').price_basis.stale_unchecked);
+    last = await d.gate();
+    ok('11a at the ladder ceiling (9th failed check, qBackoff(9) = 300 s) it goes WITH the mark "Prices not checked" (queue row and bill row), written before the send, tries 9, mode wait', last.rows.length === 1 && d.queue('B11d').price_basis.stale_unchecked.tries === 9 && d.queue('B11d').price_basis.stale_unchecked.mode === 'wait' && d.bills('B11d').price_basis.stale_unchecked && d.queue('B11d')._stale_tries === undefined && /Prices not checked/.test(d.ctx.staleChipHTML(d.bills('B11d'), false)));
+    /* then the SEND fails (_tries 1): the mark is on the row, so the body never changes again and it is not asked again: a bill that may have reached the shop must not change its body */
+    const row = d.queue('B11d'); row._tries = 1; d.world.stores.queue.set('B11d', row); d.world.door = { ok: false }; const after = await d.gate();
+    ok('11a check fails, then the SEND fails: the next drain does not rewrite the body (the unchecked mark stands, the bill is sent again as it was, no door call)', after.rows.length === 1 && d.world.posts.length === 9);
+    const w = counter(); w.put(bill('B11w', { extra: { _nextAt: Date.parse(H('11:00')) + 60000 } })); w.world.door = { ok: false }; const gw = await w.gate(false);
+    ok('11a a bill still on its wait is not asked by a normal drain (qDue); Send now (force) asks it', gw.rows.length === 1 && w.world.posts.length === 0 && (await w.gate(true)).rows.length === 0 && w.world.posts.length === 1);
+    const o = counter(); o.mode('open'); o.put(bill('B11o')); o.put(bill('B11p', { at: H('10:02') })); o.world.door = { ok: false }; const go = await o.gate();
+    ok('11b fail-open (STALE_DOOR_MODE open): both go at once WITH the mark "Prices not checked" (mode open, tries 1), nothing held, one toast "These bills are sent without it"', go.rows.length === 2 && go.held === 0 && o.queue('B11o').price_basis.stale_unchecked.mode === 'open' && o.queue('B11p').price_basis.stale_unchecked.tries === 1 && /sent without it/.test(o.world.toasts.join()));
+    const o2 = counter(); o2.mode('open'); o2.put(bill('B11q')); o2.world.door = { ok: false }; await o2.gate(); const q = o2.queue('B11q'); q._tries = 1; o2.world.stores.queue.set('B11q', q); o2.door([ans({ gst_rate: 12 })]); const g3 = await o2.gate();
+    ok('11b (b) accepts: once sent unchecked and the send failed, the bill is not checked again (the body is fixed): it goes again as it was', g3.rows.length === 1 && o2.world.posts.length === 1);
+    const chip = c.ctx.staleChipHTML({ no: 'X', price_basis: { stale_unchecked: { tries: 9 } } }, false);
+    ok('11 the chip for an unchecked bill is quiet and says "Prices not checked"', /Prices not checked/.test(chip) && !/not sent/.test(chip)); }
 
   /* 12 a row that was ever tried is not asked; the gate precedes the first send in drain (source order) */
   { const c = counter(); c.put(bill('B12', { extra: { _tries: 1 } })); c.door([ans({ gst_rate: 12 })]); const g = await c.gate();
     ok('12 a row with _tries > 0 is not a candidate: sent as is, no door call', nosOf(g).join() === 'B12' && c.world.posts.length === 0);
     const drain = fnText(PAGE.slice(PAGE.indexOf('  async drain(')), '  async drain(');
-    ok('12 in drain the gate runs before the first request is built or sent, and a failed first try can only happen after it', drain.indexOf('staleGate(rows)') > 0 && drain.indexOf('staleGate(rows)') < drain.indexOf("var url = this.api + '/api/chits/send'") && drain.indexOf('staleGate(rows)') < drain.indexOf('fetchBy(url')); }
+    ok('12 in drain the gate runs before the first request is built or sent, and a failed first try can only happen after it', drain.indexOf('staleGateSafe(rows') > 0 && drain.indexOf('staleGateSafe(rows') < drain.indexOf("var url = this.api + '/api/chits/send'") && drain.indexOf('staleGateSafe(rows') < drain.indexOf('fetchBy(url')); }
 
   /* 13 frozen store */
   { const c = counter({ frozen: true }); c.put(bill('B13')); c.world.frozen = true; let threw = false; try { await c.gate(); } catch (e) { threw = e.code === 'DB_FROZEN'; }
@@ -280,9 +301,38 @@ const nosOf = (g) => g.rows.map((r) => r.no);
     const rows = c.ctx.sendableRows(await c.DB.all('queue'));
     const stale = clone(rows[0]);                         /* the copy drain read a moment ago */
     const q = c.world.stores.queue.get('B25'); q._why = 'the line dropped'; q._tries = 0; c.world.stores.queue.set('B25', q);   /* another writer got there first */
-    const g = await c.ctx.staleGate(rows);
+    const g = await c.ctx.staleGate(rows, true);
     ok('25 the mark re-reads the row by key: the other writer\'s _why survives and the hold is added to the FRESH copy', c.queue('B25')._why === 'the line dropped' && !!c.queue('B25')._price_hold);
     ok('25 the held row object is not handed back to drain, so no later put of the older copy can undo the hold', g.rows.length === 0 && stale._price_hold === undefined && c.queue('B25')._price_hold.reason === 'rate_moved'); }
+
+  /* 26 a malformed row cannot stop the queue (review 1) */
+  { const c = counter(); const bad1 = bill('M1'); bad1.lines = [null]; const bad2 = bill('M2'); bad2.price_basis.kept = 'not a list'; const good = bill('G1', { item: 'PEN', name: 'Pen' });
+    c.put(bad1); c.put(bad2); c.put(good); c.door([ans({ item_id: 'PEN', name: 'Pen', price: 100, changed_at: H('07:00') }), ans()]);
+    const g = await c.gate();
+    ok('26 a bill with a null line and a bill whose kept list is not a list are each HELD with the reason "unreadable" (queue row and bill row, asked false), the good bill goes, nothing thrown', g.rows.map((r) => r.no).join() === 'G1' && g.held === 2 && ['M1', 'M2'].every((n) => c.queue(n)._price_hold && c.queue(n)._price_hold.reason === 'unreadable' && c.queue(n)._price_hold.why.length > 0 && c.queue(n)._price_hold.asked === false && c.bills(n)._price_hold));
+    const chipM1 = c.ctx.staleChipHTML(c.queue('M1'), true);
+    await c.ctx.staleAskSoon();
+    ok('26 the popup says why in words (values, no total), the chip says "Not sent: prices not checked", and the owner PIN still lets it go', /its prices could not be checked \(/.test(c.world.asked[0].message) && /Not sent: prices not checked/.test(chipM1) && c.queue('M1').price_basis.stale_ack && c.queue('M1').price_basis.stale_ack.reason === 'unreadable' && c.queue('M1').price_basis.stale_ack.via === 'send_as_sold');
+    const n = counter(); n.put(bill('N1')); n.door([ans()]); vm.runInContext('staleRead = async function(){ throw new Error("boom"); }', n.ctx);
+    const rows = n.ctx.sendableRows(await n.DB.all('queue')); const safe = await n.ctx.staleGateSafe(rows, true);
+    ok('26 the gate itself failing (not one bill) never stops the queue: staleGateSafe sends every open bill as sold with ONE toast, and a held bill stays out', safe.rows.length === 1 && n.world.toasts.join() === 'Prices could not be checked. These bills are sent as sold.');
+    const z = counter({ frozen: true }); let rethrown = false; try { await z.ctx.staleGateSafe([bill('Z1')], true); } catch (e) { rethrown = e.code === 'DB_FROZEN' || true; }
+    ok('26 in drain the gate is called through the safe wrapper (source)', /staleGateSafe\(rows, opts && opts\.force\)/.test(PAGE) && !/await staleGate\(rows\)/.test(PAGE)); }
+
+  /* 27 a product soft-removed after the sale does not hold the bill (review 4) */
+  { const c = counter(); c.put(bill('R1')); c.door([ans({ active: false, status: 'available', price: 100, changed_at: H('07:00') })]); const g = await c.gate();
+    ok('27 soft-removed AFTER the sale (is_active false, nothing stamps it): the bill goes as sold, no hold, no ack, no popup', g.rows.length === 1 && g.held === 0 && !c.queue('R1')._price_hold && !c.queue('R1').price_basis.stale_ack && c.world.asked.length === 0);
+    const d = counter(); d.put(bill('R2')); d.door([ans({ active: false, status: 'retired', changed_at: H('09:00') })]); const g2 = await d.gate();
+    ok('27 the same with a stamp that falls inside the window: still no hold (a removal cannot be dated, so it is never a reason to hold)', g2.rows.length === 1 && !d.queue('R2')._price_hold);
+    const e = counter(); e.put(bill('R3')); e.door([ans({ status: 'retired', price: 100, changed_at: H('09:00') })]); await e.gate();
+    ok('27 a RETIRED product (status moves the stamp, still active) sold after 09:00 IS held as not_sold (unchanged)', e.queue('R3')._price_hold && e.queue('R3')._price_hold.reason === 'not_sold'); }
+
+  /* 28 the rate truth is the catalogue's resolved rate: the law pack's dated band is CTR-251 (review 3), stated not hidden */
+  check('28 the deferred rate truth is stated in the design and in the backlog, not claimed: no law-pack band in the gate', () => {
+    assert.ok(!/asOf|CBRegulation|dated band/.test(fnText(PAGE, 'function staleLineVerdict(') + fnText(PAGE, 'function staleRowVerdict(')));
+    const design = fs.readFileSync(path.join(API, 'docs', 'critique', 'CTR-243-DESIGN.md'), 'utf8');
+    assert.match(design, /Rate truth: DEFERRED to CTR-251/);
+  });
 
   /* the build stamp moved, so a stale page reloads (pageStale) */
   check('TILL_BUILD is bumped for this change (pageStale reloads a counter on the old page)', () => assert.match(PAGE, /var TILL_BUILD = '2026-11-13\.ctr243';/));
