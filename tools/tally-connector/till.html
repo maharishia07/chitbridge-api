@@ -5702,10 +5702,8 @@ var CloudHost = {
     var no = await nextNumber('R', false, p.at);
     var doc = Object.assign({ at: new Date().toISOString(), till: tillId() }, p, { kind: 'payment', no: no });
     doc.chitBody = chitOfPayment(doc);
-    var key = 'payments-' + dayKeyOf(doc.at);
-    var list = (await DB.get(key)) || [];
-    list.push(doc);
-    await DB.set(key, list);
+    var payDay = dayOrNull(doc.at);   /* no shop day: no bucket (the queue below still carries the payment) */
+    if (payDay) { var list = (await DB.get('payments-' + payDay)) || []; list.push(doc); await DB.set('payments-' + payDay, list); }
     await DB.put('queue', { no: no, at: doc.at, kind: 'payment', chitBody: doc.chitBody });
     this.drain();
     return { ok: true, bill: doc };
@@ -7491,7 +7489,7 @@ function rcvPayPropose(){
       prop = CBReceivables.propose(open.map(function(o){ return { id: o.ref, party: c.identity_id, date: o.date || o.due_date,
                                                                   due: o.due_date, amount: booksMajor(o.balance_minor), currency: cur,
                                                                   disputed: !!o.disputed }; }),
-                                   { id: 'new', party: c.identity_id, amount: amt, currency: cur, date: dayKeyOf(Date.now()) });
+                                   { id: 'new', party: c.identity_id, amount: amt, currency: cur, date: dayOrNull() });
     } catch (_) { prop = null; }
   }
   if (prop && prop.ok) {
@@ -22515,6 +22513,14 @@ var DAY_D = null, DAY_ROWS = [];
  */
 /** ⭐ CTR-242: THE day cut of the till — the bills lists, the day close, the closed mark, the summary key. The shop's day (shopDayOf), never a UTC slice; a non-date keeps its own first ten characters. */
 function dayKeyOf(at){ var t = new Date(at); return isNaN(t) ? String(at || '').slice(0, 10) : shopDayOf(t); }
+/** the shop's day of a moment (none = now) or null when there is no shop day — a caller that stores or prints a date uses this, never a '' */
+function dayOrNull(at){ return dayKeyOf(at == null ? Date.now() : at) || null; }
+/** the bill numbers this device already holds → { no: 1 } */
+async function billNosHeld(){
+  var have = {};
+  try { ((await DB.all('bills')) || []).forEach(function(b){ if (b && b.no) have[String(b.no)] = 1; }); } catch (e) { cbQuiet('dayReread:1', e); }
+  return have;
+}
 /** CTR-197: the bill numbers the server names as withdrawn (cancelled or rejected) → { no: 1 }; anything else it sends is ignored */
 function withdrawnNos(list){
   var out = {};
@@ -22612,8 +22618,8 @@ async function dayReread(reopen){ if (frozenStop('re-reading the day')) return 0
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return 0;
   var h = await historyOrNull();
   if (!h || h.offline || !Array.isArray(h.bills)) { if (reopen) toastLine('Could not reach the server — try again when the line is back.'); return 0; }
-  var have = {}; try { ((await DB.all('bills')) || []).forEach(function(b){ if (b && b.no) have[String(b.no)] = 1; }); } catch (e) { cbQuiet('dayReread:1', e); }
-  var day = dayKeyOf(Date.now()), n = 0;
+  var day = dayKeyOf(Date.now()), n = 0; if (!day) return 0;   /* no shop day: '' !== '' is false, which imported every server bill as today's */
+  var have = await billNosHeld();
   for (var i = 0; i < h.bills.length; i++) {
     var b = h.bills[i];
     if (!b || !b.no || have[String(b.no)] || dayKeyOf(b.at) !== day) continue;
