@@ -108730,6 +108730,65 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-11-13T00:00:00.000Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/ops-58-short-delivery-match.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "OPS-58: the W73 rail bill (60 billed, 50 received) is a short line, gap -120, verdict differs",
+   "claim": "OPS-58: the W73 rail bill (60 billed, 50 received) is a short line, gap -120, verdict differs",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 62 lines. Run: node chitbridge-api/tests/ops-58-short-delivery-match.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/deliverline.js",
+    "lib/policy.js",
+    "lib/select.js",
+    "routes/till.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z",
+   "needs": [
+    "a database"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/net-41-bridge-id-search.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "NET-41: a whole bridge id typed in supplier search finds the listed shop on another installation (exact, any case)",
+   "claim": "NET-41: a whole bridge id typed in supplier search finds the listed shop on another installation (exact, any case)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 52 lines. Run: node chitbridge-api/tests/net-41-bridge-id-search.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-14T00:00:00.000Z"
   }
  ]
 }
