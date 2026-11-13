@@ -37,6 +37,13 @@ const minorOf = (v, cur) => Math.round(money.round(Number(v), cur || null) * Mat
     const fund = await gov.currencyRefusal('no-such-entity', 'XDR');
     assert.ok(fund && !/withdrawn/.test(fund.message));
   });
+  await it('the one currency lock door (save, PATCH profile, network-build) refuses a NEW withdrawn money, and lets a shop re-send the one it holds', async () => {
+    const cs = require('../lib/country-setup');
+    const shop = (currency) => ({ currency, constituted: false, country: { code: 'IN' } });
+    await assert.rejects(() => cs.currencyLockRefusal({}, 'e', 'BGN', { cur: shop('INR') }), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN' && e.withdrawn === true);
+    assert.strictEqual(await cs.currencyLockRefusal({}, 'e', 'BGN', { cur: shop('BGN') }), null, 'the held code is no change');
+    assert.strictEqual(cs.guessOf({ country: 'BG', currency_code: 'BGN', timezone: 'Europe/Sofia' }).currency, null, 'a guess is never a withdrawn money');
+  });
   await it('fx-rates refuses a new rate in a withdrawn code in words, and in a fund', () => {
     const why = fx.rowOf({ date: '2026-11-01', from: 'BGN', to: 'INR', rate: '45.1' }, 'INR', 'manual');
     assert.ok(why.why && /withdrawn/.test(why.why));
