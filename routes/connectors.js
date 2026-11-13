@@ -18,6 +18,8 @@ const router = express.Router();
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withEntity } = require('../db');
+/* SEC-75/DB-103: connector_connection is under RLS (b855), so every statement on it is bound to the shop: queryAsShop(shop, sql, params) */
+const queryAsShop = (entity, text, params) => withEntity(entity, (bound) => bound.query(text, params));
 const { safeErr } = require('../lib/respond');
 const storage = require('../lib/storage');
 const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution seam — resolve-before-act
@@ -180,7 +182,7 @@ const fitsBigint = (digits) => {
 
 // ownership guard — the connector actor must be an actor identities row under this entity
 async function ownedConnector(actor_id, entity_id) {
-  const r = await db(
+  const r = await queryAsShop(entity_id,
     `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen
        FROM identities
       WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,
@@ -554,7 +556,7 @@ router.post(
       // Resolve the device/connection when a BridgeId is given — it must belong to THIS actor and be enabled.
       let conn = null;
       if (bridge_id) {
-        const cr = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+        const cr = await queryAsShop(entity_id, `SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
         conn = cr.rows[0] || null;
         if (!conn) return problem(req, res, { status: 404, ...words.unknownDevice() });
         if (conn.enabled === false) return problem(req, res, { status: 409, ...words.deviceOff() });
@@ -562,7 +564,7 @@ router.post(
 
       // (2) HEARTBEAT — health goes live for the Pi (and this device). Saved independently of the chit emit below.
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
-      if (bridge_id) await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+      if (bridge_id) await queryAsShop(entity_id, `UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
 
       // (3) EMIT the exception as a co-held chit — a SELF-CHIT filed into the device's FOLDER, CC the partner if set.
       //     A pure liveness ping can pass heartbeat_only=true to refresh health WITHOUT raising a chit (no inbox flood).
@@ -779,7 +781,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
 router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
-    const r = await db(
+    const r = await queryAsShop(entity_id,
       `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at,
               (SELECT COUNT(*) FROM connector_connection cc WHERE cc.actor_id = identities.identity_id) AS connection_count
          FROM identities
@@ -805,7 +807,7 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
-    const conns = await db(`SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [
+    const conns = await queryAsShop(entity_id, `SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [
       actor.identity_id,
       entity_id
     ]);
@@ -912,7 +914,7 @@ router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()
     if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
     if (req.body && req.body.bridge_id)
-      await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
+      await queryAsShop(entity_id, `UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
     res.json({ message: 'pong', last_seen: new Date().toISOString(), health: 'live' });
   } catch (err) {
     problem(req, res, failed(err, req, 'Ping failed'));
@@ -946,7 +948,7 @@ router.post(
       const retention = req.body.retention || 'never_persist';
       const config = req.body.config || {}; // IoT: {protocol,host,port,topic,device_id} · ERP: {path}
       const bridge_id = generateBridgeId();
-      const r = await db(
+      const r = await queryAsShop(entity_id,
         `INSERT INTO connector_connection
            (actor_id, entity_id, direction, ref, schema_ref, counterparty_entity_id, retention, bridge_id, conn_config)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
@@ -966,7 +968,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     const actorHealth = health(actor.last_seen);
-    const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
+    const r = await queryAsShop(entity_id, `SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
     const connections = r.rows.map((item) => ({ ...item, signal: actorHealth === 'offline' ? 'no_signal' : health(item.last_seen) }));
     res.json(
@@ -995,7 +997,7 @@ router.patch(
       if (!fitsBigint(req.params.connId)) return problem(req, res, { status: 404, ...words.notFound() });
       const actor = await ownedConnector(req.params.actorId, entity_id);
       if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
-      const r = await db(
+      const r = await queryAsShop(entity_id,
         `UPDATE connector_connection SET enabled = $1
           WHERE connection_id = $2 AND actor_id = $3 AND entity_id = $4 RETURNING *`,
         [req.body.enabled, req.params.connId, actor.identity_id, entity_id]
@@ -1016,7 +1018,7 @@ router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], 
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return problem(req, res, { status: 404, ...words.noSuchConnector() });
-    const cc = await db(`SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
+    const cc = await queryAsShop(entity_id, `SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
     if (cc.rows[0].n > 0) return problem(req, res, { status: 409, ...words.hasDevices(cc.rows[0].n) });
     try {
       await db(`DELETE FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [

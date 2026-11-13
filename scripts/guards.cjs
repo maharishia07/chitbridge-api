@@ -253,6 +253,7 @@ const GUARDS = [
   'rls-guard-baseline.test.cjs',
   'rls-open-ratchet.test.cjs', // SEC-75: every open readable table is classified (dictionary / entity / shared / platform-private); the non-dictionary count only falls
   'sec-75-actor-settings-entity.test.cjs', // SEC-75 P1 slice: every statement on entity_actor_settings runs under withEntity (b842)
+  'sec-75-shared-tables-entity.test.cjs', // SEC-75 + DB-103: b855 locks six shared tables; every statement on them runs bound to a shop; break test on the policies
   'rls-predicate.test.cjs', // ⚠️ every policy reads a GUC something sets — written, never declared, so never run
   'migration-rls.test.js', // a new table closes itself; the default grant makes an open one readable
   /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that
