@@ -271,14 +271,25 @@ function runUnverified(req, res, next, claim, why) {
     .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
 
+/**
+ * SEC-150 bridge: the settled row a co-assist's retry may replay under its OLD plain key, or null. Only inside the one replay window after the cutover; a store
+ * error is logged and the retry then runs as a first try under its own key (the same answer as no bridge).
+ */
+function legacyReplay(req, claim) {
+  if (!claim.legacyKey || Date.now() >= Date.parse(ACTOR_SCOPE_AT) + claim.windowHrs * HOUR_MS) return Promise.resolve(null);
+  return dbStore.legacy(claim.entity, claim.legacyKey, claim.hash, claim.windowHrs).catch((e) => {
+    log.warn('idempotency: the legacy-key lookup failed — the retry runs under its own key', { id: req.id, path: req.path, err: e && e.message });
+    return null;
+  });
+}
+
 /** the key is ours to hold: the durable store, or the memory when the store is off. `req.idempotencyHeld` says so to a gate further down the chain (FIN-63) */
 function holdKey(req, res, next, claim) {
   /* ⭐ PLT-85: the client left before the claim: claim nothing and run nothing (nobody can read the answer, and a retry is a first try). After the claim the route always runs to COMMIT. */
   if (res.locals && res.locals.clientGone) return log.info('idempotency: the client left before the claim — nothing claimed, nothing run', { id: req.id, method: req.method, path: req.path });
   req.idempotencyHeld = claim.key;
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
-  const bridge = claim.legacyKey && Date.now() < Date.parse(ACTOR_SCOPE_AT) + claim.windowHrs * HOUR_MS ? dbStore.legacy(claim.entity, claim.legacyKey, claim.hash, claim.windowHrs).catch(() => null) : Promise.resolve(null);
-  return bridge
+  return legacyReplay(req, claim)
     .then((old) => (old ? { existing: old } : dbStore.begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)))
     .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, true) : runAndRecord(req, res, next, dbStore, claim)))
     .catch((e) => (isPoolBusy(e) ? answerBusyStore(req, res, e) : runUnverified(req, res, next, claim, storeWhy(e))));
@@ -340,8 +351,8 @@ async function publicClaim(req, key, { shopOf, contactOf }) {
 function bearerClaim(req, key) {
   if (req.idempotencyHeld) return null;
   const entity = req.identity ? require('./auth').entityOf(req) : null;
-  const who = entity && req.identity.identity_id !== entity ? 'as ' + req.identity.identity_id + ' ' : '';
-  return entity ? { entity, legacyKey: who ? key : null, key: who + key, hash: fingerprint(req), windowHrs: windowHours() } : null;
+  const actorPrefix = entity && req.identity.identity_id !== entity ? 'as ' + req.identity.identity_id + ' ' : '';
+  return entity ? { entity, legacyKey: actorPrefix ? key : null, key: actorPrefix + key, hash: fingerprint(req), windowHrs: windowHours() } : null;
 }
 /**
  * requireKey(reader?) → the gate a money door mounts; tools/api-register.cjs finds it by its name (requireIdempotencyKey).

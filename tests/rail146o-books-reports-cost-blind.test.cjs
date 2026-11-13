@@ -151,7 +151,7 @@ async function partCanRead() {
   t('a boolean false is answered false, still no trip', await cost.canRead(mk(false), 'e').then((v) => v, (e) => 'threw:' + e.message), false);
   t('an owner always may', await cost.canRead({ identity: { identity_type: 'entity' } }, 'e'), true);
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'middleware', 'auth.js'), 'utf8');
-  t('middleware/auth puts the row it read on req.identity', /req\.identity\.can_see_costs = judged\.actor\.can_see_costs === true/.test(src), true);
+  t('middleware/auth puts the row it read on req.identity', /identity\.can_see_costs = actor\.can_see_costs === true/.test(src) && /attachActorRow\(req\.identity, judged\.actor\)/.test(src), true);
 }
 
 async function partIdempotency() {
