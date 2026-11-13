@@ -73122,6 +73122,34 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/ctr-155-114-till.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CTR-155 + CTR-114: a 403 MEMBERSHIP_SUSPENDED holds one bill and the queue goes on; usignBecome clears busy when becomeShop throws.",
+   "claim": "CTR-155 + CTR-114: a 403 MEMBERSHIP_SUSPENDED holds one bill and the queue goes on; usignBecome clears busy when becomeShop throws.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 101 lines. Run: node chitbridge-api/tests/ctr-155-114-till.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-08T17:07:26+05:30",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/ctr182-gstin-owner-only.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

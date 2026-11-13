@@ -59,7 +59,7 @@ function counterOn(port) {
     isSaleRow: () => false, renumberBill: async () => null, stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     fetchBy: async (url, init) => fetch(url, init) };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + lift('qBackoff') + lift('qDue') + lift('qSoonest') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + lift('isParkedRow') + lift('parksOn') + lift('sendableRows') + lift('refusedRow') + lift('frozenDrain') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + lift('qBackoff') + lift('qDue') + lift('qSoonest') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + liftVar('ONE_ROW_REFUSALS') + lift('isParkedRow') + lift('parksOn') + lift('sendableRows') + lift('refusedRow') + lift('frozenDrain') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'till-key'; host.api = 'http://127.0.0.1:' + port;
   host.cred = () => 'till-key'; host.auth = (extra) => Object.assign({ Authorization: 'Bearer till-key' }, extra || {}); host.idemHeaders = (p, b, extra) => extra;

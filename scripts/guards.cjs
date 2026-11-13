@@ -858,6 +858,7 @@ const GUARDS = [
   'till-queue-poison.test.cjs', // S33-T: the counter's own drain parks a refused queued row (400) with the server's words and sends the rows behind it; a refused bill is never deleted
   'till-park.test.cjs', // till-park (12 Nov): a queued CHANGE refused for good (400/404/409/422) is parked once with the server's words, never retried; a bill never parked; Drop is the owner's; the price grain (JPY 0, INR 2, KWD 3) refuses a finer typed price and rounds a bulk step
   'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
+  'ctr-155-114-till.test.cjs', // CTR-155 + CTR-114: a 403 MEMBERSHIP_SUSPENDED holds that one bill and the queue goes on (a plain 403 still stops it); usignBecome clears busy when becomeShop throws
   'ctry-72-no-country-refusal.test.cjs', // CTRY-72: a shop with no country gets words, never the rupee (products lists money_why, tax slabs, legacy catalogue service)
   'ctry-139-band-asof.test.cjs', // CTRY-139 (engines v1.86.0): the law-set price band is read as of the shop's day of the document
   'ctry-139-number-at.test.cjs', // CTRY-139: the number-at read of the adopted engine
