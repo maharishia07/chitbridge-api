@@ -916,6 +916,8 @@ const GUARDS = [
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it
   'assist-resolve-retired-gone-mutation.test.cjs', // API-49: with the route put back the test above goes red
+  'read-batch-rls-guard.test.cjs', // OPS-27: a scoped readBatch runs with no [RLS-GUARD] warning and no throw fallback; an unscoped one is still guarded
+  'read-batch-rls-guard-mutation.test.cjs' // OPS-27: exemption removed, or too wide, and the test above goes red
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
@@ -981,9 +983,7 @@ const NEEDS_ENGINES = [
   'itemmatch-corpus.test.cjs', // CAT-75: the itemmatch tolerance per product family on a hand-computed corpus; CAT-261: numbers, units, sizes, grades exact, a near-miss ASKS
   'itemmatch-corpus-mutation.test.cjs', // CAT-75: the corpus goes red under exact-match and under the old per-token tolerance on numbers and sizes
   'db-error-survives.test.cjs', // PLT-86: a pool error and a held-client error are logged, the process lives, the next query gets a fresh connection
-  'db-error-survives-mutation.test.cjs', // PLT-86: with each handler removed the test above goes red
-  'read-batch-rls-guard.test.cjs', // OPS-27: a scoped readBatch runs with no [RLS-GUARD] warning and no throw fallback; an unscoped one is still guarded
-  'read-batch-rls-guard-mutation.test.cjs' // OPS-27: exemption removed, or too wide, and the test above goes red
+  'db-error-survives-mutation.test.cjs' // PLT-86: with each handler removed the test above goes red
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
