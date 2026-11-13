@@ -174,6 +174,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     await X.B.postEntry(X.db, SHOP, { type: 'expense', date: '2026-09-11', currency: 'INR', class: 'rent', amount: 500, paid_from: 'cash', source_ref: 'chit:e1' });
     await X.B.postEntry(X.db, SHOP, { type: 'expense', date: '2026-09-12', currency: 'INR', class: 'rent', amount: 300, paid_from: 'cash', source_ref: 'chit:e2' });
     const P = require(path.join(API, 'lib', 'books-pack'));
+    await X.B.setPeriod(X.db, SHOP, '2026-27', 6, 'soft_locked', SHOP, 'September done'); /* CAT-127 (M7b): a month pack is made from a locked month */
     const pk = await P.build(SHOP, { kind: 'month', fiscal_year: '2026-27', period: 6, by: SHOP, today: '2026-09-29' });
     ok('a month pack is built (zip in hand, not stored)', !!(pk && pk.zip && pk.manifest), JSON.stringify(pk).slice(0, 120));
     const files = unzip(pk.zip), names = Object.keys(files);

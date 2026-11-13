@@ -25,7 +25,7 @@ function load(opt) {
   const store = M.create();
   const dbStub = {
     query: async (t, v) => M.fakeDb.query(t, v),
-    withEntity: async (e, fn) => fn(M.fakeDb),
+    withEntity: async (e, fn) => { const handle = Object.create(M.fakeDb); handle.heldLocks = []; try { return await fn(handle); } finally { handle.heldLocks.forEach((release) => release()); } },
     trySavepoint: async (db, fn, fallback) => { try { return await fn(db); } catch (_) { return fallback; } },
     onEntity: async (e, fn) => fn(M.fakeDb),
   };

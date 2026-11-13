@@ -228,7 +228,8 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const nop = await q('POST', '/opening', { rows: [{ code: '1300', party_no: 'P-09999', dr_minor: 1 }] });
   ok('…an unknown party number is refused in words', nop.status === 422 && /P-09999/.test(nop.body.error), JSON.stringify(nop.body));
 
-  /* packs */
+  /* packs — CAT-127 (M7b): a month pack is made from a LOCKED month, so the month is locked first (the open-month refusal is tests/fin-ledger-guards.test.cjs) */
+  await q('POST', '/periods/2026-27/6/lock', { reason: 'September done' });
   const pk = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
   ok('POST /packs builds a month pack (CBBookPack) and says it is not stored without storage', pk.status === 200 && pk.body.pack && pk.body.pack.stored === false && pk.body.pack.sha256, JSON.stringify(pk.body).slice(0, 300));
   const pl2 = await q('GET', '/packs');
@@ -248,6 +249,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
     && BPx.seal(Object.assign({}, mm, { sha256: null }), Object.fromEntries(mm.files.map((f) => [f.file, f.sha256])), require(path.join(H.API, 'lib', 'books-pack')).sha).sha256 === mm.sha256);
   const pk2 = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
   ok('…the next pack is chained to this one (prev_sha256)', pk2.body.manifest && pk2.body.manifest.prev_sha256 === pk.body.pack.sha256, JSON.stringify(pk2.body.manifest && pk2.body.manifest.prev_sha256));
+  await q('POST', '/periods/2026-27/6/unlock', { reason: 'back to work' }); /* the rest of this walk still posts into September */
   /* MOVED 2026-09-30 (critic M10): this pack was built with no storage, and acknowledging it answered 200 — the shop "had" a
      pack it could never have downloaded. An unstored pack is now refused; the handover of a STORED pack (download, then
      acknowledge) is held in tests/books-fixes.test.cjs. */
