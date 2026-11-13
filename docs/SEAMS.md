@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 132 | `rows` | `crm.js` | still in them: |
 | 125 | `words` | `variant.browser.js` |  |
 | 117 | `read` | `books-cashflow.js` | Trips: |
-| 116 | `withEntity` | `books-hooks.js` |  |
+| 117 | `withEntity` | `books-hooks.js` |  |
 | 114 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 103 | `answer` | `availability.js` | from March; then nearest. |
 | 96 | `money` | `bill-privacy.js` |  |
@@ -52,7 +52,7 @@ of file each thing is; this says what already does the job.
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 46 | `read` | `cap-print.js` |  |
 | 46 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
-| 45 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 46 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 45 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 45 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
@@ -97,11 +97,11 @@ of file each thing is; this says what already does the job.
 | 31 | `mine` | `crm.js` | `opt.removedOk`: |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
+| 30 | `owner` | `books.js` |  |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
-| 29 | `owner` | `books.js` |  |
 | 28 | `money` | `cart.js` |  |
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
