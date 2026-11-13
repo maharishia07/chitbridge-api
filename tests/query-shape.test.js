@@ -209,14 +209,13 @@ t('★★ every leading-wildcard LIKE has a trigram index to support it', () => 
     // A parameterised LIKE whose argument is built as '%' + term + '%'
     if (/LIKE\s+\$\d/.test(src) && /'%'\s*\+|\+\s*'%'|'%' \+ /.test(src)) offenders.push(rel.replace(/\\/g, '/'));
   });
-  /* migrations/ AND migrations/archive/ (b121 moved there; a folder is skipped: that was the EISDIR). The 2026-10-21 baseline holds no gin_trgm_ops: cb-db to confirm the index is live. */
-  const sqlFiles = (dir) => fs.readdirSync(dir).map((f) => path.join(dir, f)).filter((p) => fs.statSync(p).isFile());
-  const migrations = sqlFiles(path.join(API, 'migrations')).concat(sqlFiles(path.join(API, 'migrations', 'archive'))).map((p) => fs.readFileSync(p, 'utf8')).join('\n');
+  /* migrations/ only (what migrate.cjs runs): b121 lives in archive/ and is NOT in production, so reading archive/ turned this red into a false green (critic, #1259). b859 holds the index. */
+  const migrations = fs.readdirSync(path.join(API, 'migrations')).map((f) => path.join(API, 'migrations', f)).filter((p) => fs.statSync(p).isFile()).map((p) => fs.readFileSync(p, 'utf8')).join('\n');
   const hasTrgm = /gin_trgm_ops/.test(migrations);
   assert.ok(!offenders.length || hasTrgm,
     'substring search in ' + offenders.join(', ') + ' with no gin_trgm_ops index anywhere in migrations/. '
     + 'A leading wildcard cannot use a btree, so this is a scan that only shows up at volume.');
-  if (offenders.length) console.log('        substring search in: ' + offenders.join(', ') + ' — b121 covers it');
+  if (offenders.length) console.log('        substring search in: ' + offenders.join(', ') + ' — b859 covers it');
 });
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
