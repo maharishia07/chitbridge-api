@@ -160,7 +160,9 @@ const onceOnly = require('../middleware/idempotency').requireKey();
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
-router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) => {
+/** ACC-229: the switch's status is a READ too — the owner or the shop's auditor, through the ONE reader gate of GET /returns (declared further down, so reached at call time). POST /enable stays owner. */
+const statusReader = roleGate('reader', (req, res, next) => returnReader(req, res, next));
+router.get('/status', auth, statusReader, ...checked('GET /status'), async (req, res) => {
   try {
     const e = ctx(req);
     /* ⭐ CS1: `country` says whether the books MAY open here — { books, code, why, required, country } — so the switch is greyed WITH its sentence */
