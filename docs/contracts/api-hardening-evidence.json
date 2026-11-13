@@ -556,9 +556,6 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
-  "GET /api/quick-keys/screen-config/default": {
-   "output_allowlist": true
-  },
   "PUT /api/quick-keys/screen-config/default": {
    "strict_input": true
   },

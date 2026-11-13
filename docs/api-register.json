@@ -26549,8 +26549,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3703,
-   "hash": "a8c0186a848ea76a",
+   "line": 3692,
+   "hash": "2f6ccb3bf69814d1",
    "does": "",
    "errors": {
     "count": 0,
@@ -26616,7 +26616,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1254 stage2: handler re-read and 13 columns checked after the hash moved; CTR-225: ?page= read (absent = page 1, legacy keys kept), total is now the whole window (was the page rows), count unchanged; page passes the route validator (checked live); FIELDS rows added",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07, re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26645,7 +26645,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3501,
+   "line": 3490,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -26837,7 +26837,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4451,
+   "line": 4431,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -27033,7 +27033,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3930,
+   "line": 3910,
    "hash": "4cc02b7049e1cf09",
    "does": "",
    "errors": {
@@ -27841,7 +27841,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3339,
+   "line": 3328,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -27941,7 +27941,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3569,
+   "line": 3558,
    "hash": "cb196c32797a4f71",
    "does": "",
    "errors": {
@@ -28041,7 +28041,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3900,
+   "line": 3880,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -58440,7 +58440,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4324,
+   "line": 4304,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -58542,7 +58542,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3413,
+   "line": 3402,
    "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
@@ -59256,7 +59256,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4385,
+   "line": 4365,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -60914,7 +60914,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3171,
-   "hash": "63b65103abc91dc0",
+   "hash": "3609a57a2f557a8d",
    "does": "",
    "errors": {
     "count": 0,
@@ -60988,7 +60988,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1254 stage2: handler re-read and 13 columns checked after the hash moved; CTR-174: a NEW junk e-mail, phone or PIN is refused 400 TILL_BAD_REQUEST naming field (same 400 as the tax-number refusal, same route), a value equal to the stored one is not judged, blank ignored; answers otherwise unchanged; FIELDS rows added",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
     "lifecycle": "stable"
    },
    "status": "meets standard",

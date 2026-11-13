@@ -78,10 +78,10 @@ of file each thing is; this says what already does the job.
 | 35 | `closeModal` | `app.html` |  |
 | 35 | `shell` | `pick.js` |  |
 | 35 | `hold` | `orders.js` |  |
-| 35 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 34 | `changes` | `books-store.js` |  |
 | 34 | `note` | `dbwatch.js` |  |
+| 34 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 33 | `modal` | `app.html` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
