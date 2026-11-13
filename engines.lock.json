@@ -1,7 +1,7 @@
 {
   "$comment": "The engines this platform ADOPTS from chitbridge-engines — ONE PIN PER ENGINE, so a rollout moves one engine at a time. Change a pin, then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
   "pins": {
-    "money": "1.89.0",
+    "money": "1.93.0",
     "tax-packs": "1.86.0",
     "tax-slab": "1.72.0",
     "tax": "1.86.0",
@@ -27,7 +27,7 @@
     "screen": "1.5.0",
     "orders": "1.5.0",
     "orderhub": "1.5.0",
-    "rollup": "1.78.0",
+    "rollup": "1.93.0",
     "convert": "1.5.0",
     "accounts-packs": "1.79.0",
     "receivables": "1.78.0",
@@ -219,7 +219,7 @@
     ]
   },
   "sha256": {
-    "money": "4fa4e90de64298d4c7ec3756230ae8b865eaf3a2f1df1be6365724ae13305415",
+    "money": "d372552d68f8f37e838bc3cb743ff063266c8e548cfd4276c55af10f0805ea37",
     "tax-packs": "060e6c5883026c040b0e0d8fc979ae2563f5b992f01946b02e941acbc221bb80",
     "tax-slab": "80c25b62bb08491b8116ddf95090e93f24a700dc57132683be0b4fd4be6ec8fc",
     "tax": "da87a58d052162ce580c0e5e079fd6fe471a7a1e2fb6106460f5f6e2223947c4",
@@ -245,7 +245,7 @@
     "screen": "6ca7e55a964373b19a97db139d4130ab9b91469def89e263eac34c73ca5ca151",
     "orders": "a8e4417ed369e5b6e18bb5bf90eaf57e1097c112744566a47ebc46af0d3ba069",
     "orderhub": "c70a78a6839c10d41f6c43901f0557bd782463460e4af3f2e99d369a5012e9e5",
-    "rollup": "2290a93074d6c87bed048ea8e09e90c7b932c119613bc997c528079584f37d57",
+    "rollup": "3cf37376bcc687cfffda634eb25b055204ca844e507f3d4a3c7cf8c34a445a58",
     "convert": "31b4b4d40a211f0a437ad1b5f4ff394bfb6f63637f05c24323b9846a1e51a5ba",
     "accounts-packs": "08ee7a753735b46bd480582cf2035e88f4f676f0442ddf585c279616a9c3775a",
     "receivables": "180e6f8728f4e88c0a8a6fbac647fceb40c3c6174b12faf184fef98bf75b862d",
