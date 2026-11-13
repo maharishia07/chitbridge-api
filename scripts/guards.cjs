@@ -131,6 +131,7 @@ const GUARDS = [
   'rollup.test.js', // day/week/month: a return is not a sale, and folding equals summarising
   'verdict.test.js', // one cause, one sentence, one button — the message has a single home
   'counter-claim.test.js', // one counter, one holder — two PCs on C1 fork the bill numbers
+  'ctr-208-enrol-race.test.cjs', // CTR-208: the enrol that lost a race is refused 409 COUNTER_HELD and its key closed (the real race: ctr-208-enrol-race-truth.realstack.cjs)
   'till-watch.test.js', // the watch list names real gates — a row with no gate watches nothing
   'orders.test.js', // the order rules, run with no browser — the proof they left the page
   'dayopen.test.js', // ⭐⭐ the morning: who, products, the counter number, the drawer — [TILL-182]
