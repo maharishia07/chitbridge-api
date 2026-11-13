@@ -32,7 +32,7 @@ const KNOWN_NOT_ENROLLED = {
   'env-posture.test.cjs': 'RAIL-208 (PRODUCT): lib/ctpreturn.js:199 compares process.env.NODE_ENV to a literal untrimmed; the assertion (one trimmed reader, isSealed) is right',
   'gherkin.test.js': 'QA-123: the case key `governance.nightly` (data/test-cases.json) is lowercase and dotted, the Gherkin key grammar is capitals-and-hyphens: rename the key or widen the grammar',
   'governed-currency.test.js': 'QA-122: tests 11 and 12 are static regexes (API-58, RAIL-63); replace by a behavioural case on the resolved currency, then enrol (closes CTRY-28)',
-  'query-shape.test.js': 'QA-170 (REGRESSION, not stale): 19 files now run more per-item queries than their budget (books-hooks 3, party-fields 3, api-keys 2, books-store 2 and 15 more, each budgeted 0, src/services/network.js 2 of 1), 3 budget rows name files now clean, and the trigram check hits an EISDIR on a path that became a folder; each loop is judged N+1 or per-tenant read, then the budget is refreshed with its reason (cb-speed)',
+  'query-shape.test.js': 'QA-171 (REGRESSION, not stale): 19 files now run more per-item queries than their budget (books-hooks 3, party-fields 3, api-keys 2, books-store 2 and 15 more, each budgeted 0, src/services/network.js 2 of 1), 3 budget rows name files now clean, and the trigram check hits an EISDIR on a path that became a folder; each loop is judged N+1 or per-tenant read, then the budget is refreshed with its reason (cb-speed)',
   'type-tokens.test.js': 'QA-122 (LEFT: a UX decision): the type scale moved to appearanceApply and 139 raw pixel sizes in 26 capability files need a budget, which cb-ux-locale sets (UX pack 12); not a pin to re-aim'
 };
 /** the list may not grow: lower this when a row is deleted */
