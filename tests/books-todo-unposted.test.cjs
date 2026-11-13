@@ -62,12 +62,12 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     ok('nothing missing → the row is left out (never "0")', (await S.row()) === undefined);
   });
 
-  await section('T2 · a bill past the grace with no entry and no waiting row → one row, in words, with the existing retry', async () => {
+  await section('T2 · a bill past the grace with no entry and no waiting row → one row, in words, and no button', async () => {
     const S = await shop();
     S.expense(10 * 60000);
     const r = await S.row();
     ok('count 1, singular words, no jargon', r && r.count === 1 && /^1 bill is not in your books yet\./.test(r.words) && !/outbox|reconcil|journal|ledger/i.test(r.words), JSON.stringify(r));
-    ok('the button is the existing outbox retry', r && r.action.call === 'POST /api/books/outbox/retry' && r.action.screen === 'waiting' && !!r.action.label, JSON.stringify(r && r.action));
+    ok('no button: this kind carries no action (the outbox retry walks parked rows only; the 30 s pass is the retry)', r && r.action === undefined && !/press|button/i.test(r.words) && /tell support/.test(r.words), JSON.stringify(r));
     S.expense(10 * 60000);
     const two = await S.row();
     ok('two bills → plural words', two.count === 2 && /^2 bills are not in your books yet/.test(two.words), JSON.stringify(two));
