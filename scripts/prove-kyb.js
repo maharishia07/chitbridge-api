@@ -1,3 +1,10 @@
+/**
+ * prove-kyb.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-kyb.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /** @covers FR-T1 — the rung ladder: self-typed stays `declared`, evidence lifts to `documented`, self-write never reaches `verified` */
 // prove-kyb.js — LIVE proof of the "Know your business" panel. node scripts/prove-kyb.js
 // Runs against the live API. Tests the runnable directive boxes (R1/R2/P1/P2/K1/K2 + the Field wall structure F2/F3).

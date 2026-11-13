@@ -1,3 +1,10 @@
+/**
+ * prove-storefront.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-storefront.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // prove-storefront.js — LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path:
 //   provision a shop → open its storefront → a walk-in customer orders → the storefront chit carries the FULL
 //   governance stamp (constitution · capability · work-pattern · N standards) + an advisory conformance verdict.

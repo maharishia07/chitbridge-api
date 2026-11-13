@@ -20,6 +20,68 @@ check('no script in scripts/ names the production api host', () => {
   const bad = files.filter((f) => LIVE_HOST.test(fs.readFileSync(path.join(SCRIPTS, f), 'utf8')));
   assert.deepStrictEqual(bad, [], 'hard-coded production host in: ' + bad.join(', ') + ' — use require("../tests/lib/run-target.cjs").apiBase(name)');
 });
+const CONVERTED = [
+  'scripts/_proof.js',
+  'scripts/actor-harness.js',
+  'scripts/akums-demo.js',
+  'scripts/assimilate-standard.js',
+  'scripts/cancel-request.js',
+  'scripts/catalogue-persist.js',
+  'scripts/conform-check.js',
+  'scripts/container-model.js',
+  'scripts/container-wiring.js',
+  'scripts/dept-store-demo.js',
+  'scripts/dispute-reads.js',
+  'scripts/dispute-scope.js',
+  'scripts/entity-vertical.js',
+  'scripts/erp-connector.js',
+  'scripts/erp-handoff.js',
+  'scripts/gold-demo.js',
+  'scripts/gov-cascade.js',
+  'scripts/iot-assignee.js',
+  'scripts/journey-document-store.js',
+  'scripts/journey-supplier-hop.js',
+  'scripts/lifecycle-iot.js',
+  'scripts/matrix.js',
+  'scripts/multi-source.js',
+  'scripts/penetration.js',
+  'scripts/prototype-form16-to-itr2.js',
+  'scripts/prove-availability.js',
+  'scripts/prove-b159-attachments.js',
+  'scripts/prove-capture.js',
+  'scripts/prove-commerce-standards.js',
+  'scripts/prove-commerce.js',
+  'scripts/prove-definer-guards.js',
+  'scripts/prove-forms.js',
+  'scripts/prove-idempotency.js',
+  'scripts/prove-kyb.js',
+  'scripts/prove-lanes.js',
+  'scripts/prove-network-cap.js',
+  'scripts/prove-network-search.js',
+  'scripts/prove-one-roof.js',
+  'scripts/prove-orderbind.js',
+  'scripts/prove-private-shop.js',
+  'scripts/prove-profile.js',
+  'scripts/prove-readiness.js',
+  'scripts/prove-reference.js',
+  'scripts/prove-sectors.js',
+  'scripts/prove-storefront.js',
+  'scripts/prove-verify.js',
+  'scripts/regional-scatter.js',
+  'scripts/register-mint.js',
+  'scripts/sealed-guard.js',
+  'scripts/seed-2026-08-05.js',
+  'scripts/seed-bulk-catalogue.js',
+  'scripts/seed-test-entities.js',
+  'scripts/self-copy-pref.js',
+  'scripts/source-entity.js',
+  'scripts/source-rules.js',
+  'scripts/test-dev.js'
+];   /* named so the trace row of each converted script has a test (KG1 tested-by) */
+check('every converted script calls apiBase() and exists', () => {
+  const bad = CONVERTED.filter((f) => !/apiBase\(/.test(fs.readFileSync(path.join(__dirname, '..', f), 'utf8')));
+  assert.deepStrictEqual(bad, [], 'no apiBase() in: ' + bad.join(', '));
+});
 const NETWORKED = /\bfetch\(|https?\.request|https?\.get\(|require\('(https?|node-fetch|axios|undici)'\)/;
 check('every networked script takes its target from run-target (or _proof, which does)', () => {
   const bad = files.filter((f) => { const t = fs.readFileSync(path.join(SCRIPTS, f), 'utf8'); return NETWORKED.test(t) && !/run-target|require\('\.\/_proof'\)/.test(t) && f !== 'vendor-till.cjs'; });   /* vendor-till: 'fetch(' is service-worker text it writes out */

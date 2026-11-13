@@ -1,3 +1,10 @@
+/**
+ * gov-cascade.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/gov-cascade.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // gov-cascade.js — proves the WHOLE governance cascade end-to-end, from attributes:
 // register + choose a vertical → placed on the installation that serves it → /me.governance resolves the basics.
 //   service-desk → the AWS Mexico platform → MXN · America/Mexico_City · MX · es
