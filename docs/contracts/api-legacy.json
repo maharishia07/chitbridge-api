@@ -59353,6 +59353,58 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "ingest-key-reused",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request.",
+      "code": "IDEMPOTENCY_CONFLICT",
+      "type": "https://chitbridge.com/problems/idempotency_conflict",
+      "title": "Idempotency conflict",
+      "status": 422,
+      "detail": "This Idempotency-Key was already used with a different request.",
+      "hint": "Start it again; the new try goes as its own.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request.",
+      "code": "IDEMPOTENCY_CONFLICT",
+      "type": "https://chitbridge.com/problems/idempotency_conflict",
+      "title": "Idempotency conflict",
+      "status": 422,
+      "detail": "This Idempotency-Key was already used with a different request.",
+      "hint": "Start it again; the new try goes as its own.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ingest-first-try-still-running",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed.",
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "type": "https://chitbridge.com/problems/idempotency_in_progress",
+      "title": "Idempotency in progress",
+      "status": 409,
+      "detail": "A request with this Idempotency-Key is still being processed.",
+      "hint": "Wait a moment and look before sending it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed.",
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "type": "https://chitbridge.com/problems/idempotency_in_progress",
+      "title": "Idempotency in progress",
+      "status": 409,
+      "detail": "A request with this Idempotency-Key is still being processed.",
+      "hint": "Wait a moment and look before sending it again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },

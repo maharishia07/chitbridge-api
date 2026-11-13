@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 1,
+  "meets": 630,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -930,7 +930,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1014,
+   "line": 1045,
    "hash": "e5b9eacc9c599271",
    "does": "",
    "errors": {
@@ -11945,7 +11945,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 779,
+   "line": 810,
    "hash": "e7284e2a1727d98b",
    "does": "",
    "errors": {
@@ -12047,7 +12047,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 963,
+   "line": 994,
    "hash": "4574a239426bb2f1",
    "does": "",
    "errors": {
@@ -12151,7 +12151,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 803,
+   "line": 834,
    "hash": "c7ab8441a009fdac",
    "does": "",
    "errors": {
@@ -12255,7 +12255,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 719,
+   "line": 750,
    "hash": "11be9936f414911a",
    "does": "",
    "errors": {
@@ -29147,7 +29147,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 984,
+   "line": 1015,
    "hash": "ea0e27d69ed819ff",
    "does": "",
    "errors": {
@@ -43096,7 +43096,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 193,
+   "line": 236,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -43199,7 +43199,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 923,
+   "line": 954,
    "hash": "45c59297489b4a7c",
    "does": "",
    "errors": {
@@ -43304,7 +43304,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 744,
+   "line": 775,
    "hash": "f427329066062d46",
    "does": "",
    "errors": {
@@ -43409,7 +43409,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 908,
+   "line": 939,
    "hash": "888a9edf8f9752b2",
    "does": "",
    "errors": {
@@ -43514,7 +43514,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 861,
+   "line": 892,
    "hash": "5c5dd3f7f0c7925f",
    "does": "",
    "errors": {
@@ -43618,7 +43618,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 675,
+   "line": 706,
    "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
@@ -43727,8 +43727,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 534,
-   "hash": "4e4ad9002d6b420e",
+   "line": 577,
+   "hash": "7cf96de6e7f41d71",
    "does": "",
    "errors": {
     "count": 0,
@@ -43738,6 +43738,7 @@
      403,
      404,
      409,
+     422,
      500,
      503
     ],
@@ -43790,6 +43791,7 @@
     403,
     404,
     409,
+    422,
     500,
     503
    ],
@@ -43813,10 +43815,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#1144 (CON-159): file_err and proof_err on the 200 now hold a registered code (CONNECTOR_FOLDER_NOT_FILED, CONNECTOR_PROOF_NOT_KEPT, shopkeeper sentences in ERROR-CODES.md) or null, never exception text; both keys kept, still null/non-null so a device testing presence works (cap-connector.js logs proof_err, lifecycle-test reads file_err only as a label); refusals are RFC 9457 with 400/401/403/404/409/503 declared, a failed chit is 503 not 200; tolerant-by-design exemption (S33-T) stands; all 13 machine columns read yes",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7cf96de6e7f41d71"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43838,7 +43841,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 836,
+   "line": 867,
    "hash": "5321fbf8637c444b",
    "does": "",
    "errors": {

@@ -12,7 +12,7 @@
   "POST /api/till/reward/claim",
   "POST /api/connectors/erp-ingest"
  ],
- "money_reviewed_not_about": {"POST /api/connectors/ingest": "Athi 12 Nov 2026 (DECISIONS.md): not a money write. The value is a device reading; the chit carries total_value 0 and the value goes only into the subject and business_json. Backlog: no dedupe (a replayed reading mints a second chit)."},
+ "money_reviewed_not_about": {"POST /api/connectors/ingest": "Athi 12 Nov 2026 (DECISIONS.md): not a money write. The value is a device reading; the chit carries total_value 0 and the value goes only into the subject and business_json. Replay dedupe built 14 Nov 2026 (CON-159): the caller's own Idempotency-Key or event_id only, never a payload hash (tests/con-159-ingest-replay.test.cjs)."},
  "money_reviewed_not": [
   "POST /api/books/payments/:id/propose",
   "POST /api/books/payments/preview",

@@ -150,7 +150,11 @@ function extras(tools) {
     dev('ingest-population-boundary', 409, ingest({}), {}, { patch: boundary }),
     dev('ingest-statement-timeout', 503, ingest({}), {}, { patch: tooSlow }),
     dev('ingest-no-money-refusal', 409, ingest({}), {}, { patch: noMoney }),
-    dev('ingest-heartbeat-fails', 500, ingest({}), failing(/UPDATE identities SET last_seen/))
+    dev('ingest-heartbeat-fails', 500, ingest({}), failing(/UPDATE identities SET last_seen/)),
+    /* CON-159: a reading carrying its own event_id is deduplicated; the same id with another body is 422; with no key nothing is claimed (tests/con-159-ingest-replay.test.cjs) */
+    dev('ingest-replay', 200, ingest({ event_id: 'evt-1' }), { duplicate: true }, { patch: Object.assign({ schema: { hasColumn: async () => true } }, delivering) }),
+    dev('ingest-key-reused', 422, ingest({ event_id: 'evt-1' }), { duplicate: true, held: { payload_hash: 'a-different-body' } }, { patch: Object.assign({ schema: { hasColumn: async () => true } }, delivering) }),
+    dev('ingest-first-try-still-running', 409, ingest({ event_id: 'evt-1' }), { duplicate: true, held: { outcome: 'pending', chit_id: null, received_at: new Date() } }, { patch: Object.assign({ schema: { hasColumn: async () => true } }, delivering) })
   ];
 
   /* ── POST /api/connectors/erp-ingest (the ERP agent) ── */
