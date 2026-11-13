@@ -443,8 +443,9 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     walk(ast, { fn: '(top)', handler: null, text: '' }, null);
     const GATE = /frozenStop\(|frozenDrain\(|dbFrozen\(\)/, CHECK = /throwIfFrozen|dbFrozen|frozenOr|paintFrozenInto|DB_FROZEN/;
     const SORTED = {   // fn: [kind, why]   gated = the function stops/branches on frozen first · checked = every catch rethrows or paints frozen · closed = an unreadable store already fails closed, said here
-      closeCounter: ['gated'], dayReread: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
+      closeCounter: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
       queueTally: ['gated'], queueLength: ['checked'], retainPaint: ['checked'], subListPaint: ['checked'], tillIssued: ['checked'],
+      billNosHeld: ['closed', 'its only caller, dayReread, stops on frozenStop first; an empty read only means more server bills are offered'],
       keepParked: ['closed', 'null = unreadable; every caller stops through keptUnread'],
       checkAbsorbed: ['closed', 'null = could not check; callers say so, nothing is decided from it'],
       dayMarkWithdrawn: ['closed', 'only marks bills withdrawn; its writes reject while frozen'],
