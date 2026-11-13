@@ -911,6 +911,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_VOIDED",
+   "status": "409",
+   "title": "This bill was withdrawn",
+   "shopkeeper": "This bill is withdrawn or rejected, so it cannot be marked paid.",
+   "hint": "Open the bill to see its status.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
+  },
+  {
    "code": "CHOOSE_IDENTITY",
    "status": "409",
    "title": "Choose identity",

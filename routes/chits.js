@@ -1019,18 +1019,24 @@ async function sendCredit(sendState, req, res) {
      the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
      counter carries business_json.credit_override = { by } (the owner's counter PIN, checked at the till), and only a counter key or
      the owner's own login may carry it. An allowed bill is recorded (books_change_log 'credit_limit'). Not a credit bill, no named
-     customer, ledger off or no limit → no query at all. */
+     customer, ledger off or no limit → no query at all. FIN-56: bills still WAITING in books_outbox count as owed; the bill's own client_ref
+     is stamped first so its own parked row (a retry) is left out. */
+  stampBillFacts(business_json, client_ref, number_check);
   if (!req.body.is_draft && purpose === 'order' && isJsonObject(business_json)) {
     const financeTerms = require('../lib/finance-terms');
     const creditCheck = await financeTerms.creditSaleCheck(sender_id, business_json);
-    if (creditCheck.over) {
+    /* a currency mismatch sits behind the SAME owner override as OVER_LIMIT: a till-drained bill the owner allowed must pass, not retry for ever */
+    if (creditCheck.mismatch || creditCheck.over) {
       const allowedBy = financeTerms.overrideBy(req, business_json.credit_override);
-      if (!allowedBy)
-        return problem(req, res, { status: 409, ...said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT') });
-      financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
+      if (!allowedBy) {
+        const refusal = creditCheck.mismatch
+          ? said({ error: 'Wrong currency', message: creditCheck.mismatch + ' Settle or post it first.' }, 'CURRENCY_MISMATCH')
+          : said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT');
+        return problem(req, res, { status: 409, ...refusal });
+      }
+      if (creditCheck.over) financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
-  stampBillFacts(business_json, client_ref, number_check);
 }
 /** is this value a JSON object (not null, not a scalar)? an array passes, as before */
 const isJsonObject = (value) => !!value && typeof value === 'object';
@@ -5134,6 +5140,8 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
     problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
+/** the statuses a bill takes no payment in: withdrawn (the void route writes 'cancelled') and rejected — the rail's two ends with no way to money */
+const NO_PAYMENT_STATUS = ['cancelled', 'rejected'];
 /**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
  * → null (no copy) · { parts } (the bill carries its own tender) · { books }
@@ -5144,6 +5152,8 @@ async function markChitPaid(db, press) {
   const { entity_id, chit_id, payment, hooks } = press;
   const copy = await taxCopy.copyOn(db, chit_id, entity_id);
   if (!copy) return null;
+  /* FIN-80 (M7a): a withdrawn (voided) or rejected bill takes no payment — stamped before this check, the copy read paid while the books answered { none } */
+  if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { voided: copy.current_status };
   const copyBusiness = copy.business_json || {};
   /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
   if (copyBusiness.payment && Array.isArray(copyBusiness.payment.parts)) return { parts: true };
@@ -5207,13 +5217,18 @@ router.post(
       /* an id that is no uuid names no bill: the unknown bill's 404, never a 500 from the cast (gorilla pack 2, GP-8: not-a-bill-N) */
       const out = trace.UUID_RE.test(chit_id) ? await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks })) : null;
       if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
+      if (out.voided)
+        return problem(req, res, { status: 409, ...said({
+          error: 'This bill was withdrawn',
+          message: 'This bill is ' + (out.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so it cannot be marked paid.'
+        }, 'CHIT_VOIDED') });
       if (out.parts)
         return problem(req, res, { status: 422, ...said({
           error: 'The tender is on the bill',
           message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
         }, 'PAYMENT_TENDER_ON_BILL') });
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
-      if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
+      if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id, press: 'payment' }, out.books.why, chit_id, 'chit:' + chit_id); /* press: so "Mark unpaid" closes THIS row and never the bill's own wait (FIN-66) */
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
       try {
         require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method });
@@ -5236,6 +5251,9 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
       );
+      /* FIN-66 (M7a): a Mark-paid the books could not post yet WAITS in books_outbox — closed in this same transaction, else the retry books the payment just cleared */
+      if (cleared.rows.length && (await schema.hasTable('books_outbox')))
+        await require('../lib/books-store').outboxClose(db, entity_id, [req.params.chit_id], 'Mark paid was cleared before it posted.', { press: 'payment' });
       return cleared;
     });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
@@ -6932,6 +6950,7 @@ module.exports.sendBillCopyFor = sendBillCopyFor; /* OPS-83: tests/ops83-match-m
 module.exports.refOf = refOf; /* PLT-70: lib/limits asks the one reader whether a send carries a bill number */
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
+module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.cjs runs the credit gate with a mismatch and an owner override */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
