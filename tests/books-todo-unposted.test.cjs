@@ -120,6 +120,20 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     back();
   });
 
-  console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
+  await section('T7 · the row fits the closed output shape of GET /api/books/todo (a kind with no button must not break it)', async () => {
+    const S = await shop();
+    S.expense(10 * 60000);
+    const shape = require(path.join(H.API, 'lib', 'output-allowlist.js')).shapeOf('GET /api/books/todo');
+    ok('the shape is closed, rows list their keys', shape && shape.schema.items.additionalProperties === false, JSON.stringify(shape && shape.schema.items));
+    const fits = require(path.join(H.API, 'middleware', 'validate.js')).bodyEngine.compile(shape.schema);
+    const rows = await S.BT.todo(SHOP, await S.X.B.settingOf(S.X.db, SHOP));
+    const wire = JSON.parse(JSON.stringify(rows));
+    ok('the bills_not_in_books row (no action key at all) fits the output shape', wire.some((x) => x.kind === KIND && !('action' in x)) && fits(wire), JSON.stringify(fits.errors));
+    const required = shape.schema.items.required || [];
+    ok('action is not required (kind, count, words are), so a kind without a button stays inside the shape', !required.includes('action') && ['kind', 'count', 'words'].every((key) => required.includes(key)), JSON.stringify(required));
+    ok('every row produced is a listed KIND and fits (a future kind that breaks the shape goes red here)', wire.every((x) => S.BT.KINDS.includes(x.kind)) && fits(wire));
+  });
+
+  console.log('\n' + (fail ?'  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
