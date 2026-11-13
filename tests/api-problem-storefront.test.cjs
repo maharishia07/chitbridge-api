@@ -905,6 +905,11 @@ async function checkRoutes(port, recording) {
   delete process.env.NETWORK_STORE_ORDERS;
   checkSameNotFound(recording);
   checkSameRefusal(recording);
+  if (!argv.includes('--capture')) {
+    const withdrawn = (recording['POST /api/catalogue/network-store/:networkId/order'] || {})['norder-withdrawn-currency'] || {};
+    const body = withdrawn.body || {};
+    check('norder-withdrawn-currency: 422, MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor (EUR) named, nothing converted', withdrawn.status === 422 && body.code === 'MONEY_CURRENCY_UNKNOWN' && body.withdrawn === true && /replaced by EUR/.test(String(body.detail)) && /nothing is converted/.test(String(body.detail)), withdrawn);
+  }
   return tested;
 }
 

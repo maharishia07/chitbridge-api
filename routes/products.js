@@ -1247,6 +1247,7 @@ router.post(
       if (refusal) return problem(req, res, refusal);
 
       const currency = await regional.currencyFor(entity_id);
+      if (currency) money.refuseNewCurrency(currency); /* CUR-1b: a shop whose own money is withdrawn imports nothing: one worded 422, not a failed line per row */
       // O(1): the rules are read once for the whole file, not once per row.
       let ruleRows = await schemaFieldsOf(schema_id);
 
