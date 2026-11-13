@@ -300,6 +300,11 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/cat-313-search-blind.realstack.cjs
+      - name: SEC-184 A · b857 sign-in lookup (ops.signin_candidates) on a fresh database as cb_app — role does not bypass RLS, grants closed to anon/authenticated/PUBLIC, 8 columns, LIMIT 10, the api's own reader signs in through it
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/sec-184-signin-lookup.realstack.cjs
       - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
         env:
           API_BASE: http://127.0.0.1:3000

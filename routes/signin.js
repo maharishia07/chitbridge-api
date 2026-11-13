@@ -39,6 +39,7 @@ const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
+const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
 const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
@@ -255,6 +256,11 @@ const refused = (req, res, reason) => {
   problem(req, res, { status: 400, code: 'SIGNIN_REFUSED', detail: SIGNIN_REFUSED.message, legacy: SIGNIN_REFUSED });
   if (reason) res.locals.code = reason; // the log keeps the true reason; the caller never sees it
 };
+/** SEC-184: the accounts a typed e-mail or handle names: who (the definer lookup), then their credential columns BY ID in one read; a minted party is no account (SEC-130) */
+const accountsTypedAs = async (kind, typed, columns) => {
+  const named = (await signinLookup.candidates(query, kind, typed)).filter(identityAuth.isAccount);
+  return identityAuth.rowsOfCandidates(query, named.map((candidate) => candidate.identity_id), columns);
+};
 /** no such account: refuse like a wrong secret, after spending the time a secret check spends */
 const unknownAccount = async (req, res) => {
   await identityAuth.spendCheckTime();
@@ -450,7 +456,7 @@ async function ask(req, res, next) {
     if (isEmail) {
       email = input.toLowerCase();
       display_name = sanitise(req.body.display_name || input);
-      const existing = (await query('SELECT identity_id, bridge_id, user_id FROM identities WHERE email = $1', [email])).rows.filter(identityAuth.isAccount); // SEC-130
+      const existing = (await signinLookup.candidates(query, 'email', email)).filter(identityAuth.isAccount); // SEC-130
       if (existing.length > 0) {
         identity_id = existing[0].identity_id;
         console.log(`Existing entity login: ${email}`);
@@ -465,18 +471,10 @@ async function ask(req, res, next) {
        * display name — and the name must be UNAMBIGUOUS: taking rows[0] once mailed a code to the wrong owner and locked
        * the other out. Ambiguity gets the one answer and no code (SEC-143).
        */
-      const accounts = async (sql) => ({ rows: (await query(sql, [input])).rows.filter(identityAuth.isAccount) }); // SEC-130: a minted party is no account
-      let rows = await accounts(
-        `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
-         WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`
-      );
+      const accounts = async (kind, keep) => ({ rows: (await signinLookup.candidates(query, kind, input)).filter(keep).filter(identityAuth.isAccount) }); // SEC-130: a minted party is no account
+      let rows = await accounts('handle', (candidate) => candidate.identity_type === 'entity' && candidate.status === 'active');
       if (!rows.rows.length) {
-        rows = await accounts(
-          `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
-           WHERE LOWER(display_name) = LOWER($1)
-           AND identity_type = 'entity'
-           AND status = 'active'`
-        );
+        rows = await accounts('name', () => true); // the function keeps active entities only
         if (rows.rows.length > 1) return answer('AMBIGUOUS_NAME');
       }
       if (rows.rows.length === 0) return answer('NO_ACCOUNT');
@@ -602,8 +600,8 @@ async function verify(req, res) {
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
                     pin_hash, pin_attempts, pin_locked_at, otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
     let rows;
-    if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows.filter(identityAuth.isAccount);
-    else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows.filter(identityAuth.isAccount);
+    if (email) rows = await accountsTypedAs('email', email, COLS);
+    else if (handle) rows = await accountsTypedAs('handle', handle, COLS);
     else {
       rows = await accountsOfTypedId(req, res, { otp, pin: nestedPin, name: id });
       if (!rows) return; // answered: the chooser, or the one refusal

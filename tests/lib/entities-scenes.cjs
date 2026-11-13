@@ -24,6 +24,9 @@ const ME_BARE = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop 
 /** the tools a scene is built from: the harness's own stand-ins */
 function extras(tools) {
   const { OWNER, STAFF, SECRET_SQL, answering, raising, firstOf, nobodyRoot } = tools;
+  /* SEC-184: the rows of the definer lookup for one kind (ops.signin_candidates), and of the by-id credential read that follows it */
+  const lookupOf = (kind, rows) => (sql, params) => (/ops\.signin_candidates/.test(String(sql)) && (params || [])[0] === kind ? { rows, rowCount: rows.length } : null);
+  const byIdRows = (rows) => (sql) => (/identity_id = ANY\(\$1::uuid\[\]\)/.test(String(sql)) ? { rows, rowCount: rows.length } : null);
   const STRANGER = { identity_id: STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
   const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
@@ -44,17 +47,18 @@ function extras(tools) {
   const meRow = row(/SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref/, ME_ROW);
 
   /* a person (a co-assist, so the shop's onboarding steps are not run) found by the User ID typed, with a PIN; issueToken is the one thing a scene changes */
-  const PERSON_BY_HANDLE = answering(/LOWER\(user_id\) = LOWER/, [{ identity_id: '22222222-2222-4222-8222-222222222222', bridge_id: 'AAAA1111', display_name: 'Ravi Kumar', email: null, user_id: 'ravik.shop-a.br', identity_type: 'actor', pin_hash: 'x', parent_entity_id: SHOP, break_status: 'active' }]);
+  const PERSON_ROWS = [{ identity_id: '22222222-2222-4222-8222-222222222222', bridge_id: 'AAAA1111', display_name: 'Ravi Kumar', email: null, user_id: 'ravik.shop-a.br', identity_type: 'actor', pin_hash: 'x', parent_entity_id: SHOP, break_status: 'active' }];
+  const PERSON_BY_HANDLE = firstOf(lookupOf('handle', PERSON_ROWS), byIdRows(PERSON_ROWS));
   /* one contact on two accounts that the same secret opens: the chooser, 409 (SEC-143, M14; the same stand-in tests/lib/signin-scenes.cjs uses) */
   const choosing = () => ({ identityAuth: { findLoginIdentity: async () => ({ ambiguous: true, via: 'contact', candidates: [{ identity_id: 'a' }, { identity_id: 'b' }], contact: 'tea@x.com' }), proveOnContact: async () => ({ opens: [{ identity_id: 'a' }, { identity_id: 'b' }], hashes: 1 }), choicesOf: async () => [{ id: 'a', label: 'Tea Shop' }, { id: 'b', label: 'Tea Shop' }] } });
   const verifying = (issueToken) => ({ identityAuth: { verifyCredential: async () => ({ ok: true }), issueToken } });
-  const TWO_SHOPS = answering(/LOWER\(display_name\) = LOWER/, [{ identity_id: 'a', bridge_id: 'A', email: 'a@x.com', display_name: 'Tea Shop' }, { identity_id: 'b', bridge_id: 'B', email: 'b@x.com', display_name: 'Tea Shop' }]);
+  const TWO_SHOPS = lookupOf('name', [{ identity_id: 'a', bridge_id: 'A', email: 'a@x.com', display_name: 'Tea Shop' }, { identity_id: 'b', bridge_id: 'B', email: 'b@x.com', display_name: 'Tea Shop' }]);
   /* ── sign-in and sign-up (POST /register is recorded, never judged; POST /verify is judged) ── */
   const signin = [
     X('register-needs-an-id', 'POST ' + at('/register'), 400, { body: {} }),
     X('register-name-too-short', 'POST ' + at('/register'), 400, { body: { email: 'new@example.com', display_name: 'Z' } }),
     X('register-user-id-unusable', 'POST ' + at('/register'), 400, { body: { email: 'new@example.com', display_name: 'ab' } }),
-    X('register-user-id-taken', 'POST ' + at('/register'), 409, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: row(/SELECT 1 FROM identities WHERE LOWER\(user_id\) = \$1/, { '?column?': 1 }) } }),
+    X('register-user-id-taken', 'POST ' + at('/register'), 409, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: lookupOf('handle', [{ identity_id: 'someone-else', user_id: 'taken-id' }]) } }),
     X('register-made', 'POST ' + at('/register'), 200, { body: { email: 'new@example.com', display_name: 'Brand New Shop' } }),
     X('register-made-with-a-chosen-id', 'POST ' + at('/register'), 200, { body: { email: 'new2@example.com', display_name: 'Brand New Shop', user_id: 'chosen-id' } }),
     X('register-insert-fails', 'POST ' + at('/register'), 500, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: raising(/INSERT INTO identities/, '23505') } }),
@@ -163,7 +167,7 @@ function extras(tools) {
     X('profile-staff-user-id', 'PATCH ' + at('/profile'), 403, { body: { user_id: 'clerkstolen' }, setup: { who: STAFF } }),
     X('profile-user-id-fixed', 'PATCH ' + at('/profile'), 409, { body: { user_id: 'other-name' }, setup: { sqlRows: user('shop-a') } }),
     X('profile-user-id-unusable', 'PATCH ' + at('/profile'), 400, { body: { user_id: 'a b' }, setup: { sqlRows: user(null) } }),
-    X('profile-user-id-taken', 'PATCH ' + at('/profile'), 409, { body: { user_id: 'fresh-name' }, setup: { sqlRows: firstOf(user(null), row(/SELECT 1 FROM identities WHERE LOWER\(user_id\) = \$1 AND identity_id/, { '?column?': 1 })) } }),
+    X('profile-user-id-taken', 'PATCH ' + at('/profile'), 409, { body: { user_id: 'fresh-name' }, setup: { sqlRows: firstOf(user(null), lookupOf('handle', [{ identity_id: 'someone-else', user_id: 'fresh-name' }])) } }),
     X('profile-handler-not-yours', 'PATCH ' + at('/profile'), 400, { body: { dispute_handler_actor_id: HANDLER } }),
     X('profile-staff-currency', 'PATCH ' + at('/profile'), 403, { body: { currency_code: 'USD' }, setup: { who: STAFF } }),
     X('profile-currency-malformed', 'PATCH ' + at('/profile'), 400, { body: { currency_code: 'U$D' } }),

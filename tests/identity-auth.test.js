@@ -33,6 +33,7 @@ function fakeDb(rows) {
   const table = rows;
   return async (sql, params) => {
     const s = sql.replace(/\s+/g, ' ');
+    { const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => table); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
     if (/UPDATE identities SET.*otp_code = \$1/.test(s)) {
       const row = table.find((r) => r.identity_id === params[2]);
       if (row) { row.otp_code = params[0]; row.otp_expires_at = params[1]; row.otp_attempts = 0; }
@@ -74,13 +75,13 @@ function fakeDb(rows) {
 /* ── findLoginIdentity — the shapes it must tell apart ────────────────────────────────────────────────── */
 
 t('⭐ an entity is found by its real email', async () => {
-  const q = fakeDb([{ identity_id: 'e1', identity_type: 'entity', email: 'owner@shop.com', user_id: 'mayurbhavan', display_name: 'Mayur Bhavan' }]);
+  const q = fakeDb([{ identity_id: 'e1', identity_type: 'entity', status: 'active', email: 'owner@shop.com', user_id: 'mayurbhavan', display_name: 'Mayur Bhavan' }]);
   const { identity } = await IA.findLoginIdentity(q, 'owner@shop.com');
   assert.strictEqual(identity && identity.identity_id, 'e1');
 });
 
 t('⭐ an entity is found by its handle, no @ at all', async () => {
-  const q = fakeDb([{ identity_id: 'e1', identity_type: 'entity', email: 'owner@shop.com', user_id: 'mayurbhavan', display_name: 'Mayur Bhavan' }]);
+  const q = fakeDb([{ identity_id: 'e1', identity_type: 'entity', status: 'active', email: 'owner@shop.com', user_id: 'mayurbhavan', display_name: 'Mayur Bhavan' }]);
   const { identity } = await IA.findLoginIdentity(q, 'mayurbhavan');
   assert.strictEqual(identity && identity.identity_id, 'e1');
 });
@@ -93,7 +94,7 @@ t('⭐⭐ a coassist is found by their OWN b260 handle — the exact match, no c
 
 t('⭐⭐⭐ a coassist typed the way a person actually types it, unsuffixed — this is the bug that shipped', async () => {
   const q = fakeDb([
-    { identity_id: 'e1', identity_type: 'entity', user_id: 'mayurbhavan', display_name: 'Mayur Bhavan' },
+    { identity_id: 'e1', identity_type: 'entity', status: 'active', user_id: 'mayurbhavan', display_name: 'Mayur Bhavan' },
     { identity_id: 'a1', identity_type: 'actor', user_id: 'bala@mayurbhavan.br', actor_key: 'bala', parent_entity_id: 'e1', display_name: 'Bala' },
   ]);
   // ⚠️ this is EXACTLY the shape routes/entities.js's `input.includes('@')` would have sent down the entity
@@ -104,8 +105,8 @@ t('⭐⭐⭐ a coassist typed the way a person actually types it, unsuffixed —
 
 t('⚠️⚠️ two entities sharing a name is refused, never guessed', async () => {
   const q = fakeDb([
-    { identity_id: 'e1', identity_type: 'entity', user_id: 'e1id', display_name: 'Clothing' },
-    { identity_id: 'e2', identity_type: 'entity', user_id: 'e2id', display_name: 'Clothing' },
+    { identity_id: 'e1', identity_type: 'entity', status: 'active', user_id: 'e1id', display_name: 'Clothing' },
+    { identity_id: 'e2', identity_type: 'entity', status: 'active', user_id: 'e2id', display_name: 'Clothing' },
     { identity_id: 'a1', identity_type: 'actor', user_id: 'ravi@clothing.br', actor_key: 'ravi', parent_entity_id: 'e1', display_name: 'Ravi' },
   ]);
   const r = await IA.findLoginIdentity(q, 'ravi@Clothing');

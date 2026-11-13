@@ -15,6 +15,7 @@ const { validate, validateAsProblem, schemaValidate, sanitise } = require('../mi
 const auth = require('../middleware/auth');
 const { problem, uuidParam, textParam, softFault } = require('../lib/problem');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
@@ -139,8 +140,8 @@ async function registerNew(req, res) {
       return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason, { suggestion }) });
     }
     /* ⚠️ UNIQUE PLATFORM-WIDE, refused HERE — the unique index on lower(user_id) would raise a 500 that says nothing usable */
-    const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [verdict.value]);
-    if (taken.rows.length) {
+    const taken = await signinLookup.candidates(query, 'handle', verdict.value); // SEC-184: the one pre-binding reader
+    if (taken.length) {
       return problem(req, res, { status: 409, ...contract.words.userIdTaken(verdict.value) });
     }
     /**
@@ -1076,8 +1077,8 @@ router.patch(
           if (!verdict.ok) {
             return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason) });
           }
-          const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1 AND identity_id <> $2', [verdict.value, id]);
-          if (taken.rows.length) {
+          const taken = (await signinLookup.candidates(query, 'handle', verdict.value)).filter((holder) => holder.identity_id !== id); // SEC-184: the one pre-binding reader
+          if (taken.length) {
             return problem(req, res, { status: 409, ...contract.words.userIdTaken(verdict.value) });
           }
           userId = verdict.value; // lowercase: the uniqueness index is on lower(user_id)
