@@ -3089,6 +3089,13 @@ const numberOrNull = (rawValue) => {
   const parsed = parseFloat(rawValue);
   return isFinite(parsed) ? parsed : null;
 };
+/** the detail answer's total_value is the header's one pick (ACC-206 C4), in the column's own two-place text; the key keeps its name (RAIL-146 drops it by name) */
+function detailWithPickedTotal(detail, header) {
+  if (!detail) return null;
+  const picked = ownBill.pickOf(header);
+  if (picked.source === 'withheld' || picked.total === null) return detail;
+  return Object.assign({}, detail, { total_value: picked.total.toFixed(2) });
+}
 /** ?amount_min / ?amount_max → the bounds on the chit's total value */
 function amountFilter(req, params) {
   let where = '';
@@ -3096,11 +3103,11 @@ function amountFilter(req, params) {
     amax = numberOrNull(req.query.amount_max);
   if (amin !== null) {
     params.push(amin);
-    where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`;
+    where += ` AND COALESCE(${ownBill.billTotalSql('ch')},0) >= $${params.length}`;
   }
   if (amax !== null) {
     params.push(amax);
-    where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`;
+    where += ` AND COALESCE(${ownBill.billTotalSql('ch')},0) <= $${params.length}`;
   }
   return where;
 }
@@ -3249,7 +3256,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
               ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
@@ -3304,7 +3311,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
         ({
           date: 'created_at',
           subject: 'COALESCE(manual_subject, auto_subject)',
-          amount: "(summary_json->>'total_value')::numeric",
+          amount: 'bill_total',
           status: 'current_status',
           priority: "CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
@@ -3320,7 +3327,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
               /* ⭐ ROLE, because the LIST is where a draft has to be recognisable. Without it the mailbox could
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
-              ch.role,
+              ch.role, ${ownBill.billTotalSql('ch')} AS bill_total, /* the sort key only: folderRow names its keys, it never ships */
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
@@ -3395,7 +3402,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
          RAIL-146 rides on the same rows: a blind actor's (key, currency) row is stripped by lib/cost-view first, then folded by key. */
       const perCur = await db.query(
         `SELECT ${keyExpr} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
-              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
+              COALESCE(SUM(${ownBill.billTotalSql('ch')}), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
@@ -3598,7 +3605,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
@@ -4148,7 +4155,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
-      detail: data.detail.rows[0] || null,
+      detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]),
       participants: _red.participants,
       state_log: _red.state_log,
       bill_private: _red.private ? true : undefined,

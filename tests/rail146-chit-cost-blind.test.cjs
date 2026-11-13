@@ -283,7 +283,7 @@ function unitCases() {
   SCENE = { header: SALE };
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   sameRead('sale', owner, granted);
-  t('sale | blind: price, total and the header money stay', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.header.summary_json.money.total, blind.body.detail.total_value], [SECRET.price, owner.body.live_set[0].live.price, SECRET.money_total, String(SECRET.total)]);
+  t('sale | blind: price, total and the header money stay', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.header.summary_json.money.total, blind.body.detail.total_value], [SECRET.price, owner.body.live_set[0].live.price, SECRET.money_total, SECRET.money_total.toFixed(2)]); /* ACC-206 C4: the detail answer carries the header's one pick (money.total), not the old detail column (fixture: total_value 8485 beside money.total 9999.5, no stamps = a pre-2-Nov chit) */
   t('sale | blind: the cost-named keys still go; cost_hidden is ABSENT because no money was withheld', [costKeys(blind.body), blind.body.cost_hidden], [[], undefined]);
   t('sale | blind: exactly the owner\'s answer minus the cost-named keys', blind.body, stripNamed(owner.body));
 
@@ -322,7 +322,7 @@ function unitCases() {
     const ownerSql = LAST_LIST_SQL;
     const blindAsked = await call(port, p, BLIND);
     const blindSql = LAST_LIST_SQL;
-    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(ownerSql), /ORDER BY \(?.*total_value.*numeric/.test(ownerSql) || !/sort(\[\])?=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
+    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, /COALESCE\(\(CASE WHEN .*total_value.* END\),0\) (>=|<=)/.test(ownerSql), /ORDER BY (\(CASE WHEN .*total_value|bill_total)/.test(ownerSql) || !/sort(\[\])?=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
     t(name + ' oracle | blind: no amount filter, no amount order, and the ask named back', [blindAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(blindSql), /ORDER BY[^;]*total_value/.test(blindSql), (blindAsked.body.cost_params_ignored || []).slice().sort()], [200, false, false, p.split('?')[1].split('&').map((kv) => kv.split('=')[0].replace('[]', '')).filter((k) => k === 'amount_min' || k === 'amount_max' || k === 'sort').sort()]);
   }
 
