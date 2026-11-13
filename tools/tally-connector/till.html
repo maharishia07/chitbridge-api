@@ -23031,15 +23031,15 @@ function lotFromScan(raw){
   try { return CBGS1.parseElementString(raw); } catch (_) { return null; }
 }
 /** what is still wrong with this line, in the words to show the person at the door */
-function lotTrouble(l){
-  var p = lotPack(), lot = l.lot || {}, miss = [];
-  (p.required || []).forEach(function(k){ if (lot[k] == null || String(lot[k]).trim() === '') miss.push(lotLabel(k)); });
+function lotTrouble(line){
+  var lotRules = lotPack(), lotValues = line.lot || {}, miss = [];
+  (lotRules.required || []).forEach(function(k){ if (lotValues[k] == null || String(lotValues[k]).trim() === '') miss.push(lotLabel(k)); });
   /* ⚠️ NO ENGINE IN THIS PATH. Two dates compare themselves; asking CBGS1 meant that on a counter where the engine had not
      arrived, expired stock was accepted in silence — the one thing this rule exists to prevent. */
-  var exp = lot.expiry || lot.best_before, today = dayKeyOf(Date.now());
-  if (exp && /^\d{4}-\d{2}-\d{2}$/.test(exp) && !today) return { refuse: noDayMoney().why, missing: [] };   /* no shop day: expiry cannot be judged, so it is not accepted */
-  if (exp && /^\d{4}-\d{2}-\d{2}$/.test(exp) && exp < today)   /* CTR-242: two YYYY-MM-DD compare as text; today is the shop's day */
-    return { refuse: 'This has already expired (' + exp + '). It cannot be taken in.', missing: [] };
+  var expiryDay = lotValues.expiry || lotValues.best_before, today = dayKeyOf(Date.now());
+  if (expiryDay && /^\d{4}-\d{2}-\d{2}$/.test(expiryDay) && !today) return { refuse: noDayMoney().why, missing: [] };   /* no shop day: expiry cannot be judged, so it is not accepted */
+  if (expiryDay && /^\d{4}-\d{2}-\d{2}$/.test(expiryDay) && expiryDay < today)   /* CTR-242: two YYYY-MM-DD compare as text; today is the shop's day */
+    return { refuse: 'This has already expired (' + expiryDay + '). It cannot be taken in.', missing: [] };
   return { missing: miss };
 }
 function lotBoxes(l, n){
@@ -27394,14 +27394,14 @@ function shopMoveOf(o){
  * ([TILL-138]) — it is asked on the dialog's own 'held' stage, where leaving it alone is the default button.
  */
 async function usignBecome(takeover, counter){
-  var p = USIGN.pending; if (!p) return;
-  var r;
+  var pending = USIGN.pending; if (!pending) return;
+  var outcome;
   USIGN.busy = true;
-  try { r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null, via: 'window' }); }
+  try { outcome = await becomeShop({ token: pending.token, who: pending.person, idn: pending.idn, takeover: !!takeover, counter: counter || null, via: 'window' }); }
   finally { USIGN.busy = false; }   /* CTR-114: a becomeShop that throws must not leave the button stuck */
-  if (r && r.held) { USIGN.held = r; usignNote(usignHeldHtml(r)); return; }
-  if (!r || !r.ok) { usignRestore((r && r.message) || 'Signed in, but the shop did not issue a counter key.'); return; }
-  USIGN.opening = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
+  if (outcome && outcome.held) { USIGN.held = outcome; usignNote(usignHeldHtml(outcome)); return; }
+  if (!outcome || !outcome.ok) { usignRestore((outcome && outcome.message) || 'Signed in, but the shop did not issue a counter key.'); return; }
+  USIGN.opening = (outcome.shop && (outcome.shop.name || outcome.shop.bridge_id)) || 'your shop';
   usignNote('<p class="note" data-testid="till-usign-opening"><b>Opening ' + esc(USIGN.opening) + '…</b></p>');   /* the reload or the restart follows */
 }
 /**

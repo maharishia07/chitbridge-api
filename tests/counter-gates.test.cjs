@@ -92,7 +92,7 @@ it('the person crosses the reload as a PENDING sign-in, adopted only onto their 
 
 it('every inlet goes through the door: sign-in, #key= link, ⚙ key box, both sign-outs, closing the counter', () => {
   const need = [
-    ['usignBecome', /becomeShop\(\{ token: p\.token/],
+    ['usignBecome', /becomeShop\(\{ token: pending\.token/],
     ['pickHost', /becomeShop\(\{ key: k, marker/],
     ['settingsKeySave', /becomeShop\(\{ key: val \}\)/],
     ['signoutDo', /becomeShop\(\{ key: null, force: !!force/],
