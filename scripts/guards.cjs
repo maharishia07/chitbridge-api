@@ -890,6 +890,10 @@ const GUARDS = [
   'net-56-withdraw-earlier-end.test.cjs', // B13 (12 Nov): NET-56 a second withdraw keeps the EARLIER end and answers 200 with it (ATHI-DECISIONS 6 Nov)
   'net-76-ask-by-bridge-id.test.cjs', // B13 (12 Nov): NET-76 an ask by childBridgeId makes a local shop's node; a remote one is refused, nothing written
   'plt-67-register-member-taken.test.cjs', // B13 (12 Nov): PLT-67 register refuses a retired or local key (NET_KEY_TAKEN); an active member needs --update (spin.sh passes it)
+  'rail-30-meter-chit-send.test.cjs', // RAIL-30 (proof 14 Nov): a sent chit writes one chit.send ledger row with its basis, a draft none, a failed meter never fails the send
+  'rail-65-labelled-never-converted.test.cjs', // RAIL-65 (proof 14 Nov): an amount is labelled never converted: money.sum refuses mixed, the bill door 409s a foreign cell, no rail file reaches a rate table
+  'rail-71-with-transaction.test.cjs', // RAIL-71 (proof 14 Nov): withTransaction commits/rolls back, and the /send fan-out and dispute creation run inside it
+  'rail-121-dispute-participants-both-sides.test.cjs', // RAIL-121 (proof 14 Nov): the seller's copy of a dispute names raiser AND party, written and read
   'net-77-remote-dealer-409-mutation.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 mutation checks: break the refusal two ways and tests/net-77-remote-dealer-409.test.cjs MUST go red each time.
   'net-77-remote-dealer-409.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 (owner cb-network): asking to connect to a business on ANOTHER installation (a supplier stub here) is refused, nothing save
   'net-edge-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): NET-EDGE (owner cb-network): the five POST /api/network/connections/:id/{approve,decline,suspend,resume,disconnect} answers name t
