@@ -76,6 +76,7 @@ const answer = (explain) =>
       const lines = engineLines(read);
       const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
       const ctx = Object.assign({ now: new Date(), currency: null }, ctxOf(req.body.ctx)); /* T2-NATDEF: the caller's stated money, never INR by name */
+      ctx.timezone = await require('../lib/offers-live').shopZoneFor(offers, auth.entityOf(req), withEntity); /* CAT-247: the SERVER names the shop's zone (not a caller key), so a date-only window runs on the shop's own day */
       /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
       if (typeof ctx.money !== 'function') ctx.money = (n) => (ctx.currency ? String(ctx.currency) + ' ' : '') + roundMoney(Number(n) || 0).toFixed(2);
       const ev = eng.evaluate({ lines, offers, ctx });
