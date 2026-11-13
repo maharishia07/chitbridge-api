@@ -3967,7 +3967,7 @@ function receiptOf(row, business) {
  * one order beside its receipts and their invoice, or null when it has no lines.
  * ⭐ THE VERDICT IS ABOUT WHAT IS KNOWN, not about who is right.
  *   awaited   nothing has arrived yet
- *   open      some has, some has not
+ *   open      some has, some has not: waiting for the rest (OPS-100: a short line on an order the shop has not closed is not a difference)
  *   agreed    everything arrived as ordered, and the money agrees
  *   differs   something does not agree, and the line says what
  */
@@ -3977,7 +3977,8 @@ function matchOrder(head, detail, business, progress, receipts, invoices, tolera
   const invoice = theirInvoice(head, receipts, invoices);
   const ordered_total = roundMoney(lines.reduce((total, item) => total + item.ordered * (item.rate || 0), 0));
   const received_total = roundMoney(lines.reduce((total, item) => total + item.received * (item.rate || 0), 0));
-  const differences = lines.filter((item) => item.difference !== 0 && !item.absorbed).length;
+  const closed = String(head.current_status) === 'completed';
+  const differences = lines.filter((item) => countsAsDifference(item, closed)).length;
   const money = matchMoney(invoice, receipts, currency);
   return {
     chit_id: head.chit_id,
@@ -3985,7 +3986,7 @@ function matchOrder(head, detail, business, progress, receipts, invoices, tolera
     ...orderParty(head, business),
     lines,
     differences,
-    verdict: matchVerdict(lines, differences, money.code),
+    verdict: matchVerdict(lines, differences, money.code, closed),
     ordered_total,
     received_total,
     invoiced_total: invoice.total,
@@ -4088,11 +4089,20 @@ function invoiceNo(invoice) {
   return String(business.bill_no || business.invoice_no || business.doc_no || invoice.chit_id);
 }
 
+/**
+ * OPS-100 · is this line a difference to chase? An excess always is; a short only once the shop has closed the order (rail status completed). While the order is open a short line
+ * is the rest still to come, and one this trade absorbs (matchLine, lib/lotfields tolerance) never is. The same matchLine figures: no second compare.
+ */
+function countsAsDifference(item, closed) {
+  if (item.difference === 0 || item.absorbed) return false;
+  return item.difference > 0 || closed;
+}
+
 /** awaited · differs · open · agreed — see matchOrder */
-function matchVerdict(lines, differences, money_code) {
+function matchVerdict(lines, differences, money_code, closed) {
   if (lines.every((item) => item.received === 0 && !item.counted_in_another_unit)) return 'awaited';
   if (differences || lines.some((item) => item.state === 'other_unit')) return 'differs';
-  if (lines.some((item) => item.received < item.ordered)) return 'open';
+  if (!closed && lines.some((item) => item.received < item.ordered)) return 'open';
   return money_code === 'apart' || money_code === 'currency_mismatch' ? 'differs' : 'agreed'; /* a round-off or an unknown figure is not a difference */
 }
 
