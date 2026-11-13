@@ -4330,6 +4330,8 @@ function qWaitWords(row, at){
  * ⚠️ A BILL IS NEVER PARKED HERE: a sale is money already taken, it keeps its backoff ladder and its "set aside" button.
  */
 var FINAL_REFUSALS = [400, 404, 409, 422];
+/* a 403 that refuses ONE bill, never the key: the drain keeps that bill's words on its row and sends the rest. MEMBERSHIP_SUSPENDED (api routes/chits.js sendSuspended, CTR-155) is the shop's standing with ONE receiver's network */
+var ONE_ROW_REFUSALS = ['TILL_SEND_REFUSED', 'MEMBERSHIP_SUSPENDED'];
 function isParkedRow(row){ return !!(row && row._parked); }
 function parksOn(row, status, code){
   return !!(row && row.tillPost) && FINAL_REFUSALS.indexOf(status) >= 0 && code !== WAITS_FOR_BILL;
@@ -5884,7 +5886,7 @@ var CloudHost = {
              "the key was refused" stopped every bill behind it and named the wrong cause. That bill now keeps the
              server's words below, like any other refusal, and the rest of the queue goes. */
           else if ((r.status === 403 || r.status === 401)
-                   && (code = await r.clone().json().then(function(j){ return (j && j.code) || ''; }, function(){ return ''; })) !== 'TILL_SEND_REFUSED') {
+                   && ONE_ROW_REFUSALS.indexOf(code = await r.clone().json().then(function(j){ return (j && j.code) || ''; }, function(){ return ''; })) < 0) {
             /* ⚠️ A KEY PROBLEM IS NOT FIXED BY TRYING HARDER, and it is also not fixed by saying nothing. This is
                the one failure a shopkeeper can actually act on — and until now it was the most invisible. */
             /* ⭐ M08: a PERSON's refusal is never "the key" — its words come from the code (personRefused), and the
@@ -27393,9 +27395,10 @@ function shopMoveOf(o){
  */
 async function usignBecome(takeover, counter){
   var p = USIGN.pending; if (!p) return;
+  var r;
   USIGN.busy = true;
-  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null, via: 'window' });
-  USIGN.busy = false;
+  try { r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null, via: 'window' }); }
+  finally { USIGN.busy = false; }   /* CTR-114: a becomeShop that throws must not leave the button stuck */
   if (r && r.held) { USIGN.held = r; usignNote(usignHeldHtml(r)); return; }
   if (!r || !r.ok) { usignRestore((r && r.message) || 'Signed in, but the shop did not issue a counter key.'); return; }
   USIGN.opening = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
