@@ -763,6 +763,11 @@ const GUARDS = [
   'catalogue-visibility.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'column-parity.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'column-rules.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'con-30-connector-csv-core.test.cjs', // CON-30 (proof 2026-11-14): tools/tally-connector core + csv adapter: products up once (receipts), offers back, orders down, receipts out
+  'con-54-storefront-presence.test.cjs', // CON-54 (proof 2026-11-14): storefront away sentence from connector last_seen
+  'con-55-zoho-refresh.test.cjs', // CON-55 (proof 2026-11-14): Zoho refresh_token renewal
+  'con-74-send-via-whitelist.test.cjs', // CON-74 (proof 2026-11-14): via whitelist on /send
+  'con-90-notify-channel.test.cjs', // CON-90 (proof 2026-11-14): sendOtp chooses the channel
   'conf-cache.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'connector-rows.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'consolidate-units.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
