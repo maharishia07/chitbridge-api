@@ -104,10 +104,10 @@ of file each thing is; this says what already does the job.
 | 29 | `owner` | `books.js` |  |
 | 28 | `money` | `cart.js` |  |
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
+| 28 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `opts` | `cap-stock.js` |  |
 | 27 | `guard` | `amend.js` | would disturb what has gone out. |
-| 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 27 | `group` | `identity.js` | again in a different costume. |
 | 26 | `view` | `country-ready.js` |  |

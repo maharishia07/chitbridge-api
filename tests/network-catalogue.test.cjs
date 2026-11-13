@@ -141,6 +141,20 @@ it('⚠️ a product the brand WITHDREW from this store is not a detached price 
   assert.deepStrictEqual(build.detachedKeys([{ name: 'A', formerly: ['A0'] }], { A0: 1, B: 2 }), ['B']);
 });
 
+it('⚠️ CAT-324: a negative brand price is no suggestion and cannot be adopted; zero and a positive price are kept', async () => {
+  const d = (price, mrp) => ({ name: 'X', price: { amount: price, currency: 'INR' }, mrp });
+  assert.strictEqual(ncat.suggested({ price: -5 }), null, 'a negative price was suggested');
+  assert.strictEqual(ncat.suggested({ price: -5, mrp: 40 }), 40, 'the MRP did not stand in for a negative price');
+  assert.strictEqual(ncat.suggested({ price: 0 }), 0, 'zero is a price (a free sample)');
+  assert.strictEqual(ncat.suggested({ price: 7 }), 7);
+  assert.strictEqual(ncat.fromProduct(d(-5, -9), null).price, null, 'the published copy carried a negative price');
+  assert.strictEqual(ncat.fromProduct(d(-5, -9), null).mrp, null, 'the published copy carried a negative MRP');
+  assert.strictEqual(ncat.fromProduct(d(0, 10), null).price, 0);
+  SOURCE_ROW = { source_key: 'k@v1', items: [{ name: 'X', price: -5 }] };
+  const r = await ncat.answer('e1', { source_key: 'k@v1', name: 'X', choice: 'use' });
+  assert.strictEqual(r.error, 'no_price', 'a store adopted a negative brand price: ' + JSON.stringify(r));
+});
+
 (async () => {
   console.log('\nnetwork catalogue · publish changes, suggest prices');
   for (const [name, fn] of tests) {
