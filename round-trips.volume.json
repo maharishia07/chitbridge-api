@@ -3230,6 +3230,19 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/till/invoice-lease/report": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
   "GET /api/till/match": {
    "0": {
     "trips": 4
