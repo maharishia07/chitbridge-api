@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -33,13 +33,13 @@
    "title": "cap-catsetup.js",
    "ci": "CAP-CATSETUP",
    "state": "ok",
-   "note": "1 screen(s) · 14 API call(s)"
+   "note": "1 screen(s) · 15 API call(s)"
   },
   {
    "title": "cap-chit2.js",
    "ci": "CAP-CHIT2",
    "state": "ok",
-   "note": "3 screen(s) · 10 API call(s)"
+   "note": "3 screen(s) · 13 API call(s)"
   },
   {
    "title": "cap-cmdb.js",
@@ -51,26 +51,26 @@
    "title": "Connector · IoT / ERP",
    "ci": "CAP-CONNECTOR",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s) · maturity 2",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2",
    "node": "p1"
   },
   {
    "title": "cap-definitions.js",
    "ci": "CAP-DEFINITIONS",
    "state": "ok",
-   "note": "1 screen(s) · 8 API call(s)"
+   "note": "1 screen(s) · 9 API call(s)"
   },
   {
    "title": "Disputes — the USP",
    "ci": "CAP-DISPUTE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
   },
   {
    "title": "cap-folders.js",
    "ci": "CAP-FOLDERS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s)"
+   "note": "1 screen(s) · 28 API call(s)"
   },
   {
    "title": "cap-iddocs.js",
@@ -94,25 +94,25 @@
    "title": "cap-match.js",
    "ci": "CAP-MATCH",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "cap-messages.js",
    "ci": "CAP-MESSAGES",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Network — one shopfront, many entities",
    "ci": "CAP-NETWORK",
    "state": "ok",
-   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
   },
   {
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
@@ -130,7 +130,7 @@
    "title": "cap-standards.js",
    "ci": "CAP-STANDARDS",
    "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "note": "0 screen(s) · 1 API call(s)"
   },
   {
    "title": "cap-supplies.js",
@@ -142,31 +142,133 @@
    "title": "Test lab — cases, results and the spec they cite",
    "ci": "CAP-TESTING",
    "state": "ok",
-   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
   },
   {
    "title": "cap-traceability.js",
    "ci": "CAP-TRACEABILITY",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 6 API call(s)"
   },
   {
    "title": "Co-assists",
    "ci": "CAP-WORKFORCE",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
   },
   {
    "title": "cap-worklist.js",
    "ci": "CAP-WORKLIST",
    "state": "ok",
-   "note": "5 screen(s) · 8 API call(s)"
+   "note": "5 screen(s) · 12 API call(s)"
   },
   {
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 19 API call(s)"
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
   }
  ],
  "entries": [
@@ -206,19 +308,73 @@
  "exits": [
   {
    "id": "x1",
+   "t": "GET /api/connectors/:actorId/connections",
+   "s": "api('connectorConns') → routes/connectors.js",
+   "d": "Reads through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/connectors/:actorId/provisioning",
+   "s": "api('connectorProvision') → routes/connectors.js",
+   "d": "Reads through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x3",
+   "t": "GET /api/connectors/:actorId/receipts",
+   "s": "api('connectorReceipts') → routes/connectors.js",
+   "d": "Reads through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x4",
+   "t": "POST /api/connectors/:actorId/erp-test",
+   "s": "api('connectorErpTest') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x5",
+   "t": "DELETE /api/connectors/:actorId",
+   "s": "api('connectorDelete') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x6",
+   "t": "POST /api/connectors/:actorId/connections",
+   "s": "api('connectorConnAdd') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x7",
+   "t": "PATCH /api/connectors/:actorId/connections/:connId",
+   "s": "api('connectorConnToggle') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x8",
+   "t": "POST /api/connectors/:actorId/ping",
+   "s": "api('connectorPing') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x9",
+   "t": "POST /api/connectors/reissue-code",
+   "s": "api('connectorReissueCode') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x10",
+   "t": "POST /api/connectors/:actorId/regenerate-key",
+   "s": "api('connectorRegen') → routes/connectors.js",
+   "d": "Writes through the API, answered by routes/connectors.js."
+  },
+  {
+   "id": "x11",
    "t": "CALL /api/connectors/:actor",
    "s": "routes/connectors.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x2",
+   "id": "x12",
    "t": "CALL /api/connectors",
-   "s": "routes/connectors.js",
-   "d": "A direct call to the API."
-  },
-  {
-   "id": "x3",
-   "t": "CALL /api/connectors/reissue-code",
    "s": "routes/connectors.js",
    "d": "A direct call to the API."
   }
@@ -251,6 +407,42 @@
   [
    "p1",
    "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
   ]
  ],
  "relationships": [
@@ -267,22 +459,32 @@
   {
    "this": "CAP007 cap-connector.js",
    "rel": "documented-by",
-   "that": "no document names this module or its routes"
-  },
-  {
-   "this": "CAP007 cap-connector.js",
-   "rel": "retired-docs (tidy 2026-10-02)",
-   "that": "web e2e/README.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
+   "that": "api docs/API-REGISTER.md · api docs/critique/API-4-connectors.md · api docs/critique/CON-ERP-IDEM.md · api docs/critique/HX1.md · api docs/critique/INT6a.md · api docs/critique/MKT-SRV1.md · api docs/critique/SEC3.md · api docs/critique/T2-HONEST.md · api docs/critique/TEST-INGEST-IOT.md · api docs/FIELDS.md · api docs/HOSTING-COUPLING.md · web docs/ACTION-STATE-SWEEP.md · web docs/critique/HX1-PR.md · web docs/critique/INT6a.md · web docs/critique/SEC-FIX2.md · web docs/critique/T3-P3-CONSENT.md · web docs/design/INDEX-NOT-APP.md · web docs/DESIGN-NOTES-2026-10.md"
   }
  ],
  "layers": {
   "build": "chitbridge-web/public/app/cap-connector.js",
-  "design": "Capability Connector · IoT / ERP"
+  "design": "web docs/design/INDEX-NOT-APP.md"
  },
  "tests": [
   {
+   "file": "web e2e/iot-agent-retry.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
    "file": "web e2e/tests/connector.spec.js",
    "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-connector-cockpit.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/api-problem-connectors.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {
@@ -293,8 +495,87 @@
   {
    "file": "api tests/canon.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
+  },
+  {
+   "file": "api tests/connectors-strict-input.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/consent-senders.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/country-literals.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/engine-manifest.js",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/erp-ingest-idempotency.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/home-facts.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/honest-failures.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/identity-country.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/ingest-iot-offline.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/lib/actors-scenes.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/lib/connectors-scenes.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/natdef-guard.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/neutral-core.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/people-writes-sec2.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/reports-truth.realstack.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/sec3-device-keys.test.cjs",
+   "kind": "server",
+   "result": "not run"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: connector\n  annotations:\n    chitbridge.io/ci: CAP-CONNECTOR\n    chitbridge.io/asset: CAP007\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/connectors.js"
