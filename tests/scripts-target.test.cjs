@@ -32,6 +32,10 @@ check('apiBase: the production host is refused (code 3) unless CB_ALLOW_PROD=1',
   }
   assert.strictEqual(RT.resolveApi({ CB_API: RT.PRODUCTION_API, CB_ALLOW_PROD: '1' }).ok, true);
 });
+check('apiBase: encoded production host and userinfo are refused', () => {
+  assert.strictEqual(RT.resolveApi({ CB_API: 'https://x.up.railway%2eapp' }).code, 3);
+  assert.strictEqual(RT.resolveApi({ CB_API: 'http://a:b@127.0.0.1:9' }).code, 2);
+});
 check('apiBase: a local or SIT host is accepted, trailing slash trimmed', () => {
   assert.strictEqual(RT.resolveApi({ CB_API: 'http://127.0.0.1:9/' }).base, 'http://127.0.0.1:9');
   assert.strictEqual(RT.resolveApi({ CB_API: 'https://staging.144-24-145-121.sslip.io' }).ok, true);

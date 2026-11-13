@@ -69,9 +69,12 @@ function judge(api, db, env) {
 function resolveApi(env) {
   const e = env || process.env, raw = String(e.CB_API || '').trim();
   if (!raw) return { ok: false, code: 2, why: 'CB_API is not set. There is no default target: name the api (local http://127.0.0.1:3100 or a SIT box) and run again' };
-  const base = noSlash(raw);
-  if (!/^https?:\/\/[^\s/]+/i.test(base)) return { ok: false, code: 2, why: 'CB_API is not an http(s) URL: ' + base };
-  if (PRODUCTION.test(base) && String(e.CB_ALLOW_PROD || '').trim() !== '1') {
+  let u;
+  try { u = new URL(raw); } catch (_) { return { ok: false, code: 2, why: 'CB_API is not a URL: ' + raw }; }
+  if (!/^https?:$/.test(u.protocol)) return { ok: false, code: 2, why: 'CB_API must be http(s): ' + raw };
+  if (u.username || u.password) return { ok: false, code: 2, why: 'CB_API must not carry a user name or password' };
+  const base = u.origin;   /* the parser's own normal form: railway%2eapp and a full-width dot are judged as the host they really are */
+  if ((PRODUCTION.test(base) || PRODUCTION.test(raw)) && String(e.CB_ALLOW_PROD || '').trim() !== '1') {
     return { ok: false, code: 3, why: 'CB_API is the production api (' + base + '). Writing to production needs CB_ALLOW_PROD=1, which only Athi sets' };
   }
   return { ok: true, base };
