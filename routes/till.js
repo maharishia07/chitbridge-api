@@ -49,27 +49,8 @@ const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 /** what tax-shelf.readShelf needs from this router — the db, the region layer, the catalogue face — in ONE place for its two callers (the snapshot, the rate door) */
 const shelfDeps = () => ({ withEntity, query, regionLayer: regional.regionLayer, getFace: (shopId) => catalogueView.getFace({ entity_id: shopId, withEntity }) });
-/** a stored rate as a number, or null for a blank or junk value (a rate is a percentage, never money) */
-const rateOf = (value) => (value == null || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
-/**
- * ⭐⭐ THE ITEM'S TAX FACTS, AS THE ENGINE'S ONE INPUT READS THEM (F5 A1, critic 2 and 12; tax-slab inputOf from engines 1.72.0). A rate typed on the
- * item, or set at the counter's door (POST /rate), reached the catalogue view and never the counter's projection, so the counter billed 0%.
- * gst_rate · tax_slab_name · cess_rate are the slab's travelling copy; `categories` is EVERY id the product cites (the category rung is keyed by id;
- * the resolved NAME still travels as `category` for old tills); hsn also reads `sac` (a service's code) and NEVER `code`: a shop code "D01" would
- * land on a tax invoice. A blank is null — "nobody said", never 0.
- */
-function taxFactsOf(item_data) {
-  /* engines 1.72.0: the ONE builder (tax_slab · tax_slab_name · gst_rate · cess_rate · categories[] · hsn || sac), blanks left out — the wire says null for them */
-  const facts = taxSlab.inputOf(item_data);
-  return {
-    hsn: facts.hsn !== undefined ? facts.hsn : item_data.hs_code || item_data.hsn_code || null /* the two legacy keys old rows still carry */,
-    tax_slab: facts.tax_slab || null,
-    gst_rate: rateOf(facts.gst_rate),
-    tax_slab_name: facts.tax_slab_name || null,
-    cess_rate: rateOf(facts.cess_rate),
-    categories: facts.categories || []
-  };
-}
+/* CTR-244: rateOf · taxFactsOf · soldPriceOf live in lib/till-row (the recheck's drift check at send reads the same projection); the row is still built here */
+const { taxFactsOf, soldPriceOf } = require('../lib/till-row');
 /**
  * ⭐⭐ THE CATEGORY MASTER, READ WITHOUT THE TAX GATE ([TILL-114]). taxShelf.readShelf() also returns
  * categories — and answers NULL for a seller with no GSTIN, so an unregistered shop could not get its own
@@ -935,7 +916,7 @@ function itemNameAndPrice(data) {
     name: data.name,
     code: firstSet(data.code, data.sku),
     unit: data.unit || 'piece',
-    price: sellablePrice.soldAt(amountOf(data.price)),
+    price: soldPriceOf(data),
     mrp: amountOf(data.mrp)
   };
 }

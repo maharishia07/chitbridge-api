@@ -453,6 +453,8 @@ const INFRA_LIBS = [
   'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
   'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
   'sellable-price.js',     // when a stored price cannot be sold (unset or negative): the one rule the order refusal and the till snapshot both read (CAT-318, CAT-324)
+  'till-row.js',           // the three readers of a product's money the counter's row and the send-time drift check share (rate, tax facts, sellable price), lifted from routes/till.js, nothing computed (CTR-244)
+  'price-drift.js',        // CTR-244: at send, was a bill's price or rate out of date at the sale (the row's commercial_changed_at against billed_at, two carried figures compared for equality, nothing computed)
   'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
   'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —

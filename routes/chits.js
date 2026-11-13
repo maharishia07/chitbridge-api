@@ -582,6 +582,7 @@ const SEND_STEPS = [
   sendAssign,
   sendMeter,
   sendStock,
+  sendPriceDrift,
   sendBooks,
   sendAnswer
 ];
@@ -3033,6 +3034,28 @@ async function sendStock(sendState, req, res) {
     } catch (e) {
       cbLog.fellBack('chits: the helper failed — carried on without it', e);
     }
+  }
+}
+
+/**
+ * ⭐ CTR-244 (CTR-212 S3) · WERE THE PRICES OUT OF DATE WHEN THIS BILL WAS RUNG? Asked AFTER the bill is stored, and it only ever SAYS: one service ticket (lib/money-check.raiseDrift), never a
+ * refusal (the till retries any non-ok answer for ever), never a re-price (the bill is the sale, REV-02). ONE extra read per bill (the rows its products name). lib/price-drift judges: the row's
+ * commercial_changed_at (b845) is at or before billed_at and after the counter's snapshot AND the carried price or rate differs; a bill the shopkeeper already answered is exempt. A failure here
+ * is logged and the send goes on. A draft, a replay (answered earlier in the steps) and a bill with no counter moment are never judged.
+ */
+async function sendPriceDrift(sendState, req, res) {
+  const { sender_id, is_draft, line_items, business_json, currency_code } = sendState;
+  if (is_draft || !business_json || !business_json.billed_at) return;
+  try {
+    const drift = require('../lib/price-drift');
+    const { ids } = drift.catalogueIdsOf(line_items);
+    if (!ids.length || drift.answeredOf(business_json)) return;
+    const found = drift.driftOf({ lines: line_items, business_json }, await drift.readRows(sender_id, ids, withEntity), currency_code);
+    if (!found.lines || !found.lines.length) return;
+    const basis = business_json.price_basis || {};
+    await require('../lib/money-check').raiseDrift(sender_id, { lines: found.lines, billed_at: business_json.billed_at, snapshot_at: basis.snapshot_at }, { bill: business_json.bill_no, client_ref: sendState.client_ref });
+  } catch (e) {
+    cbLog.fellBack('chits: the price-drift check failed — the bill stands, nothing was filed', e);
   }
 }
 

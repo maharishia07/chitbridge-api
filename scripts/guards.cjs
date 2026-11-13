@@ -378,6 +378,7 @@ const GUARDS = [
   'ctr-243-recheck-changed-at.test.cjs', // ⭐ CTR-243: POST /till/recheck carries changed_at (commercial_changed_at); a database before b845 answers null, never a 500
   'ctr-243-stale-send.test.cjs', // ⭐ CTR-243: a bill rung at an out-of-date price: price only goes as sold with an ack, a rate move or a withdrawn line is HELD for the owner PIN, never re-priced, never lost (25 cases)
   'ctr-246-bridge-missing.test.cjs', // ⭐ CTR-246: a bill that carries an invoice but no bridge or no readable till build stamp is passed and counted (/health send_bridge_absent · send_heads_absent), never refused
+  'ctr-244-price-drift.test.cjs', // ⭐ CTR-244: at send ONE ticket says a bill's prices were out of date at the sale (the row's commercial_changed_at vs billed_at, carried figure vs row); the bill is stored as sold, nothing refused or re-priced
   'ctr-212-recheck-till.test.cjs', // ⭐ CTR-212 S2a: the counter reads prices again at unpark and finish; 236.00 kept · 283.20 · 224.00 · deleted never billed (hand figures, the real engine)
   'cat-264a-commercial-stamp.test.cjs', // ⭐ CAT-264a: the b845 trigger key list equals till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency; cb_item_fields makes each key (SQL and JS cannot drift)
   'till-rate-door.test.cjs', // ⭐ F5 A1: the counter's item carries its tax facts (gst_rate · categories[] · hsn from sac, never code); POST /rate refuses a key and a cashier in words, an owner/manager sets it once (idempotent); Veg Meals ₹120 inclusive at 5% through the engine
