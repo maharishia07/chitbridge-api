@@ -390,6 +390,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
 | POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
+| PRICE_MOVED | 409 | Prices have moved | Some items in this draft changed in the catalogue after the draft was made. Nothing was sent. | Use the new prices, or send it as drafted when only a price moved. | chits | 2026-11-14 |
 | PRICING_KIND_UNKNOWN | 400 | Pricing structure not known | A line names a pricing structure we do not know. The kinds are fixed, tiered and range. | Use fixed, tiered or range, or send the line without a structure to use the list price. | pricing | 2026-11-13 |
 | PRODUCT_BAD_REQUEST | 400 | The catalogue needs something else | The catalogue could not take that request, and the sentence says why. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
 | PRODUCT_CLASH | 409 | Clashes with the catalogue | That clashes with how this catalogue is set up. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |

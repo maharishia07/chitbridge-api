@@ -3899,6 +3899,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PRICE_MOVED",
+   "status": "409",
+   "title": "Prices have moved",
+   "shopkeeper": "Some items in this draft changed in the catalogue after the draft was made. Nothing was sent.",
+   "hint": "Use the new prices, or send it as drafted when only a price moved.",
+   "owner_area": "chits",
+   "since": "2026-11-14"
+  },
+  {
    "code": "PRICING_KIND_UNKNOWN",
    "status": "400",
    "title": "Pricing structure not known",

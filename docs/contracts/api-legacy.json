@@ -27510,6 +27510,72 @@
      }
     },
     {
+     "scenario": "send-draft-prices-moved",
+     "status": 409,
+     "body_keys": {
+      "code": "PRICE_MOVED",
+      "error": "Prices have moved since this draft was made.",
+      "message": "One item in this draft changed in the catalogue after the draft was made. Use the new prices, or send it as drafted.",
+      "lines": [
+       {
+        "line_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "item_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "name": "Tea",
+        "kind": "price_moved",
+        "was_minor": 1000,
+        "now_minor": 1200,
+        "was_rate": null,
+        "now_rate": null,
+        "changed_at": "2026-11-13T10:00:00.000Z"
+       }
+      ],
+      "can_send_as_drafted": true,
+      "ack": "signed-ack",
+      "total": null,
+      "reach": {
+       "recipients": [],
+       "lines": 1
+      },
+      "type": "https://chitbridge.com/problems/price_moved",
+      "title": "Prices have moved",
+      "status": 409,
+      "detail": "One item in this draft changed in the catalogue after the draft was made. Use the new prices, or send it as drafted.",
+      "hint": "Use the new prices, or send it as drafted when only a price moved.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "PRICE_MOVED",
+      "error": "Prices have moved since this draft was made.",
+      "message": "One item in this draft changed in the catalogue after the draft was made. Use the new prices, or send it as drafted.",
+      "lines": [
+       {
+        "line_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "item_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "name": "Tea",
+        "kind": "price_moved",
+        "was_minor": 1000,
+        "now_minor": 1200,
+        "was_rate": null,
+        "now_rate": null,
+        "changed_at": "2026-11-13T10:00:00.000Z"
+       }
+      ],
+      "can_send_as_drafted": true,
+      "ack": "signed-ack",
+      "total": null,
+      "reach": {
+       "recipients": [],
+       "lines": 1
+      },
+      "type": "https://chitbridge.com/problems/price_moved",
+      "title": "Prices have moved",
+      "status": 409,
+      "detail": "One item in this draft changed in the catalogue after the draft was made. Use the new prices, or send it as drafted.",
+      "hint": "Use the new prices, or send it as drafted when only a price moved.",
+      "request_id": "req-test"
+     }
+    },
+    {
      "scenario": "send-till-bill-to-a-stranger",
      "status": 403,
      "body_keys": {

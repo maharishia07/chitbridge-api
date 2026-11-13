@@ -2619,7 +2619,7 @@
    ]
   },
   "POST /api/chits/send": {
-   "cases": 18,
+   "cases": 19,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

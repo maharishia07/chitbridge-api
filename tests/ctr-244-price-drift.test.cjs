@@ -224,7 +224,7 @@ const facts = (r) => r.tickets[0] && r.tickets[0].t.money_mismatch;
     /* row 10: the break test is a mutation run (the call removed), recorded in the PR; here the step is placed and the projection is the lib's */
     const strip = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
     const chitsSrc = strip(require(path.join(API, 'tools', 'chits-files.cjs')).read(API));
-    ok('10 guard: sendPriceDrift sits in SEND_STEPS after sendStock and before sendBooks (after the store)', /sendWrite,[\s\S]*sendStock,\s*sendPriceDrift,\s*sendBooks/.test(chitsSrc), '');
+    ok('10 guard: sendPriceDrift sits in SEND_STEPS after sendStock and before sendBooks (after the store)', /sendWrite,[\s\S]*sendStock,\s*sendPriceDrift,\s*(?:sendMovedTicket,\s*)?sendBooks/.test(chitsSrc), '');
     ok('10 guard: routes/chits.js never requires routes/till.js; lib/price-drift and routes/till.js read the row through lib/till-row', !/require\('\.\/till'\)|routes\/till/.test(chitsSrc) && /require\('\.\/till-row'\)/.test(fs.readFileSync(path.join(API, 'lib', 'price-drift.js'), 'utf8')) && /require\('\.\.\/lib\/till-row'\)/.test(fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8')), '');
 
     /* exemptions of the line: a free line, a network line, a mistyped id, a soft-removed product, a row with no stamp, a draft, an old till build */
