@@ -5,12 +5,12 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 0,
-  "partial": 3,
-  "meets": 631,
+  "partial": 0,
+  "meets": 634,
   "columns": {
    "strict_input": {
     "applies": 323,
-    "failing": 2
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 634,
@@ -26963,7 +26963,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
@@ -27011,7 +27011,7 @@
     "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till read: the day close of the invoice blocks (leases, outside, total/page/limit, paged with a server max); 13 columns pass; closed LEASE_REPORT; bad paging 400 in words; FIELDS rows added",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -27104,7 +27104,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-13 OPS-83 re-sign after merging main (OPS-87 other-unit rule kept; independent read of the merged route, builder did not sign): the answer gains received_with_tax and money_code (hidden from a blind reader: money_gap and received_with_tax are outside MATCH_KEEP, money_code is a word with no figure) (additive, no new input, no new status or code); money_gap now their-bill.check on carried figures; the register row reads 13 of 13",
+    "signed_off_by_date": "cb-api 2026-11-13 OPS-351 re-sign (independent read of the diff; builder did not sign): the answer gains lines[].billed (number or null, carried from their invoice, never 0), billed_unit (only when units differ, billed then null), billed_more (only when true) and orders[].billed_unmatched (integer); verdict is differs when a line is billed above received, open or closed; all additive, no new input, status or code; FIELDS rows present; blind readers keep the quantity keys (lib/cost-view MATCH_LINE_KEEP/MATCH_KEEP, counts not money). Earlier: OPS-83 received_with_tax and money_code (hidden from blind reader); OPS-87 other-unit rule kept; register row reads 13 of 13",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -59086,12 +59086,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59134,7 +59134,7 @@
     "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till door: a counter leases a block of invoice numbers (AE only); body strict (want, remaining, till_id), answer closed LEASE_BLOCK; 13 columns pass; codes LEASE_WANT_INVALID 400, LEASE_TILL_UNKNOWN 404, LEASE_NOT_FOR_COUNTRY and LEASE_NOT_READY 409, LEASE_NOT_YOUR_COUNTER 403, LEASE_COUNTER_BUSY 503 registered with a shopkeeper sentence, problem shape, no raw error text; a counter key leases only for its own id; FIELDS rows added; 13 + 3151 tests pass",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -59186,12 +59186,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -59234,7 +59234,7 @@
     "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till door: say why numbers of a block were not printed and close it; body strict (lease_id, unused), answer closed LEASE_CLOSED; 13 columns pass; codes LEASE_REASON_INVALID 400, LEASE_NOT_FOUND 404, LEASE_NUMBER_NOT_IN_LEASE and LEASE_NUMBER_WAS_USED 409 registered; saying it twice changes nothing; FIELDS rows added",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
