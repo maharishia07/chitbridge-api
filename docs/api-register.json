@@ -5,8 +5,8 @@
   "routes": 631,
   "no_does": 621,
   "not_started": 0,
-  "partial": 0,
-  "meets": 631,
+  "partial": 4,
+  "meets": 627,
   "columns": {
    "strict_input": {
     "applies": 321,
@@ -2505,8 +2505,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 822,
-   "hash": "3cd9061ca816e45a",
+   "line": 821,
+   "hash": "f3b5356c80fe1afe",
    "does": "",
    "errors": {
     "count": 0,
@@ -2574,10 +2574,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder) 2026-11-13 PR#1236 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f3b5356c80fe1afe"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -2613,7 +2614,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1645,
+   "line": 1644,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2712,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1834,
+   "line": 1833,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2897,7 +2898,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1516,
+   "line": 1515,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -19731,7 +19732,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 134,
+   "line": 136,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -31449,7 +31450,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 913,
+   "line": 912,
    "hash": "88c05cc1b9fd315d",
    "does": "",
    "errors": {
@@ -49248,7 +49249,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 54,
-   "hash": "9f9dfe1002e8b7e5",
+   "hash": "513487b278538b70",
    "does": "",
    "errors": {
     "count": 1,
@@ -49325,10 +49326,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "513487b278538b70"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51848,7 +51850,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 68,
-   "hash": "45cd0a7f006fec68",
+   "hash": "50d14d8dfd03e1cd",
    "does": "",
    "errors": {
     "count": 0,
@@ -51923,10 +51925,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1223 stage2: handlers and diff re-read, 13 columns true; a quantity not above 0 or blank, a price below 0 or blank (offers: also missing) and an unknown structure kind now answer 400 BAD_QTY / BAD_PRICE / PRICING_KIND_UNKNOWN in the one problem shape via the shared lineRefusal, no 0 reading, no second calculation, no raw text; web has no app caller (only e2e valid bodies), connector surfaces the 400 message",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "50d14d8dfd03e1cd"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -56827,7 +56830,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 184,
+   "line": 186,
    "hash": "db720732b4da51d8",
    "does": "",
    "errors": {
@@ -56932,7 +56935,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 147,
-   "hash": "f06e00970724f9d6",
+   "hash": "7fcda0c8f8fc9bbd",
    "does": "",
    "errors": {
     "count": 0,
@@ -57005,10 +57008,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7fcda0c8f8fc9bbd"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -61031,7 +61035,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1608,
+   "line": 1607,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61139,7 +61143,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 990,
+   "line": 989,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61249,7 +61253,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1743,
+   "line": 1742,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61351,7 +61355,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1342,
+   "line": 1341,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -61462,7 +61466,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1204,
+   "line": 1203,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -61671,7 +61675,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1537,
+   "line": 1536,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {
