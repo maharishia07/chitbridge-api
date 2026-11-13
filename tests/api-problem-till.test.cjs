@@ -184,6 +184,14 @@ const LEDGER_ROWS = (at) => (sql) => (/FROM reward_ledger/.test(sql) ? rowsOf([{
 const SETTLE_OK = ['lib/reward-store.js', 'settle', async (entity, holder, prog, posted) => ({ before: { points: 40 }, added: posted.earn ? 5 : 0 })];
 const SCREEN_KEYS = (sql) => (/SELECT policy_flags FROM identities/.test(sql) ? rowsOf([{ policy_flags: { api_keys: [{ jti: 's1', name: 'TV', scopes: ['screen'] }] } }]) : undefined);
 const WRITE_ITEMS_OK = ['lib/catalogue-write.js', 'writeItems', async ({ items }) => ({ ok: true, rows: items.map((item, index) => ({ item_id: 'row-' + index })) })];
+/** CTR-213: the invoice number block doors. The table is "there", the shop is an AE shop with counter A; the library call itself is patched per scene (it has its own test) */
+const LEASE_READY = [['lib/schema.js', 'hasTable', async () => true], ['lib/invoice-lease.js', 'shopFactsOf', async () => ({ country: 'AE', tills: ['A'] })]];
+const LEASE_BLOCK_STAND_IN = { lease_id: ITEM, till_id: 'A', first_no: 1, last_no: 50, size: 50, expires_at: '2026-11-20T09:00:00.000Z', reused: false };
+const LEASE_REPORT_STAND_IN = { leases: [Object.assign({ state: 'open', closed_at: null, recorded: [1, 2, 4], unused: [], gaps: [3], ahead: { from: 5, to: 50 } }, LEASE_BLOCK_STAND_IN)], outside: { numbers: [{ no: 77, till_id: 'A' }], more: false }, total: 1, page: 1, limit: 20 };
+/** a library call that refuses the way lib/invoice-lease does: an error carrying its status, code and words */
+const LEASE_REFUSES = (status, code, message) => async () => {
+  throw Object.assign(new Error(message), { status, code, refused: true });
+};
 /** the extras: an answer the generic worlds cannot reach (a named refusal inside a handler, a fault behind a body the handler accepts) */
 const EXTRAS = [
   X('snapshot-breaks', 'GET /api/till/snapshot', 500, { patch: [['lib/profile.js', 'countryOf', THROWS]] }),
@@ -238,6 +246,20 @@ const EXTRAS = [
   X('price-no-money', 'POST /api/till/price', 422, { body: { item_id: ITEM, price: 5 } }),
   X('price-item-not-there', 'POST /api/till/price', 404, { body: { item_id: ITEM, price: 5 }, setup: { sqlRows: SHOP_ROW } }),
   X('price-write-breaks', 'POST /api/till/price', 500, { body: { item_id: ITEM, price: 5 }, setup: { db: 'fail', sqlRows: SHOP_ROW } }),
+  /* CTR-213 · the invoice number blocks: the lease library is patched (its own tests are tests/ctr-213-invoice-lease.test.cjs), so these scenes prove the DOORS: the answers' shapes (the allow-list is derived from the 200) and a relayed refusal */
+  X('lease-answers', 'POST /api/till/invoice-lease', 200, { body: { till_id: 'A', want: 50 }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'leaseFor', async () => LEASE_BLOCK_STAND_IN]]) }),
+  X('lease-refused-for-country', 'POST /api/till/invoice-lease', 409, { body: { till_id: 'A' }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'leaseFor', LEASE_REFUSES(409, 'LEASE_NOT_FOR_COUNTRY', 'This shop’s invoice numbers are not issued by blocks, so no block was given.')]]) }),
+  X('lease-till-unknown', 'POST /api/till/invoice-lease', 404, { body: { till_id: 'Z9' }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'leaseFor', LEASE_REFUSES(404, 'LEASE_TILL_UNKNOWN', 'That counter is not one of this shop’s counters, so no block was given.')]]) }),
+  X('lease-counter-busy', 'POST /api/till/invoice-lease', 503, { body: { till_id: 'A' }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'leaseFor', LEASE_REFUSES(503, 'LEASE_COUNTER_BUSY', 'The invoice numbers are busy for a moment. Try again; nothing was taken.')]]) }),
+  X('lease-close-number-used', 'POST /api/till/invoice-lease/close', 409, { body: { lease_id: ITEM, unused: [{ no: 7, reason: 'void' }] }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'closeLease', LEASE_REFUSES(409, 'LEASE_NUMBER_WAS_USED', 'Number 7 is on an invoice; it cannot be called unused.')]]) }),
+  X('lease-breaks', 'POST /api/till/invoice-lease', 500, { body: { till_id: 'A' }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'leaseFor', throwsLater]]) }),
+  X('lease-report-breaks', 'GET /api/till/invoice-lease/report', 500, { setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'reportFor', throwsLater]]) }),
+  X('lease-report-bad-page-size', 'GET /api/till/invoice-lease/report', 400, { url: '/api/till/invoice-lease/report?limit=abc', setup: { key: ['till'] }, patch: LEASE_READY }),
+  X('lease-close-breaks', 'POST /api/till/invoice-lease/close', 500, { body: { lease_id: ITEM, unused: [] }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'closeLease', throwsLater]]) }),
+  X('lease-table-not-there', 'POST /api/till/invoice-lease', 409, { body: { till_id: 'A' }, setup: { key: ['till'] } }),
+  X('lease-report-answers', 'GET /api/till/invoice-lease/report', 200, { setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'reportFor', async () => LEASE_REPORT_STAND_IN]]) }),
+  X('lease-close-answers', 'POST /api/till/invoice-lease/close', 200, { body: { lease_id: ITEM, unused: [{ no: 3, reason: 'void' }] }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'closeLease', async () => ({ lease_id: ITEM, closed: true, unused: [{ no: 3, reason: 'void' }] })]]) }),
+  X('lease-close-not-found', 'POST /api/till/invoice-lease/close', 404, { body: { lease_id: ITEM, unused: [] }, setup: { key: ['till'] }, patch: LEASE_READY.concat([['lib/invoice-lease.js', 'closeLease', LEASE_REFUSES(404, 'LEASE_NOT_FOUND', 'That block is not one of this shop’s.')]]) }),
   /* F5 A1 · POST /rate: the door (a key, a cashier) with a full body, since the strict schema answers an empty one first; the shop that charges none; the slab and the product not there; the write breaking */
   X('rate-key-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { key: ['till'] } }),
   X('rate-cashier-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { who: STAFF } }),

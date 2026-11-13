@@ -2792,6 +2792,96 @@
    "since": "2026-10-22"
   },
   {
+   "code": "LEASE_COUNTER_BUSY",
+   "status": "503",
+   "title": "Invoice numbers busy",
+   "shopkeeper": "The invoice numbers are busy for a moment. Nothing was taken.",
+   "hint": "Try again in a few seconds.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_FOR_COUNTRY",
+   "status": "409",
+   "title": "No block of numbers for this shop",
+   "shopkeeper": "This shop's invoice numbers are not issued by blocks, so no block was given.",
+   "hint": "Keep numbering invoices as the counter does today.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_FOUND",
+   "status": "404",
+   "title": "Block not found",
+   "shopkeeper": "That block of invoice numbers is not one of this shop's.",
+   "hint": "Open the day close and pick a block from the list.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_READY",
+   "status": "409",
+   "title": "Invoice blocks not switched on",
+   "shopkeeper": "Invoice number blocks are not switched on for this shop yet.",
+   "hint": "Ask support to switch them on.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_YOUR_COUNTER",
+   "status": "403",
+   "title": "Not your counter",
+   "shopkeeper": "A counter can only ask for its own invoice numbers.",
+   "hint": "Ask from the counter that will print them.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NUMBER_NOT_IN_LEASE",
+   "status": "409",
+   "title": "Number not in the block",
+   "shopkeeper": "A number you named as unused is not in this block.",
+   "hint": "Check the number on the day close list.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NUMBER_WAS_USED",
+   "status": "409",
+   "title": "Number is on an invoice",
+   "shopkeeper": "That number is already on an invoice, so it cannot be called unused.",
+   "hint": "Name only numbers that were not printed.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_REASON_INVALID",
+   "status": "400",
+   "title": "Reason not accepted",
+   "shopkeeper": "The reason must be void, unused or retired.",
+   "hint": "Pick one of the three and save again.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_TILL_UNKNOWN",
+   "status": "404",
+   "title": "Counter not found",
+   "shopkeeper": "That counter is not one of this shop's counters, so no block was given.",
+   "hint": "Ask from a counter this shop has connected.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_WANT_INVALID",
+   "status": "400",
+   "title": "Block size not accepted",
+   "shopkeeper": "Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50.",
+   "hint": "Change the number and ask again.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
    "code": "LEDGER_OFF",
    "status": "404",
    "title": "Ledger switched off",

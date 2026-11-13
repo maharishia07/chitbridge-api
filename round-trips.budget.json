@@ -4795,6 +4795,30 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06"
     },
+    "GET /api/till/invoice-lease/report": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/invoice-lease": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/invoice-lease/close": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/till/rate": {
       "file": "till.js",
       "trips": 0,
