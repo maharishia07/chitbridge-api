@@ -58,8 +58,7 @@ const BUDGET = {
    * `chit_line_deliver()` once per line because each line event IS its own governed record. A batch call would
    * be a different design decision about what a line event is, not an optimisation.
    */
-  'lib/deliverline.js': 1,   // one governed chit_line_deliver() per line — the per-line event IS the record
-  'lib/assign.js': 1,        // per-copy write per assignee: the per-copy model says each holder gets their own row
+  /* 2026-11-14 (QA-172): lib/deliverline.js, lib/assign.js and routes/network-offers.js now count 0 — their rows are gone. */
   'lib/amend.js': 1,         // ENGINE · locked. Needs Athi before the shape changes.
   'lib/cost.js': 1,          // not engine — a genuine candidate to batch. See BACKLOG.
   'lib/capture.js': 1,       // not engine — a genuine candidate to batch. See BACKLOG.
@@ -81,16 +80,15 @@ const BUDGET = {
    * cite that version. Batching the clauses would mean giving up the citation, which is the whole point of the
    * file. Sixteen features, and a deliberate manual act — not a hot path.
    */
-  'routes/testing.js': 3,
+  'routes/testing.js': 2,
   /* 9 → 11 (2026-09-27): cancel-requested and withdraw (b195/b197, 2026-09-02) write each PARTY's own copy, each
      under that party's RLS context — "a write per recipient", which this file's rule allows by name. */
-  'routes/chits.js': 10,   /* T2-SPLIT (2026-10-14): 12 → 10 — the recipient lookup is its own step (sendLookupRecipient), one call per recipient */
+  'routes/chits.js': 5,   /* T2-SPLIT (2026-10-14): 12 → 10 — the recipient lookup is its own step (sendLookupRecipient), one call per recipient */
   /**
    * ⭐ PER-TENANT, BY CONSTRUCTION (2026-09-27, each read before it was budgeted). Each loop is over ENTITIES, and each
    * entity's rows sit behind FORCE RLS keyed on the context withEntity() sets — one statement cannot read or write
    * two tenants, so the loop IS the isolation, not an N+1.
    */
-  'routes/network-offers.js': 1,   // each brand's offers, read under that brand
   'lib/network-catalogue.js': 2,   // each store's copy written under that store; each member store read under itself
   'lib/workroute.js': 1,           // each routing target's folder, under that target
   /* ⚠️ ORDER IS THE MEANING: scheduled patches apply in effective_at order, and two patches to ONE product must land
@@ -101,6 +99,26 @@ const BUDGET = {
   'routes/governance.js': 1,
   /* routes/products.js — clean since CAT-W1 (14 Oct): the import and the stock feed write through catalogue-write.patchItems, once */
   'lib/storage.js': 2,
+  /**
+   * ⭐ 2026-11-14 (QA-172): this test was red on main for weeks (not enrolled in CI). Fifteen files crossed 0; each was read, and the introducing commit is named.
+   * FIXED instead of budgeted (one statement for the set, behaviour unchanged): lib/ctpreturn.js (c311a58c) · lib/identity-auth.js · lib/netsync.js
+   * · routes/catalogue.js (684de292) · src/services/network.js refuseRemoteNodes (7f9652f1; the 1 left there is register()'s mint RETRY loop).
+   * BUDGETED, each with its reason:
+   */
+  'lib/api-keys.js': 2,        // 1d41bbf6: the counted query is RELEASE SAVEPOINT, bookkeeping beside the one read per tenant (RLS: one tenant per statement)
+  'lib/books-hooks.js': 3,     // c054fdae/6249278a: per-event asset register, per-counter posted-day check, per-parked-row outbox mark: each runs its own job and must land or fail alone; counters per shop-day are few
+  'lib/books-nightly.js': 1,   // c054fdae: one read per CLOSED DAY (three days), not per item
+  'lib/books-store.js': 2,     // c054fdae: REAL, DEFERRED to cb-accounting: addBalances (ON CONFLICT accumulation per balance key) and insertItems (20 columns) are ledger writes, a few per entry; batching changes money-posting SQL, so it is Athi/cb-accounting's call
+  'lib/chit-proposal.js': 1,   // cd4e0d9d: a guard read per LOCAL COPY, each under that copy's own RLS context
+  'lib/crm-calls.js': 1,       // 18aaa566: counter artefact: queue() is ONE statement (its own comment); the text counter sees a for-word above it
+  'lib/crm-followups.js': 1,   // 39551015: the nightly sweep reads each SHOP under that shop's RLS context
+  'lib/finance-terms.js': 1,   // 0752406a: one change-log row per CHANGED key (a few) before the single UPDATE
+  'lib/party-contact.js': 1,   // 5569a08a: counter artefact: set() is an if/else of single statements, no loop over items
+  'lib/party-fields.js': 3,    // 530e2487/447f9e36: the merge checks read the two list tables SIDES (2, a constant); saveTaxIds is per tax scheme (a few), the clash check names the holder
+  'lib/party-restore.js': 1,   // 4634b89d: the two list tables (customer, supplier), a constant 2
+  'lib/repeat-supply.js': 1,   // ec88ce10: noteBoth writes each side's note under that side's RLS context
+  'lib/reward-store.js': 1,    // a01d22fe: strict claims need each half to land or throw 409; REAL but small (a claim is 2 rows), left for cb-catalogue
+  'lib/whatsapp-out.js': 1,    // f4f65a1b: already BATCHED, one INSERT per chunk of REFUSED_CHUNK rows
   'src/services/chit.js': 2,
   'src/services/network.js': 1,
 };
@@ -191,13 +209,13 @@ t('★★ every leading-wildcard LIKE has a trigram index to support it', () => 
     // A parameterised LIKE whose argument is built as '%' + term + '%'
     if (/LIKE\s+\$\d/.test(src) && /'%'\s*\+|\+\s*'%'|'%' \+ /.test(src)) offenders.push(rel.replace(/\\/g, '/'));
   });
-  const migrations = fs.readdirSync(path.join(API, 'migrations')).map((f) =>
-    fs.readFileSync(path.join(API, 'migrations', f), 'utf8')).join('\n');
+  /* migrations/ only (what migrate.cjs runs): b121 lives in archive/ and is NOT in production, so reading archive/ turned this red into a false green (critic, #1259). b859 holds the index. */
+  const migrations = fs.readdirSync(path.join(API, 'migrations')).map((f) => path.join(API, 'migrations', f)).filter((p) => fs.statSync(p).isFile()).map((p) => fs.readFileSync(p, 'utf8')).join('\n');
   const hasTrgm = /gin_trgm_ops/.test(migrations);
   assert.ok(!offenders.length || hasTrgm,
     'substring search in ' + offenders.join(', ') + ' with no gin_trgm_ops index anywhere in migrations/. '
     + 'A leading wildcard cannot use a btree, so this is a scan that only shows up at volume.');
-  if (offenders.length) console.log('        substring search in: ' + offenders.join(', ') + ' — b121 covers it');
+  if (offenders.length) console.log('        substring search in: ' + offenders.join(', ') + ' — b859 covers it');
 });
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);

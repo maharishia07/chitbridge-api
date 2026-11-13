@@ -107,7 +107,8 @@ function rowsFor(sql, p) {
   if (/pg_advisory_xact_lock/.test(s)) return [{}];
   if (/coalesce\(max\(seq\), 0\) \+ 1 AS seq FROM ctp_event_out/.test(s)) return [{ seq: Math.max(0, ...W.out.filter((r) => r.chit_id === p[0] && r.from_entity_id === p[1]).map((r) => r.seq)) + 1 }];
   if (/^INSERT INTO ctp_event_out/.test(s)) {
-    W.out.push({ id: W.nextId++, chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: p[5], to_bridge_id: p[6], to_installation_key: p[7] });
+    /* ONE statement carries every party (unnest arrays in p[5..7]): one row per party, in order */
+    p[5].forEach((to, i) => W.out.push({ id: W.nextId++, chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: to, to_bridge_id: p[6][i], to_installation_key: p[7][i] }));
     return [];
   }
   if (/^SELECT 1 FROM chit_messages WHERE message_id/.test(s)) return W.msgs.filter((m) => m.message_id === p[0] && m.entity_id === p[1]).map(() => ({}));

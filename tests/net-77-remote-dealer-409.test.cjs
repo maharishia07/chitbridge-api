@@ -26,7 +26,9 @@ const { memory, A, C } = require('./lib/network-memory.cjs');
 let world;
 let remote = new Set();
 let unresolved = new Set();
-const run = async (sql, params) => { const a = world.answer(sql, params); if (process.env.NET77_TRACE) process.stderr.write(String(sql).replace(/\s+/g, ' ').slice(0, 100) + ' => ' + (a ? a.rows.length : 'NULL') + '\n'); return a || { rows: [], rowCount: 0 }; };
+const keyReads = []; // the bridge-key arrays refuseRemoteNodes sent to the database
+const run = async (sql, params) => { if (/bridge_key/.test(sql)) keyReads.push(params[0]);
+  const a = world.answer(sql, params); if (process.env.NET77_TRACE) process.stderr.write(String(sql).replace(/\s+/g, ' ').slice(0, 100) + ' => ' + (a ? a.rows.length : 'NULL') + '\n'); return a || { rows: [], rowCount: 0 }; };
 const stub = (file, exports) => { const id = require.resolve(path.join(ROOT, file)); require.cache[id] = { id, filename: id, loaded: true, exports }; };
 const dbExports = { query: run, pool: { query: run }, withTx: async (fn) => fn({ query: run }), withEntity: async (id, fn) => fn({ query: run }), withTransaction: async (fn) => fn({ query: run }) };
 stub('db', dbExports);
@@ -101,6 +103,13 @@ function ask(server, body) {
     world.data.identities = world.data.identities.filter((one) => one.identity_id !== C);
     const nobody = await ask(server, { childBridgeId: 'CCCC4444', type: 'commercial' });
     check('a node with no identity row is refused (fail closed), no edge', nobody.status === 409 && nobody.body.code === 'NETWORK_REMOTE_NOT_YET' && world.data.edges.length === 0, nobody.status + ' ' + JSON.stringify(nobody.body));
+
+    /* a node with NO bridge id: its key is null (dropped), never the text 'UNDEFINED'; it matches nothing, so it is refused (fail closed) */
+    keyReads.length = 0;
+    const svc = process.env.NET77_SERVICE ? require(path.join(ROOT, process.env.NET77_SERVICE)) : require(path.join(ROOT, 'src', 'services', 'network.js'));
+    const rejected = await svc.refuseRemoteNodes([{ bridge_id: null }, { bridge_id: undefined }, { bridge_id: '' }]).then(() => null, (e) => e);
+    check('a node with no bridge id is refused (fail closed, 409)', !!rejected && rejected.status === 409, String(rejected && (rejected.status || rejected.message)));
+    check('and the text UNDEFINED is never sent as a key (null keys are dropped)', keyReads.length > 0 && keyReads.every((keys) => keys.length === 0), JSON.stringify(keyReads));
   } finally {
     server.close();
   }

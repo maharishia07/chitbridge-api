@@ -67,7 +67,7 @@ function cond(c, params, r) {
   if ((m = c.match(/^(\w+) = \$(\d+)$/))) return r[m[1]] === P(params, m[2]);
   if ((m = c.match(/^(\w+) = '([^']*)'$/))) return r[m[1]] === m[2];
   if ((m = c.match(/^(\w+) IS NOT NULL$/))) return r[m[1]] != null;
-  if ((m = c.match(/^(\w+) = ANY\(\$(\d+)::text\[\]\)$/))) return (P(params, m[2]) || []).indexOf(r[m[1]]) >= 0;
+  if ((m = c.match(/^(\w+) = ANY\(\$(\d+)::(?:text|uuid)\[\]\)$/))) return (P(params, m[2]) || []).indexOf(r[m[1]]) >= 0;
   throw new Error('stub db: unknown condition ' + c);
 }
 const where = (rows, clause, params) => rows.filter((r) => splitTop(clause, ' AND ').every((c) => cond(c, params, r)));

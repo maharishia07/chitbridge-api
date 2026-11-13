@@ -106,7 +106,8 @@ function self() {
   r = await sync.pullOne(ROW, false);
   t('it asks from the stored sequence, signed with the network key', calls[0].want.after === 4 && calls[0].want.want === 'registry_changes' && calls[0].signedWithNetworkKey === true && calls[0].target.domain === 'au.example.com');
   t('the member is asked at ITS registered row (key + endpoint), never whoever answers the domain now (SIT run 4)', !!calls[0].peer && calls[0].peer.installation_key === 'au-1' && calls[0].peer.endpoint === 'https://au.example.com/api/ctp/deliver');
-  t('each change is an idempotent upsert of ids, kind, world, status only', wrote(/INSERT INTO registry_entry/).length === 2 && /ON CONFLICT \(installation_key, bridge_id\) DO UPDATE/.test(wrote(/INSERT INTO registry_entry/)[0].s) && wrote(/INSERT INTO registry_entry/)[0].p.length === 5);
+  /* ONE upsert for the whole page (query-shape): the two changes to one bridge id collapse to the LAST (active), the end state the one-by-one loop reached; params = key + four arrays */
+  t('each change is an idempotent upsert of ids, kind, world, status only', wrote(/INSERT INTO registry_entry/).length === 1 && /ON CONFLICT \(installation_key, bridge_id\) DO UPDATE/.test(wrote(/INSERT INTO registry_entry/)[0].s) && wrote(/INSERT INTO registry_entry/)[0].p.length === 5 && wrote(/INSERT INTO registry_entry/)[0].p[4][0] === 'active' && wrote(/INSERT INTO registry_entry/)[0].p[1].length === 1);
   t('no name, handle, contact or money column is ever written to the registry', !wrote(/INSERT INTO registry_entry/).some((x) => /display_name|user_id|email|phone|amount|total/i.test(x.s)));
   t('the cursor moves to the last sequence read', wrote(/INSERT INTO registry_cursor/)[0].p[1] === 6 && r.ok === true && r.entities === 2);
 
