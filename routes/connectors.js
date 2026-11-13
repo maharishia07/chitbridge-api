@@ -182,7 +182,7 @@ const fitsBigint = (digits) => {
 
 // ownership guard — the connector actor must be an actor identities row under this entity
 async function ownedConnector(actor_id, entity_id) {
-  const r = await queryAsShop(entity_id,
+  const r = await db(
     `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen
        FROM identities
       WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,

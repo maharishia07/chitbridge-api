@@ -18,6 +18,7 @@
 --    entity, so the writer is not the owner) · entity_schemas + schema_fields (15 files read them, some across shops) · cb_edge, cb_entity, product_version, resolved_blueprint, container_region_override.
 -- RLS: ENABLE + FORCE on each, literal statements (db-85 rule). Privileges unchanged (cb_app keeps SELECT, INSERT, UPDATE, DELETE; nothing is revoked).
 --
+-- ⚠️ scripts/reset-2-wipe.sql must be run AS postgres after b855: under FORCE the app role would touch 0 rows silently.
 -- ROLL BACK (restores the open state exactly; catalogue_source keeps its original read_all policy):
 --    ALTER TABLE connections NO FORCE ROW LEVEL SECURITY;          ALTER TABLE connections DISABLE ROW LEVEL SECURITY;
 --    ALTER TABLE connector_connection NO FORCE ROW LEVEL SECURITY; ALTER TABLE connector_connection DISABLE ROW LEVEL SECURITY;
@@ -28,10 +29,11 @@
 --    (the policies may stay: with RLS disabled they do nothing.)
 -- CHECK (read-only): SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity, count(p.polname) AS policies
 --      FROM pg_class c LEFT JOIN pg_policy p ON p.polrelid = c.oid
---     WHERE c.relname IN ('connections','connector_connection','dispute_participants','catalogue_source','product_container','media_blobs') GROUP BY 1,2,3 ORDER BY 1;
+--     WHERE c.relnamespace = 'public'::regnamespace AND c.relname IN ('connections','connector_connection','dispute_participants','catalogue_source','product_container','media_blobs') GROUP BY 1,2,3 ORDER BY 1;
 --      Expect true, true on all six; policies: catalogue_source 3, connections 3, connector_connection 2, dispute_participants 1, media_blobs 2, product_container 3.
 
 BEGIN;
+SET LOCAL lock_timeout = '5s';   -- each ALTER takes ACCESS EXCLUSIVE: fail fast instead of queueing behind a long read; a failed run changed nothing and is safe to run again
 
 -- connections: either side of the row
 ALTER TABLE connections ENABLE ROW LEVEL SECURITY;
