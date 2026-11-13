@@ -138,6 +138,43 @@ const OTHER_ITEM = [line('coffee', 100, 2)];
     ok('a replay that carries no invoice figure gives no verdict: still 200 duplicate:true (never blocks what it cannot judge)', blind.status === 200 && blind.answer.duplicate === true, J([blind.status, blind.answer]));
     const otherMoment = await send(bill(THREE, (bj) => { bj.billed_at = '2026-11-13T07:00:00Z'; }));
     ok('another moment is still the two-counters answer (TILL_SERIES_COLLISION), not CHIT_REPLAY_DIFFERS', otherMoment.status === 409 && otherMoment.answer.code === 'TILL_SERIES_COLLISION', J(otherMoment.answer));
+    /* ── a false "different" would make the till renumber an honest replay and bill the customer twice: every doubt is no verdict ── */
+    const held236 = HELD.full;
+    const kwd = (total, bridged) => bill(TWO, (bj) => {
+      bj.invoice.currency = 'KWD';
+      bj.invoice.ValDtls.TotInvVal = total;
+      if (bridged) bj.invoice._cb.bridge = { ok: true, decimals: 3, steps: [{ name: 'total', amount: total, amount_minor: Math.round(total * 1000) }] };
+      else delete bj.invoice._cb.bridge;
+    });
+    const kwdHeld = (bridged) => ({ chit_id: 'held-1', till_id: 'C1', billed_at: '2026-11-13T05:00:00Z', line_items: TWO,
+      summary_json: { money: Object.assign({ total: 1.24, currency_code: 'KWD' }, bridged ? { bridge: { decimals: 3, steps: [{ name: 'total', amount: 1.235, amount_minor: 1235 }] } } : {}) } });
+    HELD.full = kwdHeld(true);
+    const kwdSame = await send(kwd(1.235, true));
+    ok('a 3-decimal bill (KWD 1.235, stored money.total 1.24) replayed honestly → 200 duplicate:true, compared in the bridge minor units (1235 = 1235)', kwdSame.status === 200 && kwdSame.answer.duplicate === true, J([kwdSame.status, kwdSame.answer]));
+    const kwdOther = await send(kwd(1.236, true));
+    ok('the same KWD bill with one fils more (1.236) → 409 CHIT_REPLAY_DIFFERS total', kwdOther.status === 409 && kwdOther.answer.differs === 'total', J([kwdOther.status, kwdOther.answer]));
+    HELD.full = kwdHeld(false);
+    const oldHeld = await send(kwd(1.235, true));
+    ok('a held bill from before the bridge (money.total 1.24 rounded to 2) against a bridged replay (1.235) → no verdict: 200 duplicate:true', oldHeld.status === 200 && oldHeld.answer.duplicate === true, J([oldHeld.status, oldHeld.answer]));
+    const plain = await send(kwd(1.24, false));
+    ok('neither side bridged: both rounded to the currency decimals (1.24 = 1.24) → 200 duplicate:true', plain.status === 200 && plain.answer.duplicate === true, J([plain.status, plain.answer]));
+    const plainOther = await send(kwd(1.245, false));
+    ok('neither side bridged, 1.245 against 1.24 → 409 total', plainOther.status === 409 && plainOther.answer.differs === 'total', J([plainOther.status, plainOther.answer]));
+
+    HELD.full = Object.assign({}, held236, { summary_json: Object.assign({}, held236.summary_json, { money: Object.assign({}, held236.summary_json.money, { currency_code: 'AUD' }) }) });
+    const money = await send(bill(TWO));
+    ok('a held bill in AUD against a replay whose invoice is INR → 409 CHIT_REPLAY_DIFFERS currency', money.status === 409 && money.answer.differs === 'currency', J([money.status, money.answer]));
+    HELD.full = Object.assign({}, held236, { summary_json: Object.assign({}, held236.summary_json, { money: Object.assign({}, held236.summary_json.money, { currency_code: null }) }) });
+    const noCur = await send(bill(TWO));
+    ok('the held bill states no currency → no verdict on currency: 200 duplicate:true', noCur.status === 200 && noCur.answer.duplicate === true, J([noCur.status, noCur.answer]));
+
+    const idless = (name, qty) => [{ particulars: name, name, quantity: qty, price: 100, total: 100 * qty, unit: 'each', gst_rate: 18 }];
+    HELD.full = Object.assign({}, held236, { line_items: idless('tea', 2) });
+    const renamed = await send(bill(idless('chai', 2)));
+    ok('a line with no item_id renamed on an honest replay (tea → chai, same total) → 200 duplicate:true, never judged on a name', renamed.status === 200 && renamed.answer.duplicate === true, J([renamed.status, renamed.answer]));
+    const idlessMoney = await send(bill(idless('tea', 3)));
+    ok('id-less lines, another quantity and so another total → still 409 (the total carries it)', idlessMoney.status === 409 && idlessMoney.answer.differs === 'total', J([idlessMoney.status, idlessMoney.answer]));
+    HELD.full = held236;
   } finally {
     server.close();
   }

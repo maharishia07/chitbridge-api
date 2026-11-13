@@ -857,6 +857,8 @@ async function replayRefusal(req, sender_id, seen, client_ref) {
   const verdict = tillCollisionVerdict(mine, seen.till_id || null, myAt, seen.billed_at ? String(seen.billed_at) : null, client_ref);
   return verdict.collision ? verdict.body : await replayOtherSale(req, sender_id, client_ref);
 }
+/** what differed, in the words of the refusal */
+const DIFFERS_WORDS = { total: 'a different total', currency: 'a different currency', lines: 'different items' };
 /**
  * ⭐ CTR-204 · SAME NUMBER, SAME TILL, SAME MOMENT, DIFFERENT SALE. The check above cannot tell it from a retry (it reads till id and billed_at only), so the
  * second sale was answered "duplicate" and never stored — lost, with the till told it was sent. Here the held bill's carried total and lines are compared with the
@@ -875,7 +877,7 @@ async function replayOtherSale(req, sender_id, client_ref) {
       client_ref,
       differs: verdict.differs,
       message:
-        'Bill ' + client_ref + ' was already recorded with ' + (verdict.differs === 'total' ? 'a different total' : 'different items') +
+        'Bill ' + client_ref + ' was already recorded with ' + DIFFERS_WORDS[verdict.differs] +
         '. This is a different sale using the same number. It is kept on the counter, unsent — nothing has been lost.'
     };
   } catch (e) {
