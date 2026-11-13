@@ -792,6 +792,7 @@ const ENGINE_OTHER = [
   'ctpreturn.js',
   'chit-proposal.js',
   'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
+  'invoice-lease.js', /* CTR-213 (ACC-192 S2): the block of invoice numbers a counter leases from the issuer's one counter, and the day close of what became of each number */
   'price-note.js',    /* ACC-192 1b + 2: the credit or debit note an accepted price change on an issued invoice issues (changed lines only, one direction, idempotent, through the one send path) */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a

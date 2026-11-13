@@ -10,6 +10,7 @@
 --    lease did not turn into an invoice. A number with no invoice, below the highest used one, and NO reason is reported as a GAP, never filled and never hidden.
 --    An expired lease is never re-leased: its numbers may be on paper already (offline), so a number is handed out once, ever.
 -- UNIQUE (entity_id, first_no): two leases of one issuer can never start at the same number. The ranges never overlap because they come from the counter, not from this table.
+-- OWNER: lib/invoice-lease.js (the lease, the day close report, the close with reasons); routes/till.js only reads the request.
 -- ROLL BACK (before the build ships it loses nothing; after, the day close loses its lease list, the invoices themselves are untouched):
 --    DROP TABLE IF EXISTS till_invoice_lease;
 -- CHECK (read-only, one row):   SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'till_invoice_lease';   Expect 1.

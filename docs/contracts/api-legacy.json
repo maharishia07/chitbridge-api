@@ -66071,6 +66071,58 @@
       "hint": "Ask support to switch them on.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "lease-report-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-report-bad-page-size",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "limit must be a whole number from 1.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "limit must be a whole number from 1.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "limit must be a whole number from 1.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "limit must be a whole number from 1.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -66311,6 +66363,136 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "lease-refused-for-country",
+     "status": 409,
+     "body_keys": {
+      "code": "LEASE_NOT_FOR_COUNTRY",
+      "message": "This shop’s invoice numbers are not issued by blocks, so no block was given.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_not_for_country",
+      "title": "No block of numbers for this shop",
+      "status": 409,
+      "detail": "This shop’s invoice numbers are not issued by blocks, so no block was given.",
+      "hint": "Keep numbering invoices as the counter does today.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "LEASE_NOT_FOR_COUNTRY",
+      "message": "This shop’s invoice numbers are not issued by blocks, so no block was given.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_not_for_country",
+      "title": "No block of numbers for this shop",
+      "status": 409,
+      "detail": "This shop’s invoice numbers are not issued by blocks, so no block was given.",
+      "hint": "Keep numbering invoices as the counter does today.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-table-not-there",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Invoice number blocks are not switched on for this shop yet.",
+      "type": "https://chitbridge.com/problems/lease_not_ready",
+      "title": "Invoice blocks not switched on",
+      "status": 409,
+      "code": "LEASE_NOT_READY",
+      "detail": "Invoice number blocks are not switched on for this shop yet.",
+      "hint": "Ask support to switch them on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-till-unknown",
+     "status": 404,
+     "body_keys": {
+      "code": "LEASE_TILL_UNKNOWN",
+      "message": "That counter is not one of this shop’s counters, so no block was given.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_till_unknown",
+      "title": "Counter not found",
+      "status": 404,
+      "detail": "That counter is not one of this shop’s counters, so no block was given.",
+      "hint": "Ask from a counter this shop has connected.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "LEASE_TILL_UNKNOWN",
+      "message": "That counter is not one of this shop’s counters, so no block was given.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_till_unknown",
+      "title": "Counter not found",
+      "status": 404,
+      "detail": "That counter is not one of this shop’s counters, so no block was given.",
+      "hint": "Ask from a counter this shop has connected.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-counter-busy",
+     "status": 503,
+     "body_keys": {
+      "code": "LEASE_COUNTER_BUSY",
+      "message": "The invoice numbers are busy for a moment. Try again; nothing was taken.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_counter_busy",
+      "title": "Invoice numbers busy",
+      "status": 503,
+      "detail": "The invoice numbers are busy for a moment. Try again; nothing was taken.",
+      "hint": "Try again in a few seconds.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "LEASE_COUNTER_BUSY",
+      "message": "The invoice numbers are busy for a moment. Try again; nothing was taken.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_counter_busy",
+      "title": "Invoice numbers busy",
+      "status": 503,
+      "detail": "The invoice numbers are busy for a moment. Try again; nothing was taken.",
+      "hint": "Try again in a few seconds.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -66550,6 +66732,84 @@
         "detail": "lease_id is needed."
        }
       ]
+     }
+    },
+    {
+     "scenario": "lease-close-not-found",
+     "status": 404,
+     "body_keys": {
+      "code": "LEASE_NOT_FOUND",
+      "message": "That block is not one of this shop’s.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_not_found",
+      "title": "Block not found",
+      "status": 404,
+      "detail": "That block is not one of this shop’s.",
+      "hint": "Open the day close and pick a block from the list.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "LEASE_NOT_FOUND",
+      "message": "That block is not one of this shop’s.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_not_found",
+      "title": "Block not found",
+      "status": 404,
+      "detail": "That block is not one of this shop’s.",
+      "hint": "Open the day close and pick a block from the list.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-close-number-used",
+     "status": 409,
+     "body_keys": {
+      "code": "LEASE_NUMBER_WAS_USED",
+      "message": "Number 7 is on an invoice; it cannot be called unused.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_number_was_used",
+      "title": "Number is on an invoice",
+      "status": 409,
+      "detail": "Number 7 is on an invoice; it cannot be called unused.",
+      "hint": "Name only numbers that were not printed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "LEASE_NUMBER_WAS_USED",
+      "message": "Number 7 is on an invoice; it cannot be called unused.",
+      "error": "refused",
+      "type": "https://chitbridge.com/problems/lease_number_was_used",
+      "title": "Number is on an invoice",
+      "status": 409,
+      "detail": "Number 7 is on an invoice; it cannot be called unused.",
+      "hint": "Name only numbers that were not printed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "lease-close-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     }
    ]

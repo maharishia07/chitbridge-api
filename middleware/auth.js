@@ -466,6 +466,9 @@ const KEY_ROUTES = {
                  only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
                  session-only, no scope grants it). */
     ['GET', /^\/api\/till\/counters$/],
+    /* CTR-213: a counter leases blocks of invoice numbers, reads the day close of them and closes a block with its reasons (the server owns the counter: lib/invoice-lease) */
+    ['POST', /^\/api\/till\/invoice-lease(\/close)?$/],
+    ['GET', /^\/api\/till\/invoice-lease\/report$/],
     ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
     ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
     /* ⚠️⚠️ THE SHOP'S OWN HEADER, FROM THE COUNTER ([TILL-105], 2026-09-19). Athi: *'counter has no

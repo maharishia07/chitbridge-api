@@ -1389,9 +1389,11 @@
   500
  ],
  "GET /api/till/invoice-lease/report": [
+  400,
   401,
   403,
-  409
+  409,
+  500
  ],
  "GET /api/till/match": [
   401,
@@ -3500,12 +3502,19 @@
  "POST /api/till/invoice-lease": [
   400,
   401,
-  403
+  403,
+  404,
+  409,
+  500,
+  503
  ],
  "POST /api/till/invoice-lease/close": [
   400,
   401,
-  403
+  403,
+  404,
+  409,
+  500
  ],
  "POST /api/till/listen": [
   400,
