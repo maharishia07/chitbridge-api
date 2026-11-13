@@ -569,6 +569,7 @@ const SEND_STEPS = [
   sendBridge,
   sendCopyPolicy,
   sendPromote,
+  sendPriceMoved,
   sendParticipants,
   sendRetention,
   sendFolds,
@@ -583,6 +584,7 @@ const SEND_STEPS = [
   sendMeter,
   sendStock,
   sendPriceDrift,
+  sendMovedTicket,
   sendBooks,
   sendAnswer
 ];
@@ -3056,6 +3058,73 @@ async function sendPriceDrift(sendState, req, res) {
     await require('../lib/money-check').raiseDrift(sender_id, { lines: found.lines, billed_at: business_json.billed_at, snapshot_at: basis.snapshot_at }, { bill: business_json.bill_no, client_ref: sendState.client_ref });
   } catch (e) {
     cbLog.fellBack('chits: the price-drift check failed — the bill stands, nothing was filed', e);
+  }
+}
+
+/**
+ * ⭐ CTR-245 (CTR-212 S4) · A DRAFT SENT LONG AFTER IT WAS PRICED. Only a send that PROMOTES a draft is judged (a fresh send has nothing stale), by lib/price-moved: a product row that moved after the
+ * draft was made and whose price differs from the line's, or a product withdrawn. A PERSON waiting gets 409 PRICE_MOVED naming the lines (never a total) and an ack to hand back; a price-only move
+ * may be sent as drafted with that ack (void after 5 minutes or when a stamp moved again), a rate or a withdrawn line never. The shop's own loopback (kind auto) and any key go as authored plus ONE
+ * ticket (sendMovedTicket). A till body is never judged here (its check is sendPriceDrift: a ticket, never a 4xx; the till retries any non-ok answer for ever). A failure of the check is logged and the send goes on.
+ */
+async function sendPriceMoved(sendState, req, res) {
+  const { is_draft, promote_draft_id, business_json } = sendState;
+  if (is_draft || !promote_draft_id) return false;
+  const priceMoved = require('../lib/price-moved');
+  const lines = asSentLines(sendState, req);
+  const ids = priceMoved.idsOf(lines);
+  const who = ids.length ? priceMoved.whoAsks(req, business_json) : 'till';
+  if (who === 'till') return false;
+  let found;
+  try {
+    const read = await priceMoved.readFor(sendState.sender_id, ids, promote_draft_id, withEntity);
+    if (read.role !== 'Draft' || Number.isNaN(read.since)) return false;
+    found = priceMoved.movedOf(lines, read.rows, read.since, sendState.currency_code);
+    found.since = read.since;
+  } catch (e) {
+    cbLog.fellBack('chits: the price-moved check failed — the draft goes as drafted, nothing was asked', e);
+    return false;
+  }
+  if (!found.lines.length) return false;
+  if (who === 'unattended') {
+    sendState.movedLines = found;
+    return false;
+  }
+  return answerPriceMoved(sendState, req, res, found);
+}
+
+/** the lines as the sender SENT them (the server rates the carried ones after, which would hide a rate that moved), each with the line_id the mint stamped */
+function asSentLines(sendState, req) {
+  const sent = Array.isArray(req.body.line_items) ? req.body.line_items : [];
+  const stamped = sendState.line_items || [];
+  return sent.length === stamped.length ? sent.map((line, at) => Object.assign({}, line, { line_id: stamped[at].line_id })) : stamped;
+}
+
+/** a person is waiting: the ack he handed back lets a price-only move go (recorded on the bill), anything else is the 409 */
+function answerPriceMoved(sendState, req, res, found) {
+  const priceMoved = require('../lib/price-moved');
+  const now = Date.now();
+  if (priceMoved.ackVerdict(req.body.price_ack, found, now).ok) {
+    if (!isJsonObject(sendState.business_json)) sendState.business_json = {};
+    const basis = isJsonObject(sendState.business_json.price_basis) ? sendState.business_json.price_basis : {};
+    const by = req.identity && (req.identity.actor_id || req.identity.identity_id);
+    sendState.business_json.price_basis = Object.assign({}, basis, { ack: priceMoved.ackBlockOf(found, by, now) });
+    return false;
+  }
+  res.locals.code = 'PRICE_MOVED';
+  return problem(req, res, { status: 409, ...said(priceMoved.bodyFor(found, now), 'CHIT_CONFLICT') });
+}
+
+/** an unattended send of a stale draft was stored as authored; ONE ticket says which lines had moved (lib/money-check.raiseDrift, never a refusal) */
+async function sendMovedTicket(sendState) {
+  const found = sendState.movedLines;
+  if (!found) return;
+  try {
+    const priceMoved = require('../lib/price-moved');
+    const draft = String(sendState.promote_draft_id).slice(0, 8);
+    await require('../lib/money-check').raiseDrift(sendState.sender_id, { lines: priceMoved.ticketLinesOf(found), billed_at: new Date().toISOString(), snapshot_at: new Date(found.since).toISOString() }, { bill: 'draft ' + draft, client_ref: sendState.client_ref });
+  } catch (e) {
+    cbLog.fellBack('chits: the price-moved ticket failed — the draft stands, nothing was filed', e);
   }
 }
 

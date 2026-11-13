@@ -454,6 +454,7 @@ const INFRA_LIBS = [
   'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
   'sellable-price.js',     // when a stored price cannot be sold (unset or negative): the one rule the order refusal and the till snapshot both read (CAT-318, CAT-324)
   'till-row.js',           // the three readers of a product's money the counter's row and the send-time drift check share (rate, tax facts, sellable price), lifted from routes/till.js, nothing computed (CTR-244)
+  'price-moved.js',        // CTR-245: which lines of a stale draft moved (lib/price-drift's one comparison), the 409 body and the five-minute ack bound to the stamps; nothing summed or re-priced
   'price-drift.js',        // CTR-244: at send, was a bill's price or rate out of date at the sale (the row's commercial_changed_at against billed_at, two carried figures compared for equality, nothing computed)
   'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
   'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
