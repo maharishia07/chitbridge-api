@@ -2291,7 +2291,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 510,
+   "line": 513,
    "hash": "683aa6ccd46c28b5",
    "does": "",
    "errors": {
@@ -21304,7 +21304,7 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 109,
+   "line": 110,
    "hash": "0fea4ab2374ff23d",
    "does": "",
    "errors": {
@@ -22965,7 +22965,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 753,
+   "line": 756,
    "hash": "2c73efd115705c67",
    "does": "",
    "errors": {
@@ -23068,7 +23068,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 815,
+   "line": 818,
    "hash": "7c3134ca129680fe",
    "does": "",
    "errors": {
@@ -23170,7 +23170,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 746,
+   "line": 749,
    "hash": "e85807898c5889e2",
    "does": "",
    "errors": {
@@ -23267,7 +23267,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1081,
+   "line": 1084,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -23360,7 +23360,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1093,
+   "line": 1096,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -23455,7 +23455,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 332,
-   "hash": "de8640973f5b3504",
+   "hash": "a0891d21f5e92c94",
    "does": "",
    "errors": {
     "count": 0,
@@ -23528,7 +23528,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1228 (CAT-247, engines v1.92.0 adopt, head 2fb943a3): handler read: ctx.timezone is named by the server (lib/offers-live shopZoneFor, which calls crm-followups.zoneOfShop and books-hooks.zoneOf, no second reader; read only when an offer has a window), not a caller key; suppliers reads i.timezone on the row already fetched and drops supplier_timezone before the answer; no key, status, code or refusal changed; 13 columns true; cat-247-offer-window-zone 10 checks green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -23563,7 +23563,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 686,
+   "line": 689,
    "hash": "34ea3d3a80a87da1",
    "does": "",
    "errors": {
@@ -23667,7 +23667,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 556,
+   "line": 559,
    "hash": "838efddd220e91de",
    "does": "",
    "errors": {
@@ -30512,7 +30512,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1007,
+   "line": 1010,
    "hash": "967b68cf080c3479",
    "does": "",
    "errors": {
@@ -30617,7 +30617,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 402,
+   "line": 405,
    "hash": "8f6477ebba0a8479",
    "does": "",
    "errors": {
@@ -51647,8 +51647,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 105,
-   "hash": "b443772f4998f191",
+   "line": 106,
+   "hash": "d13a82f7d6dc3d74",
    "does": "",
    "errors": {
     "count": 1,
@@ -51723,7 +51723,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1228 (CAT-247, engines v1.92.0 adopt, head 2fb943a3): handler read: ctx.timezone is named by the server (lib/offers-live shopZoneFor, which calls crm-followups.zoneOfShop and books-hooks.zoneOf, no second reader; read only when an offer has a window), not a caller key; suppliers reads i.timezone on the row already fetched and drops supplier_timezone before the answer; no key, status, code or refusal changed; 13 columns true; cat-247-offer-window-zone 10 checks green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51748,8 +51748,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 106,
-   "hash": "7ffb40a2463ac7a9",
+   "line": 107,
+   "hash": "be23658d5f60c639",
    "does": "",
    "errors": {
     "count": 1,
@@ -51824,7 +51824,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 merged contract2: ctx cut to the closed typed key list (ctxOf), answer unchanged, no leak path; all 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1228 (CAT-247, engines v1.92.0 adopt, head 2fb943a3): handler read: ctx.timezone is named by the server (lib/offers-live shopZoneFor, which calls crm-followups.zoneOfShop and books-hooks.zoneOf, no second reader; read only when an offer has a window), not a caller key; suppliers reads i.timezone on the row already fetched and drops supplier_timezone before the answer; no key, status, code or refusal changed; 13 columns true; cat-247-offer-window-zone 10 checks green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53610,7 +53610,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 909,
+   "line": 912,
    "hash": "1d7cfce76d101948",
    "does": "",
    "errors": {
@@ -53721,7 +53721,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 987,
+   "line": 990,
    "hash": "035dcc95b8adf401",
    "does": "",
    "errors": {
