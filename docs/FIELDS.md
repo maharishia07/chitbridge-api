@@ -1327,3 +1327,13 @@ One mechanism on ONE chit for the seller's pro-forma, the buyer's counter, an am
 | `invoice.ItemList[]._band` | string, e.g. `18% · price above Rs 2,500 per piece` | Written by tax.determine on a line the pack's dated price band re-rated (apparel and footwear, India); absent on every other line. The till and the bill print it beside the rate; nobody can lower a banded rate. Words come from the pack row (`limit_words`), never a client sentence: branch on `_cb.bands[].side` / `rate`. |
 | `invoice._cb.bands[]` | `{ line, band, from, side: 'up_to'\|'above', rate, was, status, words }` | Same call; present only when a line was re-rated. `was` = the rate the line carried (null if none), `status` the row's `confirmed`/`unconfirmed`, `from` the row's first day. |
 | `lib/tax-lines.invoiceFor({ bill_day })` · `billDayOf(business, purpose, at, zone)` | `bill_day` YYYY-MM-DD, the SHOP's calendar day | The engine's `asOf`. A bill: its `billed_at` day in the shop zone (never a UTC slice); a credit or debit note: NEVER banded (null; `invoiceFor({ purpose })` sends the engine `rateFromOriginal`: no band, no `_band` mark, its lines keep the rate they carry; a delta line would re-band the original supply); a typed purchase bill: its own `date`. No day = no band. |
+
+## `POST /api/chits/send` · a counter summary closed again · `summary.revision` · `summary.supersedes` · `revision` (CTR-181, 2026-11-13)
+
+A day (or week, month, year) summary is sent under the fixed reference `SUM/<D|W|M|Y>/<till>/<key>`. The same figures again are a retry; NEW figures are the next version, stored as a new chit under `<ref>#<n>` (lib/summary-reclose.js). Written by: the send route (routes/chits.js `summaryReclose`). Read by: nobody needs it; the Trend and `GET /api/till/summary` take the newest chit per counter and key as before.
+
+| Where | Key | Meaning |
+|---|---|---|
+| the stored chit · `business_json.summary` | `revision` | integer ≥ 2 · written only on a re-close with other figures: the version number (the first close carries none and is version 1). Equals the `#<n>` of the chit's `client_ref`. |
+| the stored chit · `business_json.summary` | `supersedes` | string chit id · the newest version held when this one was stored; the older chits are kept as history, never changed. |
+| `POST /api/chits/send` answer (200, `duplicate:true`) | `revision` | integer · present when a summary replay is answered: the version of the chit named in `chit_id` (1 for the first close). |

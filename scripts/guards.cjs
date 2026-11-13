@@ -266,6 +266,7 @@ const GUARDS = [
   'ctr-211-send-recheck.test.cjs', // CTR-211: at send the bridge step and its ValDtls figure are compared (total, taxable, round_off); a disagreement is 409 + one ticket, never overridable
   'fin58-upi-waiting.test.cjs', // FIN-58: an unconfirmed UPI part waits as a receivable from the system party "UPI waiting"; the flip is a payment
   'rollup-currency.test.cjs', // REP-50
+  'ctr-181-books-once.test.cjs', // CTR-181: the real postChit on version #1 and #2 of a day summary leaves ONE walk-in day entry
   'ctr-181-summary-reclose.test.cjs', // CTR-181: a summary closed again under the same reference with new figures is stored as the next version (<ref>#n, revision, supersedes), the same figures stay duplicate:true on the newest chit
   'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its

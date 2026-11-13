@@ -422,8 +422,7 @@ router.post(
       /* ⭐ T2-SPLIT (2026-10-14): the 1,408 lines that stood here are the named steps below, in order, each under 80
          lines — the same statements, the same order, the same answers (tests/send-golden.test.cjs, frozen before the split).
          A step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
-      const st = {};
-      for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+      await runSendSteps(req, res);
     } catch (err) {
       /**
        * ── ⭐⭐⭐ A LOST RACE IS A DUPLICATE, NOT A FAILURE (2026-09-18) ───────────────────────
@@ -480,6 +479,42 @@ router.post(
     }
   }
 );
+
+/** the named send steps, in order; a step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
+async function runSendSteps(req, res) {
+  try {
+    await sendStepsOnce(req, res);
+  } catch (err) {
+    const again = await rerunLostSummary(err, req, res); /* CTR-181: a summary that lost the unique-reference race is judged again, once */
+    if (!again.done) throw again.err;
+  }
+}
+/** one pass through the steps */
+async function sendStepsOnce(req, res) {
+  const st = {};
+  for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+}
+/**
+ * ⭐ CTR-181 · TWO RE-CLOSES, ONE VERSION NUMBER. Both judge "#2"; the loser's insert meets the unique reference (23505) and the race answer below would call it the
+ * winner's duplicate — its later totals lost. For a summary the whole send runs once more from the base reference with the stamps removed: sendReplay now sees the
+ * winner, so the same figures are a replay and other figures are "#3". Answers { done: true } when the second run answered, else { err } (the error to handle as before).
+ */
+async function rerunLostSummary(err, req, res) {
+  const reclose = require('../lib/summary-reclose');
+  const summary = reclose.summaryOf(req.body);
+  const lost = !!err && err.code === '23505' && /client_ref/.test(String(err.constraint || err.detail || err.message || ''));
+  if (!lost || !summary || req.summaryRerun) return { err };
+  req.summaryRerun = true;
+  req.body.client_ref = reclose.baseRef(refOf(req));
+  delete summary.revision;
+  delete summary.supersedes;
+  try {
+    await sendStepsOnce(req, res);
+    return { done: true };
+  } catch (second) {
+    return { err: second };
+  }
+}
 
 /* ═══ POST /chits/send — THE NAMED STEPS (T2-SPLIT, 2026-10-14) ═════════════════════════════════════════════════════════
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:

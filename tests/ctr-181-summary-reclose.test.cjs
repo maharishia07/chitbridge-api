@@ -86,10 +86,13 @@ require.cache[authPath] = {
 };
 const mint = require(path.join(API, 'lib', 'mint'));
 let COPIES = null;
+let ON_DELIVER = null; /* a hook that runs as the write is reached: it may throw the unique-reference refusal a lost race meets */
 mint.deliver = async (sender, chit_id, copies) => {
+  if (ON_DELIVER) ON_DELIVER(copies);
   COPIES = copies;
   return { ok: true };
 };
+const LOST_RACE = () => Object.assign(new Error('duplicate key value violates unique constraint "b263_client_ref"'), { code: '23505', constraint: 'b263_client_ref' });
 try {
   require(path.join(API, 'lib', 'books-hooks')).afterChit = () => Promise.resolve({});
   require(path.join(API, 'lib', 'meter')).meter = async () => {};
@@ -173,6 +176,44 @@ const refOfStored = (copies) => {
     logger.warn = realWarn;
     ok('the versions read throws → answered as before (200 duplicate:true), never a blocked close', broken.status === 200 && broken.answer.duplicate === true, J([broken.status, broken.answer]));
     ok('and the fall-back was said', SAID.some((words) => /summary re-close lookup failed/.test(words)), J(SAID));
+    /* ── TWO RE-CLOSES, ONE VERSION NUMBER: the loser's write meets the unique reference; it is judged again, never called the winner duplicate ── */
+    const winner = (bills, total, at) => ({ ref: REF + '#2', chit_id: 'won-2', summary: close(bills, total, at).business_json.summary });
+    HELD = [{ ref: REF, chit_id: 'held-1', summary: close(10, 1180, '2026-11-12T18:00:00Z').business_json.summary }];
+    let writes = 0;
+    ON_DELIVER = () => {
+      writes++;
+      if (writes === 1) {
+        HELD.push(winner(20, 2360, '2026-11-12T21:00:00Z')); /* the other request stored #2 first */
+        throw LOST_RACE();
+      }
+    };
+    const lost = await send(close(15, 1770, '2026-11-12T21:00:05Z'));
+    ON_DELIVER = null;
+    ok('a lost race with DIFFERENT totals → judged again: stored as #3 (not the winner duplicate), superseding the winner', lost.status === 200 && !lost.answer.duplicate && refOfStored(lost.copies) === REF + '#3' && storedOf(lost.copies).business_json.summary.supersedes === 'won-2' && storedOf(lost.copies).business_json.summary.totals.bills === 15, J([lost.status, lost.answer, refOfStored(lost.copies)]));
+    HELD = [{ ref: REF, chit_id: 'held-1', summary: close(10, 1180, '2026-11-12T18:00:00Z').business_json.summary }];
+    writes = 0;
+    ON_DELIVER = () => {
+      writes++;
+      if (writes === 1) {
+        HELD.push(winner(15, 1770, '2026-11-12T21:00:00Z'));
+        throw LOST_RACE();
+      }
+    };
+    const sameLost = await send(close(15, 1770, '2026-11-12T21:00:05Z'));
+    ON_DELIVER = null;
+    ok('a lost race with the SAME totals as the winner → 200 duplicate:true naming the winner, nothing stored', sameLost.status === 200 && sameLost.answer.duplicate === true && sameLost.answer.chit_id === 'won-2' && sameLost.copies === null, J([sameLost.status, sameLost.answer]));
+    /* a second loss is not a rerun again: the race answer asks about the VERSION's reference (req.body.client_ref = "<ref>#n"), not the day's — so it is not the first close duplicate */
+    HELD = [{ ref: REF, chit_id: 'held-1', summary: close(10, 1180, '2026-11-12T18:00:00Z').business_json.summary }];
+    writes = 0;
+    ON_DELIVER = () => {
+      writes++;
+      if (writes === 1) HELD.push(winner(20, 2360, '2026-11-12T21:00:00Z'));
+      throw LOST_RACE();
+    };
+    const twice = await send(close(15, 1770, '2026-11-12T21:00:05Z'));
+    ON_DELIVER = null;
+    ok('losing twice is not answered as the first close duplicate (the version reference is what the race answer asks about)', !(twice.status === 200 && twice.answer.duplicate === true), J([twice.status, twice.answer]));
+
     /* ── the module itself, one check per rule (not only through the door) ── */
     const reclose = require(path.join(API, 'lib', 'summary-reclose'));
     const dbOf = (rows) => ({ query: async () => ({ rows }) });
@@ -183,6 +224,9 @@ const refOfStored = (copies) => {
     ok('judge: the same figures as the newest → replay of that chit', J(await reclose.judge(dbOf([heldRow('a', 1), heldRow('b', 2, 2)]), SHOP, REF, incoming(2, 'z'))) === J({ replay: 'b', revision: 2 }));
     ok('judge: other figures → the next version after the highest held, naming the newest', J(await reclose.judge(dbOf([heldRow('a', 1), heldRow('b', 2, 2)]), SHOP, REF, incoming(3, 'z'))) === J({ version: 3, ref: REF + '#3', supersedes: 'b' }));
     ok('judge: a till id with LIKE characters is escaped in the pattern (never a wildcard)', await (async () => { let seen; await reclose.judge({ query: async (sql, params) => { seen = params; return { rows: [] }; } }, SHOP, 'SUM/D/C_1%/d', incoming(1, 'x')); return seen[2] === 'SUM/D/C!_1!%/d#%'; })());
+    ok('judge: gapped revisions (1, 3) → the next is 4, the highest held plus one, never the count plus one', J(await reclose.judge(dbOf([heldRow('a', 1), heldRow('c', 3, 3)]), SHOP, REF, incoming(9, 'z'))) === J({ version: 4, ref: REF + '#4', supersedes: 'c' }));
+    ok('judge: the versions read asks only for general chits of this shop and this reference (purpose filter, entity, LIKE ... ESCAPE)', await (async () => { let text = ''; await reclose.judge({ query: async (sql) => { text = String(sql); return { rows: [] }; } }, SHOP, REF, incoming(1, 'x')); return /purpose = 'general'/.test(text) && /entity_id = [$]1/.test(text) && /LIKE [$]3 ESCAPE/.test(text); })());
+    ok('baseRef strips only the version suffix', reclose.baseRef(REF + '#12') === REF && reclose.baseRef(REF) === REF);
     let refusedClosed = null;
     try {
       await reclose.judge({ query: async () => { throw new Error('the database is down'); } }, SHOP, REF, incoming(1, 'x'));
