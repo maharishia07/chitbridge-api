@@ -69,7 +69,8 @@ it('⭐⭐ D2: each currency to its own decimals — yen 0, rial 3, rupee 2', ()
   assert.strictEqual(M.round(1.2345, 'OMR'), 1.235);
   assert.strictEqual(M.round(1.2345, 'INR'), 1.23);
   assert.strictEqual(M.round(1.235), 1.24, 'no currency must keep today\'s 2 decimals');
-  assert.strictEqual(M.decimals('not a code'), 2);
+  /* CUR-1 (engines money v1.89.0+): a code that is not on the ISO 4217 list is refused (422), no longer answered 2; an ABSENT currency still answers 2 (the line above) */
+  assert.throws(() => M.decimals('not a code'), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN' && e.status === 422);
 });
 
 it('⚠️ a non-number stays loud — NaN in, NaN out', () => {
