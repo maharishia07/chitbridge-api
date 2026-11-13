@@ -1,0 +1,959 @@
+{
+ "ci": "CAP-TILL",
+ "title": "Counter (till) · till.html",
+ "type": "Page / surface",
+ "system": "ChitBridge web app",
+ "summary": "The counter: billing, bill slip, day close, offline — the till page the shopkeeper stands at.",
+ "source": "generated",
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 17 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 1 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 5 API call(s)"
+  },
+  {
+   "title": "cap-books.js",
+   "ci": "CAP-BOOKS",
+   "state": "ok",
+   "note": "1 screen(s) · 22 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "warn",
+   "note": "0 screen(s) · 64 API call(s)",
+   "node": "p1"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "warn",
+   "note": "0 screen(s) · 13 API call(s)"
+  }
+ ],
+ "entries": [],
+ "process": [
+  {
+   "id": "p1",
+   "t": "till.html",
+   "s": "till.html · 1390 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBTax",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBOffers",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBSignin",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBAvatar",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p6",
+   "t": "CBEmbed",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p7",
+   "t": "CBMoney",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p8",
+   "t": "CBOrders",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p9",
+   "t": "CBLocale",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p10",
+   "t": "CBRollup",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p11",
+   "t": "CBSearch",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p12",
+   "t": "CBLots",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p13",
+   "t": "CBNums",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "CALL /api/signin/renew",
+   "s": "routes/signin.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x2",
+   "t": "CALL /api/number",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x3",
+   "t": "CALL /api/record",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x4",
+   "t": "CALL /api/state",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x5",
+   "t": "CALL /api/bills",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x6",
+   "t": "CALL /api/history",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x7",
+   "t": "CALL /api/shift",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x8",
+   "t": "CALL /api/refresh",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x9",
+   "t": "CALL /api/bill",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x10",
+   "t": "CALL /api/tasks",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x11",
+   "t": "CALL /api/summary",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x12",
+   "t": "CALL /api/printers",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x13",
+   "t": "CALL /api/printer",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x14",
+   "t": "CALL /api/print",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x15",
+   "t": "CALL /api/doc",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x16",
+   "t": "CALL /api/alias",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x17",
+   "t": "CALL /api/verify",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x18",
+   "t": "CALL /api/op",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x19",
+   "t": "CALL /api/listen",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x20",
+   "t": "CALL /api/send",
+   "s": "no route file found",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x21",
+   "t": "CALL /api/till/reward",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x22",
+   "t": "CALL /api/till/reward/claim",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x23",
+   "t": "CALL /api/till/summary",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x24",
+   "t": "CALL /api/till/snapshot",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x25",
+   "t": "CALL /api/till/bills",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x26",
+   "t": "CALL /api/till/tasks",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x27",
+   "t": "CALL /api/till/alias",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x28",
+   "t": "CALL /api/till/listen",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x29",
+   "t": "CALL /api/till/verify",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x30",
+   "t": "CALL /api/chits/send",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x31",
+   "t": "CALL /api/chits/",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x32",
+   "t": "CALL /api/till/quick-keys/unhide",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x33",
+   "t": "CALL /api/till/counters",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x34",
+   "t": "CALL /api/till/quick-keys/hide",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x35",
+   "t": "CALL /api/till/quick-keys/hidden",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x36",
+   "t": "CALL /api/till/quick-keys/screen-config",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x37",
+   "t": "CALL /api/till/quick-keys/groups",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x38",
+   "t": "CALL /api/till/worth-an-offer",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x39",
+   "t": "CALL /api/till/stock/bulk",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x40",
+   "t": "CALL /api/till/flags",
+   "s": "routes/till.js",
+   "d": "A direct call to the API."
+  }
+ ],
+ "edges": [
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "p6"
+  ],
+  [
+   "p1",
+   "p7"
+  ],
+  [
+   "p1",
+   "p8"
+  ],
+  [
+   "p1",
+   "p9"
+  ],
+  [
+   "p1",
+   "p10"
+  ],
+  [
+   "p1",
+   "p11"
+  ],
+  [
+   "p1",
+   "p12"
+  ],
+  [
+   "p1",
+   "p13"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
+  ],
+  [
+   "p1",
+   "x13"
+  ],
+  [
+   "p1",
+   "x14"
+  ],
+  [
+   "p1",
+   "x15"
+  ],
+  [
+   "p1",
+   "x16"
+  ],
+  [
+   "p1",
+   "x17"
+  ],
+  [
+   "p1",
+   "x18"
+  ],
+  [
+   "p1",
+   "x19"
+  ],
+  [
+   "p1",
+   "x20"
+  ],
+  [
+   "p1",
+   "x21"
+  ],
+  [
+   "p1",
+   "x22"
+  ],
+  [
+   "p1",
+   "x23"
+  ],
+  [
+   "p1",
+   "x24"
+  ],
+  [
+   "p1",
+   "x25"
+  ],
+  [
+   "p1",
+   "x26"
+  ],
+  [
+   "p1",
+   "x27"
+  ],
+  [
+   "p1",
+   "x28"
+  ],
+  [
+   "p1",
+   "x29"
+  ],
+  [
+   "p1",
+   "x30"
+  ],
+  [
+   "p1",
+   "x31"
+  ],
+  [
+   "p1",
+   "x32"
+  ],
+  [
+   "p1",
+   "x33"
+  ],
+  [
+   "p1",
+   "x34"
+  ],
+  [
+   "p1",
+   "x35"
+  ],
+  [
+   "p1",
+   "x36"
+  ],
+  [
+   "p1",
+   "x37"
+  ],
+  [
+   "p1",
+   "x38"
+  ],
+  [
+   "p1",
+   "x39"
+  ],
+  [
+   "p1",
+   "x40"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "SURFACE till.html",
+   "rel": "draws",
+   "that": "no screen"
+  },
+  {
+   "this": "SURFACE till.html",
+   "rel": "calls",
+   "that": "routes/signin.js · routes/till.js · routes/chits.js · routes/products.js · routes/events.js"
+  },
+  {
+   "this": "SURFACE till.html",
+   "rel": "documented-by",
+   "that": "api design-handoff/A-screens/00-foundations/feedback-vs-known-till-apps.md · api design-handoff/A-screens/00-foundations/README-INDEX.md · api docs/API-REGISTER.md · api docs/CB-SYNC.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER-SIGNIN.md · api docs/COUNTER.md · api docs/critique/ACC-198.md · api docs/critique/ACC-206-A-B.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-bell.md · api docs/critique/API-4-entities.md · api docs/critique/API-4-quick-keys.md · api docs/critique/CAT-124-C1C2.md · api docs/critique/CS2.md · api docs/critique/CTR-212.md · api docs/cri…"
+  },
+  {
+   "this": "SURFACE till.html",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api design-handoff/README-INDEX.md · api design-handoff/feedback-vs-known-till-apps.md · api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md · api docs/tasks/CLOUD-TASK-shop-name.md · web docs/design/chit-sheet/BACKLOG.md · web docs/design/chit-sheet/FOLLOWUPS-TASK.md · web docs/design/daybook-todo/CLOUD-TASK.md · web docs/design/daybook-views/CLOUD-TASK.md · web docs/design/gate-courtesy/CLOUD-TASK.md · web docs/design/index-page/CLOUD-TASK.md · web public/app/search.js · web public/app/variant.js — restore: git checkout ar…"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/till.html",
+  "design": "web docs/design/bill-slip/REQUIREMENT.md"
+ },
+ "tests": [
+  {
+   "file": "web e2e/arrow-probe.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/bulk-shop.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/capability-bare-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/combo-lab-direct.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/combo-lab.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/counter-follows-shop.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/csp-violations.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/day-one.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/developer-words.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/device-id.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/docnumber-continuity.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/employees-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/floor-demo.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/guard-static.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/icon-map-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-not-app.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-page-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/india-words-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/lib/signin.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/offer-lab-next-offline.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/one-person.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/per-row-probe.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/person-signin.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/phone-signin.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/phone-till.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/prim-homes.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/rail-thread-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/readability-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/run-shard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/scale-probe.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/search-probe.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/shell.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/sim-counter3.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/sim-resign3.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/sim-run3.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/skeleton-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/stacking.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/standards-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/counter-key.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: till.html\n  annotations:\n    chitbridge.io/ci: CAP-TILL\n    chitbridge.io/asset: SURFACE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/signin.js\n    - routes/till.js\n    - routes/chits.js\n    - routes/products.js\n    - routes/events.js"
+}
