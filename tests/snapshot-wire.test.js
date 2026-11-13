@@ -1199,7 +1199,7 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
   assert.ok(page.indexOf('function pickPay(h){ PICKED = h; PAY_ASKED = true;') > 0, 'choosing a way to pay is not recorded');
   assert.ok(page.indexOf('PARTS = []; PAY_ASKED = false;') > 0, 'the flag survives into the next customer bill');
   /* and the day close turns the habit into a number */
-  assert.ok(page.indexOf('b.payment_asked === false') > 0, 'the day close does not count the bills nobody answered');
+  assert.ok(page.indexOf('bill.payment_asked === false') > 0, 'the day close (dayAddTenders) does not count the bills nobody answered');
   assert.ok(page.indexOf('Not asked how paid') > 0, 'the day close never says it');
   /* ⚠️ and it must NOT block: no disabled Save, no refusal to finish */
   const fin = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 700);
