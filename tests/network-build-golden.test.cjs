@@ -28,7 +28,7 @@ function rows(s, p, ctx) {
   if (/SELECT plan, params_override FROM identities/.test(s)) return [{ plan: null, params_override: ctx.capPrivate ? { caps: { catalogue_visibility: 'network' } } : {} }];
   if (/SELECT path::text AS path FROM cb_entity WHERE bridge_id = \$1/.test(s)) return ctx.noRoot ? [] : [{ path: 'CBROOT00001' }];
   if (/SELECT bridge_id, path::text AS path FROM cb_entity WHERE bridge_id = ANY/.test(s)) return (ctx.paths || []).filter((r) => (p[0] || []).includes(r.bridge_id));
-  if (/^UPDATE identities SET catalogue_visibility/.test(s)) { if (ctx.updThrows) { const e = new Error('x'); e.code = ctx.updThrows; throw e; } return (ctx.mine || []).includes(p[1]) ? [{ bridge_id: p[1] }] : []; }
+  if (/^UPDATE identities SET catalogue_visibility/.test(s)) { if (ctx.updThrows) { const e = new Error('x'); e.code = ctx.updThrows; throw e; } return (ctx.mine || []).includes(p[1]) ? [{ bridge_id: p[1], identity_id: 'store-of-' + p[1] }] : []; }
   if (/FROM identities WHERE \(LOWER\(user_id\) = LOWER\(\$1\) OR UPPER\(bridge_id\) = UPPER\(\$1\)\)/.test(s)) return (ctx.partners || []).filter((r) => r.user_id === String(p[0]).toLowerCase());
   if (/^select identity_id, bridge_id, display_name from identities where identity_id = \$1/i.test(s)) return (ctx.partners || []).filter((r) => r.identity_id === p[0]);
   if (/^select \* from cb_entity where bridge_id = \$1/i.test(s) || /^SELECT \* FROM cb_entity WHERE bridge_id = \$1/.test(s)) return [{ id: 'node-' + p[0], bridge_id: p[0] }];

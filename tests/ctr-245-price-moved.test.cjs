@@ -56,6 +56,7 @@ function rowsFor(sql, params) {
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) return params && params[0] === SHOP ? [shopRow] : [];
   return [];
 }
+const bound = require('./support/bound-db.cjs').boundDb(rowsFor);
 const dbPath = require.resolve(path.join(API, 'db'));
 const tx = { query: async (s, p) => ({ rows: rowsFor(s, p) }) };
 require.cache[dbPath] = {
@@ -64,6 +65,7 @@ require.cache[dbPath] = {
   loaded: true,
   exports: {
     query: async (s, p) => ({ rows: rowsFor(s, p) }),
+    queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: a bound read; blank id or another shop's predicate sees no row */
     withEntity: async (id, fn) => fn(tx),
     withTransaction: async (fn) => fn(tx),
     trySavepoint: async (db, fn, fb) => {
