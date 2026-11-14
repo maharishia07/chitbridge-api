@@ -3607,7 +3607,8 @@
           "actions",
           "doc",
           "books_wait",
-          "lines_from"
+          "lines_from",
+          "bill_total"
         ],
         "properties": {
           "cost_hidden": {
@@ -3786,6 +3787,9 @@
           "books_wait": {},
           "lines_from": {
             "type": "string"
+          },
+          "bill_total": {
+            "type": "object"
           },
           "_timing": {
             "type": "object"
