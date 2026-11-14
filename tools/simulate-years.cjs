@@ -34,7 +34,7 @@ const YEARS = Number(arg('years', 3)),
   SEED = Number(arg('seed', 7)),
   AS_JSON = process.argv.includes('--json');
 
-const H = require(path.join(__dirname, '..', 'tests', 'support', 'books-harness.cjs'));
+const booksHarness = require(path.join(__dirname, '..', 'tests', 'support', 'books-harness.cjs'));
 const SHOP = '11111111-1111-4111-8111-111111111111',
   CUST = '22222222-2222-4222-8222-222222222222',
   SUPP = '33333333-3333-4333-8333-333333333333';
@@ -58,7 +58,7 @@ const check = (name, cond, detail) => line(cond ? 'ok' : 'RED', name, cond ? '' 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
 const PLAN = PLAN_LIB.planDays({ start: '2026-04-01', years: YEARS, seed: SEED });
 const dayAdd = PLAN_LIB.dayAdd;
-const IST = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00+05:30';
+const istTimestamp = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00+05:30';
 const fyOf = (d) => {
   const y = +d.slice(0, 4),
     m = +d.slice(5, 7),
@@ -66,32 +66,32 @@ const fyOf = (d) => {
   return s + '-' + String((s + 1) % 100).padStart(2, '0');
 };
 const monthNo = (d) => ((+d.slice(5, 7) + 8) % 12) + 1; /* Apr = 1 … Mar = 12 */
-const rup = (minor) => (minor / 100).toFixed(2);
+const rupees = (minor) => (minor / 100).toFixed(2);
 
 (async () => {
-  const X = H.load({ auth: authStub });
-  if (!X.src.dir) {
-    console.log('SKIP: ' + X.src.why);
+  const harness = booksHarness.load({ auth: authStub });
+  if (!harness.src.dir) {
+    console.log('SKIP: ' + harness.src.why);
     process.exit(0);
   }
-  const CLOCK = require(path.join(H.API, 'lib', 'shop-clock'));
+  const CLOCK = require(path.join(booksHarness.API, 'lib', 'shop-clock'));
   const app = express();
   app.use(express.json());
-  app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
-  const srv = app.listen(0),
-    port = srv.address().port;
-  const q = (m, p, body) =>
+  app.use('/api/books', require(path.join(booksHarness.API, 'routes', 'books')));
+  const server = app.listen(0),
+    port = server.address().port;
+  const apiCall = (method, urlPath, body) =>
     new Promise((done) => {
-      const b = JSON.stringify(body || {});
-      const r = http.request(
-        { host: '127.0.0.1', port, path: '/api/books' + p, method: m, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+      const payload = JSON.stringify(body || {});
+      const request = http.request(
+        { host: '127.0.0.1', port, path: '/api/books' + urlPath, method: method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
         (res) => {
-          let raw = '';
-          res.on('data', (c) => (raw += c));
+          let rawBody = '';
+          res.on('data', (c) => (rawBody += c));
           res.on('end', () => {
             let j = {};
             try {
-              j = JSON.parse(raw || '{}');
+              j = JSON.parse(rawBody || '{}');
             } catch (parseError) {
               require('../lib/logger').fellBack('simulate-years: the reply was not JSON — body stays empty', parseError);
             }
@@ -99,19 +99,19 @@ const rup = (minor) => (minor / 100).toFixed(2);
           });
         }
       );
-      r.end(b);
+      request.end(payload);
     });
-  const T = X.T;
-  const codeOfRole = (role) => (T.accounts.find((item) => item.entity_id === SHOP && item.role === role) || {}).code;
+  const tables = harness.T;
+  const codeOfRole = (role) => (tables.accounts.find((item) => item.entity_id === SHOP && item.role === role) || {}).code;
   const nameOfCode = (c) => {
-    const a = T.accounts.find((x) => x.entity_id === SHOP && String(x.code) === String(c));
+    const a = tables.accounts.find((x) => x.entity_id === SHOP && String(x.code) === String(c));
     return a ? c + ' ' + a.name : String(c);
   };
-  const codeOfId = (id) => (T.accounts.find((item) => item.account_id === id) || {}).code;
+  const codeOfId = (id) => (tables.accounts.find((item) => item.account_id === id) || {}).code;
   const entryOf = new Map(); /* entry_id → entry, built lazily for the line scans */
   const entryById = (id) => {
     if (!entryOf.has(id)) {
-      const e = T.entries.find((x) => x.entry_id === id);
+      const e = tables.entries.find((x) => x.entry_id === id);
       if (e) entryOf.set(id, e);
     }
     return entryOf.get(id);
@@ -119,21 +119,21 @@ const rup = (minor) => (minor / 100).toFixed(2);
 
   const START = PLAN.start,
     LAST = PLAN.last;
-  CLOCK.set(IST(START, 9, 0));
-  await X.store.saveSetting(X.db, SHOP, { enabled: false });
-  check('the ledger switches on', (await q('POST', '/enable', {})).body.ok === true);
-  T.parties.push(
+  CLOCK.set(istTimestamp(START, 9, 0));
+  await harness.store.saveSetting(harness.db, SHOP, { enabled: false });
+  check('the ledger switches on', (await apiCall('POST', '/enable', {})).body.ok === true);
+  tables.parties.push(
     { owner: SHOP, party_id: CUST, party_no: 'P-00001', name: 'Ravi Stores', customer: true, credit_days: 10 },
     { owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 }
   );
-  const op = await q('POST', '/opening', {
+  const opening = await apiCall('POST', '/opening', {
     date: START,
     rows: [
       { code: codeOfRole('cash'), dr_minor: 50000000 },
       { code: codeOfRole('capital') || '3000', cr_minor: 50000000 }
     ]
   });
-  check('opening balances (cash 5,00,000 against capital) post', op.status === 200 && op.body.suspense_minor === 0, JSON.stringify(op.body));
+  check('opening balances (cash 5,00,000 against capital) post', opening.status === 200 && opening.body.suspense_minor === 0, JSON.stringify(opening.body));
 
   /* what this script posted, day by day — the "sum of its days" the summaries are checked against */
   const DAYS = new Map(); /* day → { taxable_minor, total_minor, n } of the SALES posted that day */
@@ -147,46 +147,46 @@ const rup = (minor) => (minor / 100).toFixed(2);
   }; /* a planned sale's tax halves (one rule, sim-plan) */
   let posted = 0,
     refused = 0;
-  const post = async (d, ev, asSale) => {
+  const post = async (postDay, event, asSale) => {
     try {
-      const r = await X.B.postEntry(X.db, SHOP, Object.assign({ date: d, currency: 'INR' }, ev));
-      if (r && r.ok) {
+      const result = await harness.B.postEntry(harness.db, SHOP, Object.assign({ date: postDay, currency: 'INR' }, event));
+      if (result && result.ok) {
         posted++;
         if (asSale) {
-          const row = dayRow(d);
+          const row = dayRow(postDay);
           row.taxable_minor += Math.round(asSale.taxable * 100);
           row.total_minor += Math.round(asSale.total * 100);
           row.n++;
         }
-        return r;
+        return result;
       }
       refused++;
-      line('RED', 'a posting was refused on ' + d, JSON.stringify(r));
-      return r;
+      line('RED', 'a posting was refused on ' + postDay, JSON.stringify(result));
+      return result;
     } catch (e) {
       refused++;
-      line('RED', 'a posting threw on ' + d, String(e && e.message));
+      line('RED', 'a posting threw on ' + postDay, String(e && e.message));
       return null;
     }
   };
 
   const tbNet = async (asOf) => {
     /* code → net (Dr positive) from the trial balance route */
-    const r = await q('GET', '/trial-balance?asOf=' + asOf),
+    const r = await apiCall('GET', '/trial-balance?asOf=' + asOf),
       lookup = new Map();
     (r.body.rows || []).forEach((x) => lookup.set(String(x.code), x.dr_minor - x.cr_minor));
     return { m: lookup, balanced: r.body.balanced, dr: r.body.total_dr_minor, cr: r.body.total_cr_minor };
   };
   const salesCode = () => String(codeOfRole('sales') || '4000');
 
-  const reportYear = async (fy, lastDay) => {
+  const reportYear = async (fiscalYear, lastDay) => {
     const nextFirst = dayAdd(lastDay, 1),
       nextFy = fyOf(nextFirst);
     /* 1 + 2 · opening = closing; profit → capital */
     const close = await tbNet(lastDay),
       open = await tbNet(nextFirst);
     check(
-      fy + ' · trial balance balances at year end (' + rup(close.dr) + ' Dr = ' + rup(close.cr) + ' Cr)',
+      fiscalYear + ' · trial balance balances at year end (' + rupees(close.dr) + ' Dr = ' + rupees(close.cr) + ' Cr)',
       close.balanced === true,
       'Dr ' + close.dr + ' vs Cr ' + close.cr
     );
@@ -200,53 +200,53 @@ const rup = (minor) => (minor / 100).toFixed(2);
       if (/^[4-9]/.test(index)) return;
       const want = index === '3900' ? item - profit : item,
         got = open.m.get(index) || 0;
-      if (got !== want) wrong.push(nameOfCode(index) + ' closed ' + rup(want) + ' but opened ' + rup(got));
+      if (got !== want) wrong.push(nameOfCode(index) + ' closed ' + rupees(want) + ' but opened ' + rupees(got));
     });
     open.m.forEach((item, index) => {
-      if (!close.m.has(index) && item !== 0 && index !== '3900') wrong.push(nameOfCode(index) + ' appeared at opening with ' + rup(item));
+      if (!close.m.has(index) && item !== 0 && index !== '3900') wrong.push(nameOfCode(index) + ' appeared at opening with ' + rupees(item));
     });
-    check(fy + ' → ' + nextFy + ' · opening = last closing, to the paisa (' + close.m.size + ' ledgers)', !wrong.length, wrong.slice(0, 5).join(' · '));
+    check(fiscalYear + ' → ' + nextFy + ' · opening = last closing, to the paisa (' + close.m.size + ' ledgers)', !wrong.length, wrong.slice(0, 5).join(' · '));
     const capWant = (close.m.get('3900') || 0) - profit;
     check(
-      fy + ' · profit ' + rup(profit) + ' moved into capital (3900)',
+      fiscalYear + ' · profit ' + rupees(profit) + ' moved into capital (3900)',
       (open.m.get('3900') || 0) === capWant,
-      '3900 opened ' + rup(open.m.get('3900') || 0) + ', expected ' + rup(capWant)
+      '3900 opened ' + rupees(open.m.get('3900') || 0) + ', expected ' + rupees(capWant)
     );
     const carried = [...open.m.keys()].filter((item) => /^[4-9]/.test(item) && open.m.get(item) !== 0);
-    check(fy + ' · no income/expense ledger is carried into ' + nextFy, !carried.length, carried.map(nameOfCode).join(', '));
+    check(fiscalYear + ' · no income/expense ledger is carried into ' + nextFy, !carried.length, carried.map(nameOfCode).join(', '));
   };
 
-  const verifySummaries = async (fy) => {
+  const verifySummaries = async (fiscalYear) => {
     /* 3 · every summary = the sum of its days */
     const sums = new Map(),
       perMonthSales = new Map();
-    T.lines.forEach((item) => {
-      const en = entryById(item.entry_id);
-      if (!en || en.fiscal_year !== fy) return;
-      const c = codeOfId(item.account_id),
-        k = c + '|' + en.period,
-        s = sums.get(k) || { dr: 0, cr: 0 };
-      s.dr += item.dr_minor || 0;
-      s.cr += item.cr_minor || 0;
-      sums.set(k, s);
-      if (c === salesCode()) perMonthSales.set(Number(en.period), (perMonthSales.get(Number(en.period)) || 0) + (item.cr_minor || 0) - (item.dr_minor || 0));
+    tables.lines.forEach((item) => {
+      const entry = entryById(item.entry_id);
+      if (!entry || entry.fiscal_year !== fiscalYear) return;
+      const accountCode = codeOfId(item.account_id),
+        k = accountCode + '|' + entry.period,
+        monthSum = sums.get(k) || { dr: 0, cr: 0 };
+      monthSum.dr += item.dr_minor || 0;
+      monthSum.cr += item.cr_minor || 0;
+      sums.set(k, monthSum);
+      if (accountCode === salesCode()) perMonthSales.set(Number(entry.period), (perMonthSales.get(Number(entry.period)) || 0) + (item.cr_minor || 0) - (item.dr_minor || 0));
     });
     const list = [];
-    T.balances.forEach((item) => {
-      if (item.fiscal_year !== fy || item.party_key !== X.store.ZERO) return;
+    tables.balances.forEach((item) => {
+      if (item.fiscal_year !== fiscalYear || item.party_key !== harness.store.ZERO) return;
       const c = codeOfId(item.account_id),
         s = sums.get(c + '|' + item.period) || { dr: 0, cr: 0 };
       if (s.dr !== item.dr_minor || s.cr !== item.cr_minor)
         list.push(
-          nameOfCode(c) + ' month ' + item.period + ': summary ' + rup(item.dr_minor) + '/' + rup(item.cr_minor) + ' ≠ its lines ' + rup(s.dr) + '/' + rup(s.cr)
+          nameOfCode(c) + ' month ' + item.period + ': summary ' + rupees(item.dr_minor) + '/' + rupees(item.cr_minor) + ' ≠ its lines ' + rupees(s.dr) + '/' + rupees(s.cr)
         );
     });
-    check(fy + ' · every month summary (account_balance) = the sum of its entries’ lines', !list.length, list.slice(0, 4).join(' · '));
+    check(fiscalYear + ' · every month summary (account_balance) = the sum of its entries’ lines', !list.length, list.slice(0, 4).join(' · '));
     /* the days this script posted, summed by month, against the Sales ledger and the period figures */
     const days = new Map(),
       lookup = new Map();
     DAYS.forEach((item, index) => {
-      if (fyOf(index) !== fy) return;
+      if (fyOf(index) !== fiscalYear) return;
       const m = monthNo(index);
       days.set(m, (days.get(m) || 0) + item.taxable_minor);
       lookup.set(m, (lookup.get(m) || 0) + item.total_minor);
@@ -254,23 +254,23 @@ const rup = (minor) => (minor / 100).toFixed(2);
     const sbad = [];
     days.forEach((item, index) => {
       if ((perMonthSales.get(index) || 0) !== item)
-        sbad.push('Sales month ' + index + ': ledger ' + rup(perMonthSales.get(index) || 0) + ' vs the days ' + rup(item));
+        sbad.push('Sales month ' + index + ': ledger ' + rupees(perMonthSales.get(index) || 0) + ' vs the days ' + rupees(item));
     });
-    check(fy + ' · Sales (' + salesCode() + ') each month = the sum of the days posted into it', !sbad.length, sbad.join(' · '));
-    const fig = await X.store.periodFigures(X.db, SHOP, fy),
+    check(fiscalYear + ' · Sales (' + salesCode() + ') each month = the sum of the days posted into it', !sbad.length, sbad.join(' · '));
+    const figures = await harness.store.periodFigures(harness.db, SHOP, fiscalYear),
       fbad = [];
-    fig.forEach((item) => {
+    figures.forEach((item) => {
       if (item.period > 0 && (lookup.get(item.period) || 0) !== item.sales_minor)
-        fbad.push('month ' + item.period + ': figure ' + rup(item.sales_minor) + ' vs the days ' + rup(lookup.get(item.period) || 0));
+        fbad.push('month ' + item.period + ': figure ' + rupees(item.sales_minor) + ' vs the days ' + rupees(lookup.get(item.period) || 0));
     });
-    check(fy + ' · month figures (sales) = the sum of their days', !fbad.length, fbad.join(' · '));
+    check(fiscalYear + ' · month figures (sales) = the sum of their days', !fbad.length, fbad.join(' · '));
   };
 
-  const verifyVouchers = (fy) => {
+  const verifyVouchers = (fiscalYear) => {
     /* 4 · gap-free per series inside the year, every number carrying the year */
     const by = new Map();
-    T.entries
-      .filter((e) => e.fiscal_year === fy)
+    tables.entries
+      .filter((e) => e.fiscal_year === fiscalYear)
       .forEach((e) => {
         const rows = by.get(e.series) || [];
         rows.push(e);
@@ -280,32 +280,32 @@ const rup = (minor) => (minor / 100).toFixed(2);
     by.forEach((arr, series) => {
       const n = (e) => Number(String(e.entry_no).split('/').pop()),
         sorted = arr.slice().sort((first, second) => n(first) - n(second));
-      if (!arr.every((e) => String(e.entry_no).indexOf('/' + fy + '/') > 0)) list.push(series + ' has a number outside /' + fy + '/');
+      if (!arr.every((e) => String(e.entry_no).indexOf('/' + fiscalYear + '/') > 0)) list.push(series + ' has a number outside /' + fiscalYear + '/');
       for (let index = 0; index < sorted.length; index++)
         if (n(sorted[index]) !== index + 1) {
           list.push(series + ' gap: expected ' + (index + 1) + ' got ' + n(sorted[index]) + ' (' + sorted[index].doc_date + ')');
           break;
         }
     });
-    check(fy + ' · voucher series gap-free from 1, every number carries ' + fy + ' (' + [...by.keys()].join(' ') + ')', !list.length, list.join(' · '));
+    check(fiscalYear + ' · voucher series gap-free from 1, every number carries ' + fiscalYear + ' (' + [...by.keys()].join(' ') + ')', !list.length, list.join(' · '));
   };
 
-  const closeMonth = async (pd) => {
-    const pfy = fyOf(pd),
-      pm = monthNo(pd);
-    const g = await q('POST', '/gst/close', { fy: pfy, period: pm });
-    if (g.status !== 200) line('RED', 'GST close of ' + pfy + ' month ' + pm + ' refused', JSON.stringify(g.body).slice(0, 200));
-    const tb = await tbNet(pd);
-    if (!tb.balanced) line('RED', 'trial balance out of balance at the end of ' + pd, 'Dr ' + tb.dr + ' Cr ' + tb.cr);
-    const lk = await q('POST', '/periods/' + pfy + '/' + pm + '/lock', { reason: 'month done' });
-    if (lk.status !== 200) line('RED', 'lock of ' + pfy + ' month ' + pm + ' refused', JSON.stringify(lk.body).slice(0, 200));
-    if (pm === 12) {
+  const closeMonth = async (periodDate) => {
+    const periodFy = fyOf(periodDate),
+      periodMonth = monthNo(periodDate);
+    const gstClose = await apiCall('POST', '/gst/close', { fy: periodFy, period: periodMonth });
+    if (gstClose.status !== 200) line('RED', 'GST close of ' + periodFy + ' month ' + periodMonth + ' refused', JSON.stringify(gstClose.body).slice(0, 200));
+    const trialNet = await tbNet(periodDate);
+    if (!trialNet.balanced) line('RED', 'trial balance out of balance at the end of ' + periodDate, 'Dr ' + trialNet.dr + ' Cr ' + trialNet.cr);
+    const lockReply = await apiCall('POST', '/periods/' + periodFy + '/' + periodMonth + '/lock', { reason: 'month done' });
+    if (lockReply.status !== 200) line('RED', 'lock of ' + periodFy + ' month ' + periodMonth + ' refused', JSON.stringify(lockReply.body).slice(0, 200));
+    if (periodMonth === 12) {
       /* the year has ended: close it, then the year-end checks */
-      const yc = await q('POST', '/year/' + pfy + '/close', {});
-      check(pfy + ' · year close accepted', yc.status === 200 && yc.body.ok === true, JSON.stringify(yc.body).slice(0, 240));
-      await reportYear(pfy, pd);
-      await verifySummaries(pfy);
-      verifyVouchers(pfy);
+      const yearClose = await apiCall('POST', '/year/' + periodFy + '/close', {});
+      check(periodFy + ' · year close accepted', yearClose.status === 200 && yearClose.body.ok === true, JSON.stringify(yearClose.body).slice(0, 240));
+      await reportYear(periodFy, periodDate);
+      await verifySummaries(periodFy);
+      verifyVouchers(periodFy);
     }
   };
 
@@ -313,54 +313,54 @@ const rup = (minor) => (minor / 100).toFixed(2);
   let daysRun = 0,
     sales = 0;
   for (const row of PLAN.days) {
-    const day = row.day;
-    CLOCK.set(IST(day, 12, 0));
-    const d = CLOCK.bizDay(undefined, 'IN'); /* the shop's day, from the clock */
-    if (d !== day) line('RED', 'the clock and the loop disagree on ' + day, 'clock says ' + d);
-    if (d.slice(8) === '01' && d !== START) await closeMonth(dayAdd(d, -1)); /* the month just ended: GST set-off, lock, and at March the year close */
+    const planDay = row.day;
+    CLOCK.set(istTimestamp(planDay, 12, 0));
+    const today = CLOCK.bizDay(undefined, 'IN'); /* the shop's day, from the clock */
+    if (today !== planDay) line('RED', 'the clock and the loop disagree on ' + planDay, 'clock says ' + today);
+    if (today.slice(8) === '01' && today !== START) await closeMonth(dayAdd(today, -1)); /* the month just ended: GST set-off, lock, and at March the year close */
 
     for (let index = 0; index < row.sales.length; index++) {
-      const s = sale(row.sales[index]),
-        how = row.sales[index].how;
-      const ev = {
+      const saleAmounts = sale(row.sales[index]),
+        payMode = row.sales[index].how;
+      const saleEvent = {
         type: 'sale_bill',
-        source_ref: 'sim:' + d + ':s:' + index,
-        by_rate: [{ rate: s.rate, taxable: s.taxable, cgst: s.half, sgst: s.half, igst: 0 }],
+        source_ref: 'sim:' + today + ':s:' + index,
+        by_rate: [{ rate: saleAmounts.rate, taxable: saleAmounts.taxable, cgst: saleAmounts.half, sgst: saleAmounts.half, igst: 0 }],
         round_off: 0
       };
-      if (how === 'credit') {
-        ev.party = CUST;
-        ev.paid = {};
-      } else ev.paid = { [how]: s.total };
-      await post(d, ev, s);
+      if (payMode === 'credit') {
+        saleEvent.party = CUST;
+        saleEvent.paid = {};
+      } else saleEvent.paid = { [payMode]: saleAmounts.total };
+      await post(today, saleEvent, saleAmounts);
       sales++;
     }
     if (row.purchase) {
-      const p = sale({ rate: 18, taxable: row.purchase.taxable });
-      await post(d, {
+      const purchase = sale({ rate: 18, taxable: row.purchase.taxable });
+      await post(today, {
         type: 'purchase_bill',
         party: SUPP,
-        source_ref: 'sim:' + d + ':p',
-        by_rate: [{ rate: 18, taxable: p.taxable, cgst: p.half, sgst: p.half, igst: 0 }],
-        paid: row.purchase.paid_bank ? { bank: p.total } : {},
+        source_ref: 'sim:' + today + ':p',
+        by_rate: [{ rate: 18, taxable: purchase.taxable, cgst: purchase.half, sgst: purchase.half, igst: 0 }],
+        paid: row.purchase.paid_bank ? { bank: purchase.total } : {},
         round_off: 0
       });
     }
-    if (row.expense) await post(d, { type: 'expense', class: row.expense.class, amount: row.expense.amount, paid_from: 'cash', source_ref: 'sim:' + d + ':e' });
-    if (row.rent) await post(d, { type: 'expense', class: 'rent', amount: 20000, paid_from: 'bank', source_ref: 'sim:' + d + ':rent' });
+    if (row.expense) await post(today, { type: 'expense', class: row.expense.class, amount: row.expense.amount, paid_from: 'cash', source_ref: 'sim:' + today + ':e' });
+    if (row.rent) await post(today, { type: 'expense', class: 'rent', amount: 20000, paid_from: 'bank', source_ref: 'sim:' + today + ':rent' });
     daysRun++;
   }
   /* the last month and the last year: the clock passes the end, then the same close */
-  CLOCK.set(IST(dayAdd(LAST, 1), 9, 0));
+  CLOCK.set(istTimestamp(dayAdd(LAST, 1), 9, 0));
   await closeMonth(LAST);
   {
     const first = dayAdd(LAST, 1),
-      nfy = fyOf(first); /* the new year starts its own series at 1 */
-    const r = await post(first, { type: 'expense', class: 'fuel', amount: 10, paid_from: 'cash', source_ref: 'sim:newyear' });
+      newFy = fyOf(first); /* the new year starts its own series at 1 */
+    const firstExpense = await post(first, { type: 'expense', class: 'fuel', amount: 10, paid_from: 'cash', source_ref: 'sim:newyear' });
     check(
-      'the first entry of ' + nfy + ' is PY/' + nfy + '/000001 — a new series on the first day',
-      !!r && r.entry_no === 'PY/' + nfy + '/000001',
-      'got ' + (r && r.entry_no)
+      'the first entry of ' + newFy + ' is PY/' + newFy + '/000001 — a new series on the first day',
+      !!firstExpense && firstExpense.entry_no === 'PY/' + newFy + '/000001',
+      'got ' + (firstExpense && firstExpense.entry_no)
     );
   }
   check('all ' + posted + ' postings over ' + daysRun + ' days were accepted (' + YEARS + ' years)', refused === 0, refused + ' refused');
@@ -370,28 +370,28 @@ const rup = (minor) => (minor / 100).toFixed(2);
      created_at is a naive wall-clock string: node-pg reads it in the PROCESS zone (pg-types 1114 → new Date(y,m,d,h,mi,s)), then dayOf() cuts the IST day.
      Modelled for each (database zone, server zone): which day each sale's chit lands on, against the day it should. */
   {
-    const D = '2027-08-10',
+    const testDay = '2027-08-10',
       moments = [
-        ['23:55 IST', IST(D, 23, 55), D],
-        ['00:05 IST', IST(dayAdd(D, 1), 0, 5), dayAdd(D, 1)]
+        ['23:55 IST', istTimestamp(testDay, 23, 55), testDay],
+        ['00:05 IST', istTimestamp(dayAdd(testDay, 1), 0, 5), dayAdd(testDay, 1)]
       ];
     for (const [lbl, iso, want] of moments) {
       CLOCK.set(iso);
-      const got = CLOCK.bizDay(undefined, 'IN');
-      check('the shop clock puts a ' + lbl + ' sale on ' + want + ' (the ledger path)', got === want, 'landed on ' + got);
+      const landedDay = CLOCK.bizDay(undefined, 'IN');
+      check('the shop clock puts a ' + lbl + ' sale on ' + want + ' (the ledger path)', landedDay === want, 'landed on ' + landedDay);
     }
-    const OFF = { UTC: 0, IST: 330 };
-    const wall = (iso, dbZone) => new Date(Date.parse(iso) + OFF[dbZone] * 60000).toISOString().slice(0, 19); /* what NOW() stores in a TIMESTAMP */
-    const readBack = (w, nodeZone) => new Date(Date.parse(w + 'Z') - OFF[nodeZone] * 60000); /* how node-pg parses it (local zone) */
+    const zoneOffsetMinutes = { UTC: 0, IST: 330 };
+    const wall = (iso, dbZone) => new Date(Date.parse(iso) + zoneOffsetMinutes[dbZone] * 60000).toISOString().slice(0, 19); /* what NOW() stores in a TIMESTAMP */
+    const readBack = (w, nodeZone) => new Date(Date.parse(w + 'Z') - zoneOffsetMinutes[nodeZone] * 60000); /* how node-pg parses it (local zone) */
     const scen = [
       ['live: database UTC, server UTC', 'UTC', 'UTC'],
       ['dev PC: database UTC (docker), server IST (Windows)', 'UTC', 'IST'],
       ['database IST, server UTC', 'IST', 'UTC']
     ];
-    const KH = require(path.join(H.API, 'lib', 'books-hooks'));
+    const booksHooks = require(path.join(booksHarness.API, 'lib', 'books-hooks'));
     for (const [name, dbz, nodez] of scen)
       for (const [lbl, iso, want] of moments) {
-        const landed = KH.dayOf(readBack(wall(iso, dbz), nodez), 'IN');
+        const landed = booksHooks.dayOf(readBack(wall(iso, dbz), nodez), 'IN');
         line(
           landed === want ? 'ok' : 'FINDING',
           'chit_header.created_at · ' + name + ' · sale at ' + lbl + ' → lands on ' + landed + ' (should be ' + want + ')',
@@ -402,15 +402,15 @@ const rup = (minor) => (minor / 100).toFixed(2);
       }
   }
   CLOCK.reset();
-  srv.close();
-  const red = REPORT.filter((item) => item.status === 'RED').length,
+  server.close();
+  const redCount = REPORT.filter((item) => item.status === 'RED').length,
     finds = REPORT.filter((item) => item.status === 'FINDING').length;
   if (AS_JSON)
-    console.log(JSON.stringify({ years: YEARS, seed: SEED, posted, sales, plan: PLAN_LIB.countOf(PLAN), red, findings: finds, report: REPORT }, null, 1));
+    console.log(JSON.stringify({ years: YEARS, seed: SEED, posted, sales, plan: PLAN_LIB.countOf(PLAN), red: redCount, findings: finds, report: REPORT }, null, 1));
   else
     console.log(
       '\n  ' +
-        (red ? '✗ ' + red + ' RED' : '✓ all green') +
+        (redCount ? '✗ ' + redCount + ' RED' : '✓ all green') +
         ' · ' +
         REPORT.length +
         ' lines · ' +
@@ -423,7 +423,7 @@ const rup = (minor) => (minor / 100).toFixed(2);
         YEARS +
         ' years\n'
     );
-  process.exit(red ? 1 : 0);
+  process.exit(redCount ? 1 : 0);
 })().catch((e) => {
   console.error(e);
   process.exit(2);
