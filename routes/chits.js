@@ -1000,6 +1000,10 @@ async function sendLineShape(sendState, req, res) {
   if (badId) return problem(req, res, { status: 400, ...said(badId, 'BAD_LINE_ID') });
   sendState.ignored = lineShape.ignoredFigures(req.body.line_items);
 }
+/** CUR-1b: a NEW chit never names a withdrawn or unlisted money (thrown, worded 422 by lib/knownerr) */
+function refuseWithdrawnCurrency(business_json) {
+  if (business_json && typeof business_json === 'object' && business_json.currency) require('../lib/money').refuseNewCurrency(business_json.currency);
+}
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
@@ -1012,7 +1016,7 @@ async function sendBody(sendState, req, res) {
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
   const business_json = businessJsonOf(req.body);
-  if (business_json && typeof business_json === 'object' && business_json.currency) require('../lib/money').refuseNewCurrency(business_json.currency); /* CUR-1b: a NEW chit never names a withdrawn or unlisted money (thrown, worded 422 by lib/knownerr) */
+  refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */

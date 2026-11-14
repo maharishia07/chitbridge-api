@@ -288,14 +288,14 @@ function readQueueEntries() {
   let text = '';
   try { text = fs.readFileSync(F.queue, 'utf8'); }
   catch (e) { if (e.code !== 'ENOENT') log('queue: the queue file cannot be read (' + e.message + ')'); return []; }
-  return text.split('\n').filter(Boolean).map((raw) => ({ raw: raw, row: parseQueueLine(raw) }));
+  return text.split('\n').filter(Boolean).map((lineText) => ({ raw: lineText, row: parseQueueLine(lineText) }));
 }
 /** the row a queue line holds, or null for a torn line — which stays in the file (said once per line) and is never sent */
 const TORN_SAID = new Set();
-function parseQueueLine(raw) {
-  try { return JSON.parse(raw); }
+function parseQueueLine(lineText) {
+  try { return JSON.parse(lineText); }
   catch (e) {
-    if (!TORN_SAID.has(raw)) { TORN_SAID.add(raw); log('queue: a line that is not readable was kept, not sent: ' + raw.slice(0, 60)); }
+    if (!TORN_SAID.has(lineText)) { TORN_SAID.add(lineText); log('queue: a line that is not readable was kept, not sent: ' + lineText.slice(0, 60)); }
     return null;
   }
 }

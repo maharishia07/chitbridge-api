@@ -251,7 +251,7 @@ async function refuseVoucher({ cb, adapter, log, chit_id, order }) {
 /** the buyer's party ledger in their books, created when missing; a failure is logged and the voucher goes on */
 async function ensureBuyerParty(adapter, buyer, log) {
   if (!adapter.ensureParty) return;
-  try { const pr = await adapter.ensureParty(buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); }
+  try { const partyResult = await adapter.ensureParty(buyer); if (partyResult && partyResult.created) log('party ledger created: ' + partyResult.created); } catch (e) { log('party ledger: ' + e.message); }
 }
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
@@ -275,10 +275,10 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
    */
   try {
     const invoice = await cb.invoice(chit_id);
-    const b2b = b2bOf(invoice, order);
-    if (b2b && b2b.total == null) return refuseVoucher({ cb, adapter, log, chit_id, order });
-    if (b2b) {
-      order.b2b = b2b; await ensureBuyerParty(adapter, b2b.buyer, log);
+    const b2bInfo = b2bOf(invoice, order);
+    if (b2bInfo && b2bInfo.total == null) return refuseVoucher({ cb, adapter, log, chit_id, order });
+    if (b2bInfo) {
+      order.b2b = b2bInfo; await ensureBuyerParty(adapter, b2bInfo.buyer, log);
     }
   } catch (e) {
     /* ⚠️ A FAILED READ IS NOT "NO GSTIN". Booking a registered buyer as a walk-in because the API blinked (a redeploy, 11:32 on
