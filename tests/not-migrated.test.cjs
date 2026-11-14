@@ -29,7 +29,8 @@ const ALLOW = {
   'lib/workroute.js': 'no module header / CARD yet: own PR with the header (b250 in a routing reason)',
   'lib/reprice.js': 'no module header / CARD yet: own PR with the header (b142, internal error)',
   'lib/schedule.js': 'no module header / CARD yet: own PR with the header (b203)',
-  'lib/signin-events.js': 'text goes to the log only (the CHECK that refused), never to a person (b282)'
+  'lib/signin-events.js': 'text goes to the log only (the CHECK that refused), never to a person (b282)',
+  'lib/db-role.js': 'the sign-in door verdict is a boot-log line for the operator (b857 is the migration to run), never shown to a shopkeeper (SEC-185)'
 };
 const ROOT = path.join(__dirname, '..');
 const walk = (dir) => fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? walk(dir + '/' + d.name) : d.name.endsWith('.js') ? [dir + '/' + d.name] : []));
