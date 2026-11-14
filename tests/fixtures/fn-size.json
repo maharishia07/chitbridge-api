@@ -215,7 +215,6 @@
       "PATCH /profile"
     ],
     "routes/folders.js": [
-      "GET /messages",
       "POST /move"
     ],
     "routes/identity-docs.js": [

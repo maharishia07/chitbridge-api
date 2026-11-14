@@ -108,6 +108,17 @@ function tillCeiling() {
   check('routes/till.js asks that same function before it writes (revert it and a huge price is a 500 at the column)', /catwrite\.validateAgainst\(PRICE_FIELD, \{ price: sent \}\)/.test(require('fs').readFileSync(path.join(HERE, 'routes', 'till.js'), 'utf8')));
 }
 
+/** CAT-206: a price above the printed MRP is refused in words; at or below it, an edit that leaves both alone, and a row with no MRP all pass */
+function mrpCeiling() {
+  console.log('\n── CAT-206 · a price above its MRP is refused ──\n');
+  const catwrite = require(path.join(HERE, 'lib', 'catalogue-write.js'));
+  const none = [];
+  check('price 105 over mrp 100 → a sentence naming the MRP', /above the MRP/.test(catwrite.validateAgainst(none, { price: 105, mrp: 100 }) || ''));
+  check('price 100 at mrp 100, price 90 under it, and a price with no MRP → allowed', catwrite.validateAgainst(none, { price: 100, mrp: 100 }) === null && catwrite.validateAgainst(none, { price: 90, mrp: 100 }) === null && catwrite.validateAgainst(none, { price: 105 }) === null);
+  check('a stamped price over a stamped MRP is refused as the bare numbers are', /above the MRP/.test(catwrite.validateAgainst(none, { price: { amount: 105, currency: 'INR' }, mrp: { amount: 100, currency: 'INR' } }) || ''));
+  check('raising only the price past the stored MRP is refused; an edit of the name alone on a legacy row passes', /above the MRP/.test(catwrite.validateAgainst(none, { price: 120 }, { price: 90, mrp: 100 }) || '') && catwrite.validateAgainst(none, { name: 'Renamed' }, { price: 105, mrp: 100 }) === null);
+}
+
 async function elsewhere() {
   console.log('\n── CAT-310 combo price · CAT-232 availability · CAT-246 source_key ──\n');
   let r = await ask('POST', '/api/combo-templates', { name: 'Meal', definition: [{ name: 'Pick', options: [{ name: 'Idli' }] }], price: 1e20 }, shelf(AUD));
@@ -161,6 +172,7 @@ async function elsewhere() {
   try {
     await shapes();
     tillCeiling();
+    mrpCeiling();
     await elsewhere();
   } finally {
     server.close();

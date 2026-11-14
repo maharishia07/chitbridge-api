@@ -67,6 +67,25 @@ const timed = (promise, ms) => Promise.race([promise, new Promise((done) => setT
     r = await dir.publicKeyFor('127.0.0.1:' + plain.address().port, 'someone-else', { fresh: true });
     t('a manifest for another installation names neither key', r.ok === false && r.why === 'the manifest at that domain is for a different installation' && !/far-1|someone-else/.test(r.why), JSON.stringify(r));
 
+    /* RAIL-115: one blip (a reset connection, a 503) is read once more, not cached as a refusal for the whole window */
+    for (const blip of ['reset', '503']) {
+      let hits = 0;
+      const flaky = await serve((req, res) => {
+        hits++;
+        if (hits === 1 && blip === 'reset') { req.socket.destroy(); return; }
+        if (hits === 1) { res.statusCode = 503; res.end('busy'); return; }
+        res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(MANIFEST));
+      });
+      servers.push(flaky);
+      r = await dir.manifestFor('127.0.0.1:' + flaky.address().port, { fresh: true });
+      t('a first read that ' + (blip === 'reset' ? 'is reset' : 'answers 503') + ' is retried once and succeeds', r.ok === true && hits === 2, 'hits ' + hits + ' · ' + JSON.stringify(r));
+    }
+    let hits404 = 0;
+    const missing = await serve((req, res) => { hits404++; res.statusCode = 404; res.end(); });
+    servers.push(missing);
+    r = await dir.manifestFor('127.0.0.1:' + missing.address().port, { fresh: true });
+    t('a 404 is a real answer: read once, not retried', r.ok === false && hits404 === 1, 'hits ' + hits404);
+
     /* headers at once, then one byte a second: the deadline (5 s) must cut it, not wait for the far end */
     const drip = await serve((req, res) => {
       res.setHeader('Content-Type', 'application/json');

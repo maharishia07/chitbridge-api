@@ -37,7 +37,7 @@ const ALLOWED = [
   /* the invoice / money.total copies: producers, writers and checks of ONE carried document are not readers of the shown total */
   { file: 'lib/tax.js', any: true, why: 'the engine (vendored tax pack): it PRODUCES TotInvVal and money.total, the one calculation' },
   { file: 'lib/tax-engine.browser.js', any: true, why: 'the same engine, browser build: produces the figures' },
-  { file: 'lib/tax-lines.js', has: 'v.TotInvVal', why: 'maps the engine\'s invoice answer into the money block (a producer step, no second figure)' },
+  { file: 'lib/tax-lines.js', has: 'values.TotInvVal', why: 'maps the engine\'s invoice answer into the money block (a producer step, no second figure)' },
   { file: 'lib/tax-copy.js', has: 'TotInvVal: paid', why: 'a counter note builds its own invoice ValDtls from the paid figure (writer)' },
   { file: 'lib/send-money.js', any: true, why: 'writer: pairs the engine figures into the chit (pair table, stamps) at send, ACC-206 A' },
   { file: 'lib/chit-proposal.js', has: 'priced2.block.total', why: 'writer: the change order stores the engine block total (ACC-206 A)' },
@@ -48,6 +48,8 @@ const ALLOWED = [
   { file: 'lib/credit-cap.js', has: "'TotInvVal' AS invoice_total", why: 'selects the three copies and hands them to pickOf (credit-cap.js:58): no total of its own' },
   { file: 'lib/credit-cap.js', has: 'TotInvVal: row.invoice_total', why: 'rebuilds the header shape from the selected copies for pickOf' },
   { file: 'lib/credit-cap.js', has: 'valDtls.TotInvVal', why: 'a counter note\'s two carried figures handed on (invoice_total, refund_total), compared by the cap, not computed' },
+  { file: 'lib/money-check.js', has: 'AS invoice_total', why: 'ACC-348a: the list select carries the invoice total beside summary_json and hands both to pickOf (the credit-cap.js:58 pattern): no total of its own' },
+  { file: 'lib/money-check.js', has: 'TotInvVal: row.invoice_total', why: 'ACC-348a: rebuilds the header shape from the selected copies for pickOf' },
   { file: 'lib/money-check.js', has: "money: 'summary_json.money.total'", why: 'a label: the field path the mismatch ticket names, not a read' },
   { file: 'routes/chits.js', has: 'total: money.total', why: 'the send\'s answer echoes the engine money block it just stored (writer side, ACC-206 A)' },
   { file: 'routes/chits.js', has: 'invoice.ValDtls.TotInvVal', why: 'hasInvoiceTotal: a shape test that the carried invoice holds a number (the CTR-211 verdict path), not a figure shown' },

@@ -57,7 +57,7 @@ const DEF = /(function\s+(ymd|addDays|dayKey)\w*\s*\(|(const|let|var)\s+(ymd|add
 const copies = [];
 for (const f of ours) {
   if (f === 'lib/books-engines.js') continue;
-  src(f).split('\n').forEach((l, i) => { if (code(l) && DEF.test(l) && !/books-engines|\bE\.(ymd|addDays)\b/.test(l)) copies.push(f + ':' + (i + 1)); });
+  src(f).split('\n').forEach((l, i) => { if (code(l) && DEF.test(l) && !/books-?[eE]ngines|\bE\.(ymd|addDays)\b/.test(l)) copies.push(f + ':' + (i + 1)); });
 }
 ok('no private ymd / addDays / dayKey — an alias names books-engines', copies.length === 0, copies.join(' · '));
 
