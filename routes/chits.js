@@ -22,6 +22,7 @@ const { definersReady, crossing, crossingIn, postMessageCopies } = require('../l
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
+const moneyCheck = require('../lib/money-check'); // ACC-348a: the `bill_total` key of the lists and the detail
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
 const log = require('../lib/logger');
 const { v4: uuidv4 } = require('uuid');
@@ -3404,17 +3405,20 @@ function assignmentFilter(req, params) {
   return where;
 }
 
+/** a list row with its `bill_total` (ACC-348a): the one pick of the row's stored copies, never composed here (lib/money-check.billTotalWire); the row carries no raw business_json, so its invoice figures come as columns */
+const withBillTotal = (row) => Object.assign({}, row, { bill_total: moneyCheck.billTotalWire(moneyCheck.headerOfListRow(row)) });
+
 /**
  * S34: a chit of the three mailbox lists, as each statement selects it and in its order — the allow-list of the answer, named once per list (the cancel
  * columns only when cancelCols named them: undefined is left out). summary_json and all_recipients are documents whose keys are the chit's own, so the
  * answer schema leaves the row open (listed in docs/contracts/api-output-shapes.json) and this mapping is what keeps an unnamed column out.
  */
 // prettier-ignore
-const sentRow = (x) => ({ chit_id: x.chit_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, priority_flag: x.priority_flag, customer_priority: x.customer_priority, star_flag: x.star_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count });
+const sentRow = (x) => ({ chit_id: x.chit_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, priority_flag: x.priority_flag, customer_priority: x.customer_priority, star_flag: x.star_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, bill_total: x.bill_total });
 // prettier-ignore
-const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, deleted_at: x.deleted_at, archived_at: x.archived_at, direction: x.direction, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, message_count: x.message_count });
+const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, deleted_at: x.deleted_at, archived_at: x.archived_at, direction: x.direction, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, message_count: x.message_count, bill_total: x.bill_total });
 // prettier-ignore
-const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type });
+const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type, bill_total: x.bill_total });
 
 router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, res) => {
   try {
@@ -3452,7 +3456,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
       const _cancelCol = await cancelCols();
       const outcome = await db.query(
         `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
-              ch.summary_json, ch.created_at, ch.role,
+              ch.summary_json, ch.created_at, ch.role, ${moneyCheck.listInvoiceColumnsSql('ch')},
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
               /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
               ${_cancelCol}
@@ -3474,7 +3478,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
     const total = countResult ? parseInt(countResult.rows[0].count) : null;
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
     /* S34: a chit is sentRow (the statement above, in its order); capped and cap_note only when the pager cut the page */
-    res.json({ chits: costView.listRows(result.rows, sentRow, { blind, shopId: entity_id, roles }), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
+    res.json({ chits: costView.listRows(result.rows.map(withBillTotal), sentRow, { blind, shopId: entity_id, roles }), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Sent list error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get sent items'));
@@ -3518,7 +3522,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
         ({
           date: 'created_at',
           subject: 'COALESCE(manual_subject, auto_subject)',
-          amount: 'bill_total',
+          amount: 'bill_total_sort',
           status: 'current_status',
           priority: "CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
@@ -3534,7 +3538,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
               /* ⭐ ROLE, because the LIST is where a draft has to be recognisable. Without it the mailbox could
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
-              ch.role, ${ownBill.billTotalSql('ch')} AS bill_total, /* the sort key only: folderRow names its keys, it never ships */
+              ch.role, ${ownBill.billTotalSql('ch')} AS bill_total_sort, /* the sort key only: folderRow names its keys, it never ships (the wire key bill_total is billTotalWire) */ ${moneyCheck.listInvoiceColumnsSql('ch')},
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
@@ -3554,7 +3558,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
     const total = parseInt(countResult.rows[0].count);
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
     /* S34: a chit is folderRow (the DISTINCT ON statement above, in its order); capped and cap_note only when the pager cut the page */
-    res.json({ chits: costView.listRows(result.rows, folderRow, { blind, shopId: entity_id, roles }), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
+    res.json({ chits: costView.listRows(result.rows.map(withBillTotal), folderRow, { blind, shopId: entity_id, roles }), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Folder error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get folder'));
@@ -3781,7 +3785,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
          ch.purpose,
          ch.auto_subject,
          ch.manual_subject,
-         ch.summary_json,
+         ch.summary_json, ${moneyCheck.listInvoiceColumnsSql('ch')},
          ch.created_at,
          cs.current_status,
          cs.read_at,
@@ -3824,7 +3828,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` (absent otherwise) */
     /* S34: a chit is inboxRow (the statement above, in its order). Top-level total/page/limit mirror /sent so the web pager treats both lists the same; next is the ?after= of the next page (newest-first only; null on
        the last). ⚠️ the `pagination` object said the same three numbers a second time: two spellings of one fact is how they start disagreeing. */
-    res.json({ chits: costView.listRows(result.rows, inboxRow, { blind, shopId: entity_id, roles }), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
+    res.json({ chits: costView.listRows(result.rows.map(withBillTotal), inboxRow, { blind, shopId: entity_id, roles }), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Inbox error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get inbox'));
@@ -4362,7 +4366,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
-      detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]),
+      detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]), bill_total: moneyCheck.billTotalWire(data.header.rows[0]) /* ACC-348a: the lists' key, from the full header */,
       participants: _red.participants,
       state_log: _red.state_log,
       bill_private: _red.private ? true : undefined,
