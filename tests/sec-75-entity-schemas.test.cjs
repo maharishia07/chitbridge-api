@@ -21,6 +21,7 @@ const RLS = read('migrations/RUN-2026-11-14-b862-entity-schemas-rls.sql');
 const code = (sql) => sql.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n');
 const base = () => JSON.parse(read('db/identities-sweep.baseline.json'));
 const TABLES = ['entity_schemas', 'schema_fields'];
+const ENTITY_ROWS = (present) => dbRole.ENTITY_DOORS.map((sig) => ({ sig, present, may_run: present }));
 /** T8: a SELECT that names a whole row or one of the columns a public schema must not hand over, from either table */
 const EXPOSES = /SELECT[^;`'"]{0,200}?(\*|\bdefault_value\b|\bxref\b|\bvia\b|\bleg\b)[^;`'"]{0,200}?FROM\s+(entity_schemas|schema_fields)\b/i;
 
@@ -80,9 +81,29 @@ const withExtraLine = (table, line) => {
     assert.strictEqual(dbRole.entityDoorVerdict([row(has, true, true)], false).level, 'fatal', 'a missing row counts as missing');
     assert.strictEqual(dbRole.entityDoorVerdict([], false).level, 'fatal');
     assert.strictEqual(dbRole.entityDoorVerdict([], true).level, 'warn');
-    assert(/RUN-2026-11-14-b861/.test(dbRole.entityDoorVerdict([], false).reason));
+    assert(/entity_schemas functions file in migrations/.test(dbRole.entityDoorVerdict([], false).reason), 'the reason names what to run, with no migration id in the message');
     assert(/has_function_privilege\(current_user/.test(dbRole.ENTITY_SQL) && /to_regprocedure/.test(dbRole.ENTITY_SQL), 'the facts come from the catalog, for the role the api connects as');
-    assert(/entityDoorFacts/.test(read('server.js')) && /entityNow\.level === 'fatal'\) process\.exit\(1\)/.test(read('server.js')), 'server.js asks before listening and exits on fatal');
+  });
+
+  await check('boot: bootCheck asks the entity doors THIRD (after the role and the sign-in door), is fatal on a missing door, and a fatal earlier step stops before the doors are asked', async () => {
+    const asked = [];
+    const log = { critical() {}, info() {}, warn() {} };
+    const runWith = (role, signin, entity) => async (sql) => {
+      asked.push(sql === dbRole.ROLE_SQL ? 'role' : sql === dbRole.SIGNIN_SQL ? 'signin' : sql === dbRole.ENTITY_SQL ? 'entity' : 'other');
+      if (sql === dbRole.ROLE_SQL) return { rows: [role] };
+      if (sql === dbRole.SIGNIN_SQL) return { rows: [signin] };
+      return { rows: entity };
+    };
+    const ok = { current_user: 'cb_app', rolsuper: false, rolbypassrls: false };
+    const door = { present: true, may_run: true };
+    assert.strictEqual(await dbRole.bootCheck(runWith(ok, door, ENTITY_ROWS(true)), false, log), false);
+    assert.deepStrictEqual(asked, ['role', 'signin', 'entity']);
+    asked.length = 0;
+    assert.strictEqual(await dbRole.bootCheck(runWith(ok, door, ENTITY_ROWS(false)), false, log), true, 'a missing entity door is fatal');
+    asked.length = 0;
+    assert.strictEqual(await dbRole.bootCheck(runWith(ok, { present: false, may_run: false }, ENTITY_ROWS(true)), false, log), true);
+    assert.deepStrictEqual(asked, ['role', 'signin'], 'a fatal sign-in door stops the run before the entity doors are asked');
+    assert(read('server.js').includes("dbRole.bootCheck((sql, params) => require('./db').query(sql, params)"), 'server.js hands the params through: the entity read carries the door list as a parameter');
   });
 
   await check('RUN files: held out of the migrate chain, numbered b861 then b862, and the policies file states it ships last', () => {
@@ -159,7 +180,7 @@ const withExtraLine = (table, line) => {
   });
   await check('the owner\'s preview binds to the owner and the public branch stays unbound (lib/catalogue-view.js: ONE reader for both statements of the pipeline)', () => {
     const view = read('lib/catalogue-view.js');
-    assert(/const readSchema = asOwner \? require\('\.\.\/db'\)\.queryFor\(entity\.identity_id\) : query;/.test(view));
+    assert(view.includes('const readSchema = asOwner ? queryFor(entity.identity_id) : query;') && view.includes("queryFor = (shopId) => require('../db').queryFor(shopId)"), 'the owner reader is the injected queryFor, which defaults to the real bound reader');
     assert(/_pSchema = readSchema\(/.test(view) && /await readSchema\(\s*`SELECT field_key/.test(view), 'both statements take the same reader');
     assert(/\$\{asOwner \? '' : " AND visibility = 'public'"\}/.test(view), 'the public branch keeps its visibility predicate');
   });

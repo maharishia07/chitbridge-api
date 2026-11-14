@@ -38,6 +38,7 @@ function extras(tools) {
   const withRows = (answer) => ({ sqlRows: answer });
   const failing = { db: 'fail' };
   const requiredName = firstOf(
+    answering(/WITH d AS .SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY, field_key: 'name', field_name: 'Name', field_type: 'text', required: true, min_value: null }]), /* SEC-75: the default schema AND its rules in ONE bound read */
     answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]),
     answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text', required: true }]),
     shelf
