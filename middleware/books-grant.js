@@ -21,10 +21,11 @@ const HEADER = 'x-books-for';
 /** GET routes of routes/books.js an auditor may read: the books' figures and lists, no party contact data, nothing that stores into the member's books */
 const GRANT_READS = new Set([
   '/accounts', '/daybook', '/ledger/:account', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
-  '/terms', '/fx-rates', '/health', '/cheques', '/bank/rail', '/returns'
+  '/terms', '/fx-rates', '/health', '/cheques', '/returns'
 ]);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */
 const GRANT_HELD_BACK = {
+  '/bank/rail': 'returns payment_advice and the party list (held until cb-country agrees)',
   '/status': 'owner only today; an auditor reads the ledger switch only after its gate is widened (the register line moves with it)',
   '/party/:id/statement': 'party names, phones, bank details (C6: only after cb-country confirms per country)',
   '/payments/:id/advice': 'bank details of a payee (C6)',

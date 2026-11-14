@@ -132,7 +132,7 @@ async function main() {
   base = 'http://127.0.0.1:' + server.address().port;
   try {
     /* 1 no grants */
-    let r = await viaP(P, M1, 'GET', '/daybook');
+    let r = await call(ownerOf(P), 'GET', '/api/books/daybook', { member: M1.id }); /* no grant row: refused and NO log row is written */
     ok('1 no grant: P naming M1 is refused 403 BOOKS_GRANT_NONE and gets no row', r.status === 403 && code(r) === 'BOOKS_GRANT_NONE' && !r.body.rows, JSON.stringify(r));
     r = await call(ownerOf(P), 'GET', '/api/books/daybook');
     ok('1 P without the header reads its own books only', r.status === 200 && JSON.stringify(r.body.rows) === '["Pown"]' && r.body.entity === P.id, JSON.stringify(r));
@@ -237,8 +237,13 @@ async function main() {
     const lookM1 = await logRows(M1);
     const looksOfP = lookM1.filter((x) => String(x.grantee_entity) === P.id && x.actor_identity_id !== null);
     ok('11 every request on M1 left one log row (allowed or refused): ' + asked[M1.id], looksOfP.length === asked[M1.id], looksOfP.length + ' of ' + asked[M1.id]);
-    ok('11 refusals are in the log with their outcome', lookM1.some((x) => x.outcome === 'read_only') && lookM1.some((x) => x.outcome === 'not_listed') && lookM1.some((x) => x.outcome === 'no_grant') && lookM1.some((x) => x.outcome === 'revoked') && lookM1.some((x) => x.outcome === 'allowed'), lookM1.map((x) => x.outcome).join(','));
+    ok('11 refusals are in the log with their outcome', lookM1.some((x) => x.outcome === 'read_only') && lookM1.some((x) => x.outcome === 'not_listed') && lookM1.every((x) => x.outcome !== 'no_grant') && lookM1.some((x) => x.outcome === 'revoked') && lookM1.some((x) => x.outcome === 'allowed'), lookM1.map((x) => x.outcome).join(','));
     ok('11 a log row holds the route and the query keys, never a figure', lookM1.every((x) => /^(GET|POST|PATCH|DELETE|PUT) \//.test(x.route_pattern)) && lookM1.some((x) => x.query_shape === 'entity'));
+
+    /* 2b a caller with no grant cannot add rows to another entity's log (also not by naming the member again and again) */
+    for (let i = 0; i < 5; i++) { await call(ownerOf(S), 'GET', '/api/books/daybook', { member: M1.id }); await call(ownerOf(S), 'GET', '/api/books/daybook', { member: M2.id }); }
+    const forged = (await logRows(M1)).concat(await logRows(M2)).filter((x) => String(x.grantee_entity) === S.id);
+    ok('2b a stranger with no grant naming M1 and M2 ten times writes no log row at all', forged.length === 0, forged.length);
 
     /* 12 the member lists only its own looks */
     const m2Looks = await call(ownerOf(M2), 'GET', '/api/books-grants/log');
@@ -251,9 +256,38 @@ async function main() {
     ok('the parent lists the access it holds, each with its state', received.status === 200 && received.body.received.length === 4 && ['revoked', 'expired', 'edge_off'].every((word) => received.body.received.some((g) => g.state === word)), JSON.stringify(received.body.received && received.body.received.map((g) => g.state)));
     const noUpdate = await withEntity(P.id, (h) => h.query('UPDATE books_access_log SET status = 0')).then(() => 'updated', (e) => e.code);
     ok('the log is insert-only: no UPDATE privilege (42501)', noUpdate === '42501', noUpdate);
+    await realBooks(P, S);
   } finally {
     server.close();
   }
+}
+
+/** the REAL routes/books.js (not the stand-in): every non-GET is refused, every listed GET runs under READ ONLY through the real gates, every other GET is refused */
+async function realBooks(P, S) {
+  const M5 = await business('5'); await join(P, M5);
+  const real = express(); real.use(express.json()); real.use('/api/books', require(path.join(API, 'routes', 'books.js')));
+  const realServer = await new Promise((resolve) => { const s = real.listen(0, '127.0.0.1', () => resolve(s)); });
+  const saved = base; base = 'http://127.0.0.1:' + realServer.address().port;
+  try {
+    const enabled = await call(ownerOf(M5), 'POST', '/api/books/enable', { body: {} });
+    ok('R0 the member switches its real ledger on (the real gates answer)', enabled.status === 200, JSON.stringify(enabled));
+    ok('R0 a grant is given', (await giveGrant(P, M5)).status === 201);
+    const fill = (route) => route.replace(/:fy/g, '2026-27').replace(/:account/g, 'cash').replace(/:p/g, '1').replace(/:act/g, 'lock').replace(/:[a-z_]+/g, '3f2c9e1a-1111-4222-8333-444455556666');
+    const routes = []; const walk = (stack) => stack.forEach((layer) => layer.route && Object.keys(layer.route.methods).forEach((m) => routes.push([m.toUpperCase(), layer.route.path])));
+    walk(require(path.join(API, 'routes', 'books.js')).stack);
+    const writes = routes.filter(([m]) => m !== 'GET'); const reads = routes.filter(([m]) => m === 'GET');
+    const refused = [];
+    for (const [m, route] of writes) { const r = await call(ownerOf(P), m, '/api/books' + fill(route), { member: M5.id, body: m === 'DELETE' ? undefined : {} }); if (!(r.status === 403 && code(r) === 'GRANT_READ_ONLY')) refused.push(m + ' ' + route + ' -> ' + r.status + ' ' + code(r)); }
+    ok('R1 every non-GET of the real books router (' + writes.length + ') answers 403 GRANT_READ_ONLY', refused.length === 0, refused.slice(0, 4).join(' | '));
+    const listed = reads.filter(([, route]) => booksGrant.GRANT_READS.has(route));
+    ok('R2 the allow-list is ' + booksGrant.GRANT_READS.size + ' real GET routes', listed.length === booksGrant.GRANT_READS.size, listed.length);
+    const bad = [];
+    for (const [, route] of listed) { const r = await call(ownerOf(P), 'GET', '/api/books' + fill(route), { member: M5.id }); if (r.status >= 500 || r.status === 401 || (code(r) || '').startsWith('GRANT_') || (code(r) || '').startsWith('BOOKS_GRANT_')) bad.push(route + ' -> ' + r.status + ' ' + code(r)); }
+    ok('R3 every listed GET runs through the real gates under READ ONLY (no 5xx, no grant refusal)', bad.length === 0, bad.slice(0, 4).join(' | '));
+    const open = [];
+    for (const [, route] of reads.filter(([, rt]) => !booksGrant.GRANT_READS.has(rt))) { const r = await call(ownerOf(P), 'GET', '/api/books' + fill(route), { member: M5.id }); if (!(r.status === 403 && code(r) === 'GRANT_ROUTE_NOT_LISTED')) open.push(route + ' -> ' + r.status); }
+    ok('R4 every GET that is not listed is refused GRANT_ROUTE_NOT_LISTED', open.length === 0, open.slice(0, 4).join(' | '));
+  } finally { base = saved; realServer.close(); }
 }
 
 async function cleanup() {
