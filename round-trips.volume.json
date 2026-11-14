@@ -22,6 +22,7 @@
   "GET /api/attachments/:id",
   "GET /api/books/accounts",
   "GET /api/books/assets",
+  "GET /api/books/bank/log",
   "GET /api/books/bank/rail",
   "GET /api/books/bs",
   "GET /api/books/cashflow",
@@ -457,6 +458,19 @@
    },
    "100": {
     "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bank/log": {
+   "0": {
+    "trips": 6
+   },
+   "10": {
+    "trips": 6
+   },
+   "100": {
+    "trips": 6
    },
    "grows": false,
    "exercised": false
