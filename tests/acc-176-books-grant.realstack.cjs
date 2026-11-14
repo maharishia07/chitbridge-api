@@ -269,6 +269,7 @@ async function realBooks(P, S) {
   const realServer = await new Promise((resolve) => { const s = real.listen(0, '127.0.0.1', () => resolve(s)); });
   const saved = base; base = 'http://127.0.0.1:' + realServer.address().port;
   try {
+    await withEntity(M5.id, (h) => require(path.join(API, 'lib', 'country-setup.js')).save(h, M5.id, { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' }, source: { tax: 'typed' } }, M5.id)); /* the shop's country setup, as set86 does it */
     const enabled = await call(ownerOf(M5), 'POST', '/api/books/enable', { body: {} });
     ok('R0 the member switches its real ledger on (the real gates answer)', enabled.status === 200, JSON.stringify(enabled));
     const given = await giveGrant(P, M5); ok('R0 a grant is given', given.status === 201, JSON.stringify(given));
