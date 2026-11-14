@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // @type: unit
 /**
- * tests/acc-176-grants-contract.test.cjs — ACC-176: the member's grant routes (in routes/books-money.js) against their contract (lib/books-grants-contract.js), and the grant store's rules that need no database.
+ * tests/acc-176-grants-contract.test.cjs — ACC-176: the member's grant routes (routes/books-grants.js) against their contract (lib/books-grants-contract.js), and the grant store's rules that need no database.
  * Contract: every route of the router has an operation (a session, a Problem for each refusal, a closed body on every write, a uuid id) and the router publishes exactly them.
  * Refusal path: an end date in the past or beyond 36 months, a purpose of 1 or 400 characters, a grantee that is no id, are refused in words with a code BEFORE any database is asked.
  * Fail closed: a database that is not there is the typed BOOKS_GRANT_NOT_SWITCHED_ON (503) in words, never a 500 and never an open answer; the consent words list exactly the allow-list.
@@ -14,7 +14,7 @@ const path = require('path');
 const assert = require('assert');
 const API = path.join(__dirname, '..');
 const contract = require(path.join(API, 'lib', 'books-grants-contract.js'));
-const router = require(path.join(API, 'routes', 'books-money.js'));
+const router = require(path.join(API, 'routes', 'books-grants.js'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 const booksGrant = require(path.join(API, 'middleware', 'books-grant.js'));
 let pass = 0;
@@ -27,10 +27,10 @@ const refusedWith = (fn, code) => { try { fn(); } catch (e) { assert.strictEqual
 (async () => {
   console.log('\nACC-176 · the member grant routes (offline)');
   await t('contract: every route of the router has an operation, and the router publishes exactly them', () => {
-    const mine = router.stack.filter((layer) => layer.route && layer.route.path.startsWith('/grants'));
-    const live = mine.map((layer) => Object.keys(layer.route.methods)[0].toUpperCase() + ' ' + (layer.route.path.slice('/grants'.length) || '/')).sort();
+    const mine = router.stack.filter((layer) => layer.route);
+    const live = mine.map((layer) => Object.keys(layer.route.methods)[0].toUpperCase() + ' ' + layer.route.path).sort();
     assert.deepStrictEqual(live, Object.keys(contract.ROUTES).sort());
-    const published = Object.keys(router.openapi.paths).filter((p) => p.startsWith('/api/books/grants')).reduce((n, p) => n + Object.keys(router.openapi.paths[p]).length, 0);
+    const published = Object.keys(router.openapi.paths).reduce((n, p) => n + Object.keys(router.openapi.paths[p]).length, 0);
     assert.strictEqual(published, live.length);
   });
   await t('contract: a session is required, every refusal is a Problem, every write has a closed body, the id is a uuid', () => {
