@@ -174,7 +174,7 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
     assert.strictEqual(dbRole.verdict(null, false).level, 'warn');
   });
   check('role: the boot asks db-role before it listens (server.js), and the SQL reads rolbypassrls of current_user', () => {
-    const server = read('server.js'); assert(/roleFacts/.test(server) && /db-role/.test(server)); assert(server.indexOf('roleFacts') < server.indexOf('.listen('));
+    const server = read('server.js'); assert(/bootCheck/.test(server) && /db-role/.test(server)); assert(server.indexOf('bootCheck') < server.indexOf('.listen(')); assert(read('lib/db-role.js').includes('roleFacts(runQuery)'));
     assert(/rolbypassrls FROM pg_roles WHERE rolname = current_user/.test(dbRole.ROLE_SQL));
   });
 

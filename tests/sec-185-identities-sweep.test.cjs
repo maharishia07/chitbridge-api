@@ -29,7 +29,7 @@ const code = (sql) => sql.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n'
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sec185-'));
     try {
       for (const dir of ['lib', 'routes', 'middleware']) fs.cpSync(path.join(ROOT, dir), path.join(tmp, dir), { recursive: true });
-      fs.appendFileSync(path.join(tmp, 'lib', 'policy.js'), '\n' + line + '\n');
+      fs.appendFileSync(path.join(tmp, 'lib', 'policy.js'), ('\n' + line).repeat(3) + '\n'); /* three copies: the ceiling may sit one above this tree (a merged batch), so one extra site must not hide in the slack */
       return sweepTool.judge(sweepTool.count(sweepTool.sweep(tmp)), baseline());
     } finally { fs.rmSync(tmp, { recursive: true, force: true }); sweepTool.sweep(); }
   };
