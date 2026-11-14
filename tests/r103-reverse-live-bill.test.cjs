@@ -22,7 +22,7 @@ const ok = (name, cond, why) => { if (cond) console.log('   ok   ' + name); else
   ok('one query for the page, the bad id never reaches it', calls.length === 1 && calls[0].args[1].length === 1 && calls[0].args[1][0] === X);
   ok('the answer is a Set of entry ids', live instanceof Set && live.has(X));
   const sql = calls[0].sql;
-  ok('only bills, only the exact chit source, not reversed, not cancelled / rejected', /event_type IN \('sale_bill', 'purchase_bill'\)/.test(sql) && /\^chit:\[0-9a-f-\]\{36\}\$/.test(sql) && /reverses_entry_id = x\.entry_id/.test(sql) && /'cancelled', 'rejected'/.test(sql));
+  ok('only bills, only the chit source (and its :asset|:use halves), not reversed, not cancelled / rejected', /event_type IN \('sale_bill', 'purchase_bill'\)/.test(sql) && /\^chit:\[0-9a-f-\]\{36\}\$/.test(sql) && /reverses_entry_id = x\.entry_id/.test(sql) && /'cancelled', 'rejected'/.test(sql));
   ok('no ids → no query', (await S.liveBillEntries(db, E, [])).size === 0 && calls.length === 1);
 
   const route = read('routes/books.js'), at = route.indexOf("router.post('/entries/:id/reverse'"), body = route.slice(at, at + 2600);
