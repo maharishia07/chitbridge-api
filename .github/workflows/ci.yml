@@ -331,6 +331,11 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/net-93-tree-approve.realstack.cjs
+      - name: ACC-176 · an auditor reads a member's books only through a live, named grant — read only in Postgres itself, every look logged, revoke / suspend / disconnect / expiry end it at once (real Postgres, api role cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/acc-176-books-grant.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
