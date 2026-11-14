@@ -18097,6 +18097,7 @@
     "codes": []
    },
    "reads": [
+    "identities",
     "standard_source"
    ],
    "writes": [],
@@ -35289,7 +35290,6 @@
    "writes": [
     "customer_list",
     "identities",
-    "ledger_account",
     "supplier_list"
    ],
    "money": false,
@@ -37249,7 +37249,6 @@
     "identities"
    ],
    "writes": [
-    "books_change_log",
     "books_setting"
    ],
    "money": false,
@@ -45203,7 +45202,6 @@
    },
    "reads": [
     "customer_list",
-    "identities",
     "supplier_list"
    ],
    "writes": [
@@ -50434,9 +50432,7 @@
      "SESSION_ONLY"
     ]
    },
-   "reads": [
-    "identities"
-   ],
+   "reads": [],
    "writes": [
     "catalogue_adoption"
    ],
@@ -50644,8 +50640,7 @@
     ]
    },
    "reads": [
-    "catalogue_adoption",
-    "identities"
+    "catalogue_adoption"
    ],
    "writes": [
     "catalogue_adoption"

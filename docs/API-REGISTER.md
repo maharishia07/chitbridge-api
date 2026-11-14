@@ -1265,7 +1265,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): customer_list, identities, ledger_account, supplier_list · callers: cap-move-in.js · actions: -
+- reads (derived): books_setting, catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): customer_list, identities, supplier_list · callers: cap-move-in.js · actions: -
 
 **POST /api/books/move-in/preflight** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -1373,7 +1373,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, TERMS_NOT_MIGRATED] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-finance-cheques.js 1/1, cap-finance-terms.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): books_change_log, books_setting · callers: cap-finance-cheques.js, cap-finance-terms.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): books_setting · callers: cap-finance-cheques.js, cap-finance-terms.js · actions: -
 
 **POST /api/books/write-off** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -2337,7 +2337,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): customer_list, identities, supplier_list · writes (derived): memberships · callers: cap-crm-leads.js · actions: -
+- reads (derived): customer_list, supplier_list · writes (derived): memberships · callers: cap-crm-leads.js · actions: -
 
 **POST /api/crm/privacy-requests** · crm · cb-crm · meets standard
 - does: _not yet written_
@@ -2871,7 +2871,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 10 (wire 20; share cap-admin.js 10/109, cap-definitions.js 10/17, cap-readiness.js 10/25) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): standard_source · writes (derived): - · callers: cap-admin.js, cap-definitions.js, cap-readiness.js · actions: -
+- reads (derived): identities, standard_source · writes (derived): - · callers: cap-admin.js, cap-definitions.js, cap-readiness.js · actions: -
 
 **GET /api/governance/readiness/:bridge_id** · governance · cb-settings · meets standard
 - does: _not yet written_
@@ -3335,7 +3335,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/109) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): identities · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
+- reads (derived): - · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
 
 **POST /api/network-offers/catalogue/price** · network-offers · cb-network · meets standard
 - does: _not yet written_
@@ -3347,7 +3347,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 1 code(s) [SESSION_ONLY] · statuses 400, 401, 403, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/109) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_adoption, identities · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
+- reads (derived): catalogue_adoption · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
 
 **PUT /api/network-offers/policy** · network-offers · cb-network · meets standard
 - does: _not yet written_
