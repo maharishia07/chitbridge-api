@@ -40,7 +40,7 @@ function bill(o) {
   return {
     bill_no: 'C1/26-27/0001', till: { id: 'till-1' }, billed_at: '2026-10-30T03:00:00.000Z',
     customer: o.customer || { name: 'Walk-in' },
-    invoice: { ValDtls: val, ItemList: [{ SlNo: '1', PrdDesc: 'Item', GstRt: o.rate, AssAmt: taxable, TotAmt: total }], _cb: { supply: o.supply || 'domestic' } },
+    invoice: { ValDtls: val, ItemList: [{ SlNo: '1', PrdDesc: 'Item', HsnCd: '1006', GstRt: o.rate, AssAmt: taxable, TotAmt: total }], _cb: { supply: o.supply || 'domestic' } },
     not_invoice: o.not_invoice
   };
 }
