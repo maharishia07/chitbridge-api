@@ -543,6 +543,8 @@ function pageQ(query) {
 }
 const cursorOf = (next) => (next ? next.date + '|' + next.no : null);
 
+/** the sentence the refusal and the greyed Reverse button both say (one text, the server's) */
+const LIVE_BILL_WORDS = 'This entry is a bill that is still live. Make a credit note instead.';
 /** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
@@ -596,6 +598,12 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
           counter: l.counter_id,
           rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate)
         }); /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
+      }
+      /* R1-03: show every action, the server answers may/why — a live bill's Reverse is greyed with the sentence (the route refuses it too, ENTRY_OF_LIVE_BILL); ONE read for the page */
+      const live = await S.liveBillEntries(h, e, entries.map((x) => x.entry_id));
+      for (const x of entries) {
+        x.may_reverse = !live.has(String(x.entry_id));
+        x.why = x.may_reverse ? null : { code: 'ENTRY_OF_LIVE_BILL', words: LIVE_BILL_WORDS };
       }
       return entries;
     });
@@ -1857,6 +1865,10 @@ router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req
 router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    /* R1-03 (DEC-267): a bill still live leaves the books through a credit note, not a Reverse. The guard sits HERE, not in B.reverseEntry: the cancel path
+       (chit-move → books-hooks.takeBackCancelled) reaches the writer too and must keep working. An entry already reversed is not "live": it answers ALREADY_REVERSED below. */
+    const live = await withEntity(ctx(req), (h) => S.liveBillEntries(h, ctx(req), [String(req.params.id)]));
+    if (live.has(String(req.params.id))) return problem(req, res, { status: 409, code: 'ENTRY_OF_LIVE_BILL', detail: LIVE_BILL_WORDS });
     const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });
     if (r && r.duplicate) {
       const m = 'This entry was already reversed by ' + r.entry_no + '.';

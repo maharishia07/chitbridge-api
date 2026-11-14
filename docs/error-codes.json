@@ -2243,6 +2243,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ENTRY_OF_LIVE_BILL",
+   "status": "409",
+   "title": "Bill still live",
+   "shopkeeper": "This entry is a bill that is still live. Make a credit note instead.",
+   "hint": "Open the bill and make a credit note to take it back.",
+   "owner_area": "books",
+   "since": "2026-11-14"
+  },
+  {
    "code": "ERR",
    "status": "500",
    "title": "Something went wrong",
