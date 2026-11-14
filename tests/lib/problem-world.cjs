@@ -14,6 +14,7 @@
  */
 'use strict';
 const path = require('path');
+const { boundDb } = require('../support/bound-db.cjs');
 const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
@@ -101,7 +102,8 @@ function harness(options) {
   function installStubs() {
     /* the database stand-in goes in FIRST: a library a middleware loads (lib/schema binds `query` when it loads) must see the stand-in, not the real pool */
     const client = { query: async (sql, params) => rowsFor(sql, params) };
-    const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, db, run) => (typeof db === 'function' ? db : run)(client), /* onEntity(id, db, fn): db is the transaction a caller owns, or nothing */ trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
+    const bound = boundDb((sql, params) => rowsFor(sql, params)); /* SEC-75: queryAs/queryFor are the bound readers: a blank id or another shop's predicate sees no row */
+    const known = { query: async (sql, params) => rowsFor(sql, params), queryAs: bound.queryAs, queryFor: bound.queryFor, withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, db, run) => (typeof db === 'function' ? db : run)(client), /* onEntity(id, db, fn): db is the transaction a caller owns, or nothing */ trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
     const fallback = async () => ({ rows: [], rowCount: 0 });
     const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : fallback) });
     mock('db', db);

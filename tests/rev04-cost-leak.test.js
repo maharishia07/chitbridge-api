@@ -17,6 +17,7 @@
 // Run: node tests/rev04-cost-leak.test.js
 const assert = require('node:assert');
 const view = require('../lib/catalogue-view');
+const { boundDb, schemaRows } = require('./support/bound-db.cjs');
 const catalogueRead = require('../lib/catalogue-read');
 const orderInput = require('../lib/order-input');
 
@@ -48,7 +49,9 @@ function deps({ can_see_cost = false } = {}) {
     return { rows: [] };
   } });
   const catalogueBuild = { resolve: async (key) => ({ title: 'Templates', collection: 'T', items: [], source_key: key }) };
-  return { entity: ENTITY, query, withEntity, catalogueBuild, orderInput, catalogueRead };
+  /* SEC-75: the OWNER's preview reads the schema bound to the shop (queryFor); only ENTITY has a schema, another id reads nothing. The public read stays the plain `query`. */
+  const bound = boundDb(schemaRows({ [ENTITY.identity_id]: { schema_id: 's1', schema_name: 'Products', fields: [] } }));
+  return { entity: ENTITY, query, queryFor: bound.queryFor, withEntity, catalogueBuild, orderInput, catalogueRead };
 }
 
 t('⭐⭐⭐ item_data.cost is stripped from the ITEM — the pre-existing half of the guard, still true', async () => {

@@ -35,7 +35,7 @@ function boundDb(rowsFor) {
 }
 
 /**
- * schemaRows(shops) -> a rowsFor part: the rows of entity_schemas / schema_fields for { [shopId]: { schema_id, fields: [...] } }, one shop's rules never another's.
+ * schemaRows(shops) -> a rowsFor part: the rows of entity_schemas / schema_fields for { [shopId]: { schema_id, schema_name?, fields: [...] } }, one shop's rules never another's.
  * Answers the three shapes the bound readers send (lib/catalogue-write): the default schema, its fields (with the shop predicate), and both in one WITH. null = not a schema statement.
  */
 function schemaRows(shops) {
@@ -45,7 +45,7 @@ function schemaRows(shops) {
     if (!mine) return [];
     if (/WITH d AS/.test(sql)) return mine.fields.length ? mine.fields.map((f) => Object.assign({ schema_id: mine.schema_id }, f)) : [{ schema_id: mine.schema_id, field_key: null }];
     if (/FROM schema_fields/.test(sql)) return params[0] === mine.schema_id ? mine.fields : [];
-    return [{ schema_id: mine.schema_id }];
+    return [Object.assign({ schema_id: mine.schema_id }, mine.schema_name ? { schema_name: mine.schema_name } : {})];
   };
 }
 
