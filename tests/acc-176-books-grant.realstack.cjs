@@ -53,11 +53,11 @@ const UUID0 = '00000000-0000-4000-8000-0000000000';
 const label = (bridgeId) => String(bridgeId).replace(/[^A-Za-z0-9_]/g, '_');
 
 /** a business: its identity and its network node, a root of its own */
-async function business(tag) {
+async function business(tag, country, currency) {
   const bridgeId = 'CB' + RUN + tag;
   const { rows: [identity] } = await query(
-    `INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'AU', 'AUD', $3) RETURNING identity_id`,
-    [bridgeId, 'ACC176 ' + tag + ' ' + RUN, bridgeId.toLowerCase()]);
+    `INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', $4, $5, $3) RETURNING identity_id`,
+    [bridgeId, 'ACC176 ' + tag + ' ' + RUN, bridgeId.toLowerCase(), country || 'AU', currency || 'AUD']);
   madeIdentities.push(identity.identity_id);
   return { tag, bridgeId, id: identity.identity_id, node: await net.nodeOf(identity.identity_id, { ensure: true }) };
 }
@@ -264,14 +264,14 @@ async function main() {
 
 /** the REAL routes/books.js (not the stand-in): every non-GET is refused, every listed GET runs under READ ONLY through the real gates, every other GET is refused */
 async function realBooks(P, S) {
-  const M5 = await business('5'); await join(P, M5);
-  const real = express(); real.use(express.json()); real.use('/api/books', require(path.join(API, 'routes', 'books.js')));
+  const M5 = await business('5', 'IN', 'INR'); /* an India shop passes the country-setup gate unchanged, so its ledger can be switched on here */ await join(P, M5);
+  const real = express(); real.use(express.json()); real.use('/api/books', require(path.join(API, 'routes', 'books.js'))); real.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
   const realServer = await new Promise((resolve) => { const s = real.listen(0, '127.0.0.1', () => resolve(s)); });
   const saved = base; base = 'http://127.0.0.1:' + realServer.address().port;
   try {
     const enabled = await call(ownerOf(M5), 'POST', '/api/books/enable', { body: {} });
     ok('R0 the member switches its real ledger on (the real gates answer)', enabled.status === 200, JSON.stringify(enabled));
-    ok('R0 a grant is given', (await giveGrant(P, M5)).status === 201);
+    const given = await giveGrant(P, M5); ok('R0 a grant is given', given.status === 201, JSON.stringify(given));
     const fill = (route) => route.replace(/:fy/g, '2026-27').replace(/:account/g, 'cash').replace(/:p/g, '1').replace(/:act/g, 'lock').replace(/:[a-z_]+/g, '3f2c9e1a-1111-4222-8333-444455556666');
     const routes = []; const walk = (stack) => stack.forEach((layer) => layer.route && Object.keys(layer.route.methods).forEach((m) => routes.push([m.toUpperCase(), layer.route.path])));
     walk(require(path.join(API, 'routes', 'books.js')).stack);
