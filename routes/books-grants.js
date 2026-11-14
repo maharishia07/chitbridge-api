@@ -11,6 +11,7 @@ const { problem } = require('../lib/problem');
 const { ownerOnly } = require('../lib/owner');
 const grants = require('../lib/books-grant');
 const contract = require('../lib/books-grants-contract');
+const { declaresStatuses } = require('../lib/contract-kit'); /* a gate that refuses nothing and says which statuses the store under the handler can answer (a table not yet made: 503; a second open grant: 409) */
 
 const entityOf = (req) => auth.entityOf(req);
 const byOf = (req) => req.identity.identity_id;
@@ -30,7 +31,7 @@ function answer(req, res, err) {
 
 router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false')));
 
-router.get('/', auth, noKey, memberOnly, ...contract.checked('GET /'), async (req, res) => {
+router.get('/', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
   try {
     res.json(await grants.list(entityOf(req)));
   } catch (err) {
@@ -38,7 +39,7 @@ router.get('/', auth, noKey, memberOnly, ...contract.checked('GET /'), async (re
   }
 });
 
-router.post('/', auth, noKey, memberOnly, ...contract.checked('POST /'), async (req, res) => {
+router.post('/', auth, noKey, memberOnly, declaresStatuses([409, 503]), ...contract.checked('POST /'), async (req, res) => {
   try {
     const body = req.body || {};
     if (body.consent !== true) throw grants.refusal('BOOKS_GRANT_CONSENT_NEEDED', 422, 'Read what your auditor can see, then say yes.');
@@ -48,7 +49,7 @@ router.post('/', auth, noKey, memberOnly, ...contract.checked('POST /'), async (
   }
 });
 
-router.patch('/:id', auth, noKey, memberOnly, ...contract.checked('PATCH /:id'), async (req, res) => {
+router.patch('/:id', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('PATCH /:id'), async (req, res) => {
   try {
     res.json(await grants.change(entityOf(req), byOf(req), req.params.id, req.body || {}));
   } catch (err) {
@@ -56,7 +57,7 @@ router.patch('/:id', auth, noKey, memberOnly, ...contract.checked('PATCH /:id'),
   }
 });
 
-router.post('/:id/revoke', auth, noKey, memberOnly, ...contract.checked('POST /:id/revoke'), async (req, res) => {
+router.post('/:id/revoke', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('POST /:id/revoke'), async (req, res) => {
   try {
     res.json(await grants.revoke(entityOf(req), byOf(req), req.params.id));
   } catch (err) {
@@ -64,7 +65,7 @@ router.post('/:id/revoke', auth, noKey, memberOnly, ...contract.checked('POST /:
   }
 });
 
-router.get('/log', auth, noKey, memberOnly, ...contract.checked('GET /log'), async (req, res) => {
+router.get('/log', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('GET /log'), async (req, res) => {
   try {
     res.json({ looks: await grants.looks(entityOf(req), req.query || {}) });
   } catch (err) {

@@ -97,6 +97,11 @@
  "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
  "cannot_answer": [
   {
+   "route": "GET /api/books-grants/consent",
+   "status": 500,
+   "reason": "the answer is the consent words built in memory from the auditor allow-list with no query and no database; the only fault left is Express failing to write, which no request can provoke, so no test can show a 500"
+  },
+  {
    "route": "GET /api/actors/check-login",
    "status": 500,
    "reason": "the answer is one frozen constant object read from memory with no query; the only fault left is Express itself failing to write, which no request can provoke, so no test can show a 500"
