@@ -4365,7 +4365,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
-      header: data.header.rows[0],
+      header: costView.headerWithCurrency(data.header.rows[0]),
       detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]), bill_total: moneyCheck.billTotalWire(data.header.rows[0]) /* ACC-348a: the key the lists carry, from the full header */,
       participants: _red.participants,
       state_log: _red.state_log,
