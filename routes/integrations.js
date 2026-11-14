@@ -186,6 +186,7 @@ const KIT_NAMES = [
   'till.html',
   'signin-ui.js',
   'their-bill.js',
+  'tax-slab-ui.js',
   'printer.js',
   'rollup.js',
   'orders.js',
