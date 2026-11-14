@@ -239,8 +239,19 @@ function b2bOf(inv, order) {
   const h = (inv.heads) || {}; const cbx = (inv.invoice && inv.invoice._cb) || {};
   return { buyer: { name: b.LglNm || b.TrdNm || order.buyer, gstin: b.Gstin, state_code: b.State || String(b.Gstin).slice(0, 2), addr: [b.Addr1, b.Addr2].filter(Boolean).join(', '), loc: b.Loc || '', pin: b.Pin || '', reg_type: 'Regular' },
            place_of_supply: b.Pos || cbx.place_of_supply || b.State || String(b.Gstin).slice(0, 2), supply: cbx.supply || null,
-           taxes: { cgst: Number(h.cgst) || 0, sgst: Number(h.sgst) || 0, igst: Number(h.igst) || 0, cess: Number(h.cess) || 0 }, taxable: Number(h.taxable) || 0, total: Number(h.total) || order.total,
+           taxes: { cgst: Number(h.cgst) || 0, sgst: Number(h.sgst) || 0, igst: Number(h.igst) || 0, cess: Number(h.cess) || 0 }, taxable: Number(h.taxable) || 0, total: Number(h.total) > 0 ? Number(h.total) : null, currency: order.currency,   /* CON-98: no invoice total = unknown (null), never the order's net */
            items: ((inv.invoice && inv.invoice.ItemList) || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd, rate: Number(it.GstRt) || 0, ass: Number(it.AssAmt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 })) };
+}
+/** CON-98: a registered buyer's invoice with no total cannot make a voucher — say so once (log + books write-back), keep no receipt so the next catch-up asks again */
+async function refuseVoucher({ cb, adapter, log, chit_id, order }) {
+  const reason = 'the invoice carries no total (' + order.currency + ') — not exportable until it does';
+  if (!cb._waited || !cb._waited[chit_id + ':total']) { cb._waited = cb._waited || {}; cb._waited[chit_id + ':total'] = true; log('order ' + chit_id.slice(0, 8) + ' ' + reason); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'waiting', why: reason }); }
+  return { chit_id, outcome: 'waiting', why: reason };
+}
+/** the buyer's party ledger in their books, created when missing; a failure is logged and the voucher goes on */
+async function ensureBuyerParty(adapter, buyer, log) {
+  if (!adapter.ensureParty) return;
+  try { const pr = await adapter.ensureParty(buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); }
 }
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
@@ -265,9 +276,9 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   try {
     const inv = await cb.invoice(chit_id);
     const b2b = b2bOf(inv, order);
+    if (b2b && b2b.total == null) return refuseVoucher({ cb, adapter, log, chit_id, order });
     if (b2b) {
-      order.b2b = b2b;
-      if (adapter.ensureParty) { try { const pr = await adapter.ensureParty(order.b2b.buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); } }
+      order.b2b = b2b; await ensureBuyerParty(adapter, b2b.buyer, log);
     }
   } catch (e) {
     /* ⚠️ A FAILED READ IS NOT "NO GSTIN". Booking a registered buyer as a walk-in because the API blinked (a redeploy, 11:32 on
