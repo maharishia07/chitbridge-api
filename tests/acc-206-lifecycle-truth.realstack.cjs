@@ -112,12 +112,11 @@ const piece = (name) => ({ id: undefined, name, unit: 'piece', price: 1000 });
     const counter = (extra) => Object.assign({ invoice: { ValDtls: counterOf } }, c.id === 'AU' ? { parts: [{ how: 'card', amount: counterOf.TotInvVal }] } : {}, extra);
     const NO = (kind) => RUN + c.id + '-' + kind;
 
-    await kase(c.id + '-C1', 'C1 counter cash bill: invoice, money, total_value and the detail column are one figure; the list that holds it says it too', async () => {
+    await kase(c.id + '-C1', 'C1 counter cash bill: invoice, money, total_value and the detail column are one figure (no list holds a walk-in bill)', async () => {
       const r = ok(await send(A, bill(NO('c1'), rows, counter())), 'send C1');
       const id = chitIdOf(r);
-      const total = assertOneFigure(await copiesOf(A, id), c.currency, c.id + ' C1');
-      const row = await listFigureOf(A, id);
-      expect(same(row.total_value, total), 'the ' + row.where + ' says ' + row.total_value + ', the detail ' + total);
+      assertOneFigure(await copiesOf(A, id), c.currency, c.id + ' C1');
+      /* a walk-in cash bill sits in no list (not sent, not inbox, not a Bills folder: seen in CI run on c5d87f29), so there is no list row to compare; its readers are the till's day close and the books */
     });
     await kase(c.id + '-C2', 'C2 counter bill to a named customer: the same one figure', async () => {
       const r = ok(await send(A, bill(NO('c2'), rows, counter({ customer: { name: 'Named buyer ' + RUN } }))), 'send C2');
