@@ -81,15 +81,15 @@ const door = (status, work) => async (req, res) => {
   }
 };
 
-router.get('/', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('GET /'), door(200, (req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
-router.get('/:id', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('GET /:id'), door(200, (req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
-router.post('/', auth, noKey, ledgerOn, firmOnly, ...contract.checked('POST /'), rightStore, door(201, (req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
-router.post('/:id/review', auth, noKey, ledgerOn, firmOnly, ...contract.checked('POST /:id/review'), rightStore, door(200, (req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
-router.post('/:id/return', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('POST /:id/return'), rightStore, door(200, (req) => {
+router.get('/', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('GET /'), door(200, (req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
+router.get('/:id', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('GET /:id'), door(200, (req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
+router.post('/', auth, noKey, firmOnly, ledgerOn, ...contract.checked('POST /'), rightStore, door(201, (req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
+router.post('/:id/review', auth, noKey, firmOnly, ledgerOn, ...contract.checked('POST /:id/review'), rightStore, door(200, (req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
+router.post('/:id/return', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('POST /:id/return'), rightStore, door(200, (req) => {
   const byFirm = actingAdviser(req);
   return actions.returnAction(storeOf(req), byFirm ? firmActor(req) : ownerActor(req), req.params.id, req.body, !byFirm);
 }));
-router.post('/:id/accept', auth, noKey, ledgerOn, ownerOnly, ...contract.checked('POST /:id/accept'), rightStore, door(200, (req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
+router.post('/:id/accept', auth, noKey, ownerOnly, ledgerOn, ...contract.checked('POST /:id/accept'), rightStore, door(200, (req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
 
 router.openapi = { paths: contract.pathsOf() };
 module.exports = router;
