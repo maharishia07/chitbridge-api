@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 0,
-  "partial": 6,
-  "meets": 628,
+  "partial": 0,
+  "meets": 634,
   "columns": {
    "strict_input": {
     "applies": 323,
@@ -15859,11 +15859,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b4f6060f0711d650"
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-folders.js"
    ],
@@ -16052,11 +16051,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c6c5d1f9629db170"
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-messages.js"
@@ -16153,11 +16151,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6823b031ef6994f2"
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-mis.js"
@@ -16254,11 +16251,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "95710217ec720112"
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-folders.js"
    ],
@@ -16540,11 +16536,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c91ba23959680d72"
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-messages.js",
@@ -46943,11 +46938,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "030ff44e7a797585"
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-messages.js"
    ],
