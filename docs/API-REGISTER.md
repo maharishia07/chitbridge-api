@@ -943,7 +943,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/books/bank/log** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money y (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): bank_rec_log, books_setting, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/bank/rail** · books · cb-accounting · meets standard
@@ -1165,13 +1165,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/books/bank/marks** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, ledger_account · writes (derived): bank_rec_log · callers: - · actions: -
 
 **POST /api/books/bank/statements** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 409, 422, 500, 503 · money y (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, ledger_account · writes (derived): bank_rec_log · callers: - · actions: -
 
 **POST /api/books/check** · books · cb-accounting · meets standard

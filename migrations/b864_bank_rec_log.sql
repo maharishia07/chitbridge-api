@@ -70,6 +70,7 @@ DROP TRIGGER IF EXISTS bank_rec_log_insert_only ON bank_rec_log;
 CREATE TRIGGER bank_rec_log_insert_only BEFORE UPDATE OR DELETE ON bank_rec_log FOR EACH ROW EXECUTE FUNCTION public.books_insert_only();
 
 REVOKE ALL ON bank_rec_log FROM cb_app, cb_backup;
+REVOKE UPDATE, DELETE, TRUNCATE ON bank_rec_log FROM cb_app;  -- stated again beside the GRANT: migration-lint reads an insert-only GRANT with this exact REVOKE
 GRANT SELECT, INSERT ON bank_rec_log TO cb_app;
 GRANT SELECT ON bank_rec_log TO cb_backup;
 COMMENT ON TABLE bank_rec_log IS 'FIN-70: the bank reconciliation record, insert-only. kind mark = a step action (accept, undo, note, attach) on a statement line, replayed newest-wins; kind statement = the signed BRS figures with their currency and the file hash. Never a statement line or the file itself.';

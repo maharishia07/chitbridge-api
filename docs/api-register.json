@@ -4548,7 +4548,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 6,
     "wire": null,
     "screens": []
    },
@@ -33422,7 +33422,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 4,
     "wire": null,
     "screens": []
    },
@@ -33532,7 +33532,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 4,
     "wire": null,
     "screens": []
    },
