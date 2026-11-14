@@ -296,7 +296,8 @@ function mintWith(transport, place) {
   };
 
   await t('RAIL-104: a failed manifest read is retried after seconds, not kept for 15 minutes', async () => {
-    const dir = directory(['down', 'KEY-A']);
+    /* RAIL-115: a first read that is refused is read once more, so the peer is down for BOTH reads of the first delivery */
+    const dir = directory(['down', 'down', 'KEY-A']);
     try {
       atTime(1000000);
       const first = await dir.publicKeyFor('au.example', 'sit-au');
