@@ -3607,8 +3607,7 @@
           "actions",
           "doc",
           "books_wait",
-          "lines_from",
-          "bill_total"
+          "lines_from"
         ],
         "properties": {
           "cost_hidden": {
