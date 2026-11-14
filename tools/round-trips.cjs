@@ -22,12 +22,20 @@
  * where to look; it does not measure a request.
  *
  * Read-only.
+ *
+ * OWNS      the static round-trip count per endpoint and its budget (tools/round-trips.budget.json). A split route file (routes/folders-inbox.js) is read as its parent (tools/server-mounts.cjs partParents).
+ * CALLED BY by hand (--check, --update), tests/round-trips*.test.cjs.
+ * FLOW      routes/*.js ──▶ route declarations ──▶ handler spans ──▶ trips per endpoint ──▶ compare with the budget
+ * CARD      28-platform-and-operations/performance-and-round-trips
  */
 const fs = require('fs');
 const path = require('path');
 
 const API = path.join(__dirname, '..');
 const R = path.join(API, 'routes');
+const { partParents } = require('./server-mounts.cjs');
+/* a split route file (routes/folders-inbox.js) is a PART of its parent: it takes the parent's mount and the parent's name, so its budget keys stay 'GET /messages  folders.js' and the ratchet on a part's routes is not silently dead */
+const PARTS = partParents(R);
 
 const COST = { withEntity: 4, withTransaction: 3, onEntity: 1, query: 1 };
 
@@ -146,11 +154,11 @@ for (const f of files) {
       /* ⚠️ no regex here on purpose — a trailing-slash strip written as a literal has now had its backslash
          eaten by a generated edit twice in this file alone. String work cannot be mis-escaped. */
       route: (() => {
-        let p = (mounts[f] || '') + item[3];
+        let p = (mounts[PARTS[f] || f] || '') + item[3];
         if (p.length > 1 && p[p.length - 1] === '/') p = p.slice(0, -1);
         return item[1].toUpperCase().padEnd(6) + (p || item[3]);
       })(),
-      file: f,
+      file: PARTS[f] || f,
       we,
       wt,
       oe,
