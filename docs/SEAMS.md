@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 116 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 105 | `answer` | `availability.js` | from March; then nearest. |
 | 99 | `money` | `bill-privacy.js` |  |
-| 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 87 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 81 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 80 | `next` | `dayopen.js` | the next thing to do — |
 | 78 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -115,13 +115,13 @@ of file each thing is; this says what already does the job.
 | 26 | `governance` | `home-facts.js` |  |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `view` | `country-ready.js` |  |
+| 25 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 24 | `form` | `accounts-shell.js` |  |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `shown` | `country-compare.js` | one side's value for the line: |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 24 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 23 | `says` | `adopt.js` |  |
@@ -176,6 +176,7 @@ of file each thing is; this says what already does the job.
 | 17 | `series` | `gst-returns.js` | `paid_on`: |
 | 17 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
+| 17 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 16 | `done` | `attach-ui.js` |  |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `frame` | `cap-settings.js` |  |
@@ -190,7 +191,6 @@ of file each thing is; this says what already does the job.
 | 16 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 16 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 16 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
-| 16 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 16 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
