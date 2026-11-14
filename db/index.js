@@ -52,7 +52,7 @@ function armPool(p) {
   p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
   return p;
 }
-const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return 'BEGIN; SET LOCAL ' + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
 
 /**
  * ⭐ HX1 · THE ATTEMPTS COME FROM CONFIG, NOTHING ELSE (db/connect-config.js): DATABASE_URL, then DB_POOLER_URL when it is set.

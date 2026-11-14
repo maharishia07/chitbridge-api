@@ -32,7 +32,7 @@ const logger = require('../lib/logger');
  * Money in and out is *_minor (integer minor units) with the currency beside it.
  */
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); router.use(require('../middleware/books-grant')); /* ACC-176: a request that names a member's books (X-Books-For) is read-only for a live grant; no header, no effect */
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const B = require('../lib/books');

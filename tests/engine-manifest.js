@@ -251,6 +251,7 @@ const INFRA_LIBS = [
   /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */
   'output-allowlist.js',
   'books-contract.js',
+  'books-grant.js', 'books-grants-contract.js',
   'tax-contract.js',
   /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'marketing-contract.js',
