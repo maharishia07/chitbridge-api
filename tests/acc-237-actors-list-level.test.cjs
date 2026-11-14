@@ -32,7 +32,7 @@ const model = (sql) => {
   if (/GROUP BY break_status/.test(sql)) return { rows: [{ break_status: 'active', count: '2' }], rowCount: 1 };
   if (/FROM identities/.test(sql) && /connector_config/.test(sql)) {
     listSql = sql;
-    const rows = columns ? [row('1111aaaa-1111-4111-8111-111111111111', { access_level: 'viewer', whole_entity: true }), row('2222bbbb-2222-4222-8222-222222222222', { access_level: 'editor', whole_entity: false })] : [row('1111aaaa-1111-4111-8111-111111111111')];
+    const rows = columns ? [row('1111aaaa-1111-4111-8111-111111111111', { access_level: 'viewer', whole_entity: true }), row('2222bbbb-2222-4222-8222-222222222222', { access_level: 'editor', whole_entity: false }), row('3333cccc-3333-4333-8333-333333333333', { access_level: 'commenter', whole_entity: true, can_see_costs: true })] : [row('1111aaaa-1111-4111-8111-111111111111')];
     return { rows, rowCount: rows.length };
   }
   return null;
@@ -47,10 +47,14 @@ async function main() {
   Object.assign(lab.world, { who: OWNER, sqlRows: model, db: 'ok' });
 
   let got = await lab.send(port, 'GET', '/api/actors');
-  check('with the columns: 200 (it answered ' + got.status + ')', got.status === 200 && got.json && got.json.actors.length === 2, got.text.slice(0, 200));
+  check('with the columns: 200 (it answered ' + got.status + ')', got.status === 200 && got.json && got.json.actors.length === 3, got.text.slice(0, 200));
   check('the SELECT names access_level and whole_entity off the row JSON, with no schema probe round trip (round-trips budget 2)', /->> 'access_level'\) AS access_level, \(to_jsonb\(identities\) -> 'whole_entity'\) AS whole_entity/.test(listSql) && probes === 0, 'probes ' + probes + ' ' + listSql.slice(0, 200));
   check('a viewer login lists access_level=viewer and whole_entity=true as stored', got.json.actors[0].access_level === 'viewer' && got.json.actors[0].whole_entity === true, JSON.stringify(got.json.actors[0]));
   check('an editor lists editor / false', got.json.actors[1].access_level === 'editor' && got.json.actors[1].whole_entity === false, JSON.stringify(got.json.actors[1]));
+
+  check('an auditor login (hat act, commenter, whole entity, sees costs) lists preset auditor and its level', got.json.actors[2].preset === 'auditor' && got.json.actors[2].access_level === 'commenter', JSON.stringify(got.json.actors[2]));
+  check('other logins are unchanged: a view-only reader and an editor match no preset (null), level as stored', got.json.actors[0].preset === null && got.json.actors[1].preset === null && got.json.actors[1].access_level === 'editor', JSON.stringify(got.json.actors.slice(0, 2)));
+  check('the SELECT names can_see_costs (the preset needs it)', /hat, can_see_costs,/.test(listSql), listSql.slice(0, 200));
 
   columns = false;
   schema._reset();
