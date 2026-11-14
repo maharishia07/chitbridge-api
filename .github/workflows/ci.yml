@@ -294,6 +294,11 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/bill-total-sql.realstack.cjs
+      - name: ACC-348a · the list row's bill_total equals the detail's, with its currency, in IN / AU / AE (real Postgres)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/bill-total-wire.realstack.cjs
       - name: CUR-1 slice 3 · chit_header.currency_code (b846) and the b847 backfill on real Postgres — seeded as cb_app in two entities, backfilled as the owner; every bucket, mismatch kept as two codes, idempotent, rollback
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41

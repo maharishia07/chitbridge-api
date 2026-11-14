@@ -3787,6 +3787,9 @@
           "lines_from": {
             "type": "string"
           },
+          "bill_total": {
+            "type": "object"
+          },
           "_timing": {
             "type": "object"
           },
