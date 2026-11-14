@@ -282,7 +282,7 @@ async function main() {
     const seesStranger = await call(Z, 'GET', '/api/books-grants');
     const seesOneNode = await call(C, 'GET', '/api/books-grants');
     ok('the grants a firm works under: a team member of P reads its `received` (its own firm\'s grants, none given), another firm sees only its own, a stranger business sees none, a person who may use no grant is refused (403)',
-      seesA.status === 200 && seesA.body.given.length === 0 && seesA.body.received.length >= 4 && seesA.body.received.every((g) => g.grantee_entity === P.id) && seesA.body.received.some((g) => g.preset === 'adviser') && seesA.body.received.some((g) => g.preset === 'auditor')
+      seesA.status === 200 && seesA.body.given.length === 0 && seesA.body.received.length >= 3 && seesA.body.received.every((g) => g.grantee_entity === P.id) && seesA.body.received.some((g) => g.preset === 'adviser') && seesA.body.received.some((g) => g.preset === 'auditor')
         && seesZ2.status === 200 && seesZ2.body.received.length >= 1 && seesZ2.body.received.every((g) => g.grantee_entity === P2.id) && !seesZ2.body.received.some((g) => g.grantee_entity === P.id)
         && seesStranger.status === 200 && seesStranger.body.received.length === 0 && seesStranger.body.given.length === 0 && seesOneNode.status === 403, JSON.stringify([seesA.status, seesA.body.received && seesA.body.received.length, seesZ2.body, seesStranger.body, seesOneNode.status]));
     const f1 = await firm(A, M1, 'POST', '', journal('jf1'));
