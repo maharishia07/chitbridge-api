@@ -729,6 +729,10 @@ const GUARDS = [
   'till-network-unpriced.test.cjs',
   'till-rail.test.cjs',
   'till-since-word.test.cjs',
+  'till-s4-ctr158-footer.test.cjs', // CTR-158 (2026-11-14): fails under CTR158_MUTATE=1
+  'till-s4-ctr161-kit-taxslab.test.cjs', // CTR-161 (2026-11-14): fails under CTR161_MUTATE=1
+  'till-s4-ctr166-supply-buyer.test.cjs', // CTR-166 (2026-11-14): fails under CTR166_MUTATE=1
+  'till-s4-ctr253-freetext-gate.test.cjs', // CTR-253 (2026-11-14): fails under CTR253_MUTATE=1
   'till-t2d.test.cjs',
   'till-t2j.test.cjs',
   /* QA-80 (22 Oct): six whose expectations had gone stale (US pack, hasColumn probe, compare-and-set, N1 move, re-wrapped routes) - updated to the current truth */
