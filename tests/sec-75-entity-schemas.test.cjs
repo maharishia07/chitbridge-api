@@ -180,7 +180,7 @@ const withExtraLine = (table, line) => {
   });
   await check('the owner\'s preview binds to the owner and the public branch stays unbound (lib/catalogue-view.js: ONE reader for both statements of the pipeline)', () => {
     const view = read('lib/catalogue-view.js');
-    assert(view.includes('const readSchema = asOwner ? queryFor(entity.identity_id) : query;') && view.includes("queryFor = (shopId) => require('../db').queryFor(shopId)"), 'the owner reader is the injected queryFor, which defaults to the real bound reader');
+    assert(view.includes('const readSchema = asOwner ? readers.bound(entity.identity_id) : query;') && view.includes("bound: (shopId) => require('../db').queryFor(shopId)"), 'the owner reader is readers.bound (the seam), which is the real bound reader');
     assert(/_pSchema = readSchema\(/.test(view) && /await readSchema\(\s*`SELECT field_key/.test(view), 'both statements take the same reader');
     assert(/\$\{asOwner \? '' : " AND visibility = 'public'"\}/.test(view), 'the public branch keeps its visibility predicate');
   });
