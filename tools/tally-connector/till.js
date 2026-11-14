@@ -283,6 +283,27 @@ const readJSON = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8'))
 function writeJSON(f, obj) { const t = f + '.tmp'; fs.writeFileSync(t, JSON.stringify(obj, null, 2)); fs.renameSync(t, f); }
 const appendLine = (f, obj) => fs.appendFileSync(f, JSON.stringify(obj) + '\n');
 const readLines = (f) => { try { return fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch (_) { return null; } }).filter(Boolean); } catch (_) { return []; } };
+/** the queue file as lines: the exact text of each line beside what it parses to (null for a torn line, which is kept, never dropped) */
+function readQueueEntries() {
+  let text = '';
+  try { text = fs.readFileSync(F.queue, 'utf8'); } catch (_) { return []; }
+  return text.split('\n').filter(Boolean).map((raw) => { let row = null; try { row = JSON.parse(raw); } catch (_) { row = null; } return { raw: raw, row: row }; });
+}
+/**
+ * ⭐ T4-02 (Fable risk 4): the send pass reads the queue, awaits the network once per row, and used to write back ONLY the
+ * rows that failed — so a bill rung during those awaits (it is appended to this file at once) was erased with them.
+ * Now the pass names what it SENT, and this takes exactly those lines out of a FRESH read, through a temp file and a rename.
+ * Read, filter and write happen in one synchronous run, and every appender in this program is synchronous, so no line can
+ * slip between them. A line this pass did not send is never touched. Returns how many lines are still queued.
+ */
+function removeSentFromQueue(sentRaw) {
+  const toRemove = sentRaw.slice();
+  const kept = readQueueEntries().filter((e) => { const at = toRemove.indexOf(e.raw); if (at < 0) return true; toRemove.splice(at, 1); return false; });
+  const tmp = F.queue + '.tmp';
+  fs.writeFileSync(tmp, kept.map((e) => e.raw).join('\n') + (kept.length ? '\n' : ''));
+  fs.renameSync(tmp, F.queue);
+  return kept.filter((e) => e.row).length;
+}
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
@@ -484,12 +505,13 @@ async function drain() {
   }
   draining = true; drainAt = Date.now();
   try {
-    const rows = readLines(F.queue);
+    const entries = readQueueEntries().filter((e) => e.row);
     /* ⭐ M16: the health note is taken on BOTH ways out of a drain — never inside the finally, which must stay
        a single line that clears the busy flag and nothing else (tests/snapshot-wire.test.js) */
-    if (!rows.length) { try { healthNote(); } catch (_) {} return; }
-    const left = [];
-    for (const bill of rows) {
+    if (!entries.length) { try { healthNote(); } catch (_) {} return; }
+    const failed = [];   /* the entries this pass could not send — they stay in the file exactly as they are */
+    for (const entry of entries) {
+      const bill = entry.row;
       try {
         /**
          * ⭐ THREE KINDS RIDE ONE QUEUE (2026-09-08): a bill, a receipt or despatch note, and the MOVEMENT rows that belong to an
@@ -577,13 +599,14 @@ async function drain() {
         QUEUE_WHY = { say: w.say, fatal: !!w.fatal, online: !!w.online,
                       code: (e && e.body && e.body.code) || null, at: new Date().toISOString() };
         if (w.fatal && !QUEUE_SAID) { QUEUE_SAID = true; log('the queue cannot be sent: ' + w.say); }
-        left.push(bill);                                    /* keep it; the next tick tries again */
+        failed.push(entry);                                 /* keep it; the next tick tries again */
       }
     }
-    fs.writeFileSync(F.queue, left.map((b) => JSON.stringify(b)).join('\n') + (left.length ? '\n' : ''));
+    /* ⭐ T4-02: take out ONLY what this pass sent, from a fresh read — a bill rung during the sends is in the file now */
+    const left = removeSentFromQueue(entries.filter((e) => failed.indexOf(e) < 0).map((e) => e.raw));
     /* ⚠️ AN EMPTY QUEUE HAS NO REASON TO BE STUCK (2026-09-28). Only a sale's success cleared QUEUE_WHY; a credit
        note, expense, document or summary 'continue'd past it, so the last outage's reason outlived its recovery. */
-    if (!left.length) { QUEUE_WHY = null; QUEUE_SAID = false; }
+    if (!left) { QUEUE_WHY = null; QUEUE_SAID = false; }
     try { healthNote(); } catch (_) {}
   } catch (e) { log('queue: ' + e.message); }
   /* ⚠️ FINALLY, NOT AFTER. The old placement was reachable only if nothing above threw past its own catch —
