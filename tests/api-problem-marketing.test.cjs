@@ -145,6 +145,8 @@ const EXTRAS = [
   X('combo-save-answers', 'POST /api/combo-templates', 200, { body: GOOD_COMBO, setup: { sqlRows: COMBO_ROWS } }),
   X('combo-edit-answers', 'PATCH /api/combo-templates/:id', 200, { body: { name: 'Combo two' }, setup: { sqlRows: COMBO_ROWS } }),
   X('combo-push-answers', 'POST /api/combo-templates/:id/push', 200, { body: {}, patch: MINT, setup: { sqlRows: COMBO_ROWS } }),
+  /* CUR-1b: a shop whose own money is withdrawn (BGN) pushes no combo as a product: 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor named */
+  X('combo-push-shop-money-withdrawn', 'POST /api/combo-templates/:id/push', 422, { body: {}, setup: { sqlRows: (sql) => (/FROM identities WHERE identity_id/.test(sql) ? { rows: [{ currency_code: 'BGN', country: 'BG' }], rowCount: 1 } : COMBO_ROWS(sql)) } }),
   X('combo-delete-answers', 'DELETE /api/combo-templates/:id', 200, { setup: { sqlRows: COMBO_ROWS } }),
   X('saved-combo-has-no-groups', 'POST /api/combo-templates/:id/push', 400, { setup: { sqlRows: COMBO_ROW } })
 ];
@@ -258,6 +260,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   }
   checkKitStatus();
   const operations = Object.assign({}, ...AREAS.map((area) => require(path.join(HERE, area.contract))[area.export].OPERATIONS));
+  const withdrawnAnswer = recording['POST /api/combo-templates/:id/push|combo-push-shop-money-withdrawn'] || {};
+  const withdrawnBody = withdrawnAnswer.body || {};
+  check('combo push on a withdrawn-money shop: 422, MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor (EUR) named, nothing converted', withdrawnAnswer.status === 422 && withdrawnBody.code === 'MONEY_CURRENCY_UNKNOWN' && withdrawnBody.withdrawn === true && /replaced by EUR/.test(String(withdrawnBody.detail)) && /nothing is converted/.test(String(withdrawnBody.detail)), withdrawnAnswer);
   const allowHeld = ALLOW.checkAllowList(recording, operations, check);
   const coverage = Object.fromEntries(
     Object.keys(tested)

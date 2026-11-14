@@ -887,7 +887,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'scalecode.js': 'CBScaleCode',
                     'qty.js': 'CBQty',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null,
-                    'bank-recon.js': 'CBBankRecon' };
+                    'bank-recon.js': 'CBBankRecon',
+                    /* engines v1.96.0, bank to books: the web vendors the whole chain bank-recon now reads (batch G) */
+                    'chart.js': 'CBChart', 'accounts-packs.js': 'CBAccountsPacks', 'posting.js': 'CBPosting', 'bank-entry.js': 'CBBankEntry', 'bank-project.js': 'CBBankProject' };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
    * a page will load it" is. convert.js reads window.CBMoney and window.CBUnits at its top, and in an empty
@@ -896,7 +898,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
    */
   /* bank-recon (engines v1.28+, adopted by the web at v1.44.1 in BR1) reads the pack registry at load: engine/tax.js bundles regulation
      and the packs, as engine/tax.js does ahead of it on accounts.html */
-  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'] };
+  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'],
+                 'accounts-packs.js': ['tax.js', 'chart.js'], 'posting.js': ['money.js', 'tax.js', 'chart.js', 'accounts-packs.js'],
+                 'bank-entry.js': ['money.js', 'tax.js'], 'bank-project.js': ['money.js', 'tax.js', 'bank-entry.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
   for (const name of files) {

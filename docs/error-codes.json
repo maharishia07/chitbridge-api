@@ -3170,6 +3170,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MONEY_CURRENCY_MISMATCH",
+   "status": "409",
+   "title": "Two different moneys",
+   "shopkeeper": "These amounts are in different moneys, so nothing was added together or saved.",
+   "hint": "Use one money for them, or total each money on its own; an amount is never converted.",
+   "owner_area": "money",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "MONEY_CURRENCY_UNKNOWN",
+   "status": "422",
+   "title": "That money cannot be used",
+   "shopkeeper": "That is not a money ChitBridge can use for a new bill, price or order. If the answer carries withdrawn: true, the money has been replaced and the sentence names its successor.",
+   "hint": "Use the successor money named in the sentence; nothing is converted, and old records in the withdrawn money stay readable.",
+   "owner_area": "money",
+   "since": "2026-11-13"
+  },
+  {
    "code": "MONEY_INPUT_UNREADABLE",
    "status": "422",
    "title": "Retired: a line could not be read",
@@ -4131,6 +4149,15 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PRICE_DECIMALS",
+   "status": "400",
+   "title": "Price has too many decimals",
+   "shopkeeper": "That price has more decimal places than its money allows, so nothing was saved.",
+   "hint": "Enter the price with the decimals the money uses (for rupees, two); a price already stored is not asked again unless it changes.",
+   "owner_area": "money",
+   "since": "2026-11-14"
   },
   {
    "code": "PRICE_MOVED",
