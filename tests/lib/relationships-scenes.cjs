@@ -105,7 +105,7 @@ function extras(tools) {
     X('supplier-patch-saved', 'PATCH ' + at('/suppliers/:id'), 200, { url: sUrl, body: { nickname: 'Tea man', category: 'tea', notes: 'cash', preferred: true, supply_kind: 'own_use' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }),
     X('supplier-patch-saved-as-text-flag', 'PATCH ' + at('/suppliers/:id'), 200, { url: sUrl, body: { preferred: 'true', supply_kind: 'resale', nickname: null }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }),
     X('supplier-rename-unknown', 'PATCH ' + at('/suppliers/:id'), 404, { url: sUrl, body: { display_name: 'Corner Hardware & Sons' } }),
-    X('supplier-rename-not-yours', 'PATCH ' + at('/suppliers/:id'), 403, { url: sUrl, body: { display_name: 'Acme' }, setup: { sqlRows: row(/SELECT i\.identity_id, i\.user_id FROM supplier_list sl/, { identity_id: SUPP, user_id: 'acme' }) } }),
+    X('supplier-rename-not-yours', 'PATCH ' + at('/suppliers/:id'), 403, { url: sUrl, body: { display_name: 'Acme' }, setup: { sqlRows: row(/SELECT i\.identity_id, i.user_id, i.display_name FROM supplier_list sl/, { identity_id: SUPP, user_id: 'acme' }) } }),
     X('supplier-rename-clash', 'PATCH ' + at('/suppliers/:id'), 409, { url: sUrl, body: { display_name: 'Corner Hardware' }, setup: { sqlRows: firstOf(heldBy(SHOP, LIST_S), raising(/UPDATE identities SET display_name/, '23505')) } }),
     X('supplier-rename-saved', 'PATCH ' + at('/suppliers/:id'), 200, { url: sUrl, body: { display_name: 'Corner  Hardware & Sons' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }),
     X('supplier-rename-and-note', 'PATCH ' + at('/suppliers/:id'), 200, { url: sUrl, body: { display_name: 'Corner Hardware & Sons', notes: 'cash' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }),
