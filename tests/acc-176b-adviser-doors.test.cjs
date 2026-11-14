@@ -101,6 +101,8 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     refusedAs('lock', { fy: 'next year', period: 4 }, 'ACTION_BODY_INVALID');
     refusedAs('year_close', {}, 'ACTION_BODY_INVALID');
     assert.deepStrictEqual(action.bodyOf('year_close', { fy: '2026-27', extra: 'dropped' }), { fy: '2026-27' }, 'a key the kind does not know is dropped, never carried');
+    assert.deepStrictEqual(action.bodyOf('lock', { fy: '2026-27', period: '4', extra: 1 }), { fy: '2026-27', period: 4, reason: null }, 'a good lock body reads whole');
+    assert.strictEqual(action.bodyOf('reverse', { entry_id: MEMBER.toUpperCase(), reason: ' typo ' }).entry_id, MEMBER, 'an id is kept lower case, a reason trimmed');
   });
   await t('lib/books-action: the hash binds the store, the kind and the body: the same words give the same hash, any change another', () => {
     const body = { fy: '2026-27', period: 4, reason: null };
