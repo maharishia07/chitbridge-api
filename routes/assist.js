@@ -267,13 +267,11 @@ router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt
     // one the seed scripts mostly use, so missing it would leave half the catalogue unstamped while looking done.
     let commercialsIn = req.body && req.body.commercials && typeof req.body.commercials === 'object' ? req.body.commercials : {};
     /* ⭐ a store following its brand's price keeps following while it saves that price; its own price ends it (network-catalogue) */
-    let storedCommercials; /* CAT-308 M9b: the commercials already stored, so an unchanged legacy price still passes the decimals check */
-    try {
+    let storedCommercials; /* CAT-308 M9b: the stored commercials, so an unchanged legacy price still passes */ try {
       const prev = await withEntity(entity, (db) =>
         db.query('SELECT commercials FROM catalogue_adoption WHERE entity_id = $1 AND source_key = $2', [entity, source])
       );
-      storedCommercials = (prev.rows[0] && prev.rows[0].commercials) || {};
-      commercialsIn = require('../lib/network-catalogue').keepFollow(commercialsIn, storedCommercials, built.items);
+      commercialsIn = require('../lib/network-catalogue').keepFollow(commercialsIn, (storedCommercials = (prev.rows[0] && prev.rows[0].commercials) || {}), built.items);
     } catch (e) {
       log.fellBack('assist POST /catalogue-adopt: the read failed — carried on without it', e); /* first adoption, or b75 absent — nothing to keep */
     }

@@ -1372,7 +1372,7 @@ router.post(
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
           }
-          const stamped = money.stampItem(merged, currency, prior && prior.item_data);
+          const stamped = money.stampItem(merged, currency, prior?.item_data);
           if (prior) {
             updates.push({ item_id: prior.item_id, replace: stamped });
             outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });

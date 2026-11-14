@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // @type: contract
 /**
- * cat-308-price-decimals-route.test.cjs — CAT-308 M9b: a price finer than its currency is 400 PRICE_DECIMALS at the product door.
+ * cat-308-price-decimals-route.test.cjs — CAT-308 M9b: a price finer than its currency is 400 "at most N decimal places" at the product door.
  *
- * OWNS      POST /api/products and PATCH /api/products/:id with the engines money v1.96.0 stamp: INR 10.999 is 400 PRICE_DECIMALS in words, nothing written;
+ * OWNS      POST /api/products and PATCH /api/products/:id with the engines money v1.96.0 stamp: INR 10.999 is 400 "at most N decimal places" in words, nothing written;
  *           INR 10.99 and 10.9 are 200; JPY (no decimals) 10.5 is 400 and 10 is 200; a PATCH that leaves a legacy price (10.999) as it was passes (`stored`), one that changes it to another finer price is 400.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over the stand-in sign-in and database (tests/lib/problem-world.cjs).
  * FLOW      scenario → real route → status + code + the row written
@@ -53,25 +53,25 @@ const ask = (method, url, body, rows) => {
   return lab.send(port, method, url, body);
 };
 const P = '/api/products';
-const code = (answer) => (answer.json && answer.json.code) || null;
+const words = (answer) => String((answer.json && (answer.json.detail || answer.json.message)) || '');
 
 async function doors() {
   console.log('\n── CAT-308 · a price finer than its money, at the product door ──\n');
   let r = await ask('POST', P, { item_data: { name: 'Tea', price: 10.999 } }, shelf(INR));
-  check('INR 10.999 → 400 PRICE_DECIMALS, nothing written', r.status === 400 && code(r) === 'PRICE_DECIMALS' && written.length === 0, r.json);
+  check('INR 10.999 → 400 "at most N decimal places", nothing written', r.status === 400 && /decimal place/.test(words(r)) && written.length === 0, r.json);
   for (const [price, ok] of [[10.99, true], [10.9, true], [10, true], [0.1 + 0.2, true], [10.991, false]]) {
     r = await ask('POST', P, { item_data: { name: 'Tea', price } }, shelf(INR));
-    check('INR ' + price + (ok ? ' → 200' : ' → 400 PRICE_DECIMALS'), ok ? r.status === 200 : r.status === 400 && code(r) === 'PRICE_DECIMALS', r.json);
+    check('INR ' + price + (ok ? ' → 200' : ' → 400 "at most N decimal places"'), ok ? r.status === 200 : r.status === 400 && /decimal place/.test(words(r)), r.json);
   }
   r = await ask('POST', P, { item_data: { name: 'Tea', price: 10.5 } }, shelf(JPY));
-  check('JPY (no decimals) 10.5 → 400 PRICE_DECIMALS', r.status === 400 && code(r) === 'PRICE_DECIMALS', r.json);
+  check('JPY (no decimals) 10.5 → 400 "at most N decimal places"', r.status === 400 && /decimal place/.test(words(r)), r.json);
   r = await ask('POST', P, { item_data: { name: 'Tea', price: 10 } }, shelf(JPY));
   check('JPY 10 → 200', r.status === 200, r.json);
   /* hand: a legacy row already holds 10.999; an edit that does not touch the price must not be refused (CAT-323), one that changes it to another finer price must be */
   r = await ask('PATCH', P + '/' + PARTY, { merge: true, item_data: { name: 'Tea 2' } }, shelf(INR, { price: { amount: 10.999, currency: 'INR' } }));
   check('PATCH a name only over a stored INR 10.999 → 200 (an unchanged legacy price passes)', r.status === 200, r.json);
   r = await ask('PATCH', P + '/' + PARTY, { merge: true, item_data: { price: 10.998 } }, shelf(INR, { price: { amount: 10.999, currency: 'INR' } }));
-  check('PATCH the price to another finer one (10.998) → 400 PRICE_DECIMALS', r.status === 400 && code(r) === 'PRICE_DECIMALS', r.json);
+  check('PATCH the price to another finer one (10.998) → 400 "at most N decimal places"', r.status === 400 && /decimal place/.test(words(r)), r.json);
 }
 
 (async () => {
