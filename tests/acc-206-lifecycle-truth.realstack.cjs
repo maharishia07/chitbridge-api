@@ -40,12 +40,21 @@ async function copiesOf(shop, chitId) {
   };
 }
 
-/** the list row of a chit as the shop's own mailbox ships it (sent for the sender, inbox for the receiver): the summary the Amount cell reads */
-async function listRowOf(shop, folder, chitId) {
-  const page = ok(await j('/api/chits/' + folder + '?limit=100', { token: shop.token }), folder + ' list').b;
-  const row = (page.chits || []).find((x) => x.chit_id === chitId);
-  expect(row, 'the chit is not in the ' + folder + ' list');
-  return row.summary_json || {};
+/**
+ * the figures a shop's lists say for a chit: the mailbox rows (sent · inbox) ship the header's summary, a bill leaves them for the Bills folders (lib/folder-inventory) whose rows ship the one pick as `value`.
+ * → { total_value, money_total, where } from the first list that holds the chit; a chit in none of them is a failure (a silently absent row is how f11 hid)
+ */
+async function listFigureOf(shop, chitId) {
+  const folders = [require('../lib/folder-inventory').sysId('B-1300'), require('../lib/folder-inventory').sysId('B-2100')];
+  const lists = [['sent', '/api/chits/sent'], ['inbox', '/api/chits/inbox']].concat(folders.map((id) => ['bills folder', '/api/folders/' + id + '/chits']));
+  for (const [name, path] of lists) {
+    const page = ok(await j(path + '?limit=100', { token: shop.token }), name + ' list').b;
+    const row = (page.chits || []).find((x) => x.chit_id === chitId);
+    if (!row) continue;
+    const summary = row.summary_json;
+    return summary ? { total_value: summary.total_value, money_total: summary.money && summary.money.total, where: name } : { total_value: row.value, money_total: row.value, where: name };
+  }
+  throw new Error('the chit ' + chitId + ' is in none of the sent list, the inbox or the Bills folders');
 }
 
 /** the equality rows for one copy: every set figure is the same number, it is a number worth something, the api's own pick agrees, and every named currency is the shop's */
@@ -67,10 +76,10 @@ async function assertBothCopies(sender, receiver, chitId, currency, what) {
   const mine = await copiesOf(sender, chitId), theirs = await copiesOf(receiver, chitId);
   const total = assertOneFigure(mine, currency, what + ' sender copy');
   expect(same(assertOneFigure(theirs, currency, what + ' receiver copy'), total), what + ': the receiver holds ' + JSON.stringify(theirs.figures) + ', the sender ' + JSON.stringify(mine.figures));
-  const sentRow = await listRowOf(sender, 'sent', chitId), inboxRow = await listRowOf(receiver, 'inbox', chitId);
-  [['sent list', sentRow], ['inbox list', inboxRow]].forEach(([name, row]) => {
-    expect(same(row.total_value, total) && same(row.money && row.money.total, total), what + ': the ' + name + ' row says ' + row.total_value + ' / ' + (row.money && row.money.total) + ', the detail ' + total);
-  });
+  for (const [name, shop] of [['sender', sender], ['receiver', receiver]]) {
+    const row = await listFigureOf(shop, chitId);
+    expect(same(row.total_value, total) && same(row.money_total, total), what + ': the ' + name + "'s " + row.where + ' row says ' + row.total_value + ' / ' + row.money_total + ', the detail ' + total);
+  }
   return total;
 }
 
@@ -103,12 +112,12 @@ const piece = (name) => ({ id: undefined, name, unit: 'piece', price: 1000 });
     const counter = (extra) => Object.assign({ invoice: { ValDtls: counterOf } }, c.id === 'AU' ? { parts: [{ how: 'card', amount: counterOf.TotInvVal }] } : {}, extra);
     const NO = (kind) => RUN + c.id + '-' + kind;
 
-    await kase(c.id + '-C1', 'C1 counter cash bill: invoice, money, total_value and the detail column are one figure; the sent list says it too', async () => {
+    await kase(c.id + '-C1', 'C1 counter cash bill: invoice, money, total_value and the detail column are one figure; the list that holds it says it too', async () => {
       const r = ok(await send(A, bill(NO('c1'), rows, counter())), 'send C1');
       const id = chitIdOf(r);
       const total = assertOneFigure(await copiesOf(A, id), c.currency, c.id + ' C1');
-      const row = await listRowOf(A, 'sent', id);
-      expect(same(row.total_value, total), 'the sent list says ' + row.total_value + ', the detail ' + total);
+      const row = await listFigureOf(A, id);
+      expect(same(row.total_value, total), 'the ' + row.where + ' says ' + row.total_value + ', the detail ' + total);
     });
     await kase(c.id + '-C2', 'C2 counter bill to a named customer: the same one figure', async () => {
       const r = ok(await send(A, bill(NO('c2'), rows, counter({ customer: { name: 'Named buyer ' + RUN } }))), 'send C2');
