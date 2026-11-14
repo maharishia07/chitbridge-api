@@ -68,7 +68,7 @@ const received = (invoice, setting, extra) => ({ chit: { chit_id: 'p1', created_
   console.log('\n— a counter bill I bought, for use: the expense part is gross —\n');
   const boughtUse = K.classify({ chit: { chit_id: 'b1', created_at: '2026-11-12T05:00:00Z', purpose: 'order', sender_entity_id: SUPP, currency_code: 'AUD', business_json: { bill_no: 'B-1', till: { id: 'T' }, payment: { parts: [{ how: 'Cash', amount: 1100 }] } } },
     entry: { sells: true, me: { entity_id: 'me' }, seller: { entity_id: SUPP, Country: 'AU' }, invoice: auInv(true) }, setting: AU, status: 'accepted', uses: { lines: [{ use: 'use', name: 'Goods' }] }, buyerRegistration: 'unregistered' });
-  const ex = boughtUse.events && boughtUse.events.find((e) => e.type === 'expense');
+  const ex = boughtUse.event; /* a use-only bill is ONE event: postChit posts verdict.event, so assert on it */
   ok('R101: the use part of a bought counter bill (unregistered buyer) is an expense of the gross 1,100, no input tax', !!ex && ex.amount === 1100 && ex.input_tax === undefined, JSON.stringify(boughtUse).slice(0, 300));
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n\n' + (pass + fail) + ' checks');
