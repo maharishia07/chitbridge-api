@@ -29,6 +29,15 @@
 
 BEGIN;
 
+-- The definers must bypass row security: after b862 a definer owned by a role that does not bypass RLS returns nothing (freeze and has_catalogue fail silently), so stop here instead.
+DO $owner$
+BEGIN
+  IF NOT COALESCE((SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname = current_user), false) THEN
+    RAISE EXCEPTION 'b861: run this file as postgres (a role with rolsuper or rolbypassrls); the two definers must bypass row security or the order freeze and has_catalogue return nothing after b862' USING ERRCODE = '42501';
+  END IF;
+END
+$owner$;
+
 DO $guard$
 BEGIN
   IF (SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'entity_schemas' AND column_name = 'schema_version') IS DISTINCT FROM 'integer' THEN
