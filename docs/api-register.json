@@ -24862,7 +24862,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 433,
-   "hash": "c7796f384914558e",
+   "hash": "a958e061bf609dd5",
    "does": "",
    "errors": {
     "count": 0,
@@ -24937,7 +24937,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -24963,7 +24963,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1696,
-   "hash": "a062ac96f871111b",
+   "hash": "b557a774b8301f5b",
    "does": "",
    "errors": {
     "count": 0,
@@ -25038,7 +25038,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; a .feature text answer, noKeys by design (S34), reader-gated; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25064,7 +25064,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3854,
-   "hash": "8cf4e576115ef2fb",
+   "hash": "ec4ef17400bd57ae",
    "does": "",
    "errors": {
     "count": 0,
@@ -25137,7 +25137,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25267,7 +25267,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1114,
-   "hash": "cb27ce34e66cddf0",
+   "hash": "2009965b3d0cec31",
    "does": "",
    "errors": {
     "count": 0,
@@ -25344,7 +25344,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25374,7 +25374,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2770,
-   "hash": "46e6f0f00dc7dd6a",
+   "hash": "f326980292d38cd2",
    "does": "",
    "errors": {
     "count": 0,
@@ -25449,7 +25449,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25475,7 +25475,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 926,
-   "hash": "ef445392025c7505",
+   "hash": "11748729ece9373c",
    "does": "",
    "errors": {
     "count": 0,
@@ -25547,7 +25547,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25573,7 +25573,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2408,
-   "hash": "648b3631d4dd9f78",
+   "hash": "e4d8f908b7853b25",
    "does": "",
    "errors": {
     "count": 0,
@@ -25643,7 +25643,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25669,7 +25669,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 4101,
-   "hash": "52497bb11fd4f7f5",
+   "hash": "c8adbe49a073843e",
    "does": "",
    "errors": {
     "count": 0,
@@ -25742,7 +25742,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25768,7 +25768,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3589,
-   "hash": "cde1efb7ead1d3ed",
+   "hash": "ef8fbb9a0922c2d6",
    "does": "",
    "errors": {
     "count": 0,
@@ -25843,7 +25843,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25869,7 +25869,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2954,
-   "hash": "9bca35743df8eeca",
+   "hash": "1e2c1da92afcadc7",
    "does": "",
    "errors": {
     "count": 0,
@@ -25944,7 +25944,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25970,7 +25970,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2060,
-   "hash": "e85095280e6bcaf9",
+   "hash": "14a0b8801939ffd5",
    "does": "",
    "errors": {
     "count": 0,
@@ -26040,7 +26040,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26066,7 +26066,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1466,
-   "hash": "7a7c9c5b27829f86",
+   "hash": "516ed6b16abd2f8a",
    "does": "",
    "errors": {
     "count": 0,
@@ -26141,7 +26141,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26167,7 +26167,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1518,
-   "hash": "c2147cbd5b085bbb",
+   "hash": "46ffb7fafbdbdbba",
    "does": "",
    "errors": {
     "count": 0,
@@ -26242,7 +26242,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26268,7 +26268,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2709,
-   "hash": "99f94adaaabe158a",
+   "hash": "6e9fcf460768d812",
    "does": "",
    "errors": {
     "count": 0,
@@ -26341,7 +26341,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26367,7 +26367,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 356,
-   "hash": "4f251bf1eda67e5c",
+   "hash": "c2dc8e4933171d41",
    "does": "",
    "errors": {
     "count": 0,
@@ -26435,7 +26435,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31237,7 +31237,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2519,
-   "hash": "df4e141b1b0c06bd",
+   "hash": "c48b12156df09c5d",
    "does": "",
    "errors": {
     "count": 0,
@@ -31312,7 +31312,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31338,7 +31338,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2139,
-   "hash": "237a83a8f39b813c",
+   "hash": "7707cd65bf5b33ed",
    "does": "",
    "errors": {
     "count": 0,
@@ -31413,7 +31413,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57139,7 +57139,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 286,
-   "hash": "5e677f9daa7e3d25",
+   "hash": "0ed16057356e4a10",
    "does": "",
    "errors": {
     "count": 0,
@@ -57215,7 +57215,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57241,7 +57241,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1754,
-   "hash": "fd3f809f9bb31d7e",
+   "hash": "151529b305359971",
    "does": "",
    "errors": {
     "count": 0,
@@ -57318,7 +57318,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: re-signed after the stale hash (fd3f809f): whole handler and contract read at the new hash; no exception text in any answer (faultOf says only the label and the safe sentence; problems[] are parser words about the caller's own file); board writer gate kept; api-problem-testing 1839 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57546,7 +57546,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3780,
-   "hash": "c371fe538a9aa0d2",
+   "hash": "d6df81bd6f94fb2a",
    "does": "",
    "errors": {
     "count": 0,
@@ -57618,7 +57618,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57644,7 +57644,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1154,
-   "hash": "6d22cf4f5179ca5c",
+   "hash": "0753dc6c72c4c825",
    "does": "",
    "errors": {
     "count": 0,
@@ -57719,7 +57719,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: re-signed after the stale hash (6d22cf4f): whole handler and contract read at the new hash; every shipped record is checked before anything is written, refusals name the file, faults say the safe sentence; api-problem-testing 1839 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57745,7 +57745,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2672,
-   "hash": "df76c8bae9c24aa4",
+   "hash": "62ba5527c70bf421",
    "does": "",
    "errors": {
     "count": 0,
@@ -57817,7 +57817,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57843,7 +57843,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2274,
-   "hash": "f029e6e0ada3ffd3",
+   "hash": "daf25f3eea1e168c",
    "does": "",
    "errors": {
     "count": 0,
@@ -57915,7 +57915,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57945,7 +57945,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3919,
-   "hash": "d09d4629cc3c54d0",
+   "hash": "4106ecc76678349e",
    "does": "",
    "errors": {
     "count": 0,
@@ -58018,7 +58018,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58044,7 +58044,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1865,
-   "hash": "e0ca8ea923c8e9c1",
+   "hash": "01b811fd15475d92",
    "does": "",
    "errors": {
     "count": 0,
@@ -58117,7 +58117,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58248,7 +58248,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1615,
-   "hash": "505771ada9129966",
+   "hash": "3e2c86b12dd7b24c",
    "does": "",
    "errors": {
     "count": 0,
@@ -58323,7 +58323,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58349,7 +58349,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 343,
-   "hash": "19d16db3910377c1",
+   "hash": "a8da954f77bfa780",
    "does": "",
    "errors": {
     "count": 0,
@@ -58419,7 +58419,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64988,7 +64988,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1138,
-   "hash": "0cb0f2c65965c8bf",
+   "hash": "06a5cc3370327854",
    "does": "",
    "errors": {
     "count": 0,
@@ -65068,7 +65068,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
