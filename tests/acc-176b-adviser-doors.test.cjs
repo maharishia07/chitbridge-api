@@ -24,6 +24,8 @@ const t = async (name, fn) => {
 const A = require(path.join(API, 'middleware', 'books-grant.js'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 const actionsRouter = require(path.join(API, 'routes', 'books-actions.js'));
+const action = require(path.join(API, 'lib', 'books-action.js'));
+const actionContract = require(path.join(API, 'lib', 'books-actions-contract.js'));
 const { isOwner } = require(path.join(API, 'lib', 'owner.js'));
 const access = require(path.join(API, 'lib', 'access.js'));
 
@@ -88,6 +90,38 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: true }), 'allowed');
     assert.strictEqual(grants.verdictOf(Object.assign(row('adviser'), { revoked_at: new Date() }), { method: 'POST', listed: true }), 'revoked');
   });
+  await t('lib/books-action: the body of each kind is read once; what an adviser may not do is refused in words (a party, a bill, too few lines, a bad id, no reason)', () => {
+    const refusedAs = (kind, body, code) => assert.throws(() => action.bodyOf(kind, body), (err) => err.code === code && err.status === 422 && typeof err.words === 'string', kind + ' ' + code);
+    refusedAs('journal', { lines: [{ code: '1000', dr_minor: 1 }, { code: '4000', cr_minor: 1 }], against_ref: 'B-1' }, 'ACTION_PARTY_NOT_IN_V1');
+    refusedAs('journal', { lines: [{ code: '1000', dr_minor: 1, party: 'x' }, { code: '4000', cr_minor: 1 }] }, 'ACTION_PARTY_NOT_IN_V1');
+    refusedAs('journal', { lines: [{ code: '1000', dr_minor: 1 }] }, 'ACTION_BODY_INVALID');
+    refusedAs('reverse', { entry_id: 'not-a-uuid', reason: 'x' }, 'ACTION_BODY_INVALID');
+    refusedAs('reverse', { entry_id: MEMBER, reason: '' }, 'ACTION_BODY_INVALID');
+    refusedAs('unlock', { fy: '2026-27', period: 4 }, 'ACTION_BODY_INVALID');
+    refusedAs('lock', { fy: 'next year', period: 4 }, 'ACTION_BODY_INVALID');
+    refusedAs('year_close', {}, 'ACTION_BODY_INVALID');
+    assert.deepStrictEqual(action.bodyOf('year_close', { fy: '2026-27', extra: 'dropped' }), { fy: '2026-27' }, 'a key the kind does not know is dropped, never carried');
+  });
+  await t('lib/books-action: the hash binds the store, the kind and the body: the same words give the same hash, any change another', () => {
+    const body = { fy: '2026-27', period: 4, reason: null };
+    assert.strictEqual(action.hashOf(MEMBER, 'lock', body), action.hashOf(MEMBER, 'lock', Object.assign({}, body)));
+    assert.notStrictEqual(action.hashOf(MEMBER, 'lock', body), action.hashOf(MEMBER, 'lock', Object.assign({}, body, { period: 5 })));
+    assert.notStrictEqual(action.hashOf(MEMBER, 'lock', body), action.hashOf(MEMBER, 'unlock', body));
+    assert.notStrictEqual(action.hashOf(MEMBER, 'lock', body), action.hashOf(firmOwner.identity_id, 'lock', body), 'the same body in another store is another action');
+  });
+  await t('lib/books-action: fail closed, no database (b866 not run) is the typed 503 in words, never a 500 and never a write', async () => {
+    await assert.rejects(() => action.prepareAction(MEMBER, { identity_id: maker.identity_id }, { kind: 'lock', body: { fy: '2026-27', period: 4 } }, {}), (err) => err.code === 'BOOKS_ACTION_NOT_SWITCHED_ON' && err.status === 503 && /not switched on/.test(err.words));
+    await assert.rejects(() => action.acceptAction(MEMBER, { identity_id: firmOwner.identity_id }, MEMBER, {}), (err) => err.status === 503);
+    await assert.rejects(() => action.listActions(MEMBER, {}, maker), (err) => err.status === 503);
+  });
+  await t('the contract has an operation for each door and every action door is closed to an unknown key and carries the store', () => {
+    for (const route of Object.keys(actionContract.ROUTES)) assert.ok(actionContract.operationFor(route), route + ' has an operation');
+    for (const route of ['POST /', 'POST /:id/review', 'POST /:id/return', 'POST /:id/accept']) {
+      assert.strictEqual(actionContract.ROUTES[route].rules.additionalProperties, false, route + ' refuses an unknown key');
+      assert.ok(actionContract.ROUTES[route].required.includes('store_id'), route + ' carries the store');
+    }
+  });
+
   console.log(fail ? '\n' + fail + ' failed' : '\nall ok');
   process.exit(fail ? 1 : 0);
 })();

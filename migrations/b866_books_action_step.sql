@@ -7,11 +7,12 @@
 --    (books_insert_only trigger), so an entry cannot wait there as a draft that later changes status. There is no existing place to keep a prepared, unposted books action. The status of an action is its LATEST step; nothing is updated.
 -- WHAT IT IS.
 --    books_action_step  one row per step of an action: action_id, store (the books' owner), step, kind (journal, reverse, lock, unlock, year_close), body (first step only: exactly what the owner's own door would take),
---                       body_hash (every later step carries the hash of the body it saw: a changed body is a new action), total_minor + currency (the pair the preview showed), client_ref, who (identity, name), the firm's name,
+--                       body_hash (every later step carries the hash of the body it saw: a changed body is a new action), total_minor + currency (the pair the preview showed), action_ref, who (identity, name), the firm's name,
 --                       role (maker, checker, owner, system), reason (a return and a withdrawal say why), grant_id, entry_id (set on `accepted`: the entry the existing writer posted).
 --                       Each step happens at most once per action (unique index). The posted entry is linked back through journal_entry.source_ref = 'action:<action_id>' (no new column there).
 --    RLS: ENABLE + FORCE. SELECT: the store's own rows. INSERT: the firm's steps (prepared, reviewed, returned by a checker) only WITH a live ADVISER grant of this store named by grant_id; the owner's steps (accepted, returned, withdrawn)
 --         for the store itself. No UPDATE, no DELETE for cb_app, and the books_insert_only() trigger refuses both for every role.
+-- money-group: currency covers total_minor
 -- OWNER: lib/books-action.js (prepare, review, return, accept, withdraw) · routes/books-actions.js.
 -- ROLL BACK (loses the queue and its history; the books themselves are untouched, because an accepted action already posted through the normal writer):
 --    DROP TABLE IF EXISTS books_action_step;
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS books_action_step (
   body_hash         text        NOT NULL,
   total_minor       bigint,
   currency          text        CHECK (currency IS NULL OR currency ~ '^[A-Z]{3}$'),
-  client_ref        text,
+  action_ref        text,
   actor_identity_id uuid        NOT NULL,
   actor_name        text,
   firm_name         text,
@@ -47,9 +48,9 @@ CREATE TABLE IF NOT EXISTS books_action_step (
   CONSTRAINT books_action_step_body_first CHECK ((step = 'prepared') = (body IS NOT NULL)));
 -- WHY: a step happens once per action (a second review or a second accept is refused by the database, not only by the api)
 CREATE UNIQUE INDEX IF NOT EXISTS books_action_step_once_uq ON books_action_step (action_id, step);
--- WHY: the queue of a store reads its newest steps; an open client_ref is looked up before a second prepare
+-- WHY: the queue of a store reads its newest steps; an open action_ref is looked up before a second prepare
 CREATE INDEX IF NOT EXISTS books_action_step_store_idx ON books_action_step (store, at DESC);
-CREATE INDEX IF NOT EXISTS books_action_step_ref_idx ON books_action_step (store, client_ref) WHERE client_ref IS NOT NULL;
+CREATE INDEX IF NOT EXISTS books_action_step_ref_idx ON books_action_step (store, action_ref) WHERE action_ref IS NOT NULL;
 
 ALTER TABLE books_action_step ENABLE ROW LEVEL SECURITY;  ALTER TABLE books_action_step FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS action_read ON books_action_step;

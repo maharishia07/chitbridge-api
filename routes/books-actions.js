@@ -13,7 +13,7 @@ const { withEntity } = require('../db');
 const { problem } = require('../lib/problem');
 const { refusalOf } = require('../lib/books-contract');
 const { isOwner } = require('../lib/owner');
-const B = require('../lib/books');
+const ledger = require('../lib/books');
 const actions = require('../lib/books-action');
 const contract = require('../lib/books-actions-contract');
 
@@ -33,7 +33,7 @@ function noKey(req, res, next) {
 async function ledgerOn(req, res, next) {
   try {
     const store = storeOf(req);
-    const setting = await withEntity(store, (h) => B.settingOf(h, store));
+    const setting = await withEntity(store, (handle) => ledger.settingOf(handle, store));
     if (!setting || !setting.enabled) return refuse(req, res, 404, 'LEDGER_OFF', 'This shop has not switched the ledger on.');
     req.books = setting;
     return next();
