@@ -246,7 +246,7 @@ async function main() {
     const mixed = await withEntity(M2.id, (h) => h.query('SELECT count(*)::int AS n FROM books_access_log WHERE grantor_entity <> $1 AND grantee_entity <> $1', [M2.id]));
     ok('12 row security: M2 cannot see a log row that is neither about its books nor made by it', mixed.rows[0].n === 0, JSON.stringify(mixed.rows));
     const received = await call(ownerOf(P), 'GET', '/api/books-grants');
-    ok('the parent lists the access it holds, each with its state', received.status === 200 && received.body.received.length >= 3 && received.body.received.some((g) => g.state === 'live') && received.body.received.some((g) => g.state === 'revoked'), JSON.stringify(received.body.received && received.body.received.map((g) => g.state)));
+    ok('the parent lists the access it holds, each with its state', received.status === 200 && received.body.received.length === 4 && ['revoked', 'expired', 'edge_off'].every((word) => received.body.received.some((g) => g.state === word)), JSON.stringify(received.body.received && received.body.received.map((g) => g.state)));
     const noUpdate = await withEntity(P.id, (h) => h.query('UPDATE books_access_log SET status = 0')).then(() => 'updated', (e) => e.code);
     ok('the log is insert-only: no UPDATE privilege (42501)', noUpdate === '42501', noUpdate);
   } finally {
