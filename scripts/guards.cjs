@@ -1051,7 +1051,6 @@ const files = all
       console.log('  ⚠️  ' + item + ' is listed but missing — renamed, or deleted without updating this list');
       return false;
     });
-
 /**
  * ⚠️ CI WITHOUT THE ENGINES REPO (2026-09-28). chitbridge-engines is PRIVATE; CI clones it only when the
  * ENGINES_READ_TOKEN secret exists. Without it, exactly these two guards cannot run — measured by moving the repo

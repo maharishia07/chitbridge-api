@@ -442,6 +442,12 @@ const fakeDb = {
       return { rows: T.parties.filter((p) => p.customer && p.owner === (v || [])[0]).map((p) => ({ party_id: p.party_id, credit_days: p.credit_days == null ? null : p.credit_days,
         credit_limit_minor: p.credit_limit_minor == null ? null : String(p.credit_limit_minor), terms: p.terms || null })) };
     }
+    /* R1-03 (lib/books-live-bill liveBillEntries): which of the asked entries are a live bill (sale_bill / purchase_bill, source chit:<id>, not reversed). The chit's own status is NOT modelled here: the real read is proved on Postgres (tests/r103-reverse-live-bill.realstack.cjs) */
+    if (/^SELECT x.entry_id FROM journal_entry x/.test(t.trim())) {
+      const asked = (v || [])[1] || [], mine = (T.entries || []).filter((h) => h.entity_id === (v || [])[0] && asked.indexOf(h.entry_id) >= 0);
+      const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
+      return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
+    }
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
