@@ -5267,8 +5267,9 @@
       "file": "books.js",
       "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "hand count (FIN-70): the table probe, the chart read, ONE insert for the whole batch; the stub reaches a 422 floor, needs a live measure on sit-in",
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, ONE insert for the whole batch); the offline stub reaches a 422 floor; live measure on sit-in pending",
       "awaiting_client": {
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"
@@ -5278,8 +5279,9 @@
       "file": "books.js",
       "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "hand count (FIN-70): the table probe, the chart read, ONE insert; the stub reaches a 422 floor, needs a live measure on sit-in",
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, ONE insert); the offline stub reaches a 422 floor; live measure on sit-in pending",
       "awaiting_client": {
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"
@@ -5289,8 +5291,9 @@
       "file": "books.js",
       "trips": 6,
       "wire": null,
-      "fired": false,
-      "why": "hand count (FIN-70): the table probe, the chart read, then the marks, the statements and the posted bank refs in parallel; the stub reaches a 422 floor, needs a live measure on sit-in",
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, then the marks, the statements and the posted bank refs in parallel); the offline stub reaches a 422 floor; live measure on sit-in pending",
       "awaiting_client": {
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"

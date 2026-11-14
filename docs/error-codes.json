@@ -722,6 +722,15 @@
    "since": "2026-11-14"
   },
   {
+   "code": "BOOKS_NOT_FOUND",
+   "status": "404",
+   "title": "Bank account not found",
+   "shopkeeper": "That bank account was not found in this shop's ledger.",
+   "hint": "Pick the bank account from the list and try again.",
+   "owner_area": "books",
+   "since": "2026-11-14"
+  },
+  {
    "code": "BOOKS_NOT_MIGRATED",
    "status": "503",
    "title": "Ledger update pending",
@@ -4158,6 +4167,15 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "POSTED_NOT_ACCEPTED",
+   "status": "varies",
+   "title": "Posted but not accepted",
+   "shopkeeper": "This bank line is in the books but nobody has accepted it against the statement yet.",
+   "hint": "Accept it on the bank reconciliation page, or leave it to carry over.",
+   "owner_area": "books",
+   "since": "2026-11-14"
   },
   {
    "code": "PRICE_DECIMALS",

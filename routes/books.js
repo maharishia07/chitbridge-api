@@ -1434,6 +1434,7 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
     const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account), body, byOf(req)));
     res.status(201).json({ marks });
   } catch (err) {
+    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
     problem(req, res, refusalOf(err, req));
   }
 });
@@ -1445,6 +1446,8 @@ router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/
     const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req)));
     res.status(201).json({ statement });
   } catch (err) {
+    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
+    if (err && err.code === 'CURRENCY_MISMATCH') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field } }); /* a statement in another currency than the account's (the same answer refusalOf gives) */
     problem(req, res, refusalOf(err, req));
   }
 });
@@ -1460,6 +1463,7 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
     });
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
+    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
     problem(req, res, refusalOf(err, req));
   }
 });

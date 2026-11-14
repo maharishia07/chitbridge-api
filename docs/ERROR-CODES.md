@@ -66,6 +66,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_GRANT_NO_PARENT | 422 | Not your network parent | Pick the business in your network that audits you. | Choose the business that sits above you in your network. | network | 2026-11-14 |
 | BOOKS_GRANT_PURPOSE_INVALID | 422 | Purpose too short or long | Say why in 3 to 300 characters. | Write the reason in a few words. | network | 2026-11-14 |
 | BOOKS_GRANT_RATE | 429 | Too many requests | Too many requests for these books. Wait a minute. | Wait a minute, then try again. | network | 2026-11-14 |
+| BOOKS_NOT_FOUND | 404 | Bank account not found | That bank account was not found in this shop's ledger. | Pick the bank account from the list and try again. | books | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
@@ -410,6 +411,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
 | POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
+| POSTED_NOT_ACCEPTED | varies | Posted but not accepted | This bank line is in the books but nobody has accepted it against the statement yet. | Accept it on the bank reconciliation page, or leave it to carry over. | books | 2026-11-14 |
 | PRICE_MOVED | 409 | Prices have moved | Some items in this draft changed in the catalogue after the draft was made. Nothing was sent. | Use the new prices, or send it as drafted when only a price moved. | chits | 2026-11-14 |
 | PRICING_KIND_UNKNOWN | 400 | Pricing structure not known | A line names a pricing structure we do not know. The kinds are fixed, tiered and range. | Use fixed, tiered or range, or send the line without a structure to use the list price. | pricing | 2026-11-13 |
 | PRODUCT_BAD_REQUEST | 400 | The catalogue needs something else | The catalogue could not take that request, and the sentence says why. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
