@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/23-connectors-and-integrations/functions/erp-ingest-and-hand-off.md
  * tests/erp-ingest-idempotency.test.cjs — POST /api/connectors/erp-ingest: ONE DOCUMENT, ONE CHIT, AND A FAILED EMIT IS NEVER A 200 (CON-ERP-IDEM, 11 Nov 2026).
  *
  * The cases the S36 machine_keyed check (tools/api-register.cjs, docs/contracts/api-hardening-scope.json) reads this file for, by their ids:
