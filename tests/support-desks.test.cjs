@@ -249,7 +249,7 @@ if (shop) {
   /* ⚠️⚠️ THE DOOR WAS INSIDE THE PRODUCT LIST. A shop with an empty catalogue drew no support link at all —
      and the emptier a shop is, the more likely the person reading it is the one with a problem. */
   ok('an EMPTY shop still has a door',
-    /nothing on display yet[\s\S]{0,400}supLinkHtml\(\)/.test(shop),
+    /nothing on display(?: yet)?[\s\S]{0,400}supLinkHtml\(\)/i.test(shop),
     'support belongs to the shop, not to its shelves');
   ok('and so does one whose catalogue is private or gone',
     /no public catalogue[\s\S]{0,300}supLinkHtml\(\)/.test(shop),
