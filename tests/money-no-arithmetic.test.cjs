@@ -5,6 +5,7 @@
  * OWNS      the scan that keeps money arithmetic out of the files that carry money from the engine to the chit: lib/send-money.js, lib/money-check.js,
  *           lib/chit-proposal.js (the change order, RAIL-106) and every send step of routes/chits.js (async function send…). A sum, a difference, a product,
  *           a quotient on a money figure, a reduce(), a hand rounding or a percentage is a SECOND CALCULATION and fails here, under any name.
+ *           ALSO (G2) every lib/*.js and routes/*.js by hit count per file against tests/money-scan-baseline.json; the shapes live in ONE list, tests/lib/money-scan.cjs.
  * CALLED BY scripts/guards.cjs · cited by lib/send-money.js and lib/money-check.js headers.
  * FLOW      read each file (comments stripped) → cut the scanned bodies → every suspect pattern → minus the NAMED exceptions (each with its backlog id)
  * CARD      14-accounting/README
@@ -16,53 +17,23 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const API = path.join(__dirname, '..');
+const { code, bodyOf, hitsIn: scanBody, treeFiles, countsOver } = require('./lib/money-scan.cjs');
 let pass = 0, fail = 0;
 const ok = (name, cond, detail) => {
   if (cond) { pass++; console.log('   ok   ' + name); }
   else { fail++; console.log('   FAIL ' + name + (detail ? '\n          ' + detail : '')); }
 };
 
-/** a file's code with its comments taken out (a comment may name arithmetic; only code is judged) */
-const code = (file) => fs.readFileSync(path.join(API, file), 'utf8').replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-
-/** a top-level function's text: from its signature to the first line that is a lone closing brace */
-const bodyOf = (text, signature) => {
-  const at = text.indexOf(signature);
-  if (at < 0) return null;
-  const rest = text.slice(at);
-  return rest.slice(0, rest.indexOf('\n}\n') + 2);
-};
-
 /** every top-level `async function send…(` / `function send…(` in a text → [name, body] */
 const sendSteps = (text) => [...text.matchAll(/^(?:async )?function (send\w*)\(/gm)].map((match) => [match[1], bodyOf(text, match[0])]);
-
-const MONEY = '(?:total|net|gross|tax|amount|price|taxable|savings|discount|value|sum|paid|due|money)';
-/** the shapes a second calculation takes */
-const SUSPECTS = [
-  { name: 'reduce()', re: /\.reduce\(/ },
-  { name: 'hand rounding', re: new RegExp('\\bMath\\.(?:round|floor|ceil)\\(.*' + MONEY + '|' + MONEY + '.*\\bMath\\.(?:round|floor|ceil)\\(', 'i') },
-  { name: 'toFixed', re: /\.toFixed\(/ },
-  { name: 'percent', re: /[*/]\s*100\b/ },
-  { name: 'money operator', re: new RegExp('\\b\\w*' + MONEY + '\\w*\\s*[-+*/]\\s*(?:\\(?\\s*Number\\()?\\s*[\\w.]*' + MONEY, 'i') },
-  { name: 'money operator (qty x price)', re: new RegExp('\\b\\w*(?:qty|quantity)\\w*\\)?\\s*\\*|\\*\\s*\\(?\\s*(?:Number\\()?\\s*\\w*(?:qty|quantity)', 'i') }
-];
 
 /** the known lines, each a backlog item that moves it into the engine (ACCOUNTING-BACKLOG, P2) */
 const EXCEPTIONS = [
   { file: 'lib/chit-proposal.js', where: 'priceOneLine', line: 'Number(amounts.price) * Number(amounts.quantity)', backlog: 'ACC-253', why: 'the line total of a seller-priced round (price x quantity) before the engine prices the round' }
 ];
 
-/** the suspect hits in a body, minus the named exceptions → [{ pattern, text }] */
-function hitsIn(file, body) {
-  const lines = body.split('\n');
-  const hits = [];
-  for (const text of lines) {
-    if (EXCEPTIONS.some((ex) => ex.file === file && text.includes(ex.line))) continue;
-    for (const s of SUSPECTS) if (s.re.test(text)) hits.push({ pattern: s.name, text: text.trim().slice(0, 160) });
-  }
-  return hits;
-}
+/** the suspect hits in a body, minus the named exceptions above */
+const hitsIn = (file, body) => scanBody(file, body, EXCEPTIONS);
 const said = (hits) => hits.map((h) => h.pattern + ': ' + h.text).join('\n          ');
 
 console.log('\n══ NO MONEY ARITHMETIC BETWEEN THE ENGINE AND THE CHIT (ACC-206) ══\n');
@@ -85,6 +56,37 @@ ok('routes/chits.js: the second calculation that was removed stays removed (mone
 for (const ex of EXCEPTIONS) {
   const text = code(ex.file);
   ok('named exception ' + ex.backlog + ' (' + ex.file + ' ' + ex.where + ') is still where it was — when it moves into the engine, delete its row here', text.includes(ex.line), ex.why);
+}
+
+/**
+ * the WIDENED scan (ACC-206 G2): every lib/*.js and routes/*.js, by hit count per file against tests/money-scan-baseline.json.
+ * A file not in the baseline holds NO hit (a new file with `total + tax` goes red); a baselined file may not gain one. The count only goes DOWN:
+ * when an owner moves a line into the engine, lower its number (never raise one — a new line is a second calculation). The KNOWN_LINES are the
+ * named, pre-existing lines of the files the plan lists (PLAN-ACC-206 §2e), each with the backlog item that moves it; the rest of the baseline
+ * is aggregation over rows and engine copies, widened per owner.
+ */
+const BASELINE = JSON.parse(fs.readFileSync(path.join(__dirname, 'money-scan-baseline.json'), 'utf8'));
+const KNOWN_LINES = [
+  { file: 'lib/offers-live.js', line: 'parts.reduce((amount, entry) => amount + (Number(entry.off) || 0), 0)', backlog: 'CAT-255', why: 'sums the offer parts of a line itself' },
+  { file: 'lib/books-hooks.js', line: 'rows.reduce((sum, item) => sum + item.taxable + item.cgst', backlog: 'ACC-351', why: 'by-rate total re-adds the bill heads' },
+  { file: 'lib/books-hooks.js', line: 'roundMoney(total - byRate.total)', backlog: 'ACC-352', why: 'round-off derived by subtraction' },
+  { file: 'routes/catalogue.js', line: 'items.reduce((s, item) => s + item.total, 0)', backlog: 'CAT-243', why: 'network order total summed in the route' },
+  { file: 'routes/catalogue.js', line: 'items.reduce((sum, item) => sum + item.price * item.qty, 0)', backlog: 'CAT-243', why: 'network order total (price x qty) in the route' },
+  { file: 'routes/catalogue.js', line: 'sitems.reduce((sum, item) => sum + item.price * item.qty, 0)', backlog: 'CAT-243', why: 'fragment total (price x qty) in the route' }
+];
+const overBaseline = (counts) => Object.keys(counts).filter((file) => counts[file] > (BASELINE[file] || 0)).map((file) => file + ' has ' + counts[file] + ' (baseline ' + (BASELINE[file] || 0) + ')');
+
+const treeCounts = countsOver(treeFiles(), code);
+const over = overBaseline(treeCounts);
+ok('lib/ and routes/ (' + Object.keys(treeCounts).length + ' files with hits): no file gains a money-arithmetic hit, no new file holds one', over.length === 0, over.join('\n          '));
+for (const known of KNOWN_LINES) {
+  ok('known line ' + known.backlog + ' (' + known.file + ') is still where it was — when it moves into the engine, delete its row here and lower the baseline', code(known.file).includes(known.line), known.why);
+}
+{
+  const planted = { 'lib/zz-new-file.js': 'const owed = total + tax;\n' };
+  const found = overBaseline(countsOver(Object.keys(planted), (file) => planted[file]));
+  ok('the widened scan bites: a bare `total + tax` in a NEW file is red', found.length === 1 && /zz-new-file/.test(found[0]), found.join(', '));
+  ok('the known list stays green: the real tree is not over the baseline', over.length === 0);
 }
 
 /* the scan bites: a planted second calculation under a new name is found */
