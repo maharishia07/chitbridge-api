@@ -81,6 +81,14 @@ function create() {
       return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
     },
+    async zeroRateSales(db, e, from, to, role, currency) {
+      const day = (x) => String(x.posting_date).slice(0, 10);
+      const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id);
+      const got = T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && live(x))
+        .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id && l.currency === currency && /^0+([.]0+)?$/.test(String(l.tax_rate == null ? '' : l.tax_rate))
+          && (T.accounts.find((a) => a.account_id === l.account_id) || {}).role === role));
+      return { lines: got.length, total_minor: got.reduce((sum, l) => sum + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0) };
+    },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {
       const live = (r) => T.entries.find((x) => x.entity_id === e && x.source_ref === 'chit:' + r.chit_id && !x.reverses_entry_id && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
