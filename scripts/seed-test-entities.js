@@ -24,8 +24,8 @@
  * Everything goes through the REAL public API (register → dev OTP → verify → publish → adopt → declare), so it
  * exercises the same path a human would and works against any environment.
  *
- *   Run:  node scripts/seed-test-entities.js
- *         API=http://localhost:3000 node scripts/seed-test-entities.js
+ *   Run:  CB_API=http://127.0.0.1:3100 node scripts/seed-test-entities.js
+ *         CB_API=<a SIT box api> node scripts/seed-test-entities.js     (CB_API is required; there is no default)
  *
  * ⚠️ Writes to the live database. All five use @test-cb.com, so cleanup-test-entities.sql sweeps them later.
  */

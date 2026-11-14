@@ -70,7 +70,7 @@ it('⚠️⚠️ both halves are required: the evidence AND the rule', () => {
 
 it('⚠️⚠️ a rejection carries its reason, or it is refused', () => {
   /* A "no" with no reason gets re-raised by the next tester, and rightly. */
-  assert.ok(/state === 'rejected' && !why/.test(SRC), 'a rejection can be recorded with no reason');
+  assert.ok(/state === 'rejected' && !reason/.test(SRC), 'a rejection can be recorded with no reason');
 });
 
 it('⚠️ every decision is APPENDED, never overwritten', () => {
@@ -78,7 +78,7 @@ it('⚠️ every decision is APPENDED, never overwritten', () => {
      nobody can be held to. */
   assert.ok(/INSERT INTO definition_version[\s\S]{0,400}current_version \+ 1/.test(SRC),
     'a decision no longer writes a new version');
-  assert.ok(/history: \(ru\.history \|\| \[\]\)\.concat/.test(SRC), 'the history is no longer appended to');
+  assert.ok(/history: \(rules\.history \|\| \[\]\)\.concat/.test(SRC), 'the history is no longer appended to');
   assert.ok(!/DELETE FROM definition/.test(SRC), 'nothing about a requirement may delete a definition');
 });
 

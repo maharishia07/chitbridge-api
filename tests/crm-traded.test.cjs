@@ -41,7 +41,7 @@ it('routes/chits.js: the bump runs INSIDE the delivery\'s withEntity, on deliver
 });
 it('the stage stays DERIVED: assemble() says customer once txn_count > 0; isLead() is false then', () => {
   const src = fs.readFileSync(path.join(API, 'lib', 'crm.js'), 'utf8');
-  assert.ok(/p\.lead = r\.added_via === 'lead' \? \{ stage: \(Number\(r\.txn_count\) \|\| 0\) > 0 \? 'customer'/.test(src));
+  assert.ok(/party\.lead = row\.added_via === 'lead' \? \{ stage: \(Number\(row\.txn_count\) \|\| 0\) > 0 \? 'customer'/.test(src));
   assert.strictEqual(crm.isLead({ lead: { stage: 'customer' }, customer: { txn_count: 1 }, roles: { supplier: false } }), false);
   assert.strictEqual(crm.isLead({ lead: { stage: 'trial' }, customer: { txn_count: 0 }, roles: { supplier: false } }), true);
 });

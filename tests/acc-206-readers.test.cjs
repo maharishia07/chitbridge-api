@@ -84,7 +84,7 @@ const WIRED = [
   ['routes/chits.js', "COALESCE(${ownBill.billTotalSql('ch')},0) >="],
   ['routes/chits.js', "COALESCE(${ownBill.billTotalSql('ch')},0) <="],
   ['routes/chits.js', "amount: ownBill.billTotalSql('ch')"],
-  ['routes/chits.js', "AS bill_total"],
+  ['routes/chits.js', "AS bill_total_sort"],
   ['routes/chits.js', "SUM(${ownBill.billTotalSql('ch')})"],
   ['routes/chits.js', 'detailWithPickedTotal(data.detail.rows[0], data.header.rows[0])'],
   ['lib/cost-view.js', "'total_value', ${counterBill.billTotalSql(alias)},"],
@@ -96,5 +96,5 @@ const WIRED = [
 for (const [file, piece] of WIRED) ok(read(file).includes(piece), file + ' reads the one pick: ' + piece);
 const chitsSrc = CHITS.read(root);
 ok(!/summary_json->>'total_value'/.test(chitsSrc) && !/\(ch\.summary_json->>'total_value'\)/.test(chitsSrc), 'routes/chits.js holds no raw total_value SQL read');
-ok((chitsSrc.match(/amount: 'bill_total'/g) || []).length === 1, 'the folder sort orders by the picked bill_total (its outer select has no business_json)');
+ok((chitsSrc.match(/amount: 'bill_total_sort'/g) || []).length === 1, 'the folder sort orders by the picked bill_total_sort (its outer select has no business_json)');
 ASYNC_CASES.then(() => console.log('acc-206-readers: ' + checks + ' checks pass')).catch((e) => { console.error('FAIL ' + e.message); process.exit(1); });

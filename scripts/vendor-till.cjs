@@ -167,6 +167,8 @@ const VERSIONS = () => {
   return JSON.stringify({ engines: out, page }, null, 2) + '\n';
 };
 
+/* ⭐ CTR-161: web-mastered files the kit carries a byte copy of (till.js serves each at the same path as the web): the ask-once rate menu, public/app/tax-slab-ui.js, which the page loads with an onerror hook */
+const WEB_MASTERED_KIT = () => [[path.join(WEB, 'app', 'tax-slab-ui.js'), path.join(API, 'tools', 'tally-connector', 'tax-slab-ui.js'), 'copy']];
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
   /* ⭐⭐ THE ROLLUP RULE GOES INTO THE KIT, because the program on the shop PC requires it directly — the day,
@@ -394,7 +396,7 @@ const touchesWeb = (file) => Boolean(file) && file.startsWith(WEB + path.sep);
 const SCOPE = process.argv.includes('--kit-only') ? (pair) => !touchesWeb(pair[0]) && !touchesWeb(pair[1]) : process.argv.includes('--web-only') ? (pair) => touchesWeb(pair[1]) : () => true;
 
 if (process.argv.includes('--check')) {
-  for (const [from, to, body] of COPIES().filter(SCOPE)) {
+  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT()).filter(SCOPE)) {
     const text = want(from, body);
     const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
     if (have !== text) {
@@ -406,7 +408,7 @@ if (process.argv.includes('--check')) {
   process.exit(0);
 }
 
-for (const [from, to, body] of COPIES()) {
+for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT())) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.writeFileSync(to, want(from, body));
   console.log('wrote ' + to);

@@ -122,12 +122,12 @@ const junitresults = require('../lib/junitresults');
  */
 const PROJECT_MAX = 80;
 const _proj = { has: null, at: 0, warned: false };
-function projectMissing(why) {
+function projectMissing(reason) {
   _proj.has = false;
   _proj.at = Date.now();
   if (!_proj.warned) {
     _proj.warned = true;
-    console.warn('[testing] test_result.project is not there yet (' + why + ') — results are written WITHOUT a project until b292 is run');
+    console.warn('[testing] test_result.project is not there yet (' + reason + ') — results are written WITHOUT a project until b292 is run');
   }
 }
 /**
@@ -142,11 +142,11 @@ async function hasProject(db) {
   if (_proj.has === true) return true;
   if (_proj.has === false && Date.now() - _proj.at < 5 * 60 * 1000) return false;
   try {
-    const r = await db.query(
+    const found = await db.query(
       `SELECT 1 FROM information_schema.columns
         WHERE table_schema = current_schema() AND table_name = 'test_result' AND column_name = 'project' LIMIT 1`
     );
-    if (r.rows.length) {
+    if (found.rows.length) {
       _proj.has = true;
       return true;
     }
@@ -157,9 +157,9 @@ async function hasProject(db) {
   return false;
 }
 /** ⭐ ONE reading of a project name — the tap, the JUnit post and every ?project= filter. '' is no project. */
-function projectOf(v) {
-  if (v == null) return { project: null };
-  const text = String(v).trim();
+function projectOf(value) {
+  if (value == null) return { project: null };
+  const text = String(value).trim();
   if (!text) return { project: null };
   if (text.length > PROJECT_MAX) return { error: 'The project name is longer than ' + PROJECT_MAX + ' characters.' };
   return { project: text };
@@ -168,8 +168,8 @@ function projectOf(v) {
  * ⭐ THE ONE FILTER on test_result for `?project=`, given the $ index its value is passed at (always passed,
  * null when no filter). Without the column a named project matches nothing — which is true: no row has one.
  */
-function projectWhere(has, i) {
-  return has ? `($${i}::text IS NULL OR project = $${i})` : `($${i}::text IS NULL)`;
+function projectWhere(hasTable, index) {
+  return hasTable ? `($${index}::text IS NULL OR project = $${index})` : `($${index}::text IS NULL)`;
 }
 
 /**
@@ -190,13 +190,13 @@ const PAGE = {
  * ONE page read for this file: `SELECT <sel> <from> ORDER BY <order>` cut to the page, with the count of the whole
  * filtered set in the same statement. Only a page past the end (no row to carry the count) asks the count again.
  */
-async function readPage(db, sel, from, order, params, q, size) {
-  const limit = limitOf(q.limit, size, size),
-    page = pageOf(q.page),
-    n = params.length;
+async function readPage(db, columns, from, order, params, query, size) {
+  const limit = limitOf(query.limit, size, size),
+    page = pageOf(query.page),
+    paramCount = params.length;
   const rows = (
     await db.query(
-      `SELECT ${sel}, count(*) OVER ()::int AS full_count ${from} ORDER BY ${order} LIMIT $${n + 1} OFFSET $${n + 2}`,
+      `SELECT ${columns}, count(*) OVER ()::int AS full_count ${from} ORDER BY ${order} LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
       params.concat([limit, (page - 1) * limit])
     )
   ).rows;
@@ -302,11 +302,11 @@ router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, r
      * table to join. Reopening clears it: a stale reason on a live case would explain a closure that has been
      * undone.
      */
-    const why = String((req.body && req.body.why) || '')
+    const reason = String((req.body && req.body.why) || '')
       .trim()
       .slice(0, 400);
-    const who = testerOf(req);
-    const r = await withEntity(entity_id, (db) =>
+    const tester = testerOf(req);
+    const result = await withEntity(entity_id, (db) =>
       db.query(
         `UPDATE definition d SET status = $3
         WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2
@@ -314,7 +314,7 @@ router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, r
         [entity_id, key, open ? 'live' : 'retired']
       )
     );
-    if (r && r.rows.length) {
+    if (result && result.rows.length) {
       /* the account of the closure goes onto the CURRENT version, where every reader already looks */
       await withEntity(entity_id, (db) =>
         db.query(
@@ -322,19 +322,19 @@ router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, r
             || jsonb_build_object('closed_note', $3::text, 'closed_by', $4::text, 'closed_at', $5::text)
           WHERE definition_id = $1 AND version = $2`,
           [
-            r.rows[0].definition_id,
-            r.rows[0].current_version,
-            open ? null : why || null,
-            open ? null : who.name || null,
+            result.rows[0].definition_id,
+            result.rows[0].current_version,
+            open ? null : reason || null,
+            open ? null : tester.name || null,
             open ? null : new Date().toISOString()
           ]
         )
       );
     }
-    if (!r || !r.rows.length) {
+    if (!result || !result.rows.length) {
       return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'no case called ' + key }) });
     }
-    return res.json({ case_key: r.rows[0].name, status: r.rows[0].status, closed: !open });
+    return res.json({ case_key: result.rows[0].name, status: result.rows[0].status, closed: !open });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Failed'));
   }
@@ -342,11 +342,11 @@ router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, r
 
 router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
   try {
-    const me = auth.entityOf(req);
-    if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
-    const t = require('../lib/trips');
-    const b = req.body || {};
-    const state = b.off ? t.traceOff(me) : t.traceOn(me, b.minutes);
+    const myEntity = auth.entityOf(req);
+    if (!myEntity) return problem(req, res, { status: 401, ...notSignedIn() });
+    const trips = require('../lib/trips');
+    const body = req.body || {};
+    const state = body.off ? trips.traceOff(myEntity) : trips.traceOn(myEntity, body.minutes);
     /* S34: the keys the library's answer can carry, named: off and no-entity answer { on } alone, on answers all four */
     return res.json(state.on ? { on: state.on, minutes: state.minutes, until: state.until, seconds: state.seconds } : { on: state.on });
   } catch (e) {
@@ -355,9 +355,9 @@ router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
 });
 router.get('/trace', auth, ...checked('GET /trace'), (req, res) => {
   try {
-    const me = auth.entityOf(req);
-    if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
-    const state = require('../lib/trips').traceState(me);
+    const myEntity = auth.entityOf(req);
+    if (!myEntity) return problem(req, res, { status: 401, ...notSignedIn() });
+    const state = require('../lib/trips').traceState(myEntity);
     /* S34: the keys the library's answer can carry, named; a key it does not carry is undefined, and JSON leaves it out */
     return res.json({ on: state.on, until: state.until, seconds: state.seconds });
   } catch (e) {
@@ -419,8 +419,8 @@ function resultsEntityOf(req) {
 }
 
 function testerOf(req) {
-  const i = req.identity || {};
-  return { id: i.identity_id || null, name: i.display_name || i.user_id || 'someone' };
+  const identity = req.identity || {};
+  return { id: identity.identity_id || null, name: identity.display_name || identity.user_id || 'someone' };
 }
 
 /* ── THE CASES ────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -433,7 +433,7 @@ function testerOf(req) {
 router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) =>
+    const result = await withEntity(entity_id, (db) =>
       readPage(
         db,
         `d.definition_id, d.name, d.sub_kind, d.status, d.current_version, v.rules`,
@@ -454,13 +454,13 @@ router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, 
       )
     );
 
-    const cases = r.rows.map((x) =>
+    const cases = result.rows.map((x) =>
       Object.assign(
         { definition_id: x.definition_id, case_key: x.name, module_key: x.sub_kind || '—', version: x.current_version, status: x.status },
         x.rules || {}
       )
     );
-    res.json({ cases, count: cases.length, total: r.total, page: r.page, limit: r.limit });
+    res.json({ cases, count: cases.length, total: result.total, page: result.page, limit: result.limit });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the test cases'));
   }
@@ -492,7 +492,7 @@ router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, 
  * at all: a case loaded by the button and a case loaded from a file must be the SAME row, or the board holds two
  * kinds of case that only look alike.
  */
-async function importCases(entity_id, who, rows, mode) {
+async function importCases(entity_id, tester, rows, mode) {
   const out = { added: 0, updated: 0, unchanged: 0, cases: [] };
   /* ⭐ what came in that this door does not recognise — reported, never accepted */
   out.dropped_fields = unknownFields(rows);
@@ -656,8 +656,8 @@ async function importCases(entity_id, who, rows, mode) {
          * through here too, and stamping there would rewrite the author of all 1,455 cases to whoever last
          * pressed the button.
          */
-        written_by: mode === 'add' && who ? who.name || null : c.written_by || null,
-        written_by_id: mode === 'add' && who ? who.id || null : c.written_by_id || null,
+        written_by: mode === 'add' && tester ? tester.name || null : c.written_by || null,
+        written_by_id: mode === 'add' && tester ? tester.id || null : c.written_by_id || null,
         written_at: mode === 'add' ? new Date().toISOString() : c.written_at || null,
         /**
          * ── ⚠️⚠️⚠️ AND THE SEVENTH FIELD THROUGH THE SAME DOOR, CAUGHT BY DRIVING THE LOOP ────────────────
@@ -698,38 +698,38 @@ async function importCases(entity_id, who, rows, mode) {
     const toCreate = [],
       toVersion = [];
     want.forEach((item) => {
-      const cur = by[item.key];
+      const current = by[item.key];
       const json = JSON.stringify(item.rules);
-      if (!cur) {
+      if (!current) {
         toCreate.push(Object.assign({ json: json }, item));
         return;
       }
       /* ⚠️ NO VERSION FOR AN IDENTICAL RE-IMPORT. The button is meant to be pressed often; a version per press
          would bury the edits that matter under a hundred that changed nothing, and would make "which version did
          this pass on?" a question with a useless answer. */
-      if (JSON.stringify(cur.rules || {}) === json) {
+      if (JSON.stringify(current.rules || {}) === json) {
         out.unchanged++;
-        out.cases.push({ case_key: item.key, definition_id: cur.definition_id, version: cur.current_version });
+        out.cases.push({ case_key: item.key, definition_id: current.definition_id, version: current.current_version });
         return;
       }
-      toVersion.push(Object.assign({ json: json, id: cur.definition_id, next: Number(cur.current_version) + 1 }, item));
+      toVersion.push(Object.assign({ json: json, id: current.definition_id, next: Number(current.current_version) + 1 }, item));
     });
 
     /* ── 4 · the new cases: one INSERT, then one INSERT for their version 1 ── */
     if (toCreate.length) {
-      const ins = await db.query(
+      const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          SELECT $1, 'testcase', t.mod, t.name, t.note, 'live', 1, $5
            FROM unnest($2::text[], $3::text[], $4::text[]) AS t(mod, name, note)
          ON CONFLICT DO NOTHING
          RETURNING definition_id, name`,
-        [entity_id, toCreate.map((item) => item.mod), toCreate.map((item) => item.key), toCreate.map((item) => item.rules.title || null), who.id]
+        [entity_id, toCreate.map((item) => item.mod), toCreate.map((item) => item.key), toCreate.map((item) => item.rules.title || null), tester.id]
       );
 
       /* ⚠ ON CONFLICT DO NOTHING means a row somebody else created in the meantime is simply not returned. It is
          not an error and must not be counted as added — the next press will see it as unchanged. */
       const madeBy = {};
-      ins.rows.forEach((item) => {
+      inserted.rows.forEach((item) => {
         madeBy[item.name] = item.definition_id;
       });
       const made = toCreate.filter((item) => madeBy[item.key]);
@@ -741,7 +741,7 @@ async function importCases(entity_id, who, rows, mode) {
           `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
            SELECT t.id::uuid, 1, $1, t.rules::jsonb, $4
              FROM unnest($2::text[], $3::text[]) AS t(id, rules)`,
-          [entity_id, made.map((item) => madeBy[item.key]), made.map((item) => item.json), who.id]
+          [entity_id, made.map((item) => madeBy[item.key]), made.map((item) => item.json), tester.id]
         );
         made.forEach((item) => {
           out.added++;
@@ -756,7 +756,7 @@ async function importCases(entity_id, who, rows, mode) {
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
          SELECT t.id::uuid, t.v::int, $1, t.rules::jsonb, $5
            FROM unnest($2::text[], $3::int[], $4::text[]) AS t(id, v, rules)`,
-        [entity_id, toVersion.map((item) => item.id), toVersion.map((item) => item.next), toVersion.map((item) => item.json), who.id]
+        [entity_id, toVersion.map((item) => item.id), toVersion.map((item) => item.next), toVersion.map((item) => item.json), tester.id]
       );
       await db.query(
         `UPDATE definition d
@@ -925,9 +925,9 @@ router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req,
  */
 router.get('/engine', auth, boardReadGate, ...checked('GET /engine'), (req, res) => {
   try {
-    const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
-    if (!require('fs').existsSync(f)) return res.json({ engine: null });
-    const doc = JSON.parse(require('fs').readFileSync(f, 'utf8'));
+    const filePath = require('path').join(__dirname, '..', 'data', 'test-cases.json');
+    if (!require('fs').existsSync(filePath)) return res.json({ engine: null });
+    const doc = JSON.parse(require('fs').readFileSync(filePath, 'utf8'));
     /* ⭐ the notes ride with the contents: each row states what its own rule leaves out */
     res.json({ engine: doc.engine || null, contents: doc.contents || null, notes: doc.notes || null, foot: doc.foot || null });
   } catch (err) {
@@ -979,12 +979,12 @@ router.post('/cases/seed', auth, ...checked('POST /cases/seed'), async (req, res
  *
  * Returns { definition_id, version } — what a case cites.
  */
-async function upsertClause(db, entity_id, who, spec, clause, text) {
+async function upsertClause(db, entity_id, tester, spec, clause, text) {
   const name = String(clause || '').trim();
   if (!name) return null;
   const doc = String(spec || '').trim() || null;
   const rules = { text: String(text || '').trim(), spec: doc };
-  return upsertVersioned(db, entity_id, who, 'spec', name, doc, rules.text.slice(0, 200) || null, rules);
+  return upsertVersioned(db, entity_id, tester, 'spec', name, doc, rules.text.slice(0, 200) || null, rules);
 }
 
 /**
@@ -1002,36 +1002,36 @@ const INSERT_BY_KIND = {
   cmdb: `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'cmdb',$2,$3,$4,'live',1,$5) RETURNING definition_id`
 };
-async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, rules) {
+async function upsertVersioned(db, entity_id, tester, kind, name, subKind, note, rules) {
   const insert = INSERT_BY_KIND[kind];
   if (!insert) throw new Error('upsertVersioned: kind ' + kind + ' has no declared INSERT');
-  const cur = await db.query(
+  const current = await db.query(
     `SELECT d.definition_id, d.current_version, v.rules
        FROM definition d
        JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
       WHERE d.entity_id = $1 AND d.kind = $2 AND d.name = $3`,
     [entity_id, kind, name]
   );
-  if (!cur.rows[0]) {
-    const ins = await db.query(insert, [entity_id, subKind, name, note, who.id]);
-    const identifier = ins.rows[0].definition_id;
+  if (!current.rows[0]) {
+    const inserted = await db.query(insert, [entity_id, subKind, name, note, tester.id]);
+    const identifier = inserted.rows[0].definition_id;
     await db.query(
       `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                     VALUES ($1,1,$2,$3,$4)`,
-      [identifier, entity_id, JSON.stringify(rules), who.id]
+      [identifier, entity_id, JSON.stringify(rules), tester.id]
     );
     return { definition_id: identifier, version: 1, changed: true };
   }
-  const id = cur.rows[0].definition_id;
+  const id = current.rows[0].definition_id;
   /* QA-148: the SAME content in any key order is no change (lib/canon sorts keys; JSON.stringify did not) */
-  if (canon.canon(cur.rows[0].rules || {}) === canon.canon(rules)) {
-    return { definition_id: id, version: cur.rows[0].current_version, changed: false };
+  if (canon.canon(current.rows[0].rules || {}) === canon.canon(rules)) {
+    return { definition_id: id, version: current.rows[0].current_version, changed: false };
   }
-  const next = Number(cur.rows[0].current_version) + 1;
+  const next = Number(current.rows[0].current_version) + 1;
   await db.query(
     `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                   VALUES ($1,$2,$3,$4,$5)`,
-    [id, next, entity_id, JSON.stringify(rules), who.id]
+    [id, next, entity_id, JSON.stringify(rules), tester.id]
   );
   await db.query(`UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`, [id, next, subKind, note]);
   return { definition_id: id, version: next, changed: true };
@@ -1113,8 +1113,8 @@ router.get('/cmdb', auth, boardReadGate, ...checked('GET /cmdb'), async (req, re
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
 router.get('/cmdb/:ci', auth, boardReadGate, ...checked('GET /cmdb/:ci'), async (req, res) => {
   try {
-    const ci = String(req.params.ci || '');
-    if (!cmdb.CI_RE.test(ci)) return problem(req, res, { status: 400, ...badRequest('Not a CI id', 'A CI id looks like CAP-SIGNIN.') });
+    const cmdbCode = String(req.params.ci || '');
+    if (!cmdb.CI_RE.test(cmdbCode)) return problem(req, res, { status: 400, ...badRequest('Not a CI id', 'A CI id looks like CAP-SIGNIN.') });
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const want = Number(req.query.version) || null;
     const rows = await withEntity(entity_id, (db) =>
@@ -1123,12 +1123,12 @@ router.get('/cmdb/:ci', auth, boardReadGate, ...checked('GET /cmdb/:ci'), async 
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = COALESCE($3, d.current_version)
         WHERE d.entity_id = $1 AND d.kind = 'cmdb' AND d.name = $2`,
-        [entity_id, ci, want]
+        [entity_id, cmdbCode, want]
       )
     );
-    const r = rows.rows[0];
-    if (!r) return problem(req, res, { status: 404, ...notFound({ error: 'No such record', message: 'Nothing in the CMDB is called ' + ci + '.' }) });
-    res.json({ ci: r.name, version: r.version, current_version: r.current_version, saved_at: r.created_at, record: r.rules, flags: cmdb.flags(r.rules || {}) });
+    const first = rows.rows[0];
+    if (!first) return problem(req, res, { status: 404, ...notFound({ error: 'No such record', message: 'Nothing in the CMDB is called ' + cmdbCode + '.' }) });
+    res.json({ ci: first.name, version: first.version, current_version: first.current_version, saved_at: first.created_at, record: first.rules, flags: cmdb.flags(first.rules || {}) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the record'));
   }
@@ -1139,10 +1139,10 @@ router.put('/cmdb/:ci', auth, ...checked('PUT /cmdb/:ci'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return;
     const rec = Object.assign({}, req.body || {}, { ci: String(req.params.ci || '') });
-    const v = cmdb.shape(rec);
-    if (!v.ok) return problem(req, res, { status: 400, ...badRequest('That record does not fit', v.why) });
+    const shaped = cmdb.shape(rec);
+    if (!shaped.ok) return problem(req, res, { status: 400, ...badRequest('That record does not fit', shaped.why) });
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const out = await withEntity(entity_id, (db) => upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
+    const out = await withEntity(entity_id, (db) => upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, shaped.record));
     /* S34: upsertVersioned answers definition_id, version and changed */
     res.json({ ci: rec.ci, flags: cmdb.flags(rec), definition_id: out.definition_id, version: out.version, changed: out.changed });
   } catch (err) {
@@ -1159,7 +1159,7 @@ router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) 
       return problem(req, res, { status: 500, ...cmdbNotDeployed() });
     }
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const who = testerOf(req);
+    const tester = testerOf(req);
     const out = { seeded: [], unchanged: [], refused: [] };
     const files = fs
       .readdirSync(CMDB_DIR)
@@ -1168,21 +1168,21 @@ router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) 
     /* ⚠️ every file is checked BEFORE anything is written: one bad record refuses the whole load, said by name,
        rather than leaving the CMDB half-seeded and looking complete */
     const recs = files.map((item) => {
-      let r = null;
+      let result = null;
       try {
-        r = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, item), 'utf8'));
+        result = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, item), 'utf8'));
       } catch (e) {
         logger.fellBack('testing POST /cmdb/seed: did not parse — carried on without it', e, 'debug');
       }
-      return { n: item, r, v: cmdb.shape(r) };
+      return { n: item, r: result, v: cmdb.shape(result) };
     });
     const list = recs.filter((x) => !x.v.ok);
     if (list.length)
       return problem(req, res, { status: 400, ...badRequest('A shipped record does not fit', list.map((x) => x.n + ': ' + x.v.why).join(' · ')) });
     await withEntity(entity_id, async (db) => {
       for (const x of recs) {
-        const w = await upsertVersioned(db, entity_id, who, 'cmdb', x.r.ci, x.r.system || null, x.r.title, x.r);
-        (w.changed ? out.seeded : out.unchanged).push(x.r.ci + ' v' + w.version);
+        const upserted = await upsertVersioned(db, entity_id, tester, 'cmdb', x.r.ci, x.r.system || null, x.r.title, x.r);
+        (upserted.changed ? out.seeded : out.unchanged).push(x.r.ci + ' v' + upserted.version);
       }
     });
     res.json({ seeded: out.seeded, unchanged: out.unchanged, refused: out.refused });
@@ -1260,11 +1260,11 @@ function unknownFields(rows) {
   return [...seen].slice(0, 20);
 }
 
-function badResult(r) {
-  if (!r || !String(r.case_key || '').trim()) return 'a result must name the case it is about';
-  if (STATUSES.indexOf(r.status) < 0) return `"${r.status}" is not a status — ${STATUSES.join(', ')}`;
-  if (RUN_KINDS.indexOf(r.run_kind) < 0) return `"${r.run_kind}" is not a kind of run — ${RUN_KINDS.join(', ')}`;
-  if (r.layer && LAYERS.indexOf(r.layer) < 0) return `"${r.layer}" is not a layer — ${LAYERS.join(', ')}`;
+function badResult(entry) {
+  if (!entry || !String(entry.case_key || '').trim()) return 'a result must name the case it is about';
+  if (STATUSES.indexOf(entry.status) < 0) return `"${entry.status}" is not a status — ${STATUSES.join(', ')}`;
+  if (RUN_KINDS.indexOf(entry.run_kind) < 0) return `"${entry.run_kind}" is not a kind of run — ${RUN_KINDS.join(', ')}`;
+  if (entry.layer && LAYERS.indexOf(entry.layer) < 0) return `"${entry.layer}" is not a layer — ${LAYERS.join(', ')}`;
   /**
    * ⭐⭐ BLOCKED MUST SAY WHY — ISO/IEC/IEEE 29119-3 asks for the reason a case could not be run, and it is
    * right to. A blocked case with no reason is indistinguishable from a case nobody got to, and the two lead
@@ -1274,7 +1274,7 @@ function badResult(r) {
    * before it would file one. Nothing automated posts blocked today — checked, not assumed — so this cannot
    * quietly redden a suite.
    */
-  if (r.status === 'blocked' && !String(r.note || '').trim()) {
+  if (entry.status === 'blocked' && !String(entry.note || '').trim()) {
     return 'a blocked case must say what blocked it — otherwise it reads the same as one nobody reached';
   }
   return null;
@@ -1287,12 +1287,12 @@ function sittingOf(post) {
 /** one result as the INSERT takes it: the case it names (its definition and current version, null when the board does not hold it), the module it belongs to, and the tester stamped from the token */
 function resultRowOf(item, by, tester) {
   const key = String(item.case_key).trim();
-  const d = by[key] || null;
+  const existing = by[key] || null;
   return {
     key: key,
-    definition_id: d ? d.definition_id : null,
-    case_version: d ? d.current_version : null,
-    module_key: item.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
+    definition_id: existing ? existing.definition_id : null,
+    case_version: existing ? existing.current_version : null,
+    module_key: item.module_key || (existing && existing.sub_kind) || key.split('-')[0] || null,
     status: item.status,
     run_kind: item.run_kind,
     layer: item.layer || null,
@@ -1314,29 +1314,29 @@ function resultRowOf(item, by, tester) {
  * settles something more important than tidiness: an automated result and a manual one are written by the SAME
  * code, so they cannot drift into being two different kinds of record on one board.
  */
-async function recordResults(entity_id, who, b) {
-  const given = Array.isArray(b.results) ? b.results : [b];
+async function recordResults(entity_id, tester, requestBody) {
+  const given = Array.isArray(requestBody.results) ? requestBody.results : [requestBody];
   for (const r of given) {
-    const bad = badResult(r);
-    if (bad) return { status: 422, body: { error: 'Not recorded', message: bad } };
+    const refusal = badResult(r);
+    if (refusal) return { status: 422, body: { error: 'Not recorded', message: refusal } };
   }
   /**
    * ⚠️⚠️ ONE ROW PER (run, case, layer) IS THE LEDGER'S SHAPE (uq_test_result_once), so a batch naming a case
    * twice is FOLDED here, worst result first — never left to ON CONFLICT DO NOTHING, which kept the first and
    * dropped the rest silently, so a fail after a pass vanished (N01). A single result passes through as it was.
    */
-  const pj = sittingOf(b);
-  if (pj.error) return { status: 422, body: { error: 'Not recorded', message: pj.error } };
+  const sitting = sittingOf(requestBody);
+  if (sitting.error) return { status: 422, body: { error: 'Not recorded', message: sitting.error } };
   const list = junitresults.fold(given);
   {
     /* ⭐ ONE run id for the whole post unless the caller supplies one — a sitting is a sitting. */
-    const run_id = b.run_id || require('crypto').randomUUID();
-    const run_label = b.run_label || null;
-    const build = b.build || null;
+    const run_id = requestBody.run_id || require('crypto').randomUUID();
+    const run_label = requestBody.run_label || null;
+    const build = requestBody.build || null;
 
     const write = (askProject) =>
       withEntity(entity_id, async (db) => {
-        const withProject = askProject && pj.project !== null && (await hasProject(db));
+        const withProject = askProject && sitting.project !== null && (await hasProject(db));
         /* the case's identity and CURRENT VERSION, read once for the whole batch — see the round-trip note above */
         const keys = list.map((item) => String(item.case_key).trim());
         const known = await db.query(
@@ -1359,9 +1359,9 @@ async function recordResults(entity_id, who, b) {
          * ⚠ ON CONFLICT DO NOTHING still applies per row, so a replayed suite is still a quiet no-op, and the
          * rows that were skipped are simply not returned — which is what `skipped` counts.
          */
-        const norm = list.map((item) => resultRowOf(item, by, who));
+        const norm = list.map((item) => resultRowOf(item, by, tester));
 
-        const ins = await db.query(
+        const inserted = await db.query(
           `INSERT INTO test_result
            (entity_id, definition_id, case_version, case_key, module_key, status, run_kind, layer,
             tested_by, tester_name, run_id, run_label, note, evidence, build${withProject ? ', project' : ''})
@@ -1384,15 +1384,15 @@ async function recordResults(entity_id, who, b) {
             norm.map((item) => item.tester_name),
             norm.map((item) => item.note),
             norm.map((item) => item.evidence),
-            who.id,
+            tester.id,
             run_id,
             run_label,
             build
-          ].concat(withProject ? [pj.project] : [])
+          ].concat(withProject ? [sitting.project] : [])
         );
         return {
-          rows: ins.rows,
-          project: withProject ? pj.project : null,
+          rows: inserted.rows,
+          project: withProject ? sitting.project : null,
           missing: norm
             .filter((item) => !item.definition_id)
             .map((item) => item.key)
@@ -1418,8 +1418,8 @@ async function recordResults(entity_id, who, b) {
      */
     /* ⚠️ SAID: a project asked for and not written (b292 not run yet) is named back, never dropped quietly */
     const body = { run_id, run_label, project: saved.project };
-    if (pj.project !== null && saved.project === null) {
-      body.project_not_written = 'test_result.project is not there yet (b292) — recorded without "' + pj.project + '"';
+    if (sitting.project !== null && saved.project === null) {
+      body.project_not_written = 'test_result.project is not there yet (b292) — recorded without "' + sitting.project + '"';
     }
     return {
       status: 200,
@@ -1466,21 +1466,21 @@ router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
 router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const q = req.query || {};
-    const pj = projectOf(q.project);
-    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
+    const query = req.query || {};
+    const sitting = projectOf(query.project);
+    if (sitting.error) return problem(req, res, { status: 400, ...badRequest('Not read', sitting.error) });
 
-    let r = null;
-    if (q.case_key || q.run_id) {
-      const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
-      r = await withEntity(entity_id, async (db) =>
+    let result = null;
+    if (query.case_key || query.run_id) {
+      const where = query.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
+      result = await withEntity(entity_id, async (db) =>
         readPage(
           db,
           '*',
-          `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}`,
+          `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, sitting.project), 3)}`,
           'at DESC',
-          [entity_id, q.case_key || uuidOrNone(q.run_id), pj.project],
-          q,
+          [entity_id, query.case_key || uuidOrNone(query.run_id), sitting.project],
+          query,
           PAGE.history
         )
       );
@@ -1492,23 +1492,23 @@ router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (r
        * hide a red counter, which is precisely the pair of facts worth keeping apart.
        */
       /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
-      r = await withEntity(entity_id, async (db) =>
+      result = await withEntity(entity_id, async (db) =>
         readPage(
           db,
           '*',
           `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
-           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, sitting.project), 2)}
           ORDER BY case_key, COALESCE(layer,''), at DESC) latest`,
           `case_key, COALESCE(layer,'')`,
-          [entity_id, pj.project],
-          q,
+          [entity_id, sitting.project],
+          query,
           PAGE.results
         )
       );
     }
     /* S34: a row of the ledger is test_result as the table holds it (migrations/000_baseline_2026-10-21.sql, project from b292), every column named; a column the database does not hold yet is undefined, and JSON leaves it out */
     // prettier-ignore
-    res.json({ results: r.rows.map((x) => ({ result_id: x.result_id, entity_id: x.entity_id, definition_id: x.definition_id, case_version: x.case_version, case_key: x.case_key, module_key: x.module_key, status: x.status, run_kind: x.run_kind, layer: x.layer, tested_by: x.tested_by, tester_name: x.tester_name, at: x.at, run_id: x.run_id, run_label: x.run_label, note: x.note, evidence: x.evidence, build: x.build, project: x.project })), count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
+    res.json({ results: result.rows.map((x) => ({ result_id: x.result_id, entity_id: x.entity_id, definition_id: x.definition_id, case_version: x.case_version, case_key: x.case_key, module_key: x.module_key, status: x.status, run_kind: x.run_kind, layer: x.layer, tested_by: x.tested_by, tester_name: x.tester_name, at: x.at, run_id: x.run_id, run_label: x.run_label, note: x.note, evidence: x.evidence, build: x.build, project: x.project })), count: result.rows.length, total: result.total, page: result.page, limit: result.limit, project: sitting.project });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the results'));
   }
@@ -1518,16 +1518,16 @@ router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (r
 router.get('/runs', auth, boardReadGate, ...checked('GET /runs'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const pj = projectOf((req.query || {}).project);
-    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
+    const sitting = projectOf((req.query || {}).project);
+    if (sitting.error) return problem(req, res, { status: 400, ...badRequest('Not read', sitting.error) });
     /**
      * ⭐ `projects` — every project the board has seen, newest first, with its run count. It is what the page's
      * Project filter offers; read from the whole ledger, not the 50 runs below, so an old sprint stays choosable.
      */
     let projects = [];
-    const r = await withEntity(entity_id, async (db) => {
-      const has = await hasProject(db);
-      if (has) {
+    const result = await withEntity(entity_id, async (db) => {
+      const hasTable = await hasProject(db);
+      if (hasTable) {
         projects = (
           await db.query(
             `SELECT project, count(DISTINCT run_id)::int AS runs, max(at) AS last_at FROM test_result
@@ -1538,7 +1538,7 @@ router.get('/runs', auth, boardReadGate, ...checked('GET /runs'), async (req, re
       }
       return readPage(
         db,
-        `run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
+        `run_id, max(run_label) AS run_label, max(build) AS build, ${hasTable ? 'max(project)' : 'NULL::text'} AS project,
               min(at) AS started, max(at) AS finished,
               string_agg(DISTINCT run_kind, ', ') AS kinds,
               string_agg(DISTINCT tester_name, ', ') AS testers,
@@ -1547,16 +1547,16 @@ router.get('/runs', auth, boardReadGate, ...checked('GET /runs'), async (req, re
               count(*) FILTER (WHERE status = 'fail')    AS failed,
               count(*) FILTER (WHERE status = 'blocked') AS blocked,
               count(*) FILTER (WHERE status = 'skipped') AS skipped`,
-        `FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)} GROUP BY run_id`,
+        `FROM test_result WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)} GROUP BY run_id`,
         'max(at) DESC, run_id',
-        [entity_id, pj.project],
+        [entity_id, sitting.project],
         req.query || {},
         PAGE.runs
       );
     });
     /* S34: a sitting and a project are the columns their statements select, each named */
     // prettier-ignore
-    res.json({ runs: r.rows.map((x) => ({ run_id: x.run_id, run_label: x.run_label, build: x.build, project: x.project, started: x.started, finished: x.finished, kinds: x.kinds, testers: x.testers, total: x.total, passed: x.passed, failed: x.failed, blocked: x.blocked, skipped: x.skipped })), count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects: projects.map((x) => ({ project: x.project, runs: x.runs, last_at: x.last_at })) });
+    res.json({ runs: result.rows.map((x) => ({ run_id: x.run_id, run_label: x.run_label, build: x.build, project: x.project, started: x.started, finished: x.finished, kinds: x.kinds, testers: x.testers, total: x.total, passed: x.passed, failed: x.failed, blocked: x.blocked, skipped: x.skipped })), count: result.rows.length, total: result.total, page: result.page, limit: result.limit, project: sitting.project, projects: projects.map((x) => ({ project: x.project, runs: x.runs, last_at: x.last_at })) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the runs'));
   }
@@ -1588,14 +1588,14 @@ let _caseAreas = null;
 function layerOfCase(key) {
   try {
     if (!_caseAreas) {
-      const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
+      const filePath = require('path').join(__dirname, '..', 'data', 'test-cases.json');
       _caseAreas = {};
-      JSON.parse(require('fs').readFileSync(f, 'utf8')).cases.forEach((item) => {
+      JSON.parse(require('fs').readFileSync(filePath, 'utf8')).cases.forEach((item) => {
         if ((item.areas || []).length) _caseAreas[item.case_key] = item.areas;
       });
     }
-    const ar = _caseAreas[key];
-    if (!ar || !ar.length) return null;
+    const area = _caseAreas[key];
+    if (!area || !area.length) return null;
     /* ⚠️ one value per row, and it must be the WIDEST thing the test reaches — a file that drives a browser and
        also reads a lib is a web test; calling it an engine test would understate what its failure implicates. */
     /* ⚠️ THIS ONE IS NOT THE ARCHITECTURE ORDER AND MUST NOT BE CHANGED TO MATCH IT. It answers a different
@@ -1603,7 +1603,7 @@ function layerOfCase(key) {
        the narrowest. A file driving a browser is a web test even though the engine is the more important
        layer, because that is what its failure implicates. */
     for (const a of ['web', 'connector', 'database', 'api', 'middleware', 'engine']) {
-      if (ar.indexOf(a) >= 0) return AREA_TO_LAYER[a];
+      if (area.indexOf(a) >= 0) return AREA_TO_LAYER[a];
     }
     return null;
   } catch (e) {
@@ -1626,11 +1626,11 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
      * how the board lists every Playwright spec. ⚠ The layer is still the CASE's where we know it, the
      * caller's only where we do not — post-suite.cjs once stamped "engine" on 235 browser files.
      */
-    const kf = req.body.key_from;
+    const keyFrom = req.body.key_from;
     let read;
     try {
       read = junitresults.read(text, {
-        keyFrom: kf === 'name' || kf === 'file' ? kf : 'bracket',
+        keyFrom: keyFrom === 'name' || keyFrom === 'file' ? keyFrom : 'bracket',
         keyPrefix: req.body.key_prefix,
         runKind: run_kind,
         layer,
@@ -1699,7 +1699,7 @@ router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin
     const gherkin = require('../lib/gherkin');
     const only = req.query && req.query.module ? String(req.query.module).trim() : null;
 
-    const r = await withEntity(entity_id, (db) =>
+    const result = await withEntity(entity_id, (db) =>
       db.query(
         `SELECT d.name, d.sub_kind, d.current_version, v.rules
          FROM definition d
@@ -1713,23 +1713,23 @@ router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin
 
     const groups = [],
       seen = {};
-    r.rows.forEach((x) => {
-      const ru = x.rules || {},
+    result.rows.forEach((x) => {
+      const rules = x.rules || {},
         key = x.sub_kind || '-';
       if (!seen[key]) {
         seen[key] = {
           module: {
             key: key,
-            name: ru.module_name || '',
-            intro: ru.intro || '',
-            spec: (ru.cites && ru.cites.spec) || '',
-            clause: (ru.cites && ru.cites.clause) || key
+            name: rules.module_name || '',
+            intro: rules.intro || '',
+            spec: (rules.cites && rules.cites.spec) || '',
+            clause: (rules.cites && rules.cites.clause) || key
           },
           cases: []
         };
         groups.push(seen[key]);
       }
-      seen[key].cases.push(Object.assign({ case_key: x.name }, ru));
+      seen[key].cases.push(Object.assign({ case_key: x.name }, rules));
     });
 
     /* ⚠️ text/plain and a filename, because this is a FILE — it goes into the repository beside the code it
@@ -1755,7 +1755,7 @@ router.post('/cases/gherkin', auth, ...checked('POST /cases/gherkin'), async (re
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a feature file authors shared cases */
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const who = testerOf(req);
+    const tester = testerOf(req);
     const gherkin = require('../lib/gherkin');
     const text = String((req.body && req.body.text) || '');
     if (!text.trim()) return problem(req, res, { status: 400, ...badRequest('Nothing to import', 'Send { text: "Feature: …" }.') });
@@ -1770,37 +1770,37 @@ router.post('/cases/gherkin', auth, ...checked('POST /cases/gherkin'), async (re
 
     const out = { added: 0, updated: 0, unchanged: 0, clauses: [], problems: [], cases: [] };
     for (const part of parts) {
-      const f = gherkin.parseFeature(part);
+      const feature = gherkin.parseFeature(part);
       /* ⚠️ EVERY PROBLEM IS RETURNED, never swallowed. A scenario that was skipped is a test that silently does
          not exist, and the board would be showing coverage it does not have. */
-      (f.problems || []).forEach((x) => out.problems.push((f.key || f.name || '?') + ': ' + x));
+      (feature.problems || []).forEach((x) => out.problems.push((feature.key || feature.name || '?') + ': ' + x));
 
       /* the clause FIRST, so the cases can cite the version it ends up at */
       let cite = null;
       await withEntity(entity_id, async (db) => {
-        const cl = await upsertClause(db, entity_id, who, f.spec, f.clause || f.key, f.intro);
-        if (cl) {
-          cite = { definition_id: cl.definition_id, version: cl.version, spec: f.spec || null, clause: f.clause || f.key };
-          out.clauses.push({ clause: f.clause || f.key, spec: f.spec || null, version: cl.version, changed: cl.changed });
+        const clause = await upsertClause(db, entity_id, tester, feature.spec, feature.clause || feature.key, feature.intro);
+        if (clause) {
+          cite = { definition_id: clause.definition_id, version: clause.version, spec: feature.spec || null, clause: feature.clause || feature.key };
+          out.clauses.push({ clause: feature.clause || feature.key, spec: feature.spec || null, version: clause.version, changed: clause.changed });
         }
       });
 
-      const rows = (f.cases || [])
+      const rows = (feature.cases || [])
         .filter((item) => item.case_key)
         .map((item) =>
           Object.assign({}, item, {
-            module_key: f.key || (item.case_key || '').split('-')[0],
-            module_name: f.name || '',
-            intro: f.intro || '',
+            module_key: feature.key || (item.case_key || '').split('-')[0],
+            module_name: feature.name || '',
+            intro: feature.intro || '',
             cites: cite
           })
         );
       if (!rows.length) continue;
-      const r = await importCases(entity_id, who, rows);
-      out.added += r.added;
-      out.updated += r.updated;
-      out.unchanged += r.unchanged;
-      out.cases = out.cases.concat(r.cases);
+      const result = await importCases(entity_id, tester, rows);
+      out.added += result.added;
+      out.updated += result.updated;
+      out.unchanged += result.unchanged;
+      out.cases = out.cases.concat(result.cases);
     }
     res.json({ added: out.added, updated: out.updated, unchanged: out.unchanged, clauses: out.clauses, problems: out.problems, cases: out.cases });
   } catch (err) {
@@ -1865,11 +1865,11 @@ const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rej
 router.post('/requirements', auth, ...checked('POST /requirements'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
-    const b = req.body || {};
-    const observed = String(b.observed || '').trim();
-    const requirement = String(b.requirement || '').trim();
-    const case_key = String(b.case_key || '').trim() || null;
+    const tester = testerOf(req);
+    const body = req.body || {};
+    const observed = String(body.observed || '').trim();
+    const requirement = String(body.requirement || '').trim();
+    const case_key = String(body.case_key || '').trim() || null;
     /**
      * ── ⚠️⚠️ THE CASE AND THE REQUIREMENT NO LONGER LIVE IN THE SAME ENTITY ───────────────────────────────
      *
@@ -1910,12 +1910,12 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
     const out = await withEntity(entity_id, async (db) => {
       /* the clause id: given, or minted from the case it came from so it reads as what it is */
       const name =
-        String(b.clause || '').trim() ||
+        String(body.clause || '').trim() ||
         'REQ-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       /* ⭐ PRIORITY, because Athi: *"this will help to keep it prioratised, backlog and so on"*. Same three
          words the cases already use — a second vocabulary for the same idea is how two lists stop sorting alike. */
       const list = ['High', 'Medium', 'Low'];
-      const priority = list.indexOf(String(b.priority || '')) >= 0 ? String(b.priority) : 'Medium';
+      const priority = list.indexOf(String(body.priority || '')) >= 0 ? String(body.priority) : 'Medium';
       /**
        * ⭐⭐ WHERE THE TESTER WAS STANDING, CAPTURED RATHER THAN ASKED FOR. Athi, 2026-09-12: *"I am doing all
        * those so when I ask the external tester to perform testing they should be able to record against it."*
@@ -1926,31 +1926,31 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
        * cannot know which of 84 dialogs was open. A missing code stays missing rather than being guessed.
        * ⚠️ Shape-checked, not trusted: it reaches a screen, so it is six characters of code or it is dropped.
        */
-      const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
+      const codeOf = (value) => (/^[A-Z]{3}[0-9]{3}$/.test(String(value || '').trim()) ? String(value).trim() : null);
       const rules = {
         text: requirement,
         observed: observed,
-        spec: String(b.spec || '').trim() || null,
+        spec: String(body.spec || '').trim() || null,
         priority: priority,
-        screen_code: codeOf(b.screen_code),
-        popup_code: codeOf(b.popup_code),
+        screen_code: codeOf(body.screen_code),
+        popup_code: codeOf(body.popup_code),
         state: 'raised',
         raised_from: case_key,
-        raised_by: who.name,
+        raised_by: tester.name,
         raised_at: new Date().toISOString(),
-        raised_by_id: who.id /* who to tell when it is accepted or rejected — see lib/testnews.js */,
-        history: [{ state: 'raised', by: who.name, at: new Date().toISOString(), why: null }]
+        raised_by_id: tester.id /* who to tell when it is accepted or rejected — see lib/testnews.js */,
+        history: [{ state: 'raised', by: tester.name, at: new Date().toISOString(), why: null }]
       };
-      const ins = await db.query(
+      const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
-        [entity_id, rules.spec, name, requirement.slice(0, 200), who.id]
+        [entity_id, rules.spec, name, requirement.slice(0, 200), tester.id]
       );
-      const id = ins.rows[0].definition_id;
+      const id = inserted.rows[0].definition_id;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
-        [id, entity_id, JSON.stringify(rules), who.id]
+        [id, entity_id, JSON.stringify(rules), tester.id]
       );
 
       /**
@@ -1977,14 +1977,14 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
        */
       let cited = false;
       if (case_key && citeHeld === null) {
-        const c = await db.query(
+        const found = await db.query(
           `SELECT d.definition_id, d.current_version, v.rules
              FROM definition d JOIN definition_version v
                ON v.definition_id = d.definition_id AND v.version = d.current_version
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2`,
           [entity_id, case_key]
         );
-        const row = c.rows[0];
+        const row = found.rows[0];
         if (row && !((row.rules || {}).cites || {}).definition_id) {
           const next = Object.assign({}, row.rules, {
             cites: { definition_id: id, version: 1, spec: rules.spec, clause: name }
@@ -1992,7 +1992,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
           await db.query(
             `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                           VALUES ($1,$2,$3,$4,$5)`,
-            [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]
+            [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), tester.id]
           );
           await db.query(
             `UPDATE definition SET current_version = $2, updated_at = now()
@@ -2007,7 +2007,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
 
     let support = { copied: false, why: 'not attempted' };
     try {
-      const w2 = testerOf(req);
+      const reporter = testerOf(req);
       /**
        * ⭐ THE SAME PATH, A DIFFERENT KIND. Athi: *"same way all can be handled."* A requirement is a request
        * from a shop just as much as a fault is — it differs only in which folder and which person answers it,
@@ -2024,13 +2024,13 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
             ref: out && (out.clause || out.ref),
             note: out && out.requirement,
             subject: out && out.requirement,
-            screen_code: b.screen_code,
+            screen_code: body.screen_code,
             /* ⭐ 'here' keeps it inside this entity and 'them' sends it to the shop named by to_bridge_id — each
              answered by THAT entity's own routing. Anything else means us. */
-            audience: b.audience,
-            to_bridge_id: b.to_bridge_id
+            audience: body.audience,
+            to_bridge_id: body.to_bridge_id
           },
-          w2,
+          reporter,
           req.id
         );
       } catch (e) {
@@ -2038,8 +2038,8 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
       }
       require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref), {
         screen: (req.body || {}).screen_code,
-        by: w2.id,
-        byName: w2.name
+        by: reporter.id,
+        byName: reporter.name
       });
     } catch (e) {
       logger.fellBack('testing POST /requirements: the helper failed — carried on without it', e);
@@ -2067,7 +2067,7 @@ router.get('/requirements', auth, ...checked('GET /requirements'), async (req, r
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'spec' AND v.rules->>'state' IS NOT NULL`;
     let byState = [];
-    const r = await withEntity(entity_id, async (db) => {
+    const result = await withEntity(entity_id, async (db) => {
       byState = (await db.query(`SELECT v.rules->>'state' AS state, count(*)::int AS n ${FROM} GROUP BY 1`, [entity_id])).rows;
       return readPage(
         db,
@@ -2080,26 +2080,26 @@ router.get('/requirements', auth, ...checked('GET /requirements'), async (req, r
       );
     });
 
-    const all = r.rows.map((x) => {
-      const ru = x.rules || {};
+    const all = result.rows.map((x) => {
+      const rules = x.rules || {};
       return {
         definition_id: x.definition_id,
         clause: x.name,
         spec: x.sub_kind || null,
-        requirement: ru.text || '',
-        observed: ru.observed || '',
-        priority: ru.priority || 'Medium',
-        screen_code: ru.screen_code || null,
-        popup_code: ru.popup_code || null,
-        state: ru.state || 'raised',
+        requirement: rules.text || '',
+        observed: rules.observed || '',
+        priority: rules.priority || 'Medium',
+        screen_code: rules.screen_code || null,
+        popup_code: rules.popup_code || null,
+        state: rules.state || 'raised',
         shelf: x.status,
-        raised_from: ru.raised_from || null,
-        raised_by: ru.raised_by || null,
-        raised_at: ru.raised_at || null,
-        raised_by_id: ru.raised_by_id || x.created_by || null,
-        work_status: teststatus.workStatus({ kind: 'requirement', state: ru.state || 'raised' }),
-        why: ru.why || null,
-        history: ru.history || [],
+        raised_from: rules.raised_from || null,
+        raised_by: rules.raised_by || null,
+        raised_at: rules.raised_at || null,
+        raised_by_id: rules.raised_by_id || x.created_by || null,
+        work_status: teststatus.workStatus({ kind: 'requirement', state: rules.state || 'raised' }),
+        why: rules.why || null,
+        history: rules.history || [],
         at: x.updated_at
       };
     });
@@ -2119,9 +2119,9 @@ router.get('/requirements', auth, ...checked('GET /requirements'), async (req, r
       count: all.length,
       counts,
       open: REQ_OPEN.reduce((total, item) => total + counts[item], 0),
-      total: r.total,
-      page: r.page,
-      limit: r.limit
+      total: result.total,
+      page: result.page,
+      limit: result.limit
     });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read them'));
@@ -2139,9 +2139,9 @@ router.get('/requirements', auth, ...checked('GET /requirements'), async (req, r
 router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
+    const tester = testerOf(req);
     const state = String((req.body || {}).state || '');
-    const why = String((req.body || {}).why || '').trim();
+    const reason = String((req.body || {}).why || '').trim();
     /**
      * ⭐ A PRIORITY-ONLY CHANGE IS LEGITIMATE. Re-ranking the backlog is not a decision about the requirement,
      * so it must not be forced to restate one — an empty state means "leave it where it is".
@@ -2152,34 +2152,34 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     if (!onlyPriority && REQ_STATES.indexOf(state) < 0) {
       return problem(req, res, { status: 400, ...badRequest('Not a state', 'One of: ' + REQ_STATES.join(' · ')) });
     }
-    if (state === 'rejected' && !why) {
+    if (state === 'rejected' && !reason) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'A rejected requirement needs its reason, or the next tester raises it again.') });
     }
     const out = await withEntity(entity_id, async (db) => {
-      const c = await db.query(
+      const found = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.definition_id = $2::uuid`,
         [entity_id, uuidOrNone(req.params.id)] /* K-1: an id that is no uuid is looked up as one that names no row: the unknown id's own answer */
       );
-      const row = c.rows[0];
+      const row = found.rows[0];
       if (!row) return null;
-      const ru = row.rules || {};
+      const rules = row.rules || {};
       /* ⚠️ re-prioritising is a decision too, and lands in the same history rather than editing quietly */
       const list = ['High', 'Medium', 'Low'];
-      const pri = list.indexOf(String((req.body || {}).priority || '')) >= 0 ? String(req.body.priority) : ru.priority || 'Medium';
-      const nextState = state || ru.state || 'raised';
-      const next = Object.assign({}, ru, {
+      const priority = list.indexOf(String((req.body || {}).priority || '')) >= 0 ? String(req.body.priority) : rules.priority || 'Medium';
+      const nextState = state || rules.state || 'raised';
+      const next = Object.assign({}, rules, {
         state: nextState,
-        priority: pri,
-        why: why || ru.why || null,
-        history: (ru.history || []).concat([{ state: nextState, priority: pri, by: who.name, at: new Date().toISOString(), why: why || null }])
+        priority: priority,
+        why: reason || rules.why || null,
+        history: (rules.history || []).concat([{ state: nextState, priority: priority, by: tester.name, at: new Date().toISOString(), why: reason || null }])
       });
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,$2,$3,$4,$5)`,
-        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]
+        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), tester.id]
       );
       await db.query(
         `UPDATE definition SET current_version = $2, status = $3, updated_at = now()
@@ -2191,8 +2191,8 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
         shelf: REQ_SHELF[nextState],
         version: row.current_version + 1,
         _ref: row.name || null,
-        _raiser: ru.raised_by_id || row.created_by || null,
-        _screen: ru.screen_code || null
+        _raiser: rules.raised_by_id || row.created_by || null,
+        _screen: rules.screen_code || null
       };
     });
 
@@ -2204,8 +2204,8 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
         state: out.state,
         forId: out._raiser,
         screen: out._screen,
-        by: who.id,
-        byName: who.name
+        by: tester.id,
+        byName: tester.name
       });
     } catch (e) {
       logger.fellBack('testing PATCH /requirements/:id: the helper failed — carried on without it', e);
@@ -2274,62 +2274,62 @@ const SEV_MEANS = {
 router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
-    const b = req.body || {};
-    const observed = String(b.observed || '').trim();
+    const tester = testerOf(req);
+    const body = req.body || {};
+    const observed = String(body.observed || '').trim();
     /* ⚠️ refused, not defaulted: an incident with no account of what happened cannot be investigated by
        anybody but the person who filed it, and they are the one person who will not need to. */
     if (!observed) return problem(req, res, { status: 400, ...badRequest('Nothing recorded', 'Say what happened.') });
-    const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
-    const sev = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : 'Sev-3';
+    const codeOf = (value) => (/^[A-Z]{3}[0-9]{3}$/.test(String(value || '').trim()) ? String(value).trim() : null);
+    const severity = INC_SEV.indexOf(String(body.severity || '')) >= 0 ? String(body.severity) : 'Sev-3';
     const now = new Date().toISOString();
     /* ⚠️ the client's clock is not trusted to be in the future: a 'happened' after 'raised' is a wrong clock,
        and it would show as a negative delay on the one number this board exists to make visible. */
-    let happened = String(b.happened_at || '').trim() || now;
+    let happened = String(body.happened_at || '').trim() || now;
     if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
     const out = await withEntity(entity_id, async (db) => {
-      const name = String(b.ref || '').trim() || 'INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+      const name = String(body.ref || '').trim() || 'INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       const rules = {
         observed: observed,
-        severity: sev,
-        severity_means: SEV_MEANS[sev],
+        severity: severity,
+        severity_means: SEV_MEANS[severity],
         /* ⭐ where they were standing, in the words the registers already use — CAT005 is a work item,
            'the catalogue screen' is a conversation. Shape-checked, and a missing code stays missing. */
-        screen_code: codeOf(b.screen_code),
-        popup_code: codeOf(b.popup_code),
+        screen_code: codeOf(body.screen_code),
+        popup_code: codeOf(body.popup_code),
         /* ⭐ the screenshot, by id — the bytes stay in the attachment store and are read through its own
            entity-scoped door. ⚠️ Shape-checked: an id that is not a uuid is dropped rather than stored as
            a link that will 404 for whoever opens the incident next. */
-        evidence_id: /^[0-9a-f-]{36}$/i.test(String(b.evidence_id || '')) ? String(b.evidence_id) : null,
-        affected: String(b.affected || '').trim() || null,
-        build: String(b.build || '').trim() || null,
-        found_by_case: String(b.case_key || '').trim() || null,
+        evidence_id: /^[0-9a-f-]{36}$/i.test(String(body.evidence_id || '')) ? String(body.evidence_id) : null,
+        affected: String(body.affected || '').trim() || null,
+        build: String(body.build || '').trim() || null,
+        found_by_case: String(body.case_key || '').trim() || null,
         state: 'raised',
         happened_at: happened,
         raised_at: now,
-        raised_by: who.name,
+        raised_by: tester.name,
         /* ⚠️ THE ID AS WELL AS THE NAME. The name is what a board read six months from now must still be able
            to show; the ID is what lets a session ask "is this one MINE to retest?" without matching strings.
            Two people called Athi on one board would otherwise both be told to go and verify it. */
-        raised_by_id: who.id,
+        raised_by_id: tester.id,
         /* the links, empty until somebody makes them — never invented here */
         defects: [],
         changes: [],
         resolved_at: null,
-        history: [{ state: 'raised', by: who.name, at: now, why: null }]
+        history: [{ state: 'raised', by: tester.name, at: now, why: null }]
       };
-      const ins = await db.query(
+      const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
-        [entity_id, sev, name, observed.slice(0, 200), who.id]
+        [entity_id, severity, name, observed.slice(0, 200), tester.id]
       );
-      const id = ins.rows[0].definition_id;
+      const id = inserted.rows[0].definition_id;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
-        [id, entity_id, JSON.stringify(rules), who.id]
+        [id, entity_id, JSON.stringify(rules), tester.id]
       );
-      return { definition_id: id, ref: name, severity: sev, happened_at: happened, rules, note: observed };
+      return { definition_id: id, ref: name, severity: severity, happened_at: happened, rules, note: observed };
     });
 
     /**
@@ -2340,8 +2340,8 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
      * browser could not be told.
      */
     try {
-      const w = testerOf(req);
-      require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref, { screen: b.screen_code, by: w.id, byName: w.name });
+      const actor = testerOf(req);
+      require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref, { screen: body.screen_code, by: actor.id, byName: actor.name });
     } catch (e) {
       logger.fellBack('testing POST /incidents: the helper failed — carried on without it', e);
     }
@@ -2380,10 +2380,10 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
           ref: out && out.ref,
           sub_kind: out && out.severity,
           note: out && out.note,
-          screen_code: b.screen_code,
+          screen_code: body.screen_code,
           /* the rail is broken (us), my business is (me), or theirs is (them) - only the raiser knows which */
-          audience: b.audience,
-          to_bridge_id: b.to_bridge_id
+          audience: body.audience,
+          to_bridge_id: body.to_bridge_id
         },
         testerOf(req),
         req.id
@@ -2414,65 +2414,65 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
     const FROM = `FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'incident'`;
-    const ST = `COALESCE(v.rules->>'state','raised')`,
-      SV = `COALESCE(v.rules->>'severity','Sev-3')`;
+    const STATE_SQL = `COALESCE(v.rules->>'state','raised')`,
+      SEVERITY_SQL = `COALESCE(v.rules->>'severity','Sev-3')`;
     let bySS = [];
-    const r = await withEntity(entity_id, async (db) => {
-      bySS = (await db.query(`SELECT ${ST} AS state, ${SV} AS severity, count(*)::int AS n ${FROM} GROUP BY 1, 2`, [entity_id])).rows;
+    const result = await withEntity(entity_id, async (db) => {
+      bySS = (await db.query(`SELECT ${STATE_SQL} AS state, ${SEVERITY_SQL} AS severity, count(*)::int AS n ${FROM} GROUP BY 1, 2`, [entity_id])).rows;
       return readPage(
         db,
         `d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules`,
-        `${FROM} AND ${stateWhere(ST, INC_OPEN)}`,
-        `${rankOrder(SV, INC_SEV)}, v.rules->>'happened_at' NULLS LAST, d.definition_id`,
+        `${FROM} AND ${stateWhere(STATE_SQL, INC_OPEN)}`,
+        `${rankOrder(SEVERITY_SQL, INC_SEV)}, v.rules->>'happened_at' NULLS LAST, d.definition_id`,
         [entity_id, want],
         req.query || {},
         PAGE.findings
       );
     });
 
-    const all = r.rows.map((x) => {
-      const ru = x.rules || {};
-      const sev = ru.severity || 'Sev-3';
+    const all = result.rows.map((x) => {
+      const rules = x.rules || {};
+      const severity = rules.severity || 'Sev-3';
       /* ⭐ THE TWO NUMBERS NOBODY CAN GET FROM A LIST OF ROWS: how long the shop suffered before anyone knew,
          and how long it then took. Computed on read from the stamps, never stored — a stored duration is a
          number that stops being true the moment the row changes and nobody recomputes it. */
-      const t0 = Date.parse(ru.happened_at || ru.raised_at || x.updated_at);
-      const t1 = Date.parse(ru.raised_at || x.updated_at);
-      const t2 = ru.resolved_at ? Date.parse(ru.resolved_at) : null;
-      const mins = (a, b2) => (a > 0 && b2 > 0 ? Math.max(0, Math.round((b2 - a) / 60000)) : null);
+      const happenedAt = Date.parse(rules.happened_at || rules.raised_at || x.updated_at);
+      const raisedAt = Date.parse(rules.raised_at || x.updated_at);
+      const resolvedAt = rules.resolved_at ? Date.parse(rules.resolved_at) : null;
+      const mins = (startMs, endMs) => (startMs > 0 && endMs > 0 ? Math.max(0, Math.round((endMs - startMs) / 60000)) : null);
       return {
         definition_id: x.definition_id,
         ref: x.name,
-        observed: ru.observed || '',
-        severity: sev,
-        severity_means: SEV_MEANS[sev] || null,
-        screen_code: ru.screen_code || null,
-        popup_code: ru.popup_code || null,
-        evidence_id: ru.evidence_id || null,
-        affected: ru.affected || null,
-        build: ru.build || null,
-        found_by_case: ru.found_by_case || null,
-        state: ru.state || 'raised',
+        observed: rules.observed || '',
+        severity: severity,
+        severity_means: SEV_MEANS[severity] || null,
+        screen_code: rules.screen_code || null,
+        popup_code: rules.popup_code || null,
+        evidence_id: rules.evidence_id || null,
+        affected: rules.affected || null,
+        build: rules.build || null,
+        found_by_case: rules.found_by_case || null,
+        state: rules.state || 'raised',
         shelf: x.status,
-        happened_at: ru.happened_at || null,
-        raised_at: ru.raised_at || null,
-        resolved_at: ru.resolved_at || null,
-        unnoticed_mins: mins(t0, t1),
-        open_mins: mins(t1, t2),
-        defects: ru.defects || [],
-        changes: ru.changes || [],
-        raised_by: ru.raised_by || null,
-        raised_by_id: ru.raised_by_id || x.created_by || null,
+        happened_at: rules.happened_at || null,
+        raised_at: rules.raised_at || null,
+        resolved_at: rules.resolved_at || null,
+        unnoticed_mins: mins(happenedAt, raisedAt),
+        open_mins: mins(raisedAt, resolvedAt),
+        defects: rules.defects || [],
+        changes: rules.changes || [],
+        raised_by: rules.raised_by || null,
+        raised_by_id: rules.raised_by_id || x.created_by || null,
         /* ⭐ WHOSE FAULT IS THIS, AND FROM WHICH SET OF BOOKS. On the operator queue every row is a COPY
            (lib/supportcopy), and without this the list reads as nine anonymous faults with no way to tell a
            real customer apart from an e2e run. Null on a shop own board, which is correct: it is theirs. */
-        origin: ru.origin || null,
-        resolved_in: ru.resolved_in || null,
+        origin: rules.origin || null,
+        resolved_in: rules.resolved_in || null,
         /* ⭐ ONE RULE, ON THE SERVER — see lib/teststatus.js. The board, the screen and the report print the
            same word because they read the same function. */
-        work_status: teststatus.workStatus({ kind: 'incident', state: ru.state || 'raised' }),
-        why: ru.why || null,
-        history: ru.history || [],
+        work_status: teststatus.workStatus({ kind: 'incident', state: rules.state || 'raised' }),
+        why: rules.why || null,
+        history: rules.history || [],
         at: x.updated_at
       };
     });
@@ -2498,9 +2498,9 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
       counts,
       open: INC_OPEN.reduce((total, item) => total + counts[item], 0),
       open_by_severity: bySev,
-      total: r.total,
-      page: r.page,
-      limit: r.limit,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
       severities: INC_SEV,
       means: SEV_MEANS
     });
@@ -2519,14 +2519,14 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
 router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
-    const b = req.body || {};
-    const state = String(b.state || '');
-    const why = String(b.why || '').trim();
-    const sevIn = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : null;
+    const tester = testerOf(req);
+    const body = req.body || {};
+    const state = String(body.state || '');
+    const reason = String(body.why || '').trim();
+    const sevIn = INC_SEV.indexOf(String(body.severity || '')) >= 0 ? String(body.severity) : null;
     /* re-grading the severity is a legitimate change on its own — it is a judgement, not a decision to move */
     const onlySeverity = !state && sevIn;
-    const linking = !state && (b.defect || b.change);
+    const linking = !state && (body.defect || body.change);
     if (!onlySeverity && !linking && INC_STATES.indexOf(state) < 0) {
       return problem(req, res, { status: 400, ...badRequest('Not a state', 'One of: ' + INC_STATES.join(' · ')) });
     }
@@ -2535,79 +2535,79 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
      * the shop is still broken, and six months later nobody can tell whether it was fixed or forgotten. So a
      * resolution carries either the commit that did it or, in words, why nothing needed doing.
      */
-    if (state === 'resolved' && !b.change && !why) {
+    if (state === 'resolved' && !body.change && !reason) {
       return problem(req, res, { status: 400, ...badRequest('Say what changed', 'Cite the commit that fixed it, or say why nothing needed to change.') });
     }
-    if (state === 'closed' && !why) {
+    if (state === 'closed' && !reason) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'Closing is a decision — record it, or the next person reopens the same thing.') });
     }
     const out = await withEntity(entity_id, async (db) => {
-      const c = await db.query(
+      const found = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'incident' AND d.definition_id = $2::uuid`,
         [entity_id, uuidOrNone(req.params.id)] /* K-1: an id that is no uuid is looked up as one that names no row: the unknown id's own answer */
       );
-      const row = c.rows[0];
+      const row = found.rows[0];
       if (!row) return null;
-      const ru = row.rules || {};
+      const rules = row.rules || {};
       const now = new Date().toISOString();
-      const nextState = state || ru.state || 'raised';
-      const sev = sevIn || ru.severity || 'Sev-3';
+      const nextState = state || rules.state || 'raised';
+      const severity = sevIn || rules.severity || 'Sev-3';
       /**
        * ⭐ A CHANGE IS A CITATION, NOT A COPY: repo and sha, so the message, the diff and the author are read
        * from git where they already are and cannot drift from it. A subject line is kept for reading, and it
        * is explicitly a CACHE of git's — git remains the record.
        */
-      const changes = (ru.changes || []).slice();
-      if (b.change) {
-        const sha = String(b.change.sha || b.change.commit || '')
+      const changes = (rules.changes || []).slice();
+      if (body.change) {
+        const commitSha = String(body.change.sha || body.change.commit || '')
           .trim()
           .toLowerCase();
-        if (/^[0-9a-f]{7,40}$/.test(sha)) {
+        if (/^[0-9a-f]{7,40}$/.test(commitSha)) {
           changes.push({
-            repo: String(b.change.repo || '').trim() || null,
-            sha: sha,
+            repo: String(body.change.repo || '').trim() || null,
+            sha: commitSha,
             subject:
-              String(b.change.subject || '')
+              String(body.change.subject || '')
                 .trim()
                 .slice(0, 200) || null,
-            by: who.name,
+            by: tester.name,
             at: now
           });
         }
       }
       /* a defect is a requirement/spec row that already exists — its id, never its text copied over */
-      const defects = (ru.defects || []).slice();
-      if (b.defect && /^[0-9a-f-]{36}$/i.test(String(b.defect))) {
-        if (defects.indexOf(String(b.defect)) < 0) defects.push(String(b.defect));
+      const defects = (rules.defects || []).slice();
+      if (body.defect && /^[0-9a-f-]{36}$/i.test(String(body.defect))) {
+        if (defects.indexOf(String(body.defect)) < 0) defects.push(String(body.defect));
       }
-      const next = Object.assign({}, ru, {
+      const next = Object.assign({}, rules, {
         state: nextState,
-        severity: sev,
-        severity_means: SEV_MEANS[sev],
-        why: why || ru.why || null,
+        severity: severity,
+        severity_means: SEV_MEANS[severity],
+        why: reason || rules.why || null,
         changes: changes,
         defects: defects,
         /* ⚠️ stamped once, on the FIRST resolution: a reopened-and-resolved incident must not lose the day the
            shop actually got its counter back, which is the number anybody reporting on this will quote. */
-        resolved_at: nextState === 'resolved' || nextState === 'closed' ? ru.resolved_at || now : ru.resolved_at || null,
-        history: (ru.history || []).concat([{ state: nextState, severity: sev, by: who.name, at: now, why: why || null }])
+        resolved_at: nextState === 'resolved' || nextState === 'closed' ? rules.resolved_at || now : rules.resolved_at || null,
+        history: (rules.history || []).concat([{ state: nextState, severity: severity, by: tester.name, at: now, why: reason || null }])
       });
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,$2,$3,$4,$5)`,
-        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]
+        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), tester.id]
       );
       await db.query(
         `UPDATE definition SET current_version = $2, status = $3, sub_kind = $4, updated_at = now()
                         WHERE definition_id = $1 AND entity_id = $5`,
-        [row.definition_id, row.current_version + 1, INC_SHELF[nextState], sev, entity_id]
+        [row.definition_id, row.current_version + 1, INC_SHELF[nextState], severity, entity_id]
       );
       return {
         state: nextState,
-        severity: sev,
+        severity: severity,
         shelf: INC_SHELF[nextState],
         version: row.current_version + 1,
         changes: changes.length,
@@ -2615,8 +2615,8 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
         /* carried out of the transaction so the news can name the incident and the person now waiting on it.
            ⚠️ Stripped again before the reply — the client is answered about the incident, not about the post. */
         _ref: row.name || null,
-        _raiser: ru.raised_by_id || row.created_by || null,
-        _screen: ru.screen_code || null
+        _raiser: rules.raised_by_id || row.created_by || null,
+        _screen: rules.screen_code || null
       };
     });
 
@@ -2638,8 +2638,8 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
         state: out.state,
         forId: out._raiser,
         screen: out._screen,
-        by: who.id,
-        byName: who.name
+        by: tester.id,
+        byName: tester.name
       });
     } catch (e) {
       logger.fellBack('testing PATCH /incidents/:id: the helper failed — carried on without it', e);
@@ -2672,10 +2672,10 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
 router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
-    const b = req.body || {};
-    const mime = String(b.mime || '').toLowerCase();
-    const data = String(b.data_base64 || '');
+    const tester = testerOf(req);
+    const body = req.body || {};
+    const mime = String(body.mime || '').toLowerCase();
+    const data = String(body.data_base64 || '');
     if (!data) return problem(req, res, { status: 400, ...badRequest('Nothing to attach', 'Send data_base64.') });
     if (!/^image\/(png|jpe?g|gif|webp|bmp)$/.test(mime)) {
       return problem(req, res, { status: 400, ...badRequest('Not an image', 'A screenshot, please \u2014 png, jpg, gif, webp or bmp.') });
@@ -2689,18 +2689,18 @@ router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) =>
       chit_id: null,
       message_id: null,
       line_index: null,
-      name: String(b.name || 'screenshot.png').slice(0, 120),
+      name: String(body.name || 'screenshot.png').slice(0, 120),
       mime: mime,
       size: buffer.length,
       buffer: buffer,
-      uploaded_by: who.id,
+      uploaded_by: tester.id,
       participants: [entity_id],
       forEntity: entity_id
     });
     if (!id) return problem(req, res, { status: 500, ...notStored() });
     /* ⭐ the id is all the caller keeps; the bytes come back from /api/attachments/:id, which is already
        entity-scoped, so evidence cannot be read by anyone the tester does not work for. */
-    res.json({ id: id, name: b.name || null, mime: mime, size: buffer.length });
+    res.json({ id: id, name: body.name || null, mime: mime, size: buffer.length });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not attach it'));
   }
@@ -2709,7 +2709,7 @@ router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) =>
 router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) =>
+    const result = await withEntity(entity_id, (db) =>
       db.query(
         `SELECT d.name AS case_key, d.sub_kind AS module_key, v.rules,
               s.name AS clause, s.sub_kind AS spec, s.current_version AS clause_now
@@ -2725,7 +2725,7 @@ router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, 
     );
 
     res.json({
-      stale: r.rows.map((x) => ({
+      stale: result.rows.map((x) => ({
         case_key: x.case_key,
         module_key: x.module_key,
         title: (x.rules || {}).title || '',
@@ -2734,8 +2734,8 @@ router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, 
         cited_version: Number(((x.rules || {}).cites || {}).version),
         clause_now: Number(x.clause_now)
       })),
-      count: r.rowCount,
-      says: r.rowCount
+      count: result.rowCount,
+      says: result.rowCount
         ? 'These cases were written against an earlier wording of their clause. Read the clause, then either ' + 'edit the case or test it again.'
         : 'Every case cites the current wording of its clause.'
     });
@@ -2771,11 +2771,11 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? uuidOrNone(req.query.run_id) : null;
-    const pj = projectOf((req.query || {}).project);
-    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
+    const sitting = projectOf((req.query || {}).project);
+    if (sitting.error) return problem(req, res, { status: 400, ...badRequest('Not read', sitting.error) });
     /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
 
-    const r = await withEntity(entity_id, async (db) =>
+    const result = await withEntity(entity_id, async (db) =>
       db.query(
         `WITH cases AS (
          SELECT d.definition_id, d.name AS case_key, COALESCE(d.sub_kind, '-') AS module_key,
@@ -2790,7 +2790,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
           would otherwise count five times and a module could report more coverage than it has cases. */
        latest AS (
          SELECT DISTINCT ON (case_key) case_key, status, at
-           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 3)}
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, sitting.project), 3)}
           ORDER BY case_key, at DESC
        ),
        inrun AS (
@@ -2814,7 +2814,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
         ORDER BY count(*) FILTER (WHERE l.case_key IS NULL AND c.priority = 'High') DESC,
                  count(*) FILTER (WHERE l.case_key IS NULL) DESC,
                  c.module_key`,
-        [entity_id, run_id, pj.project]
+        [entity_id, run_id, sitting.project]
       )
     );
 
@@ -2830,7 +2830,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
      * ⚠ One transaction, four aggregates. Not one query per group in a loop.
      */
     const groups = await withEntity(entity_id, async (db) => {
-      const has = await projectReady(db, pj.project);
+      const hasTable = await projectReady(db, sitting.project);
       const latest = `WITH cases AS (
            SELECT d.name AS case_key, COALESCE(d.sub_kind,'-') AS module_key,
                   COALESCE(v.rules->>'priority','Medium') AS priority,
@@ -2840,7 +2840,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)} ORDER BY case_key, at DESC
          )`;
       const tally = (col) => `${latest}
          SELECT c.${col} AS key, count(*) AS total,
@@ -2851,8 +2851,8 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
           GROUP BY c.${col} ORDER BY c.${col}`;
 
-      const byLayer = await db.query(tally('layer'), [entity_id, pj.project]);
-      const byPriority = await db.query(tally('priority'), [entity_id, pj.project]);
+      const byLayer = await db.query(tally('layer'), [entity_id, sitting.project]);
+      const byPriority = await db.query(tally('priority'), [entity_id, sitting.project]);
 
       /* ⚠ THE TREND IS A DIFFERENT SHAPE, and must be: it counts RESULTS in a sitting, not the latest word per
          case. "What happened on Tuesday" and "where do we stand" are different questions and a chart that
@@ -2863,9 +2863,9 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
                 count(*) FILTER (WHERE status='fail')    AS failed,
                 count(*) FILTER (WHERE status='blocked') AS blocked,
                 count(*) AS total
-           FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)}
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)}
           GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`,
-        [entity_id, pj.project]
+        [entity_id, sitting.project]
       );
 
       const num = (rows) =>
@@ -2896,7 +2896,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
       };
     });
 
-    const areas = r.rows.map((x) => ({
+    const areas = result.rows.map((x) => ({
       module_key: x.module_key,
       module_name: x.module_name,
       total: Number(x.total),
@@ -2912,7 +2912,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
 
     res.json({
       areas: areas,
-      project: pj.project,
+      project: sitting.project,
       groups: groups,
       /* ⭐ the panel opens on this when no focus has been chosen — the gap, named, rather than a dropdown */
       suggest: worst ? worst.module_key : null,
@@ -2955,12 +2955,12 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? uuidOrNone(req.query.run_id) : null;
-    const pj = projectOf((req.query || {}).project);
-    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
+    const sitting = projectOf((req.query || {}).project);
+    if (sitting.error) return problem(req, res, { status: 400, ...badRequest('Not read', sitting.error) });
 
     const data = await withEntity(entity_id, async (db) => {
       /* ⭐ ?project= — every RESULT read below is that project's rows only; the cases stay the board's */
-      const has = await projectReady(db, pj.project);
+      const hasTable = await projectReady(db, sitting.project);
       /* ⚠️ THE LATEST WORD PER CASE for the board-wide picture; the RUN's own rows when one is named. Mixing
          them would be the classic report fault: totals that answer a different question from the detail. */
       const cover = await db.query(
@@ -2977,7 +2977,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)} ORDER BY case_key, at DESC
          )
          SELECT c.module_key, max(c.module_name) AS module_name, count(*) AS total,
                 count(*) FILTER (WHERE l.status='pass')    AS passed,
@@ -2990,17 +2990,17 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
                 count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=0) AS untested_written
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
           GROUP BY c.module_key ORDER BY c.module_key`,
-        [entity_id, pj.project]
+        [entity_id, sitting.project]
       );
 
       /* the incidents: what actually went wrong, latest word only, worst first */
-      const bad = await db.query(
+      const latest = await db.query(
         `SELECT DISTINCT ON (case_key) case_key, module_key, status, note, evidence,
                 tester_name, run_kind, layer, at, case_version
            FROM test_result
-          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 3)}
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(hasTable, 3)}
           ORDER BY case_key, at DESC`,
-        [entity_id, run_id, pj.project]
+        [entity_id, run_id, sitting.project]
       );
 
       /**
@@ -3026,7 +3026,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
         `WITH latest AS (
            SELECT DISTINCT ON (case_key) case_key, status, tested_by, tester_name, at
              FROM test_result
-            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 3)}
+            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(hasTable, 3)}
             ORDER BY case_key, at DESC
          )
          SELECT tested_by, max(tester_name) AS tester_name, count(*)::int AS recorded,
@@ -3038,19 +3038,19 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
            FROM latest
           GROUP BY tested_by
           ORDER BY count(*) DESC`,
-        [entity_id, run_id, pj.project]
+        [entity_id, run_id, sitting.project]
       );
 
       const runs = await db.query(
-        `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
+        `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${hasTable ? 'max(project)' : 'NULL::text'} AS project,
                 min(at) AS started, max(at) AS finished,
                 string_agg(DISTINCT run_kind, ', ') AS kinds,
                 string_agg(DISTINCT tester_name, ', ') AS testers,
                 string_agg(DISTINCT layer, ', ') AS layers, count(*) AS total
            FROM test_result
-          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 4)}
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(hasTable, 4)}
           GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`,
-        [entity_id, run_id, run_id ? 1 : 12, pj.project]
+        [entity_id, run_id, run_id ? 1 : 12, sitting.project]
       );
 
       /* ⚠️ cases written against wording that has since changed — a PASS on one of these is not evidence about
@@ -3088,7 +3088,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)} ORDER BY case_key, at DESC
          )
          SELECT c.test_type, c.layer, count(*)::int AS total,
                 count(l.case_key)::int                            AS run,
@@ -3096,28 +3096,28 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
                 count(*) FILTER (WHERE l.status='fail')::int       AS failed
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
           GROUP BY c.test_type, c.layer ORDER BY count(*) DESC`,
-        [entity_id, pj.project]
+        [entity_id, sitting.project]
       );
 
       /* ⭐ ONE READ, TWO FOLDS (N07): the same rows give the per-kind table and the §5 plan-by-level table, so the
          plan comparison costs no extra trip. Planned = cases DEFINED; executed = defined cases with a latest word. */
       const fold = (key) => {
-        const m = {};
+        const byKey = {};
         kinds.rows.forEach((item) => {
-          const k = item[key];
-          const a = m[k] || (m[k] = { total: 0, run: 0, passed: 0, failed: 0 });
+          const groupKey = item[key];
+          const bucket = byKey[groupKey] || (byKey[groupKey] = { total: 0, run: 0, passed: 0, failed: 0 });
           ['total', 'run', 'passed', 'failed'].forEach((x) => {
-            a[x] += Number(item[x] || 0);
+            bucket[x] += Number(item[x] || 0);
           });
         });
-        return m;
+        return byKey;
       };
       const byKind = fold('test_type'),
         byLayer = fold('layer');
 
       return {
         cover: cover.rows.map(coverRowOf),
-        bad: bad.rows.map(badRowOf),
+        bad: latest.rows.map(badRowOf),
         runs: runs.rows,
         people: people.rows,
         kinds: Object.keys(byKind)
@@ -3143,10 +3143,10 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
      * finding, and burying it would be the opposite fault to the one being fixed. They are SEPARATED, so the
      * board asks for the two different actions it actually needs — go run these, go write those.
      */
-    const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0, untested_swept: 0, untested_written: 0 };
+    const counts = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0, untested_swept: 0, untested_written: 0 };
     data.cover.forEach((item) =>
-      Object.keys(n).forEach((k) => {
-        n[k] += Number(item[k] || 0);
+      Object.keys(counts).forEach((field) => {
+        counts[field] += Number(item[field] || 0);
       })
     );
     const incidents = data.bad.filter((item) => item.status === 'fail' || item.status === 'blocked');
@@ -3228,35 +3228,35 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
      * the same function. [[feedback-no-duplicate-functions]]
      */
     const foundRows = (found.rows || []).map((x) => {
-      const r = x.rules || {};
-      const st = String(r.state || '');
+      const rules = x.rules || {};
+      const state = String(rules.state || '');
       const kind = KINDW[x.kind] || x.kind;
       const work = teststatus.workStatus({
         kind: kind === 'case' ? 'case' : kind === 'incident' ? 'incident' : 'requirement',
-        state: st,
+        state: state,
         retired: x.status === 'retired',
         last: null
       });
       return {
         kind: kind,
         ref: x.name,
-        screen: r.screen_code || null,
-        what: r.title || r.requirement || r.observed || '',
-        seen: r.observed || null,
-        by: r.written_by || r.raised_by || null,
-        at: r.written_at || r.raised_at || null,
-        state: st || (teststatus.isOpen(work) ? 'open' : 'closed'),
+        screen: rules.screen_code || null,
+        what: rules.title || rules.requirement || rules.observed || '',
+        seen: rules.observed || null,
+        by: rules.written_by || rules.raised_by || null,
+        at: rules.written_at || rules.raised_at || null,
+        state: state || (teststatus.isOpen(work) ? 'open' : 'closed'),
         /* ⭐ the same word the board shows, and what it asks of the reader */
         work_status: work,
         work_label: teststatus.LABEL[work],
         next: teststatus.TELL[work],
         open: teststatus.isOpen(work),
-        closed_note: r.closed_note || r.why || null,
-        closed_by: r.closed_by || null,
-        has_screenshot: !!r.evidence_id
+        closed_note: rules.closed_note || rules.why || null,
+        closed_by: rules.closed_by || null,
+        has_screenshot: !!rules.evidence_id
       };
     });
-    const tested = n.total - n.untested;
+    const tested = counts.total - counts.untested;
 
     res.json({
       standard: 'ISO/IEC/IEEE 29119-3 · Test Completion Report',
@@ -3281,8 +3281,8 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
       /* ⚠️ named so a reader can check it, and because IEEE 829 is the one most people expect */
       supersedes: 'IEEE 829 (withdrawn 2013)',
       generated_at: new Date().toISOString(),
-      scope: (run_id ? 'one run' : 'the whole board') + (pj.project ? ' · project ' + pj.project : ''),
-      project: pj.project,
+      scope: (run_id ? 'one run' : 'the whole board') + (sitting.project ? ' · project ' + sitting.project : ''),
+      project: sitting.project,
 
       sections: [
         {
@@ -3372,15 +3372,15 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
                 screen: 'A named screen, walked by a person.',
                 support: 'Not a test — a fixture or harness other tests stand on.'
               };
-              const got = {};
+              const seen = {};
               (data.kinds || []).forEach((item) => {
-                got[item.test_type] = item;
+                seen[item.test_type] = item;
               });
               /* ⚠️ the DECLARED list leads, so a kind with no cases still gets a row */
-              const order = TEST_TYPES.concat(Object.keys(got).filter((item) => TEST_TYPES.indexOf(item) < 0));
+              const order = TEST_TYPES.concat(Object.keys(seen).filter((item) => TEST_TYPES.indexOf(item) < 0));
               return order.map((item) => {
-                const g = got[item] || { total: 0, run: 0, passed: 0, failed: 0 };
-                return { kind: item, says: SAYS[item] || null, total: g.total, run: g.run, passed: g.passed, failed: g.failed };
+                const group = seen[item] || { total: 0, run: 0, passed: 0, failed: 0 };
+                return { kind: item, says: SAYS[item] || null, total: group.total, run: group.run, passed: group.passed, failed: group.failed };
               });
             })(),
             note:
@@ -3394,10 +3394,10 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
           title: 'Test results',
           source: 'measured',
           body: {
-            totals: n,
+            totals: counts,
             tested: tested,
-            coverage_pct: n.total ? Math.round((tested / n.total) * 100) : 0,
-            pass_pct: tested ? Math.round((n.passed / tested) * 100) : 0,
+            coverage_pct: counts.total ? Math.round((tested / counts.total) * 100) : 0,
+            pass_pct: tested ? Math.round((counts.passed / tested) * 100) : 0,
             by_feature: data.cover
           }
         },
@@ -3423,13 +3423,13 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
               status: item,
               label: teststatus.LABEL[item],
               next: teststatus.TELL[item],
-              count: foundRows.filter((r) => r.work_status === item).length
+              count: foundRows.filter((foundRow) => foundRow.work_status === item).length
             })).filter((x) => x.count),
             awaiting_retest: foundRows.filter((item) => item.work_status === 'retest').length,
             by_kind: ['case', 'requirement', 'incident'].map((item) => ({
               kind: item,
-              total: foundRows.filter((r) => r.kind === item).length,
-              open: foundRows.filter((r) => r.kind === item && r.open).length
+              total: foundRows.filter((foundRow) => foundRow.kind === item).length,
+              open: foundRows.filter((foundRow) => foundRow.kind === item && foundRow.open).length
             })),
             items: foundRows,
             /* ⚠️ said in the document, because the two sections WILL be read as the same thing otherwise */
@@ -3500,17 +3500,17 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
              *
              * ⭐ These two fire on ZERO, which is exactly when the others cannot.
              */
-            !n.total
+            !counts.total
               ? 'THERE ARE NO TEST CASES ON THIS BOARD. Every count in section 2 is zero because nothing has ' +
                 'been declared — not because it was tested and found clean. Nothing here may be signed.'
               : null,
-            n.total && !(n.total - n.untested)
+            counts.total && !(counts.total - counts.untested)
               ? 'NOT ONE CASE HAS EVER BEEN RUN. The board holds ' +
-                n.total +
+                counts.total +
                 ' case(s) and no result exists ' +
                 'for any of them, so this report records what is INTENDED, never what was observed.'
               : null,
-            n.untested ? n.untested + ' case(s) have never been run' + (n.high_untested ? ', ' + n.high_untested + ' of them High priority' : '') : null,
+            counts.untested ? counts.untested + ' case(s) have never been run' + (counts.high_untested ? ', ' + counts.high_untested + ' of them High priority' : '') : null,
             data.stale
               ? data.stale + ' case(s) cite an older version of their spec clause, so a pass on them is ' + 'not evidence about what the spec says today'
               : null
@@ -3528,7 +3528,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
           id: '8',
           title: 'Reusable test assets',
           source: 'measured',
-          body: { cases: n.total, features: data.cover.length, note: 'Every case is a versioned definition and can be exported as Gherkin (.feature).' }
+          body: { cases: counts.total, features: data.cover.length, note: 'Every case is a versioned definition and can be exported as Gherkin (.feature).' }
         },
 
         { id: '9', title: 'Lessons learned and recommendations', source: 'needs a person', asks: 'What should be done differently next time?' },
@@ -3541,7 +3541,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
          * ⚠️ The clause is NOT hidden. An empty report is a legitimate and useful document — "we have
          * declared nothing and run nothing" — it simply must not be signable.
          */
-        n.total && n.total - n.untested
+        counts.total && counts.total - counts.untested
           ? {
               id: '10',
               title: 'Approval',
@@ -3554,7 +3554,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
               title: 'Approval',
               source: 'needs a person',
               no_sign: true,
-              asks: !n.total
+              asks: !counts.total
                 ? 'There is nothing to approve: this board holds no test cases. The signature block appears ' + 'once there is a result to stand behind.'
                 : 'There is nothing to approve: no case on this board has been run. The signature block ' + 'appears once there is a result to stand behind.'
             }
@@ -3589,10 +3589,10 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
 router.get('/reliability', auth, boardReadGate, ...checked('GET /reliability'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const q = req.query || {};
-    const kind = q.run_kind ? String(q.run_kind) : null;
+    const query = req.query || {};
+    const kind = query.run_kind ? String(query.run_kind) : null;
 
-    const r = await withEntity(entity_id, (db) =>
+    const result = await withEntity(entity_id, (db) =>
       db.query(
         `WITH ordered AS (
          SELECT case_key, module_key, status, at, run_kind, layer,
@@ -3626,7 +3626,7 @@ router.get('/reliability', auth, boardReadGate, ...checked('GET /reliability'), 
       )
     );
 
-    const rows = r.rows.map((x) => {
+    const rows = result.rows.map((x) => {
       const runs = Number(x.runs),
         failed = Number(x.failed),
         flips = Number(x.flips);
@@ -3781,12 +3781,12 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
   try {
     /* ⚠️ entityForFinding, NOT entityFor: a change is ours and never goes on the shared board. */
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
-    const b = req.body || {};
+    const tester = testerOf(req);
+    const body = req.body || {};
 
-    const summary = String(b.summary || '').trim();
-    const backout = String(b.backout || '').trim();
-    const cites = b.cites && typeof b.cites === 'object' ? b.cites : null;
+    const summary = String(body.summary || '').trim();
+    const backout = String(body.backout || '').trim();
+    const cites = body.cites && typeof body.cites === 'object' ? body.cites : null;
 
     /* ⚠️ ALL THREE REFUSED RATHER THAN DEFAULTED — each one is the reason the record is worth keeping.
        A change with no CAUSE is undocumented work or scope creep, and both are worth catching.
@@ -3796,9 +3796,9 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
     if (!backout) return problem(req, res, { status: 400, ...noWayBack() });
     if (!cites || !String(cites.ref || '').trim()) return problem(req, res, { status: 400, ...noCause() });
 
-    const { risk, forced } = riskOf(b);
+    const { risk, forced } = riskOf(body);
     const name =
-      String(b.ref || '').trim() ||
+      String(body.ref || '').trim() ||
       'CHG-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 
     const out = await withEntity(entity_id, async (db) => {
@@ -3814,33 +3814,33 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
           definition_id: cites.definition_id || null,
           entity_id: citedEntityOf(entity_id, cites)
         },
-        repo: String(b.repo || '').trim() || null,
+        repo: String(body.repo || '').trim() || null,
         /* ⭐ the SHA is the record. A branch name rots the moment it is merged or deleted. */
-        sha: String(b.sha || '').trim() || null,
+        sha: String(body.sha || '').trim() || null,
         /* ⭐ empty is allowed, and is itself the finding: a change nothing proves is a change nobody can retest. */
-        proves: Array.isArray(b.proves) ? b.proves.map((x) => String(x).trim()).filter(Boolean) : [],
+        proves: Array.isArray(body.proves) ? body.proves.map((x) => String(x).trim()).filter(Boolean) : [],
         shipped_in: null,
         state: 'proposed',
-        raised_by: who.name,
-        raised_by_id: who.id,
+        raised_by: tester.name,
+        raised_by_id: tester.id,
         raised_at: new Date().toISOString(),
-        history: [{ state: 'proposed', by: who.name, at: new Date().toISOString(), why: forced }]
+        history: [{ state: 'proposed', by: tester.name, at: new Date().toISOString(), why: forced }]
       };
-      const ins = await db.query(
+      const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'change',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
-        [entity_id, risk, name, summary.slice(0, 200), who.id]
+        [entity_id, risk, name, summary.slice(0, 200), tester.id]
       );
-      const id = ins.rows[0].definition_id;
+      const id = inserted.rows[0].definition_id;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
-        [id, entity_id, JSON.stringify(rules), who.id]
+        [id, entity_id, JSON.stringify(rules), tester.id]
       );
       return { definition_id: id, ref: name, risk, rules };
     });
 
-    require('../lib/testnews').testRaised(entity_id, 'change', out.ref, { state: 'proposed', by: who.id, byName: who.name });
+    require('../lib/testnews').testRaised(entity_id, 'change', out.ref, { state: 'proposed', by: tester.id, byName: tester.name });
 
     /* ⭐ forced_risk and needs_review are said out loud, not silently applied: a rule that changes your answer without telling you is one you will argue with */
     res.status(201).json({ ok: true, definition_id: out.definition_id, ref: out.ref, risk: out.risk, rules: out.rules, forced_risk: forced, needs_review: risk !== 'routine' });
@@ -3855,7 +3855,7 @@ router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
-    const r = await withEntity(entity_id, (db) =>
+    const result = await withEntity(entity_id, (db) =>
       db.query(
         `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
          FROM definition d
@@ -3865,28 +3865,28 @@ router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
         [entity_id]
       )
     );
-    const all = r.rows.map((x) => {
-      const ru = x.rules || {};
+    const all = result.rows.map((x) => {
+      const rules = x.rules || {};
       return {
         definition_id: x.definition_id,
         ref: x.name,
-        risk: x.sub_kind || ru.risk || 'routine',
-        summary: ru.text || '',
-        backout: ru.backout || '',
-        cites: ru.cites || null,
-        repo: ru.repo || null,
-        sha: ru.sha || null,
-        proves: ru.proves || [],
-        shipped_in: ru.shipped_in || null,
-        state: ru.state || 'proposed',
+        risk: x.sub_kind || rules.risk || 'routine',
+        summary: rules.text || '',
+        backout: rules.backout || '',
+        cites: rules.cites || null,
+        repo: rules.repo || null,
+        sha: rules.sha || null,
+        proves: rules.proves || [],
+        shipped_in: rules.shipped_in || null,
+        state: rules.state || 'proposed',
         shelf: x.status,
         /* ⭐ ONE RULE, ON THE SERVER — the board, the screen and the report print the same verdict because
            they all read this. ⚠️ proves is passed: a change that shipped proving nothing reads "retest",
            not 'closed', which is the whole reason the field is allowed to be empty. */
-        work_status: teststatus.workStatus({ kind: 'change', state: ru.state || 'proposed', proves: ru.proves || [] }),
-        raised_by: ru.raised_by || null,
+        work_status: teststatus.workStatus({ kind: 'change', state: rules.state || 'proposed', proves: rules.proves || [] }),
+        raised_by: rules.raised_by || null,
         at: x.updated_at,
-        history: ru.history || []
+        history: rules.history || []
       };
     });
     const open = all.filter((item) => item.state === 'proposed' || item.state === 'reviewed');
@@ -3919,16 +3919,16 @@ router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
 router.post('/releases', auth, ...checked('POST /releases'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const who = testerOf(req);
-    const b = req.body || {};
-    const name = String(b.name || '').trim();
-    const ids = Array.isArray(b.changes) ? b.changes.map((x) => String(x).trim()).filter(Boolean) : [];
+    const tester = testerOf(req);
+    const body = req.body || {};
+    const name = String(body.name || '').trim();
+    const ids = Array.isArray(body.changes) ? body.changes.map((x) => String(x).trim()).filter(Boolean) : [];
 
     if (!name) return problem(req, res, { status: 400, ...unnamedRelease() });
     if (!ids.length) return problem(req, res, { status: 400, ...emptyRelease() });
 
     const carried = await withEntity(entity_id, async (db) => {
-      const got = await db.query(
+      const seen = await db.query(
         `SELECT d.definition_id, d.name, d.current_version, v.rules
            FROM definition d
            JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
@@ -3936,28 +3936,28 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
         [entity_id, ids.filter((id) => UUID.test(id))] /* an id that is no uuid names no change: carried as an unknown one is (nothing) */
       );
 
-      const rows = got.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
+      const rows = seen.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
 
-      const rel = {
-        text: String(b.note || '').trim() || null,
+      const release = {
+        text: String(body.note || '').trim() || null,
         carried: rows.map((x) => ({ definition_id: x.id, ref: x.ref, risk: x.rules.risk || 'routine' })),
         /* ⭐ every case any carried change claims to be proved by, de-duplicated — the release's own evidence. */
         proves: [...new Set(rows.flatMap((x) => x.rules.proves || []))],
         state: 'shipped',
-        cut_by: who.name,
-        cut_by_id: who.id,
+        cut_by: tester.name,
+        cut_by_id: tester.id,
         at: new Date().toISOString()
       };
-      const ins = await db.query(
+      const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'release',NULL,$2,$3,'live',1,$4) RETURNING definition_id`,
-        [entity_id, name, rel.text, who.id]
+        [entity_id, name, release.text, tester.id]
       );
-      const relId = ins.rows[0].definition_id;
+      const relId = inserted.rows[0].definition_id;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
-        [relId, entity_id, JSON.stringify(rel), who.id]
+        [relId, entity_id, JSON.stringify(release), tester.id]
       );
 
       /* ⭐ each change now knows what carried it — written by the release, never by hand. */
@@ -3966,12 +3966,12 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
           ...x.rules,
           state: 'shipped',
           shipped_in: name,
-          history: (x.rules.history || []).concat([{ state: 'shipped', by: who.name, at: rel.at, why: name }])
+          history: (x.rules.history || []).concat([{ state: 'shipped', by: tester.name, at: release.at, why: name }])
         };
         await db.query(
           `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
            VALUES ($1,$2,$3,$4,$5)`,
-          [x.id, x.v + 1, entity_id, JSON.stringify(next), who.id]
+          [x.id, x.v + 1, entity_id, JSON.stringify(next), tester.id]
         );
         await db.query(
           `UPDATE definition SET current_version = $2, status = 'live', updated_at = now()
@@ -3979,7 +3979,7 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
           [x.id, x.v + 1, entity_id]
         );
       }
-      return { release_id: relId, rows, rel };
+      return { release_id: relId, rows, rel: release };
     });
 
     /**
@@ -3993,21 +3993,21 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
     const told = [];
     const mayFollow = require('../lib/platformroot').isRoot(String(entity_id));
     for (const x of carried.rows) {
-      const c = x.rules.cites || {};
-      if (!c.definition_id || !c.entity_id || c.kind !== 'incident') continue;
+      const cites = x.rules.cites || {};
+      if (!cites.definition_id || !cites.entity_id || cites.kind !== 'incident') continue;
       /* SEC-FIX3 S1: a change recorded before this fix may name a stranger — only the root follows another entity, or `origin` */
-      if (!mayFollow && String(c.entity_id) !== String(entity_id)) {
-        told.push({ ref: c.ref, resolved: false, why: 'not your incident' });
+      if (!mayFollow && String(cites.entity_id) !== String(entity_id)) {
+        told.push({ ref: cites.ref, resolved: false, why: 'not your incident' });
         continue;
       }
       try {
         /* ⭐ ours first — the queue we work from. */
-        const mine = await markIncidentResolved(c.entity_id, c.definition_id, name, who, carried.rel.at);
-        told.push({ ref: c.ref, entity_id: c.entity_id, resolved: mine.ok, why: mine.why || null });
-        if (mayFollow) await tellOriginShop(mine.origin, c, name, who, carried.rel.at, told);
+        const mine = await markIncidentResolved(cites.entity_id, cites.definition_id, name, tester, carried.rel.at);
+        told.push({ ref: cites.ref, entity_id: cites.entity_id, resolved: mine.ok, why: mine.why || null });
+        if (mayFollow) await tellOriginShop(mine.origin, cites, name, tester, carried.rel.at, told);
       } catch (e) {
         /* ⚠️ said, not swallowed: "0 shops told" with no explanation reads as "there was nobody to tell". */
-        told.push({ ref: c.ref, entity_id: c.entity_id, failed: e.code || e.message });
+        told.push({ ref: cites.ref, entity_id: cites.entity_id, failed: e.code || e.message });
       }
     }
 
@@ -4049,51 +4049,51 @@ async function tellOriginShop(origin, cited, releaseName, releasedBy, at, told) 
  *
  * @returns {Promise<{ok:boolean, origin?:object, why?:string}>} — origin is the shop's copy, if this was ours.
  */
-async function markIncidentResolved(entity_id, definition_id, releaseName, who, at) {
+async function markIncidentResolved(entity_id, definition_id, releaseName, tester, at) {
   if (!entity_id || !definition_id) return { ok: false, why: 'no reference' };
   return withEntity(entity_id, async (db) => {
-    const cur = await db.query(
+    const current = await db.query(
       `SELECT d.current_version, v.rules FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.definition_id = $1 AND d.entity_id = $2 AND d.kind = 'incident'`,
       [definition_id, entity_id]
     );
-    if (!cur.rows[0]) return { ok: false, why: 'not found' };
-    const ru = cur.rows[0].rules || {};
+    if (!current.rows[0]) return { ok: false, why: 'not found' };
+    const rules = current.rows[0].rules || {};
     /* ⚠️ ONLY FROM AN OPEN STATE. A shop that already closed it has had the last word, and a release must not
        reopen or overwrite that — the raiser's verdict outranks the fixer's claim. */
-    if (!['raised', 'acknowledged'].includes(String(ru.state || 'raised'))) {
-      return { ok: false, why: 'already ' + (ru.state || 'raised'), origin: ru.origin || null };
+    if (!['raised', 'acknowledged'].includes(String(rules.state || 'raised'))) {
+      return { ok: false, why: 'already ' + (rules.state || 'raised'), origin: rules.origin || null };
     }
-    const v = cur.rows[0].current_version + 1;
-    const next = Object.assign({}, ru, {
+    const nextVersion = current.rows[0].current_version + 1;
+    const next = Object.assign({}, rules, {
       state: 'resolved',
       resolved_in: releaseName,
-      history: (ru.history || []).concat([{ state: 'resolved', by: who.name, at, why: releaseName }])
+      history: (rules.history || []).concat([{ state: 'resolved', by: tester.name, at, why: releaseName }])
     });
     await db.query(
       `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
        VALUES ($1,$2,$3,$4,$5)`,
-      [definition_id, v, entity_id, JSON.stringify(next), who.id]
+      [definition_id, nextVersion, entity_id, JSON.stringify(next), tester.id]
     );
     await db.query(
       `UPDATE definition SET current_version = $2, updated_at = now()
         WHERE definition_id = $1 AND entity_id = $3`,
-      [definition_id, v, entity_id]
+      [definition_id, nextVersion, entity_id]
     );
     /* ⚠️ `forId` is the ORIGINAL RAISER. Everyone on that entity hears the event; only the person waiting is
        told it is theirs to verify. A message telling five people to check one fix gets checked by none. */
     try {
-      require('../lib/testnews').testRaised(entity_id, 'incident', ru.ref || null, {
+      require('../lib/testnews').testRaised(entity_id, 'incident', rules.ref || null, {
         state: 'resolved',
-        forId: ru.raised_by_id || null,
-        by: who.id,
-        byName: who.name
+        forId: rules.raised_by_id || null,
+        by: tester.id,
+        byName: tester.name
       });
     } catch (e) {
       logger.fellBack('testing markIncidentResolved: the helper failed — carried on without it', e);
     }
-    return { ok: true, origin: ru.origin || null };
+    return { ok: true, origin: rules.origin || null };
   });
 }
 
@@ -4101,7 +4101,7 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, who, 
 router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) =>
+    const result = await withEntity(entity_id, (db) =>
       db.query(
         `SELECT d.definition_id, d.name, d.note, d.updated_at, v.rules
          FROM definition d
@@ -4113,7 +4113,7 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
     );
     const answer = pageOut(
         'releases',
-        r.rows.map((x) => ({
+        result.rows.map((x) => ({
           definition_id: x.definition_id,
           name: x.name,
           note: x.note,
