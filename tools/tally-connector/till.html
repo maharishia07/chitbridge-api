@@ -482,6 +482,15 @@
         display:flex;flex-direction:column;padding:0;
         padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   .menu[hidden]{display:none}
+  /* ⭐ THE MENU IS A NATIVE <dialog> (showModal), like the counter's other popups: Esc, focus in, Tab kept inside and focus back to the opener come from the browser.
+     ⚠️ display:flex on .menu beats dialog:not([open]){display:none}, so the closed one is kept away by [hidden] AND this rule. The drawer is its fixed place;
+     the wide card (.asdialog) outranks it below. */
+  dialog.menu{position:fixed;inset-block:0;inset-inline-start:0;inset-inline-end:auto;margin:0;width:min(348px,92vw);height:100%;
+              max-width:none;max-height:none;color:var(--ink);overflow:hidden}
+  dialog.menu:not([open]){display:none}
+  body[data-menuside="right"] dialog.menu{inset-inline-start:auto;inset-inline-end:0}
+  dialog.menu::backdrop{background:transparent}
+  @media (max-width:600px){ dialog.menu,body[data-menuside="right"] dialog.menu{inset:0;width:100%} }
   /* the drag handle a sheet is grabbed by — decoration on a mouse, an affordance on a thumb */
   .menu::before{content:'';flex:0 0 auto;width:38px;height:4px;border-radius:99px;background:var(--line);margin:8px auto 2px}
   .mhead{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-bottom:1px solid var(--line)}
@@ -3011,7 +3020,7 @@
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
        (the look dropdowns' font) live on it. Dropping it when this moved into the drawer left an "on" chip
        looking exactly like an "off" one — found by a critic pass, 2026-09-18. -->
-  <div class="menu sfull" id="tillmenu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
+  <dialog class="menu sfull" id="tillmenu" hidden aria-label="Counter menu"></dialog>
 </aside>
 <!-- ⭐⭐ THE IDLE SCREEN — the shop's own picture while nobody is billing. Painted by paintIdle(); shown by a
      timer; dismissed by ANY key, scan or touch (see idleWake). -->
@@ -10510,7 +10519,7 @@ function hubHead(){
       + (place || shop ? ' · ' : '') + esc(when) + '</i></span>'
     + hubChips()
     + who
-    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()" data-cbsid="CTR004-B52">✕</button>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CTR004-B52">✕</button>'
     + '</div>';
 }
 
@@ -10701,6 +10710,13 @@ function hubChips(){
     + '<button class="hubchip" data-ic="switches" data-testid="till-hub-chip-tray" aria-label="Switches" title="Switches" onclick="fromMenu(trayOpen)" data-cbsid="CTR004-B60">⚡</button>';
   return '<div class="hubchips" data-testid="till-hub-health">' + out + '</div>';
 }
+/** ⚠️ a repaint replaces every child, which dropped the focused button to BODY (a late bills read repaints after the open): put focus back on the same control, without scrolling */
+function menuSetHTML(panel, html){
+  var held = document.activeElement, heldId = held && held !== panel && panel.contains(held) ? held.getAttribute('data-testid') : null;
+  panel.innerHTML = html;
+  var again = heldId ? panel.querySelector('[data-testid="' + heldId + '"]') : null;
+  if (again && again.focus) again.focus({ preventScroll: true });
+}
 function paintMenu(){
   var m = document.getElementById('tillmenu'); if (!m) return;
   var online = lineUp(), who = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
@@ -10713,7 +10729,7 @@ function paintMenu(){
     + '<i>' + esc((S && S.entity_name) || counterName() || '') + '</i></span>'
     + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
     + '<span class="mtime">' + esc(hhmm()) + '</span>'
-    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()" data-cbsid="CTR004-B61">✕</button>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CTR004-B61">✕</button>'
     + '</div>' + hubWhoRow() + hubChips())
     /* ⭐ pinned — see hubWhoRow() and hubChips(). They sit ABOVE the folding sections and never fold. */
     + hubFindBox();
@@ -10893,7 +10909,7 @@ function paintMenu(){
        * and nothing else.
        */
     : '<div class="msecs">' + secs + '</div>';
-  m.innerHTML = head + inner + foot;
+  menuSetHTML(m, head + inner + foot);
   /* IX0 (2026-10-13): the link in the counter's menu goes HOME — the index page and its small apps — never the workshop (app.html) */
   try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbRoot() + '/'; } catch (e) { cbQuiet('paintMenu:1', e); }
   paintMenuQuick();
@@ -11031,9 +11047,11 @@ function toggleMenu(e){
   if (e) e.stopPropagation();
   /* ⚠️ CLOSE THROUGH closeMenu(), which is what hands the caret back. Setting m.hidden here first made
      closeMenu()'s own "already hidden" guard return immediately — a guaranteed no-op (critic pass). */
-  if (!opening) { closeMenu(); return; }
+  if (!opening) { closeMenu(true); return; }
   side.classList.add('on');
   m.hidden = false;
+  /* ⭐ a native modal: the page behind goes inert, Esc and Tab stay with the menu, focus comes back to MENU_OPENER */
+  menuOpenModal(m);
   /* ⭐ ONE STATE, TWO ELEMENTS — the scrim is never toggled anywhere but beside the panel it belongs to */
   var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = false;
   /**
@@ -11056,7 +11074,7 @@ function toggleMenu(e){
      * nowhere and its trailing Enter closing the menu. The bill is short one item and nobody knows.
      * On a phone the sheet IS the screen, so there the caret belongs inside it.
      */
-    if (window.innerWidth <= 600) menuFocusFirst(); else { try { focusSearch(); } catch (e) { cbQuiet('toggleMenu:1', e); } }
+    menuFocusFirst();
   }
 }
 /** the first thing a keyboard lands on when the sheet opens — its close button, per §4's "Esc closes" pairing */
@@ -11117,7 +11135,19 @@ function paintViewChips(){
   }).join('');
 }
 /** ⚠️ shutting it hands the caret straight back to the search box — the next scan has to land on the bill */
-function closeMenu(){
+var MENU_OPENER = null;
+/** the browser's modal half of opening and shutting the menu — one place, so the open and close paths stay a pair */
+function menuOpenModal(panel){
+  MENU_OPENER = document.activeElement;
+  if (panel.showModal && !panel.open) { try { panel.showModal(); } catch (e) { cbQuiet('menuOpenModal:1', e); } }
+}
+/** where the caret goes when the menu is gone: back to what opened it when the person shut it, else the search box */
+function menuFocusBack(toOpener){
+  var opener = MENU_OPENER; MENU_OPENER = null;
+  try { if (toOpener && opener && opener.isConnected) opener.focus(); else focusSearch(); } catch (e) { cbQuiet('menuFocusBack:1', e); }
+}
+/** back = true when the person shut it (Esc, ✕, a press outside, ☰ again): focus returns to what opened it. An action chosen inside hands the caret to the search box instead. */
+function closeMenu(back){
   /* ⚠️ BEFORE THE GUARD, DELIBERATELY. closeMenu() returns early when the menu is already hidden, so a
      scrim put away AFTER it would survive any path that left the two out of step — an invisible sheet over a
      counter nobody can press, which is the worst outage this page can have. It costs nothing to put away
@@ -11125,8 +11155,9 @@ function closeMenu(){
   var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = true;
   var m = document.getElementById('tillmenu'); if (!m || m.hidden) return;
   m.hidden = true;
+  if (m.open) { try { m.close(); } catch (e) { cbQuiet('closeMenu:2', e); } }
   var side = document.getElementById('tillside'); if (side) side.classList.remove('on');
-  try { focusSearch(); } catch (e) { cbQuiet('closeMenu:1', e); }
+  menuFocusBack(back === true);
 }
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (e) { cbQuiet('fromMenu:1', e); } }
 /**
@@ -11148,6 +11179,11 @@ function fromMenuBack(fn, dlgId, sec){
  * record the answer the bubbling listener needs. [[feedback-check-after-the-wire]]
  */
 var MENU_CLICK_INSIDE = false;
+/** a press on the modal's backdrop lands on the dialog element itself, at a point outside its box */
+function menuBackdropHit(e, panel){
+  var box = panel.getBoundingClientRect();
+  return e.target === panel && (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom);
+}
 document.addEventListener('click', function(e){
   var side = document.getElementById('tillside');
   MENU_CLICK_INSIDE = !!(side && side.contains(e.target));
@@ -11155,8 +11191,30 @@ document.addEventListener('click', function(e){
 document.addEventListener('click', function(e){
   var m = document.getElementById('tillmenu');
   /* ⚠️ the whole PANEL is the menu, strip included — a press on an icon must not be read as "clicked away" */
-  if (m && !m.hidden && !MENU_CLICK_INSIDE && e.target.id !== 'menubtn') closeMenu();
+  if (m && !m.hidden && !MENU_CLICK_INSIDE && e.target.id !== 'menubtn') closeMenu(true);
+  else if (m && !m.hidden && menuBackdropHit(e, m)) closeMenu(true);
 });
+/**
+ * ⚠️⚠️ A SCAN WHILE THE MENU IS OPEN MUST STILL REACH THE BILL. The menu is a modal now, so its first control holds the caret and a scanner's digits
+ * went to the ✕ button and its trailing Enter closed the menu: the bill short one item, nobody told. A printable key that is not for a field in the
+ * menu shuts it WITHOUT moving focus to the opener and hands the caret to the search box inside the same keydown, so the character, and the rest of
+ * the scan with its Enter, land in #q exactly as before the modal.
+ */
+function menuScanKey(e){
+  var menu = document.getElementById('tillmenu');
+  if (menu && menu.open && isScanChar(e) && !typingInside(menu)) closeMenu(false);
+}
+/** one printable character that is not a space (a button's key) and not a shortcut */
+function isScanChar(e){ return e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey; }
+/** the caret is in a field of the menu, so the keys are for that field */
+function typingInside(menu){ var at = document.activeElement; return !!(at && at.matches && menu.contains(at) && at.matches('input, textarea, select, [contenteditable]')); }
+document.addEventListener('keydown', menuScanKey, true);
+/** the browser's own Esc (cancel) and any other close keep the three pieces of state in step: panel, scrim, hidden */
+(function(){
+  var menu = document.getElementById('tillmenu'); if (!menu) return;
+  menu.addEventListener('cancel', function(e){ e.preventDefault(); closeMenu(true); });
+  menu.addEventListener('close', function(){ if (menu.open) return; if (!menu.hidden) closeMenu(true); else { var scrim = document.getElementById('tillscrim'); if (scrim) scrim.hidden = true; } });
+})();
 /**
  * ── ⭐⭐⭐ FILTERS THAT FIND WORK ([TILL-52], MaintV2) ───────────────────────────────
  *
@@ -29027,9 +29085,13 @@ setInterval(function(){ checkAbsorbed(false); }, 600000);
 window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
 
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
-document.addEventListener('keydown', function(e){
+/**
+ * Escape is claimed in a fixed order BEFORE it can reach the basket: the open menu, then the pay card, then arrange mode.
+ * Returns true when one of them took it, so the key handler stops there and the sale is never thrown away.
+ */
+function escapeClaimed(e){
   /* ⚠️ BEFORE Escape reaches the basket: a person pressing Escape at an open menu means "shut this", never "throw the sale away" */
-  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(); e.preventDefault(); return; } }
+  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(true); e.preventDefault(); return true; } }
   /**
    * ⚠️⚠️ BEFORE ESCAPE REACHES THE BASKET. Escape clears the bill, and [TILL-30] is already the scar from
    * exactly this — somebody pressed it to back out of something they had opened and lost the sale instead.
@@ -29042,39 +29104,52 @@ document.addEventListener('keydown', function(e){
    * that throws the sale away.
    */
   if (e.key === 'Escape' && document.body.classList.contains('paying')){
-    payClose(); e.preventDefault(); return;
+    payClose(); e.preventDefault(); return true;
   }
   if (e.key === 'Escape' && QK_ARRANGE){
     if (QK_FROM) { QK_FROM = null; toastLine('Put back. Nothing moved.'); }
     else { QK_ARRANGE = false; toastLine('Done arranging.'); }
     try { paintQuick(); } catch (e) { cbQuiet('top:5', e); }
-    e.preventDefault(); return;
+    e.preventDefault(); return true;
   }
-  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
-  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
-  /**
-   * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
-   * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
-   * promise fails silently again.
-   * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
-   * line twice — once here and once in searchKey(). And never over an open dialog.
-   */
+  return false;
+}
+/**
+ * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
+ * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
+ * promise fails silently again.
+ * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
+ * line twice — once here and once in searchKey(). And never over an open dialog.
+ * Returns true when it added the line, so the key handler stops there.
+ */
+function enterAddsSelected(e){
   if (e.key === 'Enter' && MODE === 'sell' && !e.ctrlKey && !e.metaKey && !e.altKey
       && (!document.activeElement || document.activeElement === document.body)
       && !document.querySelector('dialog[open]')
       && hits().length) {
-    add(SEL); e.preventDefault(); return;
+    add(SEL); e.preventDefault(); return true;
   }
+  return false;
+}
+/** F2, F3, F4, F9, F10 and Ctrl+↑/↓: the bill's own keys, the same in every mode that has a bill */
+function billFunctionKeys(e){
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
   if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
+  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
+}
+/** F6, F7, F8: park, who is serving, the bills list (or the next carton in Despatch) */
+function shopFunctionKeys(e){
   if (e.key === 'F8' && MODE !== 'despatch'){ openBills(); e.preventDefault(); }   /* M127: bills are not a Sell-only thing (F8 packs the next carton in Despatch) */
   if (e.key === 'F7'){ whoAct(); e.preventDefault(); }
   if (e.key === 'F6'){ if (MODE === 'sell') parkBill(); else toastLine('Park is for the Sell screen. Tap Sell.'); e.preventDefault(); }
-  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
+  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
+}
+/** F5, F11, F12: costs in Receive, voice and the tray in Sell */
+function modeFunctionKeys(e){
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
   /**
    * ⭐⭐ VOICE, BY THE KEYBOARD (design-handoff corrections §1, §5.7: "F5 = hearing, Shift F5 = speaking" —
@@ -29095,13 +29170,22 @@ document.addEventListener('keydown', function(e){
    */
   if (e.key === 'F11' && MODE === 'sell'){ trayToggle('photos'); e.preventDefault(); }
   if (e.key === 'F12' && MODE === 'sell'){ trayOpen(); e.preventDefault(); }
-  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
-  /* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
-     Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
-     because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
-     next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+}
+/* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
+   Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
+   because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
+   next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+function escapeClearsBill(e){
   if (e.key === 'Escape' && !document.querySelector('dialog[open]'))
     (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && escapeClaimed(e)) return;
+  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
+  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
+  if (enterAddsSelected(e)) return;
+  billFunctionKeys(e); shopFunctionKeys(e); modeFunctionKeys(e);
+  escapeClearsBill(e);
 });
 /**
  * ── ⭐⭐⭐ BACK MUST NEVER LEAVE THE TILL (T66, Athi's phone test 2026-10-04) ───────────────────────────────────
