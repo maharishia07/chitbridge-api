@@ -1,7 +1,7 @@
 {
  "version": 1,
  "stage": "2b",
- "updated": "2026-11-14",
+ "updated": "2026-11-13",
  "total": 634,
  "not_meeting": 0,
  "codes_total": 615,
@@ -19,7 +19,7 @@
  },
  "reported_failing": {
   "bfla_role_check": 0,
-  "parameterised_query": 37,
+  "parameterised_query": 38,
   "rate_limited": 472
  },
  "debt": [

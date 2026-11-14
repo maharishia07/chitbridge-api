@@ -39,8 +39,8 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 287,
-    "failing": 37
+    "applies": 288,
+    "failing": 38
    },
    "rate_limited": {
     "applies": 634,
@@ -2291,7 +2291,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 501,
+   "line": 513,
    "hash": "683aa6ccd46c28b5",
    "does": "",
    "errors": {
@@ -22965,7 +22965,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 744,
+   "line": 756,
    "hash": "2c73efd115705c67",
    "does": "",
    "errors": {
@@ -23068,7 +23068,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 806,
+   "line": 818,
    "hash": "7c3134ca129680fe",
    "does": "",
    "errors": {
@@ -23170,7 +23170,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 737,
+   "line": 749,
    "hash": "e85807898c5889e2",
    "does": "",
    "errors": {
@@ -23267,7 +23267,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1068,
+   "line": 1084,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -23360,7 +23360,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1080,
+   "line": 1096,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -23454,7 +23454,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 338,
+   "line": 332,
    "hash": "a0891d21f5e92c94",
    "does": "",
    "errors": {
@@ -23563,7 +23563,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 677,
+   "line": 689,
    "hash": "34ea3d3a80a87da1",
    "does": "",
    "errors": {
@@ -23667,7 +23667,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 547,
+   "line": 559,
    "hash": "838efddd220e91de",
    "does": "",
    "errors": {
@@ -30610,8 +30610,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 998,
-   "hash": "dd576f3429fe253d",
+   "line": 1010,
+   "hash": "967b68cf080c3479",
    "does": "",
    "errors": {
     "count": 0,
@@ -30624,7 +30624,9 @@
     "codes": []
    },
    "reads": [],
-   "writes": [],
+   "writes": [
+    "customer_list"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -30673,14 +30675,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1295 stage2 (CRM-45): handler and lib/party-fields.js saveOwn re-read, all 13 columns true; the answer is now one closed party shape {changed, party_no, party_id} naming each saved field that really changed (segment_override included), message kept; saveOwn is owner-scoped (stranger id answers 404 as before), column names are fixed in the route, values bound as parameters, one books_change_log row per real change; client-visible: answer gains party (additive, was {message} only on the no-party path); web callers read message only, none break; no behaviour change to what is saved",
+    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30713,8 +30715,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 411,
-   "hash": "d609fd2ae6534719",
+   "line": 405,
+   "hash": "8f6477ebba0a8479",
    "does": "",
    "errors": {
     "count": 0,
@@ -30733,7 +30735,8 @@
     "supplier_list"
    ],
    "writes": [
-    "identities"
+    "identities",
+    "supplier_list"
    ],
    "money": false,
    "actions": [],
@@ -30780,7 +30783,7 @@
    "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": false
    },
    "reported_applies": {
@@ -30792,7 +30795,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1295 stage2 (CRM-45): handler and lib/party-fields.js saveOwn re-read, all 13 columns true; own fields (nickname, category, notes, preferred, supply_kind) saved through the one saveOwn, owner-scoped, 404 for a stranger id, 400 nothing-to-update unchanged; rename keeps its 409 and now logs the change; the answer always carries party {changed, party_no, party_id} (additive: rename-only answer {message, display_name} and own-fields answer {message} gain party); web callers read message only, none break; no behaviour change to what is saved",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53707,7 +53710,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 900,
+   "line": 912,
    "hash": "1d7cfce76d101948",
    "does": "",
    "errors": {
@@ -53818,7 +53821,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 978,
+   "line": 990,
    "hash": "035dcc95b8adf401",
    "does": "",
    "errors": {
@@ -53920,7 +53923,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 192,
+   "line": 186,
    "hash": "0ad0db0b90a8cbf3",
    "does": "",
    "errors": {
