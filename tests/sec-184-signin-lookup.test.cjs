@@ -75,62 +75,43 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
 
 (async () => {
   await checkAsync('lookup: one statement, the function, kind then key as parameters (never in the text)', async () => {
-    lookup.reset(); const sent = [];
+    const sent = [];
     const rows = await lookup.candidates(async (sql, p) => { sent.push([sql, p]); return { rows: [ROW] }; }, 'email', 'a@x.com');
     assert.deepStrictEqual(rows, [ROW]); assert.strictEqual(sent.length, 1);
     assert.strictEqual(sent[0][0], 'SELECT * FROM ops.signin_candidates($1, $2)'); assert.deepStrictEqual(sent[0][1], ['email', 'a@x.com']);
   });
   await checkAsync('lookup: a key under three characters answers nothing and sends nothing (the function does the same)', async () => {
-    lookup.reset(); let n = 0; const run = async () => { n++; return { rows: [ROW] }; };
+    let n = 0; const run = async () => { n++; return { rows: [ROW] }; };
     assert.deepStrictEqual(await lookup.candidates(run, 'handle', 'ab'), []); assert.deepStrictEqual(await lookup.candidates(run, 'name', '  x '), []); assert.deepStrictEqual(await lookup.candidates(run, 'email', null), []);
     assert.strictEqual(n, 0);
   });
   await checkAsync('lookup: an unknown kind throws (a programming error, as the function raises)', async () => {
     await assert.rejects(() => lookup.candidates(async () => ({ rows: [] }), 'like', 'abc'), /unknown kind/);
   });
-  for (const code of ['42883']) {
-    await checkAsync('fallback: ' + code + ' → today\'s read of the same eight columns, ONE warning, no second trip per call, no second warning', async () => {
-      lookup.reset(); warnings.length = 0; const sent = [];
-      const run = async (sql, p) => { sent.push(sql); if (/ops\.signin_candidates/.test(sql)) throw missing(code); return { rows: [ROW] }; };
-      const a = await lookup.candidates(run, 'handle', 'teashop'); const b = await lookup.candidates(run, 'name', 'Tea Shop');
-      assert.deepStrictEqual(a, [ROW]); assert.deepStrictEqual(b, [ROW]);
-      assert.strictEqual(sent.filter((s) => /ops\.signin_candidates/.test(s)).length, 1, 'the function is asked once, then not again inside the window');
-      assert(sent.some((s) => /FROM identities WHERE LOWER\(user_id\) = LOWER\(\$1\)/.test(s))); assert(sent.every((s) => !/pin_hash|otp_code|policy_flags/.test(s)));
-      assert.strictEqual(warnings.length, 1); assert.strictEqual(warnings[0].msg, 'signin.lookup.function_missing'); assert.strictEqual(warnings[0].meta.code, code);
+  for (const code of ['42883', '42501']) {
+    await checkAsync('no fallback (SEC-185): ' + code + ' → the error is thrown, logged, and NO direct read of identities is sent', async () => {
+      warnings.length = 0; const errors = []; const realError = logger.error; logger.error = (msg, meta) => { errors.push({ msg, meta }); }; const sent = [];
+      const run = async (sql) => { sent.push(sql); throw missing(code); };
+      try { await assert.rejects(() => lookup.candidates(run, 'handle', 'teashop'), /does not exist/); await assert.rejects(() => lookup.candidates(run, 'name', 'Tea Shop'), /does not exist/); } finally { logger.error = realError; }
+      assert.strictEqual(sent.length, 2, 'one statement per call, the function only'); assert(sent.every((s) => /ops\.signin_candidates/.test(s)), 'only the function is asked'); assert(sent.every((s) => !/FROM identities/.test(s)));
+      assert.strictEqual(errors.length, 2); assert.strictEqual(errors[0].msg, 'signin.lookup.function_unavailable'); assert.strictEqual(errors[0].meta.code, code); assert.strictEqual(warnings.length, 0);
     });
   }
-  await checkAsync('fallback: after the window the function is asked again (running b857 needs no restart)', async () => {
-    lookup.reset(); warnings.length = 0; let there = false; const sent = [];
-    const run = async (sql) => { sent.push(sql); if (/ops\.signin_candidates/.test(sql)) { if (!there) throw missing('42883'); return { rows: [ROW] }; } return { rows: [] }; };
-    await lookup.candidates(run, 'email', 'a@x.com'); there = true;
-    const realNow = Date.now; Date.now = () => realNow() + lookup.RETRY_MS + 5;
-    try { assert.deepStrictEqual(await lookup.candidates(run, 'email', 'a@x.com'), [ROW]); } finally { Date.now = realNow; }
+  await checkAsync('3F000 (invalid schema) is thrown too, not logged as a missing function', async () => {
+    await assert.rejects(() => lookup.candidates(async () => { throw missing('3F000'); }, 'email', 'a@x.com'), /does not exist/);
   });
-  await checkAsync('42501 (a real grant fault) is NOT read as missing: it is thrown, logged LOUDLY on every call, never falls back', async () => {
-    lookup.reset(); const errors = []; const realError = logger.error; logger.error = (msg, meta) => { errors.push({ msg, meta }); }; warnings.length = 0; let direct = 0;
-    const run = async (sql) => { if (/ops.signin_candidates/.test(sql)) throw missing('42501'); direct++; return { rows: [ROW] }; };
-    try {
-      await assert.rejects(() => lookup.candidates(run, 'email', 'a@x.com'), /does not exist/); await assert.rejects(() => lookup.candidates(run, 'email', 'a@x.com'), /does not exist/);
-    } finally { logger.error = realError; }
-    assert.strictEqual(direct, 0, 'no direct read'); assert.strictEqual(errors.length, 2, 'one error line per occurrence'); assert.strictEqual(errors[0].msg, 'signin.lookup.permission_denied'); assert.strictEqual(warnings.length, 0);
-  });
-  await checkAsync('3F000 (invalid schema) is not read as missing either: thrown', async () => {
-    lookup.reset(); await assert.rejects(() => lookup.candidates(async () => { throw missing('3F000'); }, 'email', 'a@x.com'), /does not exist/);
-  });
-  await checkAsync('doc kind: a PAN or GSTIN hash finds nothing (stand-in, the SQL text and the fallback text all name PHONE and EMAIL only)', async () => {
+  await checkAsync('doc kind: a PAN or GSTIN hash finds nothing (stand-in and the SQL text both name PHONE and EMAIL only)', async () => {
     const stub = require('./lib/signin-lookup-stub.cjs');
     const docs = [{ identity_id: ROW.identity_id, scheme: 'PAN', value_hash: 'hp', status: 'verified', verified_at: 'x' }, { identity_id: ROW.identity_id, scheme: 'PHONE', value_hash: 'hh', status: 'verified', verified_at: 'x' }];
     assert.deepStrictEqual(stub.lookup([ROW], 'doc', 'PAN:hp', docs), []); assert.deepStrictEqual(stub.lookup([ROW], 'doc', 'GSTIN:hp', docs), []); assert.strictEqual(stub.lookup([ROW], 'doc', 'PHONE:hh', docs).length, 1);
-    assert(code(SQL).includes("d.scheme IN ('PHONE', 'EMAIL')")); assert(lookup.DIRECT.doc.sql.includes("scheme IN ('PHONE', 'EMAIL')"));
+    assert(code(SQL).includes("d.scheme IN ('PHONE', 'EMAIL')"));
   });
-  await checkAsync('fallback: any OTHER error is thrown, not swallowed (a broken database is not "no account")', async () => {
-    lookup.reset(); await assert.rejects(() => lookup.candidates(async () => { throw Object.assign(new Error('boom'), { code: '57P01' }); }, 'email', 'a@x.com'), /boom/);
+  await checkAsync('any other error is thrown, not swallowed (a broken database is not "no account")', async () => {
+    await assert.rejects(() => lookup.candidates(async () => { throw Object.assign(new Error('boom'), { code: '57P01' }); }, 'email', 'a@x.com'), /boom/);
   });
-  await checkAsync('fallback: the direct read of every kind is one parameterised, ordered, LIMIT 10 statement over the eight columns only', async () => {
-    for (const k of lookup.KINDS) {
-      const d = lookup.DIRECT[k]; assert(/LIMIT 10$/.test(d.sql), k); assert(/ORDER BY identity_id/.test(d.sql), k); assert(!/pin_hash|otp_code\b|otp_code_hash|policy_flags|connector_config/.test(d.sql), k); assert(!/LIKE/i.test(d.sql), k);
-    }
-    assert.deepStrictEqual(lookup.DIRECT.doc.params('PHONE:h1,h2'), ['PHONE', ['h1', 'h2']]);
+  check('the module has no direct read left: no DIRECT table, no reset, no retry window, no FROM identities', () => {
+    assert.strictEqual(lookup.DIRECT, undefined); assert.strictEqual(lookup.reset, undefined); assert.strictEqual(lookup.RETRY_MS, undefined);
+    assert(!/FROM identities/.test(read('lib/signin-lookup.js').split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n')));
   });
 
   /* ── 3 · every pre-binding caller goes through the lookup ───────────────────────────────────────────── */
@@ -151,7 +132,7 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
   /** drive findLoginIdentity / findEntityByNameOrHandle / identitiesByVerifiedContact with a recording db and assert what it sent */
   const identityAuth = require('../lib/identity-auth');
   const iddoc = require('../lib/iddoc-verify');
-  const driven = async (fn) => { lookup.reset(); const sent = []; const run = async (sql, p) => { sent.push({ sql: String(sql).replace(/\s+/g, ' ').trim(), p }); if (/ops\.signin_candidates/.test(sql)) return { rows: p[0] === 'handle' && p[1] === 'teashop' ? [ROW] : [] }; return { rows: [{ ...ROW, pin_hash: null }] }; }; await fn(run); return sent; };
+  const driven = async (fn) => { const sent = []; const run = async (sql, p) => { sent.push({ sql: String(sql).replace(/\s+/g, ' ').trim(), p }); if (/ops\.signin_candidates/.test(sql)) return { rows: p[0] === 'handle' && p[1] === 'teashop' ? [ROW] : [] }; return { rows: [{ ...ROW, pin_hash: null }] }; }; await fn(run); return sent; };
   await checkAsync('driven: a typed handle → the function (kind handle), then ONE read by id; no direct handle read', async () => {
     const sent = await driven((run) => identityAuth.findLoginIdentity(run, 'teashop'));
     assert(sent.some((s) => /ops\.signin_candidates/.test(s.sql) && s.p[0] === 'handle' && s.p[1] === 'teashop'));
@@ -193,7 +174,7 @@ const ROW = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type
     assert.strictEqual(dbRole.verdict(null, false).level, 'warn');
   });
   check('role: the boot asks db-role before it listens (server.js), and the SQL reads rolbypassrls of current_user', () => {
-    const server = read('server.js'); assert(/roleFacts/.test(server) && /db-role/.test(server)); assert(server.indexOf('roleFacts') < server.indexOf('.listen('));
+    const server = read('server.js'); assert(/bootCheck/.test(server) && /db-role/.test(server)); assert(server.indexOf('bootCheck') < server.indexOf('.listen(')); assert(read('lib/db-role.js').includes('roleFacts(runQuery)'));
     assert(/rolbypassrls FROM pg_roles WHERE rolname = current_user/.test(dbRole.ROLE_SQL));
   });
 

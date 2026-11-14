@@ -1,6 +1,7 @@
 -- b859_trigram_search_indexes.sql — QA-172 / cb-db (14 Nov 2026): trigram (gin_trgm_ops) indexes for the substring searches in lib/business-search.js,
 -- lib/books-store.js (party name match) and routes/network-design.js (catalogue name/code/sku), so a leading-wildcard LIKE '%x%' is not a table scan.
 --
+-- The Supabase SQL editor wraps a multi-line run in a transaction, so CONCURRENTLY fails (25001); run each CREATE INDEX CONCURRENTLY line on its own.
 -- ⚠️⚠️ NOT RUN IN PRODUCTION · Athi runs it (Supabase SQL editor, AS postgres), ON ITS OWN: CREATE INDEX CONCURRENTLY cannot run inside a
 --    transaction, so this file has NO BEGIN/COMMIT and must not be pasted together with another file (the editor must not wrap it).
 --    Idempotent: CREATE EXTENSION / CREATE INDEX ... IF NOT EXISTS, a second run changes nothing. Touches no rows; builds without blocking writes.

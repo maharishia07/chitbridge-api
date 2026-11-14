@@ -58,7 +58,6 @@ const EIGHT = ['identity_id', 'identity_type', 'parent_entity_id', 'bridge_id', 
     ok('R-4 an unknown kind raises 22023', raised === '22023', raised);
 
     for (const typed of [RUN + '@lookup.test', 'lk-' + RUN]) { /* the two keys findLoginIdentity supports: an e-mail and a handle (a bare display name is the door's own step: findEntityByNameOrHandle) */
-      lookup.reset();
       const found = await identityAuth.findLoginIdentity(query, typed);
       ok('R-5 findLoginIdentity(' + typed + ') finds the shop through the function', !!(found && found.identity && found.identity.identity_id === shop), JSON.stringify(found && found.identity && found.identity.identity_id));
     }

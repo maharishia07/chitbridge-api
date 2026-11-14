@@ -217,10 +217,10 @@
 <script src="/engine/locale.js"></script>
 <script>
 /* ═══ 0 · the shop, read exactly as the counter reads it ══════════════════════════════════════════════════════ */
-var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
-           set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
+var localStore = { get:function(keyName,fallback){ try{ var value=localStorage.getItem(keyName); return value==null?fallback:value; }catch(_){ return fallback; } },
+           set:function(keyName,value){ try{ localStorage.setItem(keyName,value); }catch(_){ /* storage blocked (private window): the setting is only a convenience */ } } };
 
-var API = ls.get('cb_till_api', window.CB_API || '');   /* HX1: /config.js, never a host in code */
+var API = localStore.get('cb_till_api', window.CB_API || '');   /* HX1: /config.js, never a host in code */
 /**
  * ── ⚠️⚠️⚠️ THE SCREEN'S OWN KEY, NEVER THE COUNTER'S (2026-09-27) ─────────────────────────────────────────────
  *
@@ -234,7 +234,7 @@ var API = ls.get('cb_till_api', window.CB_API || '');   /* HX1: /config.js, neve
  * ⭐ promo.html#pair — or 📡 on the bar — forgets this screen's key and asks for a fresh code.
  */
 var SCREEN_LS = 'cb_screen_key', TAB_LS = 'cb_screen_key_tab';
-var KEY = (function(){ try { return sessionStorage.getItem(TAB_LS) || null; } catch (_) { return null; } })() || ls.get(SCREEN_LS, null);
+var KEY = (function(){ try { return sessionStorage.getItem(TAB_LS) || null; } catch (_) { return null; } })() || localStore.get(SCREEN_LS, null);
 var S = null, SLIDES = [], AT = 0, TIMER = null, PLAYING = true, ONLY = 'all';
 /**
  * ⭐ THE BILL BEING RUNG UP NEXT DOOR. Null when there is none, and this screen is then what it always was.
@@ -243,17 +243,17 @@ var S = null, SLIDES = [], AT = 0, TIMER = null, PLAYING = true, ONLY = 'all';
  */
 var BILL = null, BILL_AT = 0;
 (function(){
-  var ch; try { ch = new BroadcastChannel('cb-counter'); } catch (_) { return; }
-  ch.onmessage = function(e){
-    var m = e && e.data; if (!m) return;
-    if (m.done) {
-      BILL = { thanks: true, no: m.no, total: m.total }; BILL_AT = Date.now();
+  var channel; try { channel = new BroadcastChannel('cb-counter'); } catch (_) { return; }
+  channel.onmessage = function(e){
+    var message = e && e.data; if (!message) return;
+    if (message.done) {
+      BILL = { thanks: true, no: message.no, total: message.total }; BILL_AT = Date.now();
       paint(false);
       /* ⚠️ held, then let go — the next customer must not read the last one's bill */
       setTimeout(function(){ if (BILL && BILL.thanks) { BILL = null; paint(true); restart(); } }, 6000);
       return;
     }
-    BILL = (m.lines && m.lines.length) ? m : null;
+    BILL = (message.lines && message.lines.length) ? message : null;
     BILL_AT = Date.now();
     /* while a bill is open the slides stop — nothing rotates under a customer trying to read a total */
     if (BILL) clearInterval(TIMER); else restart();
@@ -266,47 +266,47 @@ var BILL = null, BILL_AT = 0;
  * ⭐ THE CUSTOMER'S OWN VIEW. Big enough to read across a shop, and only what they are entitled to: what they are
  * buying, what it costs, what they saved, and a code to pay with.
  */
-function drawBill(x, w, h, b){
-  var pad = Math.round(w * 0.05), y = pad;
-  x.fillStyle = '#0E1117'; x.fillRect(0, 0, w, h);
+function drawBill(x, width, height, bill){
+  var padding = Math.round(width * 0.05), y = padding;
+  x.fillStyle = '#0E1117'; x.fillRect(0, 0, width, height);
   x.textBaseline = 'top'; x.textAlign = 'left';
-  x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(h * 0.030) + 'px system-ui,sans-serif';
-  x.fillText(String(b.shop || '').toUpperCase(), pad, y); y += Math.round(h * 0.055);
+  x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(height * 0.030) + 'px system-ui,sans-serif';
+  x.fillText(String(bill.shop || '').toUpperCase(), padding, y); y += Math.round(height * 0.055);
 
-  if (b.thanks) {
-    x.fillStyle = '#4cc38a'; x.font = '800 ' + Math.round(h * 0.13) + 'px system-ui,sans-serif';
-    x.fillText('Thank you', pad, Math.round(h * 0.34));
-    x.fillStyle = '#F2EDE6'; x.font = '700 ' + Math.round(h * 0.07) + 'px system-ui,sans-serif';
-    x.fillText(String(b.total || ''), pad, Math.round(h * 0.50));
-    if (b.no) { x.fillStyle = '#8B93A7'; x.font = '500 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
-                x.fillText('Bill ' + b.no, pad, Math.round(h * 0.60)); }
+  if (bill.thanks) {
+    x.fillStyle = '#4cc38a'; x.font = '800 ' + Math.round(height * 0.13) + 'px system-ui,sans-serif';
+    x.fillText('Thank you', padding, Math.round(height * 0.34));
+    x.fillStyle = '#F2EDE6'; x.font = '700 ' + Math.round(height * 0.07) + 'px system-ui,sans-serif';
+    x.fillText(String(bill.total || ''), padding, Math.round(height * 0.50));
+    if (bill.no) { x.fillStyle = '#8B93A7'; x.font = '500 ' + Math.round(height * 0.032) + 'px system-ui,sans-serif';
+                x.fillText('Bill ' + bill.no, padding, Math.round(height * 0.60)); }
     /* ⭐⭐ THE REASON TO COME BACK, said last. Athi: *"so a repeated customer can be invented."* This is the moment
        that sentence is aimed at — the bill is paid, the bag is in their hand, and what is on the screen is what
        they still have here. */
-    if (b.rw && b.rw.earned > 0) {
-      x.fillStyle = '#4cc38a'; x.font = '700 ' + Math.round(h * 0.042) + 'px system-ui,sans-serif';
-      x.fillText('+' + b.rw.earned + ' ' + b.rw.name.toLowerCase(), pad, Math.round(h * 0.68));
+    if (bill.rw && bill.rw.earned > 0) {
+      x.fillStyle = '#4cc38a'; x.font = '700 ' + Math.round(height * 0.042) + 'px system-ui,sans-serif';
+      x.fillText('+' + bill.rw.earned + ' ' + bill.rw.name.toLowerCase(), padding, Math.round(height * 0.68));
     }
     return;
   }
 
   /* ⚠️ the LAST lines, not the first — a customer watches the thing they just handed over, and a long bill scrolls
      off the top of a fixed screen otherwise. */
-  var rowH = Math.round(h * 0.062);
-  var room = Math.max(1, Math.floor((h * 0.60) / rowH));
-  var lines = b.lines.slice(-room);
-  var nameSize = Math.round(h * 0.036), amtSize = Math.round(h * 0.040);
+  var rowH = Math.round(height * 0.062);
+  var room = Math.max(1, Math.floor((height * 0.60) / rowH));
+  var lines = bill.lines.slice(-room);
+  var nameSize = Math.round(height * 0.036), amtSize = Math.round(height * 0.040);
   lines.forEach(function(l){
     x.fillStyle = '#F2EDE6'; x.font = '600 ' + nameSize + 'px system-ui,sans-serif';
     x.textAlign = 'left';
-    var nm = l.qty + ' × ' + l.name;
-    if (x.measureText(nm).width > w - pad * 2 - Math.round(w * 0.24)) {
-      while (nm.length > 4 && x.measureText(nm + '…').width > w - pad * 2 - Math.round(w * 0.24)) nm = nm.slice(0, -1);
-      nm += '…';
+    var label = l.qty + ' × ' + l.name;
+    if (x.measureText(label).width > width - padding * 2 - Math.round(width * 0.24)) {
+      while (label.length > 4 && x.measureText(label + '…').width > width - padding * 2 - Math.round(width * 0.24)) label = label.slice(0, -1);
+      label += '…';
     }
-    x.fillText(nm, pad, y);
+    x.fillText(label, padding, y);
     x.textAlign = 'right'; x.font = '700 ' + amtSize + 'px system-ui,sans-serif';
-    x.fillText(String(l.amount), w - pad, y);
+    x.fillText(String(l.amount), width - padding, y);
     /**
      * ⭐⭐ EVERY SCHEME, WITH ITS AMOUNT — the same sentence the paper and the counter now show. Athi, 2026-09-10:
      * *"check how Pantaloons invoice is — there every item below they showcase, it is no ambiguity."* The customer
@@ -316,57 +316,57 @@ function drawBill(x, w, h, b){
      * line would draw straight over the next item, which is worse than a shortened one.
      */
     var offWords = (l.offs && l.offs.length)
-      ? l.offs.map(function(o){ return o.label + ' −' + o.off; }).join(' · ')
+      ? l.offs.map(function(offer){ return offer.label + ' −' + offer.off; }).join(' · ')
       : (l.off || '');
     if (offWords) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
-                 x.font = '700 ' + Math.round(h * 0.024) + 'px system-ui,sans-serif';
-                 var room = w - pad * 2;
+                 x.font = '700 ' + Math.round(height * 0.024) + 'px system-ui,sans-serif';
+                 var room = width - padding * 2;
                  while (offWords.length > 4 && x.measureText(offWords + '…').width > room) offWords = offWords.slice(0, -1);
-                 x.fillText(offWords, pad, y + nameSize + 2); }
+                 x.fillText(offWords, padding, y + nameSize + 2); }
     y += rowH;
   });
 
-  var by = Math.round(h * 0.74);
+  var by = Math.round(height * 0.74);
   x.strokeStyle = '#2A3142'; x.lineWidth = 2;
-  x.beginPath(); x.moveTo(pad, by - Math.round(h * 0.03)); x.lineTo(w - pad, by - Math.round(h * 0.03)); x.stroke();
-  x.textAlign = 'left'; x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
-  x.fillText(b.count || '', pad, by);
-  x.textAlign = 'right'; x.fillStyle = '#F2EDE6'; x.font = '800 ' + Math.round(h * 0.085) + 'px system-ui,sans-serif';
-  x.fillText(String(b.total), w - pad, by - Math.round(h * 0.018));
-  if (b.saved) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
-                 x.font = '700 ' + Math.round(h * 0.034) + 'px system-ui,sans-serif';
-                 x.fillText('You saved ' + b.saved, pad, by + Math.round(h * 0.045)); }
+  x.beginPath(); x.moveTo(padding, by - Math.round(height * 0.03)); x.lineTo(width - padding, by - Math.round(height * 0.03)); x.stroke();
+  x.textAlign = 'left'; x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(height * 0.032) + 'px system-ui,sans-serif';
+  x.fillText(bill.count || '', padding, by);
+  x.textAlign = 'right'; x.fillStyle = '#F2EDE6'; x.font = '800 ' + Math.round(height * 0.085) + 'px system-ui,sans-serif';
+  x.fillText(String(bill.total), width - padding, by - Math.round(height * 0.018));
+  if (bill.saved) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+                 x.font = '700 ' + Math.round(height * 0.034) + 'px system-ui,sans-serif';
+                 x.fillText('You saved ' + bill.saved, padding, by + Math.round(height * 0.045)); }
   /* ⭐ what this bill adds, and what came off it in points — the interpretation, never a bare count */
-  if (b.rw) {
+  if (bill.rw) {
     x.textAlign = 'left'; x.fillStyle = '#4cc38a';
-    x.font = '700 ' + Math.round(h * 0.030) + 'px system-ui,sans-serif';
+    x.font = '700 ' + Math.round(height * 0.030) + 'px system-ui,sans-serif';
     var rwSay = [];
-    if (b.rw.spent > 0) rwSay.push(b.rw.spent + ' ' + b.rw.name.toLowerCase() + ' = ' + b.rw.worth + ' off');
-    if (b.rw.earned > 0) rwSay.push('+' + b.rw.earned + ' ' + b.rw.name.toLowerCase() + ' on this bill');
+    if (bill.rw.spent > 0) rwSay.push(bill.rw.spent + ' ' + bill.rw.name.toLowerCase() + ' = ' + bill.rw.worth + ' off');
+    if (bill.rw.earned > 0) rwSay.push('+' + bill.rw.earned + ' ' + bill.rw.name.toLowerCase() + ' on this bill');
     /* ⚠️ BELOW the saved line, and only if there is room for both — a screen read across a shop is one thing per line */
-    if (rwSay.length) x.fillText(rwSay.join(' · '), pad, by + Math.round(h * (b.saved ? 0.088 : 0.045)));
+    if (rwSay.length) x.fillText(rwSay.join(' · '), padding, by + Math.round(height * (bill.saved ? 0.088 : 0.045)));
   }
-  if (b.pay && b.pay.link) {
+  if (bill.pay && bill.pay.link) {
     x.textAlign = 'right'; x.fillStyle = '#8B93A7';
-    x.font = '600 ' + Math.round(h * 0.028) + 'px system-ui,sans-serif';
-    x.fillText('Scan to pay ' + b.pay.due + ' by ' + b.pay.label, w - pad, by + Math.round(h * 0.055));
+    x.font = '600 ' + Math.round(height * 0.028) + 'px system-ui,sans-serif';
+    x.fillText('Scan to pay ' + bill.pay.due + ' by ' + bill.pay.label, width - padding, by + Math.round(height * 0.055));
   }
 }
 
 (function takeAddress(){
   /* ⭐ #pair — start again with a fresh code: this screen's key is forgotten, the tab's too */
   if (/^#pair\b/.test(location.hash)) {
-    try { localStorage.removeItem(SCREEN_LS); } catch (_) {}
-    try { sessionStorage.removeItem(TAB_LS); } catch (_) {}
+    try { localStorage.removeItem(SCREEN_LS); } catch (_) { /* storage blocked: nothing saved, nothing to forget */ }
+    try { sessionStorage.removeItem(TAB_LS); } catch (_) { /* storage blocked: nothing saved, nothing to forget */ }
     KEY = null;
     history.replaceState(null, '', location.pathname + location.search);
     return;
   }
   if (location.hash.indexOf('key=') < 0) return;
-  var hv = function(n){ var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+  var hashValue = function(name){ var matched = location.hash.match(new RegExp('[#&]' + name + '=([^&]*)')); return matched ? decodeURIComponent(matched[1]) : ''; };
   /* ⚠️ THIS TAB ONLY — the counter's own key, handed over by "▶ This device"; never written where a TV would keep it */
-  var k = hv('key'); if (k) { try { sessionStorage.setItem(TAB_LS, k); } catch (_) {} KEY = k; }
-  var sh = hv('shop'); if (sh) ls.set('cb_till_shop', sh);
+  var keyValue = hashValue('key'); if (keyValue) { try { sessionStorage.setItem(TAB_LS, keyValue); } catch (_) { /* storage blocked: the key still works for this page load */ } KEY = keyValue; }
+  var shop = hashValue('shop'); if (shop) localStore.set('cb_till_shop', shop);
   history.replaceState(null, '', location.pathname + location.search);
 })();
 
@@ -376,22 +376,22 @@ function drawBill(x, w, h, b){
  * counter's copy is: one browser, many shops.
  */
 function cacheName(){
-  var k = KEY || '';
-  var h = 5381; for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
-  return 'cb_promo_snap_' + h.toString(36);
+  var keyText = KEY || '';
+  var hash = 5381; for (var i = 0; i < keyText.length; i++) hash = (((hash * 33) ^ keyText.charCodeAt(i)) >>> 0);
+  return 'cb_promo_snap_' + hash.toString(36);
 }
 var READ_OK = false;   /* ⭐ did the LAST read reach ChitBridge, or is the screen showing its own saved copy */
 async function readShop(){
   READ_OK = false;
   try {
     if (!KEY) throw new Error('no key');
-    var r = await fetch(API + '/api/till/snapshot', { headers:{ 'X-Api-Key': KEY }, cache:'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    S = await r.json();
+    var response = await fetch(API + '/api/till/snapshot', { headers:{ 'X-Api-Key': KEY }, cache:'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    S = await response.json();
     READ_OK = true;
-    try { ls.set(cacheName(), JSON.stringify(S)); } catch (_) { /* a big shop may not fit; the screen still runs */ }
+    try { localStore.set(cacheName(), JSON.stringify(S)); } catch (_) { /* a big shop may not fit; the screen still runs */ }
   } catch (e) {
-    var kept = ls.get(cacheName(), null);
+    var kept = localStore.get(cacheName(), null);
     if (kept) { try { S = JSON.parse(kept); } catch (_) { S = null; } }
   }
   document.getElementById('shopname').textContent = S ? ((S.shop && S.shop.name) || 'this shop') : 'could not read the shop';
@@ -432,10 +432,10 @@ var ITEM_GLYPH = [
   [/soap|sabun/i,'🧼'], [/paste|brush/i,'🪥'], [/candle|mezhugu/i,'🕯️'], [/match|theepetti/i,'🔥'],
   [/egg|muttai/i,'🥚'], [/bread/i,'🍞'], [/dal|paruppu|gram|payaru/i,'🫘'],
 ];
-function glyphFor(name, cat){
-  var n = String(name || '');
-  for (var i = 0; i < ITEM_GLYPH.length; i++) if (ITEM_GLYPH[i][0].test(n)) return ITEM_GLYPH[i][1];
-  return GLYPH[cat];
+function glyphFor(name, category){
+  var text = String(name || '');
+  for (var i = 0; i < ITEM_GLYPH.length; i++) if (ITEM_GLYPH[i][0].test(text)) return ITEM_GLYPH[i][1];
+  return GLYPH[category];
 }
 /* what a shop actually sells at each hour — the same dayparting the counter's quick keys use */
 var HOURS = [
@@ -445,8 +445,8 @@ var HOURS = [
   { from:20, to:24, label:'Before you close', cats:['Staples','Cleaning','Personal care','Home'] },
   { from:0,  to:5,  label:'Open now', cats:['Staples','Milk & curd','Home'] },
 ];
-function hourBand(){ var h = new Date().getHours();
-  for (var i = 0; i < HOURS.length; i++) if (h >= HOURS[i].from && h < HOURS[i].to) return HOURS[i];
+function hourBand(){ var hour = new Date().getHours();
+  for (var i = 0; i < HOURS.length; i++) if (hour >= HOURS[i].from && hour < HOURS[i].to) return HOURS[i];
   return HOURS[0]; }
 
 /**
@@ -465,10 +465,10 @@ function hourBand(){ var h = new Date().getHours();
  * wrong price, while a code beside a number is merely plain.
  */
 function money(n){
-  var v = Number(n) || 0, cur = (S && S.shop && S.shop.currency) || '';
-  if (!cur) return '—';   /* CTRY-72: a shop with no money prints no figure, never rupees (the page says why: noMoneyWords) */
-  if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(v, cur); } catch (_) {} }
-  return cur + ' ' + v.toLocaleString(undefined, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+  var amount = Number(n) || 0, currency = (S && S.shop && S.shop.currency) || '';
+  if (!currency) return '—';   /* CTRY-72: a shop with no money prints no figure, never rupees (the page says why: noMoneyWords) */
+  if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(amount, currency); } catch (_) { /* the shared formatter refused: fall through to the plain format below */ } }
+  return currency + ' ' + amount.toLocaleString(undefined, { minimumFractionDigits: amount % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
 /* CTRY-72: a shop with no stated money (no country) advertises no price; the banner above the stage says why (the till snapshot's shop.money_why, the ONE sentence) */
 function noMoneyWords(){
   if (!S || !S.shop || S.shop.currency) return '';
@@ -480,19 +480,19 @@ function paintNoMoney(){
   box.hidden = !words;
   if (words) box.innerHTML = esc(words) + ' <a href="/settings.html#/country" data-testid="promo-country-link">Country setup</a>';
 }
-function live(){ if (noMoneyWords()) return []; return ((S && S.items) || []).filter(function(i){ return i.avail !== 'unavailable' && Number(i.price) > 0; }); }
+function live(){ if (noMoneyWords()) return []; return ((S && S.items) || []).filter(function(item){ return item.avail !== 'unavailable' && Number(item.price) > 0; }); }
 
 /* the offer engine's own sentence for a product — never a second opinion about what an offer says */
-function offersOf(i){
+function offersOf(item){
   if (!window.CBOffers || !S) return [];
   try {
-    return CBOffers.forLine({ key:i.item_id, item_id:i.item_id, sku:i.code, category:i.category, qty:1, unitPrice:Number(i.price)||0 },
+    return CBOffers.forLine({ key:item.item_id, item_id:item.item_id, sku:item.code, category:item.category, qty:1, unitPrice:Number(item.price)||0 },
       (S.offers || []), { currency:(S.shop && S.shop.currency) || '', now:new Date().toISOString() }) || [];
   } catch (_) { return []; }
 }
-function offerWords(o){
-  try { var p = CBOffers.promise(o, { currency:(S.shop && S.shop.currency)||'', now:new Date(), money:money }); if (p) return p; } catch (_) {}
-  return o.label || o.name || 'Offer';
+function offerWords(offer){
+  try { var promise = CBOffers.promise(offer, { currency:(S.shop && S.shop.currency)||'', now:new Date(), money:money }); if (promise) return promise; } catch (_) { /* the offer engine could not word this offer: show none */ }
+  return offer.label || offer.name || 'Offer';
 }
 
 /* a day-stable shuffle: the same shop shows the same order all day, and a different one tomorrow */
@@ -502,15 +502,15 @@ function offerWords(o){
  * never a filter: a shop with no photographs at all still gets a full run.
  */
 function picFirst(list){
-  var withPic = list.filter(function(i){ return i && i.image; });
-  return withPic.length ? withPic.concat(list.filter(function(i){ return !(i && i.image); })) : list;
+  var withPic = list.filter(function(item){ return item && item.image; });
+  return withPic.length ? withPic.concat(list.filter(function(item){ return !(item && item.image); })) : list;
 }
 function seeded(list, salt){
-  var d = new Date(), seed = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() + (salt || 0);
-  var a = list.slice();
-  for (var i = a.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    var j = seed % (i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; }
-  return a;
+  var today = new Date(), seed = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate() + (salt || 0);
+  var copy = list.slice();
+  for (var i = copy.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    var swapAt = seed % (i + 1); var held = copy[i]; copy[i] = copy[swapAt]; copy[swapAt] = held; }
+  return copy;
 }
 
 function build(){
@@ -528,63 +528,63 @@ function build(){
    * campaign took over would be a screen nobody trusts again.
    * ⚠️ Off the shelf still wins: items[] is already what can be sold, so a pick that ran out stops showing by itself.
    */
-  var picked = items.filter(function(i){ return i.screen === true; });
-  picFirst(picked).slice(0, 12).forEach(function(i){
-    var got = offersOf(i);
-    out.push({ kind:'picked', mood:MOOD.plum, eyebrow:'We recommend', item:i,
-               badge: got.length ? offerWords(got[0]) : null,
-               save: (Number(i.mrp) > Number(i.price)) ? (Number(i.mrp) - Number(i.price)) : 0 });
+  var picked = items.filter(function(item){ return item.screen === true; });
+  picFirst(picked).slice(0, 12).forEach(function(item){
+    var gotOffers = offersOf(item);
+    out.push({ kind:'picked', mood:MOOD.plum, eyebrow:'We recommend', item:item,
+               badge: gotOffers.length ? offerWords(gotOffers[0]) : null,
+               save: (Number(item.mrp) > Number(item.price)) ? (Number(item.mrp) - Number(item.price)) : 0 });
   });
 
   var withOffer = [];
   for (var i = 0; i < items.length && withOffer.length < 40; i++) {
-    var got = offersOf(items[i]);
-    if (got.length) withOffer.push({ item: items[i], offer: got[0] });
+    var offerList = offersOf(items[i]);
+    if (offerList.length) withOffer.push({ item: items[i], offer: offerList[0] });
   }
-  withOffer = picFirst(withOffer.map(function(x){ return x.item; })).map(function(it){
-    return withOffer.filter(function(x){ return x.item === it; })[0]; });
+  withOffer = picFirst(withOffer.map(function(x){ return x.item; })).map(function(item){
+    return withOffer.filter(function(x){ return x.item === item; })[0]; });
   seeded(withOffer, 1).slice(0, 10).forEach(function(x){
     out.push({ kind:'offer', mood:MOOD.hot, eyebrow:'On offer today', item:x.item, badge:offerWords(x.offer) });
   });
 
   /* ── price against MRP: only when the saving is real, and said in rupees ── */
-  var drops = items.filter(function(i){ var m = Number(i.mrp) || 0, p = Number(i.price) || 0;
-    return m > 0 && p > 0 && (m - p) / m >= 0.08; });
+  var drops = items.filter(function(item){ var listMrp = Number(item.mrp) || 0, price = Number(item.price) || 0;
+    return listMrp > 0 && price > 0 && (listMrp - price) / listMrp >= 0.08; });
   drops = picFirst(drops);
-  seeded(drops, 2).slice(0, 8).forEach(function(i){
-    out.push({ kind:'drop', mood:MOOD.gold, eyebrow:'Our price', item:i, save:(Number(i.mrp) - Number(i.price)) });
+  seeded(drops, 2).slice(0, 8).forEach(function(item){
+    out.push({ kind:'drop', mood:MOOD.gold, eyebrow:'Our price', item:item, save:(Number(item.mrp) - Number(item.price)) });
   });
 
   /* ── fresh: three at a time, because produce is bought as a handful, not one thing ── */
-  var fresh = items.filter(function(i){ return FRESH_CATS.indexOf(i.category) >= 0; });
+  var fresh = items.filter(function(item){ return FRESH_CATS.indexOf(item.category) >= 0; });
   if (fresh.length >= 3) {
-    var f = seeded(fresh, 3);
-    for (var n = 0; n + 3 <= Math.min(f.length, 12); n += 3)
-      out.push({ kind:'fresh', mood:MOOD.fresh, eyebrow:'Fresh in today', items:f.slice(n, n + 3) });
+    var picks = seeded(fresh, 3);
+    for (var n = 0; n + 3 <= Math.min(picks.length, 12); n += 3)
+      out.push({ kind:'fresh', mood:MOOD.fresh, eyebrow:'Fresh in today', items:picks.slice(n, n + 3) });
   }
 
   /* ── what goes together, priced as a basket ── */
   var COMBOS = [['Rice & grains','Pulses','Edible oil'], ['Spices','Pulses','Staples'],
                 ['Milk & curd','Beverages','Biscuits'], ['Cleaning','Personal care','Home']];
-  COMBOS.forEach(function(cats, n){
+  COMBOS.forEach(function(cats, index){
     var picked = [];
-    cats.forEach(function(c){ var pool = items.filter(function(i){ return i.category === c; });
-      if (pool.length) picked.push(seeded(pool, 4 + n)[0]); });
+    cats.forEach(function(category){ var pool = items.filter(function(item){ return item.category === category; });
+      if (pool.length) picked.push(seeded(pool, 4 + index)[0]); });
     if (picked.length === cats.length)
       out.push({ kind:'combo', mood:MOOD.plum, eyebrow:'Goes together', items:picked,
-                 total: picked.reduce(function(a, b){ return a + (Number(b.price) || 0); }, 0) });
+                 total: picked.reduce(function(sum, item){ return sum + (Number(item.price) || 0); }, 0) });
   });
 
   /* ── how much choice there is here ── */
-  var byCat = {}; items.forEach(function(i){ (byCat[i.category] = byCat[i.category] || []).push(i); });
-  seeded(Object.keys(byCat).filter(function(c){ return byCat[c].length >= 6; }), 5).slice(0, 6).forEach(function(c){
-    out.push({ kind:'spotlight', mood:MOOD.cool, eyebrow:'In this shop', cat:c, n:byCat[c].length,
-               items: seeded(byCat[c], 6).slice(0, 6) });
+  var byCat = {}; items.forEach(function(item){ (byCat[item.category] = byCat[item.category] || []).push(item); });
+  seeded(Object.keys(byCat).filter(function(category){ return byCat[category].length >= 6; }), 5).slice(0, 6).forEach(function(category){
+    out.push({ kind:'spotlight', mood:MOOD.cool, eyebrow:'In this shop', cat:category, n:byCat[category].length,
+               items: seeded(byCat[category], 6).slice(0, 6) });
   });
 
   /* ── this hour ── */
   var band = hourBand();
-  var now = items.filter(function(i){ return band.cats.indexOf(i.category) >= 0; });
+  var now = items.filter(function(item){ return band.cats.indexOf(item.category) >= 0; });
   if (now.length >= 3)
     out.push({ kind:'hour', mood:MOOD.hot, eyebrow:band.label, items:seeded(now, 7).slice(0, 4) });
 
@@ -623,51 +623,51 @@ var FORMATS = {
   post:   { w:1080, h:1350, label:'Instagram · portrait' },
   fb:     { w:1200, h:630,  label:'Facebook' },
 };
-var FMT = ls.get('cb_promo_fmt', 'tv'); if (!FORMATS[FMT]) FMT = 'tv';
+var FORMAT_KEY = localStore.get('cb_promo_fmt', 'tv'); if (!FORMATS[FORMAT_KEY]) FORMAT_KEY = 'tv';
 
-var C = document.getElementById('c'), X = C.getContext('2d');
-var P = document.getElementById('prev'), PX = P.getContext('2d');
+var screenCanvas = document.getElementById('c'), canvasContext = screenCanvas.getContext('2d');
+var previewCanvas = document.getElementById('prev'), previewContext = previewCanvas.getContext('2d');
 
 function face(weight, size, display){
   return weight + ' ' + Math.round(size) + 'px ' + (display
     ? '"Segoe UI Black","Arial Black","Nirmala UI",system-ui,sans-serif'
     : '"Segoe UI","Nirmala UI",system-ui,-apple-system,sans-serif');
 }
-function rrect(g, x, y, w, h, r){
-  g.beginPath();
-  g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
-  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+function rrect(brush, x, y, width, height, radius){
+  brush.beginPath();
+  brush.moveTo(x + radius, y); brush.arcTo(x + width, y, x + width, y + height, radius); brush.arcTo(x + width, y + height, x, y + height, radius);
+  brush.arcTo(x, y + height, x, y, radius); brush.arcTo(x, y, x + width, y, radius); brush.closePath();
 }
 /** wrapped text; returns the height it used. `lines` caps it and the last line gets an ellipsis. */
-function para(g, str, x, y, o){
-  g.font = o.font; g.fillStyle = o.color; g.textBaseline = 'top';
-  var words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), rows = [], cur = '';
+function para(brush, str, x, y, options){
+  brush.font = options.font; brush.fillStyle = options.color; brush.textBaseline = 'top';
+  var words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), rows = [], current = '';
   for (var i = 0; i < words.length; i++) {
-    var t = cur ? cur + ' ' + words[i] : words[i];
-    if (g.measureText(t).width > o.maxW && cur) { rows.push(cur); cur = words[i]; } else cur = t;
+    var trial = current ? current + ' ' + words[i] : words[i];
+    if (brush.measureText(trial).width > options.maxW && current) { rows.push(current); current = words[i]; } else current = trial;
   }
-  if (cur) rows.push(cur);
-  var cap = o.lines || rows.length;
-  if (rows.length > cap) { rows = rows.slice(0, cap);
-    var last = rows[cap - 1];
-    while (last.length > 1 && g.measureText(last + '…').width > o.maxW) last = last.slice(0, -1);
-    rows[cap - 1] = last + '…'; }
-  var lh = o.lh || (o.size * 1.14);
+  if (current) rows.push(current);
+  var maxLines = options.lines || rows.length;
+  if (rows.length > maxLines) { rows = rows.slice(0, maxLines);
+    var last = rows[maxLines - 1];
+    while (last.length > 1 && brush.measureText(last + '…').width > options.maxW) last = last.slice(0, -1);
+    rows[maxLines - 1] = last + '…'; }
+  var lineHeight = options.lh || (options.size * 1.14);
   for (var r = 0; r < rows.length; r++) {
-    var w = g.measureText(rows[r]).width;
-    var px = o.align === 'center' ? x - w / 2 : (o.align === 'end' ? x - w : x);
-    g.fillText(rows[r], px, y + r * lh);
+    var rowWidth = brush.measureText(rows[r]).width;
+    var left = options.align === 'center' ? x - rowWidth / 2 : (options.align === 'end' ? x - rowWidth : x);
+    brush.fillText(rows[r], left, y + r * lineHeight);
   }
-  return rows.length * lh;
+  return rows.length * lineHeight;
 }
-function pill(g, text, x, y, u, bg, fg){
-  g.font = face(800, 26 * u);
-  var w = g.measureText(text).width, padX = 18 * u, h = 46 * u;
-  g.fillStyle = bg; rrect(g, x, y, w + padX * 2, h, h / 2); g.fill();
-  g.fillStyle = fg; g.textBaseline = 'middle';
-  g.fillText(text, x + padX, y + h / 2 + 1 * u);
-  g.textBaseline = 'top';
-  return w + padX * 2;
+function pill(brush, text, x, y, unit, background, foreground){
+  brush.font = face(800, 26 * unit);
+  var width = brush.measureText(text).width, padX = 18 * unit, height = 46 * unit;
+  brush.fillStyle = background; rrect(brush, x, y, width + padX * 2, height, height / 2); brush.fill();
+  brush.fillStyle = foreground; brush.textBaseline = 'middle';
+  brush.fillText(text, x + padX, y + height / 2 + 1 * unit);
+  brush.textBaseline = 'top';
+  return width + padX * 2;
 }
 
 /**
@@ -684,25 +684,25 @@ function pill(g, text, x, y, u, bg, fg){
  * thousand failed requests by closing time. A failure is remembered as a failure.
  */
 var IMGS = {};                    /* url → HTMLImageElement | 'loading' | 'failed' */
-function pic(url){
+function loadPicture(url){
   if (!url) return null;
-  var got = IMGS[url];
-  if (got === 'failed' || got === 'loading') return null;
-  if (got) return got;
+  var cached = IMGS[url];
+  if (cached === 'failed' || cached === 'loading') return null;
+  if (cached) return cached;
   IMGS[url] = 'loading';
-  var im = new Image();
-  im.crossOrigin = 'anonymous';
-  im.onload = function(){ IMGS[url] = im; paint(false); };      /* it arrived — redraw this frame with it in */
-  im.onerror = function(){ IMGS[url] = 'failed'; };
-  im.src = url;
+  var image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.onload = function(){ IMGS[url] = image; paint(false); };      /* it arrived — redraw this frame with it in */
+  image.onerror = function(){ IMGS[url] = 'failed'; };
+  image.src = url;
   return null;
 }
 
 /* mixing a colour toward black or white — a mood needs a deep end and a bright end, not one flat value */
-function mix(hex, toward, t){
-  var h = hex.replace('#',''), r = parseInt(h.slice(0,2),16), gg = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-  var w = toward === 'w' ? 255 : 0;
-  return 'rgb(' + Math.round(r + (w - r) * t) + ',' + Math.round(gg + (gg * 0 + w - gg) * t) + ',' + Math.round(b + (w - b) * t) + ')';
+function blend(hexColour, toward, strength){
+  var digits = hexColour.replace('#',''), redPart = parseInt(digits.slice(0,2),16), green = parseInt(digits.slice(2,4),16), blue = parseInt(digits.slice(4,6),16);
+  var target = toward === 'w' ? 255 : 0;
+  return 'rgb(' + Math.round(redPart + (target - redPart) * strength) + ',' + Math.round(green + (green * 0 + target - green) * strength) + ',' + Math.round(blue + (target - blue) * strength) + ')';
 }
 
 /**
@@ -716,69 +716,69 @@ function mix(hex, toward, t){
  * ⚠️ The blade takes the right on a television and the bottom on a Story — the same composition turned through ninety degrees,
  * because a 9:16 frame has no right-hand side to spare.
  */
-function ground(g, W, H, u, slide){
-  var mood = slide.mood || MOOD.hot, wide = W / H > 1.4;
-  g.fillStyle = '#0B0E13'; g.fillRect(0, 0, W, H);
+function ground(brush, canvasWidth, canvasHeight, unit, slide){
+  var mood = slide.mood || MOOD.hot, wide = canvasWidth / canvasHeight > 1.4;
+  brush.fillStyle = '#0B0E13'; brush.fillRect(0, 0, canvasWidth, canvasHeight);
 
-  var bx, by, bw, bh;
-  if (wide) { bw = W * 0.40; bx = W - bw; by = 0; bh = H; }
-  else      { bh = H * 0.34; by = H - bh; bx = 0; bw = W; }
+  var boxX, by, boxWidth, boxHeight;
+  if (wide) { boxWidth = canvasWidth * 0.40; boxX = canvasWidth - boxWidth; by = 0; boxHeight = canvasHeight; }
+  else      { boxHeight = canvasHeight * 0.34; by = canvasHeight - boxHeight; boxX = 0; boxWidth = canvasWidth; }
 
-  var gr = wide ? g.createLinearGradient(bx, 0, bx + bw, H) : g.createLinearGradient(0, by, W, by + bh);
-  gr.addColorStop(0, mix(mood, 'w', 0.10));
-  gr.addColorStop(1, mix(mood, 'b', 0.38));
-  g.fillStyle = gr; g.fillRect(bx, by, bw, bh);
+  var gradient = wide ? brush.createLinearGradient(boxX, 0, boxX + boxWidth, canvasHeight) : brush.createLinearGradient(0, by, canvasWidth, by + boxHeight);
+  gradient.addColorStop(0, blend(mood, 'w', 0.10));
+  gradient.addColorStop(1, blend(mood, 'b', 0.38));
+  brush.fillStyle = gradient; brush.fillRect(boxX, by, boxWidth, boxHeight);
 
   /* the medallion: the shop's own photograph if it has one, the category emblem if not */
   var pick = slide.item || (slide.items && slide.items[0]) || null;
-  var cat = slide.cat || (pick && pick.category);
-  var cx = bx + bw / 2, cy = by + bh / 2, R = Math.min(bw, bh) * 0.34;
-  var shot = pick && pic(pick.image);
+  var category = slide.cat || (pick && pick.category);
+  var centerX = boxX + boxWidth / 2, centerY = by + boxHeight / 2, radius = Math.min(boxWidth, boxHeight) * 0.34;
+  var shot = pick && loadPicture(pick.image);
   if (shot) {
     /* ⚠️ COVER, NOT STRETCH. A shopkeeper photographs a packet on a counter in whatever shape the phone gave them; scaling that
        to a circle would squash it. The short side fills the medallion and the overflow is clipped, the way any photograph is
        cropped to a frame. */
-    g.save();
-    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip();
-    var iw = shot.naturalWidth || shot.width, ih = shot.naturalHeight || shot.height;
-    var k = Math.max((R * 2) / iw, (R * 2) / ih);
-    g.drawImage(shot, cx - (iw * k) / 2, cy - (ih * k) / 2, iw * k, ih * k);
-    g.restore();
+    brush.save();
+    brush.beginPath(); brush.arc(centerX, centerY, radius, 0, Math.PI * 2); brush.clip();
+    var imageWidth = shot.naturalWidth || shot.width, imageHeight = shot.naturalHeight || shot.height;
+    var scale = Math.max((radius * 2) / imageWidth, (radius * 2) / imageHeight);
+    brush.drawImage(shot, centerX - (imageWidth * scale) / 2, centerY - (imageHeight * scale) / 2, imageWidth * scale, imageHeight * scale);
+    brush.restore();
     /* a thin ring, so a photograph with a pale edge does not dissolve into the blade */
-    g.save(); g.globalAlpha = 0.35; g.strokeStyle = '#FFFFFF'; g.lineWidth = Math.max(2, R * 0.012);
-    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke(); g.restore();
+    brush.save(); brush.globalAlpha = 0.35; brush.strokeStyle = '#FFFFFF'; brush.lineWidth = Math.max(2, radius * 0.012);
+    brush.beginPath(); brush.arc(centerX, centerY, radius, 0, Math.PI * 2); brush.stroke(); brush.restore();
   } else {
-    var em = slide.cat ? GLYPH[cat] : glyphFor(pick && pick.name, cat);
-    if (em) {
-      g.save();
-      g.globalAlpha = 0.13; g.fillStyle = '#FFFFFF';
-      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
-      g.globalAlpha = 0.95;
-      g.font = face(400, R * 1.15);
-      g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(em, cx, cy + R * 0.06);
-      g.restore();
-      g.textAlign = 'left'; g.textBaseline = 'top';
+    var emoji = slide.cat ? GLYPH[category] : glyphFor(pick && pick.name, category);
+    if (emoji) {
+      brush.save();
+      brush.globalAlpha = 0.13; brush.fillStyle = '#FFFFFF';
+      brush.beginPath(); brush.arc(centerX, centerY, radius, 0, Math.PI * 2); brush.fill();
+      brush.globalAlpha = 0.95;
+      brush.font = face(400, radius * 1.15);
+      brush.textAlign = 'center'; brush.textBaseline = 'middle';
+      brush.fillText(emoji, centerX, centerY + radius * 0.06);
+      brush.restore();
+      brush.textAlign = 'left'; brush.textBaseline = 'top';
     }
   }
   /* a hairline of the mood along the top — the one bit of chrome, and it names the mood */
-  g.fillStyle = mood; g.fillRect(0, 0, W, 9 * u);
+  brush.fillStyle = mood; brush.fillRect(0, 0, canvasWidth, 9 * unit);
 }
 
 /** the footer every slide carries: who is saying this, and how to reach them */
-function x0(pad){ return pad; }
-function footer(g, W, H, u, pad, field){
-  var sh = (S && S.shop) || {};
-  var y = H - pad - 54 * u, right = (field || W) - pad;
-  g.fillStyle = 'rgba(255,248,238,.18)'; g.fillRect(pad, y - 24 * u, right - pad, 2 * u);
-  g.font = face(800, 30 * u); g.fillStyle = '#FFF8EE'; g.textBaseline = 'top';
-  g.fillText(sh.name || 'This shop', pad, y);
-  var line = [sh.phone, sh.address].filter(Boolean).join('  ·  ');
-  if (line) { g.font = face(400, 25 * u); g.fillStyle = 'rgba(255,248,238,.72)';
-    var w = g.measureText(line).width, nameW = measure(g, sh.name || '', 800, 30 * u);
+function padLeft(padding){ return padding; }
+function footer(brush, canvasWidth, canvasHeight, unit, padding, field){
+  var shop = (S && S.shop) || {};
+  var y = canvasHeight - padding - 54 * unit, right = (field || canvasWidth) - padding;
+  brush.fillStyle = 'rgba(255,248,238,.18)'; brush.fillRect(padding, y - 24 * unit, right - padding, 2 * unit);
+  brush.font = face(800, 30 * unit); brush.fillStyle = '#FFF8EE'; brush.textBaseline = 'top';
+  brush.fillText(shop.name || 'This shop', padding, y);
+  var line = [shop.phone, shop.address].filter(Boolean).join('  ·  ');
+  if (line) { brush.font = face(400, 25 * unit); brush.fillStyle = 'rgba(255,248,238,.72)';
+    var lineWidth = brush.measureText(line).width, nameW = measure(brush, shop.name || '', 800, 30 * unit);
     /* under the name when there is no room beside it — a phone number overlapping a shop name is worse than a second line */
-    if (w + nameW + 40 * u > right - pad) g.fillText(line, x0(pad), y + 40 * u);
-    else g.fillText(line, Math.max(pad, right - w), y + 4 * u); }
+    if (lineWidth + nameW + 40 * unit > right - padding) brush.fillText(line, padLeft(padding), y + 40 * unit);
+    else brush.fillText(line, Math.max(padding, right - lineWidth), y + 4 * unit); }
 }
 
 /**
@@ -787,136 +787,136 @@ function footer(g, W, H, u, pad, field){
  * layout engine, so the content is drawn TWICE: once invisibly to learn how tall it is, then again offset onto the optical centre.
  * ONE body of code both times, so the measurement can never disagree with the drawing.
  */
-function draw(g, W, H, slide){
-  var u = Math.min(W, H) / 1000;                 /* one unit = a thousandth of the short side */
-  var pad = 68 * u, wide = W / H > 1.4;
+function draw(brush, canvasWidth, canvasHeight, slide){
+  var unit = Math.min(canvasWidth, canvasHeight) / 1000;                 /* one unit = a thousandth of the short side */
+  var padding = 68 * unit, wide = canvasWidth / canvasHeight > 1.4;
   /**
    * ⚠️ THE WORDS HAVE THEIR OWN ZONE, AND THAT IS WHAT THEY CENTRE IN. Centring against the whole canvas looked right on a
    * television and wrong on a Story: the blade takes the bottom third there, so "the middle of the frame" is not the middle of
    * the space the type actually has, and the poster floated with an empty top and a footer sitting on the blade.
    */
-  var zoneW = wide ? W * 0.60 : W;
-  var zoneH = wide ? H : H * 0.66;
-  var col = zoneW - pad * (wide ? 1.6 : 2);
-  g.clearRect(0, 0, W, H);
-  ground(g, W, H, u, slide);
+  var zoneW = wide ? canvasWidth * 0.60 : canvasWidth;
+  var zoneH = wide ? canvasHeight : canvasHeight * 0.66;
+  var col = zoneW - padding * (wide ? 1.6 : 2);
+  brush.clearRect(0, 0, canvasWidth, canvasHeight);
+  ground(brush, canvasWidth, canvasHeight, unit, slide);
 
-  g.save(); g.globalAlpha = 0;                                      /* measure, invisibly */
-  var tall = content(g, W, H, u, slide, pad, pad, col, wide) - pad;
-  g.restore();
+  brush.save(); brush.globalAlpha = 0;                                      /* measure, invisibly */
+  var tall = content(brush, canvasWidth, canvasHeight, unit, slide, padding, padding, col, wide) - padding;
+  brush.restore();
 
-  var room = zoneH - pad * 2 - 110 * u;                             /* the footer keeps the foot of the zone */
+  var room = zoneH - padding * 2 - 110 * unit;                             /* the footer keeps the foot of the zone */
   /* a shade above true centre, which is where an eye expects a headline to sit */
-  content(g, W, H, u, slide, pad, pad + Math.max(0, (room - tall) / 2) * 0.82, col, wide);
+  content(brush, canvasWidth, canvasHeight, unit, slide, padding, padding + Math.max(0, (room - tall) / 2) * 0.82, col, wide);
 
-  footer(g, W, zoneH, u, pad, zoneW);
+  footer(brush, canvasWidth, zoneH, unit, padding, zoneW);
 }
 
-function content(g, W, H, u, slide, x, y0, col, wide){
-  var y = y0;
+function content(brush, canvasWidth, canvasHeight, unit, slide, x, startY, col, wide){
+  var y = startY;
 
   /* the eyebrow — small, spaced, quiet */
-  g.font = face(700, 26 * u); g.fillStyle = 'rgba(255,248,238,.78)';
-  var eb = String(slide.eyebrow || '').toUpperCase().split('').join(' ');
-  g.textBaseline = 'top'; g.fillText(eb, x, y);
-  y += 52 * u;
+  brush.font = face(700, 26 * unit); brush.fillStyle = 'rgba(255,248,238,.78)';
+  var eyebrowText = String(slide.eyebrow || '').toUpperCase().split('').join(' ');
+  brush.textBaseline = 'top'; brush.fillText(eyebrowText, x, y);
+  y += 52 * unit;
 
   if (slide.kind === 'plain') {
-    var pi = slide.item;
-    y += para(g, pi.name, x, y, { font:face(900, (wide ? 96 : 84) * u, true), color:'#FFF8EE',
-                                  maxW:col, size:(wide ? 96 : 84) * u, lines:3, lh:(wide ? 100 : 88) * u }) + 34 * u;
-    g.font = face(900, 118 * u, true); g.fillStyle = '#FFF8EE';
-    g.fillText(money(pi.price), x, y);
-    var pwp = measure(g, money(pi.price), 900, 118 * u, true);
-    g.font = face(500, 32 * u); g.fillStyle = 'rgba(255,248,238,.72)';
-    g.fillText('per ' + (pi.unit || 'piece'), x + pwp + 18 * u, y + 68 * u);
+    var priced = slide.item;
+    y += para(brush, priced.name, x, y, { font:face(900, (wide ? 96 : 84) * unit, true), color:'#FFF8EE',
+                                  maxW:col, size:(wide ? 96 : 84) * unit, lines:3, lh:(wide ? 100 : 88) * unit }) + 34 * unit;
+    brush.font = face(900, 118 * unit, true); brush.fillStyle = '#FFF8EE';
+    brush.fillText(money(priced.price), x, y);
+    var priceWidth = measure(brush, money(priced.price), 900, 118 * unit, true);
+    brush.font = face(500, 32 * unit); brush.fillStyle = 'rgba(255,248,238,.72)';
+    brush.fillText('per ' + (priced.unit || 'piece'), x + priceWidth + 18 * unit, y + 68 * unit);
   }
 
   if (slide.kind === 'offer' || slide.kind === 'drop' || slide.kind === 'picked') {
-    var it = slide.item;
-    y += para(g, it.name, x, y, { font:face(900, (wide ? 96 : 84) * u, true), color:'#FFF8EE',
-                                  maxW:col, size:(wide ? 96 : 84) * u, lines:3, lh:(wide ? 100 : 88) * u }) + 26 * u;
+    var item = slide.item;
+    y += para(brush, item.name, x, y, { font:face(900, (wide ? 96 : 84) * unit, true), color:'#FFF8EE',
+                                  maxW:col, size:(wide ? 96 : 84) * unit, lines:3, lh:(wide ? 100 : 88) * unit }) + 26 * unit;
 
     if (slide.kind === 'offer' || (slide.kind === 'picked' && slide.badge)) {
-      y += 6 * u;
-      pill(g, slide.badge, x, y, u, '#FFF8EE', slide.mood);
-      y += 78 * u;
-      g.font = face(900, 108 * u, true); g.fillStyle = '#FFF8EE';
-      g.fillText(money(it.price), x, y);
-      var priceW = measure(g, money(it.price), 900, 108 * u, true);
-      g.font = face(500, 30 * u); g.fillStyle = 'rgba(255,248,238,.72)';
-      g.fillText('per ' + (it.unit || 'piece'), x + priceW + 16 * u, y + 62 * u);
+      y += 6 * unit;
+      pill(brush, slide.badge, x, y, unit, '#FFF8EE', slide.mood);
+      y += 78 * unit;
+      brush.font = face(900, 108 * unit, true); brush.fillStyle = '#FFF8EE';
+      brush.fillText(money(item.price), x, y);
+      var priceW = measure(brush, money(item.price), 900, 108 * unit, true);
+      brush.font = face(500, 30 * unit); brush.fillStyle = 'rgba(255,248,238,.72)';
+      brush.fillText('per ' + (item.unit || 'piece'), x + priceW + 16 * unit, y + 62 * unit);
     } else {
-      g.font = face(900, 128 * u, true); g.fillStyle = '#FFF8EE';
-      g.fillText(money(it.price), x, y);
-      var pw = measure(g, money(it.price), 900, 128 * u, true);
+      brush.font = face(900, 128 * unit, true); brush.fillStyle = '#FFF8EE';
+      brush.fillText(money(item.price), x, y);
+      var headlineWidth = measure(brush, money(item.price), 900, 128 * unit, true);
       /* MRP, struck through — the comparison is the message */
-      g.font = face(500, 40 * u); g.fillStyle = 'rgba(255,248,238,.62)';
-      var mrpTxt = 'MRP ' + money(it.mrp);
-      g.fillText(mrpTxt, x + pw + 26 * u, y + 60 * u);
-      var mw = g.measureText(mrpTxt).width;
-      g.fillStyle = 'rgba(255,248,238,.62)';
+      brush.font = face(500, 40 * unit); brush.fillStyle = 'rgba(255,248,238,.62)';
+      var mrpTxt = 'MRP ' + money(item.mrp);
+      brush.fillText(mrpTxt, x + headlineWidth + 26 * unit, y + 60 * unit);
+      var mrpWidth = brush.measureText(mrpTxt).width;
+      brush.fillStyle = 'rgba(255,248,238,.62)';
       /* ⚠️ textBaseline is 'top', so y IS the top of the glyphs and actualBoundingBoxAscent measures the wrong way — it put the
          line above the digits. The optical middle of a lining numeral sits about 36% down from the top of its em. */
-      g.fillRect(x + pw + 26 * u, y + 60 * u + 40 * u * 0.36, mw, 3 * u);
-      y += 150 * u;
-      pill(g, 'You save ' + money(slide.save), x, y, u, '#FFF8EE', slide.mood);
+      brush.fillRect(x + headlineWidth + 26 * unit, y + 60 * unit + 40 * unit * 0.36, mrpWidth, 3 * unit);
+      y += 150 * unit;
+      pill(brush, 'You save ' + money(slide.save), x, y, unit, '#FFF8EE', slide.mood);
     }
   }
 
   if (slide.kind === 'fresh' || slide.kind === 'hour' || slide.kind === 'combo') {
     var head = slide.kind === 'combo' ? 'Take all three' : (slide.kind === 'hour' ? 'Ready now' : 'Straight in this morning');
-    y += para(g, head, x, y, { font:face(900, (wide ? 84 : 72) * u, true), color:'#FFF8EE',
-                               maxW:col, size:(wide ? 84 : 72) * u, lines:2, lh:(wide ? 88 : 76) * u }) + 34 * u;
+    y += para(brush, head, x, y, { font:face(900, (wide ? 84 : 72) * unit, true), color:'#FFF8EE',
+                               maxW:col, size:(wide ? 84 : 72) * unit, lines:2, lh:(wide ? 88 : 76) * unit }) + 34 * unit;
     var rows = slide.items || [];
     for (var n = 0; n < rows.length; n++) {
-      var r = rows[n], rh = 96 * u;
-      g.fillStyle = 'rgba(255,248,238,.09)'; rrect(g, x, y, col, rh, 14 * u); g.fill();
-      g.font = face(700, 34 * u); g.fillStyle = '#FFF8EE';
-      var nm = r.name, maxNm = col - 220 * u;
-      while (g.measureText(nm).width > maxNm && nm.length > 4) nm = nm.slice(0, -2);
-      if (nm !== r.name) nm += '…';
-      g.fillText(nm, x + 26 * u, y + 22 * u);
-      g.font = face(400, 23 * u); g.fillStyle = 'rgba(255,248,238,.6)';
-      g.fillText('per ' + (r.unit || 'piece'), x + 26 * u, y + 60 * u);
-      g.font = face(900, 40 * u, true); g.fillStyle = '#FFF8EE';
-      var pt = money(r.price), pwn = g.measureText(pt).width;
-      g.fillText(pt, x + col - 26 * u - pwn, y + 28 * u);
-      y += rh + 14 * u;
+      var row = rows[n], rowHeight = 96 * unit;
+      brush.fillStyle = 'rgba(255,248,238,.09)'; rrect(brush, x, y, col, rowHeight, 14 * unit); brush.fill();
+      brush.font = face(700, 34 * unit); brush.fillStyle = '#FFF8EE';
+      var rowName = row.name, maxNm = col - 220 * unit;
+      while (brush.measureText(rowName).width > maxNm && rowName.length > 4) rowName = rowName.slice(0, -2);
+      if (rowName !== row.name) rowName += '…';
+      brush.fillText(rowName, x + 26 * unit, y + 22 * unit);
+      brush.font = face(400, 23 * unit); brush.fillStyle = 'rgba(255,248,238,.6)';
+      brush.fillText('per ' + (row.unit || 'piece'), x + 26 * unit, y + 60 * unit);
+      brush.font = face(900, 40 * unit, true); brush.fillStyle = '#FFF8EE';
+      var priceText = money(row.price), priceTextWidth = brush.measureText(priceText).width;
+      brush.fillText(priceText, x + col - 26 * unit - priceTextWidth, y + 28 * unit);
+      y += rowHeight + 14 * unit;
     }
     if (slide.kind === 'combo') {
-      y += 14 * u;
-      pill(g, 'All three  ' + money(slide.total), x, y, u, '#FFF8EE', slide.mood);
+      y += 14 * unit;
+      pill(brush, 'All three  ' + money(slide.total), x, y, unit, '#FFF8EE', slide.mood);
     }
   }
 
   if (slide.kind === 'spotlight') {
-    y += para(g, slide.n + ' kinds of ' + String(slide.cat).toLowerCase(), x, y,
-      { font:face(900, (wide ? 92 : 78) * u, true), color:'#FFF8EE', maxW:col, size:(wide ? 92 : 78) * u, lines:3, lh:(wide ? 96 : 82) * u }) + 30 * u;
-    g.font = face(500, 32 * u); g.fillStyle = 'rgba(255,248,238,.85)';
+    y += para(brush, slide.n + ' kinds of ' + String(slide.cat).toLowerCase(), x, y,
+      { font:face(900, (wide ? 92 : 78) * unit, true), color:'#FFF8EE', maxW:col, size:(wide ? 92 : 78) * unit, lines:3, lh:(wide ? 96 : 82) * unit }) + 30 * unit;
+    brush.font = face(500, 32 * unit); brush.fillStyle = 'rgba(255,248,238,.85)';
     for (var q = 0; q < slide.items.length; q++) {
-      var t = '·  ' + slide.items[q].name, tt = t;
-      while (g.measureText(tt).width > col && tt.length > 6) tt = tt.slice(0, -2);
-      if (tt !== t) tt += '…';
-      g.fillText(tt, x, y); y += 44 * u;
+      var text = '·  ' + slide.items[q].name, shortText = text;
+      while (brush.measureText(shortText).width > col && shortText.length > 6) shortText = shortText.slice(0, -2);
+      if (shortText !== text) shortText += '…';
+      brush.fillText(shortText, x, y); y += 44 * unit;
     }
   }
 
   if (slide.kind === 'shop') {
-    var sh2 = (S && S.shop) || {};
-    y += para(g, sh2.name || 'This shop', x, y,
-      { font:face(900, (wide ? 104 : 88) * u, true), color:'#FFF8EE', maxW:col, size:(wide ? 104 : 88) * u, lines:3, lh:(wide ? 108 : 92) * u }) + 30 * u;
-    var lines = [sh2.address, sh2.phone, live().length + ' things on the shelf'].filter(Boolean);
-    g.font = face(500, 34 * u); g.fillStyle = 'rgba(255,248,238,.85)';
-    for (var L = 0; L < lines.length; L++) { g.fillText(lines[L], x, y); y += 50 * u; }
+    var shop = (S && S.shop) || {};
+    y += para(brush, shop.name || 'This shop', x, y,
+      { font:face(900, (wide ? 104 : 88) * unit, true), color:'#FFF8EE', maxW:col, size:(wide ? 104 : 88) * unit, lines:3, lh:(wide ? 108 : 92) * unit }) + 30 * unit;
+    var lines = [shop.address, shop.phone, live().length + ' things on the shelf'].filter(Boolean);
+    brush.font = face(500, 34 * unit); brush.fillStyle = 'rgba(255,248,238,.85)';
+    for (var L = 0; L < lines.length; L++) { brush.fillText(lines[L], x, y); y += 50 * unit; }
   }
 
   return y;
 }
 /* measuring with a font that is not the one currently set — used where the caller needs a width before it draws */
-function measure(g, str, weight, size, display){
-  var was = g.font; g.font = face(weight, size, display);
-  var w = g.measureText(str).width; g.font = was; return w;
+function measure(brush, str, weight, size, display){
+  var previousFont = brush.font; brush.font = face(weight, size, display);
+  var width = brush.measureText(str).width; brush.font = previousFont; return width;
 }
 
 /* ═══ 3 · CAMPAIGNS — the same thing said in every place it belongs ═══════════════════════════════════════════
@@ -959,17 +959,17 @@ var CAMPAIGNS = [
 ];
 /** the campaign whose window fits this hour most tightly — a two-hour rule beats an all-day one */
 function dueNow(){
-  var h = new Date().getHours(), best = null;
-  CAMPAIGNS.forEach(function(c){
-    if (c.id === 'all') return;
-    if (h < c.hours[0] || h >= c.hours[1]) return;
-    var span = c.hours[1] - c.hours[0];
-    if (!best || span < (best.hours[1] - best.hours[0])) best = c;
+  var hour = new Date().getHours(), best = null;
+  CAMPAIGNS.forEach(function(chosen){
+    if (chosen.id === 'all') return;
+    if (hour < chosen.hours[0] || hour >= chosen.hours[1]) return;
+    var span = chosen.hours[1] - chosen.hours[0];
+    if (!best || span < (best.hours[1] - best.hours[0])) best = chosen;
   });
   return best || CAMPAIGNS[CAMPAIGNS.length - 1];
 }
-var CAMP = ls.get('cb_promo_camp', 'auto');
-function campaign(){ return CAMP === 'auto' ? dueNow() : (CAMPAIGNS.filter(function(c){ return c.id === CAMP; })[0] || dueNow()); }
+var CAMP = localStore.get('cb_promo_camp', 'auto');
+function campaign(){ return CAMP === 'auto' ? dueNow() : (CAMPAIGNS.filter(function(chosen){ return chosen.id === CAMP; })[0] || dueNow()); }
 
 /**
  * ⭐ WHERE IT GOES, AND WHAT THAT PLACE NEEDS. Each channel is a shape plus a habit: a television is 16:9 and never downloaded, a
@@ -982,24 +982,24 @@ var CHANNELS = {
   story:     { fmt:'story',  label:'✨ Instagram story',  how:'Save it, then post to your story.' },
   facebook:  { fmt:'fb',     label:'👍 Facebook',        how:'Save it, then post to your page.' },
 };
-var CHAN = ls.get('cb_promo_chan', 'tv');
+var CHAN = localStore.get('cb_promo_chan', 'tv');
 
 /**
  * ⭐ THE CAPTION WRITES ITSELF, from the same facts on the picture. A shopkeeper posting at six in the evening should not have to
  * compose a sentence — and a caption that disagrees with the picture is worse than none.
  */
-function caption(s){
-  var sh = (S && S.shop) || {}, who = sh.name || 'our shop';
-  var tail = '\n\n' + who + (sh.phone ? '  ·  ' + sh.phone : '') + (sh.address ? '\n' + sh.address : '');
-  var tags = '\n\n#' + String(who).replace(/[^A-Za-z0-9]+/g, '') + ' #kirana #localshop';
-  if (s.kind === 'offer')  return s.item.name + ' — ' + s.badge + '.\nNow ' + money(s.item.price) + ' per ' + (s.item.unit || 'piece') + '.' + tail + tags;
-  if (s.kind === 'drop')   return s.item.name + ' at ' + money(s.item.price) + ' — MRP ' + money(s.item.mrp) + '. You save ' + money(s.save) + '.' + tail + tags;
-  if (s.kind === 'fresh')  return 'Fresh in today: ' + s.items.map(function(i){ return i.name + ' ' + money(i.price); }).join('  ·  ') + tail + tags;
-  if (s.kind === 'hour')   return s.eyebrow + ': ' + s.items.map(function(i){ return i.name; }).join(', ') + '. On the shelf now.' + tail + tags;
-  if (s.kind === 'combo')  return 'Goes together — ' + s.items.map(function(i){ return i.name; }).join(' + ') + '. All three ' + money(s.total) + '.' + tail + tags;
-  if (s.kind === 'spotlight') return s.n + ' kinds of ' + String(s.cat).toLowerCase() + ' on the shelf.' + tail + tags;
-  if (s.kind === 'plain')  return s.item.name + ' — ' + money(s.item.price) + ' per ' + (s.item.unit || 'piece') + '. On the shelf now.' + tail + tags;
-  return who + ' — ' + live().length + ' things on the shelf.' + tail + tags;
+function caption(slide){
+  var shop = (S && S.shop) || {}, shopName = shop.name || 'our shop';
+  var tail = '\n\n' + shopName + (shop.phone ? '  ·  ' + shop.phone : '') + (shop.address ? '\n' + shop.address : '');
+  var tags = '\n\n#' + String(shopName).replace(/[^A-Za-z0-9]+/g, '') + ' #kirana #localshop';
+  if (slide.kind === 'offer')  return slide.item.name + ' — ' + slide.badge + '.\nNow ' + money(slide.item.price) + ' per ' + (slide.item.unit || 'piece') + '.' + tail + tags;
+  if (slide.kind === 'drop')   return slide.item.name + ' at ' + money(slide.item.price) + ' — MRP ' + money(slide.item.mrp) + '. You save ' + money(slide.save) + '.' + tail + tags;
+  if (slide.kind === 'fresh')  return 'Fresh in today: ' + slide.items.map(function(item){ return item.name + ' ' + money(item.price); }).join('  ·  ') + tail + tags;
+  if (slide.kind === 'hour')   return slide.eyebrow + ': ' + slide.items.map(function(item){ return item.name; }).join(', ') + '. On the shelf now.' + tail + tags;
+  if (slide.kind === 'combo')  return 'Goes together — ' + slide.items.map(function(item){ return item.name; }).join(' + ') + '. All three ' + money(slide.total) + '.' + tail + tags;
+  if (slide.kind === 'spotlight') return slide.n + ' kinds of ' + String(slide.cat).toLowerCase() + ' on the shelf.' + tail + tags;
+  if (slide.kind === 'plain')  return slide.item.name + ' — ' + money(slide.item.price) + ' per ' + (slide.item.unit || 'piece') + '. On the shelf now.' + tail + tags;
+  return shopName + ' — ' + live().length + ' things on the shelf.' + tail + tags;
 }
 
 /* ═══ 4 · the show ═══════════════════════════════════════════════════════════════════════════════════════════ */
@@ -1015,104 +1015,104 @@ function caption(s){
  */
 function pickedIds(){
   var out = {};
-  (SLIDES || []).forEach(function(sl){ if (sl && sl.kind === 'picked' && sl.item) out[String(sl.item.item_id)] = 1; });
+  (SLIDES || []).forEach(function(slide){ if (slide && slide.kind === 'picked' && slide.item) out[String(slide.item.item_id)] = 1; });
   return out;
 }
 function showNewPickNext(before){
   var list = shown();
   for (var i = 0; i < list.length; i++) {
-    var sl = list[i];
-    if (sl && sl.kind === 'picked' && sl.item && !before[String(sl.item.item_id)]) {
+    var slide = list[i];
+    if (slide && slide.kind === 'picked' && slide.item && !before[String(slide.item.item_id)]) {
       AT = i - 1;          /* the next tick is AT++ — paint() wraps a -1 safely */
       restart();           /* a full 7 s from now, so the current slide is not cut short either */
-      return sl.item.name || true;
+      return slide.item.name || true;
     }
   }
   return false;
 }
 function shown(){
-  var c = campaign();
-  if (ONLY !== 'all') return SLIDES.filter(function(s){ return s.kind === ONLY; });
-  if (!c.kinds) return SLIDES;
+  var chosen = campaign();
+  if (ONLY !== 'all') return SLIDES.filter(function(slide){ return slide.kind === ONLY; });
+  if (!chosen.kinds) return SLIDES;
   /* ⚠️ 'picked' is never filtered out. A campaign chooses between the screen's OWN ideas; it does not overrule the shopkeeper. */
-  var got = SLIDES.filter(function(s){ return s.kind === 'picked' || c.kinds.indexOf(s.kind) >= 0; });
+  var shownSlides = SLIDES.filter(function(slide){ return slide.kind === 'picked' || chosen.kinds.indexOf(slide.kind) >= 0; });
   /* ⚠️ A CAMPAIGN THAT MATCHES NOTHING SHOWS EVERYTHING, rather than a black screen. A shop with no offers authored yet still has
      a shelf worth showing, and an empty television teaches the shopkeeper that this thing does not work. */
-  return got.length ? got : SLIDES;
+  return shownSlides.length ? shownSlides : SLIDES;
 }
 
 function paint(fade){
   if (BILL) {
-    var fb = FORMATS[FMT];
-    C.width = fb.w; C.height = fb.h;
-    drawBill(X, fb.w, fb.h, BILL);
+    var format = FORMATS[FORMAT_KEY];
+    screenCanvas.width = format.w; screenCanvas.height = format.h;
+    drawBill(canvasContext, format.w, format.h, BILL);
     document.getElementById('count').textContent = BILL.thanks ? 'thank you' : 'at the counter';
     return;
   }
   var list = shown();
-  if (!list.length) { X.fillStyle = '#0E1117'; X.fillRect(0, 0, C.width, C.height); return; }
+  if (!list.length) { canvasContext.fillStyle = '#0E1117'; canvasContext.fillRect(0, 0, screenCanvas.width, screenCanvas.height); return; }
   AT = ((AT % list.length) + list.length) % list.length;
-  var f = FORMATS[FMT];
-  if (fade) { P.width = C.width; P.height = C.height; PX.drawImage(C, 0, 0); P.classList.add('show');
-              setTimeout(function(){ P.classList.remove('show'); }, 30); }
-  C.width = f.w; C.height = f.h;
-  draw(X, f.w, f.h, list[AT]);
+  var activeFormat = FORMATS[FORMAT_KEY];
+  if (fade) { previewCanvas.width = screenCanvas.width; previewCanvas.height = screenCanvas.height; previewContext.drawImage(screenCanvas, 0, 0); previewCanvas.classList.add('show');
+              setTimeout(function(){ previewCanvas.classList.remove('show'); }, 30); }
+  screenCanvas.width = activeFormat.w; screenCanvas.height = activeFormat.h;
+  draw(canvasContext, activeFormat.w, activeFormat.h, list[AT]);
   document.getElementById('count').textContent = (AT + 1) + ' of ' + list.length;
 }
-function step(n){ AT += n; paint(true); restart(); }
+function step(delta){ AT += delta; paint(true); restart(); }
 function restart(){ clearInterval(TIMER); if (PLAYING) TIMER = setInterval(function(){ AT++; paint(true); }, 7000); }
 
 function setPlaying(on){
   PLAYING = on;
-  var b = document.getElementById('play');
-  b.textContent = on ? '⏸ Pause' : '▶ Play'; b.className = on ? 'on' : '';
+  var playButton = document.getElementById('play');
+  playButton.textContent = on ? '⏸ Pause' : '▶ Play'; playButton.className = on ? 'on' : '';
   restart();
 }
 
 /* ── saving a picture. A shop posts to WhatsApp from the same PC the counter runs on. ── */
 function save(){
-  var f = FORMATS[FMT], list = shown(); if (!list.length) return;
+  var format = FORMATS[FORMAT_KEY], list = shown(); if (!list.length) return;
   var name = (((S && S.shop && S.shop.name) || 'shop').replace(/[^A-Za-z0-9]+/g, '-').toLowerCase())
-    + '-' + list[AT].kind + '-' + FMT + '.png';
-  C.toBlob(function(b){
-    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    + '-' + list[AT].kind + '-' + FORMAT_KEY + '.png';
+  screenCanvas.toBlob(function(blob){
+    var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = name;
+    document.body.appendChild(link); link.click(); link.remove(); setTimeout(function(){ URL.revokeObjectURL(link.href); }, 4000);
   }, 'image/png');
-  say('Saved ' + name);
+  showHint('Saved ' + name);
 }
 async function saveMany(){
   var list = shown(); if (!list.length) return;
-  var was = AT, n = Math.min(10, list.length);
+  var startAt = AT, count = Math.min(10, list.length);
   setPlaying(false);
-  for (var i = 0; i < n; i++) { AT = was + i; paint(false); await new Promise(function(r){ setTimeout(r, 220); }); save(); }
-  AT = was; paint(false);
-  say('Saved ' + n + ' pictures');
+  for (var i = 0; i < count; i++) { AT = startAt + i; paint(false); await new Promise(function(resolve){ setTimeout(resolve, 220); }); save(); }
+  AT = startAt; paint(false);
+  showHint('Saved ' + count + ' pictures');
 }
 var hintT = null;
-function say(t){ var h = document.getElementById('hint'); h.textContent = t; h.classList.add('show');
-  clearTimeout(hintT); hintT = setTimeout(function(){ h.classList.remove('show'); }, 2600); }
+function showHint(text){ var hintBox = document.getElementById('hint'); hintBox.textContent = text; hintBox.classList.add('show');
+  clearTimeout(hintT); hintT = setTimeout(function(){ hintBox.classList.remove('show'); }, 2600); }
 
 /* ═══ 4 · the bar ════════════════════════════════════════════════════════════════════════════════════════════ */
 var KINDLABEL = { all:'Everything', offer:'Offers', drop:'Price', fresh:'Fresh', combo:'Together',
                   spotlight:'Choice', hour:'This hour', shop:'The shop', plain:'On the shelf' };
 function paintBar(){
   /* WHICH CAMPAIGN — "Now" follows the clock, which is what a shop leaves it on */
-  var cs = document.getElementById('camp');
-  var due = dueNow();
-  cs.innerHTML = '<option value="auto"' + (CAMP === 'auto' ? ' selected' : '') + '>Now · ' + due.name + ' (follows the clock)</option>'
-    + CAMPAIGNS.map(function(c){
-        var when = (c.hours[0] === 0 && c.hours[1] === 24) ? 'all day' : (c.hours[0] + ':00–' + c.hours[1] + ':00');
-        return '<option value="' + c.id + '"' + (CAMP === c.id ? ' selected' : '') + '>' + c.name + ' · ' + when + '</option>'; }).join('');
+  var campaignSelect = document.getElementById('camp');
+  var dueCampaign = dueNow();
+  campaignSelect.innerHTML = '<option value="auto"' + (CAMP === 'auto' ? ' selected' : '') + '>Now · ' + dueCampaign.name + ' (follows the clock)</option>'
+    + CAMPAIGNS.map(function(entry){
+        var when = (entry.hours[0] === 0 && entry.hours[1] === 24) ? 'all day' : (entry.hours[0] + ':00–' + entry.hours[1] + ':00');
+        return '<option value="' + entry.id + '"' + (CAMP === entry.id ? ' selected' : '') + '>' + entry.name + ' · ' + when + '</option>'; }).join('');
 
   /* WHERE IT GOES — the channel picks the shape, so there is nothing else to get right */
-  document.getElementById('chan').innerHTML = Object.keys(CHANNELS).map(function(k){
-    return '<button data-c="' + k + '" class="' + (k === CHAN ? 'on' : '') + '" data-cbsid="PRM001-B12">' + CHANNELS[k].label + '</button>'; }).join('');
-  [].forEach.call(document.querySelectorAll('#chan button'), function(b){
-    b.onclick = function(){ CHAN = b.getAttribute('data-c'); ls.set('cb_promo_chan', CHAN);
-      FMT = CHANNELS[CHAN].fmt; ls.set('cb_promo_fmt', FMT); paintBar(); paint(true); }; });
+  document.getElementById('chan').innerHTML = Object.keys(CHANNELS).map(function(channelKey){
+    return '<button data-c="' + channelKey + '" class="' + (channelKey === CHAN ? 'on' : '') + '" data-cbsid="PRM001-B12">' + CHANNELS[channelKey].label + '</button>'; }).join('');
+  [].forEach.call(document.querySelectorAll('#chan button'), function(button){
+    button.onclick = function(){ CHAN = button.getAttribute('data-c'); localStore.set('cb_promo_chan', CHAN);
+      FORMAT_KEY = CHANNELS[CHAN].fmt; localStore.set('cb_promo_fmt', FORMAT_KEY); paintBar(); paint(true); }; });
 
-  var c = campaign();
-  document.getElementById('why').textContent = c.why;
+  var chosen = campaign();
+  document.getElementById('why').textContent = chosen.why;
   document.getElementById('how').textContent = CHANNELS[CHAN].how;
   var list = shown();
   document.getElementById('cap').value = list.length ? caption(list[((AT % list.length) + list.length) % list.length]) : '';
@@ -1120,11 +1120,11 @@ function paintBar(){
   document.getElementById('capwrap').style.display = (CHAN === 'tv') ? 'none' : '';
 }
 
-document.getElementById('camp').onchange = function(){ CAMP = this.value; ls.set('cb_promo_camp', CAMP); AT = 0; paintBar(); paint(true); restart(); };
+document.getElementById('camp').onchange = function(){ CAMP = this.value; localStore.set('cb_promo_camp', CAMP); AT = 0; paintBar(); paint(true); restart(); };
 document.getElementById('copycap').onclick = function(){
-  var t = document.getElementById('cap'); t.select();
-  try { navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
-  say('Caption copied');
+  var box = document.getElementById('cap'); box.select();
+  try { navigator.clipboard.writeText(box.value); } catch (_) { document.execCommand('copy'); }
+  showHint('Caption copied');
 };
 /**
  * ⭐ SHARE WHERE THE PHONE CAN. On a phone this opens the real share sheet — WhatsApp, Instagram, everything installed — with the
@@ -1133,13 +1133,13 @@ document.getElementById('copycap').onclick = function(){
  */
 document.getElementById('share').onclick = function(){
   var list = shown(); if (!list.length) return;
-  C.toBlob(async function(b){
-    var file = new File([b], 'shop.png', { type:'image/png' });
+  screenCanvas.toBlob(async function(blob){
+    var file = new File([blob], 'shop.png', { type:'image/png' });
     var data = { files:[file], text: caption(list[AT]) };
     if (navigator.canShare && navigator.canShare(data) && navigator.share) {
-      try { await navigator.share(data); say('Shared'); return; } catch (_) { /* they closed the sheet */ return; }
+      try { await navigator.share(data); showHint('Shared'); return; } catch (_) { /* they closed the sheet */ return; }
     }
-    save(); say('This browser cannot share — saved the picture instead');
+    save(); showHint('This browser cannot share — saved the picture instead');
   }, 'image/png');
 };
 document.getElementById('play').onclick = function(){ setPlaying(!PLAYING); };
@@ -1163,10 +1163,10 @@ document.getElementById('refresh').onclick = async function(){
   await readShop(); SLIDES = build(); paintBar();
   var fresh = showNewPickNext(before);
   paint(true);
-  if (!READ_OK) { say('⚠ Could not reach ChitBridge — showing what this screen already had'); return; }
-  var picks = live().filter(function(i){ return i.screen === true; });
-  say('↻ ' + live().length + ' on sale · 📌 ' + picks.length
-      + (fresh ? ' · next: ' + (fresh === true ? 'your pick' : fresh) : (picks.length ? ' · ' + picks.map(function(i){ return i.name; }).slice(0, 3).join(', ') : '')));
+  if (!READ_OK) { showHint('⚠ Could not reach ChitBridge — showing what this screen already had'); return; }
+  var picks = live().filter(function(item){ return item.screen === true; });
+  showHint('↻ ' + live().length + ' on sale · 📌 ' + picks.length
+      + (fresh ? ' · next: ' + (fresh === true ? 'your pick' : fresh) : (picks.length ? ' · ' + picks.map(function(item){ return item.name; }).slice(0, 3).join(', ') : '')));
 };
 document.getElementById('full').onclick = function(){
   if (document.fullscreenElement) document.exitFullscreen();
@@ -1197,27 +1197,27 @@ document.addEventListener('mousemove', function(){
  * ⚠️ Every answer is a sentence. A person standing on a chair with a remote cannot debug an error code.
  */
 async function pairClaim(){
-  var box = document.getElementById('paircode'), say = document.getElementById('pairsay');
+  var box = document.getElementById('paircode'), pairNote = document.getElementById('pairsay');
   var code = String(box.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (code.length < 6) { say.className = 'pairsay bad'; say.textContent = 'Type all six characters.'; return; }
-  say.className = 'pairsay'; say.textContent = 'Connecting…';
+  if (code.length < 6) { pairNote.className = 'pairsay bad'; pairNote.textContent = 'Type all six characters.'; return; }
+  pairNote.className = 'pairsay'; pairNote.textContent = 'Connecting…';
   try {
-    var r = await fetch(API + '/api/till/pair/claim', { method:'POST',
+    var response = await fetch(API + '/api/till/pair/claim', { method:'POST',
       headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ code: code }) });
-    var j = await r.json().catch(function(){ return {}; });
-    if (!r.ok || !j.key) { say.className = 'pairsay bad';
-      say.textContent = j.message || 'That code did not work. Ask ChitBridge for a new one.'; return; }
-    ls.set(SCREEN_LS, j.key);            /* ⚠️ never cb_till_key — that is the counter's, see SCREEN_LS */
-    try { sessionStorage.removeItem(TAB_LS); } catch (_) {}
-    if (j.shop && j.shop.entity_id) ls.set('cb_till_shop', j.shop.entity_id);
-    say.textContent = 'Connected to ' + ((j.shop && j.shop.name) || 'your shop') + '. Starting…';
+    var reply = await response.json().catch(function(){ return {}; });
+    if (!response.ok || !reply.key) { pairNote.className = 'pairsay bad';
+      pairNote.textContent = reply.message || 'That code did not work. Ask ChitBridge for a new one.'; return; }
+    localStore.set(SCREEN_LS, reply.key);            /* ⚠️ never cb_till_key — that is the counter's, see SCREEN_LS */
+    try { sessionStorage.removeItem(TAB_LS); } catch (_) { /* storage blocked: nothing saved, nothing to forget */ }
+    if (reply.shop && reply.shop.entity_id) localStore.set('cb_till_shop', reply.shop.entity_id);
+    pairNote.textContent = 'Connected to ' + ((reply.shop && reply.shop.name) || 'your shop') + '. Starting…';
     setTimeout(function(){ location.reload(); }, 900);
-  } catch (e) { say.className = 'pairsay bad'; say.textContent = 'No internet on this screen yet.'; }
+  } catch (e) { pairNote.className = 'pairsay bad'; pairNote.textContent = 'No internet on this screen yet.'; }
 }
 function pairShow(){
   document.getElementById('pairwrap').hidden = false;
   document.body.classList.add('pairing');
-  var b = document.getElementById('paircode'); if (b) b.focus();
+  var codeBox = document.getElementById('paircode'); if (codeBox) codeBox.focus();
 }
 document.getElementById('pairgo').onclick = pairClaim;
 document.getElementById('paircode').addEventListener('keydown', function(e){ if (e.key === 'Enter') pairClaim(); });
@@ -1231,7 +1231,7 @@ document.getElementById('paircode').addEventListener('keydown', function(e){ if 
   paintBar();
   paint(false);
   setPlaying(true);
-  if (!SLIDES.length) say(KEY ? 'Nothing to show yet — add products in ChitBridge' : 'Not paired — open this from ChitBridge → Counter');
+  if (!SLIDES.length) showHint(KEY ? 'Nothing to show yet — add products in ChitBridge' : 'Not paired — open this from ChitBridge → Counter');
   /* the shop changes during the day: new prices, an offer that starts at noon, a product that ran out */
   setInterval(async function(){ var before = pickedIds(); await readShop(); SLIDES = build(); paintBar(); showNewPickNext(before); }, 15 * 60 * 1000);
   bellUp();
@@ -1258,24 +1258,24 @@ async function bellUp(){
     if (BELL || !KEY || !navigator.onLine) return;
     if (Date.now() - BELL_AT < 20000) return;
     BELL_AT = Date.now();
-    var r = await fetch(API + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': KEY } });
-    if (!r.ok) return;
-    var t = (await r.json()).ticket; if (!t) return;
-    BELL = new EventSource(API + '/api/events/stream?t=' + encodeURIComponent(t));
+    var response = await fetch(API + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': KEY } });
+    if (!response.ok) return;
+    var ticket = (await response.json()).ticket; if (!ticket) return;
+    BELL = new EventSource(API + '/api/events/stream?t=' + encodeURIComponent(ticket));
     /* ⚠️ the server names its events ("event: cb"), and onmessage only ever sees UNNAMED ones — so this screen never
        reacted, even on the days its stream did connect. Listened for by name, as the app always has (core.js). */
-    BELL.addEventListener('cb', async function(ev){
-      var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
-      if (d.kind !== 'shop') return;
+    BELL.addEventListener('cb', async function(message){
+      var data = {}; try { data = JSON.parse(message.data || '{}'); } catch (_) { /* a bell message that is not JSON is read as empty */ }
+      if (data.kind !== 'shop') return;
       var before = pickedIds();
       await readShop();
       SLIDES = build();
       paintBar();
       var fresh = showNewPickNext(before);
-      if (fresh) { say('Next on the screen: ' + (fresh === true ? 'your pick' : fresh)); return; }
-      say('The shop changed — this screen is up to date');
+      if (fresh) { showHint('Next on the screen: ' + (fresh === true ? 'your pick' : fresh)); return; }
+      showHint('The shop changed — this screen is up to date');
     });
-    BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };
+    BELL.onerror = function(){ try { BELL.close(); } catch (_) { /* already closed */ } BELL = null; };
   } catch (_) { BELL = null; }
 }
 setInterval(bellUp, 30000);

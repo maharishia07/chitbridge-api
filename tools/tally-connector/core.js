@@ -44,12 +44,12 @@ function ownsStream(cb, stream, log) {
     (log || (() => {}))(stream + ': not mine — ' + who + ' owns it (ChitBridge › Settings › Integrations › Who owns what)'); }
   return false;
 }
-function hashOf(o) { return crypto.createHash('sha256').update(JSON.stringify(o)).digest('hex').slice(0, 16); }
+function hashOf(orderReceipt) { return crypto.createHash('sha256').update(JSON.stringify(orderReceipt)).digest('hex').slice(0, 16); }
 
 class Receipts {
   constructor(file) { this.file = file; this.rows = []; try { this.rows = fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)); } catch (_) {} }
-  last(kind, ref) { for (let i = this.rows.length - 1; i >= 0; i--) { const r = this.rows[i]; if (r.kind === kind && r.ref === ref) return r; } return null; }
-  add(r) { const row = Object.assign({ at: new Date().toISOString() }, r); this.rows.push(row); fs.appendFileSync(this.file, JSON.stringify(row) + '\n'); return row; }
+  last(kind, ref) { for (let i = this.rows.length - 1; i >= 0; i--) { const result = this.rows[i]; if (result.kind === kind && result.ref === ref) return result; } return null; }
+  add(result) { const row = Object.assign({ at: new Date().toISOString() }, result); this.rows.push(row); fs.appendFileSync(this.file, JSON.stringify(row) + '\n'); return row; }
 }
 
 class CB {
@@ -74,22 +74,22 @@ class CB {
    * ⚠️ AN ABORT THROWS, like any other failure — so every existing catch keeps its bill queued exactly as it
    * does for a refused connection. What changes is that the failure ARRIVES.
    */
-  async call(method, p, body, ms, extra) {
-    const ac = new AbortController();
-    const to = setTimeout(() => { try { ac.abort(); } catch (_) {} }, ms || 120000);
-    let r;
+  async call(method, urlPath, body, ms, extra) {
+    const abort = new AbortController();
+    const to = setTimeout(() => { try { abort.abort(); } catch (_) {} }, ms || 120000);
+    let result;
     try {
-      r = await fetch(this.api + p, { method, signal: ac.signal, headers: Object.assign({ 'X-Api-Key': this.key, 'Content-Type': 'application/json' }, extra || {}), body: body ? JSON.stringify(body) : undefined });
+      result = await fetch(this.api + urlPath, { method, signal: abort.signal, headers: Object.assign({ 'X-Api-Key': this.key, 'Content-Type': 'application/json' }, extra || {}), body: body ? JSON.stringify(body) : undefined });
     } catch (e) {
       /* ⚠️ SAY IT WAS A DEADLINE, not "fetch failed" — the two need different actions from whoever reads the log */
       if (e && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
-        const err = new Error(method + ' ' + p + ' → no answer in ' + Math.round((ms || 120000) / 1000) + 's');
+        const err = new Error(method + ' ' + urlPath + ' → no answer in ' + Math.round((ms || 120000) / 1000) + 's');
         err.timeout = true; throw err;
       }
       throw e;
     } finally { clearTimeout(to); }
-    const text = await r.text(); let j = null; try { j = JSON.parse(text); } catch (_) { j = { raw: text }; }
-    if (!r.ok) { const e = new Error(method + ' ' + p + ' → ' + r.status + ' ' + ((j && (j.message || j.error)) || text.slice(0, 120))); e.status = r.status; e.body = j; throw e; }
+    const text = await result.text(); let j = null; try { j = JSON.parse(text); } catch (_) { j = { raw: text }; }
+    if (!result.ok) { const e = new Error(method + ' ' + urlPath + ' → ' + result.status + ' ' + ((j && (j.message || j.error)) || text.slice(0, 120))); e.status = result.status; e.body = j; throw e; }
     return j;
   }
   products() { return this.call('GET', '/api/products?limit=500'); }
@@ -116,16 +116,16 @@ async function syncProducts({ cb, adapter, receipts, log }) {
   const mine = await cb.products();
   const list = Array.isArray(mine) ? mine : (mine.items || mine.products || []);
   const byCode = new Map();
-  for (const p of list) { const d = p.item_data || p; const code = String(d.code || d.sku || '').trim().toLowerCase(); if (code) byCode.set(code, p); }
+  for (const p of list) { const data = p.item_data || p; const code = String(data.code || data.sku || '').trim().toLowerCase(); if (code) byCode.set(code, p); }
   const toAdd = [], toEdit = [], unchanged = [];
   for (const t of theirs) {
     const code = String(t.code || '').trim().toLowerCase(); if (!code || !t.name) continue;
     const rec = { name: t.name, code: t.code, unit: unitOf(t.unit), ...(t.unit && unitOf(t.unit) !== String(t.unit).toLowerCase() ? { unit_source: t.unit } : {}), price: Number(t.price) || 0, ...(t.hsn ? { hsn: t.hsn } : {}), ...(t.gst_rate != null ? { gst_rate: Number(t.gst_rate) } : {}), ...(t.category ? { category_name: t.category } : {}), source_system: adapter.name, source_ref: t.ref || t.code };
-    const h = hashOf(rec);
+    const hash = hashOf(rec);
     const last = receipts.last('product', code);
-    if (last && last.hash === h && last.outcome === 'ok') { unchanged.push(code); continue; }
+    if (last && last.hash === hash && last.outcome === 'ok') { unchanged.push(code); continue; }
     const have = byCode.get(code);
-    if (have) toEdit.push({ id: have.item_id || have.id, item_data: Object.assign({}, have.item_data || {}, rec), code, h }); else toAdd.push({ rec, code, h });
+    if (have) toEdit.push({ id: have.item_id || have.id, item_data: Object.assign({}, have.item_data || {}, rec), code, h: hash }); else toAdd.push({ rec, code, h: hash });
   }
   let added = 0, edited = 0, failed = 0;
   if (toAdd.length) {
@@ -150,11 +150,11 @@ async function syncStock({ cb, adapter, receipts, log, codes }) {
   if (typeof adapter.readStock !== 'function') { log('stock: the ' + adapter.name + ' adapter has no readStock'); return { read: 0, written: 0 }; }
   const at = new Date().toISOString();
   let rows = await adapter.readStock();
-  if (Array.isArray(codes) && codes.length) { const want = new Set(codes.map((c) => String(c).toLowerCase())); rows = rows.filter((r) => want.has(String(r.code || '').toLowerCase())); }
-  const items = rows.filter((r) => r && r.code && Number.isFinite(Number(r.qty))).map((r) => ({ code: r.code, qty: Math.max(0, Number(r.qty)), source: 'erp', as_of: r.at || at }));
+  if (Array.isArray(codes) && codes.length) { const want = new Set(codes.map((chit) => String(chit).toLowerCase())); rows = rows.filter((result) => want.has(String(result.code || '').toLowerCase())); }
+  const items = rows.filter((result) => result && result.code && Number.isFinite(Number(result.qty))).map((result) => ({ code: result.code, qty: Math.max(0, Number(result.qty)), source: 'erp', as_of: result.at || at }));
   if (!items.length) { log('stock: nothing to write'); return { read: rows.length, written: 0 }; }
   let written = 0, unknown = 0;
-  for (let i = 0; i < items.length; i += 500) { const r = await cb.stock(items.slice(i, i + 500)); written += r.written || 0; unknown += r.unknown || 0; }
+  for (let i = 0; i < items.length; i += 500) { const result = await cb.stock(items.slice(i, i + 500)); written += result.written || 0; unknown += result.unknown || 0; }
   receipts.add({ kind: 'stock', ref: 'all', hash: hashOf(items.map((x) => [x.code, x.qty])), outcome: 'ok', written, unknown });
   log('stock: ' + written + ' written' + (unknown ? ' · ' + unknown + ' unknown code(s)' : '') + ' · as of ' + at.slice(11, 19));
   return { read: rows.length, written, unknown, at };
@@ -165,10 +165,10 @@ async function syncProfile({ cb, adapter, receipts, log }) {
   if (!ownsStream(cb, 'profile', log)) return null;
   if (typeof adapter.readProfile !== 'function') { log('profile: the ' + adapter.name + ' adapter has no readProfile'); return null; }
   const p = await adapter.readProfile(); if (!p || !Object.keys(p).length) { log('profile: nothing read'); return null; }
-  const r = await cb.profile(p, adapter.name);
-  receipts.add({ kind: 'profile', ref: 'store', hash: hashOf(p), outcome: 'ok', written: r.written, kept: r.kept });
-  log('profile: ' + (r.written || []).length + ' written (' + (r.written || []).join(', ') + ')' + ((r.kept || []).length ? ' · kept ' + r.kept.map((k) => k.key).join(', ') : '') + ' · ' + r.filled + '/' + r.total + ' filled' + (r.issues && r.issues.length ? ' · ⚠ ' + r.issues.map((i) => i.issue).join('; ') : ''));
-  return r;
+  const result = await cb.profile(p, adapter.name);
+  receipts.add({ kind: 'profile', ref: 'store', hash: hashOf(p), outcome: 'ok', written: result.written, kept: result.kept });
+  log('profile: ' + (result.written || []).length + ' written (' + (result.written || []).join(', ') + ')' + ((result.kept || []).length ? ' · kept ' + result.kept.map((k) => k.key).join(', ') : '') + ' · ' + result.filled + '/' + result.total + ' filled' + (result.issues && result.issues.length ? ' · ⚠ ' + result.issues.map((i) => i.issue).join('; ') : ''));
+  return result;
 }
 
 /** ── OFFERS BACK: the outside system's basket lines → what comes off and why (the same engine as the storefront) ── */
@@ -178,34 +178,34 @@ async function evaluate({ cb, lines, offers }) {
 }
 
 /** ── ORDERS DOWN: a chit that arrived becomes the outside system's document, once ── */
-function orderOf(c) {
-  const h = c.header || c.chit || c, d = c.detail || {};
-  const lines = (d.line_items || c.lines || []).filter((l) => l && l.kind !== 'payload').map((l) => ({
+function orderOf(chit) {
+  const header = chit.header || chit.chit || chit, detail = chit.detail || {};
+  const lines = (detail.line_items || chit.lines || []).filter((l) => l && l.kind !== 'payload').map((l) => ({
     name: l.name || l.particulars || '', code: (l.ref && (l.ref.code || l.ref.sku)) || l.code || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
     qty: Number(l.quantity != null ? l.quantity : l.qty) || 0, unit: l.unit || '', price: Number(l.price) || 0, list_price: l.list_price != null ? Number(l.list_price) : null,
     offer: l.offer ? { label: l.offer.label, off: Number(l.offer.off) || 0 } : null, total: Number(l.total) || 0, gst_rate: l.gst_rate != null ? Number(l.gst_rate) : null, hsn: l.hsn || null }));
   /* a counter bill (Record a sale) names its customer on the chit — the voucher's party is that person, never the shop itself */
-  const cust = (h.business_json && h.business_json.customer) || null;
-  return { chit_id: h.chit_id, at: h.created_at || h.at || null, purpose: h.purpose || null, status: h.current_status || h.status || null,
-           subject: h.manual_subject || h.auto_subject || '', buyer: (cust && cust.name) || h.sender_entity_display_name || (h.sender && h.sender.display_name) || 'Customer', customer: cust, currency: d.currency_code || 'INR',
-           total: (h.summary_json && h.summary_json.total_value) || lines.reduce((t, l) => t + l.total, 0), lines };
+  const cust = (header.business_json && header.business_json.customer) || null;
+  return { chit_id: header.chit_id, at: header.created_at || header.at || null, purpose: header.purpose || null, status: header.current_status || header.status || null,
+           subject: header.manual_subject || header.auto_subject || '', buyer: (cust && cust.name) || header.sender_entity_display_name || (header.sender && header.sender.display_name) || 'Customer', customer: cust, currency: detail.currency_code || 'INR',
+           total: (header.summary_json && header.summary_json.total_value) || lines.reduce((ticket, l) => ticket + l.total, 0), lines };
 }
 /** the payment the seller recorded on their copy (business_json.payment) — level 1 by hand, level 2 by a gateway */
-function paymentOf(c) { const h = c.header || c.chit || c; const bj = (h && h.business_json) || c.business_json || {}; return bj.payment || null; }
+function paymentOf(chit) { const header = chit.header || chit.chit || chit; const business = (header && header.business_json) || chit.business_json || {}; return business.payment || null; }
 async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'receipt', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('receipt', chit_id);
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
-  const c = await cb.chit(chit_id); const pay = paymentOf(c); const order = orderOf(c);
-  if (!pay) return { chit_id, outcome: 'unpaid' };
-  const o = receipts.last('order', chit_id) || {};   /* what THEIR system called the order (invoice id, party) — a hosted system applies the payment to it */
-  const p = { chit_id, at: pay.at, method: pay.method, ref: pay.ref, amount: pay.amount != null ? Number(pay.amount) : order.total, buyer: order.buyer, order: { their_ref: o.their_ref || null, their_id: o.their_id || null, their_party: o.their_party || null } };
-  if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
-  try { const r = await adapter.pushReceipt(p);
-    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
-    if (r && r.skipped) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: r.skipped }); log('receipt ' + chit_id.slice(0, 8) + ' skipped: ' + r.skipped); return { chit_id, outcome: 'skipped', why: r.skipped }; }
-    receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null }); await tellBooks(cb, 'receipt', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: 'payment recorded' }); log('receipt ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
-  catch (e) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('receipt ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
+  const chit = await cb.chit(chit_id); const payment = paymentOf(chit); const order = orderOf(chit);
+  if (!payment) return { chit_id, outcome: 'unpaid' };
+  const orderReceipt = receipts.last('order', chit_id) || {};   /* what THEIR system called the order (invoice id, party) — a hosted system applies the payment to it */
+  const receipt = { chit_id, at: payment.at, method: payment.method, ref: payment.ref, amount: payment.amount != null ? Number(payment.amount) : order.total, buyer: order.buyer, order: { their_ref: orderReceipt.their_ref || null, their_id: orderReceipt.their_id || null, their_party: orderReceipt.their_party || null } };
+  if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
+  try { const result = await adapter.pushReceipt(receipt);
+    if (result && result.ref === 'dry-run') { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
+    if (result && result.skipped) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'skipped', why: result.skipped }); log('receipt ' + chit_id.slice(0, 8) + ' skipped: ' + result.skipped); return { chit_id, outcome: 'skipped', why: result.skipped }; }
+    receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'ok', their_ref: (result && result.ref) || null }); await tellBooks(cb, 'receipt', chit_id, { system: adapter.name, ref: (result && result.ref) || null, outcome: 'ok', why: 'payment recorded' }); log('receipt ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((result && result.ref) || '')); return { chit_id, outcome: 'ok', their_ref: result && result.ref }; }
+  catch (e) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'failed', why: e.message }); log('receipt ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
 }
 /** the write-back: the Task says "written to Tally · voucher · when" (or why not) — best effort, never fails a push */
 async function tellBooks(cb, kind, chit_id, rec) { try { await cb.call('POST', '/api/integrations/books', Object.assign({ chit_id, kind, host: require('os').hostname() }, rec)); } catch (e) { (cb.log || (() => {}))('books write-back: ' + e.message); } }
@@ -215,17 +215,17 @@ async function tellBooks(cb, kind, chit_id, rec) { try { await cb.call('POST', '
  * state has not reached the trigger WAITS — no receipt, so the next bell or the five-minute catch-up asks again. "Send to books" on the
  * Task (business_json.books_request) sends it now whatever the setting. Cancelled / rejected never go.
  */
-function booksGate(c, policy) {
-  const h = c.header || c.chit || c; const st = String(h.current_status || h.status || c.state || '');
-  const bj = h.business_json || c.business_json || {}; const asked = !!(bj && bj.books_request);
+function booksGate(chit, policy) {
+  const header = chit.header || chit.chit || chit; const status = String(header.current_status || header.status || chit.state || '');
+  const business = header.business_json || chit.business_json || {}; const asked = !!(business && business.books_request);
   /* ⭐ "Not for the books" — the owner set this order aside; the connector stops asking (2026-09-07) */
-  if (bj && bj.books_skip) return { go: false, why: 'set aside — not for the books' };
-  if (/^(cancelled|rejected)$/.test(st)) return { go: false, why: 'cancelled' };
+  if (business && business.books_skip) return { go: false, why: 'set aside — not for the books' };
+  if (/^(cancelled|rejected)$/.test(status)) return { go: false, why: 'cancelled' };
   if (asked) return { go: true, why: 'sent to books by hand' };
   const at = String((policy && policy.books_at) || 'accepted');
   if (at === 'received') return { go: true, why: 'on arrival' };
-  if (at === 'accepted') return /^(accepted|in_progress|partial|completed)$/.test(st) ? { go: true, why: 'accepted' } : { go: false, why: 'waits for acceptance (state ' + (st || 'pending') + ')' };
-  if (at === 'completed') return st === 'completed' ? { go: true, why: 'completed' } : { go: false, why: 'waits for completion (state ' + (st || 'pending') + ')' };
+  if (at === 'accepted') return /^(accepted|in_progress|partial|completed)$/.test(status) ? { go: true, why: 'accepted' } : { go: false, why: 'waits for acceptance (state ' + (status || 'pending') + ')' };
+  if (at === 'completed') return status === 'completed' ? { go: true, why: 'completed' } : { go: false, why: 'waits for completion (state ' + (status || 'pending') + ')' };
   return { go: false, why: 'waits for "Send to books" on the Task' };
 }
 /**
@@ -233,24 +233,24 @@ function booksGate(c, policy) {
  * connector posts — lib/books-tally.js): the registered buyer, the place of supply and the tax split, all from the invoice.
  * null for a buyer without a GSTIN (a walk-in books as before).
  */
-function b2bOf(inv, order) {
-  const b = (inv && inv.invoice && inv.invoice.BuyerDtls) || {};
+function b2bOf(invoice, order) {
+  const b = (invoice && invoice.invoice && invoice.invoice.BuyerDtls) || {};
   if (!b.Gstin) return null;
-  const h = (inv.heads) || {}; const cbx = (inv.invoice && inv.invoice._cb) || {};
+  const header = (invoice.heads) || {}; const cbx = (invoice.invoice && invoice.invoice._cb) || {};
   return { buyer: { name: b.LglNm || b.TrdNm || order.buyer, gstin: b.Gstin, state_code: b.State || String(b.Gstin).slice(0, 2), addr: [b.Addr1, b.Addr2].filter(Boolean).join(', '), loc: b.Loc || '', pin: b.Pin || '', reg_type: 'Regular' },
            place_of_supply: b.Pos || cbx.place_of_supply || b.State || String(b.Gstin).slice(0, 2), supply: cbx.supply || null,
-           taxes: { cgst: Number(h.cgst) || 0, sgst: Number(h.sgst) || 0, igst: Number(h.igst) || 0, cess: Number(h.cess) || 0 }, taxable: Number(h.taxable) || 0, total: Number(h.total) || order.total,
-           items: ((inv.invoice && inv.invoice.ItemList) || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd, rate: Number(it.GstRt) || 0, ass: Number(it.AssAmt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 })) };
+           taxes: { cgst: Number(header.cgst) || 0, sgst: Number(header.sgst) || 0, igst: Number(header.igst) || 0, cess: Number(header.cess) || 0 }, taxable: Number(header.taxable) || 0, total: Number(header.total) || order.total,
+           items: ((invoice.invoice && invoice.invoice.ItemList) || []).map((itemsResult) => ({ name: itemsResult.PrdDesc, hsn: itemsResult.HsnCd, rate: Number(itemsResult.GstRt) || 0, ass: Number(itemsResult.AssAmt) || 0, cgst: Number(itemsResult.CgstAmt) || 0, sgst: Number(itemsResult.SgstAmt) || 0, igst: Number(itemsResult.IgstAmt) || 0 })) };
 }
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('order', chit_id);
   if (last && last.outcome === 'ok') { log('order ' + chit_id.slice(0, 8) + ' already pushed'); return { chit_id, outcome: 'duplicate' }; }
   if (last && last.outcome === 'skipped') return { chit_id, outcome: 'duplicate' };   /* decided once (not an order); the 5-minute catch-up must not re-record it */
-  const c = await cb.chit(chit_id);
-  const order = orderOf(c);
+  const chit = await cb.chit(chit_id);
+  const order = orderOf(chit);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }
-  const gate = booksGate(c, cb.policy);
+  const gate = booksGate(chit, cb.policy);
   if (!gate.go) {
     if (gate.why === 'cancelled') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'cancelled' }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'skipped', why: 'cancelled' }); return { chit_id, outcome: 'skipped' }; }
     if (!cb._waited || !cb._waited[chit_id]) { cb._waited = cb._waited || {}; cb._waited[chit_id] = true; log('order ' + chit_id.slice(0, 8) + ' ' + gate.why); }
@@ -263,11 +263,11 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
    * The invoice is read once here and handed to the adapter as `order.b2b`; a walk-in order has none and books as before.
    */
   try {
-    const inv = await cb.invoice(chit_id);
-    const b2b = b2bOf(inv, order);
-    if (b2b) {
-      order.b2b = b2b;
-      if (adapter.ensureParty) { try { const pr = await adapter.ensureParty(order.b2b.buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); } }
+    const invoice = await cb.invoice(chit_id);
+    const b2bInfo = b2bOf(invoice, order);
+    if (b2bInfo) {
+      order.b2b = b2bInfo;
+      if (adapter.ensureParty) { try { const partyResult = await adapter.ensureParty(order.b2b.buyer); if (partyResult && partyResult.created) log('party ledger created: ' + partyResult.created); } catch (e) { log('party ledger: ' + e.message); } }
     }
   } catch (e) {
     /* ⚠️ A FAILED READ IS NOT "NO GSTIN". Booking a registered buyer as a walk-in because the API blinked (a redeploy, 11:32 on
@@ -276,11 +276,11 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
     log('order ' + chit_id.slice(0, 8) + ' deferred — invoice read failed (' + e.message + '); retried at the next catch-up');
     return { chit_id, outcome: 'failed', why: 'invoice read: ' + e.message };
   }
-  try { const r = await adapter.pushOrder(order);
+  try { const result = await adapter.pushOrder(order);
     /* ⚠️ A DRY RUN IS NOT A PUSH (first live day, 2026-09-05): it used to write outcome 'ok' with their_ref 'dry-run', and the
        real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
-    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'dry', why: 'dry run — nothing posted' }); return { chit_id, outcome: 'dry' }; }
-    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: booksGate(c, cb.policy).why }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
+    if (result && result.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'dry', why: 'dry run — nothing posted' }); return { chit_id, outcome: 'dry' }; }
+    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (result && result.ref) || null, ...(result && result.their_id ? { their_id: result.their_id } : {}), ...(result && result.their_party ? { their_party: result.their_party } : {}) }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, ref: (result && result.ref) || null, outcome: 'ok', why: booksGate(chit, cb.policy).why }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((result && result.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: result && result.ref }; }
   catch (e) {
     /* the same failure again (a stock item still missing, Tally still closed) is neither logged nor written twice — the
        receipts file keeps the first, the retry keeps trying quietly */
@@ -297,49 +297,49 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
  * same CB-<8> the seller's Sales voucher carries. The arithmetic is checked here: the voucher's input tax must equal what
  * our own ledger calls my ITC for that chit; a difference is logged and the voucher still posts (the books decide).
  */
-function purchaseOf(c, inv) {
-  const h = c.header || c.chit || c; const I = (inv && inv.invoice) || {}; const S = I.SellerDtls || {}; const heads = (inv && inv.heads) || {};
-  const seller = { name: S.LglNm || S.TrdNm || (inv && inv.seller && inv.seller.LglNm) || h.receiver_display_name || 'Supplier', gstin: S.Gstin || (inv && inv.seller && inv.seller.Gstin) || null,
+function purchaseOf(chit, invoice) {
+  const header = chit.header || chit.chit || chit; const I = (invoice && invoice.invoice) || {}; const S = I.SellerDtls || {}; const heads = (invoice && invoice.heads) || {};
+  const seller = { name: S.LglNm || S.TrdNm || (invoice && invoice.seller && invoice.seller.LglNm) || header.receiver_display_name || 'Supplier', gstin: S.Gstin || (invoice && invoice.seller && invoice.seller.Gstin) || null,
                    state_code: S.State || (S.Gstin ? String(S.Gstin).slice(0, 2) : null), addr: [S.Addr1, S.Addr2].filter(Boolean).join(', '), loc: S.Loc || '', pin: S.Pin || '', reg_type: 'Regular' };
-  const items = (I.ItemList || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd || null, qty: Number(it.Qty) || 0, unit: it.Unit || 'nos', rate: Number(it.UnitPrice) || 0, discount: Number(it.Discount) || 0, ass: Number(it.AssAmt) || 0, gst_rate: Number(it.GstRt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 }));
+  const items = (I.ItemList || []).map((itemsResult) => ({ name: itemsResult.PrdDesc, hsn: itemsResult.HsnCd || null, qty: Number(itemsResult.Qty) || 0, unit: itemsResult.Unit || 'nos', rate: Number(itemsResult.UnitPrice) || 0, discount: Number(itemsResult.Discount) || 0, ass: Number(itemsResult.AssAmt) || 0, gst_rate: Number(itemsResult.GstRt) || 0, cgst: Number(itemsResult.CgstAmt) || 0, sgst: Number(itemsResult.SgstAmt) || 0, igst: Number(itemsResult.IgstAmt) || 0 }));
   const taxes = { cgst: Number(heads.cgst) || 0, sgst: Number(heads.sgst) || 0, igst: Number(heads.igst) || 0, cess: Number(heads.cess) || 0 };
-  return { chit_id: h.chit_id, at: (I.frozen_at || h.updated_at || h.created_at || null), ref: 'CB-' + String(h.chit_id).slice(0, 8), seller, items, taxes, taxable: Number(heads.taxable) || 0, total: Number(heads.total) || 0,
-           itc_claim: Math.round(((taxes.cgst + taxes.sgst + taxes.igst + taxes.cess)) * 100) / 100, place_of_supply: (I._cb && I._cb.place_of_supply) || null, buyer_state: (I.BuyerDtls && I.BuyerDtls.State) || null, frozen: !!(inv && inv.frozen) };
+  return { chit_id: header.chit_id, at: (I.frozen_at || header.updated_at || header.created_at || null), ref: 'CB-' + String(header.chit_id).slice(0, 8), seller, items, taxes, taxable: Number(heads.taxable) || 0, total: Number(heads.total) || 0,
+           itc_claim: Math.round(((taxes.cgst + taxes.sgst + taxes.igst + taxes.cess)) * 100) / 100, place_of_supply: (I._cb && I._cb.place_of_supply) || null, buyer_state: (I.BuyerDtls && I.BuyerDtls.State) || null, frozen: !!(invoice && invoice.frozen) };
 }
 async function pushPurchase({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'purchase', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('purchase', chit_id);
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   if (!adapter.pushPurchase) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'skipped', why: adapter.name + ' has no pushPurchase' }); return { chit_id, outcome: 'skipped' }; }
-  let c; try { c = await cb.chit(chit_id); } catch (e) { return { chit_id, outcome: 'failed', why: 'read: ' + e.message }; }
+  let chit; try { chit = await cb.chit(chit_id); } catch (e) { return { chit_id, outcome: 'failed', why: 'read: ' + e.message }; }
   /* ⚠️ COMPLETION IS THE SELLER'S ACT, LOGGED ON MY COPY. A status change updates only the RECEIVED copy (the seller's) and
      writes a state_log row on EVERY party's copy — so the buyer's copy stays "pending" while its log says "completed by
      the seller". That row is the trigger; the buyer's own status (a chit the seller sent to me) counts too. */
-  const h = c.header || c.chit || c; const logRows = c.state_log || c.log || (c.detail && c.detail.state_log) || [];
-  const done = /^(completed|delivered|closed)$/.test(String(h.current_status || h.status || '')) || logRows.some((r) => /^(completed|delivered|closed)$/.test(String(r.new_status || r.to_status || r.status || '')));
-  const dead = /^(cancelled|rejected)$/.test(String(h.current_status || '')) || logRows.some((r) => /^(cancelled|rejected)$/.test(String(r.new_status || r.to_status || '')));
+  const header = chit.header || chit.chit || chit; const logRows = chit.state_log || chit.log || (chit.detail && chit.detail.state_log) || [];
+  const done = /^(completed|delivered|closed)$/.test(String(header.current_status || header.status || '')) || logRows.some((result) => /^(completed|delivered|closed)$/.test(String(result.new_status || result.to_status || result.status || '')));
+  const dead = /^(cancelled|rejected)$/.test(String(header.current_status || '')) || logRows.some((result) => /^(cancelled|rejected)$/.test(String(result.new_status || result.to_status || '')));
   if (dead) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'skipped', why: 'cancelled' }); return { chit_id, outcome: 'skipped' }; }
   if (!done) return { chit_id, outcome: 'waiting' };
-  let inv; try { inv = await cb.invoice(chit_id); } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'failed', why: 'invoice read: ' + e.message }); return { chit_id, outcome: 'failed', why: e.message }; }
-  const p = purchaseOf(c, inv);
-  if (!p.items.length) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: 'no lines on the invoice' }); return { chit_id, outcome: 'skipped' }; }
+  let invoice; try { invoice = await cb.invoice(chit_id); } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'failed', why: 'invoice read: ' + e.message }); return { chit_id, outcome: 'failed', why: e.message }; }
+  const purchase = purchaseOf(chit, invoice);
+  if (!purchase.items.length) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(purchase), outcome: 'skipped', why: 'no lines on the invoice' }); return { chit_id, outcome: 'skipped' }; }
   try {
-    if (adapter.ensureSupplier) { const s = await adapter.ensureSupplier(p.seller); if (s && s.created) log('supplier ledger created: ' + s.created); }
-    if (adapter.ensureItems) { const it = await adapter.ensureItems(p.items); if (it && it.created && it.created.length) log('stock items created: ' + it.created.join(' · ')); }
-    const r = await adapter.pushPurchase(p);
-    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
-    const booked = r && r.input_tax != null ? Math.round(Number(r.input_tax) * 100) / 100 : null;
-    if (booked != null && Math.abs(booked - p.itc_claim) > 0.01) log('⚠ ITC arithmetic: the voucher books ' + booked + ' of input tax, our ledger says ' + p.itc_claim + ' for ' + chit_id.slice(0, 8));
-    receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null, itc: p.itc_claim, total: p.total });
-    await tellBooks(cb, 'purchase', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: 'completed by the seller' });
-    log('purchase ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '') + ' · ' + p.total + ' incl. ITC ' + p.itc_claim);
-    return { chit_id, outcome: 'ok', their_ref: r && r.ref, itc: p.itc_claim };
-  } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('purchase ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
+    if (adapter.ensureSupplier) { const supplierResult = await adapter.ensureSupplier(purchase.seller); if (supplierResult && supplierResult.created) log('supplier ledger created: ' + supplierResult.created); }
+    if (adapter.ensureItems) { const itemsResult = await adapter.ensureItems(purchase.items); if (itemsResult && itemsResult.created && itemsResult.created.length) log('stock items created: ' + itemsResult.created.join(' · ')); }
+    const result = await adapter.pushPurchase(purchase);
+    if (result && result.ref === 'dry-run') { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(purchase), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
+    const booked = result && result.input_tax != null ? Math.round(Number(result.input_tax) * 100) / 100 : null;
+    if (booked != null && Math.abs(booked - purchase.itc_claim) > 0.01) log('⚠ ITC arithmetic: the voucher books ' + booked + ' of input tax, our ledger says ' + purchase.itc_claim + ' for ' + chit_id.slice(0, 8));
+    receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(purchase), outcome: 'ok', their_ref: (result && result.ref) || null, itc: purchase.itc_claim, total: purchase.total });
+    await tellBooks(cb, 'purchase', chit_id, { system: adapter.name, ref: (result && result.ref) || null, outcome: 'ok', why: 'completed by the seller' });
+    log('purchase ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((result && result.ref) || '') + ' · ' + purchase.total + ' incl. ITC ' + purchase.itc_claim);
+    return { chit_id, outcome: 'ok', their_ref: result && result.ref, itc: purchase.itc_claim };
+  } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(purchase), outcome: 'failed', why: e.message }); log('purchase ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
 }
 /** every order I placed that the seller has completed (their act, on my copy's log) and I have not yet booked as a purchase */
 async function syncPurchases({ cb, adapter, receipts, log }) {
   const sent = await cb.sent(100);
-  const rows = (sent.chits || sent.rows || sent.items || (Array.isArray(sent) ? sent : [])).filter((r) => /^(order|offer)$/.test(String(r.purpose || '')) && !/^(cancelled|rejected)$/.test(String(r.current_status || r.status || '')));
+  const rows = (sent.chits || sent.rows || sent.items || (Array.isArray(sent) ? sent : [])).filter((result) => /^(order|offer)$/.test(String(result.purpose || '')) && !/^(cancelled|rejected)$/.test(String(result.current_status || result.status || '')));
   const out = [];
   for (const r of rows) {
     const id = r.chit_id || r.id; if (!id) continue;
@@ -351,11 +351,11 @@ async function syncPurchases({ cb, adapter, receipts, log }) {
 /** catch-up: every received order in the inbox without an ok receipt */
 async function catchUp({ cb, adapter, receipts, log }) {
   const inbox = await cb.inbox();
-  const rows = (inbox.chits || inbox.rows || inbox.items || (Array.isArray(inbox) ? inbox : [])).filter((r) => /^(order|offer)$/.test(String(r.purpose || '')));
+  const rows = (inbox.chits || inbox.rows || inbox.items || (Array.isArray(inbox) ? inbox : [])).filter((result) => /^(order|offer)$/.test(String(result.purpose || '')));
   const out = [];
   for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; out.push(await pushOrder({ cb, adapter, receipts, log, chit_id: id })); }
   /* payments recorded while we were away: every pushed order without a receipt receipt */
-  for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; const o = receipts.last('order', id); if (o && o.outcome === 'ok' && !receipts.last('receipt', id)) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: id }); } catch (e) { log('receipt catch-up: ' + e.message); } } }
+  for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; const orderReceipt = receipts.last('order', id); if (orderReceipt && orderReceipt.outcome === 'ok' && !receipts.last('receipt', id)) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: id }); } catch (e) { log('receipt catch-up: ' + e.message); } } }
   return out;
 }
 /** live: hold the push stream; on an arrival push that order; reconnect with backoff; the catch-up runs first */
@@ -367,39 +367,39 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
   /* ⭐ EVERY beat carries what the first one did (2026-09-07): whether the other system answered, and which streams this kit can carry —
      so a source that dies at 8pm shows on the screen, and a stream handed over in Settings is picked up here with nobody at the PC. */
   const beat = async () => {
-    const hb = await cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching',
+    const beatReply = await cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching',
                                     tally: cb.tally || {}, streams: cb.streams || undefined, source: cb.source || undefined });
-    if (hb && hb.policy) { if (cb.policy && cb.policy.books_at !== hb.policy.books_at) log('policy: orders go to the books at "' + hb.policy.books_at + '"'); cb.policy = hb.policy; }
-    if (hb && Array.isArray(hb.owns)) {
+    if (beatReply && beatReply.policy) { if (cb.policy && cb.policy.books_at !== beatReply.policy.books_at) log('policy: orders go to the books at "' + beatReply.policy.books_at + '"'); cb.policy = beatReply.policy; }
+    if (beatReply && Array.isArray(beatReply.owns)) {
       const before = (cb.owns || []).join(',');
-      cb.owns = hb.owns; cb.stream_owner = hb.stream_owner || {};
+      cb.owns = beatReply.owns; cb.stream_owner = beatReply.stream_owner || {};
       if (before !== cb.owns.join(',')) { cb._said = {}; log('carrying: ' + (cb.owns.join(' · ') || 'nothing — every stream belongs to another connector')); }
     }
-    return hb;
+    return beatReply;
   };
-  await beat(); const hb = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(hb));
+  await beat(); const timer = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(timer));
   let backoff = 3000;
   while (!(signal && signal.aborted)) {
     try {
-      const t = await cb.ticket();
-      const res = await fetch(cb.api + '/api/events/stream?t=' + encodeURIComponent(t.ticket), { signal });
+      const ticket = await cb.ticket();
+      const res = await fetch(cb.api + '/api/events/stream?t=' + encodeURIComponent(ticket.ticket), { signal });
       if (!res.ok || !res.body) throw new Error('stream ' + res.status);
       log('stream up'); backoff = 3000;
-      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = '';
       while (true) {
         const { value, done } = await reader.read(); if (done) break;
-        buf += dec.decode(value, { stream: true });
+        buf += decoder.decode(value, { stream: true });
         let i; while ((i = buf.indexOf('\n\n')) >= 0) {
           const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
-          const ev = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
-          if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d);
-            if (sells && (d.kind === 'chit' || d.kind === 'books' || d.kind === 'task') && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
+          const eventMatch = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
+          if (eventMatch && eventMatch[1] === 'cb' && data) { let payload = {}; try { payload = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(payload);
+            if (sells && (payload.kind === 'chit' || payload.kind === 'books' || payload.kind === 'task') && payload.id) await pushOrder({ cb, adapter, receipts, log, chit_id: payload.id });
             /* a bell without the chit id (an order composed by another shop rings `{kind:'chit', who}` only) → the inbox says which */
-            else if (sells && d.kind === 'chit') { try { await catchUp({ cb, adapter, receipts, log }); } catch (e) { log('catch-up on bell: ' + e.message); } }
+            else if (sells && payload.kind === 'chit') { try { await catchUp({ cb, adapter, receipts, log }); } catch (e) { log('catch-up on bell: ' + e.message); } }
             /* the seller marked it paid (or a gateway did): the Receipt voucher */
-            if (d.kind === 'paid' && d.id) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: d.id }); } catch (e) { log('receipt: ' + e.message); } }
+            if (payload.kind === 'paid' && payload.id) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: payload.id }); } catch (e) { log('receipt: ' + e.message); } }
             /* the storefront asked for fresh stock: read the source now, write the stamped figures */
-            if (d.kind === 'ask' && d.what === 'stock') { try { await syncStock({ cb, adapter, receipts, log, codes: d.codes }); } catch (e) { log('stock on demand: ' + e.message); } } }
+            if (payload.kind === 'ask' && payload.what === 'stock') { try { await syncStock({ cb, adapter, receipts, log, codes: payload.codes }); } catch (e) { log('stock on demand: ' + e.message); } } }
         }
       }
       log('stream closed');
@@ -408,7 +408,7 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
   }
 }
 
-function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, purchases_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'receipt') c.receipts_ok++; else if (r.kind === 'purchase') c.purchases_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
+function counts(receipts) { const chit = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, purchases_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') chit.products_ok++; else if (r.kind === 'receipt') chit.receipts_ok++; else if (r.kind === 'purchase') chit.purchases_ok++; else if (r.kind === 'order') chit.orders_ok++; else if (r.kind === 'stock') chit.stock_ok++; } else if (r.outcome === 'failed') chit.failed++; } return chit; }
 /**
  * ⭐⭐ A KIT KEEPS ITSELF CURRENT (2026-09-08). Athi: *"build the kit update path."*
  *
@@ -424,35 +424,35 @@ function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 
  * ⚠️ IT NEVER THROWS. The line being down, or a key that lost its approval, must look like "no update today", not like a crash.
  */
 async function kitUpdate({ cb, dir, log, live, staged }) {
-  const say = log || (() => {});
+  const logLine = log || (() => {});
   const want = { live: live || [], staged: staged || [] };
   const out = { version: null, updated: [], staged: [], checked: 0 };
-  let man = null;
-  try { man = await cb.call('GET', '/api/integrations/kit'); } catch (_) { return null; }
-  if (!man || !Array.isArray(man.files)) return null;
-  out.version = man.version || null;
-  const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
-  for (const f of man.files) {
+  let manifest = null;
+  try { manifest = await cb.call('GET', '/api/integrations/kit'); } catch (_) { return null; }
+  if (!manifest || !Array.isArray(manifest.files)) return null;
+  out.version = manifest.version || null;
+  const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
+  for (const f of manifest.files) {
     const wanted = want.live.indexOf(f.name) >= 0 ? 'live' : (want.staged.indexOf(f.name) >= 0 ? 'staged' : null);
     if (!wanted) continue;
     out.checked++;
     const here = path.join(dir, f.name);
     const target = wanted === 'live' ? here : here + '.new';
     try {
-      if (fs.existsSync(here) && sha(fs.readFileSync(here)) === f.sha256) {
+      if (fs.existsSync(here) && sha256(fs.readFileSync(here)) === f.sha256) {
         if (fs.existsSync(target) && target !== here) fs.unlinkSync(target);   /* it caught up another way; nothing is pending */
         continue;
       }
-      if (fs.existsSync(target) && target !== here && sha(fs.readFileSync(target)) === f.sha256) { out.staged.push(f.name); continue; }
-      const got = await cb.call('GET', '/api/integrations/kit/' + f.name);
-      const body = (got && typeof got.raw === 'string') ? got.raw : null;      /* a .js file is not JSON; CB.call hands it back as raw */
-      if (body === null) { say('update: ' + f.name + ' came back in a shape I do not understand — kept what is here'); continue; }
+      if (fs.existsSync(target) && target !== here && sha256(fs.readFileSync(target)) === f.sha256) { out.staged.push(f.name); continue; }
+      const fetched = await cb.call('GET', '/api/integrations/kit/' + f.name);
+      const body = (fetched && typeof fetched.raw === 'string') ? fetched.raw : null;      /* a .js file is not JSON; CB.call hands it back as raw */
+      if (body === null) { logLine('update: ' + f.name + ' came back in a shape I do not understand — kept what is here'); continue; }
       const buf = Buffer.from(body, 'utf8');
-      if (sha(buf) !== f.sha256) { say('update: ' + f.name + ' did not arrive whole — kept what is here'); continue; }
+      if (sha256(buf) !== f.sha256) { logLine('update: ' + f.name + ' did not arrive whole — kept what is here'); continue; }
       const tmp = target + '.tmp';
       fs.writeFileSync(tmp, buf); fs.renameSync(tmp, target);                  /* through a temp file: never half a file on disk */
       (wanted === 'live' ? out.updated : out.staged).push(f.name);
-    } catch (e) { say('update: ' + f.name + ' — ' + e.message); }
+    } catch (e) { logLine('update: ' + f.name + ' — ' + e.message); }
   }
   return out;
 }
