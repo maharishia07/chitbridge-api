@@ -5,7 +5,7 @@
  *           past filesize.baseline.json, a new file is at most 500 lines. The 1,000-line ceiling is the customer-facing list (--ceiling), reached by MNT-59.
  * CALLED BY scripts/guards.cjs (the offline gate, CI guards job — the web twin is checked out beside; locally C:/dev/chitbridge-web).
  * FLOW      find ../chitbridge-web/tools/readability/filesize.cjs ──▶ spawn it with --root <api> ──▶ print its report ──▶ FAIL on exit 1
- *           · skip with a warning when the web tool is not beside (the web PR lands first)
+ *           · a missing web tool FAILS when env CI is set; it only skips (locally) with a note
  * CARD      qa/readability-guard
  *
  * Judged where made: lib/ files whose line 1 is the ADOPTED header are engines copies (master chitbridge-engines); the baseline is reset only at a batch stamp:
@@ -28,11 +28,12 @@ const gate = fs.readFileSync(path.join(API, 'scripts/guards.cjs'), 'utf8');
 t('scripts/guards.cjs lists filesize-ratchet.test.cjs', /'filesize-ratchet\.test\.cjs'/.test(gate));
 t('filesize.baseline.json is committed', fs.existsSync(path.join(API, 'filesize.baseline.json')));
 
-if (!fs.existsSync(WEB_TOOL)) {
-  console.log('  skip  the web tool is not beside this checkout (' + path.relative(API, WEB_TOOL) + ') — the twin chitbridge-web branch or main must carry MNT-58');
-  console.log('::warning::file-size ratchet skipped — ../chitbridge-web/tools/readability/filesize.cjs not found (the web PR lands first)');
+if (!fs.existsSync(WEB_TOOL) && process.env.CI) {
+  t('the web tool is beside this checkout (CI: a missing tool is a FAIL, never a skip)', false, path.relative(API, WEB_TOOL) + ' not found: the twin chitbridge-web checkout must carry MNT-58');
+} else if (!fs.existsSync(WEB_TOOL)) {
+  console.log('  skip  the web tool is not beside this checkout (' + path.relative(API, WEB_TOOL) + ') — locally only; CI fails on this');
 } else {
-  const run = spawnSync(process.execPath, [WEB_TOOL, '--root', API], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 120000 });
+  const run = spawnSync(process.execPath, [WEB_TOOL, '--root', API, '--against', process.env.CB_READABILITY_BASE || 'origin/main'], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 120000 });
   const out = (run.stdout || '') + (run.stderr || '');
   console.log(out.split('\n').map((line) => '        ' + line).join('\n'));
   t('no file grew and no new file is over 500 lines (exit ' + run.status + ')', run.status === 0, 'see the FAIL lines above: split the file, or shrink it back to its baseline');
