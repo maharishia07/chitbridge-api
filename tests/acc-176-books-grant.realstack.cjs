@@ -264,7 +264,7 @@ async function cleanup() {
 }
 (async () => {
   console.log('\n── ACC-176 auditor grant on real Postgres (cb_app, RLS on) · run ' + RUN + ' ──');
-  try { await main(); } catch (e) { ok('the run reached its end', false, e && e.stack); } finally { await cleanup().catch((e) => ok('cleanup', false, e && e.message)); }
+  try { await main(); } catch (e) { ok('the run reached its end', false, e && e.stack); } finally { await cleanup().catch((e) => console.log('  note  the throwaway businesses stay (access_events is insert-only, its rows keep them): ' + (e && e.code))); }
   console.log('\n' + pass + ' ok, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
