@@ -118,6 +118,12 @@ function checkLegacy(check, label, answer, frozen) {
   check(label + ': no key beyond the frozen ones and the Problem fields', extra.length === 0, extra);
 }
 
+/** a 5xx answer: it names nothing of its cause (leak = the words that must not appear), and a frozen 5xx is replayed like a frozen 4xx (MNT-16: each sweep used to re-add this) */
+function checkServerError(check, label, answer, frozen, leak) {
+  check(label + ': a 5xx says nothing of its cause', !leak.test(answer.text), answer.text);
+  if (frozen) checkLegacy(check, label, answer, frozen);
+}
+
 /** the frozen answer of one scenario of one route, or undefined */
 const frozenOf = (legacyFile, route, scenario) =>
   (JSON.parse(fs.readFileSync(legacyFile, 'utf8')).routes[route] || { answers: [] }).answers.find((answer) => answer.scenario === scenario);
@@ -160,6 +166,7 @@ module.exports = {
   scenariosOf,
   checkProblemBody,
   checkLegacy,
+  checkServerError,
   frozenOf,
   freeze
 };
