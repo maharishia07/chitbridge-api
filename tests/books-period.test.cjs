@@ -409,8 +409,21 @@ function memoryRegister() {
   bill('as1', { bill: 'asset' });
   const w1 = await K.afterChit(CUST, 'as1', CUST);
   ok('REGISTER THERE, no kind chosen: it waits and asks "Which kind of asset…"', w1.queued && /Which kind of asset is bill B\/as1/.test(w1.why) && !ent('chit:as1').length, JSON.stringify(w1));
+  /* ACC-207: an asset line with NO assessable amount is an unknown cost — the bill waits for the owner's figure, never books 0 */
+  const entryFor0 = TC.entryFor;
+  TC.entryFor = async (copy, entity) => {
+    const found = await entryFor0.call(TC, copy, entity);
+    if (copy.chit_id === 'as9' && found && found.invoice) found.invoice.ItemList.forEach((item) => { delete item.AssAmt; });
+    return found;
+  };
+  bill('as9', { bill: 'asset', asset_class: 'computers', put_to_use: '2026-10-01' });
+  COPIES.as9.business_json.payment.parts = [{ how: 'On credit', amount: 18 }]; /* what the tax alone comes to, so the wait is about the cost, not a payment gap */
+  const w9 = await K.afterChit(CUST, 'as9', CUST);
+  TC.entryFor = entryFor0;
+  ok('ACC-207 — an asset line with no amount waits "What did … cost?", posts nothing, makes no register row (never a 0 cost)',
+    w9.queued && /What did ".*" cost\? Bill B\/as9/.test(w9.why) && !ent('chit:as9').length && !regRows().some((r) => r.source_chit_id === 'as9'), JSON.stringify(w9));
   bill('as2', { bill: 'asset', asset_class: 'computers', put_to_use: '2026-10-01' });
-  const w2 = await K.afterChit(CUST, 'as2', CUST);
+  const w2 =await K.afterChit(CUST, 'as2', CUST);
   const ae = ent('chit:as2')[0];
   const lines2 = ae ? X.T.lines.filter((l) => l.entry_id === ae.entry_id).map((l) => [l.code, l.dr_minor, l.cr_minor]) : [];
   eq('ACCEPT AS ASSET: purchase_bill with accept asset — Dr 1060 Computers 100 · Dr input GST 9 + 9 · Cr Creditors 118',
