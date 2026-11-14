@@ -4654,12 +4654,12 @@ var DB = (function(){
      * FAILS with a code and words, and the sale stops. A refused call must never become an empty answer.
      */
     if (!idbSeenBefore()) { MEM.on = true; return alt(); }
-    return again(what, fn, e);
+    return reopenOnce(what, fn, e);
   }); };
   /** reopen the database once (a connection closed under a backgrounded tab is the usual cause) and repeat the call; else refuse it in words */
-  function again(what, fn, first){
+  function reopenOnce(what, fn, first){
     var old = p; p = null;
-    if (old) old.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.again:1', e); });
+    if (old) old.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.reopenOnce:1', e); });
     return fn().catch(function(e2){
       lastErr = { at: Date.now(), op: what, why: ((e2 || first) && ((e2 || first).name || (e2 || first).message)) || 'the database refused' };
       var err = new Error(STORAGE_REFUSED); err.code = 'DB_REFUSED';
