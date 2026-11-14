@@ -212,7 +212,6 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
-  'bound-read.js',         // SEC-185: opens the shop's own binding for one identities read (a transaction helper, no rule of its own)
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
   'dispute-alert.js',
   'line-shape.js',
