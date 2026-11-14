@@ -32,8 +32,8 @@ const logger = require('../lib/logger');
  * Money in and out is *_minor (integer minor units) with the currency beside it.
  */
 const express = require('express');
-const router = express.Router();
-const auth = require('../middleware/books-auth'); /* ACC-176: the real sign-in, then a named grant (X-Books-For) turns it into a read-only auditor of the member; no header, no change */
+const router = express.Router(); router.use(require('../middleware/books-grant')); /* ACC-176: a request that names a member's books (X-Books-For) is read-only for a live grant; no header, no effect */
+const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const B = require('../lib/books');
 const E = require('../lib/books-engines');
@@ -127,8 +127,6 @@ function owner(req, res, next) {
   if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } });
   next();
 }
-/** GET /status is a read an auditor with a grant may make (ACC-176: is the ledger on, which country); the switch beside it (POST /enable) stays owner only */
-const ownerOrAuditor = (req, res, next) => (req.acting_for_grant ? next() : owner(req, res, next));
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -175,7 +173,7 @@ const onceOnly = require('../middleware/idempotency').requireKey();
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
-router.get('/status', auth, ownerOrAuditor, ...checked('GET /status'), async (req, res) => {
+router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) => {
   try {
     const e = ctx(req);
     /* ⭐ CS1: `country` says whether the books MAY open here — { books, code, why, required, country } — so the switch is greyed WITH its sentence */

@@ -14,17 +14,17 @@ of file each thing is; this says what already does the job.
 | 128 | `words` | `variant.browser.js` |  |
 | 127 | `read` | `books-cashflow.js` | Trips: |
 | 122 | `withEntity` | `books-hooks.js` |  |
-| 116 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 115 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 106 | `answer` | `availability.js` | from March; then nearest. |
-| 98 | `money` | `bill-privacy.js` |  |
+| 99 | `money` | `bill-privacy.js` |  |
 | 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 82 | `next` | `dayopen.js` | the next thing to do — |
-| 81 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 80 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 77 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 77 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 72 | `list` | `cap-settings.js` |  |
-| 72 | `register` | `regulation.js` | register(pack) → the pack — |
+| 71 | `register` | `regulation.js` | register(pack) → the pack — |
 | 70 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 68 | `entry` | `books-store.js` |  |
 | 67 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
@@ -54,7 +54,7 @@ of file each thing is; this says what already does the job.
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 48 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 47 | `read` | `cap-print.js` |  |
-| 47 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 46 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 46 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 44 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 44 | `facts` | `bill-steps.js` | MY state_log — |
@@ -156,7 +156,6 @@ of file each thing is; this says what already does the job.
 | 19 | `verify` | `bookpack.js` | manifest's own hash. |
 | 19 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 19 | `connectors` | `home-facts.js` | declare (said in words — |
-| 19 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 18 | `close` | `avatar.js` |  |
 | 18 | `step` | `cart.js` |  |
 | 18 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
@@ -168,6 +167,7 @@ of file each thing is; this says what already does the job.
 | 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 18 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `head` | `list-ctl.js` |  |
 | 17 | `label` | `screen-id.js` |  |

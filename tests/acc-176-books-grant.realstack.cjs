@@ -3,7 +3,7 @@
  * tests/acc-176-books-grant.realstack.cjs — ACC-176 (an auditor over a network, read-only books of member stores) on a REAL Postgres, as the role the api runs as (cb_app, RLS on).
  *
  * The critic's cases (docs/04-network/ACC-176-AUDITOR-GRANT.md section 4), the api half; case 13 is the web screen (cb-network). The real pieces: migration b863's tables and policies, lib/books-grant.js,
- * middleware/books-auth.js (the wrapped sign-in), routes/books-grants.js, the real network (src/services/network: ask, approve, suspend, resume, disconnect) and the real db layer (BEGIN READ ONLY).
+ * middleware/books-grant.js (the router-level front), routes/books-money.js, the real network (src/services/network: ask, approve, suspend, resume, disconnect) and the real db layer (BEGIN READ ONLY).
  * Only the sign-in is a stand-in (a header names who is calling) and the ledger routes are small stand-ins with the real names, reading and writing access_events (RLS by entity), because a seeded books ledger is
  * not what is under test. The classification of the REAL books router is tests/acc-176-grant-classification.test.cjs.
  * HAND-COMPUTED  parent P; members M1..M4 each approved under P (an active tree edge); every member holds 2 marker rows, P holds 1.
@@ -31,6 +31,7 @@ const API = path.join(__dirname, '..');
 /* the sign-in stand-in goes in BEFORE the real modules that load middleware/auth (the wrapped books auth and the grant routes read it) */
 const authPath = require.resolve(path.join(API, 'middleware', 'auth.js'));
 const fakeAuth = (req, res, next) => {
+  if (req.identity) return next(); /* the real auth re-enters on its DECIDED set and keeps the identity the front swapped in */
   try { req.identity = JSON.parse(String(req.headers['x-test-as'] || '')); } catch (_) { return res.status(401).json({ error: 'no test identity' }); }
   return next();
 };
@@ -40,7 +41,7 @@ require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, expo
 const net = require(path.join(API, 'src', 'services', 'network'));
 const { query, withEntity } = require(path.join(API, 'db'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
-const booksAuth = require(path.join(API, 'middleware', 'books-auth.js'));
+const booksGrant = require(path.join(API, 'middleware', 'books-grant.js'));
 const { isOwner } = require(path.join(API, 'lib', 'owner.js'));
 const access = require(path.join(API, 'lib', 'access.js'));
 
@@ -78,7 +79,8 @@ const addMarker = (entity, reason) => withEntity(entity, (h) => h.query(`INSERT 
 const count = (entity) => markerRows(entity).then((rows) => rows.length);
 function ledger() {
   const router = express.Router();
-  const auth = booksAuth;
+  const auth = fakeAuth; /* the books router: the grant front first (a router-level layer), each route keeps its own sign-in, which re-enters on the decision already made */
+  router.use(booksGrant);
   const read = async (req, res) => { const entity = fakeAuth.entityOf(req); res.json({ entity, rows: await markerRows(entity), owner: isOwner(req), may_write: access.mayWrite(req).may, level: access.levelOf(req.identity) }); };
   router.get('/daybook', auth, read);
   router.get('/trial-balance', auth, read);
@@ -111,7 +113,7 @@ const asked = {}; /* requests P made on each member's books that reached the loo
 const viaP = (P, member, method, route, opts) => { asked[member.id] = (asked[member.id] || 0) + 1; return call(ownerOf(P), method, '/api/books' + route, Object.assign({ member: member.id }, opts)); };
 const code = (r) => r.body && r.body.code;
 const grantBody = (P, extra) => Object.assign({ grantee: P.id, purpose: 'audit of the books', consent: true }, extra);
-const giveGrant = async (P, M, extra) => (await call(ownerOf(M), 'POST', '/api/books-grants', { body: grantBody(P, extra) }));
+const giveGrant = async (P, M, extra) => (await call(ownerOf(M), 'POST', '/api/books/grants', { body: grantBody(P, extra) }));
 const logRows = (M) => grants.looks(M.id, { limit: 200 });
 const eventsOf = (M) => withEntity(M.id, (h) => h.query(`SELECT action, before_value, after_value FROM access_events WHERE action LIKE 'books_grant_%' ORDER BY at, action`)).then((r) => r.rows);
 
@@ -125,7 +127,7 @@ async function main() {
   const app = express();
   app.use(express.json());
   app.use('/api/books', ledger());
-  app.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
+  app.use('/api/books', require(path.join(API, 'routes', 'books-money.js')));
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   base = 'http://127.0.0.1:' + server.address().port;
   try {
@@ -136,9 +138,9 @@ async function main() {
     ok('1 P without the header reads its own books only', r.status === 200 && JSON.stringify(r.body.rows) === '["Pown"]' && r.body.entity === P.id, JSON.stringify(r));
 
     /* 2 grant M1 only */
-    const consent = await call(ownerOf(M1), 'GET', '/api/books-grants/consent');
-    ok('the consent screen words list exactly what the guard allows, and say what an auditor cannot do', consent.status === 200 && consent.body.can_read.length === booksAuth.GRANT_READS.size && /phone numbers or bank details/.test(consent.body.cannot.join(' ')), JSON.stringify(consent));
-    const noConsent = await call(ownerOf(M1), 'POST', '/api/books-grants', { body: { grantee: P.id, purpose: 'audit', consent: false } });
+    const consent = await call(ownerOf(M1), 'GET', '/api/books/grants/consent');
+    ok('the consent screen words list exactly what the guard allows, and say what an auditor cannot do', consent.status === 200 && consent.body.can_read.length === booksGrant.GRANT_READS.size && /phone numbers or bank details/.test(consent.body.cannot.join(' ')), JSON.stringify(consent));
+    const noConsent = await call(ownerOf(M1), 'POST', '/api/books/grants', { body: { grantee: P.id, purpose: 'audit', consent: false } });
     ok('a grant without a yes to the consent is refused 422', noConsent.status === 422 && code(noConsent) === 'BOOKS_GRANT_CONSENT_NEEDED', JSON.stringify(noConsent));
     const made = await giveGrant(P, M1);
     ok('2 M1 gives the grant: 201, 12 months by default, the purpose kept', made.status === 201 && Math.abs(new Date(made.body.expires_at) - Date.now() - 12 * 30.4375 * 864e5) < 36e5 && made.body.purpose === 'audit of the books', JSON.stringify(made));
@@ -190,7 +192,7 @@ async function main() {
 
     /* 8 revoke, suspend, disconnect, expiry */
     const m1Grant = made.body.grant_id;
-    const revoked = await call(ownerOf(M1), 'POST', '/api/books-grants/' + m1Grant + '/revoke', { body: {} });
+    const revoked = await call(ownerOf(M1), 'POST', '/api/books/grants/' + m1Grant + '/revoke', { body: {} });
     r = await viaP(P, M1, 'GET', '/daybook');
     ok('8 revoke: M1 revokes and the very next request is refused BOOKS_GRANT_ENDED', revoked.status === 200 && r.status === 403 && code(r) === 'BOOKS_GRANT_ENDED', JSON.stringify([revoked.status, r]));
     await net.suspend(edge['2'], P.node);
@@ -209,16 +211,16 @@ async function main() {
     /* 9 who may grant and revoke */
     const m4 = await giveGrant(P, M4, { purpose: 'yearly audit by the practice' });
     const assist = staffOf(M4, {});
-    const byAssist = await call(assist, 'POST', '/api/books-grants/' + m4.body.grant_id + '/revoke', { body: {} });
-    const byAssistGive = await call(assist, 'POST', '/api/books-grants', { body: grantBody(P) });
+    const byAssist = await call(assist, 'POST', '/api/books/grants/' + m4.body.grant_id + '/revoke', { body: {} });
+    const byAssistGive = await call(assist, 'POST', '/api/books/grants', { body: grantBody(P) });
     ok('9 a co-assist of the member cannot grant or revoke: 403 OWNER_ONLY', byAssist.status === 403 && byAssistGive.status === 403 && code(byAssist) === 'OWNER_ONLY', JSON.stringify([byAssist, byAssistGive]));
-    const byParent = await call(ownerOf(P), 'POST', '/api/books-grants/' + m4.body.grant_id + '/revoke', { body: {} });
-    const byStranger = await call(ownerOf(S), 'POST', '/api/books-grants/' + m4.body.grant_id + '/revoke', { body: {} });
+    const byParent = await call(ownerOf(P), 'POST', '/api/books/grants/' + m4.body.grant_id + '/revoke', { body: {} });
+    const byStranger = await call(ownerOf(S), 'POST', '/api/books/grants/' + m4.body.grant_id + '/revoke', { body: {} });
     ok('9 the parent and a stranger cannot revoke the member\'s grant: 404', byParent.status === 404 && byStranger.status === 404, JSON.stringify([byParent, byStranger]));
-    const notParent = await call(ownerOf(M3), 'POST', '/api/books-grants', { body: grantBody(S) });
+    const notParent = await call(ownerOf(M3), 'POST', '/api/books/grants', { body: grantBody(S) });
     ok('9 a grant to a business that is not the network parent is 422', notParent.status === 422 && code(notParent) === 'BOOKS_GRANT_NO_PARENT', JSON.stringify(notParent));
-    const longer = await call(ownerOf(M4), 'PATCH', '/api/books-grants/' + m4.body.grant_id, { body: { expires_at: new Date(Date.now() + 90 * 864e5).toISOString() } });
-    const tooLong = await call(ownerOf(M4), 'PATCH', '/api/books-grants/' + m4.body.grant_id, { body: { expires_at: new Date(Date.now() + 5 * 365 * 864e5).toISOString() } });
+    const longer = await call(ownerOf(M4), 'PATCH', '/api/books/grants/' + m4.body.grant_id, { body: { expires_at: new Date(Date.now() + 90 * 864e5).toISOString() } });
+    const tooLong = await call(ownerOf(M4), 'PATCH', '/api/books/grants/' + m4.body.grant_id, { body: { expires_at: new Date(Date.now() + 5 * 365 * 864e5).toISOString() } });
     ok('9 the member edits the end date; more than 36 months is 422', longer.status === 200 && tooLong.status === 422 && code(tooLong) === 'BOOKS_GRANT_EXPIRY_INVALID', JSON.stringify([longer.status, tooLong]));
 
     /* 11 events, the log, fail closed */
@@ -226,7 +228,7 @@ async function main() {
     const noLogId = staffOf(P, AUDITOR, 'not-a-uuid');
     const failClosed = await call(noLogId, 'GET', '/api/books/daybook', { member: M4.id });
     ok('11 the log row cannot be written: the answer is 503 and carries no data', failClosed.status === 503 && code(failClosed) === 'BOOKS_GRANT_LOG_UNAVAILABLE' && !failClosed.body.rows, JSON.stringify(failClosed));
-    await call(ownerOf(M4), 'POST', '/api/books-grants/' + m4.body.grant_id + '/revoke', { body: {} });
+    await call(ownerOf(M4), 'POST', '/api/books/grants/' + m4.body.grant_id + '/revoke', { body: {} });
     const events = await eventsOf(M4);
     const actions = events.map((e) => e.action).sort().join(',');
     ok('11 grant, change and revoke each left an access_events row', actions === 'books_grant_changed,books_grant_given,books_grant_revoked', actions);
@@ -239,13 +241,13 @@ async function main() {
     ok('11 a log row holds the route and the query keys, never a figure', lookM1.every((x) => /^(GET|POST|PATCH|DELETE|PUT) \//.test(x.route_pattern)) && lookM1.some((x) => x.query_shape === 'entity'));
 
     /* 12 the member lists only its own looks */
-    const m2Looks = await call(ownerOf(M2), 'GET', '/api/books-grants/log');
-    const m1Looks = await call(ownerOf(M1), 'GET', '/api/books-grants/log');
-    const pLooks = await call(ownerOf(P), 'GET', '/api/books-grants/log');
+    const m2Looks = await call(ownerOf(M2), 'GET', '/api/books/grants/log');
+    const m1Looks = await call(ownerOf(M1), 'GET', '/api/books/grants/log');
+    const pLooks = await call(ownerOf(P), 'GET', '/api/books/grants/log');
     ok('12 the member reads its own log through the route; M2 sees M2\'s looks, M1 M1\'s, and P (the auditor) none of the members\'', m1Looks.status === 200 && m1Looks.body.looks.length === lookM1.length && m2Looks.body.looks.length === (await logRows(M2)).length && m2Looks.body.looks.length !== m1Looks.body.looks.length && pLooks.body.looks.length === 0, JSON.stringify([m1Looks.body.looks.length, m2Looks.body.looks.length, pLooks.body.looks.length]));
     const mixed = await withEntity(M2.id, (h) => h.query('SELECT count(*)::int AS n FROM books_access_log WHERE grantor_entity <> $1 AND grantee_entity <> $1', [M2.id]));
     ok('12 row security: M2 cannot see a log row that is neither about its books nor made by it', mixed.rows[0].n === 0, JSON.stringify(mixed.rows));
-    const received = await call(ownerOf(P), 'GET', '/api/books-grants');
+    const received = await call(ownerOf(P), 'GET', '/api/books/grants');
     ok('the parent lists the access it holds, each with its state', received.status === 200 && received.body.received.length === 4 && ['revoked', 'expired', 'edge_off'].every((word) => received.body.received.some((g) => g.state === word)), JSON.stringify(received.body.received && received.body.received.map((g) => g.state)));
     const noUpdate = await withEntity(P.id, (h) => h.query('UPDATE books_access_log SET status = 0')).then(() => 'updated', (e) => e.code);
     ok('the log is insert-only: no UPDATE privilege (42501)', noUpdate === '42501', noUpdate);
