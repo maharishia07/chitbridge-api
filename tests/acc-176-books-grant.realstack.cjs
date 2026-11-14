@@ -74,7 +74,7 @@ const newId = () => require('crypto').randomUUID();
 /* ── the stand-in ledger: the real route names, rows in access_events (RLS by entity) ── */
 const reached = { packs: 0 };
 const markerRows = (entity) => withEntity(entity, (h) => h.query(`SELECT reason FROM access_events WHERE action = 'created' ORDER BY reason`)).then((r) => r.rows.map((x) => x.reason));
-const addMarker = (entity, reason) => withEntity(entity, (h) => h.query(`INSERT INTO access_events (entity_id, subject_identity_id, action, reason) VALUES ($1, $2, 'created', $3)`, [entity, newId(), reason]));
+const addMarker = (entity, reason) => withEntity(entity, (h) => h.query(`INSERT INTO access_events (entity_id, subject_identity_id, action, reason) VALUES ($1, $2, 'created', $3)`, [entity, entity, reason]));
 const count = (entity) => markerRows(entity).then((rows) => rows.length);
 function ledger() {
   const router = express.Router();
