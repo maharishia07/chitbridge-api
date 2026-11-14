@@ -25,6 +25,7 @@ const GRANT_READS = new Set([
 ]);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */
 const GRANT_HELD_BACK = {
+  '/bank/log': 'this shop own bank-reconciliation marks and signed statements (FIN-70); open to an auditor only after cb-finance agrees',
   '/bank/rail': 'returns payment_advice and the party list (held until cb-country agrees)',
   '/status': 'owner only today; an auditor reads the ledger switch only after its gate is widened (the register line moves with it)',
   '/party/:id/statement': 'party names, phones, bank details (C6: only after cb-country confirms per country)',

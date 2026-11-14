@@ -95,7 +95,7 @@
  "routes/chits-trace.js": 3,
  "routes/connectors.js": 1,
  "routes/entities.js": 6,
- "routes/folders.js": 1,
+ "routes/folders-totals.js": 1,
  "routes/integrations.js": 2,
  "routes/invoice.js": 1,
  "routes/offers.js": 1,
