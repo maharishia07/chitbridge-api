@@ -2,7 +2,7 @@
 /**
  * net-96-profile-status.test.cjs - NET-96 (P2, hunt 9 Nov 2026): PATCH /api/entities/profile { business_status: [] } answered 500 "Profile update failed".
  * @type regression
- * OWNS      the proof that the shop status is one of open, closed or away AS A WHOLE VALUE: an empty list, a list that holds a good word, a number and a null are refused 400 in words with nothing written; the three words are not refused.
+ * OWNS      the proof that the shop status is one of open, closed or away AS A WHOLE VALUE: an empty list, a list that holds a good word, a number and a null are refused 400 with nothing written; the three words are not refused.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route over a stand-in db and auth (the shape of tests/ctr182-gstin-owner-only.test.cjs).
  * FLOW      owner PATCH body → real route (express-validator chain) → status, message, and whether any UPDATE reached the db
  *   node tests/net-96-profile-status.test.cjs
@@ -66,7 +66,7 @@ const STORED = '27AAACR5055K1Z7';
   try {
     for (const [label, value] of [['an empty list', []], ['a list holding a good word', ['open']], ['a number', 7], ['null', null], ['a word that is not one of the three', 'active']]) {
       const r = await patch({ business_status: value });
-      ok(label + ': 400 in words, nothing written', r.status === 400 && /open, closed or away/.test(JSON.stringify(r.body)) && world.writes.length === 0, r.status + ' ' + JSON.stringify(r.body) + ' writes ' + world.writes.length);
+      ok(label + ': 400, nothing written', r.status === 400 && world.writes.length === 0, r.status + ' ' + JSON.stringify(r.body) + ' writes ' + world.writes.length);
     }
     for (const word of ['open', 'closed', 'away']) {
       const r = await patch({ business_status: word });

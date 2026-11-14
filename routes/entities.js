@@ -990,7 +990,7 @@ router.patch(
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     /* NET-96: custom, not isIn - isIn reads an array one element at a time, so [] passed, reached the update as a truthy value and crashed it (500); the whole value must be one of the three words */
-    body('business_status').optional().custom((value) => ['open', 'closed', 'away'].includes(value)).withMessage('Shop status can be open, closed or away.'),
+    body('business_status').optional().custom((value) => ['open', 'closed', 'away'].includes(value)),
     /* ⭐ b177-era: the entity may CHOOSE a currency. Bounded below against what the constitution permits —
        an enum here would freeze the set, and the whole point is that the layer decides it. */
     body('currency_code').optional().trim().isLength({ min: 3, max: 3 }),
