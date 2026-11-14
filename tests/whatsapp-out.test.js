@@ -1,4 +1,5 @@
 'use strict';
+// CARD      docs/22-channels-capture-and-messaging/functions/outbound-whatsapp.md
 // Regression — OUTBOUND (b126). "Your order has been accepted", back on WhatsApp.
 //
 // ⚠️ WHY THIS IS A UNIT TEST AND NOT A LIVE PROOF. Inbound could be proven end-to-end against production because

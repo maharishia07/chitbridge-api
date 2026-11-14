@@ -1,4 +1,6 @@
 'use strict';
+// CARD      docs/04-network/functions/network-design-builder.md
+// CARD      docs/04-network/functions/network-lab.md
 /**
  * network-validate.test.cjs — P2: "what would break?" for a designed network. lib/network-build.validate wraps the SAME plan() Build runs;
  * it reads nothing live and posts nothing. The route (POST /api/network-design/validate) is held to the same words.
