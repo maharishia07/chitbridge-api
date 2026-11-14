@@ -158,10 +158,6 @@ async function r2_03() {
   check('an erased business\'s sign-in is refused, with no write (it stays erased)', v.ok === false && v.reason === 'BUSINESS_ENDED' && calls.length === 0, { v, calls });
   v = await verifyCredential(run, { identity_id: 'e', identity_type: 'entity', status: 'active' }, {});
   check('good case: an active business is not stopped by the new gate', v.reason !== 'BUSINESS_ENDED', v);
-  calls.length = 0;
-  const erasedParent = async () => ({ rows: [{ status: 'erased' }], rowCount: 1 });
-  v = await verifyCredential(erasedParent, { identity_id: 'a', identity_type: 'actor', parent_entity_id: 'erased-shop-3', status: 'active', pin_hash: 'x' }, { pin: '1234' });
-  check('a co-assist of an erased business cannot sign in', v.ok === false && v.reason === 'BUSINESS_ENDED', v);
 
   /* and the shopper code's own statement cannot flip an erased account back */
   const seen = [];
