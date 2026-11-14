@@ -696,6 +696,7 @@ const GUARDS = [
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
   'books-returns.test.cjs',
+  'acc-290a-needs-answer.test.cjs',
   'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
   'chit-currency-default.test.cjs',

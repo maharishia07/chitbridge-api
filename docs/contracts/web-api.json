@@ -2034,6 +2034,23 @@
      "Basis: non-cash (accrual): GST in the period of the invoice or the payment, whichever comes first"
     ],
     "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)",
+    "needs_answer": {
+     "kind": "unknown",
+     "role": "sales",
+     "count": 2,
+     "total_minor": 150000,
+     "currency": "AUD",
+     "kinds": [
+      "taxable",
+      "gst_free",
+      "input_taxed"
+     ],
+     "boxes": [
+      "G3"
+     ],
+     "ask": "Is this sale taxable, GST-free or input-taxed?",
+     "why": "A sale at 0% that names no kind stays on Sales (4000), so BAS G3 does not count it. We never assume GST-free: it is a list in the law, not a default."
+    },
     "needs": "stagger",
     "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
     "emirates": [
