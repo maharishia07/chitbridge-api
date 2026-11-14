@@ -65,6 +65,7 @@ async function business(tag, country, currency) {
 async function join(parent, member) {
   const asked = await net.requestConnect({ parentId: parent.node.id, childId: member.node.id }, parent.node);
   await net.approve({ edgeId: asked.id }, member.node);
+  return asked.id;
 }
 const ownerOf = (biz) => ({ identity_id: biz.id, bridge_id: biz.bridgeId, identity_type: 'entity', parent_entity_id: null, display_name: biz.name });
 /** a person of a business: a real identities row (the sign-in stand-in reads it every request) */
@@ -103,10 +104,13 @@ async function ledgerOn(M) {
 }
 
 async function main() {
-  const P = await business('p'); const M1 = await business('1'); const M2 = await business('2'); const S = await business('s');
-  for (const M of [M1, M2]) await join(P, M);
+  const P = await business('p'); const P2 = await business('q'); const M1 = await business('1'); const M2 = await business('2'); const M3 = await business('3'); const M4 = await business('4'); const S = await business('s');
+  for (const M of [M1, M2, M4]) await join(P, M);
+  const edge3 = await join(P, M3);
+  await join(P2, P); /* a second firm: the NETWORK ANCESTOR of P, so it too is a parent of every store under P */
   const A = await person(P, 'a', 'editor', true); const B = await person(P, 'b', 'editor', true); const C = await person(P, 'c', 'editor', false);
   const D = await person(P, 'd', 'editor', true); const U = await person(P, 'u', 'commenter', true); const Z = await person(S, 'z', 'editor', true);
+  const Z2 = await person(P2, 'z', 'editor', true); const Y2 = await person(P2, 'y', 'editor', true); const X2 = await person(P2, 'x', 'editor', true);
 
   const app = express();
   app.use(express.json());
@@ -116,7 +120,7 @@ async function main() {
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   base = 'http://127.0.0.1:' + server.address().port;
   try {
-    await ledgerOn(M1); await ledgerOn(M2);
+    await ledgerOn(M1); await ledgerOn(M2); await ledgerOn(M3); await ledgerOn(M4);
     const accounts = (await call(ownerOf(M1), 'GET', '/api/books/accounts')).body;
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
@@ -224,7 +228,7 @@ async function main() {
     const usdLines = await firm(A, M1, 'POST', '', journal('jusd2', { body: { narration: 'usd', date: day, lines: [{ code: cash, dr_minor: 100, currency: 'USD' }, { code: sales, cr_minor: 100, currency: 'USD' }] } }));
     ok('17 a foreign currency, named or on a line, is refused and nothing is stored', usd.status === 422 && code(usd) === 'CURRENCY_NOT_THE_LEDGERS' && usdLines.status >= 400 && usdLines.status < 500, JSON.stringify([usd, usdLines]));
     const m2Entry = await call(ownerOf(M2), 'POST', '/api/books/entries', { body: { narration: 'm2 ' + RUN, date: day, lines: [{ code: cash, dr_minor: 500 }, { code: sales, cr_minor: 500 }], client_ref: RUN + 'm2' } });
-    const foreign = await firm(A, M1, 'POST', '', { kind: 'reverse', body: { entry_id: m2Entry.body.entry_id, reason: 'not mine' } });
+    const foreign = await firm(A, M1, 'POST', '', { kind: 'reverse', client_ref: RUN + 'jforeign', body: { entry_id: m2Entry.body.entry_id, reason: 'not mine' } });
     ok('18 an entry of another store: 404 and nothing stored', m2Entry.status === 200 && foreign.status === 404, JSON.stringify([m2Entry.status, foreign]));
 
     /* 14 isolation M1, M2, M1 */
@@ -241,14 +245,14 @@ async function main() {
     const rows = periods.periods || periods.rows || periods || [];
     const open = (Array.isArray(rows) ? rows : []).find((r) => r.status === 'open' && Number(r.period) >= 1);
     if (open) {
-      const fy = open.fiscal_year || periods.fiscal_year; const lockBody = { kind: 'lock', body: { fy, period: Number(open.period) } };
+      const fy = open.fiscal_year || periods.fiscal_year; const lockBody = { kind: 'lock', client_ref: RUN + 'jlock0', body: { fy, period: Number(open.period) } };
       const lp = await firm(A, M1, 'POST', '', lockBody);
       const lr = await firm(B, M1, 'POST', '/' + lp.body.action_id + '/review', { body_hash: lp.body.body_hash });
       const la = await asOwner(M1, 'POST', '/' + lp.body.action_id + '/accept', { body_hash: lp.body.body_hash });
       const after = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;
       const nowRow = ((after.periods || after.rows || after) || []).find((r) => Number(r.period) === Number(open.period));
       ok('20 a lock: prepared, reviewed, accepted by the owner, then the month is soft locked through the existing writer', lp.status === 201 && lr.status === 200 && la.status === 200 && nowRow && /locked/.test(nowRow.status), JSON.stringify([lp.status, lr.status, la, nowRow]));
-    } else ok('20 (skipped: no open month in the periods answer)', true);
+    } else ok('20 an open month was found in the periods answer (a test that cannot find one fails, never skips)', false, JSON.stringify(periods).slice(0, 300));
 
     /* 15 the owner's log */
     const looks = await grants.looks(M1.id, { limit: 200 });
@@ -256,6 +260,80 @@ async function main() {
     ok('15 the owner\'s log reads the person\'s name, the firm\'s name and the role of each look', advLooks.length > 0 && advLooks.every((x) => x.actor_name === A.display_name && x.actor_entity_name === P.name) && looks.some((x) => x.preset === 'auditor'), JSON.stringify(advLooks.slice(0, 1)));
     const viaRoute = await call(ownerOf(M1), 'GET', '/api/books-grants/log');
     ok('15 the same through the member\'s log route', viaRoute.status === 200 && viaRoute.body.looks.some((x) => x.preset === 'adviser' && x.actor_name === A.display_name && x.actor_entity_name === P.name), JSON.stringify(viaRoute.body.looks && viaRoute.body.looks[0]));
+
+    /* ── the fix round, part 1: F1 two firms on one store, F7 named people, F3 date, F4 reference, F6 reverse, F10 totals, STORE_MISMATCH on every POST, the database itself ── */
+    const g2 = await giveGrant(P2, M1, { preset: 'adviser' });
+    ok('F1 a second firm (the store\'s network ancestor) is given its OWN adviser grant on M1', g2.status === 201 && g2.body.grant_id !== adviserGrant.body.grant_id, JSON.stringify(g2));
+    const f1 = await firm(A, M1, 'POST', '', journal('jf1'));
+    const z2Review = await firm(Z2, M1, 'POST', '/' + f1.body.action_id + '/review', { body_hash: f1.body.body_hash });
+    const z2Return = await firm(Z2, M1, 'POST', '/' + f1.body.action_id + '/return', { body_hash: f1.body.body_hash, reason: 'not your firm' });
+    const z2Get = await firm(Z2, M1, 'GET', '/' + f1.body.action_id);
+    const z2List = await firm(Z2, M1, 'GET', '?state=all');
+    ok('F1 a person of ANOTHER firm cannot review, return or even read the first firm\'s action: 404 for each, and its queue holds none of it', z2Review.status === 404 && z2Return.status === 404 && z2Get.status === 404 && z2List.status === 200 && z2List.body.actions.every((a) => a.grant_id === g2.body.grant_id), JSON.stringify([z2Review.status, z2Return.status, z2Get.status, z2List.body]));
+    const f1b = await firm(Y2, M1, 'POST', '', journal('jf1b'));
+    const aOnY2 = await firm(A, M1, 'POST', '/' + f1b.body.action_id + '/review', { body_hash: f1b.body.body_hash });
+    const z2Ok = await firm(Z2, M1, 'POST', '/' + f1b.body.action_id + '/review', { body_hash: f1b.body.body_hash });
+    ok('F1 inside the second firm the review works (stamped with ITS firm), and the first firm cannot review it', aOnY2.status === 404 && z2Ok.status === 200 && z2Ok.body.reviewed.firm === P2.name && z2Ok.body.prepared.firm === P2.name, JSON.stringify([aOnY2.status, z2Ok]));
+    const ownerSeesBoth = await asOwner(M1, 'GET', '?state=all&limit=100');
+    ok('F1 the owner sees the actions of both firms', ownerSeesBoth.status === 200 && ownerSeesBoth.body.actions.some((a) => a.grant_id === g2.body.grant_id) && ownerSeesBoth.body.actions.some((a) => a.grant_id === adviserGrant.body.grant_id), JSON.stringify(ownerSeesBoth.body.total));
+    const f1Accept = await asOwner(M1, 'POST', '/' + f1b.body.action_id + '/accept', { body_hash: f1b.body.body_hash, total_minor: 10000, currency: 'INR' });
+    const f1Entry = (await withEntity(M1.id, (h) => h.query('SELECT created_by, grant_id FROM journal_entry WHERE entity_id = $1 AND entry_id = $2', [M1.id, f1Accept.body.entry && f1Accept.body.entry.entry_id]))).rows[0] || {};
+    ok('F1 the second firm\'s entry carries ITS grant and its preparer', f1Accept.status === 200 && f1Entry.grant_id === g2.body.grant_id && f1Entry.created_by === Y2.identity_id, JSON.stringify([f1Accept.status, f1Entry]));
+
+    const f7 = await firm(A, M1, 'POST', '', journal('jf7'));
+    const f7Owner = await firm(ownerOf(P), M1, 'POST', '', journal('jf7b'));
+    const f7Review = await firm(ownerOf(P), M1, 'POST', '/' + f7.body.action_id + '/review', { body_hash: f7.body.body_hash });
+    const f7Return = await firm(ownerOf(P), M1, 'POST', '/' + f7.body.action_id + '/return', { body_hash: f7.body.body_hash, reason: 'owner sign-in' });
+    const f7Named = await firm(A, M1, 'POST', '/' + f7Owner.body.action_id + '/review', { body_hash: f7Owner.body.body_hash });
+    ok('F7 the firm\'s own sign-in is not a named person: it can prepare (201), never review or return (403 ACTION_REVIEWER_NOT_NAMED); a named person reviews its work', f7Owner.status === 201 && f7Review.status === 403 && code(f7Review) === 'ACTION_REVIEWER_NOT_NAMED' && f7Return.status === 403 && f7Named.status === 200, JSON.stringify([f7Owner.status, f7Review, f7Return.status, f7Named.status]));
+
+    const undated = await firm(A, M1, 'POST', '', journal('jundated', { body: { narration: 'no date', lines: [{ code: cash, dr_minor: 100 }, { code: sales, cr_minor: 100 }] } }));
+    ok('F3 a journal with no date is refused at prepare (it would post on the day of the accept)', undated.status === 422 && code(undated) === 'ACTION_BODY_INVALID' && /date/.test(undated.body.detail || ''), JSON.stringify(undated));
+    const noRef = await call(A, 'POST', '/api/books-actions', { member: M1.id, role: 'adviser', body: { store_id: M1.id, kind: 'journal', body: journal('x').body } });
+    const dbl1 = await firm(A, M1, 'POST', '', journal('jdbl'));
+    const dbl2 = await firm(A, M1, 'POST', '', journal('jdbl2', { body: journal('jdbl').body }));
+    ok('F4 no client_ref is refused (422), and the same content under a new reference while one is open is refused (409): a double press is never two actions', noRef.status === 422 && dbl1.status === 201 && dbl2.status === 409 && code(dbl2) === 'ACTION_REF_OPEN', JSON.stringify([noRef.status, dbl1.status, dbl2]));
+
+    const revPrep = await firm(A, M1, 'POST', '', { kind: 'reverse', client_ref: RUN + 'jrev', body: { entry_id: accepted.body.entry.entry_id, reason: 'posted twice' } });
+    ok('F6 a reversal of a manual journal carries the entry\'s own total and currency from prepare', revPrep.status === 201 && revPrep.body.total_minor === 10000 && revPrep.body.currency === 'INR', JSON.stringify(revPrep));
+    await firm(B, M1, 'POST', '/' + revPrep.body.action_id + '/review', { body_hash: revPrep.body.body_hash });
+    const revNoTotals = await asOwner(M1, 'POST', '/' + revPrep.body.action_id + '/accept', { body_hash: revPrep.body.body_hash });
+    const revWrong = await asOwner(M1, 'POST', '/' + revPrep.body.action_id + '/accept', { body_hash: revPrep.body.body_hash, total_minor: 9999, currency: 'INR' });
+    const revDone = await asOwner(M1, 'POST', '/' + revPrep.body.action_id + '/accept', { body_hash: revPrep.body.body_hash, total_minor: 10000, currency: 'INR' });
+    const reversals = await count(M1, 'SELECT count(*)::int AS n FROM journal_entry WHERE entity_id = $1 AND reverses_entry_id = $2', [M1.id, accepted.body.entry.entry_id]);
+    ok('F6 the owner must carry the total (422 without, 409 on a wrong one), then the existing reverser posts exactly one mirror entry', revNoTotals.status === 422 && code(revNoTotals) === 'ACTION_TOTAL_NEEDED' && revWrong.status === 409 && code(revWrong) === 'PREVIEW_TOTAL_DIFFERS' && revDone.status === 200 && reversals === 1, JSON.stringify([revNoTotals.status, revWrong.status, revDone, reversals]));
+    const revOfRev = await firm(A, M1, 'POST', '', { kind: 'reverse', client_ref: RUN + 'jrev2', body: { entry_id: revDone.body.entry.entry_id, reason: 'undo the undo' } });
+    ok('F6 an adviser reverses manual journals only: a reversal entry (or a sale, receipt, bill) is refused with a sentence', revOfRev.status === 422 && code(revOfRev) === 'ACTION_REVERSE_MANUAL_ONLY', JSON.stringify(revOfRev));
+    const rev2 = await firm(A, M1, 'POST', '', { kind: 'reverse', client_ref: RUN + 'jrev3', body: { entry_id: accepted.body.entry.entry_id, reason: 'again' } });
+    await firm(B, M1, 'POST', '/' + rev2.body.action_id + '/review', { body_hash: rev2.body.body_hash });
+    const rev2Done = await asOwner(M1, 'POST', '/' + rev2.body.action_id + '/accept', { body_hash: rev2.body.body_hash, total_minor: 10000, currency: 'INR' });
+    const rev2State = (await asOwner(M1, 'GET', '/' + rev2.body.action_id)).body;
+    ok('F6 a second reversal of the same entry: a `duplicate` at accept is a REFUSAL (409 ACTION_DUPLICATE), the action stays waiting', rev2Done.status === 409 && code(rev2Done) === 'ACTION_DUPLICATE' && rev2State.state === 'waiting_accept', JSON.stringify([rev2Done, rev2State.state]));
+
+    const f10 = await firm(A, M1, 'POST', '', journal('jf10'));
+    await firm(B, M1, 'POST', '/' + f10.body.action_id + '/review', { body_hash: f10.body.body_hash });
+    const f10None = await asOwner(M1, 'POST', '/' + f10.body.action_id + '/accept', { body_hash: f10.body.body_hash });
+    const f10Text = await asOwner(M1, 'POST', '/' + f10.body.action_id + '/accept', { body_hash: f10.body.body_hash, total_minor: 'ten thousand', currency: 'INR' });
+    const f10Nan = await asOwner(M1, 'POST', '/' + f10.body.action_id + '/accept', { body_hash: f10.body.body_hash, total_minor: 10000 });
+    ok('F10 an accept without a proper total and currency is a 422 sentence (never "NaN")', f10None.status === 422 && code(f10None) === 'ACTION_TOTAL_NEEDED' && f10Nan.status === 422 && !/NaN|undefined/.test(JSON.stringify(f10None.body)) && (f10Text.status === 422 || f10Text.status === 400), JSON.stringify([f10None, f10Text.status, f10Nan.status]));
+
+    const km = await firm(A, M1, 'POST', '', journal('jstale'));
+    const stepsK = await stepsOf(M1);
+    const kReview = await call(A, 'POST', '/api/books-actions/' + km.body.action_id + '/review', { member: M1.id, role: 'adviser', body: { store_id: M2.id, body_hash: km.body.body_hash } });
+    const kReturn = await call(B, 'POST', '/api/books-actions/' + km.body.action_id + '/return', { member: M1.id, role: 'adviser', body: { store_id: M2.id, body_hash: km.body.body_hash, reason: 'stale tab' } });
+    const kAccept = await call(ownerOf(M1), 'POST', '/api/books-actions/' + km.body.action_id + '/accept', { body: { store_id: M2.id, body_hash: km.body.body_hash, total_minor: 10000, currency: 'INR' } });
+    ok('STORE_MISMATCH on review, return and accept (not only prepare): 409 each, nothing stored', kReview.status === 409 && kReturn.status === 409 && kAccept.status === 409 && [kReview, kReturn, kAccept].every((r) => code(r) === 'STORE_MISMATCH') && (await stepsOf(M1)) === stepsK, JSON.stringify([kReview.status, kReturn.status, kAccept.status]));
+
+    /* the database itself, as the api role: row security, insert-only, one closing step */
+    const rowOf = (store, step, role, grantId, actionId) => ['INSERT INTO books_action_step (action_id, store, step, kind, body, body_hash, actor_identity_id, role, grant_id, reason) VALUES ($1, $2, $3, \'lock\', ' + (step === 'prepared' ? '\'{}\'::jsonb' : 'NULL') + ', \'h\', $4, $5, $6, \'a reason\')', [actionId, store, step, A.identity_id, role, grantId]];
+    const sqlCode = (scope, sql, params) => withEntity(scope, (h) => h.query(sql, params)).then(() => 'ok', (e) => e.code);
+    ok('DB a firm step that names another store than the session scope is refused by row security (42501)', (await sqlCode(M2.id, ...rowOf(M1.id, 'prepared', 'maker', adviserGrant.body.grant_id, newId()))) === '42501');
+    ok('DB a firm step that names an AUDITOR grant is refused (42501): the preset is asked of the grant row', (await sqlCode(M1.id, ...rowOf(M1.id, 'prepared', 'maker', auditorGrant.body.grant_id, newId()))) === '42501');
+    ok('DB the firm cannot write an `accepted` step with a firm role, nor the owner\'s role on a prepared step (42501)', (await sqlCode(M1.id, ...rowOf(M1.id, 'accepted', 'maker', adviserGrant.body.grant_id, newId()))) === '42501' && (await sqlCode(M1.id, ...rowOf(M1.id, 'prepared', 'owner', adviserGrant.body.grant_id, newId()))) === '42501');
+    ok('DB UPDATE and DELETE on the steps are refused for the api role (42501)', (await sqlCode(M1.id, 'UPDATE books_action_step SET reason = \'x\' WHERE store = $1', [M1.id])) === '42501' && (await sqlCode(M1.id, 'DELETE FROM books_action_step WHERE store = $1', [M1.id])) === '42501');
+    const lone = newId();
+    const loneOk = [await sqlCode(M1.id, ...rowOf(M1.id, 'prepared', 'maker', adviserGrant.body.grant_id, lone)), await sqlCode(M1.id, ...rowOf(M1.id, 'returned', 'owner', null, lone)), await sqlCode(M1.id, ...rowOf(M1.id, 'withdrawn', 'owner', null, lone))];
+    ok('DB an action has AT MOST ONE closing step: prepared, returned are accepted, a second closing step is refused by the unique index (23505)', loneOk[0] === 'ok' && loneOk[1] === 'ok' && loneOk[2] === '23505', JSON.stringify(loneOk));
 
     /* 13 revoke: the open action is withdrawn; the auditor grant is its own */
     const open3 = r3.body.action_id;
@@ -273,6 +351,85 @@ async function main() {
     const stepsBefore = await stepsOf(M2);
     const failClosed = await call(badLog, 'POST', '/api/books-actions', { member: M2.id, role: 'adviser', body: Object.assign({ store_id: M2.id }, journal('jlog')) });
     ok('21 the look cannot be logged: 503 and nothing stored', failClosed.status === 503 && (await stepsOf(M2)) === stepsBefore, JSON.stringify(failClosed));
+
+    /* ── the fix round, part 2: the written leg, expiry and the edge in flight, concurrency, a locked month at accept, unlock, lock and year close ── */
+    const entriesWith = (M, tag) => count(M, "SELECT count(*)::int AS n FROM journal_entry WHERE entity_id = $1 AND narration LIKE '%' || $2", [M.id, RUN + tag]);
+    const reviewed = async (who, reviewer, M, tag, extra) => {
+      const made = await firm(who, M, 'POST', '', journal(tag, extra));
+      const checked = await firm(reviewer, M, 'POST', '/' + made.body.action_id + '/review', { body_hash: made.body.body_hash });
+      return { made, checked, id: made.body.action_id, hash: made.body.body_hash };
+    };
+    const accept = (M, one, totals) => asOwner(M, 'POST', '/' + one.id + '/accept', Object.assign({ body_hash: one.hash }, totals === undefined ? { total_minor: 10000, currency: 'INR' } : totals));
+
+    /* the WRITTEN leg of PREVIEW_TOTAL_DIFFERS: the engine writes 10000 but the prepare was shown 10001 (a stand-in preview for that one prepare) */
+    const ledgerLib = require(path.join(API, 'lib', 'books.js'));
+    const realPreview = ledgerLib.previewEntry;
+    ledgerLib.previewEntry = async (...args) => { const seen = await realPreview(...args); seen.posted.totals.dr_minor += 1; return seen; };
+    const lied = await firm(Y2, M1, 'POST', '', journal('jwritten'));
+    ledgerLib.previewEntry = realPreview;
+    await firm(Z2, M1, 'POST', '/' + lied.body.action_id + '/review', { body_hash: lied.body.body_hash });
+    const writtenLeg = await asOwner(M1, 'POST', '/' + lied.body.action_id + '/accept', { body_hash: lied.body.body_hash, total_minor: 10001, currency: 'INR' });
+    ok('the WRITTEN leg: the carried total equals the prepared one but the books would write another: 409 PREVIEW_TOTAL_DIFFERS, everything rolled back, still waiting', lied.body.total_minor === 10001 && writtenLeg.status === 409 && code(writtenLeg) === 'PREVIEW_TOTAL_DIFFERS' && /what the books wrote/.test(writtenLeg.body.detail || '') && (await entriesWith(M1, 'jwritten')) === 0 && (await asOwner(M1, 'GET', '/' + lied.body.action_id)).body.state === 'waiting_accept', JSON.stringify([lied.body.total_minor, writtenLeg]));
+
+    /* expiry in flight (M2): the grant runs out between review and accept */
+    const exp = await reviewed(A, B, M2, 'jexp');
+    await grants.change(M2.id, M2.id, m2Grant.body.grant_id, { expires_at: new Date(Date.now() + 2500).toISOString() });
+    await new Promise((resolve) => setTimeout(resolve, 3200));
+    const expAccept = await accept(M2, exp);
+    const expPrepare = await firm(A, M2, 'POST', '', journal('jexp2'));
+    const expList = await asOwner(M2, 'GET', '?state=withdrawn');
+    ok('expiry in flight: the owner cannot accept (409 ACTION_ACCESS_ENDED), the firm cannot prepare (403), and the owner opening the queue closes it "withdrawn: grant expired"', exp.checked.status === 200 && expAccept.status === 409 && code(expAccept) === 'ACTION_ACCESS_ENDED' && expPrepare.status === 403 && expList.body.actions.some((a) => a.action_id === exp.id && a.closed.reason === 'withdrawn: grant expired') && (await entriesWith(M2, 'jexp')) === 0, JSON.stringify([expAccept.status, expPrepare.status, expList.body.actions && expList.body.actions.map((a) => a.closed)]));
+
+    /* the network edge in flight (M3): suspended, the owner cannot accept; resumed, the same action posts */
+    const m3Grant = await giveGrant(P, M3, { preset: 'adviser' });
+    const edgeAction = await reviewed(A, B, M3, 'jedge');
+    await net.suspend(edge3, P.node);
+    const edgeOff = await accept(M3, edgeAction);
+    const edgeList = await asOwner(M3, 'GET', '?state=open');
+    await net.resume(edge3, P.node);
+    const edgeOn = await accept(M3, edgeAction);
+    ok('the edge in flight: suspended, accept is refused 409 ACTION_ACCESS_ENDED and the queue says access_ended; resumed, the same reviewed action posts', edgeAction.checked.status === 200 && edgeOff.status === 409 && code(edgeOff) === 'ACTION_ACCESS_ENDED' && edgeList.body.actions.some((a) => a.action_id === edgeAction.id && a.access_ended === true) && edgeOn.status === 200, JSON.stringify([edgeOff.status, code(edgeOff), edgeOn.status]));
+
+    /* concurrency */
+    const twice = await reviewed(Y2, Z2, M1, 'jtwice');
+    const both = await Promise.all([accept(M1, twice), accept(M1, twice)]);
+    ok('concurrency: two accepts of one action at once: exactly one posts (200) and the other is refused (409); one entry', both.map((r) => r.status).sort().join() === '200,409' && (await entriesWith(M1, 'jtwice')) === 1, JSON.stringify(both.map((r) => [r.status, code(r)])));
+    const dual = await firm(Y2, M1, 'POST', '', journal('jdual'));
+    const checks = await Promise.all([Z2, X2].map((who) => firm(who, M1, 'POST', '/' + dual.body.action_id + '/review', { body_hash: dual.body.body_hash })));
+    const reviews = await count(M1, "SELECT count(*)::int AS n FROM books_action_step WHERE action_id = $1 AND step = 'reviewed'", [dual.body.action_id]);
+    ok('concurrency: two reviews at once: exactly one stands (200 and 409), one reviewed step', checks.map((r) => r.status).sort().join() === '200,409' && reviews === 1, JSON.stringify(checks.map((r) => [r.status, code(r)])));
+    const m4Grant = await giveGrant(P, M4, { preset: 'adviser' });
+    const race = await reviewed(A, B, M4, 'jrace');
+    const [raceAccept, raceRevoke] = await Promise.all([accept(M4, race), call(ownerOf(M4), 'POST', '/api/books-grants/' + m4Grant.body.grant_id + '/revoke', { body: {} })]);
+    const raceState = (await asOwner(M4, 'GET', '/' + race.id)).body;
+    const raceClosing = await count(M4, "SELECT count(*)::int AS n FROM books_action_step WHERE action_id = $1 AND step IN ('returned', 'accepted', 'withdrawn')", [race.id]);
+    const raceEntries = await entriesWith(M4, 'jrace');
+    ok('concurrency: an accept racing a revoke leaves EXACTLY ONE outcome: posted and accepted, or withdrawn with nothing posted, never both and never a post after the revoke', raceRevoke.status === 200 && raceClosing === 1 && ((raceState.state === 'accepted' && raceEntries === 1 && raceAccept.status === 200) || (raceState.state === 'withdrawn' && raceEntries === 0 && raceAccept.status === 409)), JSON.stringify([raceAccept.status, raceRevoke.status, raceState.state, raceClosing, raceEntries]));
+
+    /* a locked month at accept, then unlock, lock and year close through the same flow (the second firm) */
+    const periodsNow = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;
+    const todayRow = ((periodsNow.periods || periodsNow.rows || periodsNow) || []).find((row) => row.start_date <= day && day <= row.end_date && Number(row.period) >= 1);
+    ok('the periods answer holds the month of today (a test that cannot find it fails, never skips)', !!todayRow, JSON.stringify(periodsNow).slice(0, 300));
+    const fy = todayRow.fiscal_year; const periodNo = Number(todayRow.period);
+    const lockedAt = await reviewed(Y2, Z2, M1, 'jlocked');
+    const ownerLock = await call(ownerOf(M1), 'POST', '/api/books/periods/' + fy + '/' + periodNo + '/lock', { body: {} });
+    const lockedAccept = await accept(M1, lockedAt);
+    const stillWaiting = (await asOwner(M1, 'GET', '/' + lockedAt.id)).body;
+    ok('a month locked between review and accept: the accept is refused, rolled back (no entry, no accepted step), the action still waits', ownerLock.status === 200 && lockedAccept.status >= 400 && lockedAccept.status < 500 && (await entriesWith(M1, 'jlocked')) === 0 && stillWaiting.state === 'waiting_accept', JSON.stringify([ownerLock.status, lockedAccept.status, code(lockedAccept), stillWaiting.state]));
+    const unlock = await firm(Y2, M1, 'POST', '', { kind: 'unlock', client_ref: RUN + 'junlock', body: { fy, period: periodNo, reason: 'to post the reviewed journal' } });
+    await firm(Z2, M1, 'POST', '/' + unlock.body.action_id + '/review', { body_hash: unlock.body.body_hash });
+    const unlockDone = await asOwner(M1, 'POST', '/' + unlock.body.action_id + '/accept', { body_hash: unlock.body.body_hash });
+    const retry = await accept(M1, lockedAt);
+    ok('unlock: prepared, reviewed, accepted by the owner (the existing period writer), then the rolled-back journal posts', unlock.status === 201 && unlockDone.status === 200 && retry.status === 200 && (await entriesWith(M1, 'jlocked')) === 1, JSON.stringify([unlock.status, unlockDone.status, retry.status]));
+    const lockAction = await firm(Y2, M1, 'POST', '', { kind: 'lock', client_ref: RUN + 'jlock', body: { fy, period: periodNo } });
+    await firm(Z2, M1, 'POST', '/' + lockAction.body.action_id + '/review', { body_hash: lockAction.body.body_hash });
+    const lockDone = await asOwner(M1, 'POST', '/' + lockAction.body.action_id + '/accept', { body_hash: lockAction.body.body_hash });
+    const afterLock = ((await call(ownerOf(M1), 'GET', '/api/books/periods')).body.periods || []).find((row) => Number(row.period) === periodNo && row.fiscal_year === fy);
+    ok('lock: prepared, reviewed, accepted, then the month is soft locked; the change log carries the adviser grant', lockAction.status === 201 && lockDone.status === 200 && afterLock && /locked/.test(afterLock.status) && (await count(M1, "SELECT count(*)::int AS n FROM books_change_log WHERE entity_id = $1 AND table_name = 'fiscal_period' AND grant_id = $2", [M1.id, g2.body.grant_id])) >= 1, JSON.stringify([lockDone.status, afterLock]));
+    const close = await firm(Y2, M1, 'POST', '', { kind: 'year_close', client_ref: RUN + 'jclose', body: { fy } });
+    await firm(Z2, M1, 'POST', '/' + close.body.action_id + '/review', { body_hash: close.body.body_hash });
+    const closeTry = await asOwner(M1, 'POST', '/' + close.body.action_id + '/accept', { body_hash: close.body.body_hash });
+    ok('year close goes through the existing closer: an open year is refused in its own words (422 YEAR_CLOSE_REFUSED), nothing recorded as accepted, the action still waits', close.status === 201 && closeTry.status === 422 && code(closeTry) === 'YEAR_CLOSE_REFUSED' && (await asOwner(M1, 'GET', '/' + close.body.action_id)).body.state === 'waiting_accept', JSON.stringify([closeTry.status, code(closeTry)]));
   } finally {
     server.close();
   }

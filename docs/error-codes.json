@@ -128,6 +128,15 @@
    "since": "2026-11-14"
   },
   {
+   "code": "ACTION_REF_NEEDED",
+   "status": "422",
+   "title": "Reference needed",
+   "shopkeeper": "Give the action a reference, so that pressing Prepare twice cannot make two.",
+   "hint": "Add a reference.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "ACTION_REF_OPEN",
    "status": "409",
    "title": "Already waiting",
@@ -146,11 +155,38 @@
    "since": "2026-11-14"
   },
   {
+   "code": "ACTION_REVERSE_MANUAL_ONLY",
+   "status": "422",
+   "title": "Not for an adviser",
+   "shopkeeper": "An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner.",
+   "hint": "Ask the owner to reverse it.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REVIEWER_NOT_NAMED",
+   "status": "403",
+   "title": "A named person must review",
+   "shopkeeper": "A review needs a named person of the firm, not the firm's own sign-in.",
+   "hint": "Sign in as yourself.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "ACTION_SELF_REVIEW",
    "status": "403",
    "title": "A colleague must review",
    "shopkeeper": "You prepared this, so a colleague has to review it.",
    "hint": "Ask a colleague to review it.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_TOTAL_NEEDED",
+   "status": "422",
+   "title": "Total needed",
+   "shopkeeper": "Confirm the total and its currency as shown on the screen.",
+   "hint": "Confirm the total shown.",
    "owner_area": "network",
    "since": "2026-11-14"
   },

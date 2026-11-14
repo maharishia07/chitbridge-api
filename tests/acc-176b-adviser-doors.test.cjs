@@ -124,6 +124,23 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     }
   });
 
+  await t('a journal needs its date (an undated one would post on the day of the accept), and a reversal reads its entry id lower case', () => {
+    assert.throws(() => action.bodyOf('journal', { lines: [{ code: '1000', dr_minor: 1 }, { code: '4000', cr_minor: 1 }] }), (err) => err.code === 'ACTION_BODY_INVALID' && /date/.test(err.words));
+    assert.throws(() => action.bodyOf('journal', { date: '14 Nov', lines: [{ code: '1000', dr_minor: 1 }, { code: '4000', cr_minor: 1 }] }), (err) => err.code === 'ACTION_BODY_INVALID');
+    const good = action.bodyOf('journal', { date: '2026-11-14', narration: ' n ', lines: [{ code: '1000', dr_minor: 1 }, { code: '4000', cr_minor: 1 }] });
+    assert.strictEqual(good.date, '2026-11-14');
+    assert.strictEqual(good.narration, 'n');
+  });
+  await t('CORS: every header the grant front reads is allowed to a browser (a preflight for X-Books-Role would otherwise fail every adviser call)', () => {
+    const server = require('fs').readFileSync(path.join(API, 'server.js'), 'utf8');
+    const allowed = /allowedHeaders:\s*\[([^\]]*)\]/.exec(server);
+    assert.ok(allowed, 'server.js has an allowedHeaders list');
+    const names = allowed[1].split(',').map((item) => item.replace(/['"\s]/g, '').toLowerCase());
+    for (const header of [A.HEADER, A.ROLE_HEADER]) assert.ok(names.includes(String(header).toLowerCase()), header + ' is in allowedHeaders');
+  });
+  await t('a prepare needs a client_ref (the contract requires it) and every action door carries the store', () => {
+    assert.ok(actionContract.ROUTES['POST /'].required.includes('client_ref'));
+  });
   console.log(fail ? '\n' + fail + ' failed' : '\nall ok');
   process.exit(fail ? 1 : 0);
 })();

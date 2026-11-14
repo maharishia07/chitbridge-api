@@ -83,6 +83,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_DUPLICATE | 409 | Already posted | This was already posted. Nothing was posted again. | Check the day book. | network | 2026-11-14 |
 | ACTION_FIRM_ONLY | 403 | Adviser firm only | Only the adviser firm prepares and reviews. The owner accepts. | Sign in as the adviser firm. | network | 2026-11-14 |
 | ACTION_NOT_FOR_YOU | 403 | Not for you | Only the owner and the adviser firm work on these actions. | Sign in as the owner or the firm. | network | 2026-11-14 |
+| ACTION_REF_NEEDED | 422 | Reference needed | Give the action a reference, so that pressing Prepare twice cannot make two. | Add a reference. | network | 2026-11-14 |
+| ACTION_TOTAL_NEEDED | 422 | Total needed | Confirm the total and its currency as shown on the screen. | Confirm the total shown. | network | 2026-11-14 |
+| ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
+| ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
 | PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |

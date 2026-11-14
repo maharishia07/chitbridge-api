@@ -1424,3 +1424,18 @@ The firm's team PREPARES, a colleague REVIEWS, the owner ACCEPTS; the existing w
 | `GET /api/books-actions/:id` answer | `steps` | array · every step in order `{ step, role, identity_id, name, firm, reason, at }`. |
 | `POST /api/books-actions/:id/accept` answer | `action` · `entry` | the action as accepted, and `{ entry_id, entry_no }` of the entry the existing writer posted (created_by is the preparer, grant_id the adviser grant, source_ref `action:<action_id>`). |
 | `POST /api/books-grants` · `/:id/revoke` answers | `warnings` · `actions_withdrawn` | a new grant answers a `BOTH_ROLES_ONE_FIRM` warning when the firm already holds the other role; a revoke answers how many open actions it closed as "withdrawn: grant revoked". |
+
+### Stored columns of the adviser access (ACC-176b, migrations b865 and b866)
+
+| Where | Key | Meaning |
+|---|---|---|
+| `books_access_log` | `preset` | text · `auditor` or `adviser`: the role the look ran under, from the live grant row (null on a look made before b865, read as auditor). |
+| `books_access_log` | `actor_name` · `actor_entity_name` | text · the person's name and the firm's name, kept AT the look so the owner reads them without a read into another business's identities. |
+| `journal_entry` | `grant_id` | uuid · the adviser grant an entry was posted under (null for the owner's own entries); `created_by` is the real person who PREPARED it, `source_ref` is `action:<action_id>`. |
+| `books_change_log` | `grant_id` | uuid · the adviser grant a change (a lock, an unlock, a pack acknowledgement) was made under; `by` is the real person. |
+| `books_action_step` | `action_id` · `store` · `step` · `kind` | uuid · uuid · `prepared`, `reviewed`, `returned`, `accepted` or `withdrawn` · `journal`, `reverse`, `lock`, `unlock` or `year_close`. One row per step, never updated; the latest step is the status. |
+| `books_action_step` | `body` · `body_hash` | jsonb · text · the body is kept on the `prepared` step only; every step carries the hash of the body it saw, so a changed body is a new action. |
+| `books_action_step` | `total_minor` · `currency` | bigint minor units · ISO 4217 · the pair the preview showed (a journal) or the entry a reversal undoes; both set or both null (a lock, an unlock, a year close). |
+| `books_action_step` | `action_ref` | text · the preparer's reference (the API key is `client_ref`): one open action per reference and per body in a store. |
+| `books_action_step` | `actor_identity_id` · `actor_name` · `firm_name` · `role` | the real person, their name, the firm's name, and `maker`, `checker` or `owner`. |
+| `books_action_step` | `reason` · `grant_id` · `entry_id` · `at` | why a return or a withdrawal happened · the adviser grant the action works under · the entry the accept posted · when. |

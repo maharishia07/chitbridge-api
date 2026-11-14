@@ -112,7 +112,7 @@ const corsOptions = {
    */
   /* ⭐ X-Api-Key (2026-09-07): the counter page runs in a browser on the web origin and signs its calls with a till key, not a
      session. The very failure this comment block describes happened again on [TILL-01]'s first run — a bare 'Failed to fetch'. */
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id', 'X-Books-For'], // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id', 'X-Books-For', 'X-Books-Role'], // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
   credentials: true
 };
 /* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */

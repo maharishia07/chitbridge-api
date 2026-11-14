@@ -14,6 +14,7 @@ const { problem } = require('../lib/problem');
 const { refusalOf } = require('../lib/books-contract');
 const { isOwner } = require('../lib/owner');
 const ledger = require('../lib/books');
+const countrySetup = require('../lib/country-setup');
 const actions = require('../lib/books-action');
 const contract = require('../lib/books-actions-contract');
 
@@ -29,11 +30,14 @@ function noKey(req, res, next) {
   if (!req.api_key) return next();
   return refuse(req, res, 403, 'SIGN_IN_FOR_LEDGER', 'Sign in to work on the books.');
 }
-/** the ledger must be on (the same 404-quiet rule as the books router); the store's setting is read once for the composer */
+/** the ledger must be on and its country setup in order: the books router's own gate (country-setup.gate), so a shop that cannot post for itself cannot accept an adviser action either; the setting is read once for the composer */
 async function ledgerOn(req, res, next) {
   try {
     const store = storeOf(req);
-    const setting = await withEntity(store, (handle) => ledger.settingOf(handle, store));
+    const setting = await withEntity(store, async (handle) => {
+      await countrySetup.gate(handle, store);
+      return ledger.settingOf(handle, store);
+    });
     if (!setting || !setting.enabled) return refuse(req, res, 404, 'LEDGER_OFF', 'This shop has not switched the ledger on.');
     req.books = setting;
     return next();
@@ -63,7 +67,10 @@ function rightStore(req, res, next) {
   if (carried === String(storeOf(req)).toLowerCase()) return next();
   return refuse(req, res, 409, 'STORE_MISMATCH', 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.');
 }
-const firmActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name, firm_name: req.acting_firm_name, grant_id: req.acting_for_grant });
+/** the firm's person: the real caller (never the store's synthetic identity), the firm and the grant from the live look; `named` = a person's own sign-in (an actor of the firm), not the firm's owner sign-in */
+const firmActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name, firm_name: req.acting_firm_name, grant_id: req.acting_for_grant, named: !!req.realIdentity && req.realIdentity.identity_type === 'actor' });
+/** the caller of a queue or a read: the firm's person (tied to its grant) or the owner */
+const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req));
 const ownerActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name });
 /** one handler: run `work`, answer its result, or the refusal in words */
 const door = (status, work) => async (req, res) => {
@@ -74,8 +81,8 @@ const door = (status, work) => async (req, res) => {
   }
 };
 
-router.get('/', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('GET /'), door(200, (req) => actions.listActions(storeOf(req), req.query || {}, req.identity)));
-router.get('/:id', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('GET /:id'), door(200, (req) => actions.getAction(storeOf(req), req.params.id)));
+router.get('/', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('GET /'), door(200, (req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
+router.get('/:id', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('GET /:id'), door(200, (req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
 router.post('/', auth, noKey, ledgerOn, firmOnly, ...contract.checked('POST /'), rightStore, door(201, (req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
 router.post('/:id/review', auth, noKey, ledgerOn, firmOnly, ...contract.checked('POST /:id/review'), rightStore, door(200, (req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
 router.post('/:id/return', auth, noKey, ledgerOn, firmOrOwner, ...contract.checked('POST /:id/return'), rightStore, door(200, (req) => {
