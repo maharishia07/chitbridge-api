@@ -5,6 +5,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm'), assert = r
 const API = path.join(__dirname, '..');
 let page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
 const route = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
+const profile = fs.readFileSync(path.join(API, 'lib', 'profile.js'), 'utf8').replace(/\r\n/g, '\n');
 if (process.env.CTR158_MUTATE === '1') page = page.replace('    + slipFooterHTML(shop)\n', '    + \'<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>\'\n');
 const grab = (src, n) => new RegExp('(?:async )?function ' + n + '\\([\\s\\S]*?\\n}\\n').exec(src)[0];
 const slip = grab(page, 'slipHTML');
@@ -17,13 +18,13 @@ assert.ok(!/Billed on ChitBridge/.test(ctx.slipFooterHTML({ slip_footer: 'Come a
 assert.strictEqual(ctx.slipFooterHTML({ slip_footer: '' }), '', 'an unticked footer prints nothing');
 for (const none of [{}, { slip_footer: null }, null]) assert.ok(/Thank you · visit again/.test(ctx.slipFooterHTML(none)) && /Billed on ChitBridge/.test(ctx.slipFooterHTML(none)), "no saved footer must keep today's words");
 /* the route: vault 'signature' rows footer + order → string | '' | null */
-const mk = (vault) => new Function('require', 'log', grab(route, 'signatureRowsByTag') + grab(route, 'slipFooterOf') +'\nreturn slipFooterOf;')(() => ({ getVault: async () => vault }), { warn() {} });
+const mk = (vault) => () => new Function(grab(profile, 'signatureRowsByTag') + grab(profile, 'slipFooterOfVault') + '\nreturn slipFooterOfVault;')()(vault);
 const sig = (rows) => ({ sections: [{ type: 'signature', rows }] });
 (async () => {
-  assert.strictEqual(await mk(sig([{ tag: 'footer', value: ' Come   again ' }, { tag: 'order', value: 'trade_name,footer' }]))('e'), 'Come again');
-  assert.strictEqual(await mk(sig([{ tag: 'footer', value: 'Come again' }, { tag: 'order', value: 'trade_name' }]))('e'), '', 'unticked');
-  assert.strictEqual(await mk(sig([{ tag: 'order', value: 'trade_name,footer' }]))('e'), null, 'ticked with no words saved');
-  assert.strictEqual(await mk({ sections: [] })('e'), null);
+  assert.strictEqual(await mk(sig([{ tag: 'footer', value: ' Come   again ' }, { tag: 'order', value: 'trade_name,footer' }]))(), 'Come again');
+  assert.strictEqual(await mk(sig([{ tag: 'footer', value: 'Come again' }, { tag: 'order', value: 'trade_name' }]))(), '', 'unticked');
+  assert.strictEqual(await mk(sig([{ tag: 'order', value: 'trade_name,footer' }]))(), null, 'ticked with no words saved');
+  assert.strictEqual(await mk({ sections: [] })(), null);
   assert.ok(/slip_footer: slipFooter,/.test(route), 'the snapshot shop block does not carry slip_footer');
   console.log('till-s4-ctr158-footer ok · 9 checks');
 })().catch((e) => { console.error(e.message); process.exit(1); });
