@@ -57,9 +57,9 @@ ok('only the counter\'s invoice is checked against the server (only it was compu
 });
 ok('the books read a carried invoice as it is and never recompute it', () => {
   const entry = fnBody(copy, 'async function entryFor(');
-  assert.ok(/const frozen = bj\.invoice/.test(entry) && /frozen\s*\n?\s*\? \{ invoice: frozen/.test(entry), 'entryFor must post the carried invoice');
+  assert.ok(/const frozen = business\.invoice/.test(entry) && /frozen\s*\n?\s*\? \{ invoice: frozen/.test(entry), 'entryFor must post the carried invoice');
   const freeze = fnBody(copy, 'async function freezeOnComplete(');
-  assert.ok(/if \(hdr\.business_json && hdr\.business_json\.invoice\) return hdr\.business_json\.invoice/.test(freeze), 'a carried invoice is never re-stamped');
+  assert.ok(/if \(header\.business_json && header\.business_json\.invoice\) return header\.business_json\.invoice/.test(freeze), 'a carried invoice is never re-stamped');
 });
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
