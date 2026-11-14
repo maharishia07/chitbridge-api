@@ -286,8 +286,18 @@ const readLines = (f) => { try { return fs.readFileSync(f, 'utf8').split('\n').f
 /** the queue file as lines: the exact text of each line beside what it parses to (null for a torn line, which is kept, never dropped) */
 function readQueueEntries() {
   let text = '';
-  try { text = fs.readFileSync(F.queue, 'utf8'); } catch (_) { return []; }
-  return text.split('\n').filter(Boolean).map((raw) => { let row = null; try { row = JSON.parse(raw); } catch (_) { row = null; } return { raw: raw, row: row }; });
+  try { text = fs.readFileSync(F.queue, 'utf8'); }
+  catch (e) { if (e.code !== 'ENOENT') log('queue: the queue file cannot be read (' + e.message + ')'); return []; }
+  return text.split('\n').filter(Boolean).map((raw) => ({ raw: raw, row: parseQueueLine(raw) }));
+}
+/** the row a queue line holds, or null for a torn line — which stays in the file (said once per line) and is never sent */
+const TORN_SAID = new Set();
+function parseQueueLine(raw) {
+  try { return JSON.parse(raw); }
+  catch (e) {
+    if (!TORN_SAID.has(raw)) { TORN_SAID.add(raw); log('queue: a line that is not readable was kept, not sent: ' + raw.slice(0, 60)); }
+    return null;
+  }
 }
 /**
  * ⭐ T4-02 (Fable risk 4): the send pass reads the queue, awaits the network once per row, and used to write back ONLY the
@@ -496,6 +506,30 @@ async function refresh() {
  * catch below already handles. The `finally` and the watchdog mean that whatever a deadline cannot cover — a
  * bug in here, an await that resolves never for some other reason — costs one cycle rather than the day's takings.
  */
+/**
+ * ⭐⭐ THE POINTS RIDE THE SAME QUEUE AS THE BILL THEY CAME FROM (2026-09-10). A counter that was offline
+ * when it sold has already told the customer what they earned; this is what makes that true afterwards.
+ * ⚠️ ONE QUEUE, NOT TWO — the bill and its points cannot end up on different sides of an outage, and the
+ * server's unique index on (entity, ref, why, holder) means posting again after a successful counter post
+ * is a no-op rather than a second award.
+ * ⚠️ AND IT NEVER HOLDS THE BILL BACK. The sale is recorded before this is called; if the points post fails, that is a line
+ * in the log, not a bill sent round again — sending it again would be safe but pointless, and the shop
+ * would learn nothing from a queue that never empties.
+ * (Lifted out of drain() whole, so the send loop stays short; nothing about it changed.)
+ */
+async function postPointsFor(bill) {
+  if (!(bill.reward && bill.reward.holder)) return;
+  try {
+    const rw = await cb.call('POST', '/api/till/reward', {
+      ref: bill.no, holder: bill.reward.holder, spend: bill.reward.spend || 0,
+      net: bill.total, gross: (bill.total || 0) + (bill.saved || 0),
+      count: (bill.lines || []).length,
+      lines: (bill.lines || []).map((l) => ({ item_id: l.item_id, qty: l.qty, net: l.net, category: l.category })),
+    }, undefined, { 'Idempotency-Key': 'till-reward:' + bill.no + ':agent' }); /* idem3: the points write takes one key per bill */
+    if (rw && (rw.added || rw.spent)) log('  points ' + (rw.added ? '+' + rw.added : '') + (rw.spent ? ' −' + rw.spent : '')
+      + ' → ' + rw.points + ' held');
+  } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
+}
 let draining = false, drainAt = 0;
 async function drain() {
   if (draining) {
@@ -562,28 +596,7 @@ async function drain() {
         const r = await cb.call('POST', '/api/chits/send', chitOf(bill));
         const id = r && (r.chit_id || (r.chit && r.chit.chit_id));
         log('bill ' + bill.no + ' → ' + (r && r.duplicate ? 'already recorded' : 'recorded') + (id ? ' (' + String(id).slice(0, 8) + ')' : ''));
-        /**
-         * ⭐⭐ THE POINTS RIDE THE SAME QUEUE AS THE BILL THEY CAME FROM (2026-09-10). A counter that was offline
-         * when it sold has already told the customer what they earned; this is what makes that true afterwards.
-         * ⚠️ ONE QUEUE, NOT TWO — the bill and its points cannot end up on different sides of an outage, and the
-         * server's unique index on (entity, ref, why, holder) means posting again after a successful counter post
-         * is a no-op rather than a second award.
-         * ⚠️ AND IT NEVER HOLDS THE BILL BACK. The sale is recorded above; if the points post fails, that is a line
-         * in the log, not a bill sent round again — sending it again would be safe but pointless, and the shop
-         * would learn nothing from a queue that never empties.
-         */
-        if (bill.reward && bill.reward.holder) {
-          try {
-            const rw = await cb.call('POST', '/api/till/reward', {
-              ref: bill.no, holder: bill.reward.holder, spend: bill.reward.spend || 0,
-              net: bill.total, gross: (bill.total || 0) + (bill.saved || 0),
-              count: (bill.lines || []).length,
-              lines: (bill.lines || []).map((l) => ({ item_id: l.item_id, qty: l.qty, net: l.net, category: l.category })),
-            }, undefined, { 'Idempotency-Key': 'till-reward:' + bill.no + ':agent' }); /* idem3: the points write takes one key per bill */
-            if (rw && (rw.added || rw.spent)) log('  points ' + (rw.added ? '+' + rw.added : '') + (rw.spent ? ' −' + rw.spent : '')
-              + ' → ' + rw.points + ' held');
-          } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
-        }
+        await postPointsFor(bill);
         online = true;
         QUEUE_SAID = false; QUEUE_WHY = null;   /* ⭐ it worked — say it again if it stops working */
       } catch (e) {

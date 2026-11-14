@@ -4643,8 +4643,9 @@ var DB = (function(){
    * shop billing, which is right; doing it without a word is what made "the IndexedDB got stuck somewhere I
    * guess" the best anyone could say.
    */
-  var fall = function(what, fn, alt){ return fn().catch(function(e){
-    lastErr = { at: Date.now(), op: what, why: (e && (e.name || e.message)) || 'the database refused' };
+  var refusedBecause = function(e){ return (e && (e.name || e.message)) || 'the database refused'; };
+  var fall = function(what, fn, smallStore){ return fn().catch(function(e){
+    lastErr = { at: Date.now(), op: what, why: refusedBecause(e) };
     /**
      * ⭐⭐ T4-03 (Fable risk 4) — THE SMALLER STORE IS NOT A SPARE. One decision per page load, never one per call. A device that has
      * NEVER given this counter a database (a private window, a locked-down browser) bills from the small store for the whole load: it
@@ -4653,7 +4654,7 @@ var DB = (function(){
      * bill over an earlier one. So a refusal after that reopens the database once and asks again; if it still refuses, the call
      * FAILS with a code and words, and the sale stops. A refused call must never become an empty answer.
      */
-    if (!idbSeenBefore()) { MEM.on = true; return alt(); }
+    if (!idbSeenBefore()) { MEM.on = true; return smallStore(); }
     return reopenOnce(what, fn, e);
   }); };
   /** reopen the database once (a connection closed under a backgrounded tab is the usual cause) and repeat the call; else refuse it in words */
@@ -4661,7 +4662,7 @@ var DB = (function(){
     var old = p; p = null;
     if (old) old.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.reopenOnce:1', e); });
     return fn().catch(function(e2){
-      lastErr = { at: Date.now(), op: what, why: ((e2 || first) && ((e2 || first).name || (e2 || first).message)) || 'the database refused' };
+      lastErr = { at: Date.now(), op: what, why: refusedBecause(e2 || first) };
       var err = new Error(STORAGE_REFUSED); err.code = 'DB_REFUSED';
       throw err;
     });
@@ -21406,7 +21407,7 @@ function paintTotals(){
     /* ⭐ THE FOOTNOTE, BELOW THE TOTAL — where a footnote belongs, and where it cannot push the figure a
        shopkeeper is reading off the bottom of the panel. Only when the sum was too long to sit inline. */
     + (SAVED_FOOTNOTE ? '<div class="t note" data-testid="till-saved-note">* ' + esc(SAVED_FOOTNOTE) + '</div>' : '');
-  var b = document.getElementById('save'); if (b) b.disabled = !CART.length || finish.running();   /* T4-01: never re-armed under a save that is running */
+  paintSaving(finish.running());   /* T4-01: the Save button is never re-armed under a save that is running */
   /* ⚠️ the sentence names an AMOUNT, so it changes when the total does — not only when a button is pressed */
   paintPays();
   /* ⭐ and what this bill earns depends on what is on it, so the points line follows the total too */
@@ -21760,8 +21761,7 @@ async function orderSettle(o){
     /* ⭐ ORD-FIX O5: settled ONLY when finish() saved the bill. It gives up by returning (20 still to take, credit refused, save failed, day
        closed) - the table then goes back to open, as for a thrown error, and carries no bill number it never had. */
     var done = await finish();
-    if (done && done.busy) toastLine('The last bill is still being saved.');   /* T4-01: another save owns the counter; this table stays as it is */
-    else if (done && done.ok) await floorDo({ do: 'settled', id: o.id, bill: done.bill || null });
+    if (done && done.ok) await floorDo({ do: 'settled', id: o.id, bill: done.bill || null });
     else { await floorDo({ do: 'reopen', id: o.id }); toastLine('That ' + says('subject') + ' was not billed - it is open again.'); }
   } catch (e) {
     await floorDo({ do: 'reopen', id: o.id });
@@ -22245,16 +22245,23 @@ async function finish(){
  * ⚠️ The wrap sits BELOW each function and replaces its name, so every caller (the button, F9, the order pad) goes through it
  * and finish() itself stays the plain function the source-pinned tests read.
  */
-function singleFlight(run, paintBusy){
+function singleFlight(action, paintBusy){
   var running = false;
   var guarded = async function(){
     if (running) return { ok: false, busy: true };
     running = true; paintBusy(true);
-    try { return await run.apply(this, arguments); }
+    try { return await action.apply(this, arguments); }
     finally { running = false; paintBusy(false); }
   };
   guarded.running = function(){ return running; };
   return guarded;
+}
+/** F9 confirms whatever the screen is making: a bill, a goods receipt or a despatch note. A held key is ONE press (T4-01), so key repeats do nothing. */
+function confirmOnF9(e){
+  if (e.repeat) return;
+  if (MODE === 'receive') rcvConfirm();
+  else if (MODE === 'despatch') dspConfirm();
+  else finish();
 }
 /** the Save button: greyed while a bill is being saved, and (as always) while there is nothing on the bill */
 function paintSaving(busy){
@@ -29164,7 +29171,7 @@ document.addEventListener('keydown', function(e){
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
   if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
-  if (e.key === 'F9'){ if (!e.repeat) (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }   /* T4-01: a held key is one press */
+  if (e.key === 'F9'){ confirmOnF9(e); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F8' && MODE !== 'despatch'){ openBills(); e.preventDefault(); }   /* M127: bills are not a Sell-only thing (F8 packs the next carton in Despatch) */
   if (e.key === 'F7'){ whoAct(); e.preventDefault(); }
