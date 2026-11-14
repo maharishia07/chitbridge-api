@@ -23805,7 +23805,7 @@ function slipBuyerHTML(bill, t){
   var g = bill.customer && bill.customer.gstin, row = g ? t('Buyer ' + taxIdLabel(), esc(g)) : '';
   return bill.kind === 'supply' ? row : row + slipNoBuyerHTML(bill);
 }
-/** ⭐ CTR-166: the bills that name their buyer: a tax invoice, and a BILL OF SUPPLY when the buyer is registered (CGST Rules r.49(1) lists the recipient's GSTIN); the no-buyer sentence below is a tax invoice's alone */
+/** ⭐ CTR-166: the bills that name their buyer: a tax invoice, and a BILL OF SUPPLY when the buyer is registered (CGST Rules r.49(d): name, address and GSTIN or UIN, if registered, of the recipient); the no-buyer sentence below is a tax invoice's alone */
 function slipBuyerKind(kind){ return kind === 'tax' || kind === 'supply'; }
 /** why a bill saved without a named buyer above the pack's line is not a tax invoice */
 function slipNoBuyerHTML(bill){
