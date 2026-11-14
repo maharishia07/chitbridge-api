@@ -28,7 +28,7 @@ function answer(req, res, err) {
   return problem(req, res, { status: 500, code: 'INTERNAL', detail: 'Something went wrong on our side. Nothing was changed.', legacy: { error: 'Failed', message: 'Something went wrong on our side. Nothing was changed.' } });
 }
 
-router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false')));
+router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false', req.query.preset)));
 
 router.get('/', auth, noKey, memberOnly, ...contract.checked('GET /'), async (req, res) => {
   try {

@@ -373,6 +373,24 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "registered_only": true,
+      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the queue is 3 reads in one transaction: the ledger switch, the page of first steps with the count, the steps of that page (ACC-176b, to measure on a SIT box)"
+    },
+    "GET /api/books-actions/:id": {
+      "file": "books-actions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "registered_only": true,
+      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: one read of the action steps and one of the grant clock (ACC-176b, to measure on a SIT box)"
+    },
     "GET /api/books/accounts": {
       "file": "books.js",
       "trips": 4,
@@ -2611,6 +2629,42 @@
       "fired": true,
       "status": 404,
       "extra": true
+    },
+    "POST /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "registered_only": true,
+      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the open-ref check, the server preview, the first step (ACC-176b, to measure on a SIT box)"
+    },
+    "POST /api/books-actions/:id/review": {
+      "file": "books-actions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "registered_only": true,
+      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the steps, the review step (ACC-176b, to measure on a SIT box)"
+    },
+    "POST /api/books-actions/:id/return": {
+      "file": "books-actions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "registered_only": true,
+      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the steps, the return step (ACC-176b, to measure on a SIT box)"
+    },
+    "POST /api/books-actions/:id/accept": {
+      "file": "books-actions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "registered_only": true,
+      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the steps, the existing writer, the written total read back, the accepted step (ACC-176b, to measure on a SIT box)"
     },
     "POST /api/books/accounts": {
       "file": "books.js",
