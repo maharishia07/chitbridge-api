@@ -160,7 +160,7 @@ const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { r
       await undo(`DELETE FROM entity_schemas WHERE entity_id = ANY('{${shops.join(',')}}'::uuid[])`);
       await undo(`DELETE FROM identities WHERE identity_id = ANY('{${shops.join(',')}}'::uuid[])`);
     }
-    await undo('DROP FUNCTION IF EXISTS ops.shop_has_catalogue(uuid); DROP FUNCTION IF EXISTS ops.shop_default_schema(uuid)');
+    await undo(B861); /* the doors stay: later CI steps (CAT-316, order/confirm) call them; the policies are off again, so they are harmless alone */
     await owner.end();
     try { await require('../db').pool.end(); } catch (_) {}
   }
