@@ -79,7 +79,10 @@ async function numberParty(owner, party_id) {
 }
 
 /** CRM-45: the party answer of a PATCH names EVERY field saved - the route's own (segment_override, nickname, notes ...) first, then the party fields partyPatch saved - one shape: party.changed */
-const partyAnswer = (party, routeFields) => Object.assign({}, party, { changed: routeFields.concat((party && party.changed) || []) });
+async function partyAnswer(owner, party, routeFields, partyId) {
+  const changed = routeFields.concat((party && party.changed) || []);
+  return party && party.party_id ? Object.assign({}, party, { changed }) : { changed, party_no: await numberParty(owner, partyId), party_id: partyId }; /* the answer's one shape: changed, party_no, party_id */
+}
 /** CRM-45: the supplier's own fields a PATCH body saved (a blank display_name renames nothing) */
 const supplierFieldsSaved = (body) => ['nickname', 'category', 'notes', 'preferred', 'supply_kind'].concat(String(body.display_name || '').trim() ? ['display_name'] : []).filter((key) => key in body);
 
@@ -487,7 +490,7 @@ router.patch(
           if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + nm + '.') });
           throw e;
         }
-        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm, party: partyAnswer(party, supplierFieldsSaved(req.body)) });
+        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm, party: await partyAnswer(owner, party, supplierFieldsSaved(req.body), row.identity_id) });
       }
       if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
       if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
@@ -495,12 +498,12 @@ router.patch(
       const r = await withEntity(owner, (db) =>
         db.query(
           `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_list_id`,
+         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_entity_id`,
           vals
         )
       );
       if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Supplier updated', party: partyAnswer(party, supplierFieldsSaved(req.body)) });
+      res.json({ message: 'Supplier updated', party: await partyAnswer(owner, party, supplierFieldsSaved(req.body), r.rows[0].supplier_entity_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
@@ -1034,12 +1037,12 @@ router.patch(
       const r = await withEntity(owner, (db) =>
         db.query(
           `UPDATE customer_list SET segment_override = $1
-         WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id`,
+         WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_identity_id`,
           [req.body.segment_override, req.params.id, owner]
         )
       );
       if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Segment updated', party: partyAnswer(party, ['segment_override']) });
+      res.json({ message: 'Segment updated', party: await partyAnswer(owner, party, ['segment_override'], r.rows[0].customer_identity_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update segment failed'));
     }

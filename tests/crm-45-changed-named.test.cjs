@@ -22,8 +22,8 @@ const tx = {
     if (/FROM supplier_list WHERE supplier_list_id/.test(s)) return { rows: [{ supplier_entity_id: PRIYA }] };
     if (/SELECT i\.otp_contact, .* AS email, i\.parent_entity_id FROM identities i/.test(s)) return { rows: [Object.assign({}, ids[args[0]])] };
     if (/FROM identities i\s+WHERE i\.parent_entity_id/.test(s)) return { rows: [] };
-    if (/^\s*UPDATE customer_list SET segment_override/.test(s)) return { rows: [{ customer_list_id: args[1] }] };
-    if (/^\s*UPDATE supplier_list SET/.test(s)) return { rows: [{ supplier_list_id: args[args.length - 2] }] };
+    if (/^\s*UPDATE customer_list SET segment_override/.test(s)) return { rows: [{ customer_identity_id: PRIYA }] };
+    if (/^\s*UPDATE supplier_list SET/.test(s)) return { rows: [{ supplier_entity_id: PRIYA }] };
     const set = /UPDATE identities SET (otp_contact|email) = \$2/.exec(s);
     if (set) ids[args[0]][set[1]] = args[1];
     return { rows: [] };
@@ -62,14 +62,15 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   };
   const named = (r, list) => r.status === 200 && r.body.party && r.body.party.changed.join() === list;
 
+  const shaped = (r) => r.body.party && r.body.party.party_id === PRIYA && 'party_no' in r.body.party; /* the answer's closed shape: changed, party_no, party_id */
   const seg = await patch('/customers/' + CUST, { segment_override: 'regular' });
-  ok('segment_override alone: 200 and named', named(seg, 'segment_override'), JSON.stringify(seg));
+  ok('segment_override alone: 200, named, in the closed party shape', named(seg, 'segment_override') && shaped(seg), JSON.stringify(seg));
 
   const both = await patch('/customers/' + CUST, { segment_override: 'high_value', phone: '9000000001' });
   ok('segment_override with a party field: both named, the party answer not dropped', named(both, 'segment_override,phone'), JSON.stringify(both));
 
   const sup = await patch('/suppliers/' + SUPP, { nickname: 'Corner', notes: 'pays late', category: 'tools', preferred: true, supply_kind: 'own_use' });
-  ok("the supplier's own fields are all named", named(sup, 'nickname,category,notes,preferred,supply_kind'), JSON.stringify(sup));
+  ok("the supplier's own fields are all named, in the closed party shape", named(sup, 'nickname,category,notes,preferred,supply_kind') && shaped(sup), JSON.stringify(sup));
 
   const supBoth = await patch('/suppliers/' + SUPP, { nickname: 'Corner 2', phone: '9000000005' });
   ok('a supplier own field with a party field: both named', named(supBoth, 'nickname,phone'), JSON.stringify(supBoth));
