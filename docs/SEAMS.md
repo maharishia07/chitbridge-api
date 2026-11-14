@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
-| 136 | `rows` | `crm.js` | still in them: |
+| 137 | `rows` | `crm.js` | still in them: |
 | 126 | `read` | `books-cashflow.js` | Trips: |
 | 126 | `words` | `variant.browser.js` |  |
 | 121 | `withEntity` | `books-hooks.js` |  |
@@ -53,7 +53,7 @@ of file each thing is; this says what already does the job.
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 47 | `read` | `cap-print.js` |  |
 | 47 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 46 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 47 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 45 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 44 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 44 | `facts` | `bill-steps.js` | MY state_log — |
@@ -97,9 +97,9 @@ of file each thing is; this says what already does the job.
 | 31 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 31 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 31 | `account` | `home-facts.js` | OMITTED: |
+| 31 | `owner` | `books.js` |  |
 | 31 | `mine` | `crm.js` | `opt.removedOk`: |
 | 30 | `sheet` | `cap-employees.js` |  |
-| 30 | `owner` | `books.js` |  |
 | 29 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
