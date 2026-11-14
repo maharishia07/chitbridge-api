@@ -80,12 +80,12 @@ of file each thing is; this says what already does the job.
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 34 | `changes` | `books-store.js` |  |
 | 34 | `hold` | `orders.js` |  |
+| 34 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 33 | `modal` | `app.html` |  |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 33 | `note` | `dbwatch.js` |  |
 | 33 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
-| 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 32 | `lines` | `cart.js` |  |
 | 32 | `sentence` | `one-person.js` |  |
 | 32 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |

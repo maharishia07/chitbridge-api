@@ -3149,7 +3149,7 @@ router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), 
 
     /* ⭐ CTR-182: the tax number is the owner's — a person under the owner is refused FIRST (before the number is even checked), nothing written; a till key keeps its right */
     if (taxIdDoor.taxIdDiffers(before.gstin, body.gstin) && !taxIdDoor.mayChangeTaxId(req)) return problem(req, res, taxIdDoor.refusal());
-    const refusal = checkSentTaxId(body, before);
+    const refusal = checkSentShop(body, before);
     if (refusal) return problem(req, res, { status: 400, ...refusal });
 
     const { values, changed } = shopChanges(body, before, source, as_of);
@@ -3201,6 +3201,17 @@ function nothingChangedWords(refused) {
 
 /** the value when it is an object, else an empty one */
 const objectOr = (body) => (body && typeof body === 'object' ? body : {});
+
+/** CTR-174: what the shop's header carries is checked before it is stored: the e-mail, the phone and the PIN/ZIP the way every other door reads them; the tax number last. → the refusal's spec, or null */
+function checkSentShop(body, before) {
+  return checkSentContact(body, before) || checkSentTaxId(body, before);
+}
+
+/** a blank is left alone (a blank never clears, see shopChanges); a filled e-mail, phone or PIN/ZIP that does not read right is refused 400 with the field named. → the refusal's spec, or null */
+function checkSentContact(body, before) {
+  const reason = require('../lib/party-fields').shopHeaderWhy(body, before);
+  return reason ? said('TILL_BAD_REQUEST', 'validation', reason.words, { field: reason.field }) : null;
+}
 
 /** a tax number sent with the edit is checked and stored upper-cased (the one form every reader already assumes): the refusal's spec, or null */
 function checkSentTaxId(body, before) {
@@ -3657,19 +3668,20 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
-    const page = pageLimit.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX);
+    const page = pageLimit.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX); /* CTR-225: the page asked for is read, so a window past the cap is reachable */
     const by = typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by) ? req.query.by : null;
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
     const till = typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till) ? req.query.till : null;
     const { withEntity: nestedWithEntity } = require('../db');
     const found = await nestedWithEntity(entity_id, (db) =>
-      db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till, by])
+      db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till, by, page.offset])
     );
     const live = found.rows.filter((row) => !row.withdrawn);
     const rows = live.map(billRow).filter((bill) => bill.no);
     const withdrawn = found.rows.filter((row) => row.withdrawn).map(withdrawnRow).filter((bill) => bill.no);
-    const paged = pageLimit.pageOut('bills', rows, page, rows.length);
+    const total = await pageLimit.totalOf(live, page, (limit, offset) => billsPast(entity_id, [days, limit, till, by, offset])); /* CTR-225: the whole window's count, not the page's */
+    const paged = pageLimit.pageOut('bills', rows, page, total);
     res.json({ days, count: rows.length, bills: paged.bills, withdrawn, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
     problem(req, res, failed(e, req));
@@ -3680,9 +3692,9 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
  * the shop's own counter bills inside the window, newest first (the comments sit inside the statement: they are part of the text the database receives).
  * ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08)
  */
-const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json, false AS withdrawn
+const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.line_items, page.summary_json, false AS withdrawn, page.total_rows
+         FROM (SELECT h.chit_id, h.created_at, h.business_json, h.summary_json, count(*) OVER () AS total_rows /* CTR-225: the window's count, taken on the header alone (no detail join) before the page cuts it */
          FROM chit_header h
-         LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
        /**
         * ⚠️⚠️ NO DIRECTION TEST — AND THAT IS THE WHOLE BUG. A counter bill is a chit the shop sends to ITSELF, and a SELF chit
         * lands with direction 'received', not 'sent'. We knew that: it is why business_json.side exists and why sideOf() was
@@ -3706,10 +3718,12 @@ const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_item
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
           /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out of the list and the day, as the day close leaves it out */
           ${counterBill.NOT_WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3)
+        ORDER BY h.created_at DESC LIMIT $3 OFFSET $6) page
+         LEFT JOIN chit_detail d ON d.chit_id = page.chit_id AND d.entity_id = $1 /* the lines are joined for the cut page only */
+        ORDER BY page.created_at DESC)
       UNION ALL
-       /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. */
-       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true
+       /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. CTR-225: NOT paged (no OFFSET) on purpose: this is the list the counter drops its own copies by, not a page of the day, so every page repeats the newest $3 of it. */
+       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no'
@@ -3719,6 +3733,12 @@ const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_item
           ${counterBill.WITHDRAWN_SQL}
         ORDER BY h.created_at DESC LIMIT $3)
       ORDER BY created_at DESC`;
+
+/** CTR-225: the page asked for lies past the last bill, so it carries no row to read the count from: ask for the first row of the window (the one place a second statement is run) */
+async function billsPast(entity_id, [days, limit, till, by, offset]) {
+  const found = await require('../db').withEntity(entity_id, (db) => db.query(BILLS_SQL, [entity_id, String(days), limit, till, by, offset]));
+  return found.rows.filter((row) => !row.withdrawn);
+}
 
 /** CTR-197: a withdrawn (cancelled or rejected) bill, named only - its number, its ids and its moment, so the counter can drop its own copy from the day */
 function withdrawnRow(row) {
