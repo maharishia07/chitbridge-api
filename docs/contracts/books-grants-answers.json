@@ -1,0 +1,211 @@
+{
+ "about": "The 2xx answers of the six /api/books-grants routes (ACC-176), composed for tools/api-allowlist.cjs (--capture docs/contracts/books-grants-answers.json --file routes/books-grants.js --from-recordings): the grant row carries the columns lib/books-grant.js selects (GRANT_COLUMNS; the list adds edge_live and state and leaves out granted_by and revoked_by), the log row the columns looks() selects, the consent answer is contract.consentWords itself. Composed from those column lists, NOT recorded from a database (b863 is not run in the no-DB sweep): when lib/books-grant.js changes a column, rebuild this file and the shapes with the same command.",
+ "answers": {
+  "GET /api/books-grants/consent|consent-with-costs": {
+   "route": "GET /api/books-grants/consent",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "headline": "Let your network parent read your books",
+    "can_read": [
+     "your chart of accounts",
+     "your day book",
+     "each ledger",
+     "your trial balance",
+     "your profit and loss",
+     "your balance sheet",
+     "who owes you and whom you owe, by name",
+     "your cash flow",
+     "your closed months",
+     "the state of each year",
+     "your payment terms",
+     "your exchange rates",
+     "the health check of your books",
+     "your cheques",
+     "your tax return figures"
+    ],
+    "cannot": [
+     "change or add anything",
+     "see customer or supplier phone numbers or bank details",
+     "copy or export your books"
+    ],
+    "costs": "It will see your costs and margins.",
+    "rights": "You can end this at any time. Every look is recorded and you can read the list. It ends by itself on the date you pick, 12 months from today unless you choose another."
+   },
+   "request": {
+    "url": "/api/books-grants/consent"
+   }
+  },
+  "GET /api/books-grants/consent|consent-no-costs": {
+   "route": "GET /api/books-grants/consent",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "headline": "Let your network parent read your books",
+    "can_read": [
+     "your chart of accounts",
+     "your day book",
+     "each ledger",
+     "your trial balance",
+     "your profit and loss",
+     "your balance sheet",
+     "who owes you and whom you owe, by name",
+     "your cash flow",
+     "your closed months",
+     "the state of each year",
+     "your payment terms",
+     "your exchange rates",
+     "the health check of your books",
+     "your cheques",
+     "your tax return figures"
+    ],
+    "cannot": [
+     "change or add anything",
+     "see customer or supplier phone numbers or bank details",
+     "copy or export your books"
+    ],
+    "costs": "It will not see your costs and margins.",
+    "rights": "You can end this at any time. Every look is recorded and you can read the list. It ends by itself on the date you pick, 12 months from today unless you choose another."
+   },
+   "request": {
+    "url": "/api/books-grants/consent?can_see_costs=false"
+   }
+  },
+  "GET /api/books-grants|list-given-and-received": {
+   "route": "GET /api/books-grants",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "given": [
+     {
+      "grant_id": "00000000-0000-4000-8000-0000000000a1",
+      "grantor_entity": "00000000-0000-4000-8000-0000000000b1",
+      "grantee_entity": "00000000-0000-4000-8000-0000000000c1",
+      "preset": "auditor",
+      "can_see_costs": true,
+      "purpose": "audit of the books",
+      "granted_at": "2026-11-14T09:00:00.000Z",
+      "expires_at": "2027-11-14T09:00:00.000Z",
+      "revoked_at": null,
+      "edge_live": true,
+      "state": "live"
+     }
+    ],
+    "received": [
+     {
+      "grant_id": "00000000-0000-4000-8000-0000000000a1",
+      "grantor_entity": "00000000-0000-4000-8000-0000000000c1",
+      "grantee_entity": "00000000-0000-4000-8000-0000000000b1",
+      "preset": "auditor",
+      "can_see_costs": true,
+      "purpose": "audit of the books",
+      "granted_at": "2026-11-14T09:00:00.000Z",
+      "expires_at": "2027-11-14T09:00:00.000Z",
+      "revoked_at": "2026-11-14T09:00:00.000Z",
+      "state": "live",
+      "edge_live": true
+     }
+    ]
+   },
+   "request": {
+    "url": "/api/books-grants"
+   }
+  },
+  "GET /api/books-grants/log|log": {
+   "route": "GET /api/books-grants/log",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "looks": [
+     {
+      "at": "2026-11-14T09:00:00.000Z",
+      "grant_id": "00000000-0000-4000-8000-0000000000a1",
+      "grantee_entity": "00000000-0000-4000-8000-0000000000c1",
+      "actor_identity_id": "00000000-0000-4000-8000-0000000000e1",
+      "route_pattern": "GET /api/books/pl",
+      "query_shape": "from,to",
+      "status": 200,
+      "outcome": "allowed"
+     }
+    ]
+   },
+   "request": {
+    "url": "/api/books-grants/log?limit=50"
+   }
+  },
+  "POST /api/books-grants|give": {
+   "route": "POST /api/books-grants",
+   "status": 201,
+   "type": "application/json",
+   "body": {
+    "grant_id": "00000000-0000-4000-8000-0000000000a1",
+    "grantor_entity": "00000000-0000-4000-8000-0000000000b1",
+    "grantee_entity": "00000000-0000-4000-8000-0000000000c1",
+    "preset": "auditor",
+    "can_see_costs": true,
+    "purpose": "audit of the books",
+    "granted_by": "00000000-0000-4000-8000-0000000000d1",
+    "granted_at": "2026-11-14T09:00:00.000Z",
+    "expires_at": "2027-11-14T09:00:00.000Z",
+    "revoked_at": null,
+    "revoked_by": null
+   },
+   "request": {
+    "url": "/api/books-grants",
+    "body": {
+     "grantee": "00000000-0000-4000-8000-0000000000c1",
+     "purpose": "audit of the books",
+     "expires_at": "2027-11-14T09:00:00.000Z",
+     "can_see_costs": true,
+     "consent": true
+    }
+   }
+  },
+  "PATCH /api/books-grants/:id|change-end-date": {
+   "route": "PATCH /api/books-grants/:id",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "grant_id": "00000000-0000-4000-8000-0000000000a1",
+    "grantor_entity": "00000000-0000-4000-8000-0000000000b1",
+    "grantee_entity": "00000000-0000-4000-8000-0000000000c1",
+    "preset": "auditor",
+    "can_see_costs": true,
+    "purpose": "audit of the books",
+    "granted_by": "00000000-0000-4000-8000-0000000000d1",
+    "granted_at": "2026-11-14T09:00:00.000Z",
+    "expires_at": "2027-06-30T00:00:00.000Z",
+    "revoked_at": null,
+    "revoked_by": null
+   },
+   "request": {
+    "url": "/api/books-grants/00000000-0000-4000-8000-0000000000a1",
+    "body": {
+     "expires_at": "2027-06-30T00:00:00.000Z"
+    }
+   }
+  },
+  "POST /api/books-grants/:id/revoke|revoke": {
+   "route": "POST /api/books-grants/:id/revoke",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "grant_id": "00000000-0000-4000-8000-0000000000a1",
+    "grantor_entity": "00000000-0000-4000-8000-0000000000b1",
+    "grantee_entity": "00000000-0000-4000-8000-0000000000c1",
+    "preset": "auditor",
+    "can_see_costs": true,
+    "purpose": "audit of the books",
+    "granted_by": "00000000-0000-4000-8000-0000000000d1",
+    "granted_at": "2026-11-14T09:00:00.000Z",
+    "expires_at": "2027-11-14T09:00:00.000Z",
+    "revoked_at": "2026-11-14T09:00:00.000Z",
+    "revoked_by": "00000000-0000-4000-8000-0000000000d1"
+   },
+   "request": {
+    "url": "/api/books-grants/00000000-0000-4000-8000-0000000000a1/revoke",
+    "body": {}
+   }
+  }
+ }
+}

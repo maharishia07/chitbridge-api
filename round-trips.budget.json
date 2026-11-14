@@ -349,6 +349,30 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06: 1 on a 200; the offline stub answers 404 and reads 3 (the harness ceiling is the larger)"
     },
+    "GET /api/books-grants": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-grants/consent": {
+      "file": "books-grants.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-grants/log": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/books/accounts": {
       "file": "books.js",
       "trips": 4,
@@ -2288,6 +2312,14 @@
       "status": 400,
       "extra": true
     },
+    "PATCH /api/books-grants/:id": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "PATCH /api/books/payments/:id": {
       "file": "books.js",
       "trips": 1,
@@ -2563,6 +2595,22 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/books-grants": {
+      "file": "books-grants.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books-grants/:id/revoke": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "POST /api/books/accounts": {
       "file": "books.js",

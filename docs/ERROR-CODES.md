@@ -53,6 +53,19 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
+| BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
+| BOOKS_GRANT_ENDED | 403 | Access has ended | This access was ended, or has run out. Ask the owner of the books to renew it. | The owner gives a new access from its grant screen. | network | 2026-11-14 |
+| BOOKS_GRANT_EXISTS | 409 | Access already given | This business can already read your books. Change the end date instead. | Open the access and edit its end date. | network | 2026-11-14 |
+| BOOKS_GRANT_EXPIRY_INVALID | 422 | End date not allowed | Pick an end date in the future, no more than 36 months away. | Choose a date between tomorrow and 36 months from today. | network | 2026-11-14 |
+| BOOKS_GRANT_LOG_UNAVAILABLE | 503 | Could not record the look | We could not record this look at the books, so nothing was shown. Try again in a minute. | Try again shortly; nothing was shown or changed. | network | 2026-11-14 |
+| BOOKS_GRANT_NONE | 403 | No access given | No access has been given for these books. | Ask the owner of the books to give access. | network | 2026-11-14 |
+| BOOKS_GRANT_NOT_FOR_YOU | 403 | Not for this login | Only an owner, or a person with the auditor role, can open another business's books. | Sign in as the owner or as an auditor. | network | 2026-11-14 |
+| BOOKS_GRANT_NOT_LIVE | 403 | Connection is off | You are no longer connected to this business, so its books are closed to you. | Reconnect with the business, then try again. | network | 2026-11-14 |
+| BOOKS_GRANT_NOT_RECORDED | 503 | Change not recorded | We could not record this change, so nothing was changed. Try again. | Try again; nothing was changed. | network | 2026-11-14 |
+| BOOKS_GRANT_NOT_SWITCHED_ON | 503 | Not switched on yet | Access for your auditor is not switched on yet. | Try again later. | network | 2026-11-14 |
+| BOOKS_GRANT_NO_PARENT | 422 | Not your network parent | Pick the business in your network that audits you. | Choose the business that sits above you in your network. | network | 2026-11-14 |
+| BOOKS_GRANT_PURPOSE_INVALID | 422 | Purpose too short or long | Say why in 3 to 300 characters. | Write the reason in a few words. | network | 2026-11-14 |
+| BOOKS_GRANT_RATE | 429 | Too many requests | Too many requests for these books. Wait a minute. | Wait a minute, then try again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
@@ -66,6 +79,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_AMOUNT_TOO_LARGE | 400 | Amount too large | A total, quantity or price is larger than a chit can hold, so nothing was saved. | Lower the amount or split it into smaller chits; the sentence names the most a chit can hold. | chits | 2026-11-09 |
 | BAD_LINE_ID | 400 | Invalid line id | A line's own id is not an id, or two lines share one, so nothing was saved. | Leave line_id out and one is made, or send the one the chit gave. | chits | 2026-11-12 |
 | FILTER_INVALID | 400 | Invalid filter | A date or a person in the list's filter is not a value it can use. | Use a real day (2026-11-12) for a date and a person's id for assigned_to. | chits | 2026-11-12 |
+| GRANT_READ_ONLY | 403 | Read only | An auditor can read these books, never change them. | Ask the owner of the books to make the change. | network | 2026-11-14 |
+| GRANT_ROUTE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use one of the reports the consent screen lists. | network | 2026-11-14 |
 | RETENTION_TOO_LONG | 400 | Kept too long | A chit cannot be kept for more than a hundred years. | Choose an earlier expiry date. | chits | 2026-11-12 |
 | CTP_UNRESOLVABLE | 503 | Could not reach the other side | Where one of the chit's parties is hosted could not be read just now, so nothing was written. | Try again in a moment. | ctp | 2026-11-12 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |
@@ -158,6 +173,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_ADDRESS_CLASH | 409 | Id already used here | A different business here already uses that id, so the one you typed cannot be added under it. | Ask them to share their link, and tell us. | ctp | 2026-10-25 |
 | CTP_ADDRESS_INVALID | 400 | Address not readable | That is not an address we can read. | Type it as id@domain, or paste the business's link. | ctp | 2026-10-25 |
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
+| SIGN_IN_FOR_BOOKS_GRANT | 403 | Sign in as the owner | Sign in as the owner to change who can read your books. | A counter or device key cannot give or end access. | network | 2026-11-14 |
 | SUPPLIER_SELLS_ONLY_HERE | 409 | Sells only on their own ChitBridge | That business sells only on its own ChitBridge, so it cannot be your supplier from here. | Ask them to sell outside, or find another supplier. | ctp | 2026-10-25 |
 | SUPPLIER_INVALID | 400 | Supplier details not valid | Something about the supplier you typed is missing or not valid. | Read the line shown, change it and try again. | relationships | 2026-10-25 |
 | AMEND_LINE_NEEDS_ITEM | 400 | Replacement line has no item | A replacement line needs an item. To remove the line, send line: null. | Name the item on the line, or remove the line. | chits | 2026-10-25 |

@@ -1372,3 +1372,31 @@ A day (or week, month, year) summary is sent under the fixed reference `SUM/<D|W
 | the stored chit · `business_json.summary` | `revision` | integer ≥ 2 · written only on a re-close with other figures: the version number (the first close carries none and is version 1). Equals the `#<n>` of the chit's `client_ref`. |
 | the stored chit · `business_json.summary` | `supersedes` | string chit id · the newest version held when this one was stored; the older chits are kept as history, never changed. |
 | `POST /api/chits/send` answer (200, `duplicate:true`) | `revision` | integer · present when a summary replay is answered: the version of the chit named in `chit_id` (1 for the first close). |
+
+## /api/books-grants · the member's read-only access for its network parent (ACC-176, 2026-11-14)
+
+The member (the owner of the books) gives its network parent read-only access, edits the end date, ends it, and reads who looked. Stored in `books_access_grant` and `books_access_log` (migration b863); written by routes/books-grants.js through lib/books-grant.js; read by the member's grant and log screens. The auditor reads through `GET /api/books/*` with the `X-Books-For` header, never through these routes. Contract: lib/books-grants-contract.js.
+
+| Where | Key | Meaning |
+|---|---|---|
+| `POST /api/books-grants` body | `grantee` | uuid · the business that may read: it must be the network parent of the caller now. |
+| `POST /api/books-grants` body | `purpose` | text, 3 to 300 characters · why, in the member's words; empty means "audit of the books". Fixed once given. |
+| `POST /api/books-grants` · `PATCH /api/books-grants/:id` body | `expires_at` | date text · when access ends by itself: in the future and at most 36 months away; empty on a new grant means 12 months from today. |
+| `POST /api/books-grants` body · `GET /api/books-grants/consent` query | `can_see_costs` | boolean · `false` keeps costs and margins from the reader; anything else, or absent, lets it see them. |
+| `POST /api/books-grants` body | `consent` | boolean · must be `true`: the member's yes to the plain words of the consent screen. Any other value is refused (422 `BOOKS_GRANT_CONSENT_NEEDED`). |
+| `GET /api/books-grants/log` query | `limit` | integer · how many looks to answer, 1 to 200, 50 when absent. |
+| `GET /api/books-grants/log` query | `grant_id` | uuid · only the looks under this grant; absent means all. |
+| `GET /api/books-grants/consent` answer | `headline` · `can_read` · `cannot` · `costs` · `rights` | the plain words of the consent screen: a title, the list of what the reader can read (named from the books router's allow-list itself), what it can never do, whether it sees costs, and the member's rights (end it any time; every look is recorded; it ends by itself). |
+| `GET /api/books-grants` answer | `given` · `received` | arrays of grants · the access this business gave, and the access it holds, newest first, at most 200 rows together. |
+| `GET /api/books-grants` rows | `edge_live` | boolean · the network edge between the two businesses is still connected right now. |
+| `GET /api/books-grants` rows | `state` | text · `live`, `edge_off` (edge disconnected or suspended), `expired` or `revoked`, worked out per read, never stored. |
+| grant rows (all four writes and reads) | `grant_id` · `grantor_entity` · `grantee_entity` | uuids · the access, the business that owns the books, the business that reads them. |
+| grant rows | `preset` | text · the kind of access; `auditor` is the only one today. |
+| grant rows | `can_see_costs` | boolean · whether costs and margins are readable. |
+| grant rows | `purpose` | text · the member's words for why. |
+| grant rows | `granted_at` · `expires_at` · `revoked_at` | timestamps · when given, when it ends by itself, when it was ended (`null` while open). |
+| `POST` · `PATCH` · `/:id/revoke` answers | `granted_by` · `revoked_by` | uuid identities · who gave it, and who ended it (`null` while open). Not in the list answer. |
+| `GET /api/books-grants/log` answer | `looks` | array · who looked at these books, newest first; the route and the shape of the question, never the figures. |
+| `looks[]` | `at` · `grant_id` · `grantee_entity` · `actor_identity_id` | when, under which access, which business, and which person looked. |
+| `looks[]` | `route_pattern` · `query_shape` | the books route asked for, and the names (never the values) of its query. |
+| `looks[]` | `status` · `outcome` | the status answered, and `allowed` or the reason it was refused (`no_grant`, `revoked`, `expired`, `edge_off`, `not_listed`, `read_only`). |
