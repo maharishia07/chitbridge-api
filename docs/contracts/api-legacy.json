@@ -14621,6 +14621,21 @@
      "note": "ORD-65 (2026-10-23): new answer. Before, deliverEdge called NO_CURRENCY_SAYS() on a string and the operator with no currency got a 500."
     },
     {
+     "scenario": "norder-withdrawn-currency",
+     "status": 422,
+     "body_keys": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. An operator whose stated money is a code ISO 4217 withdrew is refused in words naming the successor; withdrawn: true travels with the refusal (lib/knownerr thrownRefusal)."
+    },
+    {
      "scenario": "norder-fails",
      "status": 500,
      "body_keys": {
@@ -27684,6 +27699,38 @@
       "error": "Not a draft",
       "message": "This chit has already been sent"
      }
+    },
+    {
+     "scenario": "send-money-withdrawn",
+     "status": 422,
+     "body_keys": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "code": "MONEY_CURRENCY_UNKNOWN",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Refused",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "code": "MONEY_CURRENCY_UNKNOWN",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. A bill that names a withdrawn money is refused in words naming the successor; withdrawn: true travels."
+    },
+    {
+     "scenario": "send-shop-money-withdrawn",
+     "status": 422,
+     "body_keys": {
+      "error": "refused",
+      "code": "NO_MONEY",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written."
+     },
+     "fixture": {
+      "error": "refused",
+      "code": "NO_MONEY",
+      "message": "BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written."
+     },
+     "note": "CUR-1b (2026-11-13): new answer. A shop whose own money is withdrawn issues no new document: the one document gate (country-setup.documentRefusal) answers NO_MONEY with the successor named."
     }
    ]
   },
@@ -55889,6 +55936,120 @@
      }
     },
     {
+     "scenario": "supplier-rename-not-text-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     }
+    },
+    {
+     "scenario": "supplier-rename-not-text-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     }
+    },
+    {
+     "scenario": "supplier-rename-not-text-flag",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     }
+    },
+    {
      "scenario": "supplier-rename-not-yours",
      "status": 403,
      "body_keys": {
@@ -61305,6 +61466,21 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "combo-push-shop-money-withdrawn",
+     "status": 422,
+     "body_keys": {
+      "error": "Could not push this combo to your products",
+      "message": "Cannot stamp a price: BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "fixture": {
+      "error": "Could not push this combo to your products",
+      "message": "Cannot stamp a price: BGN has been withdrawn from ISO 4217 and replaced by EUR, so it cannot be used for new money. Change the shop currency to EUR; nothing is converted, and old records in BGN stay readable as written.",
+      "withdrawn": true
+     },
+     "note": "CUR-1b (2026-11-13): new answer. A shop whose own money is a code ISO 4217 withdrew pushes no combo as a product; it is told the successor, withdrawn: true travels."
     }
    ]
   },
@@ -66928,6 +67104,604 @@
       "detail": "Something went wrong on our side.",
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books/bank/log": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bank-log-before-migration",
+     "status": 503,
+     "body_keys": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "The shared bank reconciliation record arrives after the next update. Your marks and notes stay on this device only; nothing was sent to the server and nothing was lost.",
+      "message": "The shared bank reconciliation record arrives after the next update. Your marks and notes stay on this device only; nothing was sent to the server and nothing was lost.",
+      "type": "https://chitbridge.com/problems/books_not_migrated",
+      "title": "Ledger update pending",
+      "status": 503,
+      "detail": "The shared bank reconciliation record arrives after the next update. Your marks and notes stay on this device only; nothing was sent to the server and nothing was lost.",
+      "hint": "Try again after the next update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "The shared bank reconciliation record arrives after the next update. Your marks and notes stay on this device only; nothing was sent to the server and nothing was lost.",
+      "message": "The shared bank reconciliation record arrives after the next update. Your marks and notes stay on this device only; nothing was sent to the server and nothing was lost.",
+      "type": "https://chitbridge.com/problems/books_not_migrated",
+      "title": "Ledger update pending",
+      "status": 503,
+      "detail": "The shared bank reconciliation record arrives after the next update. Your marks and notes stay on this device only; nothing was sent to the server and nothing was lost.",
+      "hint": "Try again after the next update.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books/bank/marks": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       },
+       {
+        "field": "marks",
+        "code": "MISSING_FIELD",
+        "detail": "marks is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       },
+       {
+        "field": "marks",
+        "code": "MISSING_FIELD",
+        "detail": "marks is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       },
+       {
+        "field": "marks",
+        "code": "MISSING_FIELD",
+        "detail": "marks is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       },
+       {
+        "field": "marks",
+        "code": "MISSING_FIELD",
+        "detail": "marks is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bank-account-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That bank account was not found.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That bank account was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books/bank/statements": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "account is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "account is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "account is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "account is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "account",
+      "errors": [
+       {
+        "field": "account",
+        "code": "MISSING_FIELD",
+        "detail": "account is needed."
+       }
+      ]
      }
     }
    ]

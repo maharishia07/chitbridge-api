@@ -1847,6 +1847,15 @@
   },
   "PUT /api/service/:chit_id": {
    "output_allowlist": true
+  },
+  "GET /api/books/bank/log": {
+   "output_allowlist": true
+  },
+  "POST /api/books/bank/marks": {
+   "output_allowlist": true
+  },
+  "POST /api/books/bank/statements": {
+   "output_allowlist": true
   }
  }
 }
