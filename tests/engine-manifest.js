@@ -332,8 +332,8 @@ const INFRA_LIBS = [
   'service-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
-  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
-  'db-role.js',
+  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture; SEC-185: bound-read.js reads an identities row under its own binding — plumbing, not rules of the platform. */
+  'db-role.js', 'bound-read.js',
   /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
   'page-limit.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */

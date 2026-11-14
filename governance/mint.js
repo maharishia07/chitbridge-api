@@ -1,6 +1,7 @@
 'use strict';
 // Inheritance orchestration (pure). The DB layer (route/service) calls these with
 // values it fetched via parameterized SQL, then persists the returned stamp.
+// CARD      20-settings-governance-and-plan/governance-7-layers-govcontext
 
 const { resolve, driftStatus } = require('./resolver');
 

@@ -42,7 +42,7 @@ function fakeDB() {
     put: async (s, row) => { stores[s][row.no] = clone(row); }, del: async (s, k) => { delete stores[s][k]; },
     all: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])), allRaw: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])) };
 }
-const FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'heldWaitWords', 'isSaleRow', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
+const FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'heldWaitWords', 'isSaleRow', 'staleHasItem', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
 function counter(answer) {
   const DB = fakeDB(), calls = [];
   const ctx = { console, setTimeout, clearTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error, DB, OWNER: null, FOREIGN: 0, STATE: { queued: 1 }, DEADLINE: 20000, dbFrozen: () => false, FROZEN_LINE: 'frozen',

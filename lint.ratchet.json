@@ -994,6 +994,14 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "routes/folders-inbox.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "routes/folders-totals.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
  "routes/forms.js": {
   "warnings": 0,
   "prettierOk": true

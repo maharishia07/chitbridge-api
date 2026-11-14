@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 288,
+    "applies": 287,
     "failing": 38
    },
    "rate_limited": {
@@ -1462,7 +1462,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 342,
+   "line": 328,
    "hash": "19db281b1b056633",
    "does": "",
    "errors": {
@@ -1566,7 +1566,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 609,
+   "line": 588,
    "hash": "0f950ed6f05d88ea",
    "does": "",
    "errors": {
@@ -15386,7 +15386,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 80,
+   "line": 72,
    "hash": "3aa7dc583807a82a",
    "does": "",
    "errors": {
@@ -15487,7 +15487,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 483,
+   "line": 466,
    "hash": "cb977f1f071be92d",
    "does": "",
    "errors": {
@@ -15592,7 +15592,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 541,
+   "line": 522,
    "hash": "0a9799fceae934b2",
    "does": "",
    "errors": {
@@ -15692,7 +15692,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 566,
+   "line": 545,
    "hash": "c9015e5f5ab99f12",
    "does": "",
    "errors": {
@@ -15791,9 +15791,9 @@
    "path": "/api/folders/groupsum",
    "owner_area": "folders",
    "owner_agent": "cb-rail",
-   "file": "routes/folders.js",
-   "line": 901,
-   "hash": "9070c62e570c1c83",
+   "file": "routes/folders-totals.js",
+   "line": 41,
+   "hash": "b4f6060f0711d650",
    "does": "",
    "errors": {
     "count": 0,
@@ -15859,7 +15859,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -15888,7 +15888,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 142,
+   "line": 133,
    "hash": "b6e727a5f02eaf0b",
    "does": "",
    "errors": {
@@ -15977,9 +15977,9 @@
    "path": "/api/folders/messages",
    "owner_area": "folders",
    "owner_agent": "cb-rail",
-   "file": "routes/folders.js",
-   "line": 709,
-   "hash": "60877e20b8df1857",
+   "file": "routes/folders-inbox.js",
+   "line": 39,
+   "hash": "c6c5d1f9629db170",
    "does": "",
    "errors": {
     "count": 0,
@@ -16051,7 +16051,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -16081,9 +16081,9 @@
    "path": "/api/folders/mis",
    "owner_area": "folders",
    "owner_agent": "cb-rail",
-   "file": "routes/folders.js",
-   "line": 1054,
-   "hash": "cf257228ec420cb3",
+   "file": "routes/folders-totals.js",
+   "line": 192,
+   "hash": "6823b031ef6994f2",
    "does": "",
    "errors": {
     "count": 0,
@@ -16151,7 +16151,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-31 PR#652 stage2 (API-17, 13 of 13 read; reviewed by cb-api, builder's re-sign replaced)",
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -16181,9 +16181,9 @@
    "path": "/api/folders/reconcile",
    "owner_area": "folders",
    "owner_agent": "cb-rail",
-   "file": "routes/folders.js",
-   "line": 952,
-   "hash": "24556c31722fa718",
+   "file": "routes/folders-totals.js",
+   "line": 91,
+   "hash": "95710217ec720112",
    "does": "",
    "errors": {
     "count": 0,
@@ -16251,7 +16251,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#606 stage2 (RAIL-146k re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -16280,7 +16280,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 655,
+   "line": 631,
    "hash": "f389be46783c2688",
    "does": "",
    "errors": {
@@ -16378,7 +16378,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 634,
+   "line": 611,
    "hash": "acd81ea945245e41",
    "does": "",
    "errors": {
@@ -16466,9 +16466,9 @@
    "path": "/api/folders/worklist",
    "owner_area": "folders",
    "owner_agent": "cb-rail",
-   "file": "routes/folders.js",
-   "line": 868,
-   "hash": "9b7793fe6cd2601a",
+   "file": "routes/folders-inbox.js",
+   "line": 224,
+   "hash": "c91ba23959680d72",
    "does": "",
    "errors": {
     "count": 0,
@@ -16536,7 +16536,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -18097,6 +18097,7 @@
     "codes": []
    },
    "reads": [
+    "identities",
     "standard_source"
    ],
    "writes": [],
@@ -18770,7 +18771,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 363,
+   "line": 364,
    "hash": "4f975cefee8013c8",
    "does": "",
    "errors": {
@@ -18867,7 +18868,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 276,
+   "line": 277,
    "hash": "4c1714a8b02753ad",
    "does": "",
    "errors": {
@@ -18960,7 +18961,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 381,
+   "line": 382,
    "hash": "af7c9d3016789066",
    "does": "",
    "errors": {
@@ -19063,7 +19064,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 250,
+   "line": 251,
    "hash": "833e8fa6a4263243",
    "does": "",
    "errors": {
@@ -19153,7 +19154,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 259,
+   "line": 260,
    "hash": "348b9c92a4977ecb",
    "does": "",
    "errors": {
@@ -19249,7 +19250,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1001,
+   "line": 1002,
    "hash": "621e2f2f391396f3",
    "does": "",
    "errors": {
@@ -19345,7 +19346,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 851,
+   "line": 852,
    "hash": "457ba6a1ba37fd28",
    "does": "",
    "errors": {
@@ -19443,7 +19444,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 726,
+   "line": 727,
    "hash": "70de3a5a5b1f6993",
    "does": "",
    "errors": {
@@ -19541,7 +19542,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 979,
+   "line": 980,
    "hash": "af4a542c64bc4085",
    "does": "",
    "errors": {
@@ -19637,7 +19638,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 759,
+   "line": 760,
    "hash": "f97d3783abe3f0d1",
    "does": "",
    "errors": {
@@ -24167,7 +24168,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 143,
+   "line": 144,
    "hash": "edb76b75208461bd",
    "does": "",
    "errors": {
@@ -24265,7 +24266,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 116,
+   "line": 117,
    "hash": "c6f20bf2d163747a",
    "does": "",
    "errors": {
@@ -24862,7 +24863,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 433,
-   "hash": "c7796f384914558e",
+   "hash": "a958e061bf609dd5",
    "does": "",
    "errors": {
     "count": 0,
@@ -24937,7 +24938,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -24963,7 +24964,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1696,
-   "hash": "a062ac96f871111b",
+   "hash": "b557a774b8301f5b",
    "does": "",
    "errors": {
     "count": 0,
@@ -25038,7 +25039,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; a .feature text answer, noKeys by design (S34), reader-gated; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25064,7 +25065,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3854,
-   "hash": "8cf4e576115ef2fb",
+   "hash": "ec4ef17400bd57ae",
    "does": "",
    "errors": {
     "count": 0,
@@ -25137,7 +25138,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25267,7 +25268,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1114,
-   "hash": "cb27ce34e66cddf0",
+   "hash": "2009965b3d0cec31",
    "does": "",
    "errors": {
     "count": 0,
@@ -25344,7 +25345,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25374,7 +25375,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2770,
-   "hash": "46e6f0f00dc7dd6a",
+   "hash": "f326980292d38cd2",
    "does": "",
    "errors": {
     "count": 0,
@@ -25449,7 +25450,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25475,7 +25476,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 926,
-   "hash": "ef445392025c7505",
+   "hash": "11748729ece9373c",
    "does": "",
    "errors": {
     "count": 0,
@@ -25547,7 +25548,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25573,7 +25574,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2408,
-   "hash": "648b3631d4dd9f78",
+   "hash": "e4d8f908b7853b25",
    "does": "",
    "errors": {
     "count": 0,
@@ -25643,7 +25644,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25669,7 +25670,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 4101,
-   "hash": "52497bb11fd4f7f5",
+   "hash": "c8adbe49a073843e",
    "does": "",
    "errors": {
     "count": 0,
@@ -25742,7 +25743,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25768,7 +25769,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3589,
-   "hash": "cde1efb7ead1d3ed",
+   "hash": "ef8fbb9a0922c2d6",
    "does": "",
    "errors": {
     "count": 0,
@@ -25843,7 +25844,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25869,7 +25870,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2954,
-   "hash": "9bca35743df8eeca",
+   "hash": "1e2c1da92afcadc7",
    "does": "",
    "errors": {
     "count": 0,
@@ -25944,7 +25945,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25970,7 +25971,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2060,
-   "hash": "e85095280e6bcaf9",
+   "hash": "14a0b8801939ffd5",
    "does": "",
    "errors": {
     "count": 0,
@@ -26040,7 +26041,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26066,7 +26067,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1466,
-   "hash": "7a7c9c5b27829f86",
+   "hash": "516ed6b16abd2f8a",
    "does": "",
    "errors": {
     "count": 0,
@@ -26141,7 +26142,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26167,7 +26168,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1518,
-   "hash": "c2147cbd5b085bbb",
+   "hash": "46ffb7fafbdbdbba",
    "does": "",
    "errors": {
     "count": 0,
@@ -26242,7 +26243,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26268,7 +26269,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2709,
-   "hash": "99f94adaaabe158a",
+   "hash": "6e9fcf460768d812",
    "does": "",
    "errors": {
     "count": 0,
@@ -26341,7 +26342,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26367,7 +26368,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 356,
-   "hash": "4f251bf1eda67e5c",
+   "hash": "c2dc8e4933171d41",
    "does": "",
    "errors": {
     "count": 0,
@@ -26435,7 +26436,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26549,7 +26550,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3703,
+   "line": 3708,
    "hash": "a8c0186a848ea76a",
    "does": "",
    "errors": {
@@ -26645,7 +26646,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3501,
+   "line": 3506,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -26741,7 +26742,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1797,
+   "line": 1802,
    "hash": "065ab1b31029b6be",
    "does": "",
    "errors": {
@@ -26837,7 +26838,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4451,
+   "line": 4456,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -26935,7 +26936,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2460,
+   "line": 2465,
    "hash": "c9b5feb87079776a",
    "does": "",
    "errors": {
@@ -27033,7 +27034,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3930,
+   "line": 3935,
    "hash": "4cc02b7049e1cf09",
    "does": "",
    "errors": {
@@ -27135,7 +27136,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1806,
+   "line": 1811,
    "hash": "a93949be98bda80d",
    "does": "",
    "errors": {
@@ -27235,7 +27236,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1846,
+   "line": 1851,
    "hash": "a21ada102b689cf4",
    "does": "",
    "errors": {
@@ -27333,7 +27334,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1893,
+   "line": 1898,
    "hash": "84d5f66acbc70ed4",
    "does": "",
    "errors": {
@@ -27431,7 +27432,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1816,
+   "line": 1821,
    "hash": "7b700a57f90e53b5",
    "does": "",
    "errors": {
@@ -27531,7 +27532,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2547,
+   "line": 2552,
    "hash": "b7945b493fc90536",
    "does": "",
    "errors": {
@@ -27632,7 +27633,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2898,
+   "line": 2903,
    "hash": "34ca27a7c7ac2723",
    "does": "",
    "errors": {
@@ -27841,7 +27842,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3339,
+   "line": 3344,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -27941,7 +27942,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3569,
+   "line": 3574,
    "hash": "cb196c32797a4f71",
    "does": "",
    "errors": {
@@ -28041,7 +28042,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3900,
+   "line": 3905,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -28137,7 +28138,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3073,
+   "line": 3078,
    "hash": "8822f90ab44821bf",
    "does": "",
    "errors": {
@@ -28237,7 +28238,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1958,
+   "line": 1963,
    "hash": "d226996ac18bd6b2",
    "does": "",
    "errors": {
@@ -30083,7 +30084,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 285,
+   "line": 272,
    "hash": "007ce890480821fb",
    "does": "",
    "errors": {
@@ -30187,7 +30188,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 599,
+   "line": 578,
    "hash": "24e27419f0177ff2",
    "does": "",
    "errors": {
@@ -31237,7 +31238,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2519,
-   "hash": "df4e141b1b0c06bd",
+   "hash": "c48b12156df09c5d",
    "does": "",
    "errors": {
     "count": 0,
@@ -31312,7 +31313,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31338,7 +31339,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2139,
-   "hash": "237a83a8f39b813c",
+   "hash": "7707cd65bf5b33ed",
    "does": "",
    "errors": {
     "count": 0,
@@ -31413,7 +31414,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -35289,7 +35290,6 @@
    "writes": [
     "customer_list",
     "identities",
-    "ledger_account",
     "supplier_list"
    ],
    "money": false,
@@ -37249,7 +37249,6 @@
     "identities"
    ],
    "writes": [
-    "books_change_log",
     "books_setting"
    ],
    "money": false,
@@ -45203,7 +45202,6 @@
    },
    "reads": [
     "customer_list",
-    "identities",
     "supplier_list"
    ],
    "writes": [
@@ -46663,7 +46661,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 196,
+   "line": 185,
    "hash": "a35c61b13fd33d04",
    "does": "",
    "errors": {
@@ -46767,7 +46765,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 586,
+   "line": 565,
    "hash": "b022225c5bd68eb7",
    "does": "",
    "errors": {
@@ -46864,9 +46862,9 @@
    "path": "/api/folders/messages/:message_id/mark",
    "owner_area": "folders",
    "owner_agent": "cb-rail",
-   "file": "routes/folders.js",
-   "line": 847,
-   "hash": "bc9ca085c0569993",
+   "file": "routes/folders-inbox.js",
+   "line": 189,
+   "hash": "030ff44e7a797585",
    "does": "",
    "errors": {
     "count": 0,
@@ -46938,7 +46936,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
+    "signed_off_by_date": "cb-api 2026-11-14 re-sign after MNT-59 split + cleanup (api #1284, #1285; verified unchanged)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46967,7 +46965,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 358,
+   "line": 343,
    "hash": "036e66b26b2d9570",
    "does": "",
    "errors": {
@@ -47069,7 +47067,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 622,
+   "line": 600,
    "hash": "3a864d8cf722d2b5",
    "does": "",
    "errors": {
@@ -48732,7 +48730,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 635,
+   "line": 636,
    "hash": "5e57a81aaf5d59cc",
    "does": "",
    "errors": {
@@ -48844,7 +48842,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 958,
+   "line": 959,
    "hash": "aa16ade8f3f0dd21",
    "does": "",
    "errors": {
@@ -48939,7 +48937,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 680,
+   "line": 681,
    "hash": "0672ad19cc37824b",
    "does": "",
    "errors": {
@@ -49039,7 +49037,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 819,
+   "line": 820,
    "hash": "d86df23c95c37d1d",
    "does": "",
    "errors": {
@@ -49144,7 +49142,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 459,
+   "line": 460,
    "hash": "f354f8f23256a292",
    "does": "",
    "errors": {
@@ -49245,7 +49243,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1037,
+   "line": 1038,
    "hash": "6627938ea0d3c11c",
    "does": "",
    "errors": {
@@ -50434,9 +50432,7 @@
      "SESSION_ONLY"
     ]
    },
-   "reads": [
-    "identities"
-   ],
+   "reads": [],
    "writes": [
     "catalogue_adoption"
    ],
@@ -50644,8 +50640,7 @@
     ]
    },
    "reads": [
-    "catalogue_adoption",
-    "identities"
+    "catalogue_adoption"
    ],
    "writes": [
     "catalogue_adoption"
@@ -55841,7 +55836,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 1028,
+   "line": 1027,
    "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
@@ -55901,7 +55896,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true
    },
    "human": {
@@ -55937,7 +55932,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 102,
+   "line": 103,
    "hash": "af927b549fce1811",
    "does": "",
    "errors": {
@@ -56016,7 +56011,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
-    "wire": 3,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -56033,7 +56028,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 1030,
+   "line": 1029,
    "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
@@ -56131,7 +56126,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 78,
+   "line": 79,
    "hash": "c5769b1ea95958a8",
    "does": "",
    "errors": {
@@ -56228,7 +56223,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 165,
+   "line": 166,
    "hash": "885f42d5770569ce",
    "does": "",
    "errors": {
@@ -56330,7 +56325,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 1029,
+   "line": 1028,
    "hash": "cc9b07d8bcc06ba5",
    "does": "",
    "errors": {
@@ -57139,7 +57134,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 286,
-   "hash": "5e677f9daa7e3d25",
+   "hash": "0ed16057356e4a10",
    "does": "",
    "errors": {
     "count": 0,
@@ -57215,7 +57210,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57241,7 +57236,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1754,
-   "hash": "fd3f809f9bb31d7e",
+   "hash": "151529b305359971",
    "does": "",
    "errors": {
     "count": 0,
@@ -57318,7 +57313,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: re-signed after the stale hash (fd3f809f): whole handler and contract read at the new hash; no exception text in any answer (faultOf says only the label and the safe sentence; problems[] are parser words about the caller's own file); board writer gate kept; api-problem-testing 1839 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57546,7 +57541,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3780,
-   "hash": "c371fe538a9aa0d2",
+   "hash": "d6df81bd6f94fb2a",
    "does": "",
    "errors": {
     "count": 0,
@@ -57618,7 +57613,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57644,7 +57639,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1154,
-   "hash": "6d22cf4f5179ca5c",
+   "hash": "0753dc6c72c4c825",
    "does": "",
    "errors": {
     "count": 0,
@@ -57719,7 +57714,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: re-signed after the stale hash (6d22cf4f): whole handler and contract read at the new hash; every shipped record is checked before anything is written, refusals name the file, faults say the safe sentence; api-problem-testing 1839 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57745,7 +57740,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2672,
-   "hash": "df76c8bae9c24aa4",
+   "hash": "62ba5527c70bf421",
    "does": "",
    "errors": {
     "count": 0,
@@ -57817,7 +57812,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57843,7 +57838,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2274,
-   "hash": "f029e6e0ada3ffd3",
+   "hash": "daf25f3eea1e168c",
    "does": "",
    "errors": {
     "count": 0,
@@ -57915,7 +57910,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57945,7 +57940,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 3919,
-   "hash": "d09d4629cc3c54d0",
+   "hash": "4106ecc76678349e",
    "does": "",
    "errors": {
     "count": 0,
@@ -58018,7 +58013,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58044,7 +58039,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1865,
-   "hash": "e0ca8ea923c8e9c1",
+   "hash": "01b811fd15475d92",
    "does": "",
    "errors": {
     "count": 0,
@@ -58117,7 +58112,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58248,7 +58243,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1615,
-   "hash": "505771ada9129966",
+   "hash": "3e2c86b12dd7b24c",
    "does": "",
    "errors": {
     "count": 0,
@@ -58323,7 +58318,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58349,7 +58344,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 343,
-   "hash": "19d16db3910377c1",
+   "hash": "a8da954f77bfa780",
    "does": "",
    "errors": {
     "count": 0,
@@ -58419,7 +58414,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58444,7 +58439,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4324,
+   "line": 4329,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -58546,7 +58541,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3413,
+   "line": 3418,
    "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
@@ -58650,7 +58645,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1613,
+   "line": 1618,
    "hash": "1106ed553e2a249e",
    "does": "",
    "errors": {
@@ -58752,7 +58747,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1543,
+   "line": 1548,
    "hash": "fe2b534fc88c7bbf",
    "does": "",
    "errors": {
@@ -58852,7 +58847,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2793,
+   "line": 2798,
    "hash": "b5d1d38fbdf85c1f",
    "does": "",
    "errors": {
@@ -58952,7 +58947,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1708,
+   "line": 1713,
    "hash": "7aa0353c6b3693da",
    "does": "",
    "errors": {
@@ -59059,7 +59054,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2445,
+   "line": 2450,
    "hash": "23cdcd437d56ea48",
    "does": "",
    "errors": {
@@ -59160,7 +59155,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2474,
+   "line": 2479,
    "hash": "7b3e833b2c1e414f",
    "does": "",
    "errors": {
@@ -59260,7 +59255,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4385,
+   "line": 4390,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -59356,7 +59351,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2102,
+   "line": 2107,
    "hash": "1fe1075f4203d0d0",
    "does": "",
    "errors": {
@@ -59465,7 +59460,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2726,
+   "line": 2731,
    "hash": "fb7ee244234d4a45",
    "does": "",
    "errors": {
@@ -59567,7 +59562,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2835,
+   "line": 2840,
    "hash": "d548871784442c21",
    "does": "",
    "errors": {
@@ -59670,7 +59665,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2189,
+   "line": 2194,
    "hash": "8801009fddb9db3b",
    "does": "",
    "errors": {
@@ -59777,7 +59772,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1862,
+   "line": 1867,
    "hash": "64b7939017124705",
    "does": "",
    "errors": {
@@ -59880,7 +59875,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1904,
+   "line": 1909,
    "hash": "287b7d754f2e98df",
    "does": "",
    "errors": {
@@ -59980,7 +59975,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1830,
+   "line": 1835,
    "hash": "7cc9a8b4f101a389",
    "does": "",
    "errors": {
@@ -60080,7 +60075,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1879,
+   "line": 1884,
    "hash": "a1963fe17d788f40",
    "does": "",
    "errors": {
@@ -60185,7 +60180,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2487,
+   "line": 2492,
    "hash": "ce2b954bd9af8e16",
    "does": "",
    "errors": {
@@ -60294,7 +60289,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2237,
+   "line": 2242,
    "hash": "8150ea58b444a534",
    "does": "",
    "errors": {
@@ -60395,7 +60390,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3021,
+   "line": 3026,
    "hash": "bce8298f80a6601e",
    "does": "",
    "errors": {
@@ -60495,7 +60490,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2587,
+   "line": 2592,
    "hash": "0a6e72f6afb69950",
    "does": "",
    "errors": {
@@ -60603,7 +60598,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2659,
+   "line": 2664,
    "hash": "a51c77c0c4211825",
    "does": "",
    "errors": {
@@ -60709,7 +60704,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2965,
+   "line": 2970,
    "hash": "e8dec48d423da49f",
    "does": "",
    "errors": {
@@ -60813,7 +60808,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2945,
+   "line": 2950,
    "hash": "5ff14e252baed951",
    "does": "",
    "errors": {
@@ -60917,7 +60912,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3171,
+   "line": 3176,
    "hash": "63b65103abc91dc0",
    "does": "",
    "errors": {
@@ -61021,7 +61016,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1679,
+   "line": 1684,
    "hash": "cb1e23a403e6324f",
    "does": "",
    "errors": {
@@ -61121,7 +61116,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1412,
+   "line": 1417,
    "hash": "19ae9474f5b0153b",
    "does": "",
    "errors": {
@@ -61226,7 +61221,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1470,
+   "line": 1475,
    "hash": "206c3d8648cf8b35",
    "does": "",
    "errors": {
@@ -63722,7 +63717,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 159,
+   "line": 149,
    "hash": "8651504faa64e8e9",
    "does": "",
    "errors": {
@@ -64259,7 +64254,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 784,
+   "line": 785,
    "hash": "2a1be8be966e3ef7",
    "does": "",
    "errors": {
@@ -64988,7 +64983,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1138,
-   "hash": "0cb0f2c65965c8bf",
+   "hash": "06a5cc3370327854",
    "does": "",
    "errors": {
     "count": 0,
@@ -65068,7 +65063,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1114 tolerant door read (S33-T record_as_body): named keys typed, unknown key ignored never stored, junk value refused in the board two keys; api-tolerant-doors test 68 ok; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
