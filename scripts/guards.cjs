@@ -316,9 +316,7 @@ const GUARDS = [
   /* ⭐⭐ THE CONSTITUTION MATRIX — one cascade, two doors. A party arriving over CTP has no entity row here, so
      it used to resolve, silently, as base @ platform-0. Now it resolves from ITS installation (the b254 rule)
      and every answer says resolved_from + fallback. Also: in lib/, only govresolve may resolve a constitution. */
-  'govresolve-ctp.test.cjs',
-  'govresolve-bounded.test.cjs', // NET-25: an installation declares only inside what the constitution allows (currency, timezone, region, country)
-  'relationships-availability.test.cjs', // OPS-55 has/miss/nocat/err states, OPS-57 bounded concurrency of 6
+  'govresolve-ctp.test.cjs', 'govresolve-bounded.test.cjs', 'relationships-availability.test.cjs', // NET-25, OPS-55, OPS-57
   /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
      refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
   'ctp-query.test.cjs',
