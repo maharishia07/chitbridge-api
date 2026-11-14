@@ -556,6 +556,10 @@ async function checkDbRole() {
     const doorNow = dbRole.signinDoorVerdict(await dbRole.signinDoorFacts((sql) => require('./db').query(sql)), require('./lib/dev-otp').isLocalStack());
     log[doorNow.level === 'fatal' ? 'critical' : doorNow.level === 'ok' ? 'info' : 'warn'](doorNow.msg, { reason: doorNow.reason });
     if (doorNow.level === 'fatal') process.exit(1);
+    /* SEC-75: the two entity_schemas doors (b861) must be there before the first order or supplier list */
+    const entityNow = dbRole.entityDoorVerdict(await dbRole.entityDoorFacts((sql, params) => require('./db').query(sql, params)), require('./lib/dev-otp').isLocalStack());
+    log[entityNow.level === 'fatal' ? 'critical' : entityNow.level === 'ok' ? 'info' : 'warn'](entityNow.msg, { reason: entityNow.reason });
+    if (entityNow.level === 'fatal') process.exit(1);
   } catch (e) {
     log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' });
   }

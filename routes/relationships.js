@@ -301,9 +301,7 @@ function listSuppliers(db, owner) {
               /* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema
                  row exists; it counts as "has a catalogue — ask them", and GET /suppliers/:id/catalogue asks the far side
                  (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). */
-              (EXISTS (SELECT 1 FROM entity_schemas es
-                      WHERE es.entity_id = i.identity_id
-                        AND es.status = 'active' AND es.is_default = true)
+              (ops.shop_has_catalogue(i.identity_id) /* SEC-75: b861 definer, one boolean about another shop */
                OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)) AS has_catalogue,
               /* API-6 (network owner, 25 Oct): WHERE the supplier lives, named only when it is another installation (null here), with that installation's label.
                  The web's money-promise confirm before a cross-installation send (supCrossParty → CBQuotes.askCross) decides "far" from it: a stub made from an
@@ -572,9 +570,7 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
         `SELECT sl.supplier_list_id, sl.nickname, sl.preferred,
               i.identity_id AS supplier_entity_id, i.bridge_id, i.user_id, i.display_name, i.currency_code,
               i.business_status,
-              EXISTS (SELECT 1 FROM entity_schemas es
-                      WHERE es.entity_id = i.identity_id
-                        AND es.status = 'active' AND es.is_default = true) AS has_catalogue
+              ops.shop_has_catalogue(i.identity_id) AS has_catalogue /* SEC-75: b861 definer */
          FROM supplier_list sl
          JOIN identities i ON i.identity_id = sl.supplier_entity_id
         WHERE sl.owner_entity_id = $1 AND ${require('../lib/party-live').liveSql('sl')}

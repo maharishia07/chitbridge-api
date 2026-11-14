@@ -23,7 +23,7 @@ const contract = require('../lib/assist-contract'); // the contract (each route'
 const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
 const ownerOnly = require('../lib/owner').ownerOnly; // CAT-277: the one owner gate (a co-assist or a key is refused in words)
-const { query, withEntity, readBatch } = require('../db'); // DB access for the Q&A library (assist_qa) + entity-scoped writes
+const { query, queryAs, withEntity, readBatch } = require('../db'); // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth = require('../middleware/auth'); // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb'); // server-side grounding (cacheable, tamper-proof)
 const compliance = require('../lib/compliance'); // deterministic conform-check engine (the `ai:conform-verdict@v1` slot floor)
@@ -674,7 +674,7 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
     // Generalised (blueprint): the CALLER must be a helpdesk (carries the 'Assistant Q&A' schema); it publishes to
     // ITS OWN catalogue. GOV-01-Help carries that schema -> backward compatible.
     const sender = auth.entityOf(req);
-    const hd = await query(`SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
+    const hd = await queryAs(sender, `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
     if (!hd.rows.length) return problem(req, res, { status: 403, ...words.notAHelpDesk() });
     const helpId = sender;
 
@@ -694,7 +694,7 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
         return res.json({ ok: true, qa_id: qaIn, updated: true });
       }
     }
-    const sch = await query(`SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);
+    const sch = await queryAs(helpId, `SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);
     const schema_id = sch.rows[0] ? sch.rows[0].schema_id : null;
     const qaId = 'pub_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const item_data = { qa_id: qaId, question, answer, context, topics: [], fit: null, media: null, status: 'approved' };
@@ -720,7 +720,7 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
 router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const r = await query(`SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
+    const r = await queryAs(entity, `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
     const hd = r.rows.length > 0;
     /* T3-DISPUTES-ASSIST: may I publish an answer — the SAME test POST /publish refuses with (403 below), as a code the CB Assist screen greys on */
     res.json({ ok: true, is_helpdesk: hd, actions: { publish: hd ? { ok: true } : { ok: false, why: 'not_helpdesk', say: PUBLISH_NO } } });

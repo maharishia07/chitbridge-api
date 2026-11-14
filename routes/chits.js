@@ -25,7 +25,7 @@ const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL 
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
 const log = require('../lib/logger');
 const { v4: uuidv4 } = require('uuid');
-const { query, withTransaction, withEntity, trySavepoint } = require('../db');
+const { query, queryAs, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
 const docnumber = require('../lib/docnumber'); // what a document number may look like, per country
 const { tillClaimOf } = require('../lib/holder'); // M11 — a phone's bill names its device and person; checked against the session
@@ -2442,7 +2442,8 @@ async function sendSummary(sendState, req, res) {
 async function sendFreeze(sendState, req, res) {
   const { sender_id } = sendState;
   // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
-  const schemaRow = await query(
+  const schemaRow = await queryAs(
+    sender_id, // SEC-75: entity_schemas is row-secured; the sender's own default schema, bound to the sender
     `SELECT schema_id, schema_version
        FROM entity_schemas
       WHERE entity_id = $1 AND status = 'active' AND is_default = true

@@ -152,7 +152,7 @@ async function updateLinkedProduct(entity_id, existing, wantedFields) {
   const merged = productsRouter.mergePatch(existing.item_data || {}, wantedFields);
   const schema_id = await productsRouter.defaultSchemaId(entity_id);
   const decl = await require('../lib/catalogue-columns').ensureDeclared({
-    query: require('../db').query,
+    query: require('../db').queryFor(entity_id),
     entity_id,
     schema_id,
     item_data: merged,
@@ -183,7 +183,7 @@ async function createPushedProduct(entity_id, template, wantedFields, requestId)
   const productsRouter = require('./products');
   const schema_id = await productsRouter.defaultSchemaId(entity_id);
   const made = await require('../lib/mint-product').mintProduct({
-    query: require('../db').query,
+    query: require('../db').queryFor(entity_id),
     withEntity,
     entity_id,
     schema_id,

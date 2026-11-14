@@ -6,7 +6,7 @@ const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const { query, withEntity, readBatch } = require('../db');
+const { query, queryFor, withEntity, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer · K-1: the one guard for an id in the address
 const { words, faultOf, failed, badStatus, schemaOptionsFor, operationFor, pathsOf } = require('../lib/products-contract'); // the contract (each route's operation) and the words of a refusal
@@ -280,14 +280,8 @@ async function safeCanSeeCosts(req, entity_id) {
   return cost.canReadSafe(req, entity_id); /* the one safe wrapper lives in lib/cost.js */
 }
 
-async function defaultSchemaId(entity_id) {
-  const r = await query(
-    `SELECT schema_id FROM entity_schemas
-     WHERE entity_id = $1 AND status='active' AND is_default=true LIMIT 1`,
-    [entity_id]
-  );
-  return r.rows[0]?.schema_id || null;
-}
+/* SEC-75: ONE defaultSchemaId, in lib/catalogue-write.js (bound to the shop); this file and combo-templates / adopt all use it */
+const { defaultSchemaId } = catwrite;
 
 // Validate a product against its schema fields. Returns an error message, or null if valid.
 // Rules: required fields not empty · number fields numeric, not negative, respect min_value.
@@ -312,9 +306,9 @@ async function defaultSchemaId(entity_id) {
  */
 const { schemaFieldsOf, validateAgainst } = catwrite;
 
-async function validateItem(schema_id, item_data, stored) {
+async function validateItem(entity_id, schema_id, item_data, stored) {
   if (!schema_id) return null;
-  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
+  return validateAgainst(await schemaFieldsOf(entity_id, schema_id), item_data, stored);
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
@@ -357,7 +351,7 @@ async function catalogueShape(entity_id) {
    * free rather than bought.
    */
   const sid = await defaultSchemaId(entity_id);
-  const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+  const cols = await catcols.resolveColumns({ query: queryFor(entity_id), withEntity, entity_id, schema_id: sid });
   let schema = null;
   if (sid) {
     schema = { properties: Object.fromEntries(cols.declared.map((x) => [x.field_key, {}])) };
@@ -423,7 +417,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
      * is one behaviour — and it would have been hollow to write that and then let adoption INSERT its own.
      */
     const made = await require('../lib/mint-product').mintProduct({
-      query,
+      query: queryFor(entity_id),
       withEntity,
       entity_id,
       schema_id,
@@ -686,7 +680,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
 
     const list = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
+      const verr = await validateItem(entity_id, schema_id, items[i].item_data, stored && stored.get(items[i].id));
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
     if (list.length) {
@@ -953,7 +947,7 @@ async function catalogueRows(entity_id, canCost) {
   try {
     const sid = await defaultSchemaId(entity_id);
     if (sid) {
-      const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+      const cols = await catcols.resolveColumns({ query: queryFor(entity_id), withEntity, entity_id, schema_id: sid });
       schema = { properties: Object.fromEntries(cols.columns.map((item) => [item, {}])) };
     }
   } catch (e) {
@@ -1248,7 +1242,7 @@ router.post(
 
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
-      let ruleRows = await schemaFieldsOf(schema_id);
+      let ruleRows = await schemaFieldsOf(entity_id, schema_id);
 
       // EXTEND THE DECLARATION FIRST. The new columns have to exist before the products that use them, and doing it
       // in this order means a failure here leaves nothing half-imported.
@@ -1262,7 +1256,7 @@ router.post(
         if (!sid) return problem(req, res, { status: 500, ...words.noDefinition() });
         /* ⭐ ONE APPENDER. This loop WAS the correct implementation — it is now the shared one, so the single add
          and the bulk paste append a column exactly the way an import does. See lib/catalogue-columns.commitFields. */
-        created.push(...(await catcols.commitFields({ query, schema_id: sid, newFields: applied.newFields })));
+        created.push(...(await catcols.commitFields({ query: queryFor(entity_id), schema_id: sid, newFields: applied.newFields })));
       }
 
       // REGISTER WHAT WE ACCEPT, so a column's position becomes a stored fact.
@@ -1279,7 +1273,7 @@ router.post(
       // Additive and optional, like every other extension: this records what the catalogue already accepts, it does
       // not change what it demands.
       if (sid) {
-        const hv = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
+        const hv = await queryFor(entity_id)(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
         const known = new Set(hv.rows.map((item) => item.field_key));
         // The order the template renders them in — so registering changes nothing a merchant can see, today.
         const inOrder = template.columns.filter(
@@ -1288,7 +1282,7 @@ router.post(
         if (inOrder.length) {
           created.push(
             ...(await catcols.commitFields({
-              query,
+              query: queryFor(entity_id),
               schema_id: sid,
               newFields: inOrder.map((key) => ({
                 field_key: key,
@@ -1301,7 +1295,7 @@ router.post(
       }
 
       // New columns were just added, so the rule set changed exactly once. Re-read it once — still O(1).
-      if (created.length) ruleRows = await schemaFieldsOf(sid);
+      if (created.length) ruleRows = await schemaFieldsOf(entity_id, sid);
 
       // Then the products. Match on the DECLARED identity where the file carries one: a second upload of the same
       // sheet should correct the catalogue, not double it.
@@ -1429,7 +1423,7 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
 
     /* ⭐ The running display_order used to be tracked here; commitFields owns it now, so this only needs to know
        WHICH keys already exist — the additive-only rule. */
-    const have = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
+    const have = await queryFor(entity_id)(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
     const keys = new Set(have.rows.map((item) => item.field_key));
 
     /**
@@ -1491,7 +1485,7 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
      * variations of "add a column", which is precisely how the declaration and the store drifted apart in the
      * first place. lib/catalogue-columns.commitFields is now the only code that writes a schema_fields row.
      */
-    const added = await catcols.commitFields({ query, schema_id: sid, newFields: toAdd });
+    const added = await catcols.commitFields({ query: queryFor(entity_id), schema_id: sid, newFields: toAdd });
 
     res.json({
       message: added.length ? `Added ${added.length} column(s)` : 'Your catalogue already has all of those columns',
@@ -1660,7 +1654,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
     if (refusal) return problem(req, res, refusal);
     /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
     const decl = await catcols.ensureDeclared({
-      query,
+      query: queryFor(entity_id),
       entity_id,
       schema_id: await defaultSchemaId(entity_id),
       item_data: req.body.item_data,
