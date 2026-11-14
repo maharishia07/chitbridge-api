@@ -102,13 +102,6 @@ function create() {
       }
       return out;
     },
-    /* R1-01: did the posted bill (the given source refs) take NO input tax? true / false, null when no such entry — the real store's billTookNoInputCredit */
-    async billTookNoInputCredit(db, e, refs) {
-      const mine = T.entries.filter((x) => x.entity_id === e && (refs || []).indexOf(x.source_ref) >= 0 && !x.reverses_entry_id);
-      if (!mine.length) return null;
-      const credited = (x) => T.lines.some((l) => l.entry_id === x.entry_id && Number(l.dr_minor || 0) > 0 && (T.accounts.find((acc) => acc.account_id === l.account_id) || {}).role && /^(gst_paid|input_)/.test(T.accounts.find((acc) => acc.account_id === l.account_id).role));
-      return !mine.some(credited);
-    },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;

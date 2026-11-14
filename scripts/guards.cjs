@@ -1039,7 +1039,6 @@ function countChecks(out) {
   if (okFailed) return Number(okFailed[okFailed.length - 1].match(/\d+/)[0]);
   return (out.match(/^\s*(?:ok|✓)\s/gm) || []).length;
 }
-
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
   ? fs

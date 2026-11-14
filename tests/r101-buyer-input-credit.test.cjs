@@ -71,6 +71,25 @@ const received = (invoice, setting, extra) => ({ chit: { chit_id: 'p1', created_
   const ex = boughtUse.event; /* a use-only bill is ONE event: postChit posts verdict.event, so assert on it */
   ok('R101: the use part of a bought counter bill (unregistered buyer) is an expense of the gross 1,100, no input tax', !!ex && ex.amount === 1100 && ex.input_tax === undefined, JSON.stringify(boughtUse).slice(0, 300));
 
+
+  console.log('\n— lib/books-buyer-credit.js, one rule at a time (the two store reads, answered by hand) —\n');
+  const BC = require(path.join(H.API, 'lib', 'books-buyer-credit'));
+  const Store = require(path.join(H.API, 'lib', 'books-store'));
+  const realBySource = Store.entryBySource, realDebits = Store.entryDebitsByRole;
+  const debitsOf = { e1: [{ role: 'cost_of_goods', dr_minor: 110000 }], e2: [{ role: 'input_cgst', dr_minor: 9000 }, { role: 'purchases', dr_minor: 100000 }], e3: [{ role: 'gst_paid', dr_minor: 10000 }] };
+  Store.entryBySource = async (db, e, ref) => (ref === 'chit:a' ? { entry_id: 'e1' } : ref === 'chit:a:use' ? { entry_id: 'e2' } : ref === 'chit:c' ? { entry_id: 'e3' } : null);
+  Store.entryDebitsByRole = async (db, e, id) => debitsOf[id];
+  try {
+    eq('tookNoCredit: an entry with no input-tax debit → true', await BC.tookNoCredit(null, 'me', ['chit:a']), true);
+    eq('tookNoCredit: a part that debited input_cgst → false', await BC.tookNoCredit(null, 'me', ['chit:a', 'chit:a:use']), false);
+    eq('tookNoCredit: a gst_paid debit → false (AU)', await BC.tookNoCredit(null, 'me', ['chit:c']), false);
+    eq('tookNoCredit: no such entry → null (nothing to follow), never true', await BC.tookNoCredit(null, 'me', ['chit:zz']), null);
+    eq('tookNoCredit: no refs at all → null', await BC.tookNoCredit(null, 'me', []), null);
+  } finally { Store.entryBySource = realBySource; Store.entryDebitsByRole = realDebits; }
+  eq('carriesTax: 1,000 taxable + 100 GST → true; no tax → false', [BC.carriesTax({ rows: [{ taxable: 1000 }], total: 1100 }), BC.carriesTax({ rows: [{ taxable: 1000 }], total: 1000 })], [true, false]);
+  eq('stance: refuses to guess — unknown + tax waits; unknown + no tax posts; nothing read claims', [!!BC.inputCreditStance({ buyerRegistration: 'unknown' }, 'AU', 'B-1', true).wait, BC.inputCreditStance({ buyerRegistration: 'unknown' }, 'AU', 'B-1', false), BC.inputCreditStance({}, 'AU', 'B-1', true)], [true, {}, {}]);
+  eq('withoutInputCredit: an event that is neither a bill nor an expense, or an expense with no tax, is returned as it was', [BC.withoutInputCredit({ type: 'sale_bill' }).type, BC.withoutInputCredit({ type: 'expense', amount: 5 }).amount], ['sale_bill', 5]);
+  eq('withoutInputCredit: text or blank tax adds 0, never NaN (fail closed)', BC.withoutInputCredit({ type: 'expense', amount: 1000, input_tax: { gst: 'abc', gst2: '' } }).amount, 1000);
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n\n' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
