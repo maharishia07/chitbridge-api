@@ -1,2 +1,5 @@
 # a migration FILE NAME in the schema-lint baseline list (b159_attachment_object_key.sql), not a secret
 migrations/schema-lint.baseline.json:generic-api-key:119
+# test-only JWT_SECRET values set inside offline tests (process.env.JWT_SECRET = '<test name>-secret'), never a real key
+tests/ctr-117-trade-name-profile-first.test.cjs:generic-api-key:17
+tests/ctr-245-ack-audience.test.cjs:generic-api-key:18
