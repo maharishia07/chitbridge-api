@@ -803,8 +803,9 @@ async function readStaff(entity_id) {
 async function readParticulars(entity_id, row, profile) {
   const cbProfile = require('../lib/profile');
   let party = {};
+  const side = {}; /* CTR-158: what invoiceParty reads from the SAME vault besides the party (side.slip_footer), so the snapshot costs no extra trip */
   try {
-    party = (await cbProfile.invoiceParty(entity_id)) || {};
+    party = (await cbProfile.invoiceParty(entity_id, side)) || {};
   } catch (e) {
     console.warn('[till] snapshot could not read the shop particulars — the bill header will be thin:', e.message);
   }
@@ -817,8 +818,10 @@ async function readParticulars(entity_id, row, profile) {
   const stateSplit = require('../lib/tax-lines').splitsByState(country);
   /* CX0 + STD2: the money the counter bills in — the shop's own, else its PACK's; neither → null and the ONE sentence (country-setup.MONEY_UNSTATED) */
   const shopMoney = countrySetup.shopMoney(party.currency, country); /* SEC3: the one reader */
-  return { party, gstin, country, stateSplit, shopMoney };
+  const slipFooter = side.slip_footer === undefined ? null : side.slip_footer; /* CTR-158: the footer Print setup saved */
+  return { party, gstin, country, stateSplit, shopMoney, slipFooter };
 }
+
 
 /**
  * ⭐⭐ THE CATEGORY MASTER, ONCE ([TILL-114]). id → name for every category this shop has, so tillItem can
@@ -1272,8 +1275,10 @@ function taxBlock(shelf) {
 
 /** the `shop` block of the snapshot: who the shop is, how it is registered (`registration` = country-setup.registrationOfShop's answer), and how it is paid — in three runs of fields */
 function shopBlock(row, flags, particulars, holdsStock, registration) {
-  const { party, gstin, country, stateSplit, shopMoney } = particulars;
+  const { party, gstin, country, stateSplit, shopMoney, slipFooter } = particulars;
   return {
+    /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
+    slip_footer: slipFooter,
     ...shopIdentity(party, row),
     ...shopAddressParts(party),
     ...shopRegistration(row, flags, gstin, stateSplit, registration),
