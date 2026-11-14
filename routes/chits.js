@@ -4366,7 +4366,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
-      detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]), bill_total: moneyCheck.billTotalWire(data.header.rows[0]) /* ACC-348a: the lists' key, from the full header */,
+      detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]), bill_total: moneyCheck.billTotalWire(data.header.rows[0]) /* ACC-348a: the key the lists carry, from the full header */,
       participants: _red.participants,
       state_log: _red.state_log,
       bill_private: _red.private ? true : undefined,
