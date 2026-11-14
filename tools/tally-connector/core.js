@@ -244,9 +244,14 @@ function b2bOf(inv, order) {
 }
 /** CON-98: a registered buyer's invoice with no total cannot make a voucher — say so once (log + books write-back), keep no receipt so the next catch-up asks again */
 async function refuseVoucher({ cb, adapter, log, chit_id, order }) {
-  const why = 'the invoice carries no total (' + order.currency + ') — not exportable until it does';
-  if (!cb._waited || !cb._waited[chit_id + ':total']) { cb._waited = cb._waited || {}; cb._waited[chit_id + ':total'] = true; log('order ' + chit_id.slice(0, 8) + ' ' + why); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'waiting', why }); }
-  return { chit_id, outcome: 'waiting', why };
+  const reason = 'the invoice carries no total (' + order.currency + ') — not exportable until it does';
+  if (!cb._waited || !cb._waited[chit_id + ':total']) { cb._waited = cb._waited || {}; cb._waited[chit_id + ':total'] = true; log('order ' + chit_id.slice(0, 8) + ' ' + reason); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'waiting', why: reason }); }
+  return { chit_id, outcome: 'waiting', why: reason };
+}
+/** the buyer's party ledger in their books, created when missing; a failure is logged and the voucher goes on */
+async function ensureBuyerParty(adapter, buyer, log) {
+  if (!adapter.ensureParty) return;
+  try { const pr = await adapter.ensureParty(buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); }
 }
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
@@ -273,8 +278,7 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
     const b2b = b2bOf(inv, order);
     if (b2b && b2b.total == null) return refuseVoucher({ cb, adapter, log, chit_id, order });
     if (b2b) {
-      order.b2b = b2b;
-      if (adapter.ensureParty) { try { const pr = await adapter.ensureParty(order.b2b.buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); } }
+      order.b2b = b2b; await ensureBuyerParty(adapter, b2b.buyer, log);
     }
   } catch (e) {
     /* ⚠️ A FAILED READ IS NOT "NO GSTIN". Booking a registered buyer as a walk-in because the API blinked (a redeploy, 11:32 on
