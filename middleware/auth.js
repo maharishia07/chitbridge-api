@@ -5,6 +5,7 @@
 // CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
 const { query } = require('../db');
+const { businessEnded } = require('../lib/business-status'); // R2-03 — an erased or closed business opens no door
 const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
 const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
 const { problem } = require('../lib/problem'); // API-4b — every refusal below is the one Problem body; the old keys ride on it, frozen
@@ -211,6 +212,10 @@ async function judge(req, res) {
   // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
   if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
     return refuse(401, 'TOKEN_INVALID', { error: 'Unauthorised', message: 'Invalid token' });
+  }
+  /* R2-03: a token, a session and a key are all as alive as the business behind them — an erased or closed business keeps none of them */
+  if (await businessEnded(decoded.parent_entity_id || decoded.identity_id, query)) {
+    return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
   }
   const key = await judgeKey(req, decoded);
   if (key.refusal) return key;

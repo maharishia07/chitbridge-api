@@ -635,6 +635,8 @@ router.param('actor_id', uuidParam({ detail: NOT_FOUND_SAID, legacy: { error: 'N
 router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.approveKey, legacy: { error: 'Forbidden', message: SAID.approveKey } });
+    /* R2-05: the record says "approved by the owner", so only the owner may write it; a co-assist of any hat is refused (the one owner test, lib/owner.js) */
+    if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.approveOwner, legacy: { error: 'Forbidden', code: 'OWNER_ONLY', may: false, why: SAID.approveOwner, message: SAID.approveOwner } });
     const entity_id = auth.entityOf(req);
     const r = await query(
       `SELECT identity_id, site, connector_config FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,
