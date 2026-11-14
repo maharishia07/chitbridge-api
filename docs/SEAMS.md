@@ -49,7 +49,7 @@ of file each thing is; this says what already does the job.
 | 52 | `view` | `books-payables.js` | group: |
 | 52 | `count` | `money-check.js` | the count /health reads |
 | 51 | `again` | `signin-ui.js` |  |
-| 51 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at?, purpose? }) → the grant: |
+| 51 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 48 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 48 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
