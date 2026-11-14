@@ -5,8 +5,8 @@
   "routes": 643,
   "no_does": 633,
   "not_started": 0,
-  "partial": 17,
-  "meets": 626,
+  "partial": 0,
+  "meets": 643,
   "columns": {
    "strict_input": {
     "applies": 328,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 643,
-    "failing": 4
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 199,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 146
+  "output_allowlist_from_recordings": 150
  },
  "machine_columns": [
   "schema_in",
@@ -4243,9 +4243,9 @@
    "method": "GET",
    "path": "/api/books-grants",
    "owner_area": "books-grants",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 33,
+   "line": 34,
    "hash": "5d405c5b36fffdc9",
    "does": "",
    "errors": {
@@ -4275,10 +4275,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -4301,7 +4301,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
@@ -4315,13 +4316,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -4341,15 +4342,16 @@
    "method": "GET",
    "path": "/api/books-grants/consent",
    "owner_area": "books-grants",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 31,
-   "hash": "8e18d7128cec037a",
+   "line": 32,
+   "hash": "47a4321ced80d5c8",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      422,
      500
     ],
@@ -4370,10 +4372,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -4391,11 +4393,13 @@
    },
    "declared": [
     401,
+    403,
     422,
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
@@ -4409,13 +4413,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -4435,9 +4439,9 @@
    "method": "GET",
    "path": "/api/books-grants/log",
    "owner_area": "books-grants",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 67,
+   "line": 68,
    "hash": "8ec4029f35864373",
    "does": "",
    "errors": {
@@ -4466,12 +4470,12 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -4493,8 +4497,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -4506,13 +4512,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -6373,11 +6379,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "24370ab90c26cfec"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: the account key is read by lib/bank-rec-log accountIn (code, role or id; a group still answers null, same as before); keys and statuses unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank.js",
     "cap-books.js",
@@ -9623,11 +9628,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "db6212b16fbecab0"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: header now passes costView.headerWithCurrency (adds currency_code from the stated money only when the header has none); same keys otherwise, statuses and error shape unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -20901,11 +20905,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b97d02176fbfb866"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: price_currency reads opt in with {stored:true} at both sites (CUR-1b, a withdrawn code on an old record reads as before); keys and statuses unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network-member.js"
    ],
@@ -29315,10 +29318,10 @@
    "method": "PATCH",
    "path": "/api/books-grants/:id",
    "owner_area": "books-grants",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 51,
-   "hash": "7e0846099761c3d9",
+   "line": 52,
+   "hash": "6bf6c899d666bd41",
    "does": "",
    "errors": {
     "count": 1,
@@ -29326,7 +29329,6 @@
      401,
      403,
      404,
-     409,
      422,
      500,
      503
@@ -29350,12 +29352,12 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -29373,14 +29375,15 @@
     401,
     403,
     404,
-    409,
     422,
     500,
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -29392,13 +29395,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -31300,11 +31303,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8376a88466eb5d16"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: CRM-45 lifts the field writes into supplierOwnFields/renameMinted and answers one shape via partyAnswer (changed, party_no, party_id); display_name must be text; 404 and 403 and 409 kept in words through problem; shape and rename rule are cb-crm business, not changed here; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -32743,11 +32745,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dc8abe99239f2495"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: stampCommercials now also gets the stored commercials so an unchanged legacy price still passes (CAT-308 M9b); keys and statuses unchanged, 400 PRICE_DECIMALS is the registered code; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -33189,9 +33190,9 @@
    "method": "POST",
    "path": "/api/books-grants",
    "owner_area": "books-grants",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 41,
+   "line": 42,
    "hash": "3ce3b963a4d64b05",
    "does": "",
    "errors": {
@@ -33225,12 +33226,12 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -33253,8 +33254,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -33266,13 +33269,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -33292,9 +33295,9 @@
    "method": "POST",
    "path": "/api/books-grants/:id/revoke",
    "owner_area": "books-grants",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 59,
+   "line": 60,
    "hash": "072ac56f31d97b4d",
    "does": "",
    "errors": {
@@ -33326,12 +33329,12 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -33354,8 +33357,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -33367,13 +33372,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40014,11 +40019,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5d65c9455a82d4b8"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: a new order money passes refuseNewCurrency (worded 422 MONEY_CURRENCY_UNKNOWN, registered, 422 declared) and the per-store sum reads stored prices; answers otherwise unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43789,11 +43793,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9d43ffe7e25f1d9e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: a new chit naming a withdrawn or unlisted money is refused by refuseNewCurrency (worded 422, registered) and the role table is the one HEADER_ROLE table; answer keys unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-readiness.js",
@@ -46830,11 +46833,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "79dcc7ce2c5e9c42"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: the arriving copy is built by lib/ctp-arrival arrivalCopy (R3-03: the door sets direction, role, status and first log row, and drops owned business_json keys the peer sent); the answer and statuses are unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -53496,11 +53498,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "81cb6441c78bef91"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: stampItem gets the stored item_data and the shop money goes through newMoneyOf (withdrawn money is a worded 422, registered); keys and statuses unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -53809,11 +53810,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d578afbcc7f2ef2e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: stampItem gets the stored row and the shop money is refused once up front in words (422 MONEY_CURRENCY_UNKNOWN); keys unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -54022,11 +54022,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b10983fe8825c9de"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: a withdrawn shop money is refused once up front with a worded 422 (was 200 with every row failed; behaviour owned by cb-catalogue) and stored rows are passed to stampItem; keys unchanged; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
