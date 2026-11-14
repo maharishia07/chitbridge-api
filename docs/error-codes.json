@@ -4016,6 +4016,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PRICE_DECIMALS",
+   "status": "400",
+   "title": "Price has too many decimals",
+   "shopkeeper": "That price has more decimal places than its money allows, so nothing was saved.",
+   "hint": "Enter the price with the decimals the money uses (for rupees, two); a price already stored is not asked again unless it changes.",
+   "owner_area": "money",
+   "since": "2026-11-14"
+  },
+  {
    "code": "PRICE_MOVED",
    "status": "409",
    "title": "Prices have moved",
