@@ -196,6 +196,11 @@ const identity = require('../lib/identity'); // which line is this, and which pr
 const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
 /* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
+/** CUR-1b: the shop's money for NEW rows: a withdrawn or unlisted one is refused once, up front, in words (a worded 422), not as a failed line per row */
+function newMoneyOf(currency) {
+  if (currency) money.refuseNewCurrency(currency);
+  return currency;
+}
 function userSafeMessage(e) {
   return e.userMessage || safeErr(e);
 }
@@ -700,7 +705,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
       catwrite.patchItems(
         db,
         entity_id,
-        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency) }))
+        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency, item.item_data) }))
       )
     );
 
@@ -1246,7 +1251,7 @@ router.post(
       const refusal = await importRefusal(req, entity_id, applied, ident);
       if (refusal) return problem(req, res, refusal);
 
-      const currency = await regional.currencyFor(entity_id);
+      const currency = newMoneyOf(await regional.currencyFor(entity_id));
       // O(1): the rules are read once for the whole file, not once per row.
       let ruleRows = await schemaFieldsOf(schema_id);
 
@@ -1367,7 +1372,7 @@ router.post(
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
           }
-          const stamped = money.stampItem(merged, currency);
+          const stamped = money.stampItem(merged, currency, prior && prior.item_data);
           if (prior) {
             updates.push({ item_id: prior.item_id, replace: stamped });
             outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });
@@ -1568,7 +1573,7 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
   if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
   /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
   /* CAT-316: a changed status is recorded by itemstatus.stamp (who, when, until, replaced_by), as PUT /:id/status does; an unchanged echo is left as it came */
-  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency);
+  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency, read.stored);
   return { result: await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }) };
 }
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
@@ -1677,7 +1682,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
     const verdict = await catwrite.judgeItem(entity_id, next, cur.rows[0].item_data);
     if (verdict) return problem(req, res, changeRefusal(req, verdict));
     itemstatus.stampInto(next, decl.item_data, cur.rows[0].item_data, whoOf(req)); /* a status that cannot be stamped (a redundant with no replaced_by) is refused now; the stamp itself is cut when the change lands */
-    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id)));
+    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id), cur.rows[0].item_data));
     const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
     if (r.error === 'not_enabled') return problem(req, res, { status: 409, ...words.scheduleRefused(r) });
     if (r.error) return problem(req, res, { status: 400, ...words.scheduleRefused(r) });
@@ -2132,7 +2137,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
        * file's own warning is that the front end's prevailing `+d.price || 0` idiom turns an absent price
        * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
        */
-      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price), active: x.is_active !== false }));
+      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price, { stored: true }), active: x.is_active !== false }));
     } catch (e) {
       log.fellBack('products GET /lists: the read failed — answered with none', e);
       mine = [];

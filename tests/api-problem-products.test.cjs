@@ -83,6 +83,16 @@ function checkWords() {
   check('declined: no code, none in the old body', sameValue(Object.keys(plainDecl.legacy), ['error', 'message']), plainDecl);
 }
 
+/** CUR-1b: a shop whose own money is withdrawn (BGN) is refused in words by every products door that stamps a price: 422, MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor named */
+function checkWithdrawnShop(recording) {
+  console.log(String.fromCharCode(10) + '-- a shop whose own money is withdrawn: a worded 422 on every products door that stamps a price --');
+  ['POST /api/products/bulk-update|edits-shop-money-withdrawn', 'POST /api/products/import|import-shop-money-withdrawn', 'POST /api/products/:id/schedule|schedule-shop-money-withdrawn'].forEach((key) => {
+    const answer = recording[key];
+    const body = (answer && answer.body) || {};
+    check(key + ': 422, MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor (EUR) named, nothing converted', !!answer && answer.status === 422 && body.code === 'MONEY_CURRENCY_UNKNOWN' && body.withdrawn === true && /replaced by EUR/.test(String(body.detail)) && /nothing is converted/.test(String(body.detail)), answer && { status: answer.status, body });
+  });
+}
+
 /** every code the words and the faults can answer under is a row of docs/ERROR-CODES.md with its sentence written */
 function checkCodesRegistered() {
   console.log(String.fromCharCode(10) + '-- the codes the products routes answer under are in the register --');
@@ -267,6 +277,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const allowed = capturing ? () => [] : contractModule().allowedStatuses();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.extras({ PARTY, OWNER, STAFF, SECRET_SQL, raising, answering, firstOf }), {});
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
+  checkWithdrawnShop(recording);
   const scheduleHeld = Object.assign(await checkScheduleIds(server.address().port), await checkCancelIds(server.address().port));
   const scheduleProved = Object.fromEntries(Object.keys(scheduleHeld).sort().map((route) => [route, scheduleHeld[route]])); /* the order the evidence file keeps */
   const foreignProved = await checkForeignIds(server.address().port);
