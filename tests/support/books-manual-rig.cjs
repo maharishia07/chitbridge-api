@@ -24,8 +24,9 @@ const call = (port, method, p, body) => new Promise((done) => {
 });
 
 /** → { X, q, asOwner, asStaff, srv, staff: { code }, close } or null (with the reason printed) when the engines are not there */
-async function rig() {
+async function rig(shopRow) {
   const X = H.load({ auth: authStub });
+  if (shopRow) X.db.countryRow = shopRow; /* another country's identities row (the gate's and the registration's read); none = the India shop */
   if (!X.src.dir) { console.log('   SKIP: ' + X.src.why); return null; }
   require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => false } };
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
@@ -34,7 +35,7 @@ async function rig() {
   const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0); const port = srv.address().port;
   const q = (m, p, b) => call(port, m, '/api/books' + p, b);
-  await X.store.saveSetting(X.db, SHOP, { enabled: false });
+  await X.store.saveSetting(X.db, SHOP, shopRow ? { enabled: false, country: shopRow.country } : { enabled: false });
   const en = await q('POST', '/enable', {});
   if (!en.body.ok) throw new Error('could not enable the ledger: ' + JSON.stringify(en.body));
   X.T.parties.push({ owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 });
