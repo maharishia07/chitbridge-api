@@ -1,4 +1,4 @@
-/* CTR-166 — a bill of supply prints the buyer's registration number when the buyer has one (CGST Rules r.49(1): the recipient's GSTIN, if registered).
+/* CTR-166 — a bill of supply prints the buyer's registration number when the buyer has one (CGST Rules r.49(d): the recipient's GSTIN or UIN, if registered).
    The page's slipBuyerHTML is lifted out and run. CTR166_MUTATE=1 puts the tax-only guard back and must fail. */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert');
