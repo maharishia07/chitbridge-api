@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 288,
+    "applies": 287,
     "failing": 38
    },
    "rate_limited": {
@@ -24168,7 +24168,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 143,
+   "line": 144,
    "hash": "edb76b75208461bd",
    "does": "",
    "errors": {
@@ -24266,7 +24266,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 116,
+   "line": 117,
    "hash": "c6f20bf2d163747a",
    "does": "",
    "errors": {
@@ -55836,7 +55836,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 1028,
+   "line": 1027,
    "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
@@ -55896,7 +55896,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true
    },
    "human": {
@@ -55932,7 +55932,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 102,
+   "line": 103,
    "hash": "af927b549fce1811",
    "does": "",
    "errors": {
@@ -56011,7 +56011,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
-    "wire": 3,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -56028,7 +56028,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 1030,
+   "line": 1029,
    "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
@@ -56126,7 +56126,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 78,
+   "line": 79,
    "hash": "c5769b1ea95958a8",
    "does": "",
    "errors": {
@@ -56223,7 +56223,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 165,
+   "line": 166,
    "hash": "885f42d5770569ce",
    "does": "",
    "errors": {
@@ -56325,7 +56325,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 1029,
+   "line": 1028,
    "hash": "cc9b07d8bcc06ba5",
    "does": "",
    "errors": {
