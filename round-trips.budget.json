@@ -375,21 +375,19 @@
     },
     "GET /api/books-actions": {
       "file": "books-actions.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 6,
       "fired": true,
-      "status": 401,
-      "registered_only": true,
-      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the queue is 3 reads in one transaction: the ledger switch, the page of first steps with the count, the steps of that page (ACC-176b, to measure on a SIT box)"
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live"
     },
     "GET /api/books-actions/:id": {
       "file": "books-actions.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 6,
       "fired": true,
-      "status": 401,
-      "registered_only": true,
-      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: one read of the action steps and one of the grant clock (ACC-176b, to measure on a SIT box)"
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live"
     },
     "GET /api/books/accounts": {
       "file": "books.js",
@@ -2632,39 +2630,35 @@
     },
     "POST /api/books-actions": {
       "file": "books-actions.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 6,
       "fired": true,
-      "status": 401,
-      "registered_only": true,
-      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the open-ref check, the server preview, the first step (ACC-176b, to measure on a SIT box)"
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live"
     },
     "POST /api/books-actions/:id/review": {
       "file": "books-actions.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 6,
       "fired": true,
-      "status": 401,
-      "registered_only": true,
-      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the steps, the review step (ACC-176b, to measure on a SIT box)"
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live"
     },
     "POST /api/books-actions/:id/return": {
       "file": "books-actions.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 6,
       "fired": true,
-      "status": 401,
-      "registered_only": true,
-      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the steps, the return step (ACC-176b, to measure on a SIT box)"
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live"
     },
     "POST /api/books-actions/:id/accept": {
       "file": "books-actions.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 6,
       "fired": true,
-      "status": 401,
-      "registered_only": true,
-      "floor_is_cost": "the stub sends no sign-in, so the door answers 401 before any database read; the 401 is the whole cost here. Signed in: the ledger switch, then ONE transaction: the steps, the existing writer, the written total read back, the accepted step (ACC-176b, to measure on a SIT box)"
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live"
     },
     "POST /api/books/accounts": {
       "file": "books.js",
