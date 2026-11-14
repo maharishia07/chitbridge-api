@@ -555,6 +555,7 @@ const GUARDS = [
   'dispute-scoping.test.cjs', // roster-only visibility · no notice to a non-party · per-party resolve; KNOWN BREAKS printed loud (section 5)
   'message-once.test.cjs', // RAIL-136 (d): a message's copies and its timeline line commit together, so a retry after a 500 posts it once
   'rail-msg-type.test.cjs', // a message kind outside chk_chit_messages_msg_type is a 400 "Pick a message type" before any write (23514 never reaches the table)
+  'catalogue-enquiry-msg-type.test.cjs', // the product enquiry door refuses a message kind outside message-limit MSG_TYPES with a 400 "Pick a message type" (stacks on rail-msg-type)
   'sec-fix3.test.cjs', // SEC-FIX3: S1-S11 — one scenario each, red on main, green on the fix
   /* ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07) — offline: the real route over a stand-in db */
   'junit-board.test.js', // a report folds to one row per (run, case, layer); the guards' own JUnit reads back by the board's key; the testing scope; CI posts after red
