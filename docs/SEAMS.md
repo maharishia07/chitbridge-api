@@ -125,11 +125,11 @@ of file each thing is; this says what already does the job.
 | 24 | `governance` | `home-facts.js` |  |
 | 23 | `says` | `adopt.js` |  |
 | 23 | `entries` | `books-store.js` |  |
+| 23 | `match` | `itemmatch.js` | actually state. |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `keep` | `signin.js` | see. |
 | 22 | `note` | `device-id.js` | note(where, problem) — |
 | 22 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 22 | `match` | `itemmatch.js` | actually state. |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |

@@ -842,7 +842,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     const result = await db(
       `SELECT
            identity_id, bridge_id, display_name,
-           actor_key, actor_role, actor_type, hat,${LEVEL_COLUMNS}
+           actor_key, actor_role, actor_type, hat, can_see_costs,${LEVEL_COLUMNS}
            break_status, break_type, break_started_at,
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,
