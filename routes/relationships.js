@@ -79,7 +79,9 @@ async function numberParty(owner, party_id) {
 }
 
 /** CRM-45: the party answer of a PATCH names EVERY field saved - the route's own (segment_override, nickname, notes ...) first, then the party fields partyPatch saved - one shape: party.changed */
-const partyAnswer = (party, own) => Object.assign({}, party, { changed: own.concat((party && party.changed) || []) });
+const partyAnswer = (party, routeFields) => Object.assign({}, party, { changed: routeFields.concat((party && party.changed) || []) });
+/** CRM-45: the supplier's own fields a PATCH body saved (a blank display_name renames nothing) */
+const supplierFieldsSaved = (body) => ['nickname', 'category', 'notes', 'preferred', 'supply_kind'].concat(String(body.display_name || '').trim() ? ['display_name'] : []).filter((key) => key in body);
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
@@ -426,8 +428,7 @@ router.patch(
       if (party === false) return;
       const sets = [],
         vals = [];
-      let index = 1,
-        renamed = false;
+      let index = 1;
       if ('nickname' in req.body) {
         sets.push(`nickname = $${index++}`);
         vals.push(sanitise(req.body.nickname || '') || null);
@@ -486,8 +487,7 @@ router.patch(
           if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + nm + '.') });
           throw e;
         }
-        renamed = true;
-        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm, party: partyAnswer(party, ['display_name']) });
+        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm, party: partyAnswer(party, supplierFieldsSaved(req.body)) });
       }
       if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
       if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
@@ -500,8 +500,7 @@ router.patch(
         )
       );
       if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      const saved = ['nickname', 'category', 'notes', 'preferred', 'supply_kind'].filter((key) => key in req.body).concat(renamed ? ['display_name'] : []);
-      res.json({ message: 'Supplier updated', party: partyAnswer(party, saved) });
+      res.json({ message: 'Supplier updated', party: partyAnswer(party, supplierFieldsSaved(req.body)) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
