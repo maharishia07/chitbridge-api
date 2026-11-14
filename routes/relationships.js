@@ -78,6 +78,12 @@ async function numberParty(owner, party_id) {
   }
 }
 
+/** CRM-45: the party answer of a PATCH names EVERY field saved - the route's own (segment_override, nickname, notes ...) first, then the party fields partyPatch saved - one shape: party.changed */
+async function partyAnswer(owner, party, routeFields, partyId) {
+  const changed = routeFields.concat((party && party.changed) || []);
+  return party && party.party_id ? Object.assign({}, party, { changed }) : { changed, party_no: await numberParty(owner, partyId), party_id: partyId }; /* the answer's one shape: changed, party_no, party_id */
+}
+
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
 
@@ -399,6 +405,71 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
   }
 });
 
+/** CRM-45: the list-row fields a supplier PATCH body saves, column -> value (partyFields.saveOwn writes, names and logs them) */
+function supplierOwnFields(reqBody) {
+  const fields = {};
+  if ('nickname' in reqBody) fields.nickname = sanitise(reqBody.nickname || '') || null;
+  if ('category' in reqBody) fields.category = sanitise(reqBody.category || '') || null;
+  if ('notes' in reqBody) fields.notes = sanitise(reqBody.notes || '') || null;
+  if ('preferred' in reqBody) fields.preferred = reqBody.preferred === true || reqBody.preferred === 'true';
+  /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
+     sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
+     and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
+     what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
+     supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
+  if ('supply_kind' in reqBody) fields.supply_kind = reqBody.supply_kind === 'own_use' ? 'own_use' : 'resale';
+  return fields;
+}
+
+
+/**
+ * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
+ * keep it as per the shop name. So internal id never gets mixed up."*
+ *
+ * ⭐ That is CB's three-names rule holding at a new kind of row, and it is why the id had to be a number
+ * rather than a slug of the name: the HANDLE is generated and set once, the DISPLAY NAME is theirs and free
+ * to change. Correcting "Corner Hardwre" to "Corner Hardware & Sons" moves nothing — not the id, not a
+ * purchase, not a rupee of spend. A name-shaped handle would have frozen the typo into the identifier.
+ *
+ * ⚠️ ONLY FOR A PARTY THIS SHOP MINTED. Renaming a real ChitBridge business in their own row is not this
+ * shop's to do — for those, `nickname` is the owner-side label and always has been.
+ * ⚠️ A duplicate name is REFUSED by the b218 index rather than merged: two suppliers with one name is the
+ * mix-up he is guarding against, and a silent merge would move history between two real records.
+ */
+async function renameMinted(req, res, owner) {
+  if (!('display_name' in req.body && String(req.body.display_name || '').trim())) return null; /* no rename asked */
+  const owned = await withEntity(owner, (db) =>
+    db.query(
+      `SELECT i.identity_id, i.user_id, i.display_name FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
+      WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`,
+      [req.params.id, owner]
+    )
+  );
+  const row = owned.rows[0];
+  if (!row) {
+    problem(req, res, { status: 404, ...words.notFound() });
+    return false;
+  }
+  if (!require('../lib/handle').isMinted(row.user_id)) {
+    problem(req, res, { status: 403, ...words.notYours() });
+    return false;
+  }
+  const newName = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
+  try {
+    await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [newName, row.identity_id]);
+  } catch (err) {
+    if (err && err.code !== '23505') throw err;
+    problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + newName + '.') });
+    return false;
+  }
+  const changed = newName === row.display_name ? [] : ['display_name'];
+  if (changed.length)
+    await withEntity(owner, (db) =>
+      require('../db').trySavepoint(db, () => require('../lib/books-store').logChange(db, owner, { by: req.identity && req.identity.identity_id, table_name: 'identities', row_id: row.identity_id, field: 'display_name', old: row.display_name, new: newName }), null)
+    );
+  return { name: newName, party_id: row.identity_id, changed }; /* CRM-45: what the party answer names */
+}
+
 const SUPPLIER_PATCH_KEYS = PARTY_KEYS.concat(['category', 'notes', 'supply_kind', 'display_name', 'preferred']);
 // Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
@@ -421,81 +492,15 @@ router.patch(
       const owner = ctx(req);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
-      const sets = [],
-        vals = [];
-      let index = 1;
-      if ('nickname' in req.body) {
-        sets.push(`nickname = $${index++}`);
-        vals.push(sanitise(req.body.nickname || '') || null);
-      }
-      if ('category' in req.body) {
-        sets.push(`category = $${index++}`);
-        vals.push(sanitise(req.body.category || '') || null);
-      }
-      if ('notes' in req.body) {
-        sets.push(`notes = $${index++}`);
-        vals.push(sanitise(req.body.notes || '') || null);
-      }
-      if ('preferred' in req.body) {
-        sets.push(`preferred = $${index++}`);
-        vals.push(req.body.preferred === true || req.body.preferred === 'true');
-      }
-      /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
-         sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
-         and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
-         what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
-         supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
-      if ('supply_kind' in req.body) {
-        sets.push(`supply_kind = $${index++}`);
-        vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale');
-      }
-
-      /**
-       * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
-       * keep it as per the shop name. So internal id never gets mixed up."*
-       *
-       * ⭐ That is CB's three-names rule holding at a new kind of row, and it is why the id had to be a number
-       * rather than a slug of the name: the HANDLE is generated and set once, the DISPLAY NAME is theirs and free
-       * to change. Correcting "Corner Hardwre" to "Corner Hardware & Sons" moves nothing — not the id, not a
-       * purchase, not a rupee of spend. A name-shaped handle would have frozen the typo into the identifier.
-       *
-       * ⚠️ ONLY FOR A PARTY THIS SHOP MINTED. Renaming a real ChitBridge business in their own row is not this
-       * shop's to do — for those, `nickname` is the owner-side label and always has been.
-       * ⚠️ A duplicate name is REFUSED by the b218 index rather than merged: two suppliers with one name is the
-       * mix-up he is guarding against, and a silent merge would move history between two real records.
-       */
-      if ('display_name' in req.body && String(req.body.display_name || '').trim()) {
-        const who = await withEntity(owner, (db) =>
-          db.query(
-            `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
-            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`,
-            [req.params.id, owner]
-          )
-        );
-        const row = who.rows[0];
-        if (!row) return problem(req, res, { status: 404, ...words.notFound() });
-        if (!require('../lib/handle').isMinted(row.user_id)) return problem(req, res, { status: 403, ...words.notYours() });
-        const nm = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
-        try {
-          await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [nm, row.identity_id]);
-        } catch (e) {
-          if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + nm + '.') });
-          throw e;
-        }
-        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
-      }
-      if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
-      if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
-      vals.push(req.params.id, owner);
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_list_id`,
-          vals
-        )
-      );
-      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
+      const ownFields = supplierOwnFields(req.body);
+      const renamed = await renameMinted(req, res, owner);
+      if (renamed === false) return; /* a refusal was already answered */
+      if (!Object.keys(ownFields).length && renamed) return res.json({ message: 'Supplier updated', display_name: renamed.name, party: await partyAnswer(owner, party, renamed.changed, renamed.party_id) });
+      if (!Object.keys(ownFields).length && party) return res.json({ message: 'Supplier updated', party });
+      if (!Object.keys(ownFields).length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
+      const saved = await withEntity(owner, (db) => partyFields.saveOwn(db, owner, 'supplier', req.params.id, ownFields, req.identity && req.identity.identity_id));
+      if (!saved.party_id) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Supplier updated', party: await partyAnswer(owner, party, (renamed ? renamed.changed : []).concat(saved.changed), saved.party_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
@@ -512,7 +517,7 @@ router.patch(
  */
 router.delete('/suppliers/:id', auth, ...checked('DELETE /suppliers/:id'), async (req, res) => {
   try {
-    /* R8: owner only, refused with money open, and it HIDES (CRM's own remove) — a staff login can no longer delete a supplier the shop owes */
+    /* R8: owner only, refused with money open, and it HIDES (CRM's ownFields remove) — a staff login can no longer delete a supplier the shop owes */
     if (!isOwner(req)) return problem(req, res, { status: 403, ...words.ownerOnly() });
     const owner = ctx(req);
     const row = await withEntity(owner, (db) =>
@@ -1026,15 +1031,11 @@ router.patch(
           ...words.nothingToUpdate('Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)')
         });
       }
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `UPDATE customer_list SET segment_override = $1
-         WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id`,
-          [req.body.segment_override, req.params.id, owner]
-        )
+      const saved = await withEntity(owner, (db) =>
+        partyFields.saveOwn(db, owner, 'customer', req.params.id, { segment_override: req.body.segment_override }, req.identity && req.identity.identity_id)
       );
-      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Segment updated' });
+      if (!saved.party_id) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Segment updated', party: await partyAnswer(owner, party, saved.changed, saved.party_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update segment failed'));
     }

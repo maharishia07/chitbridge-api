@@ -989,7 +989,8 @@ router.patch(
     body('gstn').optional({ nullable: true }).isString().withMessage('The tax number is text.').trim() /* CTR-182: text only, for everyone — an array or number is refused 400 */,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
-    body('business_status').optional().isIn(['open', 'closed', 'away']),
+    /* NET-96: custom, not isIn - isIn reads an array one element at a time, so [] passed, reached the update as a truthy value and crashed it (500); the whole value must be one of the three words */
+    body('business_status').optional().custom((value) => ['open', 'closed', 'away'].includes(value)),
     /* ⭐ b177-era: the entity may CHOOSE a currency. Bounded below against what the constitution permits —
        an enum here would freeze the set, and the whole point is that the layer decides it. */
     body('currency_code').optional().trim().isLength({ min: 3, max: 3 }),
