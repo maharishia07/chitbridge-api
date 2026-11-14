@@ -84,7 +84,12 @@ function rowsFor(sql, p) {
   }
   /* R3-02: an acceptance that waits for the proposer's confirmation is marked on the decider's own row */
   if (/^UPDATE chit_proposal SET decided_at = now\(\), decided_by = \$3 WHERE entity_id = \$1 AND proposal_id = \$2 AND status = 'proposed'/.test(s)) {
-    w.props.filter((r) => r.entity_id === p[0] && r.proposal_id === p[1] && r.status === 'proposed').forEach((r) => Object.assign(r, { decided_at: 'now', decided_by: p[2] }));
+    w.props.filter((r) => r.entity_id === p[0] && r.proposal_id === p[1] && r.status === 'proposed').forEach((r) => Object.assign(r, { decided_at: new Date().toISOString(), decided_by: p[2] }));
+    return [];
+  }
+  /* the acceptance taken back or released: the round is open again on the decider's row */
+  if (/^UPDATE chit_proposal SET decided_at = NULL, decided_by = NULL WHERE entity_id = \$1 AND proposal_id = \$2 AND status = 'proposed'/.test(s)) {
+    w.props.filter((r) => r.entity_id === p[0] && r.proposal_id === p[1] && r.status === 'proposed').forEach((r) => Object.assign(r, { decided_at: null, decided_by: null }));
     return [];
   }
   if (/^UPDATE chit_proposal SET status = 'accepted'/.test(s)) {
@@ -302,6 +307,20 @@ async function ship(from, to) {
   }
   CUR = from;
   return results;
+}
+/** ONE step of the real queue: only the HEAD of the stream (the oldest pending row) is sent; a 409 refusal of a proposal event ends the row at once (ret.refusedForGood) and releases the waiting mark, so the next row is the head */
+async function shipHead(from, to) {
+  const head = from.out.filter((r) => r.status === 'pending').sort((a, b) => a.seq - b.seq)[0];
+  if (!head) return null;
+  CUR = to;
+  const fromIdent = from.ident[head.from_entity_id];
+  const local = Object.values(to.ident).find((i) => i.bridge_id === head.to_bridge_id);
+  const result = await ret.apply({ chit_id: head.chit_id, event: Object.assign({}, head.event, { seq: head.seq }), from: { installation_key: from.inst, bridge_id: fromIdent.bridge_id, display_name: fromIdent.display_name }, to: { identity_id: local.identity_id } });
+  const forGood = ret.refusedForGood(head, { accepted: false, status: result.status });
+  head.status = result.ok ? 'accepted' : forGood ? 'failed' : 'pending';
+  CUR = from;
+  if (head.status === 'failed') await ret.releaseWaiting(head);
+  return result;
 }
 const as = (w, fn) => {
   CUR = w;
@@ -1076,7 +1095,6 @@ const call = (method, url, id, body) =>
     const r3 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 93 }]), SELLER));
     const crossed = await ship(A, B);
     assert.ok(crossed.length === 1 && refusedAs(crossed[0]), 'B answers the stale accept with a refusal: ' + JSON.stringify(crossed));
-    assert.strictEqual(A.out.filter((x) => x.kind === 'proposal_decide' && x.status === 'pending').length, 1, 'so A’s queue does not count it as confirmed');
     assert.strictEqual(B.header[SELL].business_json.invoice, undefined);
     await ship(B, A);
     assert.deepStrictEqual(rowsOf(A, BUY).map((r) => [r.round, r.status]), [[2, 'superseded'], [3, 'proposed']]);
@@ -1090,6 +1108,52 @@ const call = (method, url, id, body) =>
     assert.ok(confirmed.every((x) => x.ok), JSON.stringify(confirmed));
     assert.ok(A.header[BUY].business_json.invoice, 'the money landed');
     assert.strictEqual(JSON.stringify(A.header[BUY].business_json.invoice), JSON.stringify(B.header[SELL].business_json.invoice), 'both copies hold the same money');
+  });
+  await t('R3-02 (queue): a refused accept ENDS its row at once and the stream moves on; only the head is ever sent; the awaiting mark is released', async () => {
+    const { A, B } = twoInstallations();
+    const r2 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await shipHead(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    const r3 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 93 }]), SELLER));
+    await shipHead(B, A);
+    assert.deepStrictEqual(rowsOf(A, BUY).map((r) => [r.round, r.status]), [[2, 'superseded'], [3, 'proposed']]);
+    await as(A, () => proposals.decide(BUY, CH, r3.proposal_id, 'accept', BUYER));
+    assert.deepStrictEqual(A.out.filter((x) => x.status === 'pending').map((x) => x.seq), [1, 2], 'the dead accept of round 2 is the head, the accept of round 3 waits behind it');
+    const first = await shipHead(A, B);
+    assert.ok(refusedAs(first), JSON.stringify(first));
+    assert.strictEqual(A.out[0].status, 'failed', 'refused for good: the row ends, it is not retried 40 times');
+    const second = await shipHead(A, B);
+    assert.ok(second.ok && second.applied, 'the next accept is the head and goes through: ' + JSON.stringify(second));
+    await shipHead(B, A);
+    assert.strictEqual(JSON.stringify(A.header[BUY].business_json.invoice), JSON.stringify(B.header[SELL].business_json.invoice));
+    /* a refusal with no newer round to explain it releases the mark: the round is offered again */
+    const { A: A2, B: B2 } = twoInstallations();
+    const q = await as(B2, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await shipHead(B2, A2);
+    await as(A2, () => proposals.decide(BUY, CH, q.proposal_id, 'accept', BUYER));
+    assert.strictEqual((await as(A2, () => proposals.list(BUY, CH))).proposals[0].awaiting_me, false, 'waiting: not offered');
+    rowsOf(B2, SELL)[0].status = 'superseded';
+    assert.ok(refusedAs(await shipHead(A2, B2)));
+    assert.strictEqual((await as(A2, () => proposals.list(BUY, CH))).proposals[0].awaiting_me, true, 'released: offered again');
+  });
+  await t('R3-02 (awaiting): while an acceptance waits it cannot be rejected, countered or replaced here; accept again sends it again; after the wait it can be taken back', async () => {
+    const { A, B } = twoInstallations();
+    const r2 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    const waiting = (e) => e.status === 409 && e.code === 'PROPOSAL_CLOSED' && /waiting for the other side to confirm/.test(e.message);
+    await assert.rejects(as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'reject', BUYER)), waiting, 'reject');
+    await assert.rejects(as(A, () => proposals.propose(BUY, CH, { lines: [{ line_id: L1, requested_price: '90' }] }, BUYER)), waiting, 'counter');
+    assert.deepStrictEqual(rowsOf(A, BUY).map((r) => [r.round, r.status]), [[2, 'proposed']], 'nothing moved');
+    const again = await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    assert.strictEqual(again.status, 'awaiting_seller');
+    assert.strictEqual(A.out.filter((x) => x.kind === 'proposal_decide').length, 2, 'sent again');
+    rowsOf(A, BUY)[0].decided_at = new Date(Date.now() - 25 * 3600 * 1000).toISOString();
+    const back = await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'reject', BUYER));
+    assert.strictEqual(back.status, 'withdrawn');
+    assert.ok(/took your acceptance back/.test(back.words));
+    assert.strictEqual((await as(A, () => proposals.list(BUY, CH))).proposals[0].awaiting_me, true, 'the round is open again');
+    assert.strictEqual(A.header[BUY].business_json.invoice, undefined, 'nothing was applied');
   });
   await t('R3-02: a reject that crosses a newer round is refused back too; a repeat of an outcome already held is still acknowledged', async () => {
     const { A, B } = twoInstallations();

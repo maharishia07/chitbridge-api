@@ -106,6 +106,14 @@ const t = async (name, fn) => {
     assert.deepStrictEqual([...arrival.OWNED_KEYS].sort(), ['books', 'books_log', 'books_request', 'books_skip', 'client_ref', 'party', 'payment', 'use']);
   });
 
+  await t('a counter bill keeps the tender it was paid in (payment.parts, which the customer’s books read) and loses only the holder’s marks', async () => {
+    const parts = [{ mode: 'cash', amount: 1180 }];
+    const got = await arrives(sentCopy({ business_json: { invoice: INVOICE, bill_no: 'C1/0041', till: { id: 'T1' }, payment: { method: 'bank', ref: 'X', at: '2026-11-01', parts } } }, 'receiver'));
+    assert.deepStrictEqual(got.business_json.payment, { parts }, 'only the parts remain');
+    const bare = await arrives(sentCopy({ business_json: { invoice: INVOICE, payment: { method: 'bank', paid: true } } }, 'receiver'));
+    assert.ok(!('payment' in bare.business_json), 'a payment mark without tender parts is dropped altogether');
+  });
+
   console.log('\n== B · the shared record is untouched ==\n');
   await t('lines, money, invoice and parties arrive as sent; the arrival stamp is added; the sender’s own object is not mutated', async () => {
     const sent = sentCopy({ business_json: { invoice: INVOICE, deal: 'x', client_ref: 'R' } }, 'receiver');
