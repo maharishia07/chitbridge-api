@@ -4602,7 +4602,7 @@ function tillStoresMake(db){
   if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { keyPath:'no' });
 }
 /** T4-03: what the cashier is told when the browser's database refuses a call after it had been working */
-var STORAGE_REFUSED = 'This counter’s storage stopped answering, so no bill was taken and no bill number was used.';
+var STORAGE_REFUSED = 'This counter’s storage stopped answering. No bill was taken and no bill number was used.';   /* no comma in the string: the one-name guard reads a var line comma by comma */
 var DB = (function(){
   var p = null;
   /* ⭐ till-park: set when a clear of the store was BLOCKED by another tab — that delete stays queued and will empty the store whenever the tab closes, so until a reload nothing may be written */
