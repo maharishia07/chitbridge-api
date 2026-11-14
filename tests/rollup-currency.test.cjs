@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/01-rail-core-the-chit/functions/inbox-sent-folder-pulse-unread-rollup.md
  * REP-50 (SIT run 2026-10-25): GET /chits/rollup summed total_value across currencies, so an IN chit's rupees were added to an
  * AU shop's dollars at face value. rollupGroups() turns the (key, currency) rows into groups that never add across currencies.
  */

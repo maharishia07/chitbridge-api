@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/06-catalogue-pim/functions/items-create-edit-bulk-status.md
  * tests/products-bulk.test.cjs — many products, one round trip.
  *
  * ⚠️⚠️ THE DEFECT THIS REPLACES: the catalogue wizard posted `POST /api/products` once per item, STRICTLY

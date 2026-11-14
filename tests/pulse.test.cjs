@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/01-rail-core-the-chit/functions/inbox-sent-folder-pulse-unread-rollup.md
  * tests/pulse.test.cjs — the watermark must move when anything a list row shows moves.
  *
  * Athi, 2026-08-21: *"can we change the model from reading the data to push data, which avoids the read

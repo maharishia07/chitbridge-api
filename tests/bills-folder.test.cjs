@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/01-rail-core-the-chit/functions/user-folders-and-auto-file-rules.md
  * tests/bills-folder.test.cjs — THE BILLS FOLDER ON THE FOLDER SYSTEM (Athi, 2026-10-01; BACKLOG "BILLS TO ACCEPT").
  *
  *   A  the inventory: every system folder's code is its ledger's number in lib/accounts-packs (B-2100 · B-1300 · R-1400 ·

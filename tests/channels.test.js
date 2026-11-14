@@ -1,4 +1,5 @@
 'use strict';
+// CARD      docs/22-channels-capture-and-messaging/functions/channel-binding.md
 // Regression — the CHANNEL MAP (b123). Which inbound number / address belongs to which entity.
 //
 // This is the map the capture webhooks resolve against, so the whole security property of the public webhook rests
