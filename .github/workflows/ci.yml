@@ -336,7 +336,7 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/acc-176-books-grant.realstack.cjs
-      - name: ACC-176b · an adviser firm prepares, a colleague reviews, the owner accepts: separate from the auditor, stamped with person, firm and role, one posting path, revoke withdraws what is open (real Postgres, api role cb_app, RLS on)
+      - name: ACC-176b · an adviser firm prepares, a colleague reviews, the owner accepts, separate from the auditor, stamped with person, firm and role, one posting path, revoke withdraws what is open (real Postgres, api role cb_app, RLS on)
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
