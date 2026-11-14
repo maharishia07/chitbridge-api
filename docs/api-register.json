@@ -2506,7 +2506,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 821,
-   "hash": "287a514679431eba",
+   "hash": "f3b5356c80fe1afe",
    "does": "",
    "errors": {
     "count": 0,
@@ -2574,7 +2574,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1252 (CTR-244 batch, head 3785330e) stage2: GET /api/actors now lists access_level and whole_entity per person (ACC-237, read off the row JSON, no probe, still 2 trips); the answer schema names both keys (lib/actors-contract), FIELDS carries both columns, acc-237 test 6 ok, contract tests 1897 ok; register row regenerated from the code (hash 3cd9061c to f3b5356c, the stale one that kept it partial); 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
