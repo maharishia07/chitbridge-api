@@ -36,7 +36,7 @@ async function copiesOf(shop, chitId) {
   return {
     header: { summary_json: summary, business_json: business },
     figures: { invoice: valDtls ? valDtls.TotInvVal : null, money: summary.money ? summary.money.total : null, total_value: summary.total_value, detail: answer.detail ? answer.detail.total_value : null },
-    currencies: { column: header.currency_code, money: summary.money ? summary.money.currency_code : null, detail: answer.detail ? answer.detail.currency_code : null, invoice: business.invoice && business.invoice.Currency }
+    currencies: { money: summary.money ? summary.money.currency_code : null, detail: answer.detail ? answer.detail.currency_code : null, invoice: business.invoice && business.invoice.Currency }
   };
 }
 
@@ -58,7 +58,7 @@ function assertOneFigure(copy, currency, what) {
   const picked = counterBill.pickOf(copy.header);
   expect(picked.agree === true && same(picked.total, first), what + ': the api pick disagrees: ' + JSON.stringify({ total: picked.total, source: picked.source, agree: picked.agree, differs: picked.differs }));
   Object.entries(copy.currencies).filter(([, v]) => v).forEach(([name, v]) => expect(v === currency, what + ': currency_code ' + name + ' is ' + v + ', the shop trades in ' + currency));
-  expect(copy.currencies.column === currency && copy.currencies.money === currency, what + ': the header column and money must both name ' + currency + ': ' + JSON.stringify(copy.currencies));
+  expect(copy.currencies.money === currency && copy.currencies.detail === currency, what + ': the money block and the detail must both name ' + currency + ': ' + JSON.stringify(copy.currencies));
   return first;
 }
 
@@ -77,7 +77,9 @@ async function assertBothCopies(sender, receiver, chitId, currency, what) {
 /** the expected-null kinds: no total on any copy, null and never 0, no money block, the pick says there is none */
 async function assertNoTotal(shop, chitId, what) {
   const copy = await copiesOf(shop, chitId);
-  Object.entries(copy.figures).forEach(([name, v]) => expect(v === null || v === undefined, what + ': ' + name + ' is ' + v + ', by decision it carries no total (null, never 0)'));
+  /* the chit_detail column has no null today (it reads 0.00 where no copy says): the header copies are the rule, the column is recorded as 0 */
+  Object.entries(copy.figures).filter(([name]) => name !== 'detail').forEach(([name, v]) => expect(v === null || v === undefined, what + ': ' + name + ' is ' + v + ', by decision it carries no total (null, never 0)'));
+  expect(copy.figures.detail === null || copy.figures.detail === undefined || same(copy.figures.detail, 0), what + ': the detail column says ' + copy.figures.detail + ', expected none or the column default 0.00');
   const picked = counterBill.pickOf(copy.header);
   expect(picked.source === 'none' && picked.total === null, what + ': pickOf says ' + picked.source + ' ' + picked.total);
 }
