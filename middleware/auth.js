@@ -26,8 +26,10 @@ const refusedWith = (req, res, status, code, legacy) => problem(req, res, { stat
  */
 const DECIDED = new WeakSet();
 
-/** the key half of the decision: an API key is only as alive as its listing, its counter and its scopes → { keyRec } (null for a person) or { refusal } */
+/** the first half of the decision: the business behind the credential is open, and an API key is only as alive as its listing, its counter and its scopes → { keyRec } (null for a person) or { refusal } */
 async function judgeKey(req, decoded) {
+  /* R2-03: a token, a session and a key are all as alive as the business behind them — an erased or closed business keeps none of them */
+  if (await businessEnded(decoded.parent_entity_id || decoded.identity_id, query)) return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
   /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
      the token's own expiry says. One read per request, cached a minute per jti. */
   let keyRec = null;
@@ -212,10 +214,6 @@ async function judge(req, res) {
   // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
   if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
     return refuse(401, 'TOKEN_INVALID', { error: 'Unauthorised', message: 'Invalid token' });
-  }
-  /* R2-03: a token, a session and a key are all as alive as the business behind them — an erased or closed business keeps none of them */
-  if (await businessEnded(decoded.parent_entity_id || decoded.identity_id, query)) {
-    return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
   }
   const key = await judgeKey(req, decoded);
   if (key.refusal) return key;

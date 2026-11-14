@@ -632,11 +632,14 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
 /* K-1 (API-10): a connector id that is not a uuid names no connector — the unknown-connector 404, before the database answers in a 500 */
 router.param('actor_id', uuidParam({ detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } }));
 /** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
-router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async (req, res) => {
+/** R2-05: the record says "approved by the owner", so only the owner writes it: a co-assist of any hat is refused here (the one owner test, lib/owner.js); a key goes on and is answered KEY_CANNOT_DECIDE */
+const approverIsOwner = (req, res, next) =>
+  req.api_key || isOwner(req)
+    ? next()
+    : problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: OWNER_ONLY_WORDS, legacy: { error: 'Forbidden', code: 'OWNER_ONLY', may: false, why: OWNER_ONLY_WORDS, message: OWNER_ONLY_WORDS } });
+router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), approverIsOwner, async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.approveKey, legacy: { error: 'Forbidden', message: SAID.approveKey } });
-    /* R2-05: the record says "approved by the owner", so only the owner may write it; a co-assist of any hat is refused (the one owner test, lib/owner.js) */
-    if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: OWNER_ONLY_WORDS, legacy: { error: 'Forbidden', code: 'OWNER_ONLY', may: false, why: OWNER_ONLY_WORDS, message: OWNER_ONLY_WORDS } });
     const entity_id = auth.entityOf(req);
     const r = await query(
       `SELECT identity_id, site, connector_config FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,
