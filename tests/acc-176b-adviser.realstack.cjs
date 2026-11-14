@@ -308,6 +308,28 @@ async function main() {
     const f7Named = await firm(A, M1, 'POST', '/' + f7Owner.body.action_id + '/review', { body_hash: f7Owner.body.body_hash });
     ok('F7 the firm\'s own sign-in is not a named person: it can prepare (201), never review or return (403 ACTION_REVIEWER_NOT_NAMED); a named person reviews its work', f7Owner.status === 201 && f7Review.status === 403 && code(f7Review) === 'ACTION_REVIEWER_NOT_NAMED' && f7Return.status === 403 && f7Named.status === 200, JSON.stringify([f7Owner.status, f7Review, f7Return.status, f7Named.status]));
 
+    /* F7 across identities: one HUMAN with two identities cannot review his own work (red before the fix: the identity ids differ, so the old check let it through) */
+    const H1 = await person(P, 'h1', 'editor', true); const H2 = await person(P, 'h2', 'editor', true); const H3 = await person(P, 'h3', 'editor', true);
+    const H4 = await person(P, 'h4', 'editor', true); const H5 = await person(P, 'h5', 'editor', true);
+    const sameMail = 'same-' + RUN + '@example.test';
+    await query('UPDATE identities SET email = $2 WHERE identity_id = $1', [H1.identity_id, sameMail]);
+    await query('UPDATE identities SET email = upper($2) WHERE identity_id = $1', [H2.identity_id, sameMail]);
+    await query('UPDATE identities SET email = $2 WHERE identity_id = $1', [P.id, 'owner-' + RUN + '@example.test']);
+    await query('UPDATE identities SET email = $2 WHERE identity_id = $1', [H3.identity_id, 'Owner-' + RUN + '@example.test']);
+    await query('UPDATE identities SET phone = $2 WHERE identity_id = $1', [H4.identity_id, '+91' + String(Date.now()).slice(-9)]);
+    await query('UPDATE identities SET phone = (SELECT phone FROM identities WHERE identity_id = $1) WHERE identity_id = $2', [H4.identity_id, H5.identity_id]);
+    const hm = await firm(H1, M1, 'POST', '', journal('jhuman'));
+    const hmSame = await firm(H2, M1, 'POST', '/' + hm.body.action_id + '/review', { body_hash: hm.body.body_hash });
+    const hmReturn = await firm(H2, M1, 'POST', '/' + hm.body.action_id + '/return', { body_hash: hm.body.body_hash, reason: 'my other login' });
+    const hmOther = await firm(B, M1, 'POST', '/' + hm.body.action_id + '/review', { body_hash: hm.body.body_hash });
+    ok('F7 two identities with the same e-mail (any case) are ONE human: refused to review or return (403 ACTION_SELF_REVIEW); a different human reviews the same action', hm.status === 201 && hmSame.status === 403 && code(hmSame) === 'ACTION_SELF_REVIEW' && hmReturn.status === 403 && hmOther.status === 200, JSON.stringify([hm.status, hmSame.status, code(hmSame), hmReturn.status, hmOther.status]));
+    const hmOwner = await firm(ownerOf(P), M1, 'POST', '', journal('jhuman2'));
+    const hmOwnerSame = await firm(H3, M1, 'POST', '/' + hmOwner.body.action_id + '/review', { body_hash: hmOwner.body.body_hash });
+    ok('F7 the firm\'s owner sign-in and a staff login with the same e-mail are one human: the staff login cannot review what the owner sign-in prepared', hmOwner.status === 201 && hmOwnerSame.status === 403 && code(hmOwnerSame) === 'ACTION_SELF_REVIEW', JSON.stringify([hmOwner.status, hmOwnerSame.status, code(hmOwnerSame)]));
+    const hp = await firm(H4, M1, 'POST', '', journal('jhuman3'));
+    const hpSame = await firm(H5, M1, 'POST', '/' + hp.body.action_id + '/review', { body_hash: hp.body.body_hash });
+    ok('F7 the same phone on two identities is one human too', hp.status === 201 && hpSame.status === 403 && code(hpSame) === 'ACTION_SELF_REVIEW', JSON.stringify([hp.status, hpSame.status, code(hpSame)]));
+
     const undated = await firm(A, M1, 'POST', '', journal('jundated', { body: { narration: 'no date', lines: [{ code: cash, dr_minor: 100 }, { code: sales, cr_minor: 100 }] } }));
     ok('F3 a journal with no date is refused at prepare (it would post on the day of the accept)', undated.status === 422 && code(undated) === 'ACTION_BODY_INVALID' && /date/.test(undated.body.detail || ''), JSON.stringify(undated));
     const noRef = await call(A, 'POST', '/api/books-actions', { member: M1.id, role: 'adviser', body: { store_id: M1.id, kind: 'journal', body: journal('x').body } });
