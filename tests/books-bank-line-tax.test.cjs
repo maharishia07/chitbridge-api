@@ -23,6 +23,8 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   const { X, q } = R, T = X.T;
   const D = '2026-10-05';
   const setup = require('../lib/country-setup');
+  /* the in-memory store has no b299 columns (country-setup.migrated() answers no), so the one reader's SQL read (registrationOfShop) is stood in by the same rule over the same row: registrationOf is the real one, the SQL is unrun here */
+  setup.registrationOfShop = async () => setup.registrationOf({ number: X.db.countryRow.gstn, scheme: X.db.countryRow.policy_flags.gst_registration, tax_registration: null });
   const asShop = (row) => { X.db.countryRow = row; setup.forget(SHOP); };
   const entryOf = (ref) => T.entries.find((e) => e.source_ref === ref);
   const linesOf = (e) => T.lines.filter((l) => l.entry_id === e.entry_id).sort((a, b) => a.line_no - b.line_no).map((l) => [l.code, l.dr_minor, l.cr_minor]);
@@ -89,6 +91,13 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'IN' });
   const india = await refused('a pack with four tax heads is refused', fee({ client_ref: 'bt-in', input_tax_minor: 200 }), [422]);
   ok('…naming the tax it cannot post', /no single tax/.test(JSON.stringify(india.body)), JSON.stringify(india.body));
+
+  /* ── a single-head pack with NO input-credit ledger (US sales tax, MY): the engine's expense would drop the tax line onto the class ledger and post short — refused, never posted ── */
+  const US = { country: 'US', currency_code: 'USD', gstn: '123456789', timezone: 'America/New_York', policy_flags: { gst_registration: 'regular' } };
+  asShop(US);
+  await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'US' });
+  const noCredit = await refused('a pack with no input-credit ledger (US) is refused', fee({ client_ref: 'bt-us', input_tax_minor: 200 }), [422]);
+  ok('…naming the cost, nothing posted', /part of the cost/.test(JSON.stringify(noCredit.body)), JSON.stringify(noCredit.body));
 
   R.close();
   done();
