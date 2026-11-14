@@ -1419,10 +1419,10 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
 });
 /* ── FIN-70 · THE BANK RECONCILIATION RECORD (lib/bank-rec-log, b864 bank_rec_log): the page's step actions and its signed statement, insert-only, who and when stamped HERE.
    Writes are the editor's (a viewer, the auditor, cannot); the read is any login with the Ledger on (the ACC-176 guest actor reads at viewer level). Before b864: 503 in words, the page keeps its marks on the device. ── */
-const BRL = require('../lib/bank-rec-log');
+const BANK_LOG = require('../lib/bank-rec-log');
 /** the bank ledger a body or query names (code, role or id) inside this transaction, or the 404 */
-async function bankAccountOf(h, e, key) {
-  const account = BRL.accountIn(await S.accounts(h, e), key);
+async function bankAccountOf(handle, e, key) {
+  const account = BANK_LOG.accountIn(await S.accounts(handle, e), key);
   if (!account) throw Object.assign(new Error('That bank account was not found.'), { code: 'BOOKS_NOT_FOUND' });
   return account;
 }
@@ -1430,8 +1430,8 @@ async function bankAccountOf(h, e, key) {
 router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks'), async (req, res) => {
   try {
     const e = ctx(req),
-      b = req.body || {};
-    const marks = await withEntity(e, async (h) => BRL.appendMarks(h, e, await bankAccountOf(h, e, b.account), b, byOf(req)));
+      body = req.body || {};
+    const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account), body, byOf(req)));
     res.status(201).json({ marks });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1441,8 +1441,8 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
 router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
-      b = req.body || {};
-    const statement = await withEntity(e, async (h) => BRL.appendStatement(h, e, await bankAccountOf(h, e, b.account), curOf(req), b, byOf(req)));
+      body = req.body || {};
+    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req)));
     res.status(201).json({ statement });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1454,9 +1454,9 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
     const e = ctx(req),
       from = req.query.from ? dateQ(req.query.from) : null,
       to = req.query.to ? dateQ(req.query.to) : null;
-    const out = await withEntity(e, async (h) => {
-      const account = await bankAccountOf(h, e, req.query.account);
-      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BRL.read(h, e, account, from, to));
+    const out = await withEntity(e, async (handle) => {
+      const account = await bankAccountOf(handle, e, req.query.account);
+      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to));
     });
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {

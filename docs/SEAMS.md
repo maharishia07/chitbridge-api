@@ -79,9 +79,9 @@ of file each thing is; this says what already does the job.
 | 35 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 35 | `shell` | `pick.js` |  |
 | 35 | `changes` | `books-store.js` |  |
+| 35 | `note` | `dbwatch.js` |  |
 | 35 | `hold` | `orders.js` |  |
 | 35 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
-| 34 | `note` | `dbwatch.js` |  |
 | 33 | `lines` | `cart.js` |  |
 | 33 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 33 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
