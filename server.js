@@ -549,7 +549,7 @@ async function checkDbRole() {
   if (!process.env.DATABASE_URL) return;
   const dbRole = require('./lib/db-role');
   try {
-    if (await dbRole.bootCheck((sql, params) => require('./db').query(sql, params), require('./lib/dev-otp').isLocalStack(), log)) process.exit(1);   /* SEC-185: the role, then the sign-in door (b857): no fallback read exists any more */
+    if (await dbRole.bootCheck((sql, params) => require('./db').query(sql, params), require('./lib/dev-otp').isLocalStack(), log)) process.exit(1);   /* SEC-185 + SEC-75: the role, the sign-in door, then the two entity_schemas doors: no fallback read exists any more */
   } catch (e) {
     log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' });
   }
