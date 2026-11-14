@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 127 | `read` | `books-cashflow.js` | Trips: |
 | 122 | `withEntity` | `books-hooks.js` |  |
 | 116 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 106 | `answer` | `availability.js` | from March; then nearest. |
+| 107 | `answer` | `availability.js` | from March; then nearest. |
 | 98 | `money` | `bill-privacy.js` |  |
 | 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 82 | `next` | `dayopen.js` | the next thing to do — |
