@@ -32,7 +32,7 @@ const logger = require('../lib/logger');
  * Money in and out is *_minor (integer minor units) with the currency beside it.
  */
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); router.use(require('../middleware/books-grant')); /* ACC-176: a request that names a member's books (X-Books-For) is read-only for a live grant; no header, no effect */
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const B = require('../lib/books');
@@ -628,8 +628,8 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
       const chart = await S.accounts(h, e);
-      const a = chart.find((x) => String(x.code) === key) || chart.find((x) => x.role === key) || chart.find((x) => String(x.account_id) === key);
-      if (!a || a.is_group) return null;
+      const a = require('../lib/bank-rec-log').accountIn(chart, key); /* the one reader of an account key: its code, its role or its id */
+      if (!a) return null;
       const lo = await B.ledgerOf(h, e, a, party, from, to),
         open = lo.opening_minor;
       /* PERF1: a page (?limit · ?after) reads its entries only; its first running balance = the range's opening + ONE indexed SUM of the lines before
@@ -1414,6 +1414,56 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
     /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
     res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
   } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/* ── FIN-70 · THE BANK RECONCILIATION RECORD (lib/bank-rec-log, b864 bank_rec_log): the page's step actions and its signed statement, insert-only, who and when stamped HERE.
+   Writes are the editor's (a viewer, the auditor, cannot); the read is any login with the Ledger on (the ACC-176 guest actor reads at viewer level). Before b864: 503 in words, the page keeps its marks on the device. ── */
+const BANK_LOG = require('../lib/bank-rec-log');
+/** the bank ledger a body or query names (code, role or id) inside this transaction, or the 404 */
+async function bankAccountOf(handle, e, key) {
+  const account = BANK_LOG.accountIn(await S.accounts(handle, e), key);
+  if (!account) throw Object.assign(new Error('That bank account was not found.'), { code: 'BOOKS_NOT_FOUND' });
+  return account;
+}
+/** POST /bank/marks { account, file_hash?, marks: [{ act: accept|undo|note|attach, key, how?, chits?, ledger?, text?, ref? }] } → { marks: [row], by, at } — editor; insert-only, one transaction. `by` and `at` are the server's. */
+router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      body = req.body || {};
+    const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account), body, byOf(req)));
+    res.status(201).json({ marks });
+  } catch (err) {
+    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
+router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      body = req.body || {};
+    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req)));
+    res.status(201).json({ statement });
+  } catch (err) {
+    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
+    if (err && err.code === 'CURRENCY_MISMATCH') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field } }); /* a statement in another currency than the account's (the same answer refusalOf gives) */
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** GET /bank/log?account&from&to → { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
+router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      from = req.query.from ? dateQ(req.query.from) : null,
+      to = req.query.to ? dateQ(req.query.to) : null;
+    const out = await withEntity(e, async (handle) => {
+      const account = await bankAccountOf(handle, e, req.query.account);
+      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to));
+    });
+    res.json(Object.assign({ currency: curOf(req) }, out));
+  } catch (err) {
+    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
     problem(req, res, refusalOf(err, req));
   }
 });

@@ -213,6 +213,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 ];
 const INFRA_LIBS = [
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
+  'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',
   'line-shape.js',
   'list-filters.js',
@@ -239,6 +240,7 @@ const INFRA_LIBS = [
   'remote-catalogue.js',
   'message-limit.js',
   'ctp-repair.js',
+  'ctp-arrival.js',        // R3-03: builds the receiving door's copy of an arriving chit (direction, role, status, log row) from rail-actions — plumbing of routes/ctp.js, the rules stay in rail-actions
   /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
   'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
@@ -251,6 +253,7 @@ const INFRA_LIBS = [
   /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */
   'output-allowlist.js',
   'books-contract.js',
+  'books-grant.js', 'books-grants-contract.js',
   'tax-contract.js',
   /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'marketing-contract.js',
@@ -599,6 +602,7 @@ const ENGINE_OTHER = [
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
   'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */
   'move-in-proof.js',         /* move-in W1.10 (18 Oct): the match proof kept with the import (b765) — counts and shows, computes no money */
+  'bank-rec-log.js',          /* FIN-70: the bank reconciliation record (b864): the page's step actions and signed statement figures stored and read back; no figure is computed here */
   'fx-rates.js',              /* FX1: the shop's exchange rates (b391) and the foreign event's rate / settlement / revaluation — every figure is CBPosting's (fx_settlement · fx_revalue · fxRevaluation) */
   'parallel-run.js',          /* PR1: their Tally / Xero period beside ours — reads their files, compares PURELY over the engines' answers; writes nothing to the books */
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by

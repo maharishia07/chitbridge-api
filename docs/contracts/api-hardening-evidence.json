@@ -929,8 +929,7 @@
    "output_allowlist": true
   },
   "POST /api/products/import": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "GET /api/products/starter-columns": {
    "output_allowlist": true
@@ -1085,8 +1084,7 @@
    "strict_input": true
   },
   "POST /api/network-design/reissue": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "GET /api/network-design/stores": {
    "output_allowlist": true
@@ -1541,6 +1539,12 @@
    "strict_input": true,
    "idempotent_money_write": true
   },
+  "POST /api/books/bank/marks": {
+   "strict_input": true
+  },
+  "POST /api/books/bank/statements": {
+   "strict_input": true
+  },
   "PATCH /api/books/payments/:id": {
    "strict_input": true,
    "idempotent_money_write": true
@@ -1660,6 +1664,23 @@
   },
   "POST /api/books/money-check/resolve": {
    "strict_input": true
+  },
+  "GET /api/books-grants/consent": {
+   "output_allowlist": true
+  },
+  "GET /api/books-grants": {
+   "output_allowlist": true
+  },
+  "POST /api/books-grants": {
+   "strict_input": true
+  },
+  "PATCH /api/books-grants/:id": {
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "POST /api/books-grants/:id/revoke": {
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "GET /api/facts/rail/chits": {
    "output_allowlist": true

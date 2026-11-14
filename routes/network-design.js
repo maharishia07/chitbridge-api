@@ -295,6 +295,10 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
  *
  * Only for stores THIS operator minted: `created_by` is checked, not the tree, because tree membership can be
  * arranged and `created_by` cannot.
+ *
+ * R2-01: and only while the store is UNCLAIMED. A store is claimed by its first good sign-in, which stamps
+ * `last_active_at` (lib/identity-auth.js verifyCredential; a minted store never has it). After that the head
+ * holds no key to the store: its way in is the owner's consent grant (ACC-176), never a code in this answer.
  */
 router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
@@ -307,13 +311,14 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     if (uid.includes('\u0000')) return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) }); /* K-1: a handle holding a NUL byte names no store of yours: answered as an unknown one, before the database */
 
     const r = await query(
-      `SELECT identity_id, display_name, user_id FROM identities
+      `SELECT identity_id, display_name, user_id, last_active_at FROM identities
         WHERE LOWER(user_id) = LOWER($1) AND created_by = $2 AND identity_type = 'entity'`,
       [uid, me]
     );
     if (!r.rows.length) {
       return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) });
     }
+    if (r.rows[0].last_active_at) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
     const claim = newClaimCode();
     const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
     await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [claim, expires, r.rows[0].identity_id]);
@@ -561,7 +566,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           city: r.city || null,
           entity_id: r.entity_id,
           price: sellablePrice.soldAt(amt), // CAT-324: a negative stored price goes to buyers as no price
-          price_currency: (money.isMoney(d.price) && d.price.currency) || r.currency_code || null,
+          price_currency: (money.isMoney(d.price, { stored: true }) && d.price.currency) || r.currency_code || null,
           lat: r.lat == null ? null : Number(r.lat),
           lng: r.lng == null ? null : Number(r.lng),
           service_km: r.service_km == null ? null : Number(r.service_km),
@@ -659,7 +664,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           // this viewer, and the supplier route hands out the same field for exactly the same reason.
           entity_id: nestedEnt.identity_id,
           price: sellablePrice.soldAt(amt), // CAT-324: a negative stored price goes to buyers as no price
-          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || nestedEnt.currency_code || null,
+          price_currency: (money.isMoney(rawPrice, { stored: true }) && rawPrice.currency) || nestedEnt.currency_code || null,
           lat: nestedEnt.lat == null ? null : Number(nestedEnt.lat),
           lng: nestedEnt.lng == null ? null : Number(nestedEnt.lng),
           service_km: nestedEnt.service_km == null ? null : Number(nestedEnt.service_km),

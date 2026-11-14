@@ -22,6 +22,7 @@
   "GET /api/attachments/:id",
   "GET /api/books/accounts",
   "GET /api/books/assets",
+  "GET /api/books/bank/log",
   "GET /api/books/bank/rail",
   "GET /api/books/bs",
   "GET /api/books/cashflow",
@@ -396,6 +397,45 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/books-grants": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/consent": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/log": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
   "GET /api/books/accounts": {
    "0": {
     "trips": 2
@@ -418,6 +458,19 @@
    },
    "100": {
     "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bank/log": {
+   "0": {
+    "trips": 6
+   },
+   "10": {
+    "trips": 6
+   },
+   "100": {
+    "trips": 6
    },
    "grows": false,
    "exercised": false

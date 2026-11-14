@@ -227,6 +227,24 @@
   404,
   500
  ],
+ "GET /api/books-grants": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/books-grants/consent": [
+  401,
+  403,
+  422
+ ],
+ "GET /api/books-grants/log": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
  "GET /api/books/accounts": [
   401,
   404,
@@ -237,6 +255,14 @@
   403,
   404,
   500
+ ],
+ "GET /api/books/bank/log": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
  ],
  "GET /api/books/bank/rail": [
   400,
@@ -1502,6 +1528,14 @@
   409,
   500
  ],
+ "PATCH /api/books-grants/:id": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -1737,6 +1771,22 @@
   413,
   500
  ],
+ "POST /api/books-grants": [
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-grants/:id/revoke": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "POST /api/books/accounts": [
   401,
   403,
@@ -1769,6 +1819,24 @@
   403,
   404,
   500
+ ],
+ "POST /api/books/bank/marks": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books/bank/statements": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
  ],
  "POST /api/books/check": [
   401,
@@ -2420,6 +2488,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/connections/request": [
@@ -3079,6 +3148,7 @@
   403,
   404,
   409,
+  422,
   500
  ],
  "POST /api/products/availability/bulk": [
@@ -3096,6 +3166,7 @@
   400,
   401,
   403,
+  422,
   500
  ],
  "POST /api/products/categories/bulk": [
@@ -3110,6 +3181,7 @@
   403,
   409,
   413,
+  422,
   500
  ],
  "POST /api/products/import/preflight": [

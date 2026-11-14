@@ -1000,6 +1000,10 @@ async function sendLineShape(sendState, req, res) {
   if (badId) return problem(req, res, { status: 400, ...said(badId, 'BAD_LINE_ID') });
   sendState.ignored = lineShape.ignoredFigures(req.body.line_items);
 }
+/** CUR-1b: a NEW chit never names a withdrawn or unlisted money (thrown, worded 422 by lib/knownerr) */
+function refuseWithdrawnCurrency(business_json) {
+  if (business_json && typeof business_json === 'object' && business_json.currency) require('../lib/money').refuseNewCurrency(business_json.currency);
+}
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
@@ -1012,6 +1016,7 @@ async function sendBody(sendState, req, res) {
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
   const business_json = businessJsonOf(req.body);
+  refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
@@ -1207,7 +1212,7 @@ async function sendFanOut(sendState, req, res) {
 
   // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
   const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
-  const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
+  const ROLE_MAP = railActions.HEADER_ROLE; /* the one table (rail-actions), read by the CTP door too */
   const rawList = recipientListOf(req.body).map((item) => ({
     ...item,
     kind: String(item.role || 'to').toLowerCase()
@@ -4365,7 +4370,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
-      header: data.header.rows[0],
+      header: costView.headerWithCurrency(data.header.rows[0]),
       detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]), bill_total: moneyCheck.billTotalWire(data.header.rows[0]) /* ACC-348a: the key the lists carry, from the full header */,
       participants: _red.participants,
       state_log: _red.state_log,
@@ -5281,8 +5286,8 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
       name: it.name,
       variant: it.variant || null,
       unit: it.unit || null,
-      price: money.amountOf(it.price),
-      currency: money.currencyOf(it.price),
+      price: money.amountOf(it.price, { stored: true }),
+      currency: money.currencyOf(it.price, { stored: true }),
       unit_size: it.unit_size || null,
       label: it.name + (it.variant ? ' · ' + it.variant : ''),
       key: it.key,

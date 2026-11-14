@@ -1854,6 +1854,242 @@
         "url": "/api/assist/whoami"
       }
     },
+    "GET /api/books-grants": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "given",
+          "received"
+        ],
+        "properties": {
+          "given": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "grant_id",
+                "grantor_entity",
+                "grantee_entity",
+                "preset",
+                "can_see_costs",
+                "purpose",
+                "granted_at",
+                "expires_at",
+                "revoked_at",
+                "edge_live",
+                "state"
+              ],
+              "properties": {
+                "grant_id": {
+                  "type": "string"
+                },
+                "grantor_entity": {
+                  "type": "string"
+                },
+                "grantee_entity": {
+                  "type": "string"
+                },
+                "preset": {
+                  "type": "string"
+                },
+                "can_see_costs": {
+                  "type": "boolean"
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "granted_at": {
+                  "type": "string"
+                },
+                "expires_at": {
+                  "type": "string"
+                },
+                "revoked_at": {},
+                "edge_live": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "received": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "grant_id",
+                "grantor_entity",
+                "grantee_entity",
+                "preset",
+                "can_see_costs",
+                "purpose",
+                "granted_at",
+                "expires_at",
+                "revoked_at",
+                "state",
+                "edge_live"
+              ],
+              "properties": {
+                "grant_id": {
+                  "type": "string"
+                },
+                "grantor_entity": {
+                  "type": "string"
+                },
+                "grantee_entity": {
+                  "type": "string"
+                },
+                "preset": {
+                  "type": "string"
+                },
+                "can_see_costs": {
+                  "type": "boolean"
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "granted_at": {
+                  "type": "string"
+                },
+                "expires_at": {
+                  "type": "string"
+                },
+                "revoked_at": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "edge_live": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants"
+      }
+    },
+    "GET /api/books-grants/consent": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "headline",
+          "can_read",
+          "cannot",
+          "costs",
+          "rights"
+        ],
+        "properties": {
+          "headline": {
+            "type": "string"
+          },
+          "can_read": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cannot": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "costs": {
+            "type": "string"
+          },
+          "rights": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants/consent?can_see_costs=false"
+      }
+    },
+    "GET /api/books-grants/log": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "looks"
+        ],
+        "properties": {
+          "looks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "at",
+                "grant_id",
+                "grantee_entity",
+                "actor_identity_id",
+                "route_pattern",
+                "query_shape",
+                "status",
+                "outcome"
+              ],
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "grant_id": {
+                  "type": "string"
+                },
+                "grantee_entity": {
+                  "type": "string"
+                },
+                "actor_identity_id": {
+                  "type": "string"
+                },
+                "route_pattern": {
+                  "type": "string"
+                },
+                "query_shape": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "number"
+                },
+                "outcome": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants/log?limit=50"
+      }
+    },
     "GET /api/books/accounts": {
       "status": "200",
       "schema": {
@@ -7691,6 +7927,67 @@
         "url": "/api/tax/ledger"
       }
     },
+    "PATCH /api/books-grants/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "grant_id",
+          "grantor_entity",
+          "grantee_entity",
+          "preset",
+          "can_see_costs",
+          "purpose",
+          "granted_by",
+          "granted_at",
+          "expires_at",
+          "revoked_at",
+          "revoked_by"
+        ],
+        "properties": {
+          "grant_id": {
+            "type": "string"
+          },
+          "grantor_entity": {
+            "type": "string"
+          },
+          "grantee_entity": {
+            "type": "string"
+          },
+          "preset": {
+            "type": "string"
+          },
+          "can_see_costs": {
+            "type": "boolean"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "granted_by": {
+            "type": "string"
+          },
+          "granted_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "revoked_at": {},
+          "revoked_by": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants/00000000-0000-4000-8000-0000000000a1",
+        "body": {
+          "expires_at": "2027-06-30T00:00:00.000Z"
+        }
+      }
+    },
     "PATCH /api/combo-templates/:id": {
       "status": "200",
       "schema": {
@@ -7839,6 +8136,134 @@
         }
       },
       "basis": "hand: the handler literal is { ok, kind, prefs, [set.column] } with the column locale_prefs or ui_prefs (routes/entities.js PREF_SETS), and { ok:false, pending:true } before the column exists; the recorded values are user data, left open"
+    },
+    "POST /api/books-grants": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "grant_id",
+          "grantor_entity",
+          "grantee_entity",
+          "preset",
+          "can_see_costs",
+          "purpose",
+          "granted_by",
+          "granted_at",
+          "expires_at",
+          "revoked_at",
+          "revoked_by"
+        ],
+        "properties": {
+          "grant_id": {
+            "type": "string"
+          },
+          "grantor_entity": {
+            "type": "string"
+          },
+          "grantee_entity": {
+            "type": "string"
+          },
+          "preset": {
+            "type": "string"
+          },
+          "can_see_costs": {
+            "type": "boolean"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "granted_by": {
+            "type": "string"
+          },
+          "granted_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "revoked_at": {},
+          "revoked_by": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants",
+        "body": {
+          "grantee": "00000000-0000-4000-8000-0000000000c1",
+          "purpose": "audit of the books",
+          "expires_at": "2027-11-14T09:00:00.000Z",
+          "can_see_costs": true,
+          "consent": true
+        }
+      }
+    },
+    "POST /api/books-grants/:id/revoke": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "grant_id",
+          "grantor_entity",
+          "grantee_entity",
+          "preset",
+          "can_see_costs",
+          "purpose",
+          "granted_by",
+          "granted_at",
+          "expires_at",
+          "revoked_at",
+          "revoked_by"
+        ],
+        "properties": {
+          "grant_id": {
+            "type": "string"
+          },
+          "grantor_entity": {
+            "type": "string"
+          },
+          "grantee_entity": {
+            "type": "string"
+          },
+          "preset": {
+            "type": "string"
+          },
+          "can_see_costs": {
+            "type": "boolean"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "granted_by": {
+            "type": "string"
+          },
+          "granted_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "revoked_at": {
+            "type": "string"
+          },
+          "revoked_by": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants/00000000-0000-4000-8000-0000000000a1/revoke",
+        "body": {}
+      }
     },
     "POST /api/books/check": {
       "status": "200",

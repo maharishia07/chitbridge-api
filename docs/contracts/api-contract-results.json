@@ -282,7 +282,31 @@
     422
    ]
   },
+  "GET /api/books-grants/consent": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books-grants/log": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/assets": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/bank/log": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -1570,6 +1594,14 @@
     400
    ]
   },
+  "PATCH /api/books-grants/:id": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "PATCH /api/books/payments/:id": {
    "cases": 4,
    "failed": 0,
@@ -1858,6 +1890,22 @@
     422
    ]
   },
+  "POST /api/books-grants": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-grants/:id/revoke": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/accounts": {
    "cases": 2,
    "failed": 0,
@@ -1892,6 +1940,22 @@
   },
   "POST /api/books/assets/:id/dispose": {
    "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/bank/marks": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/bank/statements": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2323,7 +2387,7 @@
    ]
   },
   "POST /api/catalogue/enquiry/:item_id": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

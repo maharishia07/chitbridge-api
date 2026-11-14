@@ -243,7 +243,6 @@
     ],
     "routes/relationships.js": [
       "GET /suppliers/availability",
-      "PATCH /suppliers/:id",
       "POST /suppliers"
     ],
     "routes/schemas.js": [

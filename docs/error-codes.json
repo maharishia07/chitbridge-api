@@ -605,6 +605,132 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BOOKS_GRANT_CONSENT_NEEDED",
+   "status": "422",
+   "title": "Say yes to the consent",
+   "shopkeeper": "Read what your auditor can see, then say yes.",
+   "hint": "Tick the yes under the plain words and send again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_ENDED",
+   "status": "403",
+   "title": "Access has ended",
+   "shopkeeper": "This access was ended, or has run out. Ask the owner of the books to renew it.",
+   "hint": "The owner gives a new access from its grant screen.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_EXISTS",
+   "status": "409",
+   "title": "Access already given",
+   "shopkeeper": "This business can already read your books. Change the end date instead.",
+   "hint": "Open the access and edit its end date.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_EXPIRY_INVALID",
+   "status": "422",
+   "title": "End date not allowed",
+   "shopkeeper": "Pick an end date in the future, no more than 36 months away.",
+   "hint": "Choose a date between tomorrow and 36 months from today.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_LOG_UNAVAILABLE",
+   "status": "503",
+   "title": "Could not record the look",
+   "shopkeeper": "We could not record this look at the books, so nothing was shown. Try again in a minute.",
+   "hint": "Try again shortly; nothing was shown or changed.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NONE",
+   "status": "403",
+   "title": "No access given",
+   "shopkeeper": "No access has been given for these books.",
+   "hint": "Ask the owner of the books to give access.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_FOR_YOU",
+   "status": "403",
+   "title": "Not for this login",
+   "shopkeeper": "Only an owner, or a person with the auditor role, can open another business's books.",
+   "hint": "Sign in as the owner or as an auditor.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_LIVE",
+   "status": "403",
+   "title": "Connection is off",
+   "shopkeeper": "You are no longer connected to this business, so its books are closed to you.",
+   "hint": "Reconnect with the business, then try again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_RECORDED",
+   "status": "503",
+   "title": "Change not recorded",
+   "shopkeeper": "We could not record this change, so nothing was changed. Try again.",
+   "hint": "Try again; nothing was changed.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+   "status": "503",
+   "title": "Not switched on yet",
+   "shopkeeper": "Access for your auditor is not switched on yet.",
+   "hint": "Try again later.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NO_PARENT",
+   "status": "422",
+   "title": "Not your network parent",
+   "shopkeeper": "Pick the business in your network that audits you.",
+   "hint": "Choose the business that sits above you in your network.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_PURPOSE_INVALID",
+   "status": "422",
+   "title": "Purpose too short or long",
+   "shopkeeper": "Say why in 3 to 300 characters.",
+   "hint": "Write the reason in a few words.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_RATE",
+   "status": "429",
+   "title": "Too many requests",
+   "shopkeeper": "Too many requests for these books. Wait a minute.",
+   "hint": "Wait a minute, then try again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_NOT_FOUND",
+   "status": "404",
+   "title": "Bank account not found",
+   "shopkeeper": "That bank account was not found in this shop's ledger.",
+   "hint": "Pick the bank account from the list and try again.",
+   "owner_area": "books",
+   "since": "2026-11-14"
+  },
+  {
    "code": "BOOKS_NOT_MIGRATED",
    "status": "503",
    "title": "Ledger update pending",
@@ -1490,7 +1616,7 @@
    "code": "CTP_EVENT_CHANGE_NOT_APPLIED",
    "status": "409",
    "title": "Change not applied here",
-   "shopkeeper": "This installation could not apply the agreed version to its own copy.",
+   "shopkeeper": "This installation could not apply the agreed version to its own copy, or the decision or round that arrived was not the sender’s to make or came after a newer round (it is refused back, never acknowledged).",
    "hint": "Check the lines on this side; the sender can propose again.",
    "owner_area": "ctp",
    "since": "2026-10-25"
@@ -2333,6 +2459,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "GRANT_READ_ONLY",
+   "status": "403",
+   "title": "Read only",
+   "shopkeeper": "An auditor can read these books, never change them.",
+   "hint": "Ask the owner of the books to make the change.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "GRANT_ROUTE_NOT_LISTED",
+   "status": "403",
+   "title": "Not open to an auditor",
+   "shopkeeper": "This part of the books is not open to an auditor.",
+   "hint": "Use one of the reports the consent screen lists.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "GROUPS_NOT_MIGRATED",
    "status": "409",
    "title": "Groups not set up",
@@ -3035,6 +3179,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MONEY_CURRENCY_MISMATCH",
+   "status": "409",
+   "title": "Two different moneys",
+   "shopkeeper": "These amounts are in different moneys, so nothing was added together or saved.",
+   "hint": "Use one money for them, or total each money on its own; an amount is never converted.",
+   "owner_area": "money",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "MONEY_CURRENCY_UNKNOWN",
+   "status": "422",
+   "title": "That money cannot be used",
+   "shopkeeper": "That is not a money ChitBridge can use for a new bill, price or order. If the answer carries withdrawn: true, the money has been replaced and the sentence names its successor.",
+   "hint": "Use the successor money named in the sentence; nothing is converted, and old records in the withdrawn money stay readable.",
+   "owner_area": "money",
+   "since": "2026-11-13"
+  },
+  {
    "code": "MONEY_INPUT_UNREADABLE",
    "status": "422",
    "title": "Retired: a line could not be read",
@@ -3213,6 +3375,15 @@
    "hint": "Fix what the sentence says and send again.",
    "owner_area": "network-offers",
    "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_STORE_CLAIMED",
+   "status": "403",
+   "title": "Store taken over",
+   "shopkeeper": "This store has been taken over by its owner, so a new code cannot be issued.",
+   "hint": "You can open it only if its owner gives you access.",
+   "owner_area": "network",
+   "since": "2026-11-14"
   },
   {
    "code": "NETWORK_TOO_LARGE",
@@ -3998,6 +4169,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "POSTED_NOT_ACCEPTED",
+   "status": "varies",
+   "title": "Posted but not accepted",
+   "shopkeeper": "This bank line is in the books but nobody has accepted it against the statement yet.",
+   "hint": "Accept it on the bank reconciliation page, or leave it to carry over.",
+   "owner_area": "books",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "PRICE_DECIMALS",
+   "status": "400",
+   "title": "Price has too many decimals",
+   "shopkeeper": "That price has more decimal places than its money allows, so nothing was saved.",
+   "hint": "Enter the price with the decimals the money uses (for rupees, two); a price already stored is not asked again unless it changes.",
+   "owner_area": "money",
+   "since": "2026-11-14"
+  },
+  {
    "code": "PRICE_MOVED",
    "status": "409",
    "title": "Prices have moved",
@@ -4154,7 +4343,7 @@
    "code": "PROPOSAL_NOT_YOURS",
    "status": "403",
    "title": "Your own proposal",
-   "shopkeeper": "You made this proposal, so the other side decides it.",
+   "shopkeeper": "You made this proposal, or it is put to another party (a CC or For party is only told of a round), so you cannot decide it. Over CTP (409) it also refuses a round a peer was not entitled to put forward or to decide.",
    "hint": "Wait for the other side.",
    "owner_area": "rail",
    "since": "2026-10-25"
@@ -4761,6 +4950,15 @@
    "hint": "Sign in with your phone or email, then order again.",
    "owner_area": "catalogue",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SIGN_IN_FOR_BOOKS_GRANT",
+   "status": "403",
+   "title": "Sign in as the owner",
+   "shopkeeper": "Sign in as the owner to change who can read your books.",
+   "hint": "A counter or device key cannot give or end access.",
+   "owner_area": "network",
+   "since": "2026-11-14"
   },
   {
    "code": "SIGN_IN_FOR_LEDGER",
