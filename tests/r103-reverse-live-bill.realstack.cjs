@@ -30,12 +30,12 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 async function tb(token) {
   await pause(3500);
-  const r = ok(await j('/api/books/trial-balance?asOf=2099-12-31', { token }), 'trial balance').b;
+  const r = ok(await j('/api/books/trial-balance?asOf=' + new Date().toISOString().slice(0, 10), { token }), 'trial balance').b;
   const out = {};
   (r.rows || []).forEach((row) => { const net = (row.dr_minor || 0) - (row.cr_minor || 0); if (net) out[row.code] = net; });
   return out;
 }
-const dayBook = async (token) => ok(await j('/api/books/daybook?from=2020-01-01&to=2099-12-31', { token }), 'day book').b.entries || [];
+const dayBook = async (token) => ok(await j('/api/books/daybook?from=' + new Date().toISOString().slice(0, 10) + '&to=' + new Date().toISOString().slice(0, 10), { token }), 'day book').b.entries || [];
 const entryOfChit = async (token, chitId, notType) => (await dayBook(token)).find((e) => String(e.source_chit_id) === String(chitId) && e.event_type !== 'reversal' && !e.reverses_entry_id && (!notType || e.event_type !== notType));
 const reverse = (shop, entryId) => j('/api/books/entries/' + entryId + '/reverse', { method: 'POST', token: shop.token, body: { reason: 'owner pressed Reverse' } });
 
@@ -44,7 +44,7 @@ const reverse = (shop, entryId) => j('/api/books/entries/' + entryId + '/reverse
   ok(await j('/health'), 'health');
   const S = await freshShop(RUN, 'Reverse live', { tax: { registered: true, number: SHOP_GSTIN, scheme: 'regular' } });
   ok(await j('/api/books/enable', { method: 'POST', token: S.token, body: { walkin_grain: 'bill' } }), 'books on');
-  const made = ok(await j('/api/relationships/customers', { method: 'POST', token: S.token, body: { name: 'Murugan ' + RUN, phone: '98400' + String(Date.now()).slice(-5), gstin: BUYER_GSTIN } }), 'customer');
+  const made = ok(await j('/api/relationships/customers', { method: 'POST', token: S.token, body: { name: 'Murugan ' + RUN, phone: '98400' + String(Date.now()).slice(-5), gstin: BUYER_GSTIN } }), 'customer').b;
   const customer = { name: 'Murugan ' + RUN, identity_id: made.customer && made.customer.customer_identity_id, gstin: BUYER_GSTIN, phone: null };
   const saleOf = (no) => bill(no, [[piece, 1]], { invoice: invoiceOf(1), customer, parts: ON_CREDIT, slip: 'credit', terms: { due_date: '2099-12-01' } });
   const A = idOf(ok(await send(S, saleOf('A/' + RUN)), 'bill A')), B = idOf(ok(await send(S, saleOf('B/' + RUN)), 'bill B'));
@@ -52,13 +52,13 @@ const reverse = (shop, entryId) => j('/api/books/entries/' + entryId + '/reverse
   let entryA, entryB, twoBills;
   await kase('RV-0', 'two live bills: the books hold both (hand: 1300 +236000, 4000 -200000, 2200/2201 -18000 each)', async () => {
     twoBills = { 1300: 236000, 4000: -200000, 2200: -18000, 2201: -18000 };
-    expect(same(two, twoBills), 'books ' + JSON.stringify(two) + ' expected ' + JSON.stringify(twoBills));
+    expect(same(two, twoBills), 'books ' + JSON.stringify(two) + ' expected ' + JSON.stringify(twoBills) + ' · day book ' + (await dayBook(S.token)).length + ' entries');
     entryA = await entryOfChit(S.token, A); entryB = await entryOfChit(S.token, B);
     expect(entryA && entryB && entryA.event_type === 'sale_bill', 'the two bill entries were not found in the day book: ' + JSON.stringify([entryA && entryA.event_type, entryB && entryB.event_type]));
   });
   await kase('RV-1', 'Reverse on live bill A: 409 ENTRY_OF_LIVE_BILL with the sentence, the books unchanged (R103-AU / AE: two bills stay)', async () => {
     const r = await reverse(S, entryA.entry_id);
-    expect(r.status === 409 && r.b.code === 'ENTRY_OF_LIVE_BILL' && String(r.b.detail || r.b.message) === WORDS, 'expected 409 ENTRY_OF_LIVE_BILL + the sentence, got ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
+    expect(r.status === 409 && r.b.code === 'ENTRY_OF_LIVE_BILL' && String(r.b.detail || r.b.message) === WORDS, 'expected 409 ENTRY_OF_LIVE_BILL + the sentence, got ' + r.status + ' ' + JSON.stringify(r.b).slice(300, 1100) + ' · waiting ' + JSON.stringify((await j('/api/books/waiting', { token: S.token })).b).slice(0, 500));
     expect(same(await tb(S.token), twoBills), 'the books moved after a refused Reverse');
   });
   await kase('RV-2', 'the day book answers may/why: A may_reverse false + why.code, so the Reverse button is greyed with the server sentence', async () => {
