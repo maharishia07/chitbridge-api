@@ -15,7 +15,7 @@
     "lib/catalogue-blueprint.js": 1392,
     "lib/catalogue-columns.js": 515,
     "lib/catalogue-view.js": 849,
-    "lib/chit-proposal.js": 863,
+    "lib/chit-proposal.js": 868,
     "lib/cost-view.js": 614,
     "lib/country-setup.js": 1015,
     "lib/csv-preflight.js": 795,
@@ -24,7 +24,7 @@
     "lib/forms.js": 664,
     "lib/handle.js": 511,
     "lib/home-facts.js": 990,
-    "lib/identity-auth.js": 665,
+    "lib/identity-auth.js": 672,
     "lib/itemmatch.js": 509,
     "lib/mint.js": 533,
     "lib/move-in.js": 1952,
@@ -49,7 +49,7 @@
     "routes/books.js": 2707,
     "routes/catalogue.js": 2166,
     "routes/chits-trace.js": 534,
-    "routes/chits.js": 7174,
+    "routes/chits.js": 7178,
     "routes/connectors.js": 1073,
     "routes/crm.js": 754,
     "routes/ctp.js": 673,
@@ -96,6 +96,6 @@
     "tools/tally-connector/promo.html": 1288,
     "tools/tally-connector/signin-ui.js": 818,
     "tools/tally-connector/till.html": 29782,
-    "tools/tally-connector/till.js": 1768
+    "tools/tally-connector/till.js": 1776
   }
 }
