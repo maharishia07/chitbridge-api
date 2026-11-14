@@ -62,6 +62,7 @@ function harness(opts) {
   const client = (via) => ({ query: async (sql, params) => ({ rows: rec(via, sql, params), rowCount: 0 }) });
   const db = stubModule('db', {
     query: async (sql, params) => ({ rows: rec('query', sql, params), rowCount: 0 }),
+    queryAs: async (id, sql, params) => ({ rows: rec('query', sql, params), rowCount: 0 }) /* SEC-75: a bound statement records as the same statement, so the golden's SQL text is unchanged */,
     withEntity: async (id, fn) => fn(client('withEntity:' + id)),
     withTransaction: async (fn) => fn(client('tx')),
     trySavepoint: async (c, fn, fb) => { try { return await fn(c); } catch (_) { return fb; } },
