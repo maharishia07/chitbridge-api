@@ -4,8 +4,7 @@
 // CARD 18-identity-sign-in-and-access/sessions-and-devices
 // CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
-const { query } = require('../db');
-const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read under its own binding
+const { query } = require('../db'), { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read under its own binding
 const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
 const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
 const { problem } = require('../lib/problem'); // API-4b — every refusal below is the one Problem body; the old keys ride on it, frozen

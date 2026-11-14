@@ -29,7 +29,7 @@ const code = (sql) => sql.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n'
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sec185-'));
     try {
       for (const dir of ['lib', 'routes', 'middleware']) fs.cpSync(path.join(ROOT, dir), path.join(tmp, dir), { recursive: true });
-      fs.appendFileSync(path.join(tmp, 'lib', 'policy.js'), '\n' + line + '\n');
+      fs.appendFileSync(path.join(tmp, 'lib', 'policy.js'), ('\n' + line).repeat(3) + '\n'); /* three copies: the ceiling may sit one above this tree (a merged batch), so one extra site must not hide in the slack */
       return sweepTool.judge(sweepTool.count(sweepTool.sweep(tmp)), baseline());
     } finally { fs.rmSync(tmp, { recursive: true, force: true }); sweepTool.sweep(); }
   };
@@ -55,7 +55,7 @@ const code = (sql) => sql.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n'
     assert.strictEqual(role.signinDoorVerdict(null, false).level, 'fatal');
     assert.strictEqual(role.signinDoorVerdict({ present: false, may_run: false }, true).level, 'warn');
     assert(/b857/.test(role.signinDoorVerdict({ present: false, may_run: false }, false).reason));
-    assert(/signinDoorFacts/.test(read('server.js')) && /process\.exit\(1\)/.test(read('server.js')), 'server.js asks before listening and exits on fatal');
+    assert(/signinDoorFacts/.test(read('lib/db-role.js')) && /bootCheck/.test(read('server.js')) && read('server.js').includes('process.exit(1)'), 'server.js asks before listening (bootCheck) and exits on fatal');
   });
   await check('queryAs shares the one guard and the one error log with query() (no second code path)', () => {
     const src = read('db/index.js');
