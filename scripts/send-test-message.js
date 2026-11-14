@@ -33,7 +33,7 @@ const crypto = require('crypto');
    overnight open defect on 2026-08-09. This was 9 copies of j() and 31 copies of the base URL. */
 const { API, j, signIn } = require('./_proof');
 
-const WEB = process.env.CB_WEB || 'https://chitbridge-web.vercel.app';
+const WEB = process.env.CB_WEB || '(set CB_WEB)';   /* printed text only; no production default */
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;
 
