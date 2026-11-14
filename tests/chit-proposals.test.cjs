@@ -82,6 +82,11 @@ function rowsFor(sql, p) {
     w.props.filter((r) => r.entity_id === p[0] && r.proposal_id === p[1] && r.status === 'proposed').forEach((r) => Object.assign(r, { status: p[2], decided_by: p[3] }));
     return [];
   }
+  /* R3-02: an acceptance that waits for the proposer's confirmation is marked on the decider's own row */
+  if (/^UPDATE chit_proposal SET decided_at = now\(\), decided_by = \$3 WHERE entity_id = \$1 AND proposal_id = \$2 AND status = 'proposed'/.test(s)) {
+    w.props.filter((r) => r.entity_id === p[0] && r.proposal_id === p[1] && r.status === 'proposed').forEach((r) => Object.assign(r, { decided_at: 'now', decided_by: p[2] }));
+    return [];
+  }
   if (/^UPDATE chit_proposal SET status = 'accepted'/.test(s)) {
     w.props.filter((r) => r.entity_id === p[0] && r.chit_id === p[1] && r.proposal_id === p[2] && r.status === 'proposed').forEach((r) => Object.assign(r, { status: 'accepted', decided_by: p[3] }));
     return [];
@@ -448,10 +453,13 @@ const call = (method, url, id, body) =>
     assert.strictEqual(B.taxCalls.length, 1);
     assert.strictEqual(A.header[BUY].business_json.invoice, undefined, 'not agreed yet');
     const accepted = await as(A, () => proposals.decide(BUY, CH, onA.proposal_id, 'accept', BUYER));
-    assert.strictEqual(accepted.status, 'accepted');
+    assert.strictEqual(accepted.status, 'awaiting_seller', 'R3-02: the proposer is on another installation, so A waits for its confirmation');
     assert.strictEqual(accepted.ctp.queued, 1);
+    assert.strictEqual(A.header[BUY].business_json.invoice, undefined, 'A applied nothing yet');
     const back = await ship(A, B);
     assert.ok(back[0].ok && back[0].applied, JSON.stringify(back));
+    const confirmed = await ship(B, A);
+    assert.ok(confirmed[0].ok && confirmed[0].applied, 'B confirms and A applies: ' + JSON.stringify(confirmed));
     assert.strictEqual(JSON.stringify(A.header[BUY].business_json.invoice), JSON.stringify(B.header[SELL].business_json.invoice), 'ValDtls and all: byte for byte');
     assert.deepStrictEqual(A.header[BUY].summary_json.money, B.header[SELL].summary_json.money);
     assert.strictEqual(A.header[BUY].summary_json.money.currency_code, 'AUD', 'the seller’s currency on BOTH copies; nothing converted');
@@ -479,6 +487,7 @@ const call = (method, url, id, body) =>
     assert.deepStrictEqual(rowsOf(A, BUY).map((r) => [r.round, r.status]), [[2, 'countered'], [3, 'superseded'], [4, 'proposed']]);
     await as(A, () => proposals.decide(BUY, CH, round4.proposal_id, 'accept', BUYER));
     await ship(A, B);
+    await ship(B, A);
     assert.strictEqual(JSON.stringify(A.header[BUY].business_json.invoice), JSON.stringify(B.header[SELL].business_json.invoice));
     assert.strictEqual(A.taxCalls.length, 0);
     for (const [w, entity] of [[A, BUY], [B, SELL]]) assert.deepStrictEqual(w.log.filter((x) => x.entity === entity && /^proposal_/.test(x.action)).map((x) => x.action), w === A ? ['proposal_proposed', 'proposal_proposed', 'proposal_proposed', 'proposal_accepted'] : ['proposal_proposed', 'proposal_proposed', 'proposal_proposed', 'proposal_accepted']);
@@ -524,8 +533,9 @@ const call = (method, url, id, body) =>
     await ship(B, A);
     await as(A, () => proposals.decide(BUY, CH, round2.proposal_id, 'accept', BUYER));
     await ship(A, B);
+    await ship(B, A);
     for (const [w, entity] of [[A, BUY], [B, SELL]]) {
-      const j = w.header[entity].business_json.jurisdiction;
+      const j =w.header[entity].business_json.jurisdiction;
       assert.deepStrictEqual([j.document, j.seller_country, j.buyer_country, j.buyer_duty_and_taxes], ['pro_forma', 'AU', 'IN', 'not_included'], w.name);
       assert.ok(!('jurisdiction' in w.header[entity].summary_json), 'the jurisdiction is on business_json, not in the money');
     }
@@ -632,8 +642,9 @@ const call = (method, url, id, body) =>
     await ship(B, A);
     assert.deepStrictEqual(rowsOf(A, BUY).map((r) => [r.round, r.status]), [[2, 'countered'], [3, 'proposed']]);
     const done = await as(A, () => proposals.decide(BUY, CH, counter.proposal_id, 'accept', BUYER));
-    assert.strictEqual(done.status, 'accepted');
+    assert.strictEqual(done.status, 'awaiting_seller', 'the proposer (B) applies first and confirms');
     await ship(A, B);
+    await ship(B, A);
     for (const [w, entity] of [[A, BUY], [B, SELL]]) {
       const agreed = w.header[entity].business_json.agreed;
       assert.deepStrictEqual([agreed.round, agreed.terms.date, agreed.terms.scope], [3, '2026-11-05', 'Install the pump at the Pune plant'], w.name);
@@ -986,6 +997,116 @@ const call = (method, url, id, body) =>
     await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
     await ship(A, B);
     assert.deepStrictEqual(RUNG.map((x) => [x.ids, x.evt.kind, x.evt.what]), [[[SELL], 'proposal', 'accepted']]);
+  });
+
+  console.log('\n== R3 · who decides, and what crosses (Fable rail review 3: R3-05, R3-01, R3-02) ==\n');
+  const CCL = 'cc111111-1111-4111-8111-111111111111';
+  const CC_NAME = 'Local Auditor';
+  const NOT_YOURS = (e) => e.status === 403 && e.code === 'PROPOSAL_NOT_YOURS';
+  /** the one installation of section A, with a CC held HERE too (a copy and a proposal row, like everyone on the header) */
+  function withLocalCc() {
+    const w = oneInstallation();
+    w.ident[CCL] = person(CCL, 'CBCCL0001', CC_NAME, 'IN', 'INR');
+    const recipients = w.header[BUY].all_recipients;
+    recipients.push({ entity_id: CCL, bridge_id: 'CBCCL0001', role: 'cc' });
+    copyOf(w, CCL, recipients, BUY, B_BUY);
+    return w;
+  }
+  /** an event from another installation, through the real applier (the door's own checks have run; this is what the applier answers) */
+  const arrive = (world, toEntity, fromKey, fromBridge, event) => as(world, () => ret.apply({ chit_id: CH, event, from: { installation_key: fromKey, bridge_id: fromBridge, display_name: 'Peer' }, to: { identity_id: toEntity } }));
+  const refusedAs = (answer) => !answer.ok && answer.status === 409 && answer.code === 'CTP_EVENT_CHANGE_NOT_APPLIED';
+
+  await t('R3-05: a CC holds the round and is never offered it; it cannot accept, reject or counter, and the buyer still can', async () => {
+    const w = withLocalCc();
+    const r2 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    assert.strictEqual(rowsOf(w, CCL).length, 1, 'the CC holds a row of the round');
+    assert.strictEqual((await as(w, () => proposals.list(CCL, CH))).proposals[0].awaiting_me, false, 'the screen does not offer it to the CC');
+    assert.strictEqual((await as(w, () => proposals.list(BUY, CH))).proposals[0].awaiting_me, true, 'the buyer is offered it');
+    const cc = { id: CCL, name: CC_NAME };
+    for (const decision of ['accept', 'reject']) await assert.rejects(as(w, () => proposals.decide(CCL, CH, r2.proposal_id, decision, cc)), NOT_YOURS, decision);
+    await assert.rejects(as(w, () => proposals.propose(CCL, CH, { lines: [{ line_id: L1, requested_price: '1' }] }, cc)), NOT_YOURS, 'counter');
+    assert.deepStrictEqual(rowsOf(w, SELL).map((r) => r.status), ['proposed'], 'nothing changed');
+    assert.strictEqual(w.header[BUY].business_json.invoice, undefined);
+    const done = await as(w, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    assert.strictEqual(done.status, 'accepted', 'the party it is put to still decides');
+    assert.deepStrictEqual(w.header[BUY].business_json.invoice, w.header[SELL].business_json.invoice);
+  });
+  await t('R3-05: a request is decided by the seller, a terms round by a To party who did not make it, and a chit with two buyers refuses a priced round in words', async () => {
+    const w = oneInstallation();
+    const asked = await as(w, () => proposals.propose(BUY, CH, { lines: [{ line_id: L1, quantity: 20 }] }, BUYER));
+    await assert.rejects(as(w, () => proposals.decide(BUY, CH, asked.proposal_id, 'reject', BUYER)), NOT_YOURS, 'the asker does not decide its own request');
+    assert.strictEqual((await as(w, () => proposals.decide(SELL, CH, asked.proposal_id, 'reject', SELLER))).status, 'rejected', 'the seller it is put to does');
+    const many = oneInstallation();
+    const round = await as(many, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    const THIRD = 'b3333333-3333-4333-8333-333333333333';
+    for (const header of Object.values(many.header)) {
+      header.purpose = 'invoice';
+      header.sender_entity_id = SELL;
+      header.all_recipients = [{ entity_id: SELL, role: 'sender' }, { entity_id: BUY, role: 'receiver' }, { entity_id: THIRD, role: 'receiver' }];
+    }
+    await assert.rejects(as(many, () => proposals.decide(BUY, CH, round.proposal_id, 'accept', BUYER)), NOT_YOURS, 'two buyers on the chit: no one can be named, so it is refused in words');
+  });
+  await t('R3-01: a remote BUYER cannot price a round, and a remote proposer cannot accept its own round: the money never lands on the local copy', async () => {
+    const { A, B } = twoInstallations();
+    const PID = 'f1111111-1111-4111-8111-111111111111';
+    const priced = { kind: 'proposal', seq: 1, proposal_id: PID, round: 2, version: 'pro_forma', edits: null, request: null, terms: null, invoice: { ValDtls: { TotInvVal: 1 } }, summary: { money: { total: 1 }, total_value: 1 }, currency_code: 'AUD', tax_note: null, base_hash: 'x', note: null, by_name: 'Chennai Stores', replaces: null, replaces_status: null };
+    const sent = await arrive(B, SELL, 'inst-A', B_BUY, priced);
+    assert.ok(refusedAs(sent), 'the buyer prices a round: ' + JSON.stringify(sent));
+    assert.strictEqual(B.props.length, 0, 'the round is not kept');
+    const accepted = await arrive(B, SELL, 'inst-A', B_BUY, { kind: 'proposal_decide', seq: 2, proposal_id: PID, decision: 'accept', by_name: 'Chennai Stores' });
+    assert.ok(!accepted.ok, 'and its acceptance finds nothing to apply: ' + JSON.stringify(accepted));
+    assert.strictEqual(B.header[SELL].business_json.invoice, undefined, 'the seller’s invoice did not move');
+    assert.strictEqual(B.detail[SELL].total_value, 1100, 'nor its total');
+    const honest = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await ship(B, A);
+    const own = await arrive(A, BUY, 'inst-B', B_SELL, { kind: 'proposal_decide', seq: 50, proposal_id: honest.proposal_id, decision: 'accept', by_name: 'Sydney Spice' });
+    assert.ok(refusedAs(own), 'the proposer accepts its own round: ' + JSON.stringify(own));
+    assert.strictEqual(A.header[BUY].business_json.invoice, undefined);
+    assert.strictEqual(A.amend.length, 0);
+    assert.strictEqual(rowsOf(A, BUY)[0].status, 'proposed', 'the buyer still has it to decide');
+    const seller = await arrive(A, BUY, 'inst-B', B_SELL, { kind: 'proposal', seq: 51, proposal_id: 'f2222222-2222-4222-8222-222222222222', round: 3, version: 'request', request: { lines: [] }, by_name: 'Sydney Spice' });
+    assert.ok(refusedAs(seller), 'the seller asks for a round instead of pricing it: ' + JSON.stringify(seller));
+  });
+  await t('R3-02: an accept that crosses a newer round is REFUSED back, never acknowledged; both copies stay equal and the next accept goes through', async () => {
+    const { A, B } = twoInstallations();
+    const r2 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await ship(B, A);
+    const waiting = await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    assert.strictEqual(waiting.status, 'awaiting_seller');
+    const r3 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 93 }]), SELLER));
+    const crossed = await ship(A, B);
+    assert.ok(crossed.length === 1 && refusedAs(crossed[0]), 'B answers the stale accept with a refusal: ' + JSON.stringify(crossed));
+    assert.strictEqual(A.out.filter((x) => x.kind === 'proposal_decide' && x.status === 'pending').length, 1, 'so A’s queue does not count it as confirmed');
+    assert.strictEqual(B.header[SELL].business_json.invoice, undefined);
+    await ship(B, A);
+    assert.deepStrictEqual(rowsOf(A, BUY).map((r) => [r.round, r.status]), [[2, 'superseded'], [3, 'proposed']]);
+    assert.deepStrictEqual(rowsOf(B, SELL).map((r) => [r.round, r.status]), [[2, 'superseded'], [3, 'proposed']]);
+    assert.strictEqual(A.header[BUY].business_json.invoice, undefined, 'A applied nothing for the round that was replaced');
+    assert.strictEqual(A.amend.length + B.amend.length, 0);
+    await as(A, () => proposals.decide(BUY, CH, r3.proposal_id, 'accept', BUYER));
+    const later = await ship(A, B);
+    assert.ok(later.some((x) => x.ok && x.applied), 'the later accept is applied: ' + JSON.stringify(later));
+    const confirmed = await ship(B, A);
+    assert.ok(confirmed.every((x) => x.ok), JSON.stringify(confirmed));
+    assert.ok(A.header[BUY].business_json.invoice, 'the money landed');
+    assert.strictEqual(JSON.stringify(A.header[BUY].business_json.invoice), JSON.stringify(B.header[SELL].business_json.invoice), 'both copies hold the same money');
+  });
+  await t('R3-02: a reject that crosses a newer round is refused back too; a repeat of an outcome already held is still acknowledged', async () => {
+    const { A, B } = twoInstallations();
+    const r2 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'reject', BUYER));
+    await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 93 }]), SELLER));
+    const crossed = await ship(A, B);
+    assert.ok(crossed.length === 1 && refusedAs(crossed[0]), JSON.stringify(crossed));
+    const { A: A2, B: B2 } = twoInstallations();
+    const r = await as(B2, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await ship(B2, A2);
+    await as(A2, () => proposals.decide(BUY, CH, r.proposal_id, 'reject', BUYER));
+    await ship(A2, B2);
+    A2.out.forEach((x) => (x.status = 'pending'));
+    const again = await ship(A2, B2);
+    assert.ok(again[0].ok && again[0].applied === false, 'older or repeated: acknowledged, nothing applied: ' + JSON.stringify(again));
   });
 
   console.error = origErr;

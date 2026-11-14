@@ -42,6 +42,7 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const arrivalCopy = require('../lib/ctp-arrival').arrivalCopy; /* R3-03: what the door itself sets on an arriving copy */
 const remoteParty = require('../lib/remote-party'); /* RAIL-107: a party named on an arriving chit is found or made by bridge id, never stored by a foreign uuid */
 const returnPath = require('../lib/ctpreturn'); /* RAIL-106: a change to a chit that already crossed (a status, an external message) is applied to OUR rows */
 const netmember = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
@@ -438,10 +439,8 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
       sender_bridge_id: (env.from && env.from.bridge_id) || null,
       at: new Date().toISOString()
     };
-    const copy = Object.assign({}, opened.copy, next.header, {
-      entity_id: to.identity_id,
-      business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp })
-    });
+    /* R3-03: the door sets this copy's own facts (direction, role, status, first log row) and drops the owned business_json keys; the peer's say only what the chit IS */
+    const copy = arrivalCopy(opened.copy, next.header, to, arrivalStamp);
 
     /**
      * ⚠️⚠️ `arrived: true`, AND IT IS LOAD-BEARING. Without it this call re-resolves the recipient's address,

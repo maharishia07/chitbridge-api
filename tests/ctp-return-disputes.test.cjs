@@ -348,6 +348,20 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
     assert.strictEqual(deliver.p[4], null);
     assert.strictEqual(JSON.parse(deliver.p[14])[1].entity_id, null);
   });
+  await t('R3-04: a raise that names one of OUR businesses which holds no copy of the chit is refused, and nothing is written for it (the local door filters to the holders; this door asks the same question)', async () => {
+    resetWorld();
+    const named = [{ bridge_id: B_STUB, display_name: 'AU Pumps', role: 'raiser' }, { bridge_id: B_ME, display_name: 'IN Plant', role: 'party' }, { bridge_id: B_LOCAL2, display_name: 'IN Neighbour', role: 'party' }];
+    for (const over of [{ scope: 'chit_wide', target: null, roster: named }, { roster: named.slice(0, 2), target: { bridge_id: B_LOCAL2, display_name: 'IN Neighbour', target_name: 'IN Neighbour' } }]) {
+      const refused = await apply(raiseEv(over));
+      assert.ok(!refused.ok && refused.status === 409 && refused.code === 'CTP_EVENT_PARTY_MISMATCH', JSON.stringify(refused));
+      assert.strictEqual(sqlOf(/SELECT chit_dispute_deliver/).length, 0, 'no dispute copy was made for anyone');
+      assert.strictEqual(sqlOf(/chit_log_targets/).length, 0, 'and nobody was told');
+    }
+    W.status.push({ chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' });
+    const holder = await apply(raiseEv({ scope: 'chit_wide', target: null, roster: named }));
+    assert.ok(holder.ok && holder.applied, 'the same raise is taken once that business holds a copy: ' + JSON.stringify(holder));
+    assert.deepStrictEqual(sqlOf(/SELECT chit_dispute_deliver/)[0].p[15], [STUB, ME, LOCAL2]);
+  });
   await t('a reply is held only if its dispute is, once, under the id it was sent with, as the remote sender, to the dispute’s roster here', async () => {
     resetWorld();
     const ev = { kind: 'dispute_message', seq: 2, dispute_id: DISPUTE, message_id: MSG, message_text: 'We shipped 200', msg_type: 'info', sender_display_name: 'AU Pumps' };
