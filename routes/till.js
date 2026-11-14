@@ -43,7 +43,7 @@ const taxSlab = require('../lib/tax-slab'); /* ⭐ F5 A1: categoryIdsOf for the 
 const taxPacks = require('../lib/tax-packs'); /* the shop's tax pack (collect_without_tax_id) for tax-shelf.chargesTax */
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { query, withEntity } = require('../db');
+const { query, queryAs, withEntity } = require('../db');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ CAT-W1: the one product writer (patchItems) */
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
@@ -566,7 +566,8 @@ function readShelf(entity_id, ownRead) {
  */
 async function readDeclared(entity_id) {
   try {
-    const found = await query(
+    const found = await queryAs(
+      entity_id, // SEC-75: one trip, bound to the shop (the catch below logs a miss)
       `SELECT sf.field_key, sf.field_name
            FROM entity_schemas es JOIN schema_fields sf ON sf.schema_id = es.schema_id
           WHERE es.entity_id = $1 AND es.status = 'active' AND es.is_default = true

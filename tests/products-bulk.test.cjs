@@ -49,7 +49,7 @@ t('the route hands the whole set to the one writer, once', (bulk.match(/catwrite
 t('the route has no validator of its own — it uses the library\'s',
   !/\nfunction validateAgainst\(|\nasync function schemaFieldsOf\(/.test(code)
   && /const \{ schemaFieldsOf, validateAgainst \} = catwrite;/.test(code));
-t('the schema is resolved ONCE', (writer.match(/defaultSchemaId\(/g) || []).length === 1);
+t('the schema is resolved ONCE', (writer.match(/defaultSchema(Id|WithFields)\(/g) || []).length === 1);
 t('the currency is resolved ONCE', (writer.match(/currencyFor\(/g) || []).length === 1);
 /* ⭐ One INSERT for the lot, not one per item — unnest, the same shape query-shape.test.js enforces elsewhere. */
 t('one INSERT covers every item', /insertStamped\(db, entity_id, sid, stamped\)/.test(writer) && /unnest\(\$3::jsonb\[\]\)/.test(cw));

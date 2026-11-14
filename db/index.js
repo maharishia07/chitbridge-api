@@ -450,5 +450,8 @@ const queryAsEach = async (ids, text, paramsOf) => {
   return { rows, rowCount: rows.length };
 };
 query.as = queryAs;
+/** SEC-75: a `query` bound to ONE shop, for libs that take their reader injected (lib/catalogue-columns): queryFor(shop)(text, params) is queryAs(shop, text, params) */
+const queryFor = (shopId) => (text, params) => queryAs(shopId, text, params);
+query.for = queryFor;
 query.asEach = queryAsEach;
-module.exports = { bootWaitMs, query, queryAs, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { bootWaitMs, query, queryAs, queryFor, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
