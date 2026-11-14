@@ -30,7 +30,7 @@ function answer(req, res, err) {
 
 router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false')));
 
-router.get('/', auth, noKey, memberOnly, async (req, res) => {
+router.get('/', auth, noKey, memberOnly, ...contract.checked('GET /'), async (req, res) => {
   try {
     res.json(await grants.list(entityOf(req)));
   } catch (err) {

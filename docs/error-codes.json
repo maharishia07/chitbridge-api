@@ -605,6 +605,123 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BOOKS_GRANT_CONSENT_NEEDED",
+   "status": "422",
+   "title": "Say yes to the consent",
+   "shopkeeper": "Read what your auditor can see, then say yes.",
+   "hint": "Tick the yes under the plain words and send again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_ENDED",
+   "status": "403",
+   "title": "Access has ended",
+   "shopkeeper": "This access was ended, or has run out. Ask the owner of the books to renew it.",
+   "hint": "The owner gives a new access from its grant screen.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_EXISTS",
+   "status": "409",
+   "title": "Access already given",
+   "shopkeeper": "This business can already read your books. Change the end date instead.",
+   "hint": "Open the access and edit its end date.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_EXPIRY_INVALID",
+   "status": "422",
+   "title": "End date not allowed",
+   "shopkeeper": "Pick an end date in the future, no more than 36 months away.",
+   "hint": "Choose a date between tomorrow and 36 months from today.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_LOG_UNAVAILABLE",
+   "status": "503",
+   "title": "Could not record the look",
+   "shopkeeper": "We could not record this look at the books, so nothing was shown. Try again in a minute.",
+   "hint": "Try again shortly; nothing was shown or changed.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NONE",
+   "status": "403",
+   "title": "No access given",
+   "shopkeeper": "No access has been given for these books.",
+   "hint": "Ask the owner of the books to give access.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_FOR_YOU",
+   "status": "403",
+   "title": "Not for this login",
+   "shopkeeper": "Only an owner, or a person with the auditor role, can open another business's books.",
+   "hint": "Sign in as the owner or as an auditor.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_LIVE",
+   "status": "403",
+   "title": "Connection is off",
+   "shopkeeper": "You are no longer connected to this business, so its books are closed to you.",
+   "hint": "Reconnect with the business, then try again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_RECORDED",
+   "status": "503",
+   "title": "Change not recorded",
+   "shopkeeper": "We could not record this change, so nothing was changed. Try again.",
+   "hint": "Try again; nothing was changed.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+   "status": "503",
+   "title": "Not switched on yet",
+   "shopkeeper": "Access for your auditor is not switched on yet.",
+   "hint": "Try again later.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NO_PARENT",
+   "status": "422",
+   "title": "Not your network parent",
+   "shopkeeper": "Pick the business in your network that audits you.",
+   "hint": "Choose the business that sits above you in your network.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_PURPOSE_INVALID",
+   "status": "422",
+   "title": "Purpose too short or long",
+   "shopkeeper": "Say why in 3 to 300 characters.",
+   "hint": "Write the reason in a few words.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_RATE",
+   "status": "429",
+   "title": "Too many requests",
+   "shopkeeper": "Too many requests for these books. Wait a minute.",
+   "hint": "Wait a minute, then try again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "BOOKS_NOT_MIGRATED",
    "status": "503",
    "title": "Ledger update pending",
@@ -2331,6 +2448,24 @@
    "hint": "Check what was sent and try again.",
    "owner_area": "governance",
    "since": "2026-10-23"
+  },
+  {
+   "code": "GRANT_READ_ONLY",
+   "status": "403",
+   "title": "Read only",
+   "shopkeeper": "An auditor can read these books, never change them.",
+   "hint": "Ask the owner of the books to make the change.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "GRANT_ROUTE_NOT_LISTED",
+   "status": "403",
+   "title": "Not open to an auditor",
+   "shopkeeper": "This part of the books is not open to an auditor.",
+   "hint": "Use one of the reports the consent screen lists.",
+   "owner_area": "network",
+   "since": "2026-11-14"
   },
   {
    "code": "GROUPS_NOT_MIGRATED",
@@ -4761,6 +4896,15 @@
    "hint": "Sign in with your phone or email, then order again.",
    "owner_area": "catalogue",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SIGN_IN_FOR_BOOKS_GRANT",
+   "status": "403",
+   "title": "Sign in as the owner",
+   "shopkeeper": "Sign in as the owner to change who can read your books.",
+   "hint": "A counter or device key cannot give or end access.",
+   "owner_area": "network",
+   "since": "2026-11-14"
   },
   {
    "code": "SIGN_IN_FOR_LEDGER",
