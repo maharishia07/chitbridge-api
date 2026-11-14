@@ -115,8 +115,8 @@ const t = async (name, fn) => {
     assert.deepStrictEqual(got.business_json.invoice, INVOICE);
     assert.strictEqual(got.business_json.deal, 'x');
     assert.strictEqual(got.business_json.ctp_arrival.from_installation, 'mx-1');
-    assert.strictEqual(got.entity_id, TO, 'written as OUR recipient, never the entity the envelope carried');
-    assert.strictEqual(got.all_recipients.find((x) => x.role === 'receiver').entity_id, TO, 'the recipient is localised');
+    assert.strictEqual(got.entity_id, 'TO', 'written as OUR recipient, never the entity the envelope carried');
+    assert.strictEqual(got.all_recipients.find((x) => x.role === 'receiver').entity_id, 'TO', 'the recipient is localised');
     assert.strictEqual(JSON.stringify(sent), before, 'the opened copy is not changed');
   });
 
