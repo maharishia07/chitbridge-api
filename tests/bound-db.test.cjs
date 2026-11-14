@@ -12,8 +12,7 @@ const SHOPS = { [A]: { schema_id: 's-a', fields: [{ field_key: 'k' }] }, [B]: { 
 const BY_ENTITY = 'SELECT schema_id FROM entity_schemas WHERE entity_id = $1';
 const BY_SCHEMA = 'SELECT field_key FROM schema_fields WHERE schema_id = $1';
 let n = 0;
-const t = async (name, fn) => { try { await fn(); n++; console.log('  ok   ' + name); } catch (e) { console.log('  FAIL ' + name + '
-       ' + e.message); process.exit(1); } };
+const t = async (name, fn) => { try { await fn(); n++; console.log('  ok   ' + name); } catch (e) { console.log('  FAIL ' + name + ' — ' + e.message); process.exit(1); } };
 
 (async () => {
   await t('a blank, null or undefined binding sees no row, and the call is still recorded', async () => {
@@ -26,7 +25,7 @@ const t = async (name, fn) => { try { await fn(); n++; console.log('  ok   ' + n
     assert.strictEqual((await db.queryAs(A, BY_ENTITY, [B])).rowCount, 0);
     assert.deepStrictEqual((await db.queryAs(A, BY_ENTITY, [A])).rows, [{ schema_id: 's-a' }]);
   });
-  await t('a schema_id-only statement: schemaRows gives shop A nothing for shop B's schema id', async () => {
+  await t('a schema_id-only statement: schemaRows gives shop A nothing for shop B schema id', async () => {
     const db = boundDb(schemaRows(SHOPS));
     assert.strictEqual((await db.queryAs(A, BY_SCHEMA, ['s-b'])).rowCount, 0);
     assert.strictEqual((await db.queryAs(A, BY_SCHEMA, ['s-a'])).rowCount, 1);
