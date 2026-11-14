@@ -1014,15 +1014,15 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books/fx-rates** · books · cb-accounting · meets standard
 - does: _not yet written_
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
+- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 3; share cap-fx.js 3/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, fx_rate, identities, journal_entry, journal_line · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: _not yet written_
-- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
+- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/health** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -1260,9 +1260,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: _not yet written_
-- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
+- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/gst/close** · books · cb-accounting · meets standard
 - does: _not yet written_
