@@ -16,10 +16,11 @@ const item = { no: 'A2', lines: [{ item_id: 'i1', price: 10 }], price_basis: { c
 assert.strictEqual(ctx.staleCandidate(free), false, 'a free-text-only bill is not a price-check candidate');
 assert.strictEqual(ctx.staleCandidate(item), true, 'a bill with an item line still is');
 assert.strictEqual(ctx.staleCandidate({ no: 'A3', lines: [{ item_id: 'i1' }, { particulars: 'x' }], price_basis: { checked: false } }), true, 'a mixed bill still is');
+assert.strictEqual(ctx.staleCandidate({ no: 'A4', lines: [null], price_basis: { checked: false } }), true, 'an unreadable line stays a candidate: the gate holds it with its reason');
 (async () => {
   const out = await ctx.staleGate([free], false);
   assert.strictEqual(out.rows.length, 1, 'the free-text bill must pass the gate');
   assert.strictEqual(out.why, null);
   assert.strictEqual(doorDown, 0, 'a free-text bill must never reach the door-down state');
-  console.log('till-s4-ctr253-freetext-gate ok · 5 checks');
+  console.log('till-s4-ctr253-freetext-gate ok · 6 checks');
 })().catch((e) => { console.error(e.message); process.exit(1); });

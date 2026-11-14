@@ -29395,9 +29395,9 @@ function staleCandidate(row){
   /* ⭐ CTR-253: a bill with no item_id line (free text only) has nothing to re-check — it is not a candidate, so it passes the gate and never reads as a price door down */
   return !!(basis && staleHasItem(row) && basis.checked !== true && !basis.stale_ack && !basis.stale_unchecked && staleSaleRow(row) && !row._tries && !row._price_hold && !row._parked);
 }
-/** the bill has at least one line rung from a product (item_id), the only kind the price door can re-check */
+/** the bill has something the price door can re-check: a line rung from a product (item_id), or a line that cannot be read at all (the gate holds that one with its reason, CTR-243 #26) */
 function staleHasItem(row){
-  return !!(row && Array.isArray(row.lines) && row.lines.some(function(line){ return !!(line && line.item_id); }));
+  return !!(row && Array.isArray(row.lines) && row.lines.some(function(line){ return !line || !!line.item_id; }));
 }
 /** a queued SALE bill (lines, not a document, a change, a shift or a delivery) with no owner override on its money */
 function staleSaleRow(row){
