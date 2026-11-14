@@ -112,15 +112,15 @@ if (SCALE)
   process.env.CB_TRIPS =
     process.env.CB_TRIPS ||
     '1'; /* lib/trips: X-DB-Trips on every answer — the scale table's trips column (local only) */ /* WX-O2C — checked against the pack's first month once the pack is read */
-const stop = (message, code) => {
+const die = (message, code) => {
   console.error('\n  REFUSED: ' + message + '\n');
   process.exit(code || 3);
 };
 const localCheck = localOnly(DB);
-if (!DB) stop('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
-if (!localCheck.ok) stop(localCheck.why);
-if (!SCHEMA_ONLY && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) stop("--shop is the shop's user id: 3–20 letters or digits, starting with a letter (e.g. simstores)");
-if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) stop('--years 1..10 and --seed a whole number');
+if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
+if (!localCheck.ok) die(localCheck.why);
+if (!SCHEMA_ONLY && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die("--shop is the shop's user id: 3–20 letters or digits, starting with a letter (e.g. simstores)");
+if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
 /* ── the three simulated shops, one per registered pack (CX0): ONLY what the pack does not say — a sample tax number that passes the pack's
    own check, the street, the city's clock offset and IANA zone, the phone. Currency · fiscal year · heads · rate menu come from the pack. */
 const SHOPS = {
@@ -146,21 +146,21 @@ const SHOPS = {
     phone: '0501234567'
   } /* 15 digits — reg-ae trn.check is a format check only (AE0 §14) */
 };
-if (!SHOPS[COUNTRY]) stop('--country IN, AU or AE (the registered packs: lib/regulation)');
+if (!SHOPS[COUNTRY]) die('--country IN, AU or AE (the registered packs: lib/regulation)');
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed())
-  stop('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
+  die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
 require(path.join(API, 'lib', 'tax-packs')); /* loads lib/regulation with the three packs registered */
 const PACK = require(path.join(API, 'lib', 'regulation')).packFor(
   COUNTRY
 ); /* currency · fiscalYear · taxHeads · tax.scheme · tax.standard_rate · chart.paymentModes */
-if (!PACK) stop('no regulation pack is registered for ' + COUNTRY);
+if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
 /* ⭐ WX-R2R: the shop's CALENDAR is the pack's (IN an April year · AU a July year · AE a January year) — the plan starts on the pack's
    first month; one reader for the bill series, the month close and the proof (lib/accounts-packs fiscalYearOf · periodOf · fyRange below). */
 const START = String(START_ARG || '2026-' + String(PACK.fiscalYear.startMonth).padStart(2, '0') + '-01');
 if (!/^\d{4}-\d{2}-01$/.test(START) || Number(START.slice(5, 7)) !== PACK.fiscalYear.startMonth)
-  stop(
+  die(
     "--start is a financial year's first day for " +
       COUNTRY +
       ' (month ' +
@@ -186,14 +186,14 @@ const CURRENCY = PACK.currency;
 const AT = (dayText, hours, minutes) => dayText + 'T' + String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':00' + SHOPROW.offset; /* the shop's own wall clock */
 /* the year and the month number THE API USES for this shop: lib/accounts-packs (the adopted engine) with the pack's start month — not a second rule here.
    ⚠️ accounts-packs v1.20 labels a January year '2026' and every other '2026-27'; the books routes read the same function, so the two always agree. */
-const accountsPacks = require(path.join(API, 'lib', 'accounts-packs'));
+const AP = require(path.join(API, 'lib', 'accounts-packs'));
 const FYPACK = { fy_start_month: PACK.fiscalYear.startMonth };
-const fyOf = (dayText) => accountsPacks.fiscalYearOf(dayText, FYPACK);
+const fyOf = (d) => AP.fiscalYearOf(d, FYPACK);
 const fyShort = (dayText) => {
   const fiscalYear = fyOf(dayText);
   return fiscalYear.length > 4 ? fiscalYear.slice(2) : fiscalYear;
 }; /* 26-27 — the counter's own year label; '2026' for a January year */
-const monthNo = (dayText) => accountsPacks.periodOf(dayText, FYPACK);
+const monthNo = (d) => AP.periodOf(d, FYPACK);
 /* the plan's three GST slabs (5 · 12 · 18) land on the pack's rate menu: a one-rate scheme (AU 10 % · AE 5 %) bills everything at its standard rate */
 const rateOf = (fallbackRate) => (PACK.tax && PACK.tax.standard_rate != null ? PACK.tax.standard_rate : fallbackRate);
 /* a purchase's tax row in the pack's OWN heads: India splits an in-state purchase CGST + SGST; a one-head scheme (gst · vat) carries the whole tax on that head */
@@ -263,11 +263,11 @@ async function applySchema() {
   try {
     result = await require('./migrate.cjs').apply(DB, { say: note });
   } catch (e) {
-    stop(e.message);
+    die(e.message);
   }
   if (!result.fresh) return;
   for (const t of ['identities', 'chit_header', 'journal_entry', 'books_setting', 'customer_list', 'catalogue_items'])
-    if (!(await hasTable(t))) stop('table ' + t + ' is missing after --schema');
+    if (!(await hasTable(t))) die('table ' + t + ' is missing after --schema');
 }
 
 /** --schema-only: the schema step alone (the compose stack's migrate job), then exit */
@@ -278,7 +278,7 @@ async function schemaOnly() {
   try {
     await sql('SELECT 1');
   } catch (e) {
-    stop('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message);
+    die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message);
   }
   await applySchema();
   await pool.end();
@@ -359,7 +359,7 @@ async function startApi() {
     }
     await new Promise((ok) => setTimeout(ok, 200));
   }
-  stop('the api did not answer /health on ' + BASE);
+  die('the api did not answer /health on ' + BASE);
 }
 async function callApi(urlPath, options) {
   const opt = options || {};
@@ -457,16 +457,16 @@ async function scaleThen(shopId) {
   try {
     await sql('SELECT 1');
   } catch (e) {
-    stop('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message);
+    die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message);
   }
   if (SCHEMA) await applySchema();
-  if (!(await hasTable('identities'))) stop('this database has no schema — the local stack migrates its own; an empty TEST database takes --schema');
-  if (!(await hasTable('journal_entry'))) stop('the ledger tables (migrations b272–b274) are not in this database');
+  if (!(await hasTable('identities'))) die('this database has no schema — the local stack migrates its own; an empty TEST database takes --schema');
+  if (!(await hasTable('journal_entry'))) die('the ledger tables (migrations b272–b274) are not in this database');
   /* the delivery function must honour the shop clock (b300) — else three years of bills would all be dated today */
   const fn = await sql(`SELECT pg_get_functiondef(to_regprocedure('chit_deliver(uuid,boolean,jsonb)')) AS d`).catch(() => ({ rows: [{ d: null }] }));
-  if (!fn.rows[0] || !fn.rows[0].d) stop('chit_deliver (migrations/migration_b50 · b142) is not in this database');
+  if (!fn.rows[0] || !fn.rows[0].d) die('chit_deliver (migrations/migration_b50 · b142) is not in this database');
   if (fn.rows[0].d.indexOf("c->>'created_at'") < 0)
-    stop('chit_deliver does not honour the shop clock yet — run migrations/b300_chit_deliver_clock.sql on this local database (as postgres), then load');
+    die('chit_deliver does not honour the shop clock yet — run migrations/b300_chit_deliver_clock.sql on this local database (as postgres), then load');
 
   /* the shop so far: exists? loaded for this seed? */
   const found = await sql(`SELECT identity_id, user_id, email FROM identities WHERE LOWER(user_id) = $1 OR LOWER(email) = $2`, [SHOP, EMAIL]);
@@ -491,8 +491,8 @@ async function scaleThen(shopId) {
         printLogin();
         process.exit(0);
       }
-      if (loaded) stop(SHOP + ' already holds ' + loaded + ' — a different seed/years. Rebuild with --fresh.');
-      if (nestedBills.rows[0].n) stop(SHOP + ' already has ' + nestedBills.rows[0].n + ' bills (an earlier run that did not finish?). Rebuild with --fresh.');
+      if (loaded) die(SHOP + ' already holds ' + loaded + ' — a different seed/years. Rebuild with --fresh.');
+      if (nestedBills.rows[0].n) die(SHOP + ' already has ' + nestedBills.rows[0].n + ' bills (an earlier run that did not finish?). Rebuild with --fresh.');
       note('shop ' + SHOP + ' exists and is empty — loading into it');
     } else {
       const kids = await sql(`SELECT identity_id FROM identities WHERE parent_entity_id = $1`, [shopId]);
@@ -556,7 +556,7 @@ async function scaleThen(shopId) {
   const codeOfRole = (role) => (accounts.find((item) => item.role === role) || {}).code;
   const CASH = codeOfRole('cash'),
     CAPITAL = codeOfRole('capital') || '3000';
-  if (!CASH) stop('the chart has no cash ledger (role cash) — enable answered ' + JSON.stringify(entity).slice(0, 200));
+  if (!CASH) die('the chart has no cash ledger (role cash) — enable answered ' + JSON.stringify(entity).slice(0, 200));
   const opened = must(
     await callApi('/api/books/opening', {
       method: 'POST',
@@ -582,7 +582,7 @@ async function scaleThen(shopId) {
   const parties = (await sql(`SELECT identity_id, display_name FROM identities WHERE parent_entity_id = $1`, [shopId])).rows;
   const SUPP = (parties.find((item) => item.display_name === SUPPLIER) || {}).identity_id,
     CUST = (parties.find((item) => item.display_name === CUSTOMER) || {}).identity_id;
-  if (!SUPP || !CUST) stop('the parties were not minted: ' + JSON.stringify({ sup: supplier.b, cus: customer.b }).slice(0, 300));
+  if (!SUPP || !CUST) die('the parties were not minted: ' + JSON.stringify({ sup: supplier.b, cus: customer.b }).slice(0, 300));
   let counters = must(await callApi('/api/counters', { token }), 'counters').b.counters || [];
   if (!counters.some((item) => item.id === TILL))
     counters = counters.concat([must(await callApi('/api/counters', { method: 'POST', token, body: { name: 'Counter 1' } }), 'add counter').b.counter]);
@@ -858,7 +858,7 @@ async function proof(shopId, quiet) {
   /* cash, each FY: opening (the STORED summaries of the years before) + net flow (this year's LINES) = closing (the stored summaries up to this year) */
   const list = [...new Set(trialBalance.rows.map((item) => item.fiscal_year))].sort();
   for (const fy of list) {
-    const range = accountsPacks.fyRange(fy, FYPACK),
+    const range = AP.fyRange(fy, FYPACK),
       from = range.start,
       to = range.end; /* the pack's year, not April's */
     const cashRows = await sql(

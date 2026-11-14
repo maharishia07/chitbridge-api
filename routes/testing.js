@@ -1005,14 +1005,14 @@ const INSERT_BY_KIND = {
 async function upsertVersioned(db, entity_id, tester, kind, name, subKind, note, rules) {
   const insert = INSERT_BY_KIND[kind];
   if (!insert) throw new Error('upsertVersioned: kind ' + kind + ' has no declared INSERT');
-  const current = await db.query(
+  const cur = await db.query(
     `SELECT d.definition_id, d.current_version, v.rules
        FROM definition d
        JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
       WHERE d.entity_id = $1 AND d.kind = $2 AND d.name = $3`,
     [entity_id, kind, name]
   );
-  if (!current.rows[0]) {
+  if (!cur.rows[0]) {
     const inserted = await db.query(insert, [entity_id, subKind, name, note, tester.id]);
     const identifier = inserted.rows[0].definition_id;
     await db.query(
@@ -1022,12 +1022,12 @@ async function upsertVersioned(db, entity_id, tester, kind, name, subKind, note,
     );
     return { definition_id: identifier, version: 1, changed: true };
   }
-  const id = current.rows[0].definition_id;
+  const id = cur.rows[0].definition_id;
   /* QA-148: the SAME content in any key order is no change (lib/canon sorts keys; JSON.stringify did not) */
-  if (canon.canon(current.rows[0].rules || {}) === canon.canon(rules)) {
-    return { definition_id: id, version: current.rows[0].current_version, changed: false };
+  if (canon.canon(cur.rows[0].rules || {}) === canon.canon(rules)) {
+    return { definition_id: id, version: cur.rows[0].current_version, changed: false };
   }
-  const next = Number(current.rows[0].current_version) + 1;
+  const next = Number(cur.rows[0].current_version) + 1;
   await db.query(
     `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                   VALUES ($1,$2,$3,$4,$5)`,
@@ -2141,7 +2141,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const tester = testerOf(req);
     const state = String((req.body || {}).state || '');
-    const reason = String((req.body || {}).why || '').trim();
+    const why = String((req.body || {}).why || '').trim();
     /**
      * ⭐ A PRIORITY-ONLY CHANGE IS LEGITIMATE. Re-ranking the backlog is not a decision about the requirement,
      * so it must not be forced to restate one — an empty state means "leave it where it is".
@@ -2152,7 +2152,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     if (!onlyPriority && REQ_STATES.indexOf(state) < 0) {
       return problem(req, res, { status: 400, ...badRequest('Not a state', 'One of: ' + REQ_STATES.join(' · ')) });
     }
-    if (state === 'rejected' && !reason) {
+    if (state === 'rejected' && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'A rejected requirement needs its reason, or the next tester raises it again.') });
     }
     const out = await withEntity(entity_id, async (db) => {
@@ -2173,8 +2173,8 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
       const next = Object.assign({}, rules, {
         state: nextState,
         priority: priority,
-        why: reason || rules.why || null,
-        history: (rules.history || []).concat([{ state: nextState, priority: priority, by: tester.name, at: new Date().toISOString(), why: reason || null }])
+        why: why || rules.why || null,
+        history: (rules.history || []).concat([{ state: nextState, priority: priority, by: tester.name, at: new Date().toISOString(), why: why || null }])
       });
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
@@ -2414,16 +2414,16 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
     const FROM = `FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'incident'`;
-    const STATE_SQL = `COALESCE(v.rules->>'state','raised')`,
-      SEVERITY_SQL = `COALESCE(v.rules->>'severity','Sev-3')`;
+    const ST = `COALESCE(v.rules->>'state','raised')`,
+      SV = `COALESCE(v.rules->>'severity','Sev-3')`;
     let bySS = [];
     const result = await withEntity(entity_id, async (db) => {
-      bySS = (await db.query(`SELECT ${STATE_SQL} AS state, ${SEVERITY_SQL} AS severity, count(*)::int AS n ${FROM} GROUP BY 1, 2`, [entity_id])).rows;
+      bySS = (await db.query(`SELECT ${ST} AS state, ${SV} AS severity, count(*)::int AS n ${FROM} GROUP BY 1, 2`, [entity_id])).rows;
       return readPage(
         db,
         `d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules`,
-        `${FROM} AND ${stateWhere(STATE_SQL, INC_OPEN)}`,
-        `${rankOrder(SEVERITY_SQL, INC_SEV)}, v.rules->>'happened_at' NULLS LAST, d.definition_id`,
+        `${FROM} AND ${stateWhere(ST, INC_OPEN)}`,
+        `${rankOrder(SV, INC_SEV)}, v.rules->>'happened_at' NULLS LAST, d.definition_id`,
         [entity_id, want],
         req.query || {},
         PAGE.findings
@@ -2436,10 +2436,10 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
       /* ⭐ THE TWO NUMBERS NOBODY CAN GET FROM A LIST OF ROWS: how long the shop suffered before anyone knew,
          and how long it then took. Computed on read from the stamps, never stored — a stored duration is a
          number that stops being true the moment the row changes and nobody recomputes it. */
-      const happenedAt = Date.parse(rules.happened_at || rules.raised_at || x.updated_at);
-      const raisedAt = Date.parse(rules.raised_at || x.updated_at);
-      const resolvedAt = rules.resolved_at ? Date.parse(rules.resolved_at) : null;
-      const mins = (startMs, endMs) => (startMs > 0 && endMs > 0 ? Math.max(0, Math.round((endMs - startMs) / 60000)) : null);
+      const t0 = Date.parse(rules.happened_at || rules.raised_at || x.updated_at);
+      const t1 = Date.parse(rules.raised_at || x.updated_at);
+      const t2 = rules.resolved_at ? Date.parse(rules.resolved_at) : null;
+      const mins = (a, b2) => (a > 0 && b2 > 0 ? Math.max(0, Math.round((b2 - a) / 60000)) : null);
       return {
         definition_id: x.definition_id,
         ref: x.name,
@@ -2457,8 +2457,8 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
         happened_at: rules.happened_at || null,
         raised_at: rules.raised_at || null,
         resolved_at: rules.resolved_at || null,
-        unnoticed_mins: mins(happenedAt, raisedAt),
-        open_mins: mins(raisedAt, resolvedAt),
+        unnoticed_mins: mins(t0, t1),
+        open_mins: mins(t1, t2),
         defects: rules.defects || [],
         changes: rules.changes || [],
         raised_by: rules.raised_by || null,
@@ -2520,13 +2520,13 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const tester = testerOf(req);
-    const body = req.body || {};
-    const state = String(body.state || '');
-    const reason = String(body.why || '').trim();
-    const sevIn = INC_SEV.indexOf(String(body.severity || '')) >= 0 ? String(body.severity) : null;
+    const b = req.body || {};
+    const state = String(b.state || '');
+    const why = String(b.why || '').trim();
+    const sevIn = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : null;
     /* re-grading the severity is a legitimate change on its own — it is a judgement, not a decision to move */
     const onlySeverity = !state && sevIn;
-    const linking = !state && (body.defect || body.change);
+    const linking = !state && (b.defect || b.change);
     if (!onlySeverity && !linking && INC_STATES.indexOf(state) < 0) {
       return problem(req, res, { status: 400, ...badRequest('Not a state', 'One of: ' + INC_STATES.join(' · ')) });
     }
@@ -2535,10 +2535,10 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
      * the shop is still broken, and six months later nobody can tell whether it was fixed or forgotten. So a
      * resolution carries either the commit that did it or, in words, why nothing needed doing.
      */
-    if (state === 'resolved' && !body.change && !reason) {
+    if (state === 'resolved' && !b.change && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say what changed', 'Cite the commit that fixed it, or say why nothing needed to change.') });
     }
-    if (state === 'closed' && !reason) {
+    if (state === 'closed' && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'Closing is a decision — record it, or the next person reopens the same thing.') });
     }
     const out = await withEntity(entity_id, async (db) => {
@@ -2551,26 +2551,26 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
       );
       const row = found.rows[0];
       if (!row) return null;
-      const rules = row.rules || {};
+      const ru = row.rules || {};
       const now = new Date().toISOString();
-      const nextState = state || rules.state || 'raised';
-      const severity = sevIn || rules.severity || 'Sev-3';
+      const nextState = state || ru.state || 'raised';
+      const severity = sevIn || ru.severity || 'Sev-3';
       /**
        * ⭐ A CHANGE IS A CITATION, NOT A COPY: repo and sha, so the message, the diff and the author are read
        * from git where they already are and cannot drift from it. A subject line is kept for reading, and it
        * is explicitly a CACHE of git's — git remains the record.
        */
-      const changes = (rules.changes || []).slice();
-      if (body.change) {
-        const commitSha = String(body.change.sha || body.change.commit || '')
+      const changes = (ru.changes || []).slice();
+      if (b.change) {
+        const commitSha = String(b.change.sha || b.change.commit || '')
           .trim()
           .toLowerCase();
         if (/^[0-9a-f]{7,40}$/.test(commitSha)) {
           changes.push({
-            repo: String(body.change.repo || '').trim() || null,
+            repo: String(b.change.repo || '').trim() || null,
             sha: commitSha,
             subject:
-              String(body.change.subject || '')
+              String(b.change.subject || '')
                 .trim()
                 .slice(0, 200) || null,
             by: tester.name,
@@ -2579,21 +2579,21 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
         }
       }
       /* a defect is a requirement/spec row that already exists — its id, never its text copied over */
-      const defects = (rules.defects || []).slice();
-      if (body.defect && /^[0-9a-f-]{36}$/i.test(String(body.defect))) {
-        if (defects.indexOf(String(body.defect)) < 0) defects.push(String(body.defect));
+      const defects = (ru.defects || []).slice();
+      if (b.defect && /^[0-9a-f-]{36}$/i.test(String(b.defect))) {
+        if (defects.indexOf(String(b.defect)) < 0) defects.push(String(b.defect));
       }
-      const next = Object.assign({}, rules, {
+      const next = Object.assign({}, ru, {
         state: nextState,
         severity: severity,
         severity_means: SEV_MEANS[severity],
-        why: reason || rules.why || null,
+        why: why || ru.why || null,
         changes: changes,
         defects: defects,
         /* ⚠️ stamped once, on the FIRST resolution: a reopened-and-resolved incident must not lose the day the
            shop actually got its counter back, which is the number anybody reporting on this will quote. */
-        resolved_at: nextState === 'resolved' || nextState === 'closed' ? rules.resolved_at || now : rules.resolved_at || null,
-        history: (rules.history || []).concat([{ state: nextState, severity: severity, by: tester.name, at: now, why: reason || null }])
+        resolved_at: nextState === 'resolved' || nextState === 'closed' ? ru.resolved_at || now : ru.resolved_at || null,
+        history: (ru.history || []).concat([{ state: nextState, severity: severity, by: tester.name, at: now, why: why || null }])
       });
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
@@ -2615,8 +2615,8 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
         /* carried out of the transaction so the news can name the incident and the person now waiting on it.
            ⚠️ Stripped again before the reply — the client is answered about the incident, not about the post. */
         _ref: row.name || null,
-        _raiser: rules.raised_by_id || row.created_by || null,
-        _screen: rules.screen_code || null
+        _raiser: ru.raised_by_id || row.created_by || null,
+        _screen: ru.screen_code || null
       };
     });
 
