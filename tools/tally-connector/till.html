@@ -11195,6 +11195,21 @@ document.addEventListener('click', function(e){
   if (m && !m.hidden && !MENU_CLICK_INSIDE && e.target.id !== 'menubtn') closeMenu(true);
   else if (m && !m.hidden && menuBackdropHit(e, m)) closeMenu(true);
 });
+/**
+ * ⚠️⚠️ A SCAN WHILE THE MENU IS OPEN MUST STILL REACH THE BILL. The menu is a modal now, so its first control holds the caret and a scanner's digits
+ * went to the ✕ button and its trailing Enter closed the menu: the bill short one item, nobody told. A printable key that is not for a field in the
+ * menu shuts it WITHOUT moving focus to the opener and hands the caret to the search box inside the same keydown, so the character, and the rest of
+ * the scan with its Enter, land in #q exactly as before the modal.
+ */
+function menuScanKey(e){
+  var menu = document.getElementById('tillmenu');
+  if (menu && menu.open && isScanChar(e) && !typingInside(menu)) closeMenu(false);
+}
+/** one printable character that is not a space (a button's key) and not a shortcut */
+function isScanChar(e){ return e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey; }
+/** the caret is in a field of the menu, so the keys are for that field */
+function typingInside(menu){ var at = document.activeElement; return !!(at && at.matches && menu.contains(at) && at.matches('input, textarea, select, [contenteditable]')); }
+document.addEventListener('keydown', menuScanKey, true);
 /** the browser's own Esc (cancel) and any other close keep the three pieces of state in step: panel, scrim, hidden */
 (function(){
   var menu = document.getElementById('tillmenu'); if (!menu) return;
