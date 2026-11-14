@@ -1,7 +1,7 @@
 // routes/folders-totals.js — the cross-chit sums of /api/folders
 /**
  * OWNS      GET /groupsum · GET /reconcile · GET /mis: what a pile of chits adds up to, whether the folders add up to the track, and the MIS view.
- * PART OF  routes/folders.js (mounted there with router.use at the end, so every path keeps its order under /api/folders). Moved byte for byte (MNT-59); no behaviour changed.
+ * PART OF  routes/folders.js (mounted there with router.use at the end, so every path keeps its order under /api/folders). Moved verbatim with its leading comments (MNT-59); the only changes to the moved code are the one-line require and `ent` declarations each part needs and, in routes/folders.js, `checked`, PAGE_DEFAULT and PAGE_MAX (now from lib/folders-contract.js). The short names PL, ent, INV are kept on purpose: renaming them would make every moved function new code for the readability guard (cleanup PR).
  * CALLED BY routes/folders.js (router.use), the web group-sum pane, the metrics pane and the MIS screens.
  * FLOW      auth → schema check → select.rows → lib/measure through costView → res.json; a refusal → problem(req, res, said(...) | failed(...))
  * CARD      01-rail-core-the-chit/folders
@@ -25,6 +25,19 @@ function ent(req) {
   return auth.entityOf(req);
 }
 const groupsum = require('../lib/groupsum');
+/**
+ * GET /groupsum?scope=task|order&folder_id= — 🧮 WHAT DOES THIS PILE ADD UP TO?
+ *
+ * Athi, 2026-08-11: *"sum all the tasks and find out the total requirement… say 10 parties ordered 1000Kg, on
+ * click the down below need to know who are all asked."*
+ *
+ * ⚠️ OMIT folder_id AND IT SUMS THE WHOLE TRACK, across every folder — Athi: *"at task level, we can ask for that
+ * total sum irrespective of the folders."*  That falls out of select.rows() applying no folder predicate unless
+ * asked, which is also why reconcile can see 157 while the inbox shows 34.
+ *
+ * ⚠️ NO ARITHMETIC LIVES HERE. The requirement is lib/consolidate.js (proved 27/0), the matching is
+ * lib/itemmatch.js, the value is lib/measure.js. This route chooses the rows and nothing else.
+ */
 router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
     const me = ent(req);
