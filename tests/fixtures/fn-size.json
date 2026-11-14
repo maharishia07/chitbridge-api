@@ -214,8 +214,10 @@
       "GET /mis",
       "PATCH /profile"
     ],
+    "routes/folders-inbox.js": [
+      "GET /messages"
+    ],
     "routes/folders.js": [
-      "GET /messages",
       "POST /move"
     ],
     "routes/identity-docs.js": [
