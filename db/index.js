@@ -192,6 +192,12 @@ function rlsGuardCheck(text) {
   console.warn(msg);
 }
 
+/** E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js). The ONE error log of query(), queryAs and queryAsEach (SEC-185: no second code path). */
+function logQueryError(text, err) {
+  const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
+  require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message });
+}
+
 const query = async (text, params) => {
   if (!pool) await ensurePool();
   require('../lib/limits').refuseIfReaderGone();   /* PLT-85: a GET/HEAD whose client has gone takes no pool connection */          // cold start: wait for the pool instead of failing the request
@@ -214,9 +220,7 @@ const query = async (text, params) => {
     }
     return result;
   } catch (err) {
-    /* E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js) */
-    { const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
-      require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message }); }
+    logQueryError(text, err);
     throw err;
   }
 };
@@ -389,4 +393,62 @@ const readBatch = async (entityId, actorId, statements) => {
   /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
   return at.map((i) => arr[2 + i]);
 };
-module.exports = { bootWaitMs, query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+/**
+ * ── ⭐ queryAs(identityId, text, params) — ONE statement under a named identity's binding, ONE round trip (SEC-185, step B) ──────
+ * identities carries row security (b860, FORCE): a row opens only under `app.current_entity` = the shop it belongs to, or = the identity itself.
+ * A read or write BY ID that has no request shop yet (sign-in: the OTP of the person who just identified themselves; the per-request check of a
+ * signed token) binds THAT id and asks once. The binding is the row's own key, so it opens exactly that row (`identity_id = me`) and, for a shop id,
+ * its customers and staff (`parent_entity_id = me`), nothing else.
+ * HOW  `set_config(..., true)` and the statement go in ONE simple-protocol message: Postgres runs a multi-statement string as one implicit
+ *      transaction, so SET LOCAL lasts exactly to the end of the statement and an error rolls the whole message back: no BEGIN/COMMIT to leave a pooled
+ *      connection half-open (readBatch's explicit BEGIN has that risk on error). Values are inlined (escapeLiteral); an object goes as its JSON text.
+ * ⚠️ a blank id binds nothing: the statement then sees no identity row (fail closed), never every row.
+ */
+const asLiteral = (v) => (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) ? JSON.stringify(v) : v);
+/** one bound statement as the two texts that ride in the message: the binding, then the statement with its values inlined */
+function boundParts(identityId, text, params) {
+  const body = inlineSql(text, (params || []).map(asLiteral));
+  if (/;\s*\S/.test(body.replace(/'(?:[^']|'')*'/g, ''))) throw new Error('queryAs: one statement only');
+  return ["SELECT set_config('app.current_entity', " + inlineLiteral(identityId == null ? '' : String(identityId)) + ', true)', body];
+}
+const queryAs = async (identityId, text, params) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  rlsGuardCheck(text);
+  try {
+    const res = await pool.query(boundParts(identityId, text, params).join(';\n') + ';');
+    return Array.isArray(res) ? res[1] : res;
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+};
+/**
+ * queryAsEach(ids, text, paramsOf) — the same statement once PER identity, each under its own binding, all in ONE message and ONE round trip; the rows come back joined, in ids order.
+ * For the sign-in read of "the people the lookup named" (they may belong to different shops, so no single binding opens them all) and of their parent shops.
+ * An empty list still sends one statement (bound to nothing, so it answers nothing): a hit and a miss cost the same trip.
+ */
+const queryAsEach = async (ids, text, paramsOf) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  const list = ids && ids.length ? ids : [null];
+  const parts = [];
+  list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  rlsGuardCheck(text);
+  let res;
+  try {
+    res = await pool.query(parts.join(';\n') + ';');
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+  const all = Array.isArray(res) ? res : [res];
+  const rows = [];
+  list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
+  return { rows, rowCount: rows.length };
+};
+query.as = queryAs;
+query.asEach = queryAsEach;
+module.exports = { bootWaitMs, query, queryAs, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
