@@ -193,7 +193,7 @@ async function main() {
     /* 8 revoke, suspend, disconnect, expiry */
     const m1Grant = made.body.grant_id;
     const revoked = await call(ownerOf(M1), 'POST', '/api/books-grants/' + m1Grant + '/revoke', { body: {} });
-    r = await viaP(P, M1, 'GET', '/daybook');
+    r = await call(ownerOf(P), 'GET', '/api/books/daybook', { member: M1.id }); /* a revoked grant has no active row: refused, no log row */
     ok('8 revoke: M1 revokes and the very next request is refused BOOKS_GRANT_ENDED', revoked.status === 200 && r.status === 403 && code(r) === 'BOOKS_GRANT_ENDED', JSON.stringify([revoked.status, r]));
     await net.suspend(edge['2'], P.node);
     r = await viaP(P, M2, 'GET', '/daybook');
@@ -237,7 +237,7 @@ async function main() {
     const lookM1 = await logRows(M1);
     const looksOfP = lookM1.filter((x) => String(x.grantee_entity) === P.id && x.actor_identity_id !== null);
     ok('11 every request on M1 left one log row (allowed or refused): ' + asked[M1.id], looksOfP.length === asked[M1.id], looksOfP.length + ' of ' + asked[M1.id]);
-    ok('11 refusals are in the log with their outcome', lookM1.some((x) => x.outcome === 'read_only') && lookM1.some((x) => x.outcome === 'not_listed') && lookM1.every((x) => x.outcome !== 'no_grant') && lookM1.some((x) => x.outcome === 'revoked') && lookM1.some((x) => x.outcome === 'allowed'), lookM1.map((x) => x.outcome).join(','));
+    ok('11 refusals are in the log with their outcome', lookM1.some((x) => x.outcome === 'read_only') && lookM1.some((x) => x.outcome === 'not_listed') && lookM1.every((x) => x.outcome !== 'no_grant') && lookM1.every((x) => x.outcome !== 'revoked') && lookM1.some((x) => x.outcome === 'allowed'), lookM1.map((x) => x.outcome).join(','));
     ok('11 a log row holds the route and the query keys, never a figure', lookM1.every((x) => /^(GET|POST|PATCH|DELETE|PUT) \//.test(x.route_pattern)) && lookM1.some((x) => x.query_shape === 'entity'));
 
     /* 2b a caller with no grant cannot add rows to another entity's log (also not by naming the member again and again) */

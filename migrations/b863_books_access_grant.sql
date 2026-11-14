@@ -17,8 +17,13 @@
 -- ROLL BACK (before the build ships it loses nothing; after, the grants and the log of looks are lost, the books themselves are untouched):
 --    DROP TABLE IF EXISTS books_access_log; DROP TABLE IF EXISTS books_access_grant;
 --    (the access_events constraint stays widened; narrowing it is refused while a books_grant_* row exists)
--- CHECK (read-only, one row):  SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('books_access_grant', 'books_access_log');   Expect 2.
--- RLS: both tables ENABLE + FORCE. cb_app: grant = SELECT, INSERT, UPDATE (a revoke and an expiry edit are updates; no DELETE: a grant is a record); log = SELECT, INSERT only.
+-- CHECK (read-only, all-true multi-row block; every row must read ok = true):
+--    SELECT 'two tables' AS what, count(*) = 2 AS ok FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('books_access_grant', 'books_access_log')
+--    UNION ALL SELECT 'log: no UPDATE, no DELETE for cb_app', NOT has_table_privilege('cb_app', 'public.books_access_log', 'UPDATE') AND NOT has_table_privilege('cb_app', 'public.books_access_log', 'DELETE')
+--    UNION ALL SELECT 'log: insert-only trigger', EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.books_access_log'::regclass AND tgname = 'books_access_log_insert_only')
+--    UNION ALL SELECT 'grant: UPDATE on expires_at, revoked_at, revoked_by only', NOT has_table_privilege('cb_app', 'public.books_access_grant', 'UPDATE') AND has_column_privilege('cb_app', 'public.books_access_grant', 'expires_at', 'UPDATE') AND has_column_privilege('cb_app', 'public.books_access_grant', 'revoked_at', 'UPDATE') AND has_column_privilege('cb_app', 'public.books_access_grant', 'revoked_by', 'UPDATE') AND NOT has_column_privilege('cb_app', 'public.books_access_grant', 'grantee_entity', 'UPDATE') AND NOT has_column_privilege('cb_app', 'public.books_access_grant', 'purpose', 'UPDATE')
+--    UNION ALL SELECT 'both tables forced RLS', (SELECT count(*) FROM pg_class WHERE relname IN ('books_access_grant', 'books_access_log') AND relrowsecurity AND relforcerowsecurity) = 2;
+-- RLS: both tables ENABLE + FORCE. cb_app: grant = SELECT, INSERT and UPDATE on the named columns expires_at, revoked_at, revoked_by only (never grantee, grantor, purpose, preset; no DELETE: a grant is a record); log = SELECT, INSERT only, and the books_insert_only() trigger refuses UPDATE and DELETE for every role.
 
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -73,13 +78,21 @@ DROP POLICY IF EXISTS log_read ON books_access_log;
 CREATE POLICY log_read ON books_access_log FOR SELECT
   USING (grantor_entity = NULLIF(current_setting('app.current_entity', true), '')::uuid
       OR grantee_entity = NULLIF(current_setting('app.current_entity', true), '')::uuid);
+-- a look is logged only by the grantee that holds an ACTIVE (not revoked) grant row for that member: nobody can write into another business's log
 DROP POLICY IF EXISTS log_insert ON books_access_log;
 CREATE POLICY log_insert ON books_access_log FOR INSERT
-  WITH CHECK (grantee_entity = NULLIF(current_setting('app.current_entity', true), '')::uuid);
+  WITH CHECK (grantee_entity = NULLIF(current_setting('app.current_entity', true), '')::uuid
+    AND EXISTS (SELECT 1 FROM books_access_grant g WHERE g.grantor_entity = books_access_log.grantor_entity AND g.grantee_entity = books_access_log.grantee_entity AND g.revoked_at IS NULL));
+
+-- insert-only, the books' own pattern (b273, as b864 does): the trigger refuses UPDATE and DELETE for every role
+DROP TRIGGER IF EXISTS books_access_log_insert_only ON books_access_log;
+CREATE TRIGGER books_access_log_insert_only BEFORE UPDATE OR DELETE ON books_access_log FOR EACH ROW EXECUTE FUNCTION public.books_insert_only();
 
 REVOKE ALL ON books_access_grant FROM cb_app, cb_backup;
 REVOKE ALL ON books_access_log FROM cb_app, cb_backup;
-GRANT SELECT, INSERT, UPDATE ON books_access_grant TO cb_app;
+GRANT SELECT, INSERT ON books_access_grant TO cb_app;
+REVOKE UPDATE, DELETE ON books_access_grant FROM cb_app;
+GRANT UPDATE (expires_at, revoked_at, revoked_by) ON books_access_grant TO cb_app;
 GRANT SELECT, INSERT ON books_access_log TO cb_app;
 REVOKE UPDATE, DELETE ON books_access_log FROM cb_app;
 GRANT SELECT ON books_access_grant TO cb_backup;
