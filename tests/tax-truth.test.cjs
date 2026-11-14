@@ -120,6 +120,14 @@ const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads
   'function reducedNoteHTML(', 'function slipCashRoundHTML(', 'function taxHeadWord(', 'function domesticFootHTML(', 'function perRateFootHTML(',
   'function cashRule(', 'function cashDue(', 'function cashRoundWords(', 'function restBeforeLast(', 'function changeOf(', 'function cashRoundOf(', 'function tenderParts('];
 
+/* R6-03 (Fable country review): the dated rate menu is asked at send. This fixture's lines carry 12%, a rate no schedule has had since 22 Sep 2025, so the counter's
+   clock is FROZEN at a day when 12% was on the menu (the bill is stamped `billed_at` from it): the hand-computed figures below stay lawful and unchanged. */
+const BILL_DAY = '2025-09-01T17:32:00.000Z';
+class FrozenDate extends Date {
+  constructor(...given) { super(...(given.length ? given : [BILL_DAY])); }
+  static now() { return new Date(BILL_DAY).getTime(); }
+}
+
 /** one bill rung at the counter: the page's finish() over a cart, as it runs in a browser — returns what it saved and printed */
 async function ring(o) {
   const saved = {}, el = (v) => ({ value: v || '', textContent: '', className: '', innerHTML: '', classList: { remove() {}, add() {} }, showModal() {}, close() {}, open: false });
@@ -127,7 +135,7 @@ async function ring(o) {
   const ctx = {
     /* W1-TILL: the page has the country REGISTRY (CBRegulation, in /engine/tax.js) — the shop's pack decides the state split; the sandbox
        used to omit it and lean on the India default the counter no longer has */
-    window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date, Promise,
+    window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date: FrozenDate, Promise,
     CBTax: o.noEngine ? undefined : CBTAX,
     MONEY: () => MONEY, r2, rmoney: r2, esc: (v) => String(v == null ? '' : v), money: (v) => '₹' + (Number(v) || 0).toFixed(2),
     S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33', country: 'IN', reg_type: 'regular' },
