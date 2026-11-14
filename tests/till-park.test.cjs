@@ -43,7 +43,7 @@ function fakeDB() {
     put: async (s, row) => { stores[s][row.no] = clone(row); }, del: async (s, k) => { delete stores[s][k]; },
     all: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])), allRaw: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])) };
 }
-const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain'];
+const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
 const PRICE_SENTENCE = 'Price can have at most 2 decimal places in INR (not 10.999). Round it and send it again.';
 
 /** a counter whose wire answers from `answer(url)` -> [status, body]; `calls` lists every url it was asked */
@@ -54,7 +54,7 @@ function counter(answer) {
     isSaleRow: (b) => !!(b && !b.tillPost && Array.isArray(b.lines)), renumberBill: async () => null, stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     fetchBy: async (url) => { calls.push(url); const [status, body] = answer(url); return { ok: status >= 200 && status < 300, status, json: async () => body, clone() { return this; } }; } };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + PARK_FNS.map(lift).join('') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + liftVar('ONE_ROW_REFUSALS') + PARK_FNS.map(lift).join('') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'k'; host.api = 'http://shop'; host.cred = () => 'k'; host.auth = (x) => Object.assign({}, x || {}); host.idemHeaders = (p, b, x) => x;
   return { host, DB, calls };
@@ -443,8 +443,9 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     walk(ast, { fn: '(top)', handler: null, text: '' }, null);
     const GATE = /frozenStop\(|frozenDrain\(|dbFrozen\(\)/, CHECK = /throwIfFrozen|dbFrozen|frozenOr|paintFrozenInto|DB_FROZEN/;
     const SORTED = {   // fn: [kind, why]   gated = the function stops/branches on frozen first · checked = every catch rethrows or paints frozen · closed = an unreadable store already fails closed, said here
-      closeCounter: ['gated'], dayReread: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
+      closeCounter: ['gated'], closeReadinessNow: ['checked'], coldStart: ['gated'], drain: ['gated'], openBills: ['gated'], openStorage: ['gated'], releaseQueue: ['gated'], stuckSend: ['gated'], sureSheet: ['gated'], wipeDevice: ['gated'],
       queueTally: ['gated'], queueLength: ['checked'], retainPaint: ['checked'], subListPaint: ['checked'], tillIssued: ['checked'],
+      billNosHeld: ['closed', 'its only caller, dayReread, stops on frozenStop first; an empty read only means more server bills are offered'],
       keepParked: ['closed', 'null = unreadable; every caller stops through keptUnread'],
       checkAbsorbed: ['closed', 'null = could not check; callers say so, nothing is decided from it'],
       dayMarkWithdrawn: ['closed', 'only marks bills withdrawn; its writes reject while frozen'],
@@ -459,7 +460,9 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       storageMap: ['closed', 'null rows print as an unknown dash, not as zero'],
       stuckReport: ['closed', 'the catch prints the frozen words in the report'],
       unparkSame: ['closed', 'a parked copy simply stays; its delete would reject anyway'],
-      waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter']
+      waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter'],
+      drainRecordSent: ['closed', 'called only by drain, which stops first when frozen; a receipt that cannot be written leaves the bill reading not confirmed, never lost (moved out of drain whole, CTR-243)'],
+      staleAskSoon: ['checked'], staleDecide: ['checked']
     };
     const bad = [];
     if (Object.keys(found).length < 25) bad.push('the scan found only ' + Object.keys(found).length + ' functions with a DB read in a try/catch — the guard has gone blind');

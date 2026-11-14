@@ -484,7 +484,10 @@ function notesOf(facts, legacyEntry) {
 function lineOf(fileText, leaf) {
   if (!fileText) return 0;
   const quoted = String(leaf.routePath).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const found = new RegExp('\\.(?:' + leaf.method.toLowerCase() + '|all)\\(\\s*[\'"`]' + quoted + '[\'"`]').exec(fileText);
+  /* router.get('/x' ...) or the shared helper route('get', '/x', ...) (routes/books.js period-end routes): one reader for both (API-11) */
+  const direct = new RegExp('\\.(?:' + leaf.method.toLowerCase() + '|all)\\(\\s*[\'"`]' + quoted + '[\'"`]').exec(fileText);
+  const helper = new RegExp('^[ \\t]*route\\(\\s*[\'"`]' + leaf.method.toLowerCase() + '[\'"`]\\s*,\\s*[\'"`]' + quoted + '[\'"`]', 'm').exec(fileText);
+  const found = direct || helper;
   return found ? fileText.slice(0, found.index).split('\n').length : 0;
 }
 
@@ -689,4 +692,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { lineOf, statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -28,13 +28,13 @@
    "title": "cap-catsetup.js",
    "ci": "CAP-CATSETUP",
    "state": "ok",
-   "note": "1 screen(s) · 14 API call(s)"
+   "note": "1 screen(s) · 15 API call(s)"
   },
   {
    "title": "cap-chit2.js",
    "ci": "CAP-CHIT2",
    "state": "ok",
-   "note": "3 screen(s) · 10 API call(s)"
+   "note": "3 screen(s) · 13 API call(s)"
   },
   {
    "title": "cap-cmdb.js",
@@ -46,26 +46,26 @@
    "title": "Connector · IoT / ERP",
    "ci": "CAP-CONNECTOR",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
   },
   {
    "title": "cap-definitions.js",
    "ci": "CAP-DEFINITIONS",
    "state": "ok",
-   "note": "1 screen(s) · 8 API call(s)",
+   "note": "1 screen(s) · 9 API call(s)",
    "node": "p1"
   },
   {
    "title": "Disputes — the USP",
    "ci": "CAP-DISPUTE",
    "state": "ok",
-   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
   },
   {
    "title": "cap-folders.js",
    "ci": "CAP-FOLDERS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s)"
+   "note": "1 screen(s) · 28 API call(s)"
   },
   {
    "title": "cap-iddocs.js",
@@ -89,25 +89,25 @@
    "title": "cap-match.js",
    "ci": "CAP-MATCH",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "cap-messages.js",
    "ci": "CAP-MESSAGES",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 4 API call(s)"
   },
   {
    "title": "Network — one shopfront, many entities",
    "ci": "CAP-NETWORK",
    "state": "ok",
-   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
   },
   {
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
@@ -125,7 +125,7 @@
    "title": "cap-standards.js",
    "ci": "CAP-STANDARDS",
    "state": "warn",
-   "note": "0 screen(s) · 0 API call(s)"
+   "note": "0 screen(s) · 1 API call(s)"
   },
   {
    "title": "cap-supplies.js",
@@ -137,31 +137,133 @@
    "title": "Test lab — cases, results and the spec they cite",
    "ci": "CAP-TESTING",
    "state": "ok",
-   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
   },
   {
    "title": "cap-traceability.js",
    "ci": "CAP-TRACEABILITY",
    "state": "ok",
-   "note": "1 screen(s) · 3 API call(s)"
+   "note": "1 screen(s) · 6 API call(s)"
   },
   {
    "title": "Co-assists",
    "ci": "CAP-WORKFORCE",
    "state": "ok",
-   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
   },
   {
    "title": "cap-worklist.js",
    "ci": "CAP-WORKLIST",
    "state": "ok",
-   "note": "5 screen(s) · 8 API call(s)"
+   "note": "5 screen(s) · 12 API call(s)"
   },
   {
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 19 API call(s)"
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
   }
  ],
  "entries": [
@@ -176,7 +278,7 @@
   {
    "id": "p1",
    "t": "cap-definitions.js",
-   "s": "app/cap-definitions.js · 70 functions",
+   "s": "app/cap-definitions.js · 76 functions",
    "d": "The capability module: what the screens above call."
   },
   {
@@ -238,6 +340,12 @@
    "t": "CBLocale",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p12",
+   "t": "CBLabKit",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
   }
  ],
  "exits": [
@@ -267,27 +375,27 @@
   },
   {
    "id": "x5",
+   "t": "GET /api/governance/readiness",
+   "s": "api('readinessOwn') → routes/governance.js",
+   "d": "Reads through the API, answered by routes/governance.js."
+  },
+  {
+   "id": "x6",
    "t": "PUT /api/definitions/:id",
    "s": "api('defSave') → routes/definitions.js",
    "d": "Writes through the API, answered by routes/definitions.js."
   },
   {
-   "id": "x6",
+   "id": "x7",
    "t": "POST /api/definitions",
    "s": "api('defAdd') → routes/definitions.js",
    "d": "Writes through the API, answered by routes/definitions.js."
   },
   {
-   "id": "x7",
+   "id": "x8",
    "t": "DELETE /api/definitions/:id",
    "s": "api('defRetire') → routes/definitions.js",
    "d": "Writes through the API, answered by routes/definitions.js."
-  },
-  {
-   "id": "x8",
-   "t": "CALL /api/governance/readiness",
-   "s": "routes/governance.js",
-   "d": "A direct call to the API."
   }
  ],
  "edges": [
@@ -337,6 +445,10 @@
   ],
   [
    "p1",
+   "p12"
+  ],
+  [
+   "p1",
    "x1"
   ],
   [
@@ -377,24 +489,19 @@
   {
    "this": "CAP008 cap-definitions.js",
    "rel": "calls",
-   "that": "routes/products.js · routes/relationships.js · routes/definitions.js · routes/governance.js"
+   "that": "routes/products.js · routes/relationships.js · routes/governance.js · routes/definitions.js"
   },
   {
    "this": "CAP008 cap-definitions.js",
    "rel": "documented-by",
-   "that": "api docs/CTP-DESIGN.md · api docs/drafts/h2_supplier_list_rls_draft.sql"
+   "that": "api docs/API-REGISTER.md · api docs/critique/API-4-definitions.md · api docs/critique/API-4-relationships.md · api docs/critique/CAT-124-C1C2.md · api docs/critique/CAT-211.md · api docs/critique/CRM-FIX.md · api docs/critique/F10.md · api docs/critique/HX1.md · api docs/critique/NET-98-PLAN.md · api docs/critique/P1-14.md · api docs/critique/R14-party-phone-email.md · api docs/critique/SEC-130-RESIDUAL.md · api docs/critique/SEC-FIX2.md · api docs/critique/SEC-SMALL.md · api docs/critique/SET-WALK1.md · api docs/critique/T1-INV.md · api docs/critique/T2-WRITERS.md · api docs/critique/T3-FIXE…"
   }
  ],
  "layers": {
   "build": "chitbridge-web/public/app/cap-definitions.js",
-  "design": "Capability cap-definitions.js"
+  "design": "web docs/design/crm/FLOWS.md"
  },
  "tests": [
-  {
-   "file": "web e2e/api-envelope.cjs",
-   "kind": "browser",
-   "result": "not run"
-  },
   {
    "file": "web e2e/dead-surface.cjs",
    "kind": "browser",
@@ -403,17 +510,15 @@
   {
    "file": "web e2e/defs-batch.test.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
    "file": "web e2e/guard-static.cjs",
    "kind": "browser",
-   "result": "fail",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
-   "file": "web e2e/index-page.cjs",
+   "file": "web e2e/india-words-guard.cjs",
    "kind": "browser",
    "result": "not run"
   },
@@ -433,22 +538,24 @@
    "result": "not run"
   },
   {
+   "file": "web e2e/offer-live-confirm.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
    "file": "web e2e/offers-kinds.test.cjs",
    "kind": "browser",
-   "result": "fail",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
    "file": "web e2e/one-cart.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
    "file": "web e2e/report-card.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
    "file": "web e2e/schemes-shot.cjs",
@@ -462,6 +569,11 @@
   },
   {
    "file": "web e2e/storefront-offer-ancestors.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/testing-report.cjs",
    "kind": "browser",
    "result": "not run"
   },
@@ -556,47 +668,40 @@
    "result": "not run"
   },
   {
-   "file": "api tests/dayopen.test.js",
-   "kind": "server",
+   "file": "web e2e/till-offers-live.cjs",
+   "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "api tests/defaults.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-manifest.js",
-   "kind": "server",
+   "file": "web e2e/ui-codes-accounts.test.cjs",
+   "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "api tests/fixtures/walkthrough.js",
-   "kind": "server",
+   "file": "web e2e/ui-codes-catalogue.test.cjs",
+   "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "api tests/local-supplier.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/namespace.test.cjs",
-   "kind": "server",
+   "file": "web e2e/ui-codes-crm.test.cjs",
+   "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "api tests/network-authority.test.cjs",
-   "kind": "server",
+   "file": "web e2e/ui-codes-employees.test.cjs",
+   "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "api tests/network-storefront.test.cjs",
-   "kind": "server",
+   "file": "web e2e/ui-codes-finance.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-offer-lab.test.cjs",
+   "kind": "browser",
    "result": "not run"
   }
  ],
- "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: definitions\n  annotations:\n    chitbridge.io/ci: CAP-DEFINITIONS\n    chitbridge.io/asset: CAP008\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/relationships.js\n    - routes/definitions.js\n    - routes/governance.js"
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: definitions\n  annotations:\n    chitbridge.io/ci: CAP-DEFINITIONS\n    chitbridge.io/asset: CAP008\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/relationships.js\n    - routes/governance.js\n    - routes/definitions.js"
 }

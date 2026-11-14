@@ -18,7 +18,7 @@ require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p)
     return { rows: [{ constitution_key: 'base', version: 1,
       governance: DB.envelope ? { allowed: { currencies: DB.envelope } } : { allowed: {} }, capabilities: [] }] };
   }
-  if (/FROM identities WHERE LOWER\(user_id\)/.test(sql)) return { rows: DB.taken.has(p[0]) ? [{ '?column?': 1 }] : [] };
+  if (/ops\.signin_candidates/.test(sql)) return { rows: p[0] === 'handle' && DB.taken.has(p[1]) ? [{ identity_id: 'someone-else', user_id: p[1] }] : [] }; /* SEC-184: the one pre-binding reader */
   if (/SELECT user_id FROM identities WHERE identity_id/.test(sql)) return { rows: [{ user_id: DB.user_id }] };
   /* the user_id placeholder is READ from the SQL, not assumed: the statement grew columns (T2-POLICY) and p[4] became the dispute handler */
   if (/^\s*UPDATE identities SET display_name/.test(sql)) { const n = (sql.match(/user_id=COALESCE\(user_id,\$(\d+)\)/) || [])[1]; DB.wrote = n ? p[n - 1] : 'NO user_id PLACEHOLDER'; return { rows: [] }; }

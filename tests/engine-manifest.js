@@ -439,6 +439,7 @@ const INFRA_LIBS = [
   'rates.js',              // the stamped rate card — what CB charges, not what a chit means
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
   'signin-events.js',      // M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
+  'signin-lookup.js',      // SEC-184 step A: the one read of ops.signin_candidates (b857) for the sign-in lookup — database plumbing, not a rule
   'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
   'bridgeid.js',           // id formatting
   'channels.js',           // channel binding lookup — plumbing for an inbound number
@@ -451,6 +452,10 @@ const INFRA_LIBS = [
   'owner.js',              // is this request the owner — one test for every owner-only switch
   'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
   'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
+  'sellable-price.js',     // when a stored price cannot be sold (unset or negative): the one rule the order refusal and the till snapshot both read (CAT-318, CAT-324)
+  'till-row.js',           // the three readers of a product's money the counter's row and the send-time drift check share (rate, tax facts, sellable price), lifted from routes/till.js, nothing computed (CTR-244)
+  'price-moved.js',        // CTR-245: which lines of a stale draft moved (lib/price-drift's one comparison), the 409 body and the five-minute ack bound to the stamps; nothing summed or re-priced
+  'price-drift.js',        // CTR-244: at send, was a bill's price or rate out of date at the sale (the row's commercial_changed_at against billed_at, two carried figures compared for equality, nothing computed)
   'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
   'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
@@ -792,6 +797,7 @@ const ENGINE_OTHER = [
   'ctpreturn.js',
   'chit-proposal.js',
   'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
+  'invoice-lease.js', /* CTR-213 (ACC-192 S2): the block of invoice numbers a counter leases from the issuer's one counter, and the day close of what became of each number */
   'price-note.js',    /* ACC-192 1b + 2: the credit or debit note an accepted price change on an issued invoice issues (changed lines only, one direction, idempotent, through the one send path) */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
@@ -943,6 +949,9 @@ const PENDING_LIBS = [
   /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
      endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
   'item-cost.js',
+  /* CTR-181 (2026-11-13): a summary closed again under a held reference is a retry or the next version. It compares two CARRIED totals (no engine run, no money computed);
+     whether that verdict is a counter adoption rule or a rail rule needs cb-capability's call. */
+  'summary-reclose.js',
 ];
 
 /**

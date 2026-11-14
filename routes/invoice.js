@@ -51,11 +51,33 @@ function unpricedRefusal(priced, shelf) {
   return taxSaid(422, code, words, { line: unpriced.key });
 }
 
+/** the offers block of the /build answer, as the offers engine said it */
+const offersEcho = (offered) => ({
+  subtotal: offered.ev.subtotal,
+  total: offered.ev.total,
+  adjustments: offered.ev.adjustments || [],
+  notes: offered.ev.notes || [],
+  considered: offered.offers_considered
+});
+/** the rates block of the /build answer: what rate, slab and source each line was taxed at */
+const ratesEcho = (rated) =>
+  rated.map((item) => ({
+    key: item.key,
+    gst_rate: item.gst_rate,
+    cess_rate: item.cess_rate,
+    hsn: item.hsn,
+    slab: item.tax_slab_name,
+    source: item.tax_source,
+    scheme: item.tax_scheme
+  }));
+
 router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /build'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const lines0 = S.normLines(req.body);
     if (!lines0.length) return problem(req, res, { status: 400, code: 'INVOICE_BAD_REQUEST', detail: 'lines[] required', legacy: { error: 'validation', message: 'lines[] required' } });
+    const refused = S.lineRefusal(lines0, S.lineName); /* CTRY-134: the one line guard, before any shelf read (a quantity of 0 or a price below 0 was priced) */
+    if (refused) return problem(req, res, taxSaid(400, refused[0], refused[1]));
     const body = req.body || {};
     const sh = await S.shelfOf(entity_id);
     const lines = lines0.map((item) => withShelfFacts(item, sh));
@@ -105,22 +127,8 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
       version: 1,
       order: ['pricing structure', 'offers', 'tax'],
       pricing: priced.map((item) => ({ key: item.key, unit_price: item.unit_price, list_price: item.list_price, structure: item.structure, why: item.why })),
-      offers: {
-        subtotal: off.ev.subtotal,
-        total: off.ev.total,
-        adjustments: off.ev.adjustments || [],
-        notes: off.ev.notes || [],
-        considered: off.offers_considered
-      },
-      rates: rated.map((item) => ({
-        key: item.key,
-        gst_rate: item.gst_rate,
-        cess_rate: item.cess_rate,
-        hsn: item.hsn,
-        slab: item.tax_slab_name,
-        source: item.tax_source,
-        scheme: item.tax_scheme
-      })),
+      offers: offersEcho(off),
+      rates: ratesEcho(rated),
       seller: { LglNm: seller.LglNm, Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType },
       buyer: { LglNm: buyer.LglNm, Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
       invoice,

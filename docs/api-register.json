@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 631,
-  "no_does": 621,
+  "routes": 634,
+  "no_does": 624,
   "not_started": 0,
   "partial": 0,
-  "meets": 631,
+  "meets": 634,
   "columns": {
    "strict_input": {
-    "applies": 321,
+    "applies": 323,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 631,
+    "applies": 634,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 631,
+    "applies": 634,
     "failing": 0
    }
   },
@@ -39,11 +39,11 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 281,
+    "applies": 288,
     "failing": 38
    },
    "rate_limited": {
-    "applies": 631,
+    "applies": 634,
     "failing": 472
    }
   },
@@ -193,7 +193,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2422,
+   "line": 2444,
    "hash": "995d3386a23c0085",
    "does": "",
    "errors": {
@@ -299,7 +299,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1987,
+   "line": 1991,
    "hash": "a60976f3208018cd",
    "does": "",
    "errors": {
@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6353,
+   "line": 6579,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,8 +607,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5231,
-   "hash": "8289e954b5c807d1",
+   "line": 5454,
+   "hash": "60b0bb3d3f7cea88",
    "does": "",
    "errors": {
     "count": 0,
@@ -681,7 +681,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 batch contract3 (#1111); 2026-11-13 PR#1201 ACC-265 re-read: new 409 CHIT_HAS_CREDIT_NOTE (why has_credit_note, notes[]) is additive, sentence + hint registered, thrown by the rail gate before any write, same code at PUT /status; handler hash unchanged, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1159 (M7a: POST answers 409 CHIT_VOIDED for a withdrawn or rejected bill, declared inline [409,422]; DELETE closes the waiting Mark-paid in the same transaction; no raw error text; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6614,
+   "line": 6840,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -930,8 +930,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1014,
-   "hash": "e5b9eacc9c599271",
+   "line": 1047,
+   "hash": "b29edcd26a079e31",
    "does": "",
    "errors": {
     "count": 0,
@@ -1001,14 +1001,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -1039,7 +1039,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 434,
+   "line": 435,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -1143,7 +1143,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 728,
+   "line": 729,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1245,7 +1245,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 450,
+   "line": 451,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -2291,7 +2291,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 510,
+   "line": 513,
    "hash": "683aa6ccd46c28b5",
    "does": "",
    "errors": {
@@ -2505,8 +2505,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 817,
-   "hash": "d244d298c4147b45",
+   "line": 821,
+   "hash": "f3b5356c80fe1afe",
    "does": "",
    "errors": {
     "count": 0,
@@ -2574,7 +2574,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#704 stage2",
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1252 (CTR-244 batch, head 3785330e) stage2: GET /api/actors now lists access_level and whole_entity per person (ACC-237, read off the row JSON, no probe, still 2 trips); the answer schema names both keys (lib/actors-contract), FIELDS carries both columns, acc-237 test 6 ok, contract tests 1897 ok; register row regenerated from the code (hash 3cd9061c to f3b5356c, the stale one that kept it partial); 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -2613,7 +2613,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1640,
+   "line": 1644,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2711,7 +2711,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1829,
+   "line": 1833,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2897,7 +2897,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1511,
+   "line": 1515,
    "hash": "640e90743374e79a",
    "does": "",
    "errors": {
@@ -4245,7 +4245,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 324,
+   "line": 339,
    "hash": "8eaeaedd397a7084",
    "does": "",
    "errors": {
@@ -4351,7 +4351,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2473,
+   "line": 2495,
    "hash": "8b75d91ef31f4602",
    "does": "",
    "errors": {
@@ -4457,7 +4457,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1358,
+   "line": 1379,
    "hash": "80e95fa15dc3a719",
    "does": "",
    "errors": {
@@ -4572,8 +4572,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1080,
-   "hash": "18214f6b305f2798",
+   "line": 1095,
+   "hash": "70123dfc64f713b5",
    "does": "",
    "errors": {
     "count": 1,
@@ -4647,7 +4647,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -4676,7 +4676,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 984,
+   "line": 999,
    "hash": "7c2da9eab40a0454",
    "does": "",
    "errors": {
@@ -4783,7 +4783,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1574,
+   "line": 1595,
    "hash": "29ab15b5384fcbde",
    "does": "",
    "errors": {
@@ -4894,7 +4894,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2003,
+   "line": 2025,
    "hash": "f419e5ec00191334",
    "does": "",
    "errors": {
@@ -5000,7 +5000,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2174,
+   "line": 2196,
    "hash": "012408655020a240",
    "does": "",
    "errors": {
@@ -5114,7 +5114,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2182,
+   "line": 2204,
    "hash": "7ca455cbd821c7a8",
    "does": "",
    "errors": {
@@ -5223,8 +5223,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 533,
-   "hash": "2daeb6cb953ee12c",
+   "line": 548,
+   "hash": "4773ad4ef4f0bf40",
    "does": "",
    "errors": {
     "count": 1,
@@ -5304,7 +5304,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -5333,8 +5333,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 821,
-   "hash": "315608c54cc7f650",
+   "line": 836,
+   "hash": "1e733e8c918ada78",
    "does": "",
    "errors": {
     "count": 3,
@@ -5421,7 +5421,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1070 stage2b: asOf outside 1900-2100 is a 400 DATE_INVALID (was a 500), declared inline with its scene and error-test row; 13 columns read true on the row; answers for real days unchanged",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -5454,7 +5454,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1727,
+   "line": 1748,
    "hash": "0e14a98c10067c83",
    "does": "",
    "errors": {
@@ -5560,7 +5560,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2543,
+   "line": 2565,
    "hash": "c9bfdc8ac640cf30",
    "does": "",
    "errors": {
@@ -5669,7 +5669,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2590,
+   "line": 2612,
    "hash": "dc47d5ce7ab5a294",
    "does": "",
    "errors": {
@@ -5783,7 +5783,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 275,
+   "line": 290,
    "hash": "a2a71e15be56dd5f",
    "does": "",
    "errors": {
@@ -5895,7 +5895,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 606,
+   "line": 621,
    "hash": "66409c311c5aabfc",
    "does": "",
    "errors": {
@@ -6007,7 +6007,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1954,
+   "line": 1976,
    "hash": "775a71cd90a0f681",
    "does": "",
    "errors": {
@@ -6107,7 +6107,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2274,
+   "line": 2296,
    "hash": "8588a456a55569eb",
    "does": "",
    "errors": {
@@ -6212,7 +6212,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2312,
+   "line": 2334,
    "hash": "6f8afb2e64d5acc2",
    "does": "",
    "errors": {
@@ -6319,7 +6319,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2341,
+   "line": 2363,
    "hash": "5ae00d5c8173ec3d",
    "does": "",
    "errors": {
@@ -6424,7 +6424,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 684,
+   "line": 699,
    "hash": "3562c34153943e3a",
    "does": "",
    "errors": {
@@ -6542,7 +6542,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1332,
+   "line": 1353,
    "hash": "e3ab88fab430d12a",
    "does": "",
    "errors": {
@@ -6655,7 +6655,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2238,
+   "line": 2260,
    "hash": "f996cd645019e1ca",
    "does": "",
    "errors": {
@@ -6761,8 +6761,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1026,
-   "hash": "69865c3857e8949b",
+   "line": 1041,
+   "hash": "a9487c3d4e5cb4f0",
    "does": "",
    "errors": {
     "count": 1,
@@ -6835,7 +6835,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -6864,7 +6864,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2394,
+   "line": 2416,
    "hash": "3531bce9d5ea96a8",
    "does": "",
    "errors": {
@@ -6968,7 +6968,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2504,
+   "line": 2526,
    "hash": "d11f85dc896848ec",
    "does": "",
    "errors": {
@@ -7074,7 +7074,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 163,
+   "line": 176,
    "hash": "ad9d9beff840f813",
    "does": "",
    "errors": {
@@ -7175,8 +7175,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 213,
-   "hash": "478b4e64d05fd2fa",
+   "line": 226,
+   "hash": "ead8b943a45d6da0",
    "does": "",
    "errors": {
     "count": 2,
@@ -7253,7 +7253,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2 | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; a party_id that is no uuid now answers the shared 404 NOT_FOUND (lib/id-guard words; the house answer for an id that names no row: path-id-guard FIN-86 rows, CAT-230 till/price item_id, ACC-217) where it answered 400 Which party?; fin-books-doors-strict and path-id-guard pass; legacy error/message keys kept",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7284,8 +7284,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2451,
-   "hash": "3cffdda5474f29a9",
+   "line": 2473,
+   "hash": "14517722ba33ac6d",
    "does": "",
    "errors": {
     "count": 2,
@@ -7359,7 +7359,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14d: handler and diff re-read (routes/books.js); two merges moved the hash: #1238 ACC-342 earlier shape and #1166 RAIL-146o (the answer passes the one forBooksDoor cost-blind filter: cost fields null with cost_hidden for a door without cost.read, Athi chose ACC-292 (a)); response keys, statuses and codes unchanged for a reader with cost.read; items typed nullable with cost_hidden; all 13 machine columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7390,8 +7390,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1000,
-   "hash": "14f2fbecc8a741fd",
+   "line": 1015,
+   "hash": "8d26f9ee74655c85",
    "does": "",
    "errors": {
     "count": 1,
@@ -7464,7 +7464,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7493,7 +7493,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2221,
+   "line": 2243,
    "hash": "ed20d7411dd0c93e",
    "does": "",
    "errors": {
@@ -8071,7 +8071,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1148,
+   "line": 1151,
    "hash": "09d3c11dea78f26b",
    "does": "",
    "errors": {
@@ -8166,7 +8166,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1169,
+   "line": 1172,
    "hash": "9ff18aab5c5a8c64",
    "does": "",
    "errors": {
@@ -8261,7 +8261,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1966,
+   "line": 1970,
    "hash": "fd244df69e65d2b2",
    "does": "",
    "errors": {
@@ -8356,7 +8356,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1940,
+   "line": 1944,
    "hash": "a2a86a8787fc122a",
    "does": "",
    "errors": {
@@ -8453,7 +8453,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1244,
+   "line": 1247,
    "hash": "de2a306c4f9ddd23",
    "does": "",
    "errors": {
@@ -8548,7 +8548,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1103,
+   "line": 1106,
    "hash": "cbf7f5d3471e11a7",
    "does": "",
    "errors": {
@@ -8643,7 +8643,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2086,
+   "line": 2090,
    "hash": "6aa1a26163f26d86",
    "does": "",
    "errors": {
@@ -8744,8 +8744,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 689,
-   "hash": "f7ae322fc1cc3543",
+   "line": 692,
+   "hash": "03ddd5e821ce7733",
    "does": "",
    "errors": {
     "count": 2,
@@ -8817,7 +8817,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, no node attribution, 404/503 in words; no handler change in the PR",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1235 CAT-324: handler re-read against the 13 columns (all true in the regenerated register); one change: a stored negative price is sent as null (soldAt) like an unset one, so the list shape and keys are unchanged, backward compatible; 404/503 unchanged in words",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -8842,7 +8842,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 949,
+   "line": 952,
    "hash": "8f390660936e440b",
    "does": "",
    "errors": {
@@ -9138,8 +9138,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3717,
-   "hash": "5b3b7b59d1faaf33",
+   "line": 3931,
+   "hash": "919a89e41fcf6d6a",
    "does": "",
    "errors": {
     "count": 0,
@@ -9221,7 +9221,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 batch contract3 (#1111)",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -9286,7 +9286,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5045,
+   "line": 5259,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9388,7 +9388,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4268,
+   "line": 4482,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9488,7 +9488,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6093,
+   "line": 6319,
    "hash": "ad2b481cd5b97231",
    "does": "",
    "errors": {
@@ -9587,7 +9587,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6047,
+   "line": 6273,
    "hash": "db87c3b5029337bc",
    "does": "",
    "errors": {
@@ -9697,7 +9697,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5625,
+   "line": 5851,
    "hash": "82ed2a6878097cdb",
    "does": "",
    "errors": {
@@ -9911,7 +9911,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4475,
+   "line": 4689,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10011,7 +10011,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4586,
+   "line": 4800,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10309,7 +10309,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6254,
+   "line": 6480,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10417,8 +10417,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3272,
-   "hash": "8dafbdfc875c70c5",
+   "line": 3486,
+   "hash": "4b1e8c7d6854ebeb",
    "does": "",
    "errors": {
     "count": 1,
@@ -10493,7 +10493,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10524,8 +10524,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3468,
-   "hash": "158440f72b9764bf",
+   "line": 3682,
+   "hash": "b68583466f70c281",
    "does": "",
    "errors": {
     "count": 1,
@@ -10602,7 +10602,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10635,7 +10635,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3655,
+   "line": 3869,
    "hash": "77f9463c104b2ef9",
    "does": "",
    "errors": {
@@ -10732,7 +10732,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4457,
+   "line": 4671,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10830,7 +10830,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4297,
+   "line": 4511,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -10926,7 +10926,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4307,
+   "line": 4521,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11024,7 +11024,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4349,
+   "line": 4563,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11119,7 +11119,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4414,
+   "line": 4628,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11219,8 +11219,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3367,
-   "hash": "717bda3d3a5a7b88",
+   "line": 3581,
+   "hash": "261faa3885535292",
    "does": "",
    "errors": {
     "count": 0,
@@ -11290,7 +11290,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11321,8 +11321,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3205,
-   "hash": "28854d3230999418",
+   "line": 3419,
+   "hash": "0bf524b7b2407696",
    "does": "",
    "errors": {
     "count": 1,
@@ -11403,7 +11403,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: RAIL-135 list filters: a garbage ?assigned_to / ?date_from / ?date_to answers 400 FILTER_INVALID (registered, shopkeeper sentence, field named, value not echoed) before the SQL cast that was a 500; 400 declared inline and tested by one recorded scene per route; the 3 api-legacy entries match what a capture+freeze writes (verified identical); answers otherwise unchanged; 13 columns true",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11745,7 +11745,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3682,
+   "line": 3896,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -11945,8 +11945,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 779,
-   "hash": "e7284e2a1727d98b",
+   "line": 812,
+   "hash": "d821ffddceedd12f",
    "does": "",
    "errors": {
     "count": 0,
@@ -12011,14 +12011,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12047,8 +12047,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 963,
-   "hash": "4574a239426bb2f1",
+   "line": 996,
+   "hash": "01a7db15cfab548e",
    "does": "",
    "errors": {
     "count": 0,
@@ -12115,14 +12115,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12151,8 +12151,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 803,
-   "hash": "c7ab8441a009fdac",
+   "line": 836,
+   "hash": "f86e2da68f562da9",
    "does": "",
    "errors": {
     "count": 0,
@@ -12219,14 +12219,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12255,7 +12255,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 719,
+   "line": 752,
    "hash": "11be9936f414911a",
    "does": "",
    "errors": {
@@ -12466,7 +12466,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 501,
+   "line": 502,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -12564,7 +12564,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 392,
+   "line": 393,
    "hash": "b0ff2a933d7638b5",
    "does": "",
    "errors": {
@@ -12765,7 +12765,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 119,
-   "hash": "8e2de5a48a92f87e",
+   "hash": "d0628c294c8f8b38",
    "does": "",
    "errors": {
     "count": 0,
@@ -12838,7 +12838,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#605 stage2 (re-sign; 13 of 13 read, purchase money null + cost_hidden for a cost-blind actor, owner bytes untouched, finance=1 still OWNER_ONLY)",
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1218 stage2 (re-sign; 13 of 13 read; additive unbilled {n,minor,currency,by_currency,no_currency,unpriced} = the list row's one sum over lib/money summarise, mixed currencies minor null, currency-less order counted not summed, blind reader hidden whole; every current web reader reads n/minor/currency only; JPY 500 and KWD 12.345+0.005=12350 minor checked by hand)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12869,7 +12869,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 625,
+   "line": 626,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -12972,7 +12972,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 212,
+   "line": 213,
    "hash": "1d3706ef33c106b7",
    "does": "",
    "errors": {
@@ -13085,7 +13085,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 665,
+   "line": 666,
    "hash": "4d599620da61bcc0",
    "does": "",
    "errors": {
@@ -13185,7 +13185,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 707,
+   "line": 708,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -13594,7 +13594,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 373,
+   "line": 374,
    "hash": "40fdcd90b8ecda55",
    "does": "",
    "errors": {
@@ -13688,7 +13688,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2420,
+   "line": 2421,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -13784,7 +13784,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 484,
+   "line": 485,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -13878,7 +13878,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 511,
+   "line": 512,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -13998,7 +13998,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 868,
+   "line": 869,
    "hash": "f12cd611fc9dc327",
    "does": "",
    "errors": {
@@ -14096,7 +14096,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1735,
+   "line": 1736,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14201,7 +14201,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 455,
+   "line": 456,
    "hash": "0485b6f18b7c36fc",
    "does": "",
    "errors": {
@@ -14303,7 +14303,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1621,
+   "line": 1622,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14404,7 +14404,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1485,
+   "line": 1486,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14503,7 +14503,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1469,
+   "line": 1470,
    "hash": "daf7f3e6e7033f84",
    "does": "",
    "errors": {
@@ -14601,7 +14601,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 405,
+   "line": 406,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -14701,7 +14701,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 422,
+   "line": 423,
    "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
@@ -14790,7 +14790,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 500,
+   "line": 501,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -14884,7 +14884,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1292,
+   "line": 1293,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -19731,7 +19731,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 134,
+   "line": 142,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -20323,7 +20323,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 61,
+   "line": 62,
    "hash": "25a38d6265b84af6",
    "does": "",
    "errors": {
@@ -20422,8 +20422,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 458,
-   "hash": "b259205974030f54",
+   "line": 459,
+   "hash": "b45f890cef6b1fdc",
    "does": "",
    "errors": {
     "count": 0,
@@ -20497,7 +20497,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1157 stage2: handler and contract re-read after the hash moved (searchWholeNetwork extract; NET-53 closed shops now left out of the answer rows, owned by cb-network, answer shape and statuses unchanged); one error shape, additive/narrowing only, no key renamed; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1235 CAT-324: handler re-read after its hash moved; both price reads (store rows and nested rows) now send a stored negative price as null via soldAt, like an unset one; price was already nullable in the answer schema so no key, type or status changes, backward compatible; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -20526,7 +20526,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 421,
+   "line": 422,
    "hash": "25df31a097bacda5",
    "does": "",
    "errors": {
@@ -21118,8 +21118,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 58,
-   "hash": "c3cc73e1b867722e",
+   "line": 59,
+   "hash": "d5e1d1845aa4a670",
    "does": "",
    "errors": {
     "count": 0,
@@ -21188,7 +21188,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-13 PR#1230 stage2 ACC-206 C4: handler diff read; only which stored total is selected changed (billTotalSql / detailTotalOf), same keys, same shapes, same status codes, folder sort key bill_total never shipped (folderRow names its keys); all 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -21304,7 +21304,7 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 109,
+   "line": 105,
    "hash": "0fea4ab2374ff23d",
    "does": "",
    "errors": {
@@ -22965,7 +22965,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 753,
+   "line": 756,
    "hash": "2c73efd115705c67",
    "does": "",
    "errors": {
@@ -23068,7 +23068,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 815,
+   "line": 818,
    "hash": "7c3134ca129680fe",
    "does": "",
    "errors": {
@@ -23170,7 +23170,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 746,
+   "line": 749,
    "hash": "e85807898c5889e2",
    "does": "",
    "errors": {
@@ -23267,7 +23267,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1081,
+   "line": 1084,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -23360,7 +23360,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1093,
+   "line": 1096,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -23455,7 +23455,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 332,
-   "hash": "de8640973f5b3504",
+   "hash": "a0891d21f5e92c94",
    "does": "",
    "errors": {
     "count": 0,
@@ -23528,7 +23528,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1228 (CAT-247, engines v1.92.0 adopt, head 2fb943a3): handler read: ctx.timezone is named by the server (lib/offers-live shopZoneFor, which calls crm-followups.zoneOfShop and books-hooks.zoneOf, no second reader; read only when an offer has a window), not a caller key; suppliers reads i.timezone on the row already fetched and drops supplier_timezone before the answer; no key, status, code or refusal changed; 13 columns true; cat-247-offer-window-zone 10 checks green",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -23563,7 +23563,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 686,
+   "line": 689,
    "hash": "34ea3d3a80a87da1",
    "does": "",
    "errors": {
@@ -23667,7 +23667,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 556,
+   "line": 559,
    "hash": "838efddd220e91de",
    "does": "",
    "errors": {
@@ -24167,7 +24167,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 140,
+   "line": 143,
    "hash": "edb76b75208461bd",
    "does": "",
    "errors": {
@@ -24265,7 +24265,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 113,
+   "line": 116,
    "hash": "c6f20bf2d163747a",
    "does": "",
    "errors": {
@@ -26549,8 +26549,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3638,
-   "hash": "2f6ccb3bf69814d1",
+   "line": 3703,
+   "hash": "a8c0186a848ea76a",
    "does": "",
    "errors": {
     "count": 0,
@@ -26616,7 +26616,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07, re-signed cb-api 2026-11-12 PR#1165 (CTR-195/205/209: live,live_capped additive, error shape and statuses unchanged)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1254 stage2: handler re-read and 13 columns checked after the hash moved; CTR-225: ?page= read (absent = page 1, legacy keys kept), total is now the whole window (was the page rows), count unchanged; page passes the route validator (checked live); FIELDS rows added",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26645,7 +26645,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3436,
+   "line": 3501,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -26741,7 +26741,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1814,
+   "line": 1797,
    "hash": "065ab1b31029b6be",
    "does": "",
    "errors": {
@@ -26837,7 +26837,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4301,
+   "line": 4451,
    "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
@@ -26929,13 +26929,111 @@
    }
   },
   {
+   "key": "GET /api/till/invoice-lease/report",
+   "method": "GET",
+   "path": "/api/till/invoice-lease/report",
+   "owner_area": "till",
+   "owner_agent": "cb-counter",
+   "file": "routes/till.js",
+   "line": 2460,
+   "hash": "c9b5feb87079776a",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     403,
+     409,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [
+    "till_invoice_lease"
+   ],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    409,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till read: the day close of the invoice blocks (leases, outside, total/page/limit, paged with a server max); 13 columns pass; closed LEASE_REPORT; bad paging 400 in words; FIELDS rows added",
+    "lifecycle": "stable"
+   },
+   "status": "meets standard",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 2,
+    "wire": 7,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "GET /api/till/match",
    "method": "GET",
    "path": "/api/till/match",
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3856,
+   "line": 3930,
    "hash": "4cc02b7049e1cf09",
    "does": "",
    "errors": {
@@ -27006,7 +27104,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-13 OPS-83 re-sign after merging main (OPS-87 other-unit rule kept; independent read of the merged route, builder did not sign): the answer gains received_with_tax and money_code (hidden from a blind reader: money_gap and received_with_tax are outside MATCH_KEEP, money_code is a word with no figure) (additive, no new input, no new status or code); money_gap now their-bill.check on carried figures; the register row reads 13 of 13",
+    "signed_off_by_date": "cb-api 2026-11-13 OPS-351 re-sign (independent read of the diff; builder did not sign): the answer gains lines[].billed (number or null, carried from their invoice, never 0), billed_unit (only when units differ, billed then null), billed_more (only when true) and orders[].billed_unmatched (integer); verdict is differs when a line is billed above received, open or closed; all additive, no new input, status or code; FIELDS rows present; blind readers keep the quantity keys (lib/cost-view MATCH_LINE_KEEP/MATCH_KEEP, counts not money). Earlier: OPS-83 received_with_tax and money_code (hidden from blind reader); OPS-87 other-unit rule kept; register row reads 13 of 13",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -27037,7 +27135,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1823,
+   "line": 1806,
    "hash": "a93949be98bda80d",
    "does": "",
    "errors": {
@@ -27137,7 +27235,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1863,
+   "line": 1846,
    "hash": "a21ada102b689cf4",
    "does": "",
    "errors": {
@@ -27235,7 +27333,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1910,
+   "line": 1893,
    "hash": "84d5f66acbc70ed4",
    "does": "",
    "errors": {
@@ -27333,7 +27431,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1833,
+   "line": 1816,
    "hash": "7b700a57f90e53b5",
    "does": "",
    "errors": {
@@ -27433,7 +27531,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2493,
+   "line": 2547,
    "hash": "b7945b493fc90536",
    "does": "",
    "errors": {
@@ -27534,7 +27632,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2844,
+   "line": 2898,
    "hash": "34ca27a7c7ac2723",
    "does": "",
    "errors": {
@@ -27632,7 +27730,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 206,
+   "line": 189,
    "hash": "8d7990b747431ba7",
    "does": "",
    "errors": {
@@ -27743,7 +27841,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3274,
+   "line": 3339,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -27843,7 +27941,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3504,
+   "line": 3569,
    "hash": "cb196c32797a4f71",
    "does": "",
    "errors": {
@@ -27943,7 +28041,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3826,
+   "line": 3900,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -28039,7 +28137,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3019,
+   "line": 3073,
    "hash": "8822f90ab44821bf",
    "does": "",
    "errors": {
@@ -28139,7 +28237,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1975,
+   "line": 1958,
    "hash": "d226996ac18bd6b2",
    "does": "",
    "errors": {
@@ -28534,7 +28632,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 15,
-   "hash": "a1fcb628914fc8e6",
+   "hash": "bd427ae4ddb9455b",
    "does": "",
    "errors": {
     "count": 0,
@@ -28593,7 +28691,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-13 PR#1224: re-sign after the closed contract (lib/plumbing-contract.js) gained send_bridge_absent and send_heads_absent as required integer properties to match routes/health.js absentCounts; diff read, additive, no key removed, names and sentence unchanged, answer already carried them (CTR-246 adds two integer counters (send_bridge_absent, send_heads_absent) to the health answer, additive, no key removed; 13 columns true)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -28814,7 +28912,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1406,
+   "line": 1427,
    "hash": "448a4e239db6e38d",
    "does": "",
    "errors": {
@@ -28937,7 +29035,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2412,
+   "line": 2434,
    "hash": "da15e2c5df750548",
    "does": "",
    "errors": {
@@ -29147,8 +29245,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 984,
-   "hash": "ea0e27d69ed819ff",
+   "line": 1017,
+   "hash": "95bd74f445e029d9",
    "does": "",
    "errors": {
     "count": 0,
@@ -29216,14 +29314,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -29356,7 +29454,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 422,
+   "line": 423,
    "hash": "33318eb6af2768b4",
    "does": "",
    "errors": {
@@ -29458,7 +29556,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1262,
+   "line": 1263,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -29560,7 +29658,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 841,
+   "line": 842,
    "hash": "efa0652b1d0f4de7",
    "does": "",
    "errors": {
@@ -29660,7 +29758,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 835,
+   "line": 836,
    "hash": "667cb4fea86280f3",
    "does": "",
    "errors": {
@@ -29762,7 +29860,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 466,
+   "line": 467,
    "hash": "8eabcd83c4aa4b87",
    "does": "",
    "errors": {
@@ -29870,8 +29968,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 961,
-   "hash": "ca5638cd28bcf812",
+   "line": 962,
+   "hash": "c77e98d68089acbf",
    "does": "",
    "errors": {
     "count": 0,
@@ -29946,7 +30044,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1234 (independent re-sign: handler diffed against origin/main; the user-id taken check reads through signin-lookup and drops the caller's own id in code (same result as identity_id <> $2), same 409/400 answers and codes, trips unchanged at 1, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30512,7 +30610,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1007,
+   "line": 1010,
    "hash": "967b68cf080c3479",
    "does": "",
    "errors": {
@@ -30617,7 +30715,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 402,
+   "line": 405,
    "hash": "8f6477ebba0a8479",
    "does": "",
    "errors": {
@@ -31449,7 +31547,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 908,
+   "line": 912,
    "hash": "88c05cc1b9fd315d",
    "does": "",
    "errors": {
@@ -32586,7 +32684,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 353,
+   "line": 368,
    "hash": "09ce0dbdbd76db8c",
    "does": "",
    "errors": {
@@ -32696,7 +32794,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2550,
    "hash": "8946badbc2fbfb0d",
    "does": "",
    "errors": {
@@ -32803,7 +32901,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2551,
    "hash": "c5804bdfe29a5772",
    "does": "",
    "errors": {
@@ -32910,7 +33008,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2504,
    "hash": "85ee4d9880bd3f5d",
    "does": "",
    "errors": {
@@ -33017,7 +33115,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2506,
    "hash": "dd20f8b7ff039130",
    "does": "",
    "errors": {
@@ -33124,7 +33222,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 306,
+   "line": 321,
    "hash": "aabf384ec7ec5ff7",
    "does": "",
    "errors": {
@@ -33227,7 +33325,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1677,
+   "line": 1698,
    "hash": "6167ef775abb8f3b",
    "does": "",
    "errors": {
@@ -33338,7 +33436,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2517,
    "hash": "f7e474aa3f126a6f",
    "does": "",
    "errors": {
@@ -33445,7 +33543,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2024,
+   "line": 2046,
    "hash": "cf88afddb1ead2a6",
    "does": "",
    "errors": {
@@ -33553,7 +33651,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2041,
+   "line": 2063,
    "hash": "c5d5fa6c2a416807",
    "does": "",
    "errors": {
@@ -33666,7 +33764,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2553,
    "hash": "4791a685ccbf85d4",
    "does": "",
    "errors": {
@@ -33769,7 +33867,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2515,
    "hash": "7f566abeda51311f",
    "does": "",
    "errors": {
@@ -33876,7 +33974,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 174,
+   "line": 187,
    "hash": "0184f8490b3c9ecc",
    "does": "",
    "errors": {
@@ -33982,7 +34080,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1759,
+   "line": 1780,
    "hash": "642ac0ba6bec7bb8",
    "does": "",
    "errors": {
@@ -34095,7 +34193,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1786,
+   "line": 1807,
    "hash": "da97f92d366b4bc1",
    "does": "",
    "errors": {
@@ -34204,7 +34302,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1748,
+   "line": 1769,
    "hash": "7d637baaefe37588",
    "does": "",
    "errors": {
@@ -34311,7 +34409,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2563,
+   "line": 2585,
    "hash": "e3bbffd0a43845a4",
    "does": "",
    "errors": {
@@ -34418,7 +34516,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2572,
+   "line": 2594,
    "hash": "c185bb01296cb2ce",
    "does": "",
    "errors": {
@@ -34525,7 +34623,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2617,
+   "line": 2639,
    "hash": "8a8fe2f889e3128e",
    "does": "",
    "errors": {
@@ -34639,7 +34737,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2519,
    "hash": "22808b3f1c7ff104",
    "does": "",
    "errors": {
@@ -34746,7 +34844,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2520,
    "hash": "73f2e0872e725f03",
    "does": "",
    "errors": {
@@ -34855,7 +34953,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2547,
    "hash": "1c90f5d4dea66b3f",
    "does": "",
    "errors": {
@@ -34958,7 +35056,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 0,
+   "line": 2548,
    "hash": "0f3772ca67a39e28",
    "does": "",
    "errors": {
@@ -35162,7 +35260,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1936,
+   "line": 1958,
    "hash": "e312a8dc229e0276",
    "does": "",
    "errors": {
@@ -35280,7 +35378,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1881,
+   "line": 1903,
    "hash": "5a3126bb70d7d509",
    "does": "",
    "errors": {
@@ -35386,7 +35484,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1926,
+   "line": 1948,
    "hash": "2a118fb7e3c1cec9",
    "does": "",
    "errors": {
@@ -35497,7 +35595,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1831,
+   "line": 1853,
    "hash": "325faf2a4d813cf7",
    "does": "",
    "errors": {
@@ -35611,7 +35709,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 313,
+   "line": 328,
    "hash": "c5cd3d070b6a04fc",
    "does": "",
    "errors": {
@@ -35717,7 +35815,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2296,
+   "line": 2318,
    "hash": "61e8d612485ebf8d",
    "does": "",
    "errors": {
@@ -35823,7 +35921,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2371,
+   "line": 2393,
    "hash": "f295ae85c796a7e7",
    "does": "",
    "errors": {
@@ -35936,7 +36034,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1700,
+   "line": 1721,
    "hash": "260df860493ec496",
    "does": "",
    "errors": {
@@ -36047,8 +36145,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1232,
-   "hash": "9a64aceb18529725",
+   "line": 1253,
+   "hash": "ba71659b802d820b",
    "does": "",
    "errors": {
     "count": 2,
@@ -36136,7 +36234,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#750 stage2",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -36165,7 +36263,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1529,
+   "line": 1550,
    "hash": "dc0a781ed49b1cd4",
    "does": "",
    "errors": {
@@ -36273,7 +36371,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1462,
+   "line": 1483,
    "hash": "b43593e9d78f2915",
    "does": "",
    "errors": {
@@ -36377,7 +36475,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1182,
+   "line": 1203,
    "hash": "955da4c294c0b894",
    "does": "",
    "errors": {
@@ -36488,7 +36586,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2193,
+   "line": 2215,
    "hash": "92a8304b6bb46be8",
    "does": "",
    "errors": {
@@ -36594,7 +36692,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1739,
+   "line": 1760,
    "hash": "36eb5b5b5a062279",
    "does": "",
    "errors": {
@@ -36700,7 +36798,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2402,
+   "line": 2424,
    "hash": "678cbb0c1ba116dc",
    "does": "",
    "errors": {
@@ -36806,7 +36904,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2432,
+   "line": 2454,
    "hash": "a9a8fedb79f55b44",
    "does": "",
    "errors": {
@@ -36912,7 +37010,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2441,
+   "line": 2463,
    "hash": "c51214ebf2d96a82",
    "does": "",
    "errors": {
@@ -37018,7 +37116,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 187,
+   "line": 200,
    "hash": "375eed95657abf0f",
    "does": "",
    "errors": {
@@ -37127,8 +37225,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 254,
-   "hash": "09fc6cf934662aac",
+   "line": 268,
+   "hash": "ebe27a3f5db0bb14",
    "does": "",
    "errors": {
     "count": 3,
@@ -37210,7 +37308,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2 | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; a party_id that is no uuid now answers the shared 404 NOT_FOUND (lib/id-guard words; the house answer for an id that names no row: path-id-guard FIN-86 rows, CAT-230 till/price item_id, ACC-217) where it answered 400 Which party?; fin-books-doors-strict and path-id-guard pass; legacy error/message keys kept",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37241,8 +37339,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1799,
-   "hash": "2e07e6f1853975a0",
+   "line": 1820,
+   "hash": "99a4ca72d06c9b59",
    "does": "",
    "errors": {
     "count": 2,
@@ -37326,7 +37424,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1072 stage 2b FIN-78: refusal 409 BOOKS_CONFLICT read from the carried party balance under the party lock in the writing transaction, replay (client_ref) answers before it, sentence names amount and currency and leaks nothing, four contract places present; 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37351,7 +37449,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2206,
+   "line": 2228,
    "hash": "ecce20760c8f63c3",
    "does": "",
    "errors": {
@@ -38261,7 +38359,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1890,
+   "line": 1894,
    "hash": "9d34219e5166cb7b",
    "does": "",
    "errors": {
@@ -38366,7 +38464,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1399,
+   "line": 1403,
    "hash": "f640389f83a89f58",
    "does": "",
    "errors": {
@@ -38491,7 +38589,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1181,
+   "line": 1184,
    "hash": "3e69e940a86dcd21",
    "does": "",
    "errors": {
@@ -38596,7 +38694,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1321,
+   "line": 1324,
    "hash": "81696fd76afddafd",
    "does": "",
    "errors": {
@@ -38700,7 +38798,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1282,
+   "line": 1285,
    "hash": "0e9d131e287ebb29",
    "does": "",
    "errors": {
@@ -38800,7 +38898,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2111,
+   "line": 2115,
    "hash": "26a9b0367a693d59",
    "does": "",
    "errors": {
@@ -38904,8 +39002,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 818,
-   "hash": "1f2b998c43f174b9",
+   "line": 821,
+   "hash": "89929d4fb0910edf",
    "does": "",
    "errors": {
     "count": 7,
@@ -38987,7 +39085,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1235 CAT-324: handler re-read against the 13 columns (all true); one change: a stored negative price now refuses with the same 422 in words that an unset price already gave (same fromError path, no new code or status shape), never totalled; no key or success shape change",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39012,7 +39110,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2009,
+   "line": 2013,
    "hash": "04d82b7cd22d9b8a",
    "does": "",
    "errors": {
@@ -39805,7 +39903,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4959,
+   "line": 5173,
    "hash": "b5bf1ff993c4dff3",
    "does": "",
    "errors": {
@@ -39915,7 +40013,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6506,
+   "line": 6732,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40023,7 +40121,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4810,
+   "line": 5024,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40129,7 +40227,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5283,
+   "line": 5509,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40235,7 +40333,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4250,
+   "line": 4464,
    "hash": "380c285599bb79c1",
    "does": "",
    "errors": {
@@ -40331,7 +40429,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4620,
+   "line": 4834,
    "hash": "2230812987fb9ca7",
    "does": "",
    "errors": {
@@ -40441,7 +40539,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5868,
+   "line": 6094,
    "hash": "d6eb5545b4017d0b",
    "does": "",
    "errors": {
@@ -40561,7 +40659,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5484,
+   "line": 5710,
    "hash": "acb999f6908ec147",
    "does": "",
    "errors": {
@@ -40668,8 +40766,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5193,
-   "hash": "fd0d3624e4edb5a0",
+   "line": 5411,
+   "hash": "c3c05613db8648a7",
    "does": "",
    "errors": {
     "count": 0,
@@ -40677,6 +40775,7 @@
      400,
      401,
      404,
+     409,
      422,
      500
     ],
@@ -40723,6 +40822,7 @@
     400,
     401,
     404,
+    409,
     422,
     500
    ],
@@ -40744,7 +40844,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 batch contract3 (#1111)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1159 (M7a: POST answers 409 CHIT_VOIDED for a withdrawn or rejected bill, declared inline [409,422]; DELETE closes the waiting Mark-paid in the same transaction; no raw error text; 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41167,7 +41267,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4489,
+   "line": 4703,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -41267,7 +41367,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4545,
+   "line": 4759,
    "hash": "a6c3059bcdab231a",
    "does": "",
    "errors": {
@@ -41367,7 +41467,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4565,
+   "line": 4779,
    "hash": "2ecd7b19ece06d6a",
    "does": "",
    "errors": {
@@ -41463,7 +41563,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4211,
+   "line": 4425,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -41563,7 +41663,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6585,
+   "line": 6811,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -41668,7 +41768,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6564,
+   "line": 6790,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -41772,7 +41872,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6546,
+   "line": 6772,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -41876,7 +41976,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6827,
+   "line": 7053,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -41982,7 +42082,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4435,
+   "line": 4649,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42078,7 +42178,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4404,
+   "line": 4618,
    "hash": "b4db7e428e83b4b7",
    "does": "",
    "errors": {
@@ -42178,7 +42278,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4425,
+   "line": 4639,
    "hash": "614db4519036ff5d",
    "does": "",
    "errors": {
@@ -42278,7 +42378,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4321,
+   "line": 4535,
    "hash": "4f89447214ef870f",
    "does": "",
    "errors": {
@@ -42379,7 +42479,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4339,
+   "line": 4553,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -42479,7 +42579,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4381,
+   "line": 4595,
    "hash": "89b46078bdc9bea1",
    "does": "",
    "errors": {
@@ -42579,7 +42679,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4360,
+   "line": 4574,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -42674,7 +42774,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 411,
-   "hash": "2fff915f42996c30",
+   "hash": "9f0d41675fb68588",
    "does": "",
    "errors": {
     "count": 0,
@@ -42749,7 +42849,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1255 (CTR-245, head d31a8783) stage2: 409 PRICE_MOVED answers lines, total before/after, reach and a signed ack; FIELDS rows for every key; the ack is an HS256 JWT with aud cb-price-ack, 5 minutes, verified only when the caller names that audience (lib/jwt-verify refuses an aud-bearing token on every session path: no api-issued session, key, auto or customer token carries aud, no Supabase token is verified here); cross-use tests both ways; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42997,7 +43097,7 @@
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
    "line": 23,
-   "hash": "3d6ff5c3055c8d28",
+   "hash": "c5670393e2b5c8e8",
    "does": "",
    "errors": {
     "count": 0,
@@ -43071,7 +43171,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43096,7 +43196,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 193,
+   "line": 238,
    "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
@@ -43199,8 +43299,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 923,
-   "hash": "45c59297489b4a7c",
+   "line": 956,
+   "hash": "707e9f5c98b659b8",
    "does": "",
    "errors": {
     "count": 0,
@@ -43268,14 +43368,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43304,7 +43404,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 744,
+   "line": 777,
    "hash": "f427329066062d46",
    "does": "",
    "errors": {
@@ -43409,8 +43509,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 908,
-   "hash": "888a9edf8f9752b2",
+   "line": 941,
+   "hash": "91d36164392e3e40",
    "does": "",
    "errors": {
     "count": 0,
@@ -43478,14 +43578,14 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43514,7 +43614,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 861,
+   "line": 894,
    "hash": "5c5dd3f7f0c7925f",
    "does": "",
    "errors": {
@@ -43618,7 +43718,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 675,
+   "line": 708,
    "hash": "8cb0fdace00a3713",
    "does": "",
    "errors": {
@@ -43727,8 +43827,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 534,
-   "hash": "4e4ad9002d6b420e",
+   "line": 579,
+   "hash": "3dfaa3ae6cb85896",
    "does": "",
    "errors": {
     "count": 0,
@@ -43738,6 +43838,7 @@
      403,
      404,
      409,
+     422,
      500,
      503
     ],
@@ -43790,6 +43891,7 @@
     403,
     404,
     409,
+    422,
     500,
     503
    ],
@@ -43813,7 +43915,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, 13-column stage-2) 2026-11-12 PR#1144 (CON-159): file_err and proof_err on the 200 now hold a registered code (CONNECTOR_FOLDER_NOT_FILED, CONNECTOR_PROOF_NOT_KEPT, shopkeeper sentences in ERROR-CODES.md) or null, never exception text; both keys kept, still null/non-null so a device testing presence works (cap-connector.js logs proof_err, lifecycle-test reads file_err only as a label); refusals are RFC 9457 with 400/401/403/404/409/503 declared, a failed chit is 503 not 200; tolerant-by-design exemption (S33-T) stands; all 13 machine columns read yes",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14d: handler and diff re-read (routes/connectors.js, lib/erp-receipt); #1270 CON-159 adds replay dedupe on the caller's own Idempotency-Key header or body event_id (never a payload hash): a replay answers 200 message duplicate with the first chit_id, idempotent true; a first call carries receipt_id and idempotent false so the 200 has one shape; event_id optional, max 128; no key = no dedupe; no status, code or refusal removed; ingest named in api-hardening-scope money_reviewed_not_about; all 13 machine columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43838,7 +43940,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 836,
+   "line": 869,
    "hash": "5321fbf8637c444b",
    "does": "",
    "errors": {
@@ -44359,7 +44461,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 406,
+   "line": 407,
    "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
@@ -44466,7 +44568,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 717,
+   "line": 718,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -44570,7 +44672,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 466,
+   "line": 467,
    "hash": "e2e8be2381ec8bb2",
    "does": "",
    "errors": {
@@ -44676,7 +44778,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 535,
+   "line": 536,
    "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
@@ -44774,7 +44876,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 648,
+   "line": 649,
    "hash": "ec220e59bf3fda06",
    "does": "",
    "errors": {
@@ -44876,7 +44978,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 370,
+   "line": 371,
    "hash": "785eb787c08de857",
    "does": "",
    "errors": {
@@ -44985,7 +45087,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 516,
+   "line": 517,
    "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
@@ -45085,7 +45187,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 548,
+   "line": 549,
    "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
@@ -45191,7 +45293,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 676,
+   "line": 677,
    "hash": "afd2b3b81ec2c619",
    "does": "",
    "errors": {
@@ -45293,7 +45395,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 691,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -45397,7 +45499,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 739,
+   "line": 740,
    "hash": "57a3696e9ad8ab93",
    "does": "",
    "errors": {
@@ -45497,7 +45599,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 574,
+   "line": 575,
    "hash": "4bf9c5a4b74c017e",
    "does": "",
    "errors": {
@@ -46143,7 +46245,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1709,
+   "line": 1710,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -46247,8 +46349,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 362,
-   "hash": "6df62c8e885b629e",
+   "line": 363,
+   "hash": "1abdd71c03974c36",
    "does": "",
    "errors": {
     "count": 0,
@@ -46259,9 +46361,7 @@
     ],
     "codes": []
    },
-   "reads": [
-    "identities"
-   ],
+   "reads": [],
    "writes": [
     "entity_governance",
     "identities"
@@ -46316,7 +46416,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1167 stage2: handler diff read, 13 columns pass; owner e-mail write cap answers the one 429 RATE_LIMITED (gate, only on calls carrying an e-mail); EMAIL_UNAVAILABLE 409 registered with its plain sentence and names nobody, EMAIL_TAKEN kept for the owner's own list; /entities/register: same 200 words for held and new address, per-address cap one 429; old keys and statuses kept",
+    "signed_off_by_date": "cb-api 2026-11-13 PR#1234 (independent re-sign: handler diffed against origin/main; the user-id taken check reads through signin-lookup (same LOWER(user_id) match, ORDER LIMIT 10, min key 3 below the 8-char handle rule), same 409/400 answers and codes, one trip for one trip, 13 columns read yes) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46338,7 +46438,7 @@
      "cap-worklist.js 0/12",
      "intake.html 0/5",
      "register-form.js 0/3",
-     "signin-ui.js 0/15"
+     "signin-ui.js 0/18"
     ]
    },
    "measured": {
@@ -46355,7 +46455,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 363,
+   "line": 364,
    "hash": "e8ded17dee03496c",
    "does": "",
    "errors": {
@@ -49249,8 +49349,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 54,
-   "hash": "9f9dfe1002e8b7e5",
+   "line": 74,
+   "hash": "d0db3038b018c925",
    "does": "",
    "errors": {
     "count": 1,
@@ -49327,7 +49427,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; a line with a quantity not above 0 or blank, a price below 0 or blank-unreadable, a figure above 1e12 or a line that is not an object now answers 400 BAD_QTY / BAD_PRICE / BAD_BOUND / BAD_LINE in the one problem shape via the shared lineRefusal before any shelf read (was priced, or a 500 for a non-object); no second calculation, no raw text; web has no app caller (e2e sends valid bodies); a keyed external client that sent qty 0 now gets a refusal (client-visible, catalogue/country-owned rule, named in the PR) | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; POST /build split into offersEcho/ratesEcho and services lineRefusal/normLine helpers, same answer and same order of checks; m3-invoice-one-builder, cat-249, cat-258, acc-282, api-8 pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -49664,7 +49764,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 200,
+   "line": 201,
    "hash": "12c06e6fce741a91",
    "does": "",
    "errors": {
@@ -49780,7 +49880,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 298,
+   "line": 299,
    "hash": "401b2636a525219e",
    "does": "",
    "errors": {
@@ -49884,7 +49984,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 162,
+   "line": 163,
    "hash": "a3f9adfd80293c99",
    "does": "",
    "errors": {
@@ -51441,7 +51541,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 236,
+   "line": 237,
    "hash": "e8e590e17a17c1da",
    "does": "",
    "errors": {
@@ -51547,7 +51647,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 185,
+   "line": 186,
    "hash": "2d4ccaf0dddfb510",
    "does": "",
    "errors": {
@@ -51647,8 +51747,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 105,
-   "hash": "b443772f4998f191",
+   "line": 101,
+   "hash": "3598884462736cfb",
    "does": "",
    "errors": {
     "count": 1,
@@ -51723,7 +51823,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: handler, contract and register row read; 13 columns true; fixed sentences, no raw error text in any answer; shapes unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14c: handlers and diff re-read (routes/offers.js, lib/offers-live.js, engines v1.92.0 adopt, lib/services.js); two merges moved the hash: #1223 CAT-312 (shared services.normLines and lineRefusal: a missing, blank or below-0 quantity or price now answers 400 BAD_QTY or BAD_PRICE in the one problem shape with the legacy keys kept; before it became a 0 line) and #1228 CAT-247 (ctx.timezone named by the server through shopZoneFor, not a caller key); response keys, statuses and LINES_REQUIRED unchanged; codes registered; strict_input exempt API-43; api-problem-offers 37 passed and cat-247-offer-window-zone 10 checks green; all 13 machine columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51748,8 +51848,8 @@
    "owner_area": "offers",
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
-   "line": 106,
-   "hash": "7ffb40a2463ac7a9",
+   "line": 102,
+   "hash": "d52c12da902a0c6d",
    "does": "",
    "errors": {
     "count": 1,
@@ -51824,7 +51924,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 stage2 merged contract2: ctx cut to the closed typed key list (ctxOf), answer unchanged, no leak path; all 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14c: handlers and diff re-read (routes/offers.js, lib/offers-live.js, engines v1.92.0 adopt, lib/services.js); two merges moved the hash: #1223 CAT-312 (shared services.normLines and lineRefusal: a missing, blank or below-0 quantity or price now answers 400 BAD_QTY or BAD_PRICE in the one problem shape with the legacy keys kept; before it became a 0 line) and #1228 CAT-247 (ctx.timezone named by the server through shopZoneFor, not a caller key); response keys, statuses and LINES_REQUIRED unchanged; codes registered; strict_input exempt API-43; api-problem-offers 37 passed and cat-247-offer-window-zone 10 checks green; all 13 machine columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51849,8 +51949,8 @@
    "owner_area": "pricing",
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
-   "line": 58,
-   "hash": "5735055939a80b80",
+   "line": 68,
+   "hash": "50d14d8dfd03e1cd",
    "does": "",
    "errors": {
     "count": 0,
@@ -51925,7 +52025,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; items no longer typed object in the contract so a non-object line answers 400 BAD_LINE (was 422) and qty x price above 1e12 answers 400 BAD_BOUND, same problem shape, same one guard; the absent-qty BAD_QTY and offers-no-price BAD_PRICE differences came with #1223/CAT-312, not this PR; web has no app caller",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53610,7 +53710,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 909,
+   "line": 912,
    "hash": "1d7cfce76d101948",
    "does": "",
    "errors": {
@@ -53721,7 +53821,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 987,
+   "line": 990,
    "hash": "035dcc95b8adf401",
    "does": "",
    "errors": {
@@ -55741,7 +55841,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 979,
+   "line": 1028,
    "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
@@ -55817,10 +55917,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 7,
-    "wire": 7,
+    "trips": 9,
+    "wire": 9,
     "screens": [
-     "signin-ui.js 7/15"
+     "signin-ui.js 9/18"
     ]
    },
    "measured": {
@@ -55837,8 +55937,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 103,
-   "hash": "ad13be02969e3299",
+   "line": 102,
+   "hash": "af927b549fce1811",
    "does": "",
    "errors": {
     "count": 0,
@@ -55850,7 +55950,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "identities"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -55906,15 +56008,15 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1171 stage2: handler diff read, 13 columns pass; logout of a token with no jti now ends it (SEC-157) and answers the same three keys ok/removed/legacy (removed is now true when ended), 1 round trip budgeted; no new status or code",
     "lifecycle": "stable"
    },
    "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 0,
-    "wire": 0,
+    "trips": 1,
+    "wire": 3,
     "screens": []
    },
    "measured": {
@@ -55931,7 +56033,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 981,
+   "line": 1030,
    "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
@@ -56012,7 +56114,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "signin-ui.js 2/15"
+     "signin-ui.js 2/18"
     ]
    },
    "measured": {
@@ -56029,7 +56131,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 77,
+   "line": 78,
    "hash": "c5769b1ea95958a8",
    "does": "",
    "errors": {
@@ -56126,7 +56228,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 162,
+   "line": 165,
    "hash": "885f42d5770569ce",
    "does": "",
    "errors": {
@@ -56228,7 +56330,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 980,
+   "line": 1029,
    "hash": "cc9b07d8bcc06ba5",
    "does": "",
    "errors": {
@@ -56306,7 +56408,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1171 stage2: re-checked on 22a3cce0, hash unchanged, 13 columns pass; the staged User ID is applied only when the body repeats it as user_id or id, both keys already documented in the verify body contract (id, user_id), no new key, status, code or sentence",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56315,10 +56417,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 6,
-    "wire": 9,
+    "trips": 7,
+    "wire": 10,
     "screens": [
-     "signin-ui.js 6/15"
+     "signin-ui.js 7/18"
     ]
    },
    "measured": {
@@ -56933,8 +57035,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 149,
-   "hash": "f06e00970724f9d6",
+   "line": 147,
+   "hash": "7fcda0c8f8fc9bbd",
    "does": "",
    "errors": {
     "count": 0,
@@ -57007,7 +57109,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; a non-object line, a figure above 1e12, a price below 0 or a quantity GIVEN as 0 now answer 400 BAD_LINE / BAD_BOUND / BAD_PRICE / BAD_QTY via the one guard (qtyOptional: an ABSENT qty still passes, a rate lookup takes none); a keyed client that sent a negative price or an explicit qty 0 gets a refusal where the rate was read; no raw text",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58342,7 +58444,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4174,
+   "line": 4324,
    "hash": "8e1f08ad996388b1",
    "does": "",
    "errors": {
@@ -58444,7 +58546,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3348,
+   "line": 3413,
    "hash": "a77c76eac150976c",
    "does": "",
    "errors": {
@@ -58548,7 +58650,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1630,
+   "line": 1613,
    "hash": "1106ed553e2a249e",
    "does": "",
    "errors": {
@@ -58650,7 +58752,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1560,
+   "line": 1543,
    "hash": "fe2b534fc88c7bbf",
    "does": "",
    "errors": {
@@ -58750,7 +58852,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2739,
+   "line": 2793,
    "hash": "b5d1d38fbdf85c1f",
    "does": "",
    "errors": {
@@ -58850,7 +58952,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1725,
+   "line": 1708,
    "hash": "7aa0353c6b3693da",
    "does": "",
    "errors": {
@@ -58951,13 +59053,214 @@
    }
   },
   {
+   "key": "POST /api/till/invoice-lease",
+   "method": "POST",
+   "path": "/api/till/invoice-lease",
+   "owner_area": "till",
+   "owner_agent": "cb-counter",
+   "file": "routes/till.js",
+   "line": 2445,
+   "hash": "23cdcd437d56ea48",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     403,
+     409,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [
+    "identities",
+    "till_invoice_lease"
+   ],
+   "writes": [
+    "till_invoice_lease"
+   ],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    409,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till door: a counter leases a block of invoice numbers (AE only); body strict (want, remaining, till_id), answer closed LEASE_BLOCK; 13 columns pass; codes LEASE_WANT_INVALID 400, LEASE_TILL_UNKNOWN 404, LEASE_NOT_FOR_COUNTRY and LEASE_NOT_READY 409, LEASE_NOT_YOUR_COUNTER 403, LEASE_COUNTER_BUSY 503 registered with a shopkeeper sentence, problem shape, no raw error text; a counter key leases only for its own id; FIELDS rows added; 13 + 3151 tests pass",
+    "lifecycle": "stable"
+   },
+   "status": "meets standard",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 0,
+    "wire": 0,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/till/invoice-lease/close",
+   "method": "POST",
+   "path": "/api/till/invoice-lease/close",
+   "owner_area": "till",
+   "owner_agent": "cb-counter",
+   "file": "routes/till.js",
+   "line": 2474,
+   "hash": "7b3e833b2c1e414f",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     403,
+     409,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [
+    "till_invoice_lease"
+   ],
+   "writes": [
+    "till_invoice_lease"
+   ],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    409,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till door: say why numbers of a block were not printed and close it; body strict (lease_id, unused), answer closed LEASE_CLOSED; 13 columns pass; codes LEASE_REASON_INVALID 400, LEASE_NOT_FOUND 404, LEASE_NUMBER_NOT_IN_LEASE and LEASE_NUMBER_WAS_USED 409 registered; saying it twice changes nothing; FIELDS rows added",
+    "lifecycle": "stable"
+   },
+   "status": "meets standard",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 0,
+    "wire": 0,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "POST /api/till/listen",
    "method": "POST",
    "path": "/api/till/listen",
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4235,
+   "line": 4385,
    "hash": "5752509fbd70958f",
    "does": "",
    "errors": {
@@ -58969,12 +59272,7 @@
     ],
     "codes": []
    },
-   "reads": [
-    "catalogue_items",
-    "definition",
-    "definition_version",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -59058,7 +59356,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2119,
+   "line": 2102,
    "hash": "1fe1075f4203d0d0",
    "does": "",
    "errors": {
@@ -59167,7 +59465,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2672,
+   "line": 2726,
    "hash": "fb7ee244234d4a45",
    "does": "",
    "errors": {
@@ -59269,7 +59567,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2781,
+   "line": 2835,
    "hash": "d548871784442c21",
    "does": "",
    "errors": {
@@ -59372,7 +59670,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2206,
+   "line": 2189,
    "hash": "8801009fddb9db3b",
    "does": "",
    "errors": {
@@ -59389,8 +59687,6 @@
    },
    "reads": [
     "catalogue_items",
-    "definition",
-    "definition_version",
     "identities"
    ],
    "writes": [
@@ -59481,7 +59777,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1879,
+   "line": 1862,
    "hash": "64b7939017124705",
    "does": "",
    "errors": {
@@ -59584,7 +59880,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1921,
+   "line": 1904,
    "hash": "287b7d754f2e98df",
    "does": "",
    "errors": {
@@ -59684,7 +59980,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1847,
+   "line": 1830,
    "hash": "7cc9a8b4f101a389",
    "does": "",
    "errors": {
@@ -59784,7 +60080,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1896,
+   "line": 1879,
    "hash": "a1963fe17d788f40",
    "does": "",
    "errors": {
@@ -59889,7 +60185,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2433,
+   "line": 2487,
    "hash": "ce2b954bd9af8e16",
    "does": "",
    "errors": {
@@ -59998,8 +60294,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2253,
-   "hash": "dbafba055729b52d",
+   "line": 2237,
+   "hash": "8150ea58b444a534",
    "does": "",
    "errors": {
     "count": 0,
@@ -60074,7 +60370,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-08 PR#995 head 576282a6: new till door re-read, 13 columns pass; 503 TILL_RECHECK_UNAVAILABLE right (read failed, nothing changed; not 409/422), registered with a shopkeeper sentence, closed RECHECK_ITEM_KEYS, strict body, till key via KEY_ROUTES",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 CTR-243 (PR#1218-1221 RC): answer gains the optional changed_at key (null when unknown, additive, old counters ignore it), 42703 fallback keeps old databases answering, status codes and refusals unchanged; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -60099,7 +60395,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2967,
+   "line": 3021,
    "hash": "bce8298f80a6601e",
    "does": "",
    "errors": {
@@ -60199,7 +60495,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2533,
+   "line": 2587,
    "hash": "0a6e72f6afb69950",
    "does": "",
    "errors": {
@@ -60307,7 +60603,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2605,
+   "line": 2659,
    "hash": "a51c77c0c4211825",
    "does": "",
    "errors": {
@@ -60413,7 +60709,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2911,
+   "line": 2965,
    "hash": "e8dec48d423da49f",
    "does": "",
    "errors": {
@@ -60517,7 +60813,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2891,
+   "line": 2945,
    "hash": "5ff14e252baed951",
    "does": "",
    "errors": {
@@ -60621,8 +60917,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3117,
-   "hash": "3609a57a2f557a8d",
+   "line": 3171,
+   "hash": "63b65103abc91dc0",
    "does": "",
    "errors": {
     "count": 0,
@@ -60696,7 +60992,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1148 stage2: handlers re-read and 13 columns checked after the hash moved; typed body fields now refused in the one error shape (no silent coercion), web and till callers send strings and numbers of the declared type, answers otherwise unchanged",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1254 stage2: handler re-read and 13 columns checked after the hash moved; CTR-174: a NEW junk e-mail, phone or PIN is refused 400 TILL_BAD_REQUEST naming field (same 400 as the tax-number refusal, same route), a value equal to the stored one is not judged, blank ignored; answers otherwise unchanged; FIELDS rows added",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -60725,7 +61021,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1696,
+   "line": 1679,
    "hash": "cb1e23a403e6324f",
    "does": "",
    "errors": {
@@ -60825,7 +61121,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1429,
+   "line": 1412,
    "hash": "19ae9474f5b0153b",
    "does": "",
    "errors": {
@@ -60930,7 +61226,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1487,
+   "line": 1470,
    "hash": "206c3d8648cf8b35",
    "does": "",
    "errors": {
@@ -61033,7 +61329,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1603,
+   "line": 1607,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61141,7 +61437,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 985,
+   "line": 989,
    "hash": "d21dfa8eab8017d4",
    "does": "",
    "errors": {
@@ -61251,7 +61547,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1738,
+   "line": 1742,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61353,7 +61649,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1337,
+   "line": 1341,
    "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
@@ -61464,7 +61760,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1199,
+   "line": 1203,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -61673,7 +61969,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1532,
+   "line": 1536,
    "hash": "a28cbf5d48a25637",
    "does": "",
    "errors": {
@@ -61779,7 +62075,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 401,
-   "hash": "72a08c43e4fe0b41",
+   "hash": "7d52796f4028042c",
    "does": "",
    "errors": {
     "count": 0,
@@ -61858,7 +62154,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1204 (independent review, not the builder: handler diff re-read, CAT-246 source_key over 200 characters answers 400 ASSIST_BAD_REQUEST (registered code, new inline 400 in contract, scene, legacy answer, error-tests row), missing key still 422, owner-only door unchanged, sole web caller catSourcePut shows the sentence; new test 45 passed, 13 columns read yes) stage2",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): the one write now runs bound to the owner (withEntity) under RLS, same body, answers and codes; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -62190,7 +62486,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6172,
+   "line": 6398,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62302,7 +62598,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6398,
+   "line": 6624,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62407,7 +62703,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6454,
+   "line": 6680,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -62514,7 +62810,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6529,
+   "line": 6755,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -62619,7 +62915,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5327,
+   "line": 5553,
    "hash": "b7cf1cbeb711e833",
    "does": "",
    "errors": {
@@ -62778,7 +63074,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4609,
+   "line": 4823,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -62882,7 +63178,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6684,
+   "line": 6910,
    "hash": "bca9bf272f4bc0fc",
    "does": "",
    "errors": {
@@ -62990,8 +63286,8 @@
    "owner_area": "connections",
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
-   "line": 102,
-   "hash": "dcfed7864c08486f",
+   "line": 106,
+   "hash": "ecb72b602637f215",
    "does": "",
    "errors": {
     "count": 0,
@@ -63065,7 +63361,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 SEC-75/DB-103 b855 (PR#1220 RC): statements on the RLS table now run bound to the shop (withEntity), same inputs, answers, codes and sentences; diff against origin/main read, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -63215,7 +63511,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1676,
+   "line": 1677,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63321,7 +63617,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1595,
+   "line": 1596,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
@@ -64070,7 +64366,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 72,
+   "line": 73,
    "hash": "22e4af6d39bdd31a",
    "does": "",
    "errors": {

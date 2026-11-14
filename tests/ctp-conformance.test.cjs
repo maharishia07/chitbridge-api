@@ -211,6 +211,59 @@ ok('⚠️ a BigInt in a copy is refused, not thrown (RAIL-141 c)', () => {
   assert.strictEqual(out.ok, false);
 });
 
+/* ── ⑤ THE VERSIONED SEAL (RAIL-141 b · Q21 draft): 1.1 seals its own time, alg and nonce ──────────────────── */
+const asV11 = (fn) => { process.env.CTP_SEAL_VERSION = '1.1'; try { return fn(); } finally { delete process.env.CTP_SEAL_VERSION; } };
+const TEST_SIGNER = { alg: 'test', sign: (h) => 'sig:' + h };
+
+ok('a sender sends 1 until it is switched, and 1.1 once it is', () => {
+  assert.strictEqual(env.build(FROM, TO, CHIT).ctp, '1');
+  assert.strictEqual(asV11(() => env.build(FROM, TO, CHIT)).ctp, '1.1');
+});
+
+ok('a 1.1 envelope opens, across the wire, and carries a nonce', () => {
+  const sent = asV11(() => env.sign(env.build(FROM, TO, CHIT), TEST_SIGNER));
+  assert.ok(sent.sealed.nonce && sent.sealed.nonce.length === 32, 'expected a nonce');
+  const got = env.open(overTheWire(sent), ctx);
+  assert.ok(got.ok, got.why);
+  assert.deepStrictEqual(got.copy, COPY);
+});
+
+ok('⚠️ 1.1: restamping the time breaks the seal — the replay 1 cannot stop', () => {
+  const sent = asV11(() => env.sign(env.build(FROM, TO, CHIT), TEST_SIGNER));
+  const replayed = Object.assign({}, sent, { sealed: Object.assign({}, sent.sealed, { at: new Date(Date.now() + 1000).toISOString() }) });
+  const out = env.open(replayed, ctx);
+  assert.strictEqual(out.ok, false);
+  assert.strictEqual(out.why, 'the seal does not match the contents');
+  /* …while version 1 cannot tell: its digest does not cover at */
+  const v1 = env.sign(env.build(FROM, TO, CHIT), TEST_SIGNER);
+  const v1Replayed = Object.assign({}, v1, { sealed: Object.assign({}, v1.sealed, { at: new Date(Date.now() + 1000).toISOString() }) });
+  assert.ok(env.open(v1Replayed, ctx).ok, 'version 1 still opens a restamped seal — the reason for 1.1');
+});
+
+ok('1.1: a seal older than the window, or from the future, is refused', () => {
+  const sent = asV11(() => env.sign(env.build(FROM, TO, CHIT), TEST_SIGNER));
+  const later = env.open(sent, Object.assign({}, ctx, { now: () => new Date(Date.now() + env.SEAL_MAX_AGE_MS + 60000) }));
+  assert.strictEqual(later.why, 'the seal is too old to be delivered');
+  const earlier = env.open(sent, Object.assign({}, ctx, { now: () => new Date(Date.now() - 10 * 60000) }));
+  assert.strictEqual(earlier.why, 'the seal is dated in the future');
+});
+
+ok('1.1 without its nonce is refused', () => {
+  const sent = asV11(() => env.sign(env.build(FROM, TO, CHIT), TEST_SIGNER));
+  const bare = Object.assign({}, sent, { sealed: Object.assign({}, sent.sealed, { nonce: undefined }) });
+  assert.strictEqual(env.open(bare, ctx).why, 'a 1.1 seal must carry its time and nonce');
+});
+
+ok('version 1 is accepted until CTP_ACCEPT_V1_UNTIL passes, then refused in words', () => {
+  const v1 = env.sign(env.build(FROM, TO, CHIT), TEST_SIGNER);
+  process.env.CTP_ACCEPT_V1_UNTIL = '2999-01-01';
+  try { assert.ok(env.open(v1, ctx).ok, 'before the date, 1 is still taken'); } finally { delete process.env.CTP_ACCEPT_V1_UNTIL; }
+  process.env.CTP_ACCEPT_V1_UNTIL = '2026-01-01';
+  try { assert.strictEqual(env.open(v1, ctx).why, 'a version 1 seal is no longer accepted here — send 1.1'); } finally { delete process.env.CTP_ACCEPT_V1_UNTIL; }
+  process.env.CTP_ACCEPT_V1_UNTIL = 'soon';
+  try { assert.strictEqual(env.open(v1, ctx).ok, false, 'an unreadable date refuses 1 rather than guessing'); } finally { delete process.env.CTP_ACCEPT_V1_UNTIL; }
+});
+
 ok('signing twice gives the same digest and does not nest', () => {
   const e1 = env.sign(env.build(FROM, TO, CHIT), null);
   const e2 = env.sign(env.build(FROM, TO, CHIT), null);

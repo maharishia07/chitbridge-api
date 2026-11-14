@@ -7,6 +7,7 @@
 // CARD  22-channels-capture-and-messaging/notifications-and-the-bell
 const express = require('express');
 const log = require('../lib/logger');
+const counterBill = require('../lib/counter-bill'); // ACC-206 C4: the ONE pick of a bill's total, as SQL
 const router = express.Router();
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { notifications: contract, words, faultOf } = require('../lib/bell-contract'); // the contract (each route's operation), the words of a refusal and of a fault
@@ -125,7 +126,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
               cs.assigned_to_actor_id,
               ch.auto_subject, ch.manual_subject,
               /* O3: a NEW order row says what it is and what it is worth - read from the header, never worked out */
-              ch.purpose, ch.summary_json->>'total_value' AS total_value, ch.summary_json->>'currency_code' AS currency_code,
+              ch.purpose, ${counterBill.billTotalSql('ch')}::text AS total_value, ch.summary_json->>'currency_code' AS currency_code,
               ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
               (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
               (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me${costView.feedColsSql('ch', blind)}

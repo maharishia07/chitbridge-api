@@ -8,6 +8,7 @@
 'use strict';
 const { waiting } = require('../lib/not-migrated');
 const CLOCK = require('../lib/shop-clock');
+const { NOT_A_UUID_WORDS } = require('../lib/knownerr');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { refusalOf, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
@@ -48,6 +49,8 @@ const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** API-25: an id in the query or body that is no uuid names no row: the same 404 NOT_FOUND the router guard (lib/id-guard) gives an address id */
+const notAnId = (req, res) => problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_A_UUID_WORDS, legacy: { error: 'Not found', message: NOT_A_UUID_WORDS } });
 /* ⚠️ WX-P2P-02 (2026-10-13, the real stack): "today" is the SHOP's day (books-hooks.dayOf — the one calendar, M210), not the UTC date.
    /dues filtered its items by the shop's day of created_at but took asOf from the UTC clock: a bill recorded after midnight IST
    (18:30–24:00 UTC) was ahead of asOf and vanished from Payables / Receivables until the next UTC day — "You owe nobody" beside
@@ -58,7 +61,17 @@ const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(valu
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
-const minorOf = (input, currency) => (input.amount_minor != null ? Math.round(Number(input.amount_minor)) : cashflow().toMinor(input.amount, currency));
+/** the amount of a payment or write-off as minor units, by the ONE strict reader (books-period.amountOf: a whole JSON number); throws the plain question "How much?" (a 400) when it is not one */
+const minorOf = (input, currency) => require('../lib/books-period').amountOf(input, 'amount', currency, { ask: 'How much?', zero: true });
+/** minorOf for a caller that answers the question itself: null when the amount is not a whole number (the payment door asks "How much?") */
+function minorAsked(input, currency) {
+  try {
+    return minorOf(input, currency);
+  } catch (err) {
+    if (err.code === 'BOOKS_BAD_REQUEST') return null;
+    throw err;
+  }
+}
 const WORD = {
   walkin_day: 'Walk-in sales',
   sale_bill: 'Sale',
@@ -216,6 +229,7 @@ router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res)
       T = require('../lib/finance-terms'),
       pid = req.query.party_id ? String(req.query.party_id) : null,
       side = req.query.side === 'supplier' ? 'supplier' : 'customer';
+    if (pid && !UUID.test(pid)) return notAnId(req, res); /* FIN-86: an id that is not an id names no party: the shared 404, never the database */
     const mig = await T.migrated(),
       may = isOwner(req);
     const out = await withEntity(e, async (h) => {
@@ -258,6 +272,7 @@ router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, re
       b = req.body || {},
       pid = b.party_id ? String(b.party_id) : null,
       side = b.side === 'supplier' ? 'supplier' : 'customer';
+    if (pid && !UUID.test(pid)) return notAnId(req, res); /* FIN-86 */
     if (!(await T.migrated()))
       return problem(req, res, { status: 503, code: 'TERMS_NOT_MIGRATED', detail: SAID.termsNotMigrated, legacy: { error: SAID.termsNotMigrated, message: SAID.termsNotMigrated } });
     const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
@@ -595,7 +610,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         }
       : {};
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json({ currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals });
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -958,7 +973,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         for (const r of rows.values()) r.payable = v.by_party[String(r.party_id)] || null;
         payables = { total_minor: v.total_minor };
       }
-      return require('../lib/upi-waiting').quietRows(Array.from(rows.values()), e, fin).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
+      return require('../lib/upi-waiting').quietRows(Array.from(rows.values()).map(withBalanceWords(curOf(req))), e, fin).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
     res.json(
       await forReader(req, e, {
@@ -1002,14 +1017,14 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
     const tb = await withEntity(e, (h) => B.trialBalance(h, e, asOf));
-    res.json({
+    res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
       rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
       balanced: tb.balanced
-    });
+    }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1029,7 +1044,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       to = dateQ(req.query.to, today(req)),
       from = dateQ(req.query.from, fyStart(req, to));
     const pl = await withEntity(e, (h) => B.profitAndLoss(h, e, from, to));
-    res.json({
+    res.json(await forBooksDoor(req, e, 'pl', {
       currency: curOf(req),
       from,
       to,
@@ -1039,7 +1054,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       total_expense_minor: pl.total_expenses_minor,
       profit_minor: pl.profit_minor,
       by_line: { income: pl.income, expense: pl.expenses }
-    });
+    }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1097,7 +1112,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         schedule_iii: sched3(bs, Object.keys(B.packOf(req.books).sch3 || {}))
       };
     });
-    res.json(Object.assign({ currency: curOf(req), asOf }, out));
+    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf }, out)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1122,6 +1137,10 @@ function knownMode(body) {
 function allocateOf(body) {
   return body.allocate === 'none' ? 'none' : body.allocate === 'oldest_first' ? 'oldest_first' : null;
 }
+/** FIN-60: a /dues row with its standing in words, the payment outcome's own function (B.owesWords; + they owe you) — said once the rows are netted */
+const withBalanceWords = (currency) => (row) => Object.assign(row, { balance_words: B.owesWords(row.balance_minor, currency) });
+/** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
+const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode) {
   const body = req.body || {},
@@ -1129,13 +1148,15 @@ function paymentQuestion(req, needMode) {
   const party = String(body.party_id || body.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   if (body.currency && String(body.currency).toUpperCase() !== currency) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
-  const amount_minor = minorOf(body, currency);
+  const amount_minor = minorAsked(body, currency);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
+  const direction = directionOf(body);
+  if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
   const mode = knownMode(body);
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — cash, bank, UPI, card or cheque?' } };
   const allocate = allocateOf(body);
   const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
-  return { party, direction: body.direction === 'out' ? 'out' : 'in', amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
+  return { party, direction, amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
@@ -1259,7 +1280,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no,
         cheque_bank: chq.bank || b.cheque_bank,
-        cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? chq.date || chq.dated || b.cheque_date : null,
+        cheque_date: require('../lib/books-period').dateGiven(chq.date || chq.dated || b.cheque_date, 'cheque.date', null) /* FIN-82: a given day that is not one is DATE_INVALID, never dropped */,
         received_at: date,
         client_ref,
         by: byOf(req),
@@ -1804,11 +1825,12 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const writeOffMinor = minorOf(b, curOf(req)); /* a plain 400 "How much?" when it is not a whole number above nothing (the write-off posts nothing for 0 either) */
     const out = await B.postEntry(null, ctx(req), {
       type: 'write_off',
       owner: true,
       party,
-      amount: cashflow().fromMinor(minorOf(b, curOf(req)), curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
+      amount: cashflow().fromMinor(writeOffMinor, curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
       reason: b.reason,
       currency: curOf(req),
       strict_date: true,
@@ -2450,7 +2472,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
 /** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · suppliers_to_add · bills_unrated (F5 A1: a bill with an unrated line, listed never changed) · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
-    res.json(await require('../lib/books-todo').todo(ctx(req), req.books));
+    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

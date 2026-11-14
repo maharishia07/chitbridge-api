@@ -1,0 +1,1052 @@
+{
+ "ci": "CAP-ACCOUNTS",
+ "title": "Accounts · accounts.html",
+ "type": "Page / surface",
+ "system": "ChitBridge web app",
+ "summary": "What the shop made, and what it owes.",
+ "source": "generated",
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 70 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 15 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 28 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 1 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 6 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 12 API call(s)"
+  },
+  {
+   "title": "cap-books.js",
+   "ci": "CAP-BOOKS",
+   "state": "ok",
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)",
+   "node": "p1"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Home card · Accounts",
+   "s": "manifest accounts · /accounts.html",
+   "d": "The home-card manifest sends the shopkeeper here."
+  },
+  {
+   "id": "e2",
+   "t": "Home card · Parallel run",
+   "s": "manifest compare · /accounts.html#compare",
+   "d": "The home-card manifest sends the shopkeeper here."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "accounts.html",
+   "s": "accounts.html · 29 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBFrame",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBList",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBKural",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBShell",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p6",
+   "t": "CBSignin",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p7",
+   "t": "CBEdition",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p8",
+   "t": "CBAvatar",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p9",
+   "t": "CBTax",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p10",
+   "t": "CBScreenId",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p11",
+   "t": "CBAction",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p12",
+   "t": "CBBell",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p13",
+   "t": "CBAttach",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "GET /api/folders",
+   "s": "api('foldersList') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/folders/:id/chits",
+   "s": "api('folderChits') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x3",
+   "t": "GET /api/books/todo",
+   "s": "api('booksTodo') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x4",
+   "t": "GET /api/books/health",
+   "s": "api('booksHealth') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x5",
+   "t": "GET /api/entities/me",
+   "s": "api('me') → routes/entities.js",
+   "d": "Reads through the API, answered by routes/entities.js."
+  },
+  {
+   "id": "x6",
+   "t": "PATCH /api/entities/me/prefs/:kind",
+   "s": "api('savePrefs') → routes/entities.js",
+   "d": "Writes through the API, answered by routes/entities.js."
+  },
+  {
+   "id": "x7",
+   "t": "GET /api/definitions",
+   "s": "api('defList') → routes/definitions.js",
+   "d": "Reads through the API, answered by routes/definitions.js."
+  },
+  {
+   "id": "x8",
+   "t": "POST /api/definitions",
+   "s": "api('defAdd') → routes/definitions.js",
+   "d": "Writes through the API, answered by routes/definitions.js."
+  },
+  {
+   "id": "x9",
+   "t": "PUT /api/definitions/:id",
+   "s": "api('defSave') → routes/definitions.js",
+   "d": "Writes through the API, answered by routes/definitions.js."
+  },
+  {
+   "id": "x10",
+   "t": "POST /api/events/ticket",
+   "s": "api('eventsTicket') → routes/events.js",
+   "d": "Writes through the API, answered by routes/events.js."
+  },
+  {
+   "id": "x11",
+   "t": "POST /api/books/enable",
+   "s": "api('booksEnable') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x12",
+   "t": "POST /api/books/setting",
+   "s": "api('booksSetting') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x13",
+   "t": "GET /api/tax/gstr",
+   "s": "api('taxGstr') → routes/tax.js",
+   "d": "Reads through the API, answered by routes/tax.js."
+  },
+  {
+   "id": "x14",
+   "t": "GET /api/chits/:id",
+   "s": "api('chit') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x15",
+   "t": "PUT /api/chits/:id/use",
+   "s": "api('billUse') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x16",
+   "t": "PUT /api/chits/:id/status",
+   "s": "api('status') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x17",
+   "t": "POST /api/folders",
+   "s": "api('folderCreate') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x18",
+   "t": "PATCH /api/folders/:id",
+   "s": "api('folderRename') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x19",
+   "t": "DELETE /api/folders/:id",
+   "s": "api('folderDelete') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x20",
+   "t": "POST /api/folders/move",
+   "s": "api('folderMove') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x21",
+   "t": "GET /api/folders/:id/rules",
+   "s": "api('folderRules') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x22",
+   "t": "PATCH /api/folders/rules/:rule_id",
+   "s": "api('folderRuleUpdate') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x23",
+   "t": "GET /api/folders/reconcile",
+   "s": "api('folderReconcile') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x24",
+   "t": "GET /api/folders/:id/metrics",
+   "s": "api('folderMetrics') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x25",
+   "t": "GET /api/folders/rules",
+   "s": "api('folderAllRules') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x26",
+   "t": "GET /api/folders/groupsum",
+   "s": "api('folderGroupSum') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x27",
+   "t": "POST /api/folders/rules/preview",
+   "s": "api('folderRulePreview') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x28",
+   "t": "POST /api/folders/:id/rules",
+   "s": "api('folderRuleCreate') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x29",
+   "t": "DELETE /api/folders/rules/:rule_id",
+   "s": "api('folderRuleDelete') → routes/folders.js",
+   "d": "Writes through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x30",
+   "t": "GET /api/books/dues",
+   "s": "api('booksDues') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x31",
+   "t": "GET /api/books/party/:id/statement",
+   "s": "api('booksStatement') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x32",
+   "t": "POST /api/books/entries",
+   "s": "api('booksEntryPost') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x33",
+   "t": "POST /api/books/payments/preview",
+   "s": "api('booksPayPreview') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x34",
+   "t": "POST /api/books/payments",
+   "s": "api('booksPayRecord') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x35",
+   "t": "GET /api/books/daybook",
+   "s": "api('booksDaybook') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x36",
+   "t": "GET /api/books/trial-balance",
+   "s": "api('booksTB') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x37",
+   "t": "GET /api/books/ledger/:account",
+   "s": "api('booksLedger') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x38",
+   "t": "GET /api/books/accounts",
+   "s": "api('booksAccounts') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x39",
+   "t": "GET /api/books/pl",
+   "s": "api('booksPL') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x40",
+   "t": "GET /api/books/bs",
+   "s": "api('booksBS') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "e2",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "p6"
+  ],
+  [
+   "p1",
+   "p7"
+  ],
+  [
+   "p1",
+   "p8"
+  ],
+  [
+   "p1",
+   "p9"
+  ],
+  [
+   "p1",
+   "p10"
+  ],
+  [
+   "p1",
+   "p11"
+  ],
+  [
+   "p1",
+   "p12"
+  ],
+  [
+   "p1",
+   "p13"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
+  ],
+  [
+   "p1",
+   "x13"
+  ],
+  [
+   "p1",
+   "x14"
+  ],
+  [
+   "p1",
+   "x15"
+  ],
+  [
+   "p1",
+   "x16"
+  ],
+  [
+   "p1",
+   "x17"
+  ],
+  [
+   "p1",
+   "x18"
+  ],
+  [
+   "p1",
+   "x19"
+  ],
+  [
+   "p1",
+   "x20"
+  ],
+  [
+   "p1",
+   "x21"
+  ],
+  [
+   "p1",
+   "x22"
+  ],
+  [
+   "p1",
+   "x23"
+  ],
+  [
+   "p1",
+   "x24"
+  ],
+  [
+   "p1",
+   "x25"
+  ],
+  [
+   "p1",
+   "x26"
+  ],
+  [
+   "p1",
+   "x27"
+  ],
+  [
+   "p1",
+   "x28"
+  ],
+  [
+   "p1",
+   "x29"
+  ],
+  [
+   "p1",
+   "x30"
+  ],
+  [
+   "p1",
+   "x31"
+  ],
+  [
+   "p1",
+   "x32"
+  ],
+  [
+   "p1",
+   "x33"
+  ],
+  [
+   "p1",
+   "x34"
+  ],
+  [
+   "p1",
+   "x35"
+  ],
+  [
+   "p1",
+   "x36"
+  ],
+  [
+   "p1",
+   "x37"
+  ],
+  [
+   "p1",
+   "x38"
+  ],
+  [
+   "p1",
+   "x39"
+  ],
+  [
+   "p1",
+   "x40"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "PAGE accounts.html",
+   "rel": "draws",
+   "that": "no screen"
+  },
+  {
+   "this": "PAGE accounts.html",
+   "rel": "calls",
+   "that": "routes/folders.js · routes/books.js · routes/entities.js · routes/definitions.js · routes/events.js · routes/tax.js · routes/chits.js · routes/relationships.js · routes/signin.js · routes/products.js · routes/crm.js · routes/governance.js · routes/keys.js · routes/counters.js · routes/integrations.js · routes/till.js · routes/facts.js · routes/assist.js · routes/notifications.js · routes/attachments.js"
+  },
+  {
+   "this": "PAGE accounts.html",
+   "rel": "documented-by",
+   "that": "api docs/AI-ASSISTANT.md · api docs/API-REGISTER.md · api docs/cards/16-finance/books-cashflow.md · api docs/CB-SYNC.md · api docs/CO1-API-PR-BODY.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER-SIGNIN.md · api docs/COUNTER.md · api docs/critique/ACC-198.md · api docs/critique/ACC-206-A-B.md · api docs/critique/ACC-336-PLAN.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-assist.md · api docs/critique/API-4-attachments.md · api docs/critique/API-4-bell.md · api docs/critique/API-4-connectors.md · api docs/critique/API-4-crm.md · api docs/critique/API-4-definition…"
+  },
+  {
+   "this": "PAGE accounts.html",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md · api docs/tasks/CLOUD-TASK-shop-name.md · web docs/design/cb-accounts/PROOF.md · web public/app/search.js · web public/app/variant.js — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/accounts.html",
+  "design": "web docs/design/cb-accounts/CLOUD-TASK.md"
+ },
+ "tests": [
+  {
+   "file": "web e2e/a11y-axe-report.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/action-state.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/bank-recon-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/bill-row.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/books-web.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/cb-accounts-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/cb-accounts.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/chit-sheet-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/chit-sheet.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/crm-themes.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/csp-violations.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/device-id.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/frame-every-width.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-page-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/kural-footer-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/kural-footer.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/list-standard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/list-unit-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/manual-entry.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/money-input-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/one-avatar-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/one-avatar.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/one-person.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/payments.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/period-end.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/rail-bell.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/rail-wiring.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/screen-id-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/shell.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/signin-window.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/skeleton-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/step-press.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/todo-home.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-accounts.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-crm.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-finance.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-std-actions.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/ui-codes-std-glyphs.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-bank-rec.cjs",
+   "kind": "browser",
+   "result": "not run"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: accounts\n  annotations:\n    chitbridge.io/ci: CAP-ACCOUNTS\n    chitbridge.io/asset: PAGE\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/folders.js\n    - routes/books.js\n    - routes/entities.js\n    - routes/definitions.js\n    - routes/events.js\n    - routes/tax.js\n    - routes/chits.js\n    - routes/relationships.js\n    - routes/signin.js\n    - routes/products.js\n    - routes/crm.js\n    - routes/governance.js\n    - routes/keys.js\n    - routes/counters.js\n    - routes/integrations.js\n    - routes/till.js\n    - routes/facts.js\n    - routes/assist.js\n    - routes/notifications.js\n    - routes/attachments.js"
+}

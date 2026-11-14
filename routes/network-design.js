@@ -24,6 +24,7 @@ const networkBuild = require('../lib/network-build');
 const run = require('../lib/network-build-run'); // the build's steps that read and write (T2-SPLIT)
 const visibilityCap = require('../lib/visibility-cap');
 const devOtp = require('../lib/dev-otp');
+const sellablePrice = require('../lib/sellable-price'); // CAT-324: when a stored price cannot be sold
 const money = require('../lib/money'); // a price is {amount,currency} — never a bare number
 const availability = require('../lib/availability'); // a quantity is not an answer without a date
 const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule — stock follows the catalogue's
@@ -559,7 +560,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           bridge_id: r.bridge_id,
           city: r.city || null,
           entity_id: r.entity_id,
-          price: Number.isFinite(amt) ? amt : null,
+          price: sellablePrice.soldAt(amt), // CAT-324: a negative stored price goes to buyers as no price
           price_currency: (money.isMoney(d.price) && d.price.currency) || r.currency_code || null,
           lat: r.lat == null ? null : Number(r.lat),
           lng: r.lng == null ? null : Number(r.lng),
@@ -657,7 +658,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           // identity_id so a request can be addressed. Not a secret: this store's catalogue is already readable by
           // this viewer, and the supplier route hands out the same field for exactly the same reason.
           entity_id: nestedEnt.identity_id,
-          price: Number.isFinite(amt) ? amt : null,
+          price: sellablePrice.soldAt(amt), // CAT-324: a negative stored price goes to buyers as no price
           price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || nestedEnt.currency_code || null,
           lat: nestedEnt.lat == null ? null : Number(nestedEnt.lat),
           lng: nestedEnt.lng == null ? null : Number(nestedEnt.lng),

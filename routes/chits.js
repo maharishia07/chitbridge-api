@@ -422,8 +422,7 @@ router.post(
       /* ⭐ T2-SPLIT (2026-10-14): the 1,408 lines that stood here are the named steps below, in order, each under 80
          lines — the same statements, the same order, the same answers (tests/send-golden.test.cjs, frozen before the split).
          A step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
-      const st = {};
-      for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+      await runSendSteps(req, res);
     } catch (err) {
       /**
        * ── ⭐⭐⭐ A LOST RACE IS A DUPLICATE, NOT A FAILURE (2026-09-18) ───────────────────────
@@ -455,15 +454,9 @@ router.post(
           const who = entityId(req);
           const seen = await sameRefLook(who, raceRef);
           if (seen) {
-            const _bj = req.body && req.body.business_json;
-            const mine = (_bj && _bj.till && _bj.till.id) || null;
-            const theirs = seen.till_id || null;
-            const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
-            const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
-               longer drift from it (it used to: this branch had no sameName wording at all). */
-            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
-            if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
+            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — one function both callers share, so this cannot drift from it */
+            const refusal = await replayRefusal(req, who, seen, raceRef);
+            if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
             return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
           }
@@ -480,6 +473,42 @@ router.post(
     }
   }
 );
+
+/** the named send steps, in order; a step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
+async function runSendSteps(req, res) {
+  try {
+    await sendStepsOnce(req, res);
+  } catch (err) {
+    const again = await rerunLostSummary(err, req, res); /* CTR-181: a summary that lost the unique-reference race is judged again, once */
+    if (!again.done) throw again.err;
+  }
+}
+/** one pass through the steps */
+async function sendStepsOnce(req, res) {
+  const st = {};
+  for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+}
+/**
+ * ⭐ CTR-181 · TWO RE-CLOSES, ONE VERSION NUMBER. Both judge "#2"; the loser's insert meets the unique reference (23505) and the race answer below would call it the
+ * winner's duplicate — its later totals lost. For a summary the whole send runs once more from the base reference with the stamps removed: sendReplay now sees the
+ * winner, so the same figures are a replay and other figures are "#3". Answers { done: true } when the second run answered, else { err } (the error to handle as before).
+ */
+async function rerunLostSummary(err, req, res) {
+  const reclose = require('../lib/summary-reclose');
+  const summary = reclose.summaryOf(req.body);
+  const lost = !!err && err.code === '23505' && /client_ref/.test(String(err.constraint || err.detail || err.message || ''));
+  if (!lost || !summary || req.summaryRerun) return { err };
+  req.summaryRerun = true;
+  req.body.client_ref = reclose.baseRef(refOf(req));
+  delete summary.revision;
+  delete summary.supersedes;
+  try {
+    await sendStepsOnce(req, res);
+    return { done: true };
+  } catch (second) {
+    return { err: second };
+  }
+}
 
 /* ═══ POST /chits/send — THE NAMED STEPS (T2-SPLIT, 2026-10-14) ═════════════════════════════════════════════════════════
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
@@ -540,6 +569,7 @@ const SEND_STEPS = [
   sendBridge,
   sendCopyPolicy,
   sendPromote,
+  sendPriceMoved,
   sendParticipants,
   sendRetention,
   sendFolds,
@@ -553,6 +583,8 @@ const SEND_STEPS = [
   sendAssign,
   sendMeter,
   sendStock,
+  sendPriceDrift,
+  sendMovedTicket,
   sendBooks,
   sendAnswer
 ];
@@ -839,7 +871,10 @@ async function sendReplay(sendState, req, res) {
     const seen = await sameRefLook(sender_id, client_ref);
     /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
     if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
-    if (seen) return answerReplay(req, res, seen, client_ref);
+    const reclose = seen ? await summaryReclose(sendState, req, res) : null;
+    if (reclose === 'versioned') return; /* CTR-181: new figures for a held summary go on as its next version */
+    if (reclose) return reclose; /* 'replied': the summary's own duplicate answer was sent */
+    if (seen) return await answerReplay(req, res, seen, client_ref, sender_id);
   } catch (e) {
     cbLog.fellBack(
       'chits: failed — carried on without it',
@@ -847,18 +882,70 @@ async function sendReplay(sendState, req, res) {
     ); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */
   }
 }
+/**
+ * ⭐ CTR-181 · A SUMMARY CLOSED AGAIN. A counter summary (SUM/D/<till>/<day>) is sent under a fixed reference, so a day reopened, sold more and closed again was
+ * answered duplicate:true and the first totals stayed. lib/summary-reclose judges it from the two carried totals: the same figures (or a late retry) → 200 duplicate
+ * naming the newest chit ('replied'); new figures → the next VERSION, sent on as a new chit under "<ref>#<n>" (summary.revision, summary.supersedes), append-only, the
+ * readers take the newest ('versioned'); not a summary, or a failed lookup → null and the ordinary replay answer follows (the worst case is the old answer).
+ */
+async function summaryReclose(sendState, req, res) {
+  const { sender_id, client_ref } = sendState;
+  const reclose = require('../lib/summary-reclose');
+  const verdict = await withEntity(sender_id, (db) => reclose.judge(db, sender_id, client_ref, req.body)).catch(cbLog.orElse('chits: summary re-close lookup failed — answered as a replay', null));
+  if (!verdict) return null;
+  if (verdict.replay) {
+    res.status(200).json({ ok: true, chit_id: verdict.replay, duplicate: true, client_ref, revision: verdict.revision });
+    return 'replied';
+  }
+  Object.assign(req.body.business_json.summary, { revision: verdict.version, supersedes: verdict.supersedes });
+  req.body.client_ref = verdict.ref; /* ⚠ the race catch reads refOf(req): it must ask about the version's reference */
+  sendState.client_ref = verdict.ref;
+  return 'versioned';
+}
+
 /** a chit already exists under this client_ref: 409 when it is two devices on one number (named), else 200 with the chit that exists (a retry) */
-function answerReplay(req, res, seen, client_ref) {
+async function answerReplay(req, res, seen, client_ref, sender_id) {
+  const refusal = await replayRefusal(req, sender_id, seen, client_ref);
+  if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
+  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
+}
+/** the refusal body (409) a replay earns — two counters on one number first, then another sale under the same number — or null for a true replay */
+async function replayRefusal(req, sender_id, seen, client_ref) {
   /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
      here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
   const businessJson = req.body && req.body.business_json;
   const mine = (businessJson && businessJson.till && businessJson.till.id) || null;
-  const theirs = seen.till_id || null;
   const myAt = businessJson && businessJson.billed_at ? String(businessJson.billed_at) : null;
-  const theirAt = seen.billed_at ? String(seen.billed_at) : null;
-  const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
-  if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
-  return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
+  const verdict = tillCollisionVerdict(mine, seen.till_id || null, myAt, seen.billed_at ? String(seen.billed_at) : null, client_ref);
+  return verdict.collision ? verdict.body : await replayOtherSale(req, sender_id, client_ref);
+}
+/** what differed, in the words of the refusal */
+const DIFFERS_WORDS = { total: 'a different total', currency: 'a different currency', lines: 'different items' };
+/**
+ * ⭐ CTR-204 · SAME NUMBER, SAME TILL, SAME MOMENT, DIFFERENT SALE. The check above cannot tell it from a retry (it reads till id and billed_at only), so the
+ * second sale was answered "duplicate" and never stored — lost, with the till told it was sent. Here the held bill's carried total and lines are compared with the
+ * replay's (counter-bill.replayDiffers — two carried figures, nothing recomputed) and a different sale is refused 409 CHIT_REPLAY_DIFFERS, in words. Industry
+ * practice is the same: an idempotency key reused with different parameters is an error, not a replay (Stripe). Null = a true replay (200 duplicate:true).
+ * ⚠ Called only after a bill exists under this number; a lookup that fails answers null — the worst case is the old answer, never a blocked sale.
+ */
+async function replayOtherSale(req, sender_id, client_ref) {
+  try {
+    const held = await withEntity(sender_id, (db) => ownBill.byRef(db, sender_id, client_ref, { lines: true }));
+    const verdict = held && ownBill.replayDiffers(held, { business_json: req.body && req.body.business_json, line_items: req.body && req.body.line_items });
+    if (!verdict) return null;
+    return {
+      error: 'Bill number already holds a different sale',
+      code: 'CHIT_REPLAY_DIFFERS',
+      client_ref,
+      differs: verdict.differs,
+      message:
+        'Bill ' + client_ref + ' was already recorded with ' + DIFFERS_WORDS[verdict.differs] +
+        '. This is a different sale using the same number. It is kept on the counter, unsent — nothing has been lost.'
+    };
+  } catch (e) {
+    cbLog.fellBack('chits: replay body check failed — answered as a replay', e);
+    return null;
+  }
 }
 
 /** a till key may only bill itself — or one listed customer (one-sided when their copy cannot go) */
@@ -1019,18 +1106,24 @@ async function sendCredit(sendState, req, res) {
      the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
      counter carries business_json.credit_override = { by } (the owner's counter PIN, checked at the till), and only a counter key or
      the owner's own login may carry it. An allowed bill is recorded (books_change_log 'credit_limit'). Not a credit bill, no named
-     customer, ledger off or no limit → no query at all. */
+     customer, ledger off or no limit → no query at all. FIN-56: bills still WAITING in books_outbox count as owed; the bill's own client_ref
+     is stamped first so its own parked row (a retry) is left out. */
+  stampBillFacts(business_json, client_ref, number_check);
   if (!req.body.is_draft && purpose === 'order' && isJsonObject(business_json)) {
     const financeTerms = require('../lib/finance-terms');
     const creditCheck = await financeTerms.creditSaleCheck(sender_id, business_json);
-    if (creditCheck.over) {
+    /* a currency mismatch sits behind the SAME owner override as OVER_LIMIT: a till-drained bill the owner allowed must pass, not retry for ever */
+    if (creditCheck.mismatch || creditCheck.over) {
       const allowedBy = financeTerms.overrideBy(req, business_json.credit_override);
-      if (!allowedBy)
-        return problem(req, res, { status: 409, ...said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT') });
-      financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
+      if (!allowedBy) {
+        const refusal = creditCheck.mismatch
+          ? said({ error: 'Wrong currency', message: creditCheck.mismatch + ' Settle or post it first.' }, 'CURRENCY_MISMATCH')
+          : said(overLimitBody(financeTerms, creditCheck), 'CHIT_CONFLICT');
+        return problem(req, res, { status: 409, ...refusal });
+      }
+      if (creditCheck.over) financeTerms.noteOverride(sender_id, creditCheck, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
-  stampBillFacts(business_json, client_ref, number_check);
 }
 /** is this value a JSON object (not null, not a scalar)? an array passes, as before */
 const isJsonObject = (value) => !!value && typeof value === 'object';
@@ -1699,6 +1792,8 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
+  const absent = is_draft ? null : sendMoneyScope.bridgeMissingOf(business_json.invoice, business_json.till, { bill: business_json.bill_no });
+  if (absent) return sendBridgeRefusal(sendState, absent, req, res);
   const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), engine: sendMoneyScope.engineStampOf(business_json, sendState.moneyScope), bill: business_json.bill_no });
   if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
@@ -1732,6 +1827,16 @@ async function sendPairRefusal(sendState, pair, req, res) {
     status: 409,
     ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
   });
+}
+
+/** CTR-246 — the carried invoice has no bridge although the till's own build stamp says its builds always send one: a FAULT, refused before anything is stored, NO override, ONE ticket (own code, not MONEY_UNBALANCED) */
+async function sendBridgeRefusal(sendState, found, req, res) {
+  const { sender_id, business_json } = sendState;
+  const filed = await require('../lib/money-check').raiseMissingBridge(sender_id, found, { bill: business_json.bill_no, client_ref: sendState.client_ref });
+  const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  const words = 'This bill arrived without its tax check figures, so it was not saved. Reload the counter and make the bill again. ' + told;
+  res.locals.code = 'BRIDGE_MISSING';
+  return problem(req, res, { status: 409, ...said({ code: 'BRIDGE_MISSING', error: 'The tax check figures are missing.', message: words, build: found.build, words }, 'CHIT_CONFLICT') });
 }
 
 /** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
@@ -2940,6 +3045,111 @@ async function sendStock(sendState, req, res) {
   }
 }
 
+/**
+ * ⭐ CTR-244 (CTR-212 S3) · WERE THE PRICES OUT OF DATE WHEN THIS BILL WAS RUNG? Asked AFTER the bill is stored, and it only ever SAYS: one service ticket (lib/money-check.raiseDrift), never a
+ * refusal (the till retries any non-ok answer for ever), never a re-price (the bill is the sale, REV-02). ONE extra read per bill (the rows its products name). lib/price-drift judges: the row's
+ * commercial_changed_at (b845) is at or before billed_at and after the counter's snapshot AND the carried price or rate differs; a bill the shopkeeper already answered is exempt. A failure here
+ * is logged and the send goes on. A draft, a replay (answered earlier in the steps) and a bill with no counter moment are never judged.
+ */
+async function sendPriceDrift(sendState, req, res) {
+  const { sender_id, is_draft, line_items, business_json, currency_code } = sendState;
+  if (is_draft || !business_json || !business_json.billed_at) return;
+  try {
+    const drift = require('../lib/price-drift');
+    const { ids } = drift.catalogueIdsOf(line_items);
+    if (!ids.length || drift.answeredOf(business_json)) return;
+    const found = drift.driftOf({ lines: line_items, business_json }, await drift.readRows(sender_id, ids, withEntity), currency_code);
+    if (!found.lines || !found.lines.length) return;
+    const basis = business_json.price_basis || {};
+    await require('../lib/money-check').raiseDrift(sender_id, { lines: found.lines, billed_at: business_json.billed_at, snapshot_at: basis.snapshot_at }, { bill: business_json.bill_no, client_ref: sendState.client_ref });
+  } catch (e) {
+    cbLog.fellBack('chits: the price-drift check failed — the bill stands, nothing was filed', e);
+  }
+}
+
+/**
+ * ⭐ CTR-245 (CTR-212 S4) · A DRAFT SENT LONG AFTER IT WAS PRICED. Only a send that PROMOTES a draft is judged (a fresh send has nothing stale), by lib/price-moved: a product row that moved after the
+ * draft was made and whose price differs from the line's, or a product withdrawn. A PERSON waiting gets 409 PRICE_MOVED naming the lines (never a total) and an ack to hand back; a price-only move
+ * may be sent as drafted with that ack (void after 5 minutes or when a stamp moved again), a rate or a withdrawn line never. The shop's own loopback (kind auto) and any key go as authored plus ONE
+ * ticket (sendMovedTicket). A till body is never judged here (its check is sendPriceDrift: a ticket, never a 4xx; the till retries any non-ok answer for ever). A failure of the check is logged and the send goes on.
+ */
+async function sendPriceMoved(sendState, req, res) {
+  const { is_draft, promote_draft_id } = sendState;
+  if (is_draft || !promote_draft_id) return false;
+  const priceMoved = require('../lib/price-moved');
+  const lines = asSentLines(sendState, req);
+  const ids = priceMoved.idsOf(lines);
+  const asker = ids.length ? priceMoved.whoAsks(req) : 'till';
+  if (asker === 'till') return false;
+  let found;
+  try {
+    const read = await priceMoved.readFor(sendState.sender_id, ids, promote_draft_id, withEntity);
+    if (read.role !== 'Draft' || Number.isNaN(read.since)) return false;
+    found = priceMoved.movedOf(lines, read.rows, read.since, sendState.currency_code);
+    found.since = read.since;
+  } catch (e) {
+    cbLog.fellBack('chits: the price-moved check failed — the draft goes as drafted, nothing was asked', e);
+    return false;
+  }
+  if (!found.lines.length) return false;
+  if (asker === 'unattended') {
+    sendState.movedLines = found;
+    return false;
+  }
+  return answerPriceMoved(sendState, req, res, found);
+}
+
+/** the lines as the sender SENT them (the server rates the carried ones after, which would hide a rate that moved), each with the line_id the mint stamped */
+function asSentLines(sendState, req) {
+  const sent = Array.isArray(req.body.line_items) ? req.body.line_items : [];
+  const stamped = sendState.line_items || [];
+  return sent.length === stamped.length ? sent.map((line, at) => Object.assign({}, line, { line_id: stamped[at].line_id })) : stamped;
+}
+
+/** a person is waiting: the signed ack he handed back (for THIS draft, from THIS person) lets a price-only move go, recorded on the bill; anything else is the 409 with the totals the engine gives */
+async function answerPriceMoved(sendState, req, res, found) {
+  const priceMoved = require('../lib/price-moved');
+  const asked = { draft: sendState.promote_draft_id, actor: priceMoved.actorOf(req) };
+  if (priceMoved.ackVerdict(req.body.price_ack, found, asked).ok) {
+    if (!isJsonObject(sendState.business_json)) sendState.business_json = {};
+    const basis = isJsonObject(sendState.business_json.price_basis) ? sendState.business_json.price_basis : {};
+    sendState.business_json.price_basis = Object.assign({}, basis, { ack: priceMoved.ackBlockOf(found, asked.actor, Date.now()) });
+    return false;
+  }
+  res.locals.code = 'PRICE_MOVED';
+  return problem(req, res, { status: 409, ...said(priceMoved.bodyFor(found, asked, await movedFigures(sendState, found)), 'CHIT_CONFLICT') });
+}
+
+/** what the person is told besides the lines: the draft's total as sent (the send's own engine run, copied) and the total at the catalogue's prices (the SAME engine door, once), and who gets it */
+async function movedFigures(sendState, found) {
+  const priceMoved = require('../lib/price-moved');
+  const before = sendState.moneyBlock && sendState.moneyBlock.total != null ? sendState.moneyBlock.total : null;
+  let after = null;
+  if (before !== null) {
+    try {
+      const invoice = await sendMoneyScope.invoiceAtSend(Object.assign({}, sendState, { line_items: priceMoved.repricedLines(sendState.line_items, found) }));
+      after = moneyOfInvoice(invoice, sendState.currency_code).total;
+    } catch (e) {
+      cbLog.fellBack('chits: the total at the new prices could not be worked out — the question is asked without it', e);
+    }
+  }
+  const names = (sendState.receiverDetails || []).filter((item) => item.entity_id && String(item.entity_id) !== String(sendState.sender_id)).map((item) => item.display_name || item.name || null).filter(Boolean);
+  return { total: before === null ? null : { currency: sendState.currency_code, before, after }, reach: { recipients: names, lines: (sendState.line_items || []).length } };
+}
+
+/** an unattended send of a stale draft was stored as authored; ONE ticket says which lines had moved (lib/money-check.raiseDrift, never a refusal) */
+async function sendMovedTicket(sendState) {
+  const found = sendState.movedLines;
+  if (!found) return;
+  try {
+    const priceMoved = require('../lib/price-moved');
+    const draft = String(sendState.promote_draft_id).slice(0, 8);
+    await require('../lib/money-check').raiseDrift(sendState.sender_id, { lines: priceMoved.ticketLinesOf(found), billed_at: new Date().toISOString(), snapshot_at: new Date(found.since).toISOString() }, { bill: 'draft ' + draft, client_ref: sendState.client_ref });
+  } catch (e) {
+    cbLog.fellBack('chits: the price-moved ticket failed — the draft stands, nothing was filed', e);
+  }
+}
+
 /** the ledger hears about it — each side that holds a copy posts its own view */
 async function sendBooks(sendState, req, res) {
   const { sender_id, is_draft, receiverDetails, chit_id } = sendState;
@@ -3089,6 +3299,10 @@ const numberOrNull = (rawValue) => {
   const parsed = parseFloat(rawValue);
   return isFinite(parsed) ? parsed : null;
 };
+/** the detail answer's total_value is the header's one pick (ACC-206 C4), in the column's own two-place text; the key keeps its name (RAIL-146 drops it by name) */
+function detailWithPickedTotal(detail, header) {
+  return detail ? Object.assign({}, detail, { total_value: costView.detailTotalOf(detail.total_value, header) }) : null;
+}
 /** ?amount_min / ?amount_max → the bounds on the chit's total value */
 function amountFilter(req, params) {
   let where = '';
@@ -3096,11 +3310,11 @@ function amountFilter(req, params) {
     amax = numberOrNull(req.query.amount_max);
   if (amin !== null) {
     params.push(amin);
-    where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`;
+    where += ` AND COALESCE(${ownBill.billTotalSql('ch')},0) >= $${params.length}`;
   }
   if (amax !== null) {
     params.push(amax);
-    where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`;
+    where += ` AND COALESCE(${ownBill.billTotalSql('ch')},0) <= $${params.length}`;
   }
   return where;
 }
@@ -3249,7 +3463,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
               ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
@@ -3304,7 +3518,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
         ({
           date: 'created_at',
           subject: 'COALESCE(manual_subject, auto_subject)',
-          amount: "(summary_json->>'total_value')::numeric",
+          amount: 'bill_total',
           status: 'current_status',
           priority: "CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
@@ -3320,7 +3534,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
               /* ⭐ ROLE, because the LIST is where a draft has to be recognisable. Without it the mailbox could
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
-              ch.role,
+              ch.role, ${ownBill.billTotalSql('ch')} AS bill_total, /* the sort key only: folderRow names its keys, it never ships */
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
@@ -3395,7 +3609,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
          RAIL-146 rides on the same rows: a blind actor's (key, currency) row is stripped by lib/cost-view first, then folded by key. */
       const perCur = await db.query(
         `SELECT ${keyExpr} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
-              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
+              COALESCE(SUM(${ownBill.billTotalSql('ch')}), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
@@ -3598,7 +3812,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
@@ -4148,7 +4362,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
-      detail: data.detail.rows[0] || null,
+      detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]),
       participants: _red.participants,
       state_log: _red.state_log,
       bill_private: _red.private ? true : undefined,
@@ -5134,6 +5348,8 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
     problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
+/** the statuses a bill takes no payment in: withdrawn (the void route writes 'cancelled') and rejected — the rail's two ends with no way to money */
+const NO_PAYMENT_STATUS = ['cancelled', 'rejected'];
 /**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
  * → null (no copy) · { parts } (the bill carries its own tender) · { books }
@@ -5144,6 +5360,8 @@ async function markChitPaid(db, press) {
   const { entity_id, chit_id, payment, hooks } = press;
   const copy = await taxCopy.copyOn(db, chit_id, entity_id);
   if (!copy) return null;
+  /* FIN-80 (M7a): a withdrawn (voided) or rejected bill takes no payment — stamped before this check, the copy read paid while the books answered { none } */
+  if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { voided: copy.current_status };
   const copyBusiness = copy.business_json || {};
   /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
   if (copyBusiness.payment && Array.isArray(copyBusiness.payment.parts)) return { parts: true };
@@ -5207,13 +5425,18 @@ router.post(
       /* an id that is no uuid names no bill: the unknown bill's 404, never a 500 from the cast (gorilla pack 2, GP-8: not-a-bill-N) */
       const out = trace.UUID_RE.test(chit_id) ? await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks })) : null;
       if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
+      if (out.voided)
+        return problem(req, res, { status: 409, ...said({
+          error: 'This bill was withdrawn',
+          message: 'This bill is ' + (out.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so it cannot be marked paid.'
+        }, 'CHIT_VOIDED') });
       if (out.parts)
         return problem(req, res, { status: 422, ...said({
           error: 'The tender is on the bill',
           message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
         }, 'PAYMENT_TENDER_ON_BILL') });
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
-      if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
+      if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id, press: 'payment' }, out.books.why, chit_id, 'chit:' + chit_id); /* press: so "Mark unpaid" closes THIS row and never the bill's own wait (FIN-66) */
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
       try {
         require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method });
@@ -5236,6 +5459,9 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
       );
+      /* FIN-66 (M7a): a Mark-paid the books could not post yet WAITS in books_outbox — closed in this same transaction, else the retry books the payment just cleared */
+      if (cleared.rows.length && (await schema.hasTable('books_outbox')))
+        await require('../lib/books-store').outboxClose(db, entity_id, [req.params.chit_id], 'Mark paid was cleared before it posted.', { press: 'payment' });
       return cleared;
     });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
@@ -6932,6 +7158,7 @@ module.exports.sendBillCopyFor = sendBillCopyFor; /* OPS-83: tests/ops83-match-m
 module.exports.refOf = refOf; /* PLT-70: lib/limits asks the one reader whether a send carries a bill number */
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
+module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.cjs runs the credit gate with a mismatch and an owner override */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */

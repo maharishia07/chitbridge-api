@@ -21,4 +21,35 @@ const FIXTURES = [
   { id: 'credit-note', column: 'counter credit note (ACC-255: money null, negative sign)', detail_total: -1180, summary: { total_value: -1180, money: null }, taxable: null, total: -1180, placed: -1180 }
 ];
 
-module.exports = { FIXTURES };
+/**
+ * The ORDER rows (ACC-206 C2, the critic's point): a bill whose engine invoice is stored beside the header copies. FIXTURES above hold no
+ * business_json.invoice, so a swap of the pick order (invoice, then money, then total_value) could not be seen. `total` is the hand figure the
+ * one pick answers; `business` is the business_json the row carries. Kept apart from FIXTURES so the margin test's per-id hand table is unchanged.
+ */
+const invoiceOf = (total) => ({ invoice: { ValDtls: { TotInvVal: total } } });
+const INVOICE_FIXTURES = [
+  { id: 'invoice-only', column: 'invoice 189, no header money', summary: {}, business: invoiceOf(189), total: 189 },
+  { id: 'invoice-equals-money', column: 'invoice 189 = money 189 = total_value 189 (stamped)', summary: Object.assign({ total_value: 189, money: { taxable: 180, tax: 9, total: 189 } }, stamped), business: invoiceOf(189), total: 189 },
+  { id: 'invoice-differs-money', column: 'stamped mismatch (agree false): invoice 189, money 180, total_value 180', summary: Object.assign({ total_value: 180, money: { total: 180 } }, stamped), business: invoiceOf(189), total: 189 },
+  { id: 'invoice-beats-money', column: 'order: invoice 200 over money 189 over total_value 150', summary: { total_value: 150, money: { total: 189 } }, business: invoiceOf(200), total: 200 },
+  { id: 'money-zero', column: 'money.total 0 is a figure, not a gap (total_value 50)', summary: { total_value: 50, money: { total: 0 } }, business: null, total: 0 },
+  { id: 'money-string', column: 'money.total "189.00" (a plain decimal string)', summary: { total_value: 180, money: { total: '189.00' } }, business: null, total: 189 },
+  { id: 'junk-figure', column: 'total_value "x" and no money: not a number, no cast error', summary: { total_value: 'x' }, business: null, total: null },
+  { id: 'withheld-with-invoice', column: 'TR-6 copy that still holds an invoice: no figure', summary: { oversight: true, total_value: 189 }, business: invoiceOf(189), total: null }
+];
+
+/**
+ * The NOT-A-FIGURE rows (ACC-206 review): one rule for "is this stored value a number" in pickOf and in billTotalSql — a finite number or a plain signed decimal
+ * string. Number() would take every one of these as a figure (true as 1, "1e3" as 1000, [5] as 5, " 5", ".5", "+5", "0x10" as 16). Each is placed in each of the three
+ * copies; `total` is null (no figure), and a row where the junk copy sits above a real one answers the real one.
+ */
+const JUNK = [true, false, '1e3', [5], ' 5', '.5', '+5', '0x10', '5.', '--5', {}, ''];
+const JUNK_FIXTURES = [];
+JUNK.forEach((junk, i) => {
+  const tag = 'junk-' + i + '-' + JSON.stringify(junk);
+  JUNK_FIXTURES.push({ id: tag + '-total_value', column: 'top-level total_value ' + JSON.stringify(junk), summary: { total_value: junk }, business: null, total: null });
+  JUNK_FIXTURES.push({ id: tag + '-money', column: 'money.total ' + JSON.stringify(junk) + ' beside a real total_value 50', summary: { total_value: 50, money: { total: junk } }, business: null, total: 50 });
+  JUNK_FIXTURES.push({ id: tag + '-invoice', column: 'invoice TotInvVal ' + JSON.stringify(junk) + ' beside a real money.total 189', summary: { money: { total: 189 } }, business: invoiceOf(junk), total: 189 });
+});
+
+module.exports = { FIXTURES, INVOICE_FIXTURES, JUNK_FIXTURES };

@@ -17,6 +17,11 @@ const rowsFor = (sql, p) => sql.includes('FROM identity_documents')
   ? TABLE.filter((r) => r.scheme === p[0] && p[1].includes(r.value_hash) && r.status === 'verified').map((r) => ({ identity_id: r.identity_id }))
   : null;
 const fakeQuery = async (sql, p) => {
+  if (sql.includes('ops.signin_candidates') && p[0] === 'doc') { /* SEC-184: the definer lookup's doc kind: SCHEME:hash,hash */
+    const [scheme, list] = [p[1].split(':')[0], p[1].slice(p[1].indexOf(':') + 1).split(',')];
+    return { rows: TABLE.filter((r) => r.scheme === scheme && list.includes(r.value_hash) && r.status === 'verified').map((r) => ({ identity_id: r.identity_id })) };
+  }
+  if (sql.includes('identity_id = ANY(')) return { rows: p[0].map((id) => ({ identity_id: id, identity_type: 'entity' })) };
   if (sql.includes('SELECT country FROM identities')) return { rows: [{ country: 'IN' }] };
   const hit = rowsFor(sql, p || []); if (hit) return { rows: hit };
   if (sql.includes('FROM identities WHERE identity_id = $1')) return { rows: [{ identity_id: p[0], identity_type: 'entity' }] };

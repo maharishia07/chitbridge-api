@@ -125,7 +125,7 @@ async function pure() {
     report();
     return;
   }
-  console.log('\nB · Against the API (' + (process.env.CB_API || 'production') + ')');
+  console.log('\nB · Against the API (' + (process.env.CB_API || 'unset') + ')');
   /* ⚠️ ONLY AN INPUT CONTAINING "@" CREATES. A bare word is read as a handle or display name and must already
      exist — so registering "partialtest" returns "Entity not found", which reads like a broken endpoint rather
      than the lookup it actually is. Register with the ADDRESS. */

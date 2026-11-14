@@ -297,7 +297,7 @@ function listSuppliers(db, owner) {
               /* ⭐ lib/istest mayTradeSql — the ONE rule (b249 + on the rail); this was a second, handle-only copy of it */
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
-              i.gstn, i.country, i.policy_flags, i.currency_code AS supplier_money,
+              i.gstn, i.country, i.timezone AS supplier_timezone, i.policy_flags, i.currency_code AS supplier_money,
               /* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema
                  row exists; it counts as "has a catalogue — ask them", and GET /suppliers/:id/catalogue asks the far side
                  (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). */
@@ -335,9 +335,12 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
     const r = await withEntity(owner, (db) => listSuppliers(db, owner));
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
+    const zoneOfSupplier = {}; /* CAT-247: each supplier's own calendar zone for its offer windows, from the row already read (no extra trip); never sent */
     const rows = r.rows.map((x) => {
       const facts = factsOf(x);
       const o = Object.assign({}, x);
+      zoneOfSupplier[x.supplier_entity_id] = require('../lib/books-hooks').zoneOf({ timezone: x.supplier_timezone, country: x.country });
+      delete o.supplier_timezone;
       delete o.policy_flags;
       delete o.gstn;
       o.facts = facts;
@@ -371,7 +374,7 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
                 let p = null;
                 try {
                   p =
-                    eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => offerMoney(n, item.supplier_money), customer_groups: groups }) : null;
+                    eng && eng.promise ? eng.promise(x, { now: new Date(), timezone: zoneOfSupplier[item.supplier_entity_id], money: (n) => offerMoney(n, item.supplier_money), customer_groups: groups }) : null;
                 } catch (e) {
                   log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug');
                 }

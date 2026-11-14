@@ -168,6 +168,8 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   /* SEC-75 (b778, b779): written ahead of the migrations (b779 run 29 Oct); no code reads them context-free, so the guard stays quiet until one does */
   'supplier_list', 'governance_exceptions', 'cb_device', 'cb_external_reference', 'cb_entity_supplier', 'cb_contact', 'cb_entity_employee', 'cb_consumer_traction',
   /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
+  /* SEC-75/DB-103 (b855): the three either-side or own tables; catalogue_source, product_container, media_blobs are read-wide, so a bare READ is legitimate and they stay out (the offline scan covers their writes) */
+  'connections', 'connector_connection', 'dispute_participants',
   'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
@@ -356,6 +358,8 @@ function inlineSql(text, params) {
   if (/;\s*\S/.test(out.replace(/'[^']*'/g, ''))) throw new Error('readBatch: one statement per entry');
   return out;
 }
+/** OPS-27: true when the shop a statement will actually run under is non-blank — set_config rides in front of it, so RLS applies and the context-free tripwire must stay quiet; a null/empty/blank binding stays guarded */
+const scopedStatement = (bound) => !!String(bound == null ? '' : bound).trim();
 /**
  * ⭐ EFF-TRIPS (2026-10-15): a statement may name its OWN `entity` — `{ text, params, entity }`. A `SELECT set_config(
  * 'app.current_entity', <entity>, true)` rides in front of it (SET LOCAL, same transaction, one more statement on the
@@ -370,8 +374,10 @@ const readBatch = async (entityId, actorId, statements) => {
   try { require('../lib/trips').tick('batch'); } catch (_) {}
   const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
   const texts = [], at = [];
+  let bound = entityId;   /* the shop each statement really runs under: the batch's, until a statement switches it (the switch stays for the next ones) */
   statements.forEach((s) => {
-    rlsGuardCheck(s.text);
+    if (s.entity !== undefined && s.entity !== null) bound = String(s.entity);
+    if (!scopedStatement(bound)) rlsGuardCheck(s.text);   /* OPS-27: guarded unless the statement's OWN effective shop is non-blank */
     if (s.entity !== undefined && s.entity !== null) texts.push("SELECT set_config('app.current_entity', " + inlineLiteral(String(s.entity)) + ', true)');
     at.push(texts.length);
     texts.push(inlineSql(s.text, s.params));

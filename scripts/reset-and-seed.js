@@ -32,9 +32,9 @@ const ARGS = process.argv.slice(2);
 const has = (f) => ARGS.includes(f);
 const DRY = has('--dry-run') || !has('--go');
 const SKIP_WIPE = has('--skip-wipe');
-const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
+const API = require('../tests/lib/run-target.cjs').apiBase('reset-and-seed.js');
 const OTP = process.env.DEV_OTP || '123456';
-const WEB = API.replace('-api-production.up.railway.app', '-web.vercel.app');
+const WEB = process.env.CB_WEB || '(set CB_WEB)';
 const ADMIN_URL = (process.env.ADMIN_DATABASE_URL || '').trim();
 
 const B = (s) => '\x1b[1m' + s + '\x1b[0m',

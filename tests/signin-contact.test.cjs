@@ -67,7 +67,7 @@ function cond(c, params, r) {
   if ((m = c.match(/^(\w+) = \$(\d+)$/))) return r[m[1]] === P(params, m[2]);
   if ((m = c.match(/^(\w+) = '([^']*)'$/))) return r[m[1]] === m[2];
   if ((m = c.match(/^(\w+) IS NOT NULL$/))) return r[m[1]] != null;
-  if ((m = c.match(/^(\w+) = ANY\(\$(\d+)::text\[\]\)$/))) return (P(params, m[2]) || []).indexOf(r[m[1]]) >= 0;
+  if ((m = c.match(/^(\w+) = ANY\(\$(\d+)::(?:text|uuid)\[\]\)$/))) return (P(params, m[2]) || []).indexOf(r[m[1]]) >= 0;
   throw new Error('stub db: unknown condition ' + c);
 }
 const where = (rows, clause, params) => rows.filter((r) => splitTop(clause, ' AND ').every((c) => cond(c, params, r)));
@@ -79,6 +79,7 @@ function value(expr, params, row) { let m;
   if ((m = expr.match(/^COALESCE\((\w+), \$(\d+)\)$/i))) return row[m[1]] != null ? row[m[1]] : P(params, m[2]);
   throw new Error('stub db: unknown value ' + expr); }
 async function q(sql, params) { params = params || []; const s = String(sql).replace(/\s+/g, ' ').trim(); let m;
+{ const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => Object.values(DB), () => (typeof DOCS !== 'undefined' ? DOCS : [])); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
   if (/^INSERT INTO (signin_events|identities)/i.test(s)) return { rows: [], rowCount: 1 };
   if (/FROM (constitution|installation)\b/i.test(s) || /policy_flags/.test(s)) return { rows: [] };
   if ((m = s.match(/^SELECT DISTINCT identity_id FROM identity_documents WHERE (.+)$/i))) {

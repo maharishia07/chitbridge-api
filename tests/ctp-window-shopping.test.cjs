@@ -157,8 +157,9 @@ const note = (r, kind) => (r.calls.find((c) => c.via === kind) || {}).payload;
     h.state.calls = null;
     assert.strictEqual(queued.queued, 1, JSON.stringify(queued));
     assert.strictEqual(inserts.length, 1);
-    assert.strictEqual(inserts[0].params[6], B_FROM, 'addressed to the sender by bridge id');
-    assert.strictEqual(inserts[0].params[7], 'mx-1');
+    /* ONE statement carries every party: params 5..7 are the parties' arrays (entity ids, bridge ids, installation keys) */
+    assert.deepStrictEqual(inserts[0].params[6], [B_FROM], 'addressed to the sender by bridge id');
+    assert.deepStrictEqual(inserts[0].params[7], ['mx-1']);
   });
 
   console.log('\n== C · the repair ==\n');

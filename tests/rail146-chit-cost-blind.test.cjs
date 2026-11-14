@@ -283,7 +283,7 @@ function unitCases() {
   SCENE = { header: SALE };
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   sameRead('sale', owner, granted);
-  t('sale | blind: price, total and the header money stay', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.header.summary_json.money.total, blind.body.detail.total_value], [SECRET.price, owner.body.live_set[0].live.price, SECRET.money_total, String(SECRET.total)]);
+  t('sale | blind: price, total and the header money stay', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.header.summary_json.money.total, blind.body.detail.total_value], [SECRET.price, owner.body.live_set[0].live.price, SECRET.money_total, SECRET.money_total.toFixed(2)]); /* ACC-206 C4: the detail answer carries the header's one pick (money.total), not the old detail column (fixture: total_value 8485 beside money.total 9999.5, no stamps = a pre-2-Nov chit) */
   t('sale | blind: the cost-named keys still go; cost_hidden is ABSENT because no money was withheld', [costKeys(blind.body), blind.body.cost_hidden], [[], undefined]);
   t('sale | blind: exactly the owner\'s answer minus the cost-named keys', blind.body, stripNamed(owner.body));
 
@@ -316,14 +316,19 @@ function unitCases() {
     const blindArr = await call(port, p, BLIND);
     t(name + ' array form | refused 422 for owner and blind alike, no list statement ran', [ownerArr.status, blindArr.status, LAST_LIST_SQL], [422, 422, '']);
   }
+  /* the amount filter and the amount order as the statement now writes them: the ONE pick (counter-bill.billTotalSql), whose text names total_value */
+  const BLIND_AMOUNT_FILTER = /COALESCE\(\(CASE WHEN .*total_value.* END\),0\) (>=|<=)/;
+  const BLIND_AMOUNT_ORDER = /ORDER BY[^;]*(total_value|bill_total)/;
   for (const [p, name] of [['/api/chits/inbox?sort=amount&amount_min=100&amount_max=9000', 'inbox'], ['/api/chits/sent?sort=amount&dir=asc&amount_min=100', 'sent'], ['/api/chits/folder?view=archive&amount_max=9000', 'folder']]) {
     SCENE = { rows: [listRow(BILL)] };
     const ownerAsked = await call(port, p, OWNER);
     const ownerSql = LAST_LIST_SQL;
     const blindAsked = await call(port, p, BLIND);
     const blindSql = LAST_LIST_SQL;
-    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(ownerSql), /ORDER BY \(?.*total_value.*numeric/.test(ownerSql) || !/sort(\[\])?=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
-    t(name + ' oracle | blind: no amount filter, no amount order, and the ask named back', [blindAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(blindSql), /ORDER BY[^;]*total_value/.test(blindSql), (blindAsked.body.cost_params_ignored || []).slice().sort()], [200, false, false, p.split('?')[1].split('&').map((kv) => kv.split('=')[0].replace('[]', '')).filter((k) => k === 'amount_min' || k === 'amount_max' || k === 'sort').sort()]);
+    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, BLIND_AMOUNT_FILTER.test(ownerSql), BLIND_AMOUNT_ORDER.test(ownerSql) || !/sort(\[\])?=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
+    /* the blind negatives are only worth their name if the SAME patterns MATCH where the amount IS in the statement: the owner's (ACC-206 review: they named the old text and could never fail) */
+    t(name + ' oracle | the blind patterns match the owner statement, so a blind statement that kept the amount WOULD fail them', [BLIND_AMOUNT_FILTER.test(ownerSql) || !/amount_m/.test(p), BLIND_AMOUNT_ORDER.test(ownerSql) || !/sort(\[\])?=amount/.test(p), BLIND_AMOUNT_FILTER.test(ownerSql.replace(/CASE WHEN/g, 'CASE_WHEN')) ], [true, true, false]);
+    t(name + ' oracle | blind: no amount filter, no amount order, and the ask named back', [blindAsked.status, BLIND_AMOUNT_FILTER.test(blindSql), BLIND_AMOUNT_ORDER.test(blindSql), (blindAsked.body.cost_params_ignored || []).slice().sort()], [200, false, false, p.split('?')[1].split('&').map((kv) => kv.split('=')[0].replace('[]', '')).filter((k) => k === 'amount_min' || k === 'amount_max' || k === 'sort').sort()]);
   }
 
   /* 6 · the rollup: the blind actor's sum leaves out the supplier's bill, the count stays, the group says cost_hidden */

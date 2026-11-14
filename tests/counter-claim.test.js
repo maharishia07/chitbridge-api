@@ -68,7 +68,7 @@ it('a takeover releases the holder BEFORE it claims, in one transaction', () => 
   assert.ok(claim > 0, 'the claim no longer records the new holder');
   assert.ok(release < claim, 'the release happens after the claim — two keys would hold one counter');
   const inClaim = CLAIM.slice(CLAIM.indexOf('const claim = async'));
-  assert.ok(inClaim.indexOf('await releaseHolder(') > 0 && inClaim.indexOf('await releaseHolder(') < inClaim.indexOf('patchCounter(db, entity_id, want'), 'claim no longer calls releaseHolder before it records the new holder');
+  assert.ok(inClaim.indexOf('await releaseHolder(') > 0 && inClaim.indexOf('await releaseHolder(') < inClaim.indexOf('writeClaim(db, entity_id, want'), 'claim no longer calls releaseHolder before it records the new holder');
 });
 
 it('and the released key stops working at once', () => {
@@ -78,7 +78,7 @@ it('and the released key stops working at once', () => {
 
 it('the new key is told which counter it is, and where the run stopped', () => {
   assert.ok(/counter: want/.test(CLAIM), 'the key does not record its counter');
-  assert.ok(/issued: Number\(claimResult\.counter\.next\) > 1/.test(CLAIM),
+  assert.ok(/issued: Number\(counters\[want\]\.next\) > 1/.test(CLAIM), /* CTR-208: written by writeClaim, under the lock */
     'the key does not carry whether that counter has already issued numbers — the series could restart');
 });
 

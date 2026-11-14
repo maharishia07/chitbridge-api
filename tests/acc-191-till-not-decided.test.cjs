@@ -25,9 +25,9 @@ const NOT_DECIDED_LINE = SRC.split('\n').find((line) => line.startsWith('var NOT
 assert.ok(NOT_DECIDED_LINE, 'the page has one word for an undecided tax');
 const BODY = [NOT_DECIDED_LINE, grab('taxFigure'), grab('domesticFootHTML'), grab('perRateFootHTML'), grab('retRateOf'), grab('retMoney')].join('\n')
   + '\nreturn { taxFigure, domesticFootHTML, perRateFootHTML, retMoney, setReturn: function(bill, qty){ RET_FOR = bill; RET_QTY = qty; } };';
-const make = new Function('money', 'r2', 'schemeWord', 'invoiceRule', 'taxHeadWord', 'reducedNoteHTML', 'esc', 'retBack', 'retLeft',
+const make = new Function('money', 'r2', 'rmoney', 'schemeWord', 'invoiceRule', 'taxHeadWord', 'reducedNoteHTML', 'esc', 'retBack', 'retLeft',
   'var RET_FOR = null; var RET_QTY = {};\n' + BODY);
-const page = make((n) => '₹' + Number(n).toFixed(2), (n) => Math.round(n * 100) / 100, () => 'GST', () => null, () => 'GST', () => '', (v) => String(v),
+const page = make((n) => '₹' + Number(n).toFixed(2), (n) => Math.round(n * 100) / 100, (n) => Math.round(n * 100) / 100, () => 'GST', () => null, () => 'GST', () => '', (v) => String(v),
   () => ({ net: 0, taxable: 0, tax: 0, save: 0, gross: 0 }), () => 1000);
 const row = (label, value) => label + '=' + value + ';';
 

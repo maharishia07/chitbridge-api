@@ -140,7 +140,8 @@ function rowsFor(sql, p) {
   if (/pg_advisory_xact_lock/.test(s)) return [{}];
   if (/coalesce\(max\(seq\), 0\) \+ 1 AS seq FROM ctp_event_out/.test(s)) return [{ seq: Math.max(0, ...w.out.filter((r) => r.chit_id === p[0] && r.from_entity_id === p[1]).map((r) => r.seq)) + 1 }];
   if (/^INSERT INTO ctp_event_out/.test(s)) {
-    w.out.push({ chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: p[5], to_bridge_id: p[6], status: 'pending' });
+    /* ONE statement carries every party (unnest arrays in p[5..7]): one row per party, in order */
+    p[5].forEach((to, i) => w.out.push({ chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: to, to_bridge_id: p[6][i], status: 'pending' }));
     return [];
   }
   if (/^SELECT last_seq FROM ctp_event_in/.test(s)) return w.inw.filter((r) => r.chit_id === p[0] && r.remote === p[1] && r.entity === p[2]).map((r) => ({ last_seq: r.last_seq }));

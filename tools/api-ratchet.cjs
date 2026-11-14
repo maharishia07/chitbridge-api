@@ -33,8 +33,12 @@ const readJson = (file, fallback) => (fs.existsSync(file) ? JSON.parse(fs.readFi
 function registerOf(checkout) {
   const out = path.join(os.tmpdir(), 'api-register-' + process.pid + '-' + path.basename(checkout) + '.json');
   const generated = spawnSync(process.execPath, [path.join(__dirname, 'api-register.cjs'), '--root', checkout, '--json', out], { encoding: 'utf8' });
-  if (generated.status !== 0 || !fs.existsSync(out)) throw new Error('the register generator failed over ' + checkout + ': ' + String(generated.stderr || generated.stdout).slice(0, 600));
-  return JSON.parse(fs.readFileSync(out, 'utf8'));
+  try {
+    if (generated.status !== 0 || !fs.existsSync(out)) throw new Error('the register generator failed over ' + checkout + ': ' + String(generated.stderr || generated.stdout).slice(0, 600));
+    return JSON.parse(fs.readFileSync(out, 'utf8'));
+  } finally {
+    fs.rmSync(out, { force: true }); /* the temp register is read once; left behind it piled up (388 files in %TEMP% on 13 Nov) */
+  }
 }
 
 /**

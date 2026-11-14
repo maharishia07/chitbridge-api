@@ -61,17 +61,19 @@ console.log('\n-- ⚠️ nothing half-written --');
    record of what went missing. */
 t('every item is validated before anything is written',
   writer.indexOf('validateAgainst') > 0 && writer.indexOf('validateAgainst') < writer.indexOf('insertStamped('));
-t('  ...and a refusal names the failing indexes', /invalid: bad/.test(writer) && /index: i/.test(writer));
+t('  ...and a refusal names the failing indexes', /invalid: list/.test(writer) && /index: i/.test(writer));   /* the writer's list of { index, message } (was named bad) */
 t('  ...and writes nothing when any is bad',
-  /if \(bad\.length\)[\s\S]{0,200}return \{ ok: false, status: 400/.test(writer));
+  /if \(list\.length\)[\s\S]{0,260}return \{ ok: false, status: 400/.test(writer));
 
 console.log('\n-- ⚠️ the guards a write route needs --');
 t('it is authed', /router\.post\('\/bulk', auth/.test(bulk));
-t('the payload must be a non-empty array', /body\('items'\)\.isArray\(\{ min: 1 \}\)/.test(bulk));
-t('a request is capped', /BULK_MAX/.test(bulk) && /Too many/.test(bulk));
+/* the express-validator chain became the route's contract (lib/products-contract.js): items is a non-empty array, run by checked('POST /bulk') */
+const contractSrc = fs.readFileSync(API + '/lib/products-contract.js', 'utf8');
+t('the payload must be a non-empty array', /checked\('POST \/bulk'\)/.test(bulk) && /'POST \/bulk': \[\['items'\]\]/.test(contractSrc) && /'POST \/bulk':[^\n]*body: \{ items: nonEmpty\(\) \}/.test(contractSrc));
+t('a request is capped', /BULK_MAX/.test(bulk) && /words\.tooMany\(BULK_MAX\)/.test(bulk) && /Too many/.test(contractSrc));
 /* ⚠️ An array member that is an array still passes isArray on the parent — jsonb would take it and the schema
    would not. */
-t('every member must be an object', /typeof it === 'object' && !Array\.isArray\(it\)/.test(bulk));
+t('every member must be an object', /typeof item === 'object' && !Array\.isArray\(item\)/.test(bulk) && /words\.notObjects\(\)/.test(bulk));
 /* ⚠️ RLS: catalogue_items is a tenant table, so the insert must run inside withEntity. */
 t('the insert runs inside withEntity', /withEntity\(entity_id/.test(writer));
 
@@ -88,7 +90,7 @@ console.log('\n-- ⚠️ and the caller no longer loops --');
  * wizard: it was "no front end adds products one request at a time in a loop". That is asserted across the whole web
  * app now — app.html and every app/*.js — so the next screen that adds many products cannot quietly loop either.
  */
-const WEBP = require('path').join(API, '..', 'chitbridge-web', 'public');
+const WEBP = require('path').join(process.env.CB_WEB_DIR || require('path').join(API, '..', 'chitbridge-web'), 'public');
 const webFiles = [WEBP + '/app.html'].concat(fs.readdirSync(WEBP + '/app').filter((f) => /\.js$/.test(f)).map((f) => WEBP + '/app/' + f));
 const loops = [];
 for (const f of webFiles) {
@@ -108,7 +110,7 @@ t('the bulk status route exists', statusBulk.length > 0);
 t('only available and unavailable are accepted',
   /BULK_STATUS = \['available', 'unavailable'\]/.test(code));
 t('  ...and the refusal says where the other two live',
-  /retired and redundant need a per-item reason/.test(statusBulk));
+  /words\.bulkStatus\(BULK_STATUS\)/.test(statusBulk) && /retired and redundant need a per-item reason/.test(contractSrc));
 /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES. A bulk path that re-implements the stamp is how the bulk
    answer and the single answer start disagreeing about what "unavailable" recorded. */
 t('it stamps through itemstatus, not a copy', /itemstatus\.stamp\(/.test(statusBulk));
@@ -122,7 +124,7 @@ t('the schema is resolved ONCE', (bulkUpdate.match(/defaultSchemaId/g) || []).le
 t('the currency is resolved ONCE', (bulkUpdate.match(/currencyFor/g) || []).length === 1);
 /* ⭐ unnest pairs each id with its OWN new item_data — one statement, not one per row. */
 /* CAT-W1: the statement lives in the one product writer now (lib/catalogue-write.patchItems) */
-t('one statement pairs each id with its own data', /catwrite\.patchItems\(db, entity_id,\s*items\.map/.test(bulkUpdate)
+t('one statement pairs each id with its own data', /catwrite\.patchItems\(\s*db,\s*entity_id,\s*items\.map/.test(bulkUpdate)
   && /unnest\(\$1::uuid\[\], \$2::text\[\]/.test(fs.readFileSync(API + '/lib/catalogue-write.js', 'utf8')));
 t('every item is validated before anything is written',
   bulkUpdate.indexOf('validateItem') >= 0 && bulkUpdate.indexOf('validateItem') < bulkUpdate.indexOf('patchItems'));
@@ -133,13 +135,14 @@ const web2 = fs.readFileSync(WEBP + '/app.html', 'utf8');
 const webCode2 = web2.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const cat = webCode2.slice(webCode2.indexOf('async function prodCategoriseApply'),
                           webCode2.indexOf('function prodCatgFilter'));
-t('categorise sends one request', /prodBulkUpdate/.test(cat));
+t('categorise sends one request', /prodBulkCategories/.test(cat));   /* QA-122: the loop became ONE call to POST /categories/bulk (groupJob ep prodBulkCategories) */
 t('  ...and the per-product prodEdit loop is gone', !/await api\('prodEdit'/.test(cat));
 /* ⚠️ ATTACH IS ADDITIVE and removal is explicit — a bulk action that REPLACED the set would silently strip
    memberships that were never on screen. Matched loosely on whitespace: an assertion that also pins the
    formatting fails on a reformat and teaches everyone to distrust it. */
 t('  ...attach is still additive, removal still explicit',
-  /cur\.indexOf\(c\)\s*<\s*0/.test(cat) && /!B\.remove\.has\(c\)/.test(cat));
+  /change\.add\.some\(\(id\) => change\.remove\.indexOf\(id\) >= 0\)/.test(src) && /words\.categoryBothWays\(\)/.test(src)
+  && /categories\/bulk/.test(src) && /productCategories\.changeCategories\(/.test(src));   /* QA-122: the loop moved server side (POST /categories/bulk, lib/product-categories.js): add and remove are two explicit lists, never one id in both */
 t('availability is offered on the same ticked bar', /data-testid="cat-availability"/.test(web2));
 
 

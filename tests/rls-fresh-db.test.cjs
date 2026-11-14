@@ -135,11 +135,78 @@ async function checkCataloguePublicReadOnly(client) {
   }
 }
 
+/** SEC-75 + DB-103 (b855): the four tables that are not "a shop sees only its own". The owner plants rows (FK checks off); cb_app then reads, writes and deletes under
+ *  shop A (owner / sender), shop B (the other side or a subscriber) and shop C (a stranger). A write a policy hides touches 0 rows; a write it forbids raises. */
+async function checkSharedTables(client) {
+  const [A, B, C] = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
+  const u = () => crypto.randomUUID();
+  const run = (entity, sql, args) => asApp(client, entity, async () => (await client.query(sql, args)).rowCount);
+  const refuses = (entity, sql, args) =>
+    asApp(client, entity, async () => {
+      try {
+        await client.query('SAVEPOINT w');
+        await client.query(sql, args);
+        return false;
+      } catch (e) {
+        return /row-level security/i.test(e.message);
+      }
+    });
+  const cx = u(), srcA = 'probe-' + u(), srcN = 'probe-' + u(), conA = 'probe-' + u(), mediaA = A + '/probe-' + u();
+  await client.query('BEGIN');
+  await client.query("SET LOCAL session_replication_role = 'replica'");
+  await client.query(
+    "INSERT INTO connections (connection_id, from_entity_id, from_display_name, from_bridge_id, to_entity_id, to_display_name, to_bridge_id) VALUES ($1,$2,'a','a',$3,'b','b')",
+    [cx, A, B]
+  );
+  await client.query('INSERT INTO catalogue_source (source_key, owner_entity_id) VALUES ($1,$2), ($3,NULL)', [srcA, A, srcN]);
+  await client.query('INSERT INTO product_container (container_id, owner_entity_id) VALUES ($1,$2)', [conA, A]);
+  await client.query("INSERT INTO media_blobs (key, entity_id, bytes) VALUES ($1,$2,'\\x00')", [mediaA, A]);
+  await client.query('COMMIT');
+  try {
+    const seen = (entity) => run(entity, 'SELECT 1 FROM connections WHERE connection_id = $1', [cx]);
+    const answer = (entity) => run(entity, "UPDATE connections SET status = 'accepted' WHERE connection_id = $1", [cx]);
+    const remove = (entity) => run(entity, 'DELETE FROM connections WHERE connection_id = $1', [cx]);
+    check('connections: no shop context sees nothing', (await seen(null)) === 0);
+    check('connections: the sender and the receiver both see the row', (await seen(A)) === 1 && (await seen(B)) === 1);
+    check('connections: a stranger sees nothing', (await seen(C)) === 0);
+    check('connections: a stranger and the sender cannot answer the request', (await answer(C)) === 0 && (await answer(A)) === 0);
+    check('connections: the receiver can answer', (await answer(B)) === 1);
+    check('connections: nobody deletes (no policy)', (await remove(A)) === 0 && (await remove(B)) === 0);
+    check(
+      "connections: a shop cannot file a request in another shop's name",
+      await refuses(C, "INSERT INTO connections (from_entity_id, from_display_name, from_bridge_id, to_entity_id, to_display_name, to_bridge_id) VALUES ($1,'x','x',$2,'y','y')", [A, B])
+    );
+    const shared = [
+      ['catalogue_source', 'source_key', 'owner_entity_id', srcA, 'INSERT INTO catalogue_source (source_key, owner_entity_id) VALUES ($1,$2)', () => ['probe-' + u(), A]],
+      ['product_container', 'container_id', 'owner_entity_id', conA, 'INSERT INTO product_container (container_id, owner_entity_id) VALUES ($1,$2)', () => ['probe-' + u(), A]],
+      ['media_blobs', 'key', 'entity_id', mediaA, "INSERT INTO media_blobs (key, entity_id, bytes) VALUES ($1,$2,'\\x00')", () => [A + '/probe-' + u(), A]]
+    ];
+    for (const [table, keyCol, ownerCol, key, insertSql, insertArgs] of shared) {
+      const read = (entity) => run(entity, 'SELECT 1 FROM ' + table + ' WHERE ' + keyCol + ' = $1', [key]);
+      const rewrite = (entity) => run(entity, 'UPDATE ' + table + ' SET ' + ownerCol + ' = $2 WHERE ' + keyCol + ' = $1', [key, entity]);
+      check(table + ': every shop can read it (read-wide)', (await read(B)) === 1 && (await read(C)) === 1);
+      check(table + ': another shop cannot update it (0 rows)', (await rewrite(B)) === 0);
+      check(table + ': another shop cannot delete it (0 rows)', (await run(B, 'DELETE FROM ' + table + ' WHERE ' + keyCol + ' = $1', [key])) === 0);
+      check(table + ": another shop cannot insert a row in the owner's name (WITH CHECK)", await refuses(B, insertSql, insertArgs()));
+      check(table + ': no shop context cannot write', await refuses(null, insertSql, insertArgs()));
+      check(table + ': the owner can update and delete its own row', (await rewrite(A)) === 1 && (await run(A, 'DELETE FROM ' + table + ' WHERE ' + keyCol + ' = $1', [key])) === 1);
+    }
+    const claim = 'UPDATE catalogue_source SET owner_entity_id = $2 WHERE source_key = $1';
+    check('catalogue_source: a shop may claim an ownerless row, and only for itself', (await run(B, claim, [srcN, B])) === 1 && (await refuses(B, claim, [srcN, A])));
+  } finally {
+    await client.query('DELETE FROM connections WHERE connection_id = $1', [cx]);
+    await client.query('DELETE FROM catalogue_source WHERE source_key = ANY($1::text[])', [[srcA, srcN]]);
+    await client.query('DELETE FROM product_container WHERE container_id = $1', [conA]);
+    await client.query('DELETE FROM media_blobs WHERE key = $1', [mediaA]);
+  }
+}
+
 /** every table the baseline marks with a `fix` is forced here, has a policy, and passes the two-shop probe */
 async function checkClosedTables(client, census) {
   for (const table of Object.keys(baseline).filter((n) => baseline[n].fix)) {
     const row = census.get(table) || {};
     check(table + ': FORCE RLS and a policy on a database built from migrations/', !!row.rls && !!row.forced && row.policies > 0);
+    if (PROBES[table] && PROBES[table].shared) continue; /* proved by checkSharedTables */
     if (PROBES[table]) await checkClosedTable(client, table, PROBES[table]);
     else check(table + ': has a probe-row recipe in tests/rls-sec75-tables.cjs', false);
   }
@@ -155,6 +222,7 @@ async function checkClosedTables(client, census) {
     await checkClosedTables(client, census);
     await checkIsolation(client);
     await checkCataloguePublicReadOnly(client);
+    await checkSharedTables(client);
   } finally { client.release(); await pool.end(); }
   console.log('\n  ' + checks + ' checks');
   process.exit(failed ? 1 : 0);

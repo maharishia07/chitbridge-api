@@ -1,9 +1,16 @@
+/**
+ * prove-verify.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-verify.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /** @covers FR-T2 — a well-formed registry ID is not treated as verified without a provider */
 // prove-verify.js — LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID
 // is accepted but is NOT "verified" — it is a format-checked claim (rung 'declared'). A malformed ID is refused (422).
 // The 'verified' rung is reserved for a real registry confirmation (set CB_KYB_PROVIDER + keys to make it real).
 // Run AFTER b92.  node scripts/prove-verify.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-verify.js');
 let P = 0,
   F = 0;
 const chk = (n, ok, d) => {

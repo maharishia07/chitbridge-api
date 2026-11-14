@@ -41,7 +41,7 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
       /* SEC-SMALL: IAM audit rows this process could not write since boot (lib/access-events.lostCount) — a reviewer wants to see 0 */
       audit_lost: require('../lib/access-events').lostCount(),
       /* ACC-206 B: support tickets this process raised for a money mismatch since boot (lib/money-check) — cb-health reads it daily; anything above 0 is our defect to find */
-      money_mismatch: require('../lib/money-check').count(), ...require('../lib/books-reconcile').health() /* ACC-266: books_unposted · books_unposted_oldest_s · books_reconcile_age_s · swallow counters */,
+      money_mismatch: require('../lib/money-check').count(), ...require('../lib/send-money').absentCounts() /* CTR-246: send_bridge_absent · send_heads_absent — bills passed from an old till build; 0 for 14 days → the check tightens */, ...require('../lib/books-reconcile').health() /* ACC-266: books_unposted · books_unposted_oldest_s · books_reconcile_age_s · swallow counters */,
       /* S34: keys the output allow-list would drop (OUTPUT_ALLOWLIST=report, the default) or dropped (enforce) since boot — Athi switches production to enforce after 7 days at 0 */
       output_dropped: require('../lib/output-allowlist').droppedCount(),
       /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.

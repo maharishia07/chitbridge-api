@@ -1,6 +1,13 @@
+/**
+ * container-wiring.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/container-wiring.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // container-wiring.js — STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container
 // ref + version → verifiable forever even after the source enhances. Needs b78 + b80. Run: node scripts/container-wiring.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('container-wiring.js');
 let P = 0,
   F = 0;
 function chk(n, ok, d) {

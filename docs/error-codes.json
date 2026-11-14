@@ -362,6 +362,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_BOUND",
+   "status": "400",
+   "title": "A line is too large",
+   "shopkeeper": "A line has a quantity, a price or a total above the most a line can hold.",
+   "hint": "Check the quantity and the price; send smaller figures.",
+   "owner_area": "tax",
+   "since": "2026-11-13"
+  },
+  {
    "code": "BAD_CHANNEL",
    "status": "400",
    "title": "Bad channel",
@@ -434,6 +443,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_LINE",
+   "status": "400",
+   "title": "A line is not a line",
+   "shopkeeper": "A line in the list is not an object (it is empty, a number or text).",
+   "hint": "Send each line as an object with a name, a quantity and a price.",
+   "owner_area": "tax",
+   "since": "2026-11-13"
+  },
+  {
    "code": "BAD_LINE_ID",
    "status": "400",
    "title": "Invalid line id",
@@ -482,7 +500,7 @@
    "code": "BAD_PRICE",
    "status": "400",
    "title": "Price below zero or not a number",
-   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line.",
+   "shopkeeper": "A line, on a quote, on a chit being sent, on the pricing service (also a pricing structure amount, minimum, maximum or tier price) or on the offers service (also a missing price), has a price below 0, a price or discount that is not a number, or a discount (with any offers) larger than the line.",
    "hint": "Send a price of 0 or more, as a number, and a discount no larger than the line.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -500,7 +518,7 @@
    "code": "BAD_QTY",
    "status": "400",
    "title": "Quantity not above zero or not a number",
-   "shopkeeper": "A line, on a quote or on a chit being sent, needs a quantity above 0, as a number.",
+   "shopkeeper": "A line, on a quote, on a chit being sent, on the pricing service or on the offers service, needs a quantity above 0, as a number.",
    "hint": "Send a quantity above 0 on every line, as a number.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -611,6 +629,15 @@
    "shopkeeper": "Only the owner or the shop's auditor may read the returns.",
    "hint": "Ask the owner.",
    "owner_area": "books",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "BRIDGE_MISSING",
+   "status": "409",
+   "title": "The tax check figures are missing",
+   "shopkeeper": "This bill arrived without its tax check figures, so it was not saved.",
+   "hint": "Reload the counter and make the bill again; we have been told and no override exists.",
+   "owner_area": "chits",
    "since": "2026-11-13"
   },
   {
@@ -884,6 +911,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_REPLAY_DIFFERS",
+   "status": "409",
+   "title": "Bill number holds another sale",
+   "shopkeeper": "That bill number was already recorded for a different sale.",
+   "hint": "The bill stays on this counter, unsent; nothing is lost.",
+   "owner_area": "chits",
+   "since": "2026-11-13"
+  },
+  {
    "code": "CHIT_TOO_MANY",
    "status": "400",
    "title": "Too many at once",
@@ -909,6 +945,15 @@
    "hint": "Try again after the next update.",
    "owner_area": "chits",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_VOIDED",
+   "status": "409",
+   "title": "This bill was withdrawn",
+   "shopkeeper": "This bill is withdrawn or rejected, so it cannot be marked paid.",
+   "hint": "Open the bill to see its status.",
+   "owner_area": "chits",
+   "since": "2026-11-12"
   },
   {
    "code": "CHOOSE_IDENTITY",
@@ -2756,6 +2801,96 @@
    "since": "2026-10-22"
   },
   {
+   "code": "LEASE_COUNTER_BUSY",
+   "status": "503",
+   "title": "Invoice numbers busy",
+   "shopkeeper": "The invoice numbers are busy for a moment. Nothing was taken.",
+   "hint": "Try again in a few seconds.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_FOR_COUNTRY",
+   "status": "409",
+   "title": "No block of numbers for this shop",
+   "shopkeeper": "This shop's invoice numbers are not issued by blocks, so no block was given.",
+   "hint": "Keep numbering invoices as the counter does today.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_FOUND",
+   "status": "404",
+   "title": "Block not found",
+   "shopkeeper": "That block of invoice numbers is not one of this shop's.",
+   "hint": "Open the day close and pick a block from the list.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_READY",
+   "status": "409",
+   "title": "Invoice blocks not switched on",
+   "shopkeeper": "Invoice number blocks are not switched on for this shop yet.",
+   "hint": "Ask support to switch them on.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NOT_YOUR_COUNTER",
+   "status": "403",
+   "title": "Not your counter",
+   "shopkeeper": "A counter can only ask for its own invoice numbers.",
+   "hint": "Ask from the counter that will print them.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NUMBER_NOT_IN_LEASE",
+   "status": "409",
+   "title": "Number not in the block",
+   "shopkeeper": "A number you named as unused is not in this block.",
+   "hint": "Check the number on the day close list.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_NUMBER_WAS_USED",
+   "status": "409",
+   "title": "Number is on an invoice",
+   "shopkeeper": "That number is already on an invoice, so it cannot be called unused.",
+   "hint": "Name only numbers that were not printed.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_REASON_INVALID",
+   "status": "400",
+   "title": "Reason not accepted",
+   "shopkeeper": "The reason must be void, unused or retired.",
+   "hint": "Pick one of the three and save again.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_TILL_UNKNOWN",
+   "status": "404",
+   "title": "Counter not found",
+   "shopkeeper": "That counter is not one of this shop's counters, so no block was given.",
+   "hint": "Ask from a counter this shop has connected.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
+   "code": "LEASE_WANT_INVALID",
+   "status": "400",
+   "title": "Block size not accepted",
+   "shopkeeper": "Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50.",
+   "hint": "Change the number and ask again.",
+   "owner_area": "till",
+   "since": "2026-11-13"
+  },
+  {
    "code": "LEDGER_OFF",
    "status": "404",
    "title": "Ledger switched off",
@@ -3861,6 +3996,24 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PRICE_MOVED",
+   "status": "409",
+   "title": "Prices have moved",
+   "shopkeeper": "Some items in this draft changed in the catalogue after the draft was made. Nothing was sent.",
+   "hint": "Use the new prices, or send it as drafted when only a price moved.",
+   "owner_area": "chits",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "PRICING_KIND_UNKNOWN",
+   "status": "400",
+   "title": "Pricing structure not known",
+   "shopkeeper": "A line names a pricing structure we do not know. The kinds are fixed, tiered and range.",
+   "hint": "Use fixed, tiered or range, or send the line without a structure to use the list price.",
+   "owner_area": "pricing",
+   "since": "2026-11-13"
   },
   {
    "code": "PRIVACY_NOT_MIGRATED",

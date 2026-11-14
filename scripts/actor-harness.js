@@ -1,6 +1,13 @@
+/**
+ * actor-harness.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/actor-harness.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // ACTOR-perspective harness. Invariants: (1) NOTHING shared between entities; (2) NOTHING private to an actor
 // except drafts. Creates two actors under Alpha (Ana, Bob), logs in as each, and checks sharing/isolation.
-const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const BASE = require('../tests/lib/run-target.cjs').apiBase('actor-harness.js');
 const ALPHA = 'Alpha Timbers',
   BETA = 'Beta Traders',
   ALPHA_ID = '71373522-147e-4a75-966a-73de3d8bf045',

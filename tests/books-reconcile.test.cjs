@@ -277,6 +277,18 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     restoreLog();
     require.cache[dbPath] = saved[0]; if (saved[1]) require.cache[tcPath] = saved[1]; else delete require.cache[tcPath];
     ok('copies the reader could not build come back in `dropped`, by chit id (ledger.count + dropped.length = copies read)', !why && Array.isArray(r.dropped) && r.dropped.length === 2 && r.dropped.indexOf(A) >= 0 && r.ledger.count === 0, why || JSON.stringify([r && r.dropped, r && r.ledger && r.ledger.count]));
+    /* ACC-302 (critic): a FLAKY read, business_json throws on the first ask (the expense check) and reads fine after, must still come back in `dropped`, never as a bill that lost its ITC in silence */
+    const C = cid(), D = cid();
+    const flaky = (id) => { let n = 0; return { chit_id: id, entity_id: SHOP, sender_entity_id: SHOP, purpose: 'expense', created_at: ago(3600000), sent_at: ago(3600000), line_items: [], get business_json() { if (n++ === 0) throw new Error('timeout exceeded when trying to connect'); return { expense: { what: 'Rent', amount: 100, mode: 'cash' } }; } }; };
+    const good = { chit_id: D, entity_id: SHOP, sender_entity_id: SHOP, purpose: 'order', created_at: ago(3600000), sent_at: ago(3600000), line_items: [], business_json: {} };
+    require.cache[dbPath] = { exports: { query: async () => ({ rows: [{ gstn: '33AAAAA0000A1Z5', display_name: 'S', timezone: 'Asia/Kolkata', country: 'IN', policy_flags: {} }] }), withEntity: async (e, fn) => fn({ query: async () => ({ rows: [flaky(C), good] }) }) } };
+    delete require.cache[tcPath];
+    const quiet2 = quiet();
+    let r2, why2 = null;
+    try { r2 = await require(tcPath).ledgerFor(SHOP, new Date(NOW).toISOString().slice(0, 7)); } catch (e) { why2 = e.message; }
+    quiet2();
+    require.cache[dbPath] = saved[0]; if (saved[1]) require.cache[tcPath] = saved[1]; else delete require.cache[tcPath];
+    ok('a copy unreadable only on the first ask is still NAMED in `dropped`', !why2 && r2.dropped.indexOf(C) >= 0, why2 || JSON.stringify(r2 && r2.dropped));
   });
 
 

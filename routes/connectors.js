@@ -18,6 +18,8 @@ const router = express.Router();
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withEntity } = require('../db');
+/* SEC-75/DB-103: connector_connection is under RLS (b855), so every statement on it is bound to the shop: queryAsShop(shop, sql, params) */
+const queryAsShop = (entity, text, params) => withEntity(entity, (bound) => bound.query(text, params));
 const { safeErr } = require('../lib/respond');
 const storage = require('../lib/storage');
 const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution seam — resolve-before-act
@@ -63,6 +65,49 @@ const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH; /* ⭐ one bound, dec
  */
 const stableStringify = (v) => require('../lib/canon').canon(v);
 const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
+
+/**
+ * CON-159 · the replay key of POST /ingest: the caller's Idempotency-Key header, else the body's event_id (CloudEvents: source + id, the source being this device, so its bridge_id is part of the key).
+ * No key = null = no dedupe: a sensor reading is an event, and byte-identical readings seconds apart are real. Never the payload hash (claimReceipt hashFallback:false).
+ */
+function ingestReplayKey(req, bridge_id) {
+  const header = String(req.get('idempotency-key') || '').trim();
+  if (header) return header;
+  const eventId = req.body.event_id ? String(req.body.event_id).trim() : '';
+  return eventId ? 'event:' + (bridge_id || '') + '|' + eventId : null;
+}
+/** claim the receipt of one reading (lib/erp-receipt, the same seam as /erp-ingest): the claim ({ receipt_id } or null when no key was sent), or null after answering a replay (200) or a refusal (422 · 409 · 503) */
+async function claimIngestReceipt(req, res, actor, bridge_id) {
+  const claim = await claimReceipt({ entityId: actor.parent_entity_id, actorId: actor.identity_id, docType: 'device_signal', docRef: null, payloadHash: hashPayload(req.body), idempotencyKey: ingestReplayKey(req, bridge_id), hashFallback: false });
+  if (claim.state === 'duplicate') return void res.json(ingestReplay(claim.held));
+  const refusal = erpReceiptRefusal({ state: claim.state }, actor);
+  return refusal ? void problem(req, res, refusal) : claim;
+}
+/** the outcome of one reading's receipt; a failed receipt is claimed again by the device's retry. Never throws: the chit is already made or refused */
+async function settleIngestReceipt(entityId, receiptId, outcome, chitId) {
+  if (!receiptId) return;
+  try {
+    await finishReceipt(entityId, receiptId, outcome, chitId);
+  } catch (e) {
+    log.warn('connectors.ingest: the receipt outcome was not written', { receipt: receiptId, why: String((e && e.message) || e).slice(0, 200) });
+  }
+}
+/** the edge image (base64) of a reading, attached to its chit for every participant (PER-ENTITY, b66); bytes are fetched on demand via GET /api/attachments/:id → { proof_id, proof_err } */
+async function attachIngestProof(req, actor, chit_id, participants) {
+  try {
+    const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
+    if (buf.length === 0 || buf.length > 6 * 1024 * 1024) return { proof_id: null, proof_err: null };
+    const proof_id = await storage.putForParticipants({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200), mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf, uploaded_by: actor.identity_id, participants, forEntity: actor.parent_entity_id });
+    return { proof_id, proof_err: null };
+  } catch (e) {
+    log.warn('connectors.ingest: the signal chit was raised but its proof was not kept', { why: String((e && e.message) || e).slice(0, 200) });
+    return { proof_id: null, proof_err: INGEST_NOTES.proofNotKept };
+  }
+}
+/** the 200 of a replay: the first call's chit, marked as a replay the way /erp-ingest marks it (message 'duplicate', idempotent true) */
+function ingestReplay(held) {
+  return { message: 'duplicate', health: 'live', last_seen: new Date().toISOString(), chit_id: held.chit_id || null, proof_id: null, filed: null, file_err: null, proof_err: null, note: 'A replay of a reading already received: no second chit.', assigned: null, money_why: null, receipt_id: held.receipt_id || null, idempotent: true };
+}
 /**
  * ⭐ THE ONE health(last_seen) of a connector: never / stale >15m = offline, >3m = slow, else live. The co-assist rail (here) and the
  * kit's status (routes/integrations.js) read THIS function — a second copy is how two screens disagree about one kit (T2-HONEST).
@@ -539,7 +584,8 @@ router.post(
     body('folder').optional().trim().isLength({ max: 80 }),
     body('bridge_id').optional().trim(),
     body('unit').optional().trim().isLength({ max: 16 }),
-    body('device_id').optional().trim().isLength({ max: 64 })
+    body('device_id').optional().trim().isLength({ max: 64 }),
+    body('event_id').optional().trim().isLength({ max: 128 })
   ],
   validateAsProblem,
   ...checked('POST /ingest'),
@@ -554,7 +600,7 @@ router.post(
       // Resolve the device/connection when a BridgeId is given — it must belong to THIS actor and be enabled.
       let conn = null;
       if (bridge_id) {
-        const cr = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+        const cr = await queryAsShop(entity_id, `SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
         conn = cr.rows[0] || null;
         if (!conn) return problem(req, res, { status: 404, ...words.unknownDevice() });
         if (conn.enabled === false) return problem(req, res, { status: 409, ...words.deviceOff() });
@@ -562,7 +608,7 @@ router.post(
 
       // (2) HEARTBEAT — health goes live for the Pi (and this device). Saved independently of the chit emit below.
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
-      if (bridge_id) await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+      if (bridge_id) await queryAsShop(entity_id, `UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
 
       // (3) EMIT the exception as a co-held chit — a SELF-CHIT filed into the device's FOLDER, CC the partner if set.
       //     A pure liveness ping can pass heartbeat_only=true to refresh health WITHOUT raising a chit (no inbox flood).
@@ -580,6 +626,7 @@ router.post(
         filed = null,
         file_err = null,
         proof_err = null,
+        claimedReceipt = null,
         assigned = null,
         money_why = null;
       /* ⚠️ SEC3: `to` (or the configured counterparty) must be the shop or one of its own parties — before anything is minted */
@@ -590,6 +637,9 @@ router.post(
       if (req.body.heartbeat_only) {
         note = 'Heartbeat only — health refreshed, no chit raised.';
       } else {
+        const claim = await claimIngestReceipt(req, res, actor, bridge_id);
+        if (!claim) return undefined; /* a replay or a refusal was answered */
+        claimedReceipt = claim.receipt_id || null;
         try {
           const emit = await emitSignalChit({
             entity_id,
@@ -610,33 +660,14 @@ router.post(
             bridge_id
           });
           chit_id = emit.chit_id;
+          await settleIngestReceipt(entity_id, claimedReceipt, 'processed', chit_id);
           filed = emit.folder_id;
           file_err = emit.folder_error;
           assigned = emit.assigned_to;
           money_why = emit.money_why; // filed = folder it landed in; assigned = resolved default-assignee (if any)
-          // PROOF — attach the edge image (base64) to the chit; bytes fetched on demand via GET /api/attachments/:id.
-          if (chit_id && req.body.proof) {
-            try {
-              const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
-              if (buf.length > 0 && buf.length <= 6 * 1024 * 1024) {
-                // PER-ENTITY: replicate the proof to every participant (owner + CC) — each holds its own copy.
-                proof_id = await storage.putForParticipants({
-                  chit_id,
-                  name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200),
-                  mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120),
-                  size: buf.length,
-                  buffer: buf,
-                  uploaded_by: actor.identity_id,
-                  participants: emit.participants,
-                  forEntity: entity_id
-                });
-              }
-            } catch (e) {
-              proof_err = INGEST_NOTES.proofNotKept;
-              log.warn('connectors.ingest: the signal chit was raised but its proof was not kept', { why: String((e && e.message) || e).slice(0, 200) });
-            }
-          }
+          if (chit_id && req.body.proof) ({ proof_id, proof_err } = await attachIngestProof(req, actor, chit_id, emit.participants));
         } catch (e) {
+          await settleIngestReceipt(entity_id, claimedReceipt, 'failed', null);
           /* ⚠️ SEC3: NOT a 200. The agent moves a 2xx event to sent/ — a 200 here lost the event for good. The real status, with a
              code; the device keeps the event and retries. A refusal the database makes on purpose keeps its own words (lib/knownerr). */
           log.error('connectors.ingest: signal chit not delivered — the device keeps the event', {
@@ -659,7 +690,9 @@ router.post(
         proof_err,
         note,
         assigned,
-        money_why
+        money_why,
+        receipt_id: claimedReceipt,
+        idempotent: false /* CON-159: the same two keys a replay carries, so the 200 has ONE shape */
       });
     } catch (err) {
       problem(req, res, failed(err, req, 'Ingest failed'));
@@ -779,7 +812,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
 router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
-    const r = await db(
+    const r = await queryAsShop(entity_id,
       `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at,
               (SELECT COUNT(*) FROM connector_connection cc WHERE cc.actor_id = identities.identity_id) AS connection_count
          FROM identities
@@ -805,7 +838,7 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
-    const conns = await db(`SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [
+    const conns = await queryAsShop(entity_id, `SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [
       actor.identity_id,
       entity_id
     ]);
@@ -912,7 +945,7 @@ router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()
     if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
     if (req.body && req.body.bridge_id)
-      await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
+      await queryAsShop(entity_id, `UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
     res.json({ message: 'pong', last_seen: new Date().toISOString(), health: 'live' });
   } catch (err) {
     problem(req, res, failed(err, req, 'Ping failed'));
@@ -946,7 +979,7 @@ router.post(
       const retention = req.body.retention || 'never_persist';
       const config = req.body.config || {}; // IoT: {protocol,host,port,topic,device_id} · ERP: {path}
       const bridge_id = generateBridgeId();
-      const r = await db(
+      const r = await queryAsShop(entity_id,
         `INSERT INTO connector_connection
            (actor_id, entity_id, direction, ref, schema_ref, counterparty_entity_id, retention, bridge_id, conn_config)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
@@ -966,7 +999,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     const actorHealth = health(actor.last_seen);
-    const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
+    const r = await queryAsShop(entity_id, `SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
     const connections = r.rows.map((item) => ({ ...item, signal: actorHealth === 'offline' ? 'no_signal' : health(item.last_seen) }));
     res.json(
@@ -995,7 +1028,7 @@ router.patch(
       if (!fitsBigint(req.params.connId)) return problem(req, res, { status: 404, ...words.notFound() });
       const actor = await ownedConnector(req.params.actorId, entity_id);
       if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
-      const r = await db(
+      const r = await queryAsShop(entity_id,
         `UPDATE connector_connection SET enabled = $1
           WHERE connection_id = $2 AND actor_id = $3 AND entity_id = $4 RETURNING *`,
         [req.body.enabled, req.params.connId, actor.identity_id, entity_id]
@@ -1016,7 +1049,7 @@ router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], 
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return problem(req, res, { status: 404, ...words.noSuchConnector() });
-    const cc = await db(`SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
+    const cc = await queryAsShop(entity_id, `SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
     if (cc.rows[0].n > 0) return problem(req, res, { status: 409, ...words.hasDevices(cc.rows[0].n) });
     try {
       await db(`DELETE FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [

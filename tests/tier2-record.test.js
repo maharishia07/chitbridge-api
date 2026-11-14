@@ -24,7 +24,7 @@ t('2.1 · a negotiation is purpose "offer" with NO total_value', () => {
   // with no currency (help desk / form) also stopped carrying a total, so the literal moved while the PROPERTY —
   // an offer carries no settled total — held and got stronger. Assert the property.
   /* 2026-09-27: the rounding became money.round(total) (SPEC-money-one-reader.md) — the PROPERTY is unchanged */
-  assert.match(ROUTE, /total_value: \(!monetary \|\| negotiation\) \? null : money\.round\(total\)/,
+  assert.match(ROUTE, /total_value: !monetary \|\| negotiation \? null : money\.round\(total\)/,
     'an offer, and anything non-monetary, must carry no settled total');
   assert.match(ROUTE, /const monetary = oi\.pipeline === 'commerce'/, 'monetary must be derived from the pipeline, not a new flag');
 });
@@ -118,14 +118,14 @@ t('2.3 · captured values are scalars, length-capped, and an unresolvable allow-
   assert.match(ROUTE, /if \(v === null \|\| typeof v === 'object'\) continue;/, 'objects must not ride onto the chit');
   assert.match(ROUTE, /String\(v\)\.slice\(0, 200\)/, 'values must be capped');
   /* T2-HONEST: still fails closed — and now logs the failure first (log.fellBack) */
-  assert.match(ROUTE, /catch \((_|e)\) \{ (\w+\.fellBack\('[^']*', e\); )?captured = \{\}; \}/, 'failing to resolve the allow-list must fail CLOSED');
+  assert.match(ROUTE, /catch \((_|e)\) \{\s*(\w+\.fellBack\('[^']*', e\);\s*)?captured = \{\};\s*\}/, 'failing to resolve the allow-list must fail CLOSED');
 });
 t('2.3 · the allow-list reads the right key — `field`, not `key`', () => {
   // captureFieldsForEntity returns [{field, standard, facet, title}]. Reading `key` yields an EMPTY allow-list,
   // which silently drops every captured field instead of failing loudly. This caught exactly that during the build.
   const conf = fs.readFileSync(path.join(__dirname, '..', 'lib', 'conformance.js'), 'utf8');
   assert.match(conf, /out\.push\(\{ field: f,/, 'conformance still returns `field`');
-  assert.match(ROUTE, /f\.field \|\| f\.key/, 'the route must read `field` first');
+  assert.match(ROUTE, /(?:f|item)\.field \|\| (?:f|item)\.key/, 'the route must read `field` first');
 });
 
 // ── 2.5 · an undeclared field must never be carried, on EITHER pipeline ───────────────────────────────────────
@@ -140,8 +140,11 @@ t('2.5 · an item with NO declared combinations rejects one instead of storing i
 // ── T1.1 follow-up · a declaration that cannot be enforced must be REFUSED at save time ───────────────────────
 t('face save rejects a declaration using unsupported keywords', () => {
   const faceRoute = fs.readFileSync(path.join(__dirname, '..', 'routes', 'catalogue-face.js'), 'utf8');
-  assert.match(faceRoute, /Declaration not supported/, 'the owner must be told at the moment they write it');
-  assert.match(faceRoute, /for \(const it of \(Array\.isArray\(face\.items\)/, 'per-ITEM declarations must be checked too');
+  /* QA-122: the save is still refused at the moment of writing, now in two steps: declarationErrors() collects (the catalogue's and each item's), the words live in lib/catalogue-contract.js */
+  const faceWords = fs.readFileSync(path.join(__dirname, '..', 'lib', 'catalogue-contract.js'), 'utf8');
+  assert.match(faceWords, /Declaration not supported/, 'the owner must be told at the moment they write it');
+  assert.match(faceRoute, /declarationErrors\(face, e\)/, 'the save must ask the declaration check before writing');
+  assert.match(faceRoute, /for \(const it of Array\.isArray\(face\.items\)/, 'per-ITEM declarations must be checked too');
   // and the check itself must actually flag the real case
   assert.ok(OI.resolve({ preset: 'form', schema: { properties: { g: { type: 'string', pattern: '^x$' } } } }).errors.length > 0);
   assert.deepStrictEqual(OI.resolve({ preset: 'form', schema: { properties: { g: { type: 'string', maxLength: 5 } } } }).errors, [],
@@ -199,8 +202,9 @@ t('WX-O2C · my-orders carries the SHOP\'s status (my copy stays the rail\'s del
 });
 
 t('SH-MY1 · my-orders and my-documents answer the pager contract (top-level total · page · limit), the server caps the page', () => {
-  assert.match(ROUTE, /const MY_PAGE_MAX = 50;/);
-  assert.match(ROUTE, /Math\.min\(MY_PAGE_MAX, parseInt\(req\.query\.limit, 10\) \|\| 20\)/);
+  /* QA-122: the cap and the default are one pair of constants fed to the one pager (lib/page-limit), not an inline Math.min */
+  assert.match(ROUTE, /const MY_PAGE_MAX = 50,\s*MY_PAGE_DEFAULT = 20;/);
+  assert.match(ROUTE, /PL\.pageArgs\([^\n]*MY_PAGE_DEFAULT, MY_PAGE_MAX\)/);
   assert.match(ROUTE, /res\.json\(\{ orders, count: orders\.length, total: myTotal\(r\.rows\), page: pg\.page, limit: pg\.limit \}\)/);
   assert.match(ROUTE, /res\.json\(\{ documents, count: documents\.length, total: myTotal\(r\.rows\), page: pg\.page, limit: pg\.limit \}\)/);
   assert.equal((ROUTE.match(/COUNT\(\*\) OVER \(\) AS _total/g) || []).length, 2, 'the total rides the same statement in both — no second trip');

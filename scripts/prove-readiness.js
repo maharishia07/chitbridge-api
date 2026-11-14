@@ -1,7 +1,14 @@
+/**
+ * prove-readiness.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-readiness.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 // prove-readiness.js — LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required
 // clearances (from its standards) → GATHERS each → readiness rolls up to import-ready → a BUYER reads the shareable
 // passport and sees it. Run AFTER b90.  node scripts/prove-readiness.js
-const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-readiness.js');
 const BP = 'royaleplay-bp-india';
 let P = 0,
   F = 0;

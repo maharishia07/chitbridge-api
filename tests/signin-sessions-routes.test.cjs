@@ -83,8 +83,19 @@ async function signIn(who, device, surface) {
     r = await call('POST', '/api/signin/logout', {});
     t('logout with no token: 401', r.status === 401, String(r.status));
     const legacy = jwt.sign(OWNER, process.env.JWT_SECRET, { expiresIn: '1h' });
-    r = await call('POST', '/api/signin/logout', { token: legacy });
-    t('logout with a legacy token (no jti): 200 { removed:false, legacy:true } — nothing server-side to end', r.status === 200 && r.body.removed === false && r.body.legacy === true, JSON.stringify(r.body));
+    /* SEC-157: a no-jti token has no listing, so its hash goes on the shop's ended list; the SAME token is refused from then on (it kept reading before) */
+    const legacyOut = jwt.sign(Object.assign({ n: 'signed-out' }, OWNER), process.env.JWT_SECRET, { expiresIn: '1h' });
+    r = await call('GET', '/api/signin/sessions', { token: legacyOut });
+    t('SEC-157 control: a legacy token reads before it signs out (GET /sessions 200, legacy:true)', r.status === 200 && r.body.legacy === true, JSON.stringify(r.body));
+    r = await call('POST', '/api/signin/logout', { token: legacyOut });
+    t('SEC-157: logout with a legacy token (no jti): 200 { removed:true, legacy:true }', r.status === 200 && r.body.removed === true && r.body.legacy === true, JSON.stringify(r.body));
+    r = await call('GET', '/api/signin/sessions', { token: legacyOut });
+    t('SEC-157: the SAME legacy token is refused 401 SESSION_EXPIRED after logout', r.status === 401 && r.body.code === 'SESSION_EXPIRED', r.status + ' ' + JSON.stringify(r.body));
+    r = await call('POST', '/api/signin/renew', { token: legacyOut, device: 'dev-legacy-out' });
+    t('SEC-157: …and it cannot be renewed back to life', r.status === 401, r.status + ' ' + JSON.stringify(r.body));
+    r = await call('GET', '/api/signin/sessions', { token: legacy });
+    t('SEC-157: another legacy token of the same person is untouched (hash, not identity)', r.status === 200, String(r.status));
+    t('SEC-157: only a hash is kept, never the token', !JSON.stringify(FLAGS).includes(legacyOut) && (FLAGS.ended_tokens || []).length === 1 && /^[0-9a-f]{32}$/.test(FLAGS.ended_tokens[0].h), JSON.stringify(FLAGS));
 
     console.log('— renew —');
     a = await signIn(OWNER, 'dev-own-2');

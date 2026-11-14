@@ -93,6 +93,7 @@ async function q(sql, params) {
   params = params || [];
   const s = String(sql).replace(/\s+/g, ' ').trim();
   let m;
+{ const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => Object.values(DB), () => (typeof DOCS !== 'undefined' ? DOCS : [])); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
   if ((m = s.match(/^INSERT INTO signin_events \(([^)]+)\) VALUES/i))) {
     if (!B282) { const e = new Error('relation "signin_events" does not exist'); e.code = '42P01'; throw e; }
     if (EVENT_FAIL) { const e = new Error('simulated'); e.code = EVENT_FAIL; throw e; }
@@ -108,7 +109,7 @@ async function q(sql, params) {
       const o = {}; cols.forEach((c) => { o[c] = c === '1' ? 1 : (r[c] === undefined ? null : r[c]); }); return o; });
     return { rows, rowCount: rows.length };
   }
-  if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+)$/i))) {
+  if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+?)(?: RETURNING .+)?$/i))) {
     const sets = splitTop(m[1], ',');
     const hit = where(m[2], params);
     hit.forEach((r) => sets.forEach((a) => {

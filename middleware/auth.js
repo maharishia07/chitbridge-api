@@ -62,7 +62,16 @@ async function judgeSession(req, res, decoded) {
    */
   const refusal = tokenRefusal(decoded, res);
   if (refusal) return refuse(401, refusal.code, refusal);
-  return isPersonSession(decoded) ? judgeDevice(req, res, decoded) : { sessRec: null };
+  if (isPersonSession(decoded)) return judgeDevice(req, res, decoded);
+  return judgeLegacyEnded(req, res, decoded);
+}
+/** SEC-157: a no-jti person token the person signed out (POST /api/signin/logout) is refused 401 SESSION_EXPIRED, as a listed session is once it is gone */
+async function judgeLegacyEnded(req, res, decoded) {
+  if (decoded.kind === 'api_key' || decoded.kind === 'auto' || !(decoded.parent_entity_id || decoded.identity_id)) return { sessRec: null };
+  const rawToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!(await require('../lib/person-session').legacyEnded(query, decoded.parent_entity_id || decoded.identity_id, rawToken))) return { sessRec: null };
+  mark(res, 'code', 'SESSION_EXPIRED');
+  return refuse(401, 'SESSION_EXPIRED', { error: 'Unauthorised', code: 'SESSION_EXPIRED', message: 'Sign in to continue.' });
 }
 /** a person session on its device: the X-Device-Id must match, the device must not be revoked, the jti must be listed → { sessRec } or { refusal } */
 async function judgeDevice(req, res, decoded) {
@@ -257,6 +266,17 @@ const softIdentity = (req) => {
   return SOFT_DECIDED.get(req);
 };
 
+/**
+ * What the database row judge() read says about a co-assist, put on the request identity: hat (default 'act' for a row older than the hat column), level, reach,
+ * and SEC-119 can_see_costs (the SAME row, never the token, so lib/cost canRead spends no second trip).
+ */
+function attachActorRow(identity, actor) {
+  identity.hat = actor.hat || 'act';
+  identity.access_level = actor.access_level;
+  identity.whole_entity = actor.whole_entity === true;
+  identity.can_see_costs = actor.can_see_costs === true;
+}
+
 const auth = async (req, res, next) => {
   if (req && DECIDED.has(req)) return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
   try {
@@ -287,11 +307,7 @@ const auth = async (req, res, next) => {
     // Revalidate actor status — a removed/deactivated co-assist must lose access
     // immediately on their next request, not whenever the JWT happens to expire.
     /* the hat, level and reach come from the database row judge() already read (never the token) — default 'act' for a row older than the hat column */
-    if (judged.actor) {
-      req.identity.hat = judged.actor.hat || 'act';
-      req.identity.access_level = judged.actor.access_level;
-      req.identity.whole_entity = judged.actor.whole_entity === true;
-    }
+    if (judged.actor) attachActorRow(req.identity, judged.actor);
 
     /**
      * ⭐⭐ THE HAT GATE RUNS HERE, INSIDE auth, AND THAT PLACEMENT IS THE WHOLE DESIGN.
@@ -466,6 +482,9 @@ const KEY_ROUTES = {
                  only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
                  session-only, no scope grants it). */
     ['GET', /^\/api\/till\/counters$/],
+    /* CTR-213: a counter leases blocks of invoice numbers, reads the day close of them and closes a block with its reasons (the server owns the counter: lib/invoice-lease) */
+    ['POST', /^\/api\/till\/invoice-lease(\/close)?$/],
+    ['GET', /^\/api\/till\/invoice-lease\/report$/],
     ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
     ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
     /* ⚠️⚠️ THE SHOP'S OWN HEADER, FROM THE COUNTER ([TILL-105], 2026-09-19). Athi: *'counter has no

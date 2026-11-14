@@ -193,7 +193,8 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
   ok('G1 default → http://localhost:3000', sim.apiBase({}, []).base === 'http://localhost:3000');
   ok('G2 http to a non-local host → refused', !!sim.apiBase({ API_BASE: 'http://example.com' }, []).refuse);
   ok('G3 the production api without the flag → refused', !!sim.apiBase({ API_BASE: 'https://chitbridge-api-production.up.railway.app' }, []).refuse);
-  ok('G4 --production → the production api', /railway\.app$/.test(sim.apiBase({}, ['--production']).base || ''));
+  ok('G4 --production → the production api', /railway\.app$/.test(sim.apiBase({ CB_ALLOW_PROD: '1' }, ['--production']).base || ''));
+  ok('G4b --production without CB_ALLOW_PROD=1 → refused', !!sim.apiBase({}, ['--production']).refuse);
   ok('G5 http://127.0.0.1:3000 allowed', sim.apiBase({ API_BASE: 'http://127.0.0.1:3000' }, []).base === 'http://127.0.0.1:3000');
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');

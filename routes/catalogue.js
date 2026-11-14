@@ -36,6 +36,7 @@ const catalogueBuild = require('../lib/catalogue-build'); // B3.7-ref: resolve t
 const container = require('../lib/container'); // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
 const regional = require('../lib/regional'); // GOVERNED CURRENCY — the network path must not invent 'INR'
 const money = require('../lib/money'); // MONEY TYPE — a price is never a bare number
+const sellablePrice = require('../lib/sellable-price'); // CAT-318/324: when a stored price cannot be sold — one rule for the order and the till
 
 // ⚠️ ONE generator (lib/bridgeid.js). This copy was the ONLY one that ever received the S4 CSPRNG hardening —
 //    the fix was correct and reached one sixth of the code it was written for. That is why it now lives in one file.
@@ -106,8 +107,9 @@ const _422 = (m) => {
  * the doors judged) is "not valid" — refused in words (ORDER_REJECTED, 422), never clamped to 0 and never carried as a negative line total.
  */
 function throwIfUnpriced(rec) {
-  if (!Number.isFinite(rec.price)) throw _422(`Price for "${rec.name}" is not set — order cannot be placed`);
-  if (rec.price < 0) throw _422(`The price of "${rec.name}" is not valid, so it cannot be ordered right now — the shop needs to correct it.`);
+  const fault = sellablePrice.fault(rec.price);
+  if (fault === 'unset') throw _422(sellablePrice.unsetSaid(rec.name));
+  if (fault === 'negative') throw _422(sellablePrice.negativeSaid(rec.name));
 }
 // ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
 // A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
@@ -117,6 +119,7 @@ const orderInput = require('../lib/order-input');
 const itemstatus = require('../lib/itemstatus');
 const catalogueView = require('../lib/catalogue-view'); // ONE catalogue read, shared with the B2B/supplier view
 const taxSlab = require('../lib/tax-slab'); // ⚠️ which slab answers for a line — resolution only, never a rate table
+const shopClock = require('../lib/shop-clock'); // M3: the shop's day for a slab's effective_from check
 const taxShelf = require('../lib/tax-shelf'); // the one reader of slabs (own + governed) · categories · face, shared with the send path
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const MAX_FORMS_PER_SUBMISSION = 5; // one purpose, several forms (an export bundle, a loan pack) — but bounded
@@ -325,7 +328,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
    * can carry a rate; until then it carries none, which is honest.
    */
   const withTax = (line, item_data) =>
-    taxCtx ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face, slabs: taxCtx.slabs, categories: taxCtx.categories })) : line;
+    taxCtx ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face, slabs: taxCtx.slabs, categories: taxCtx.categories, asOf: shopClock.today(taxCtx.zone) })) : line;
   // Finish map (reference catalogue) — resolve the shop's VISIBLE adoptions → norm(name) -> {price, combos, source}.
   // Priced from the adoption commercials, SERVER-side (never the customer). Empty if the shop has no finishes.
   const finishMap = new Map(); // STONE 3: keyed 'source|name' so same-named finishes from DIFFERENT brands don't collide
@@ -703,7 +706,7 @@ router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId
         name: d.name || d.particulars || '(unnamed)',
         category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
-        price: Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null,
+        price: sellablePrice.soldAt(money.amountOfLoose(d.price)),
         unit: d.unit || null,
         image: d.image || null
       };
@@ -848,7 +851,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
       const d = item.item_data || {};
       // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
       const amt = money.amountOfLoose(d.price);
-      if (!Number.isFinite(amt)) {
+      if (sellablePrice.fault(amt)) { /* CAT-324: unset or negative — never totalled */
         const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`);
         e.status = 422;
         throw e;
@@ -1383,9 +1386,10 @@ async function recordSourcePenetration(entity, line_items, custLocality) {
   try {
     const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
     await withEntity(entity.identity_id, async (db) => {
-      for (const sk of srcs)
-        await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
-          sk,
+      /* ONE statement for every source (was one INSERT each) */
+      if (srcs.length)
+        await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) SELECT s, $2, $3 FROM unnest($1::text[]) WITH ORDINALITY AS u(s, n) ORDER BY u.n', [
+          srcs,
           entity.identity_id,
           custLocality
         ]);

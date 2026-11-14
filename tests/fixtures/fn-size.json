@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 140,
+  "long_functions": 139,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -103,7 +103,6 @@
       "forStore"
     ],
     "lib/offers-live.js": [
-      "(anonymous)",
       "applyLiveOffers"
     ],
     "lib/policy.js": [

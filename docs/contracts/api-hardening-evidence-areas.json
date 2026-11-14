@@ -690,6 +690,9 @@
   "GET /api/till/counters": {
    "output_allowlist": true
   },
+  "GET /api/till/invoice-lease/report": {
+   "output_allowlist": true
+  },
   "GET /api/till/match": {
    "output_allowlist": true
   },
@@ -1660,10 +1663,16 @@
    "output_allowlist": true
   },
   "POST /api/till/enrol": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/till/flags": {
+   "output_allowlist": true
+  },
+  "POST /api/till/invoice-lease": {
+   "output_allowlist": true
+  },
+  "POST /api/till/invoice-lease/close": {
    "output_allowlist": true
   },
   "POST /api/till/listen": {

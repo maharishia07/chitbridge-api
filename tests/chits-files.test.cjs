@@ -41,12 +41,17 @@ try {
 /* the five break scripts find a chits anchor through the list (a break aimed at routes/chits.js follows the code when it moves) */
 ['scripts/bills-folder-breaks.cjs', 'scripts/bills-private-breaks.cjs', 'scripts/books-breaks.cjs', 'scripts/tax-truth-breaks.cjs', 'scripts/two-sided-breaks.cjs'].forEach((script) => {
   const text = fs.readFileSync(path.join(API, script), 'utf8');
-  ok(script + ' resolves its anchor file through tools/chits-files.cjs', /tools\/chits-files\.cjs/.test(text) && /CHITS\.anchorFile\(R, file, from\)/.test(text));
+  ok(script + ' resolves its anchor file through tools/chits-files.cjs', /tools\/chits-files\.cjs/.test(text) && /CHITS\.anchorFile\(repoRoot, file, from\)/.test(text));
 });
 
 /* 4 - the readers: a literal read of the chits route (readFileSync / read( / src( with routes/chits.js on the line) must go through the list */
 const PINNED = {
   /* none: every by-path reader of the chits code uses the list. A reader that must pin ONE file on purpose is named here WITH its reason. */
+  'tests/con-74-send-via-whitelist.test.cjs': 'lifts sendViaOf and its helpers out of this ONE file by name and throws "is gone" if one moves, so a split cannot leave it green on the wrong file',
+  'tests/rail-121-dispute-participants-both-sides.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
+  'tests/rail-30-meter-chit-send.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
+  'tests/rail-65-labelled-never-converted.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
+  'tests/rail-71-with-transaction.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
 };
 const READS = /(readFileSync|\bread|\bsrc)\([^\n]*(routes\/chits\.js|'routes', 'chits\.js')/;
 const strays = [];
