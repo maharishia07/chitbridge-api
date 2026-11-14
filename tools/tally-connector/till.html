@@ -482,6 +482,15 @@
         display:flex;flex-direction:column;padding:0;
         padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   .menu[hidden]{display:none}
+  /* ⭐ THE MENU IS A NATIVE <dialog> (showModal), like the counter's other popups: Esc, focus in, Tab kept inside and focus back to the opener come from the browser.
+     ⚠️ display:flex on .menu beats dialog:not([open]){display:none}, so the closed one is kept away by [hidden] AND this rule. The drawer is its fixed place;
+     the wide card (.asdialog) outranks it below. */
+  dialog.menu{position:fixed;inset-block:0;inset-inline-start:0;inset-inline-end:auto;margin:0;width:min(348px,92vw);height:100%;
+              max-width:none;max-height:none;color:var(--ink);overflow:hidden}
+  dialog.menu:not([open]){display:none}
+  body[data-menuside="right"] dialog.menu{inset-inline-start:auto;inset-inline-end:0}
+  dialog.menu::backdrop{background:transparent}
+  @media (max-width:600px){ dialog.menu,body[data-menuside="right"] dialog.menu{inset:0;width:100%} }
   /* the drag handle a sheet is grabbed by — decoration on a mouse, an affordance on a thumb */
   .menu::before{content:'';flex:0 0 auto;width:38px;height:4px;border-radius:99px;background:var(--line);margin:8px auto 2px}
   .mhead{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-bottom:1px solid var(--line)}
@@ -3011,7 +3020,7 @@
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
        (the look dropdowns' font) live on it. Dropping it when this moved into the drawer left an "on" chip
        looking exactly like an "off" one — found by a critic pass, 2026-09-18. -->
-  <div class="menu sfull" id="tillmenu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
+  <dialog data-pop="POP152" class="menu sfull" id="tillmenu" hidden aria-label="Counter menu"></dialog>
 </aside>
 <!-- ⭐⭐ THE IDLE SCREEN — the shop's own picture while nobody is billing. Painted by paintIdle(); shown by a
      timer; dismissed by ANY key, scan or touch (see idleWake). -->
@@ -3022,7 +3031,7 @@
   drawn by the real tile renderer and an Apply that means nothing changed until you pressed it.
 -->
 <!-- ⭐⭐ TO DO ([TILL-79]) — its own popup, its own menu item, list and edit in one place -->
-<dialog id="tododlg" class="dlg" data-testid="till-todo-dlg">
+<dialog data-pop="POP153" id="tododlg" class="dlg" data-testid="till-todo-dlg">
   <h3>To do <span class="u" id="todocount"></span></h3>
   <div class="todoadd">
     <input id="todoin" class="todoin" data-testid="till-todo-add" maxlength="120"
@@ -3041,7 +3050,7 @@
   the group picker and the spacing cannot be judged in a grid of six tiles, and five of the seven settings
   used to change nothing you could see.
 -->
-<dialog id="styledlg" class="dlg studio" data-testid="till-style">
+<dialog data-pop="POP154" id="styledlg" class="dlg studio" data-testid="till-style">
   <div class="sthead">
     <div>
       <h3>Screen style</h3>
@@ -3095,7 +3104,7 @@
      settable; never ours to guess, because a grocery reads nothing like a restaurant. -->
 <!-- ⭐ THE SHOP'S OWN PICTURE, FULL SIZE ([TILL-100]). The morning panel shows a 128px icon; this is what
      opens when it is pressed. Nothing else on the counter needs the big one. -->
-<dialog id="dayimgdlg" class="dlg" data-testid="till-day-img-dlg">
+<dialog data-pop="POP155" id="dayimgdlg" class="dlg" data-testid="till-day-img-dlg">
   <h3>Your picture <span class="u">kept on this counter</span></h3>
   <div id="dayimgbig" class="dayimgbig"></div>
   <div class="dlgbtns">
@@ -3119,10 +3128,10 @@
 <div id="flash" class="flash" data-testid="till-flash" hidden></div>
 <!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
 <!-- ⭐ the caution, at the moment of the act ([TILL-172]) — design-handoff/footer -->
-<dialog id="suredlg" data-testid="till-sure"><div class="dlg" id="surebody"></div></dialog>
+<dialog data-pop="POP156" id="suredlg" data-testid="till-sure"><div class="dlg" id="surebody"></div></dialog>
 <!-- ⭐ F5 W1a: "Veg Meals: GST?" — the ask-once sheet behind the bill's "No tax rate · Fix" (rateAskOpen); the slabs on today's menu as big buttons, the pack's suggestion first -->
-<dialog id="ratedlg" data-testid="till-rate"><div class="dlg" id="ratebody"></div></dialog>
-<dialog id="linedlg" data-testid="till-line-dlg">
+<dialog data-pop="POP157" id="ratedlg" data-testid="till-rate"><div class="dlg" id="ratebody"></div></dialog>
+<dialog data-pop="POP158" id="linedlg" data-testid="till-line-dlg">
   <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
   <div class="lhead"><h3>The line</h3>
     <!-- ⭐ two views of one registry ([TILL-154]) — what is happening, and what works without a line -->
@@ -3134,7 +3143,7 @@
     <button class="pill" data-testid="till-line-close" onclick="lineClose()" data-cbsid="CTR002-B13">Close<span class="kh"> · Esc</span></button></div>
   <div class="lbody" id="linebody"></div>
 </dialog>
-<dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
+<dialog data-pop="POP159" id="updlg" class="dlg wide" data-testid="till-upload-dlg">
   <h3>Your product list <span class="u">we read it first and show you what we found — nothing is added until you say so</span></h3>
   <div id="upbody" class="upbody"></div>
   <div id="upsay" class="shopsay"></div>
@@ -3143,7 +3152,7 @@
     <button id="upgo" class="pri" data-testid="till-upload-go" onclick="upCommit()" disabled data-cbsid="CTR002-B15">Add these products</button>
   </div>
 </dialog>
-<dialog id="startdlg" class="dlg" data-testid="till-start-dlg">
+<dialog data-pop="POP160" id="startdlg" class="dlg" data-testid="till-start-dlg">
   <h3>Start your shop <span class="u">pick what you sell — you can change every price and name afterwards</span></h3>
   <div id="startbody" class="startbody"></div>
   <div id="startsay" class="shopsay"></div>
@@ -3152,18 +3161,18 @@
 <!-- ⭐⭐ WHY THIS COUNTER CANNOT DO THAT YET ([TILL-127]). Athi: *"it has to give a pop up message that store
      is not signed in yet, sign-in prompt has to showcase."* A quiet no-op is what this replaces. -->
 <!-- ⭐⭐⭐ COUNTER HEALTH ([TILL-137]) — the verdict, four checks, what is waiting, the last try, the code. -->
-<dialog id="healthdlg" class="dlg wide" data-testid="till-health-dlg"><div id="healthbody"></div></dialog>
-<dialog id="needdlg" class="dlg" data-testid="till-need-dlg">
+<dialog data-pop="POP161" id="healthdlg" class="dlg wide" data-testid="till-health-dlg"><div id="healthbody"></div></dialog>
+<dialog data-pop="POP162" id="needdlg" class="dlg" data-testid="till-need-dlg">
   <h3>This counter is not ready <span class="u">what is missing, and the one thing that fixes it</span></h3>
   <div id="needbody" class="startbody"></div>
 </dialog>
-<dialog id="signindlg" class="dlg" data-testid="till-signin-dlg">
+<dialog data-pop="POP163" id="signindlg" class="dlg" data-testid="till-signin-dlg">
   <h3>Connect this counter <span class="u">sign in once with your ChitBridge email — afterwards this counter bills with or without the internet</span></h3>
   <div id="signinbody" class="startbody"></div>
   <div id="signinsay" class="shopsay"></div>
   <div class="dlgbtns"><button onclick="signinClose()" data-cbsid="CTR002-B17">Not now<span class="kh"> · Esc</span></button></div>
 </dialog>
-<dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
+<dialog data-pop="POP164" id="shopdlg" class="dlg" data-testid="till-shop-dlg">
   <h3>Your shop <span class="u">what prints on every bill</span></h3>
   <div id="shopform" class="shopform"></div>
   <div id="shopsay" class="shopsay"></div>
@@ -3177,7 +3186,7 @@
   Phase 4.6). "Back to most-used first" used to sit here, beside Cancel, reading as a second undo — it is now
   the first thing inside catbody itself (catModeHtml()), a mode picked once rather than a button pressed.
 -->
-<dialog id="catdlg" class="dlg" data-testid="till-catorder-dlg">
+<dialog data-pop="POP165" id="catdlg" class="dlg" data-testid="till-catorder-dlg">
   <h3>Category order <span class="u">What the hand reaches first — on the chips, the keys and in maintenance.</span></h3>
   <div id="catbody"></div>
   <div class="dlgbtns">
@@ -3192,7 +3201,7 @@
   ⚠️ NO SAVE BUTTON — every row here already saves as it changes (quickGroupToggle/tillOptSet), the same rule
   Settings itself follows; Close is the only footer button, same wording as Settings' own.
 -->
-<dialog id="quickmaintdlg" class="dlg" data-testid="till-quickmaint-dlg">
+<dialog data-pop="POP166" id="quickmaintdlg" class="dlg" data-testid="till-quickmaint-dlg">
   <h3>Quick keys <span class="u">what fills the keys, and what stays hidden</span></h3>
   <div id="quickmaintbody">
     <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
@@ -3211,12 +3220,12 @@
   </div>
   <div class="dlgbtns"><button onclick="quickMaintClose()" data-cbsid="CTR002-B23">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
-<dialog id="stylegal" class="dlg wide" data-testid="till-style-gallery">
+<dialog data-pop="POP167" id="stylegal" class="dlg wide" data-testid="till-style-gallery">
   <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
   <div class="stgal" id="stygal"></div>
   <div class="dlgbtns"><button onclick="galClose()" data-cbsid="CTR002-B24">Cancel<span class="kh"> · Esc</span></button></div>
 </dialog>
-<dialog id="moddlg" class="dlg" data-testid="till-mod">
+<dialog data-pop="POP168" id="moddlg" class="dlg" data-testid="till-mod">
   <h3 id="modtitle">Choose</h3>
   <div id="modbody"></div>
   <div class="dlgbtns">
@@ -3447,7 +3456,7 @@
 <nav class="stepbar" id="stepbar" data-testid="till-stepbar" aria-label="steps"></nav>
 
 <!-- ⭐ ONE BOX FOR ALL THREE — the counter's own alert, confirm and prompt. -->
-<dialog id="askdlg"><div class="dlg">
+<dialog data-pop="POP169" id="askdlg"><div class="dlg">
   <h3 id="asktitle">ChitBridge counter</h3>
   <div id="askbody" data-testid="till-ask-body"></div>
   <label id="asklabel" hidden>Your answer</label>
@@ -3459,9 +3468,9 @@
 </div></dialog>
 
 <!-- ⭐⭐ THE DAY'S SALES, FULL SCREEN AND PRINTABLE — see dayReport() -->
-<dialog id="dayrep" class="dayrep" data-testid="till-dayreport"></dialog>
+<dialog data-pop="POP170" id="dayrep" class="dayrep" data-testid="till-dayreport"></dialog>
 <!-- ⭐⭐ TAKING SOMETHING BACK — see retOpen() -->
-<dialog id="retdlg" data-testid="till-return"><div class="dlg"><h3 id="rettitle">Take a return</h3>
+<dialog data-pop="POP171" id="retdlg" data-testid="till-return"><div class="dlg"><h3 id="rettitle">Take a return</h3>
   <div id="retbody"></div>
   <!-- ⚠️⚠️ [found live 2026-09-27] .dlgbtns, NOT <menu>. Athi, on the expense sheet: "in the HTML page it
        looks good, but not in this panel, check cancel, record chip." Nothing in this file has ever styled a
@@ -3482,14 +3491,14 @@
   the same ?s=<handle>&item=<id>&preview=1. Nothing about a product page is re-drawn here; a second opinion
   about what a customer sees is exactly the drift that would make the preview a lie.
 -->
-<dialog id="shopprevdlg" data-testid="till-shopprev"><div class="dlg"><h3 id="shopprevtitle">What a customer sees</h3>
+<dialog data-pop="POP172" id="shopprevdlg" data-testid="till-shopprev"><div class="dlg"><h3 id="shopprevtitle">What a customer sees</h3>
   <div id="shopprevbody"></div>
   <div class="dlgbtns">
     <button onclick="shopPrevClose()" data-cbsid="CTR003-B03">Close</button>
     <button class="pri" data-testid="till-shopprev-open" onclick="shopPrevOut()" data-cbsid="CTR003-B04">Open the storefront ↗</button>
   </div>
 </div></dialog>
-<dialog id="tvdlg" data-testid="till-tv"><div class="dlg"><h3>📺 Shop screen</h3>
+<dialog data-pop="POP173" id="tvdlg" data-testid="till-tv"><div class="dlg"><h3>📺 Shop screen</h3>
   <div id="tvbody"></div>
   <div class="dlgbtns">
     <button onclick="tvClose()" data-cbsid="CTR003-B05">Close</button>
@@ -3498,26 +3507,26 @@
   </div>
 </div></dialog>
 <!-- ⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER — see expOpen() -->
-<dialog id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
+<dialog data-pop="POP174" id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
   <div id="expbody"></div>
   <div class="dlgbtns">
     <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()" data-cbsid="CTR003-B08">Cancel</button>
     <button id="expgo" class="pri" data-testid="till-expense-go" onclick="expIssue()" data-cbsid="CTR003-B09">Record it</button>
   </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] SIGNING SOMEONE UP — see subOpen() -->
-<dialog id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
+<dialog data-pop="POP175" id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
   <div id="subbody"></div>
   <div class="dlgbtns">
     <button value="cancel" data-testid="till-sub-cancel" onclick="subClose()" data-cbsid="CTR003-B10">Cancel</button>
     <button id="subgo" class="pri" data-testid="till-sub-go" onclick="subIssue()" data-cbsid="CTR003-B11">Sign them up</button>
   </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] EVERY SUBSCRIPTION THIS COUNTER HOLDS — see subListOpen() -->
-<dialog id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
+<dialog data-pop="POP176" id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
   <div id="sublistbody"></div>
   <div class="dlgbtns">
     <button value="cancel" data-testid="till-sub-list-close" onclick="subListClose()" data-cbsid="CTR003-B12">Close</button>
   </div></div></dialog>
-<dialog id="slipdlg"><div class="dlg">
+<dialog data-pop="POP177" id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <!-- ⭐ M41: one line, OUTSIDE the slipbox so it never prints — this bill saved, but not as a tax invoice. Filled by showSlip(). -->
   <div id="slipwarn" data-testid="till-slip-notinvoice" hidden></div>
@@ -3550,7 +3559,7 @@
      sat over EVERY counter on EVERY load, break or not — caught by [TILL-25] before it shipped. The rule lives in the
      stylesheet, where [hidden] can still win. -->
 <!-- ⭐ the identity of this counter, as JSON — see whoAmI(). Openable from the dev bar. -->
-<dialog id="whoamidlg" data-testid="till-whoami"><div class="dlg"><h3>Whose shop is this counter?</h3>
+<dialog data-pop="POP178" id="whoamidlg" data-testid="till-whoami"><div class="dlg"><h3>Whose shop is this counter?</h3>
   <p class="note">The counter is tied to the entity id the server signs — never to a shop name, which can be changed.</p>
   <pre id="whoamibody" class="whoami" data-testid="till-whoami-body"></pre>
   <div class="dlgbtns">
@@ -3581,7 +3590,7 @@
      code, and an authenticated person at the end. Owner or employee, same path.
      ⚠️ NOT #signindlg, which pairs the DEVICE and fetches its key ([TILL-121]). Two different acts, and the
      button that said "Sign in" used to open neither of them — it opened the name picker below. -->
-<dialog id="rcvpaydlg" class="setdlg"><div class="dlg">
+<dialog data-pop="POP179" id="rcvpaydlg" class="setdlg"><div class="dlg">
   <h3>Money received</h3>
   <div id="rcvpaybody" data-testid="till-rp-body"></div>
 </div></dialog>
@@ -3590,20 +3599,20 @@
      box, the chooser and the PIN-setting step; this page paints NOTHING of that (tests/till-vendor: no second id/code form).
      #usignafter is the counter's own after-step — "Opening …", a counter number held elsewhere — and #usignbtns its own
      buttons (Done · Sign out · Close). No <h3>: the window carries its title. -->
-<dialog id="usigndlg" class="setdlg"><div class="dlg">
+<dialog data-pop="POP180" id="usigndlg" class="setdlg"><div class="dlg">
   <div id="usignbody" data-testid="till-usign-body"></div>
   <div id="usignafter" data-testid="till-usign-after"></div>
   <div id="usignbtns" class="dlgbtns"></div>
 </div></dialog>
 
-<dialog id="whodlg"><div class="dlg">
+<dialog data-pop="POP181" id="whodlg"><div class="dlg">
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()" data-cbsid="CTR003-B23">Close</button></div>
   <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person for their counter PIN, or the first code from the owner. The name goes on every bill until somebody takes over.</div>
 </div></dialog>
 
-<dialog id="shiftdlg"><div class="dlg">
+<dialog data-pop="POP182" id="shiftdlg"><div class="dlg">
   <h3 id="shifttitle">Hand over</h3>
   <div id="shiftbody"></div>
   <div class="dlgbtns">
@@ -3612,7 +3621,7 @@
   </div>
 </div></dialog>
 
-<dialog id="billsdlg"><div class="dlg">
+<dialog data-pop="POP183" id="billsdlg"><div class="dlg">
   <h3 id="billstitle">Today</h3>
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button class="pill" id="tab_today" data-testid="till-tab-today" onclick="billsTab('today')" data-cbsid="CTR003-B26">Today · on this device</button>
@@ -3626,7 +3635,7 @@
   <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report" data-cbsid="CTR003-B28">📊</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close" data-cbsid="CTR003-B29">✕</button></div>
 </div></dialog>
 
-<dialog id="setdlg" class="setdlg"><div class="dlg">
+<dialog data-pop="POP184" id="setdlg" class="setdlg"><div class="dlg">
   <!--
     ⭐⭐ SETTINGS, ONE SCROLLING LIST (design-handoff/B-fine-tuning/04-settings, Phase 2.5).
     ⚠️⚠️⚠️ SIX TABS OF WILDLY DIFFERENT FREQUENCY (§1): Voice is touched mid-shift, the ChitBridge address once
@@ -3873,7 +3882,7 @@
   back and Photos on keys are exactly that; Kitchen tickets stands in for Printer, which has no clean
   browser-side on/off to flip (only a picker dialog on the desktop kit).
 -->
-<dialog id="traydlg" class="dlg" data-testid="till-tray-dlg">
+<dialog data-pop="POP185" id="traydlg" class="dlg" data-testid="till-tray-dlg">
   <div class="sethead"><h3>Switches</h3>
     <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B32">✕</button></div>
   <div id="traybody"></div>
@@ -3881,7 +3890,7 @@
 </dialog>
 
 <!-- ⭐⭐ REVIEW BEFORE CLOSE (Phase 4, the order pad) — what is on it, and the one button that bills it -->
-<dialog id="orderdlg" class="dlg" data-testid="till-order-dlg">
+<dialog data-pop="POP186" id="orderdlg" class="dlg" data-testid="till-order-dlg">
   <div class="sethead"><h3 id="orderdlgtitle">Table</h3>
     <button class="setx" onclick="document.getElementById('orderdlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B34">✕</button></div>
   <div id="orderdlgbody"></div>
@@ -3892,7 +3901,7 @@
 </dialog>
 
 <!-- ⭐ M74 ◐ — the 🛒 pill opens THIS: the shop's open online orders, in the till (who · ₹ · age · status); a row opens it in Despatch -->
-<dialog id="onlinedlg" class="dlg" data-testid="till-online-dlg">
+<dialog data-pop="POP187" id="onlinedlg" class="dlg" data-testid="till-online-dlg">
   <div class="sethead"><h3 id="onlinedlgtitle">Online orders</h3>
     <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B37">✕</button></div>
   <div id="onlinedlgbody"></div>
@@ -3900,7 +3909,7 @@
 </dialog>
 
 <!-- ⭐ M127: the modes, named. Receive and Despatch are shown to every shop and greyed WITH the reason when the shop holds no stock. -->
-<dialog id="modedlg" class="dlg" data-testid="till-mode-dlg">
+<dialog data-pop="POP188" id="modedlg" class="dlg" data-testid="till-mode-dlg">
   <div class="sethead"><h3>What are you doing?</h3>
     <button class="setx" onclick="document.getElementById('modedlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B40">✕</button></div>
   <div id="modedlgbody"></div>
@@ -10510,7 +10519,7 @@ function hubHead(){
       + (place || shop ? ' · ' : '') + esc(when) + '</i></span>'
     + hubChips()
     + who
-    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()" data-cbsid="CTR004-B52">✕</button>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CTR004-B52">✕</button>'
     + '</div>';
 }
 
@@ -10701,6 +10710,13 @@ function hubChips(){
     + '<button class="hubchip" data-ic="switches" data-testid="till-hub-chip-tray" aria-label="Switches" title="Switches" onclick="fromMenu(trayOpen)" data-cbsid="CTR004-B60">⚡</button>';
   return '<div class="hubchips" data-testid="till-hub-health">' + out + '</div>';
 }
+/** ⚠️ a repaint replaces every child, which dropped the focused button to BODY (a late bills read repaints after the open): put focus back on the same control, without scrolling */
+function menuSetHTML(panel, html){
+  var held = document.activeElement, heldId = held && held !== panel && panel.contains(held) ? held.getAttribute('data-testid') : null;
+  panel.innerHTML = html;
+  var again = heldId ? panel.querySelector('[data-testid="' + heldId + '"]') : null;
+  if (again && again.focus) again.focus({ preventScroll: true });
+}
 function paintMenu(){
   var m = document.getElementById('tillmenu'); if (!m) return;
   var online = lineUp(), who = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
@@ -10713,7 +10729,7 @@ function paintMenu(){
     + '<i>' + esc((S && S.entity_name) || counterName() || '') + '</i></span>'
     + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
     + '<span class="mtime">' + esc(hhmm()) + '</span>'
-    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()" data-cbsid="CTR004-B61">✕</button>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CTR004-B61">✕</button>'
     + '</div>' + hubWhoRow() + hubChips())
     /* ⭐ pinned — see hubWhoRow() and hubChips(). They sit ABOVE the folding sections and never fold. */
     + hubFindBox();
@@ -10893,7 +10909,7 @@ function paintMenu(){
        * and nothing else.
        */
     : '<div class="msecs">' + secs + '</div>';
-  m.innerHTML = head + inner + foot;
+  menuSetHTML(m, head + inner + foot);
   /* IX0 (2026-10-13): the link in the counter's menu goes HOME — the index page and its small apps — never the workshop (app.html) */
   try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbRoot() + '/'; } catch (e) { cbQuiet('paintMenu:1', e); }
   paintMenuQuick();
@@ -11031,9 +11047,11 @@ function toggleMenu(e){
   if (e) e.stopPropagation();
   /* ⚠️ CLOSE THROUGH closeMenu(), which is what hands the caret back. Setting m.hidden here first made
      closeMenu()'s own "already hidden" guard return immediately — a guaranteed no-op (critic pass). */
-  if (!opening) { closeMenu(); return; }
+  if (!opening) { closeMenu(true); return; }
   side.classList.add('on');
   m.hidden = false;
+  /* ⭐ a native modal: the page behind goes inert, Esc and Tab stay with the menu, focus comes back to MENU_OPENER */
+  menuOpenModal(m);
   /* ⭐ ONE STATE, TWO ELEMENTS — the scrim is never toggled anywhere but beside the panel it belongs to */
   var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = false;
   /**
@@ -11056,7 +11074,7 @@ function toggleMenu(e){
      * nowhere and its trailing Enter closing the menu. The bill is short one item and nobody knows.
      * On a phone the sheet IS the screen, so there the caret belongs inside it.
      */
-    if (window.innerWidth <= 600) menuFocusFirst(); else { try { focusSearch(); } catch (e) { cbQuiet('toggleMenu:1', e); } }
+    menuFocusFirst();
   }
 }
 /** the first thing a keyboard lands on when the sheet opens — its close button, per §4's "Esc closes" pairing */
@@ -11117,7 +11135,19 @@ function paintViewChips(){
   }).join('');
 }
 /** ⚠️ shutting it hands the caret straight back to the search box — the next scan has to land on the bill */
-function closeMenu(){
+var MENU_OPENER = null;
+/** the browser's modal half of opening and shutting the menu — one place, so the open and close paths stay a pair */
+function menuOpenModal(panel){
+  MENU_OPENER = document.activeElement;
+  if (panel.showModal && !panel.open) { try { panel.showModal(); } catch (e) { cbQuiet('menuOpenModal:1', e); } }
+}
+/** where the caret goes when the menu is gone: back to what opened it when the person shut it, else the search box */
+function menuFocusBack(toOpener){
+  var opener = MENU_OPENER; MENU_OPENER = null;
+  try { if (toOpener && opener && opener.isConnected) opener.focus(); else focusSearch(); } catch (e) { cbQuiet('menuFocusBack:1', e); }
+}
+/** back = true when the person shut it (Esc, ✕, a press outside, ☰ again): focus returns to what opened it. An action chosen inside hands the caret to the search box instead. */
+function closeMenu(back){
   /* ⚠️ BEFORE THE GUARD, DELIBERATELY. closeMenu() returns early when the menu is already hidden, so a
      scrim put away AFTER it would survive any path that left the two out of step — an invisible sheet over a
      counter nobody can press, which is the worst outage this page can have. It costs nothing to put away
@@ -11125,8 +11155,9 @@ function closeMenu(){
   var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = true;
   var m = document.getElementById('tillmenu'); if (!m || m.hidden) return;
   m.hidden = true;
+  if (m.open) { try { m.close(); } catch (e) { cbQuiet('closeMenu:2', e); } }
   var side = document.getElementById('tillside'); if (side) side.classList.remove('on');
-  try { focusSearch(); } catch (e) { cbQuiet('closeMenu:1', e); }
+  menuFocusBack(back === true);
 }
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (e) { cbQuiet('fromMenu:1', e); } }
 /**
@@ -11148,6 +11179,11 @@ function fromMenuBack(fn, dlgId, sec){
  * record the answer the bubbling listener needs. [[feedback-check-after-the-wire]]
  */
 var MENU_CLICK_INSIDE = false;
+/** a press on the modal's backdrop lands on the dialog element itself, at a point outside its box */
+function menuBackdropHit(e, panel){
+  var box = panel.getBoundingClientRect();
+  return e.target === panel && (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom);
+}
 document.addEventListener('click', function(e){
   var side = document.getElementById('tillside');
   MENU_CLICK_INSIDE = !!(side && side.contains(e.target));
@@ -11155,8 +11191,30 @@ document.addEventListener('click', function(e){
 document.addEventListener('click', function(e){
   var m = document.getElementById('tillmenu');
   /* ⚠️ the whole PANEL is the menu, strip included — a press on an icon must not be read as "clicked away" */
-  if (m && !m.hidden && !MENU_CLICK_INSIDE && e.target.id !== 'menubtn') closeMenu();
+  if (m && !m.hidden && !MENU_CLICK_INSIDE && e.target.id !== 'menubtn') closeMenu(true);
+  else if (m && !m.hidden && menuBackdropHit(e, m)) closeMenu(true);
 });
+/**
+ * ⚠️⚠️ A SCAN WHILE THE MENU IS OPEN MUST STILL REACH THE BILL. The menu is a modal now, so its first control holds the caret and a scanner's digits
+ * went to the ✕ button and its trailing Enter closed the menu: the bill short one item, nobody told. A printable key that is not for a field in the
+ * menu shuts it WITHOUT moving focus to the opener and hands the caret to the search box inside the same keydown, so the character, and the rest of
+ * the scan with its Enter, land in #q exactly as before the modal.
+ */
+function menuScanKey(e){
+  var menu = document.getElementById('tillmenu');
+  if (menu && menu.open && isScanChar(e) && !typingInside(menu)) closeMenu(false);
+}
+/** one printable character that is not a space (a button's key) and not a shortcut */
+function isScanChar(e){ return e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey; }
+/** the caret is in a field of the menu, so the keys are for that field */
+function typingInside(menu){ var at = document.activeElement; return !!(at && at.matches && menu.contains(at) && at.matches('input, textarea, select, [contenteditable]')); }
+document.addEventListener('keydown', menuScanKey, true);
+/** the browser's own Esc (cancel) and any other close keep the three pieces of state in step: panel, scrim, hidden */
+(function(){
+  var menu = document.getElementById('tillmenu'); if (!menu) return;
+  menu.addEventListener('cancel', function(e){ e.preventDefault(); closeMenu(true); });
+  menu.addEventListener('close', function(){ if (menu.open) return; if (!menu.hidden) closeMenu(true); else { var scrim = document.getElementById('tillscrim'); if (scrim) scrim.hidden = true; } });
+})();
 /**
  * ── ⭐⭐⭐ FILTERS THAT FIND WORK ([TILL-52], MaintV2) ───────────────────────────────
  *
@@ -23742,11 +23800,16 @@ function slipHeadHTML(kind){
  * taxInvoice member, so an Indian slip prints exactly what it did.
  */
 function slipBuyerHTML(bill, t){
-  if (!bill || bill.kind !== 'tax' || !invoiceRule(bill.total, bill.customer && bill.customer.gstin)) return '';
-  var g = bill.customer && bill.customer.gstin;
-  return (g ? t('Buyer ' + taxIdLabel(), esc(g)) : '')
-    + (bill.not_invoice === 'buyer_identity' ? '<div data-testid="till-slip-nobuyer" style="font-size:.9em">Over ' + money(buyerFromMajor())
-      + ' a tax invoice names the buyer or their ' + taxIdLabel() + ' — none was given.</div>' : '');
+  if (!bill || !slipBuyerKind(bill.kind) || !invoiceRule(bill.total, bill.customer && bill.customer.gstin)) return '';
+  var g = bill.customer && bill.customer.gstin, row = g ? t('Buyer ' + taxIdLabel(), esc(g)) : '';
+  return bill.kind === 'supply' ? row : row + slipNoBuyerHTML(bill);
+}
+/** ⭐ CTR-166: the bills that name their buyer: a tax invoice, and a BILL OF SUPPLY when the buyer is registered (CGST Rules r.49(d): name, address and GSTIN or UIN, if registered, of the recipient); the no-buyer sentence below is a tax invoice's alone */
+function slipBuyerKind(kind){ return kind === 'tax' || kind === 'supply'; }
+/** why a bill saved without a named buyer above the pack's line is not a tax invoice */
+function slipNoBuyerHTML(bill){
+  return bill.not_invoice === 'buyer_identity' ? '<div data-testid="till-slip-nobuyer" style="font-size:.9em">Over ' + money(buyerFromMajor())
+    + ' a tax invoice names the buyer or their ' + taxIdLabel() + ' — none was given.</div>' : '';
 }
 /* the English titles a slip printed before the packs carried their own (pack.slip) — the fallback, so a shop with no pack prints what it always did */
 var SLIP_TITLE_EN = { tax: 'TAX INVOICE', supply: 'BILL OF SUPPLY', plain: 'CASH MEMO' };
@@ -23933,8 +23996,17 @@ function slipHTML(bill, m){
      */
     + rewardOnSlip(bill, t, dash)
     + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
-    + '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>'
+    + slipFooterHTML(shop)
     + '<div style="height:10mm"></div></div>';
+}
+/**
+ * ⭐ CTR-158: THE SLIP'S CLOSING LINE is the footer the shop saved in Print setup (shop.slip_footer, the one bill-print.html prints on the preview): the words,
+ * nothing at all when the shop saved one and unticked it, and today's two lines only when none is saved (an older snapshot, a shop that never set one).
+ */
+function slipFooterHTML(shop){
+  var saved = shop && shop.slip_footer;
+  if (typeof saved === 'string') return saved ? '<div data-testid="till-slip-footer" style="text-align:center">' + esc(saved) + '</div>' : '';
+  return '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>';
 }
 /** a tax head's word on the paper and the screen: under a pack with ONE head (Sales tax · Consumption tax · GST · VAT) the pack's own word,
     never its code ("STAX" and "JCT" were printed, 17 Oct audit); India's four heads keep their names (CGST · SGST · IGST · cess) */
@@ -29027,9 +29099,13 @@ setInterval(function(){ checkAbsorbed(false); }, 600000);
 window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
 
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
-document.addEventListener('keydown', function(e){
+/**
+ * Escape is claimed in a fixed order BEFORE it can reach the basket: the open menu, then the pay card, then arrange mode.
+ * Returns true when one of them took it, so the key handler stops there and the sale is never thrown away.
+ */
+function escapeClaimed(e){
   /* ⚠️ BEFORE Escape reaches the basket: a person pressing Escape at an open menu means "shut this", never "throw the sale away" */
-  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(); e.preventDefault(); return; } }
+  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(true); e.preventDefault(); return true; } }
   /**
    * ⚠️⚠️ BEFORE ESCAPE REACHES THE BASKET. Escape clears the bill, and [TILL-30] is already the scar from
    * exactly this — somebody pressed it to back out of something they had opened and lost the sale instead.
@@ -29042,39 +29118,52 @@ document.addEventListener('keydown', function(e){
    * that throws the sale away.
    */
   if (e.key === 'Escape' && document.body.classList.contains('paying')){
-    payClose(); e.preventDefault(); return;
+    payClose(); e.preventDefault(); return true;
   }
   if (e.key === 'Escape' && QK_ARRANGE){
     if (QK_FROM) { QK_FROM = null; toastLine('Put back. Nothing moved.'); }
     else { QK_ARRANGE = false; toastLine('Done arranging.'); }
     try { paintQuick(); } catch (e) { cbQuiet('top:5', e); }
-    e.preventDefault(); return;
+    e.preventDefault(); return true;
   }
-  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
-  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
-  /**
-   * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
-   * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
-   * promise fails silently again.
-   * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
-   * line twice — once here and once in searchKey(). And never over an open dialog.
-   */
+  return false;
+}
+/**
+ * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
+ * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
+ * promise fails silently again.
+ * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
+ * line twice — once here and once in searchKey(). And never over an open dialog.
+ * Returns true when it added the line, so the key handler stops there.
+ */
+function enterAddsSelected(e){
   if (e.key === 'Enter' && MODE === 'sell' && !e.ctrlKey && !e.metaKey && !e.altKey
       && (!document.activeElement || document.activeElement === document.body)
       && !document.querySelector('dialog[open]')
       && hits().length) {
-    add(SEL); e.preventDefault(); return;
+    add(SEL); e.preventDefault(); return true;
   }
+  return false;
+}
+/** F2, F3, F4, F9, F10 and Ctrl+↑/↓: the bill's own keys, the same in every mode that has a bill */
+function billFunctionKeys(e){
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
   if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
+  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
+}
+/** F6, F7, F8: park, who is serving, the bills list (or the next carton in Despatch) */
+function shopFunctionKeys(e){
   if (e.key === 'F8' && MODE !== 'despatch'){ openBills(); e.preventDefault(); }   /* M127: bills are not a Sell-only thing (F8 packs the next carton in Despatch) */
   if (e.key === 'F7'){ whoAct(); e.preventDefault(); }
   if (e.key === 'F6'){ if (MODE === 'sell') parkBill(); else toastLine('Park is for the Sell screen. Tap Sell.'); e.preventDefault(); }
-  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
+  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
+}
+/** F5, F11, F12: costs in Receive, voice and the tray in Sell */
+function modeFunctionKeys(e){
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
   /**
    * ⭐⭐ VOICE, BY THE KEYBOARD (design-handoff corrections §1, §5.7: "F5 = hearing, Shift F5 = speaking" —
@@ -29095,13 +29184,22 @@ document.addEventListener('keydown', function(e){
    */
   if (e.key === 'F11' && MODE === 'sell'){ trayToggle('photos'); e.preventDefault(); }
   if (e.key === 'F12' && MODE === 'sell'){ trayOpen(); e.preventDefault(); }
-  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
-  /* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
-     Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
-     because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
-     next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+}
+/* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
+   Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
+   because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
+   next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+function escapeClearsBill(e){
   if (e.key === 'Escape' && !document.querySelector('dialog[open]'))
     (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && escapeClaimed(e)) return;
+  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
+  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
+  if (enterAddsSelected(e)) return;
+  billFunctionKeys(e); shopFunctionKeys(e); modeFunctionKeys(e);
+  escapeClearsBill(e);
 });
 /**
  * ── ⭐⭐⭐ BACK MUST NEVER LEAVE THE TILL (T66, Athi's phone test 2026-10-04) ───────────────────────────────────
@@ -29294,7 +29392,12 @@ var STALE_DOOR_MODE = 'wait', STALE_DOOR_MAX = 9;
 /** a queued SALE bill the gate may ask about: finished with the catalogue unchecked, never sent, not yet confirmed or held, no owner override on the money */
 function staleCandidate(row){
   var basis = row && row.price_basis;
-  return !!(basis && basis.checked !== true && !basis.stale_ack && !basis.stale_unchecked && staleSaleRow(row) && !row._tries && !row._price_hold && !row._parked);
+  /* ⭐ CTR-253: a bill with no item_id line (free text only) has nothing to re-check — it is not a candidate, so it passes the gate and never reads as a price door down */
+  return !!(basis && staleHasItem(row) && basis.checked !== true && !basis.stale_ack && !basis.stale_unchecked && staleSaleRow(row) && !row._tries && !row._price_hold && !row._parked);
+}
+/** the bill has something the price door can re-check: a line rung from a product (item_id), or a line that cannot be read at all (the gate holds that one with its reason, CTR-243 #26) */
+function staleHasItem(row){
+  return !!(row && Array.isArray(row.lines) && row.lines.some(function(line){ return !line || !!line.item_id; }));
 }
 /** a queued SALE bill (lines, not a document, a change, a shift or a delivery) with no owner override on its money */
 function staleSaleRow(row){

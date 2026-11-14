@@ -16,7 +16,12 @@
 // catalogueRead module.
 // Run: node tests/rev04-cost-leak.test.js
 const assert = require('node:assert');
+/* SEC-75: the owner's bound reader is db.queryFor, so ../db is stubbed like the other offline tests; `bound` is set per case in deps() */
+let bound;
+const dbPath = require.resolve('../db');
+require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: { queryFor: (id) => bound.queryFor(id), queryAs: (id, sql, p) => bound.queryAs(id, sql, p), query: async () => ({ rows: [] }), pool: {} } };
 const view = require('../lib/catalogue-view');
+const { boundDb, schemaRows } = require('./support/bound-db.cjs');
 const catalogueRead = require('../lib/catalogue-read');
 const orderInput = require('../lib/order-input');
 
@@ -48,6 +53,8 @@ function deps({ can_see_cost = false } = {}) {
     return { rows: [] };
   } });
   const catalogueBuild = { resolve: async (key) => ({ title: 'Templates', collection: 'T', items: [], source_key: key }) };
+  /* SEC-75: the OWNER's preview reads the schema bound to the shop (queryFor); only ENTITY has a schema, another id reads nothing. The public read stays the plain `query`. */
+  bound = boundDb(schemaRows({ [ENTITY.identity_id]: { schema_id: 's1', schema_name: 'Products', fields: [] } }));
   return { entity: ENTITY, query, withEntity, catalogueBuild, orderInput, catalogueRead };
 }
 

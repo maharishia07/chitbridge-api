@@ -19,6 +19,7 @@ const express = require('express');
 const http = require('http');
 
 const API = path.join(__dirname, '..');
+const { boundDb, schemaRows, refuseUnbound } = require('./support/bound-db.cjs');
 let pass = 0, fail = 0;
 const t = (label, got, want) => {
   const ok = String(got) === String(want);
@@ -58,11 +59,14 @@ async function run() {
       entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
     }),
   };
+  const SHOP_ROW = (text) => (/FROM identities WHERE identity_id/.test(text) ? [{ currency_code: 'INR', country: 'IN' }] : []);
+  const bound = boundDb((text, params, id) => schemaRows({})(text, params, id) || SHOP_ROW(text));
   const dbExports = {
     /* defaultSchemaId()/ensureDeclared()'s own bookkeeping queries — none of them are what this test is
        proving, so they get an empty, harmless answer, same as an entity with no custom schema at all. */
     /* the shop STATES its money (lib/regional.currencyRead never guesses INR): these two shops are Indian ones */
-    query: async (text) => ({ rows: /FROM identities WHERE identity_id/.test(text) ? [{ currency_code: 'INR', country: 'IN' }] : [] }),
+    query: async (text) => { refuseUnbound(text); return { rows: SHOP_ROW(text) }; },
+    queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: the schema reads are bound to the shop; these two shops have NO custom schema, so they read nothing */
     withEntity: async (entity_id, fn) => fn({
       query: async (text, params) => {
         const q = text.replace(/\s+/g, ' ').trim();

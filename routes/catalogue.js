@@ -1624,12 +1624,8 @@ router.post(
       const sj = JSON.stringify(summary_json);
 
       // freeze-at-send (A10): governing schema = the SHOP's active default schema
-      const schemaRow = await query(
-        `SELECT schema_id, schema_version FROM entity_schemas
-          WHERE entity_id = $1 AND status = 'active' AND is_default = true
-          ORDER BY created_at DESC LIMIT 1`,
-        [entity.identity_id]
-      );
+      /* SEC-75: the shop's row is not the caller's (an anonymous or customer order), so the freeze reads through the b861 definer: the same two values, never a name or another row */
+      const schemaRow = await query('SELECT schema_id, schema_version FROM ops.shop_default_schema($1)', [entity.identity_id]);
       const frozen_schema_id = schemaRow.rows[0]?.schema_id || null;
       const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
 

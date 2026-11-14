@@ -9,7 +9,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap'); // a choice, bounded by a cap
-const { query, withEntity } = require('../db');
+const { query, queryAs, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
@@ -1236,7 +1236,7 @@ router.patch(
         const { schemaVisibilityFor } = require('../lib/schema-bootstrap');
         const schemaVisibility = schemaVisibilityFor(req.body.catalogue_visibility);
         try {
-          await query(
+          await queryAs(id, /* SEC-75: this shop's own default schema, bound to the shop */
             `UPDATE entity_schemas SET visibility = $1
               WHERE entity_id = $2 AND status = 'active' AND is_default = true`,
             [schemaVisibility, id]

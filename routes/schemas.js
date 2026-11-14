@@ -10,7 +10,7 @@ const { problem, textParam } = require('../lib/problem'); // API-STANDARD S1: th
 const { contract, words, fault, createRefused, checked } = require('../lib/schemas-contract'); // the contract (each route's operation) and the words of a refusal
 /* ⚠️ withEntity, not bare query, for anything reading catalogue_items: that table carries the b49 per-entity
    policy, and a read with no tenant context matches NOTHING rather than everything. */
-const { query, withEntity } = require('../db');
+const { queryAs, queryFor, withEntity } = require('../db');
 /* ⭐ ONE PLACE DECIDES REMOVABILITY — the GET reports it and the DELETE enforces it from the same function, so a
    screen can never be told a column is removable and then refused. */
 const columnRules = require('../lib/column-rules');
@@ -36,7 +36,7 @@ router.post('/create-default', auth, ...checked('POST /create-default'), async (
     // ONE implementation (also called at mint) — idempotent: returns the existing active schema instead of 400.
     const r = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
     if (r.error || !r.schema_id) return problem(req, res, createRefused(req, r)); // the bootstrap's text goes to the log, never to the caller (lib/schemas-contract.js createRefused)
-    const result = await query(
+    const result = await queryAs(entity_id,
       `SELECT es.*, json_agg(sf ORDER BY sf.display_order) as fields
        FROM entity_schemas es
        JOIN schema_fields sf ON sf.schema_id = es.schema_id
@@ -81,13 +81,13 @@ router.get('/fields', auth, ...checked('GET /fields'), async (req, res) => {
      * It now asks the same function they ask, so "what are my columns" has one answer by construction rather
      * than by three implementations agreeing. See lib/catalogue-columns.js.
      */
-    const sr = await query(
+    const sr = await queryAs(entity_id,
       `SELECT schema_id FROM entity_schemas
         WHERE entity_id = $1 AND status = 'active' AND is_default = true LIMIT 1`,
       [entity_id]
     );
     const schema_id = sr.rows[0] ? sr.rows[0].schema_id : null;
-    const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id });
+    const cols = await catcols.resolveColumns({ query: queryFor(entity_id), withEntity, entity_id, schema_id });
     const used = cols.used;
     /* The panel wants the whole row (min_value, field_type…), which resolveColumns already read in order. */
     const fields = { rows: cols.declared };
@@ -97,7 +97,7 @@ router.get('/fields', auth, ...checked('GET /fields'), async (req, res) => {
     const ready = await attrsReady();
     const attrs = {};
     if (ready && schema_id) {
-      const a = await query(`SELECT field_key, unit, leg, via FROM schema_fields WHERE schema_id = $1`, [schema_id]);
+      const a = await queryAs(entity_id, `SELECT field_key, unit, leg, via FROM schema_fields WHERE schema_id = $1`, [schema_id]);
       a.rows.forEach((item) => {
         attrs[item.field_key] = { unit: item.unit || null, leg: item.leg || null, via: item.via || null };
       });
@@ -178,7 +178,7 @@ router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'
     if (columnRules.LOCKED.has(key)) {
       return problem(req, res, { status: 409, ...words.locked(key) });
     }
-    const f = await query(
+    const f = await queryAs(entity_id,
       `SELECT sf.field_id, sf.field_name, sf.required, sf.schema_id
          FROM schema_fields sf
          JOIN entity_schemas es ON es.schema_id = sf.schema_id
@@ -203,7 +203,7 @@ router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'
       return problem(req, res, { status: 409, ...words.inUse(n, f.rows[0].field_name) });
     }
 
-    await query(`DELETE FROM schema_fields WHERE field_id = $1`, [f.rows[0].field_id]);
+    await queryAs(entity_id, `DELETE FROM schema_fields WHERE field_id = $1`, [f.rows[0].field_id]);
     res.json({ message: `Removed "${f.rows[0].field_name}"`, field_key: key });
   } catch (err) {
     console.error('Schema field delete error:', err.message);
@@ -231,7 +231,7 @@ router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'
 router.patch('/fields/order', auth, ...checked('PATCH /fields/order'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
-    const sid = await query(
+    const sid = await queryAs(entity_id,
       `SELECT schema_id FROM entity_schemas
           WHERE entity_id = $1 AND status='active' AND is_default=true LIMIT 1`,
       [entity_id]
@@ -240,7 +240,7 @@ router.patch('/fields/order', auth, ...checked('PATCH /fields/order'), async (re
     const schema_id = sid.rows[0].schema_id;
 
     /* ⚠️ ORDERED, or "everything not named keeps its relative order" (below) was whatever order Postgres returned */
-    const own = await query(
+    const own = await queryAs(entity_id,
       `SELECT field_key FROM schema_fields WHERE schema_id = $1
                                ORDER BY display_order NULLS LAST, field_key`,
       [schema_id]
@@ -259,7 +259,7 @@ router.patch('/fields/order', auth, ...checked('PATCH /fields/order'), async (re
      * one UPDATE … FROM unnest: all of it lands, or none of it does.
      */
     const keys = wanted.concat(rest);
-    await query(
+    await queryAs(entity_id,
       `UPDATE schema_fields s SET display_order = u.ord
                      FROM unnest($2::text[], $3::int[]) AS u(k, ord)
                     WHERE s.schema_id = $1 AND s.field_key = u.k`,
@@ -295,7 +295,7 @@ router.patch(
     try {
       const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
       const key = String(req.params.field_key || '').trim();
-      const f = await query(
+      const f = await queryAs(entity_id,
         `SELECT sf.field_id, sf.field_name, sf.field_type, sf.required, sf.schema_id
            FROM schema_fields sf
            JOIN entity_schemas es ON es.schema_id = sf.schema_id
@@ -372,7 +372,7 @@ router.patch(
 
       if (!sets.length) return res.json({ message: 'Nothing to change', field_key: key });
       vals.push(cur.field_id);
-      await query(`UPDATE schema_fields SET ${sets.join(', ')} WHERE field_id = $${vals.length}`, vals);
+      await queryAs(entity_id, `UPDATE schema_fields SET ${sets.join(', ')} WHERE field_id = $${vals.length}`, vals);
       res.json({
         message: `Updated "${b.field_name !== undefined ? String(b.field_name).trim() : cur.field_name}"`,
         field_key: key,
@@ -391,7 +391,7 @@ router.patch(
 router.patch('/visibility', auth, ...checked('PATCH /visibility'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const r = await query(
+    const r = await queryAs(entity_id,
       `UPDATE entity_schemas SET visibility = $1
          WHERE entity_id = $2 AND status = 'active' AND is_default = true
          RETURNING schema_id, visibility`,

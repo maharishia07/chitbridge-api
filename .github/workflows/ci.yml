@@ -254,6 +254,8 @@ jobs:
         run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE cb_metrics NOLOGIN"
       - name: build the empty database from migrations/
         run: node tools/fresh-db-check.cjs --db "$CB_FRESH_DB_URL"
+      - name: SEC-75 step 1 · the two entity_schemas doors (RUN-2026-11-14-b861, held out of the chain by its RUN- prefix) applied as the owner, FIRST of the two RUN files (the api has_catalogue and order-freeze reads call them)
+        run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -f migrations/RUN-2026-11-14-b861-entity-schemas-fns.sql
       - name: give the app role (cb_app, NOBYPASSRLS) a password for this throwaway database
         run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -c "ALTER ROLE cb_app PASSWORD 'cbapp'"
       - name: start the api as cb_app (RLS enforced) and wait for health
@@ -310,6 +312,18 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/sec-184-signin-lookup.realstack.cjs
+      - name: SEC-185 (step B of SEC-184) · identities row security (migrations/RUN-2026-11-14-b860, applied by the test as the owner and taken off again) - a shop-bound session cannot read, change or plant another shop's rows; login FAILS when ops.signin_candidates is dropped (mutation); real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/sec-185-identities-rls.realstack.cjs
+      - name: SEC-75 · entity_schemas + schema_fields row security (RUN-2026-11-14-b861 functions, then b862 policies, applied by the test as the owner and taken off again) - T1-T8, T2b, T5b (the definers are CALLED), T6b and T-Q1 (a private shop's order freeze) on real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/sec-75-entity-schemas.realstack.cjs
       - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
         env:
           API_BASE: http://127.0.0.1:3000
@@ -444,6 +458,8 @@ jobs:
         run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE cb_metrics NOLOGIN"
       - name: build the empty database from migrations/ (fails on any file outside fresh-db.accepted.json)
         run: node tools/fresh-db-check.cjs --db "$CB_FRESH_DB_URL"
+      - name: SEC-75 step 1 · the two entity_schemas doors (RUN-2026-11-14-b861) applied as the owner, before the RLS isolation test
+        run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -f migrations/RUN-2026-11-14-b861-entity-schemas-fns.sql
       - name: RLS isolation test on the fresh database
         run: node tests/rls-fresh-db.test.cjs
       - name: the runner refuses a role that cannot see the ledger (K-DB)

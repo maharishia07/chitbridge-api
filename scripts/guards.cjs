@@ -91,7 +91,8 @@ const GUARDS = [
   'truth-harness-partner.test.cjs', // LIFECYCLE-B4: the harness's order() and invoice() — a buy order, an invoice that names its order, item_id on every line
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
-  'fn-size-adopted.test.cjs', // fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
+  'fn-size-adopted.test.cjs',
+  'filesize-ratchet.test.cjs', // MNT-58 (14 Nov) filesize-ratchet: no file grows past filesize.baseline.json, new file at most 500 lines (web tool from the twin);  fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
   'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
   'send-golden.test.cjs', // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
@@ -454,6 +455,8 @@ const GUARDS = [
   'crm-sweep.test.cjs', // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-17-query-day.test.cjs', // API-17: a ?since= that is not a day (7, -1, abc, 2026-02-30, twice) answers 400 VALIDATION_FAILED on folders/mis, relationships/scorecard and capture/consolidate, the db never asked
+  'folders-split-pin.test.cjs', // MNT-59 pin: GET /messages, POST /messages/:id/mark, GET /rules/vocabulary and GET /rules answer the bodies they answer today (red under the kept filter dropped, the read flag flipped, a key renamed, the entity filter removed)
+  'round-trips-parts.test.cjs', // MNT-59: a split route file is listed under its parent by tools/round-trips.cjs (folders-inbox and folders-totals under folders.js, chits-trace under chits.js)
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
   'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
@@ -665,6 +668,10 @@ const GUARDS = [
   'p2-crm-lane1.test.cjs', // P2 lane 1: PATCH followup done must be a JSON boolean (CRM-239, BAD_FLAG); the door pass tests of CRM-233/237/243/251 pinned
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
+  'sec-185-identities-sweep.test.cjs', // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
+  'sec-75-entity-schemas.test.cjs', // ⭐⭐ SEC-75: entity_schemas + schema_fields — the widened sweep ratchet and its break checks, the two held RUN files (b861 doors, b862 policies), the boot check, one defaultSchemaId, bound readers, the freeze through the definer, T8
+  'bound-db.test.cjs', // ⭐ SEC-75: the offline shop-binding double keeps its claims (blank id, other-shop predicate, schema_id-only, the documented limits)
+  'sec-75-order-freeze.test.cjs', // ⭐ SEC-75: POST /:bridge_id/order/confirm through the real router, commerce AND payload pipeline, b50 AND pre-b50: the freeze reads the shop's default schema through the ONE definer with the shop id, and the copies carry it
   'sec-184-signin-lookup.test.cjs', // ⭐⭐ SEC-184 A: the SECURITY DEFINER sign-in lookup (b857) — function text, fallback with one warning, every pre-binding caller through it, role must not bypass RLS, break check per fix
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
@@ -729,6 +736,10 @@ const GUARDS = [
   'till-network-unpriced.test.cjs',
   'till-rail.test.cjs',
   'till-since-word.test.cjs',
+  'till-s4-ctr158-footer.test.cjs', // CTR-158 (2026-11-14): fails under CTR158_MUTATE=1
+  'till-s4-ctr161-kit-taxslab.test.cjs', // CTR-161 (2026-11-14): fails under CTR161_MUTATE=1
+  'till-s4-ctr166-supply-buyer.test.cjs', // CTR-166 (2026-11-14): fails under CTR166_MUTATE=1
+  'till-s4-ctr253-freetext-gate.test.cjs', // CTR-253 (2026-11-14): fails under CTR253_MUTATE=1
   'till-t2d.test.cjs',
   'till-t2j.test.cjs',
   /* QA-80 (22 Oct): six whose expectations had gone stale (US pack, hasColumn probe, compare-and-set, N1 move, re-wrapped routes) - updated to the current truth */
@@ -742,6 +753,8 @@ const GUARDS = [
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
   'party-contact-patch.test.cjs',
+  'crm-47-party-keys.test.cjs', // CRM-47: tax_ids that is not a list and two keys for one credit limit are refused by name
+  'crm-46-party-exact.test.cjs', // CRM-46: a party field that cannot be stored exactly is refused in words
   /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
   'party-merge-target.test.cjs',
   'party-merge-guard-sql.test.cjs',
@@ -1081,7 +1094,6 @@ let total = 0,
   failed = [],
   started = Date.now();
 console.log(all ? '— every test file (some need a server) —' : '— the guards —');
-
 for (const text of files) {
   if (SKIP_ENGINES && NEEDS_ENGINES.indexOf(text) >= 0) {
     console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');

@@ -54,6 +54,8 @@ function makeRow() {
   return row;
 }
 
+const { boundDb, schemaRows, refuseUnbound } = require('./support/bound-db.cjs');
+
 (async () => {
   console.log('\n-- CAT-282 · three merge PATCHes of one product, fired together, x' + TRIALS + ' --\n');
   let ROW = makeRow();
@@ -63,13 +65,14 @@ function makeRow() {
   require.cache[require.resolve(API + '/lib/schedule')] = { exports: { enabled: async () => false, TABLE: 'x', pending: async () => [], applyDue: async () => {}, diff: () => ({}) } };
   require(API + '/lib/regional').currencyFor = async () => 'INR';
   const FIELDS = ['name', 'unit', 'price', 'status'].map((k) => ({ field_key: k, field_name: k, field_type: k === 'price' ? 'number' : 'text' }));
+  const bound = boundDb(schemaRows({ e1: { schema_id: ITEM, fields: FIELDS } })); /* SEC-75: only e1 has a schema; another id reads nothing */
   require.cache[require.resolve(API + '/db')] = {
     exports: {
       query: async (sql) => {
-        if (/SELECT schema_id FROM entity_schemas/.test(sql)) return { rows: [{ schema_id: ITEM }] };
-        if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: FIELDS };
+        refuseUnbound(sql); /* SEC-75: the schema tables are read bound to the shop, never plain */
         return { rows: [] };
       },
+      queryAs: bound.queryAs, queryFor: bound.queryFor,
       withEntity: async (_id, fn) => {
         const handle = {};
         handle.query = async (sql, params) => {

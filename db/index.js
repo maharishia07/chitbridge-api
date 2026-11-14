@@ -170,7 +170,9 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
   /* SEC-75/DB-103 (b855): the three either-side or own tables; catalogue_source, product_container, media_blobs are read-wide, so a bare READ is legitimate and they stay out (the offline scan covers their writes) */
   'connections', 'connector_connection', 'dispute_participants',
-  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history'];
+  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history',
+  /* CTR-213 (b858): the invoice-number lease; read and written only under withEntity, so a bare read is a bug */
+  'till_invoice_lease'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {
@@ -190,6 +192,12 @@ function rlsGuardCheck(text) {
     + `withEntity(entityId, db => db.query(...)). SQL: ${text.replace(/\s+/g, ' ').trim().substring(0, 140)}`;
   if (mode === 'throw') throw new Error(msg);
   console.warn(msg);
+}
+
+/** E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js). The ONE error log of query(), queryAs and queryAsEach (SEC-185: no second code path). */
+function logQueryError(text, err) {
+  const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
+  require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message });
 }
 
 const query = async (text, params) => {
@@ -214,9 +222,7 @@ const query = async (text, params) => {
     }
     return result;
   } catch (err) {
-    /* E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js) */
-    { const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
-      require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message }); }
+    logQueryError(text, err);
     throw err;
   }
 };
@@ -389,4 +395,65 @@ const readBatch = async (entityId, actorId, statements) => {
   /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
   return at.map((i) => arr[2 + i]);
 };
-module.exports = { bootWaitMs, query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+/**
+ * ── ⭐ queryAs(identityId, text, params) — ONE statement under a named identity's binding, ONE round trip (SEC-185, step B) ──────
+ * identities carries row security (b860, FORCE): a row opens only under `app.current_entity` = the shop it belongs to, or = the identity itself.
+ * A read or write BY ID that has no request shop yet (sign-in: the OTP of the person who just identified themselves; the per-request check of a
+ * signed token) binds THAT id and asks once. The binding is the row's own key, so it opens exactly that row (`identity_id = me`) and, for a shop id,
+ * its customers and staff (`parent_entity_id = me`), nothing else.
+ * HOW  `set_config(..., true)` and the statement go in ONE simple-protocol message: Postgres runs a multi-statement string as one implicit
+ *      transaction, so SET LOCAL lasts exactly to the end of the statement and an error rolls the whole message back: no BEGIN/COMMIT to leave a pooled
+ *      connection half-open (readBatch's explicit BEGIN has that risk on error). Values are inlined (escapeLiteral); an object goes as its JSON text.
+ * ⚠️ a blank id binds nothing: the statement then sees no identity row (fail closed), never every row.
+ */
+const asLiteral = (v) => (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) ? JSON.stringify(v) : v);
+/** one bound statement as the two texts that ride in the message: the binding, then the statement with its values inlined */
+function boundParts(identityId, text, params) {
+  const body = inlineSql(text, (params || []).map(asLiteral));
+  if (/;\s*\S/.test(body.replace(/'(?:[^']|'')*'/g, ''))) throw new Error('queryAs: one statement only');
+  return ["SELECT set_config('app.current_entity', " + inlineLiteral(identityId == null ? '' : String(identityId)) + ', true)', body];
+}
+const queryAs = async (identityId, text, params) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  rlsGuardCheck(text);
+  try {
+    const res = await pool.query(boundParts(identityId, text, params).join(';\n') + ';');
+    return Array.isArray(res) ? res[1] : res;
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+};
+/**
+ * queryAsEach(ids, text, paramsOf) — the same statement once PER identity, each under its own binding, all in ONE message and ONE round trip; the rows come back joined, in ids order.
+ * For the sign-in read of "the people the lookup named" (they may belong to different shops, so no single binding opens them all) and of their parent shops.
+ * An empty list still sends one statement (bound to nothing, so it answers nothing): a hit and a miss cost the same trip.
+ */
+const queryAsEach = async (ids, text, paramsOf) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  const list = ids && ids.length ? ids : [null];
+  const parts = [];
+  list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  rlsGuardCheck(text);
+  let res;
+  try {
+    res = await pool.query(parts.join(';\n') + ';');
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+  const all = Array.isArray(res) ? res : [res];
+  const rows = [];
+  list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
+  return { rows, rowCount: rows.length };
+};
+query.as = queryAs;
+/** SEC-75: a `query` bound to ONE shop, for libs that take their reader injected (lib/catalogue-columns): queryFor(shop)(text, params) is queryAs(shop, text, params) */
+const queryFor = (shopId) => (text, params) => queryAs(shopId, text, params);
+query.for = queryFor;
+query.asEach = queryAsEach;
+module.exports = { bootWaitMs, query, queryAs, queryFor, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };

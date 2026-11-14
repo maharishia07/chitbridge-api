@@ -32,7 +32,7 @@ const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: th
 const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { query, withEntity } = require('../db');
+const { queryFor, withEntity } = require('../db');
 const adopt = require('../lib/adopt');
 const govresolve = require('../lib/govresolve'); /* VERT-13: THE resolver of the shop's trade */
 const { mintProduct } = require('../lib/mint-product');
@@ -257,7 +257,7 @@ router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req
       });
       Object.keys(item_data).forEach((item) => item_data[item] === undefined && delete item_data[item]);
 
-      const r = await mintProduct({ query, withEntity, entity_id, schema_id, item_data, rid: req.id, note: 'adopted from a delivery' });
+      const r = await mintProduct({ query: queryFor(entity_id), withEntity, entity_id, schema_id, item_data, rid: req.id, note: 'adopted from a delivery' });
       if (r.error) {
         refused.push({ line: i, why: r.error });
         continue;

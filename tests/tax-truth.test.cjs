@@ -61,10 +61,12 @@ function rowsFor(sql, p) {
   return [];
 }
 let BILL_ROWS = [];
+const bound = require('./support/bound-db.cjs').boundDb(rowsFor);
 const dbPath = require.resolve(path.join(API, 'db'));
 const tx = { query: async (s, p) => ({ rows: rowsFor(s, p) }) };
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: async (s, p) => ({ rows: rowsFor(s, p) }),
+  queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: a bound read; blank id or another shop's predicate sees no row */
   withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx),
   trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
   onEntity: async (id, db, fn) => fn(tx),
@@ -112,7 +114,7 @@ const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads
   /* CX0 (2026-10-13): the pack's words on the paper — tax-id label, scheme, credit-note title — read from CBRegulation when the page has it */
   'function docCountry(', 'function shopPack(', 'function taxIdLabel(', 'function schemeWord(', 'function creditNoteTitle(',
   /* CX1 (2026-10-13): what the shop's law asks of the bill (pack.taxInvoice — none in India's pack, so nothing here changes) */
-  'function invoiceRule(', 'function buyerNamed(', 'function buyerWarnWords(', 'function buyerFromMajor(', 'function slipBuyerHTML(', 'function shopMinor(', 'function booksMajor(',
+  'function invoiceRule(', 'function buyerNamed(', 'function buyerWarnWords(', 'function buyerFromMajor(', 'function slipBuyerHTML(', 'function slipBuyerKind(', 'function slipFooterHTML(', 'function slipNoBuyerHTML(', 'function shopMinor(', 'function booksMajor(',
   /* …and a refused sale is written down before it is said (M49) */
   'function saleStop(', 'function saleStopNote(',
   /* counter batch 1 + 2 (2026-10-17): the registry's words, the slip's title per language, the one-head word, the per-rate foot, cash rounding */

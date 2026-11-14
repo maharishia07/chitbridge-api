@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 139,
+  "long_functions": 138,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -215,7 +215,6 @@
       "PATCH /profile"
     ],
     "routes/folders.js": [
-      "GET /messages",
       "POST /move"
     ],
     "routes/identity-docs.js": [

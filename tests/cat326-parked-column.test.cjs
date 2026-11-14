@@ -28,8 +28,10 @@ const run = async (sql) => {
   if (/DELETE FROM schema_fields/.test(sql)) { world.deleted++; return { rows: [], rowCount: 1 }; }
   return { rows: [], rowCount: 0 };
 };
+const { boundDb, refuseUnbound } = require('./support/bound-db.cjs');
+const bound = boundDb((sql) => run(sql)); /* SEC-75: the column doors read bound to the shop; a read of another shop's column sees nothing */
 const dbPath = require.resolve(path.join(ROOT, 'db'));
-require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: { query: run, withEntity: async (id, fn) => fn({ query: run }), pool: {} } };
+require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: { query: async (sql) => { refuseUnbound(sql); return run(sql); }, queryAs: bound.queryAs, queryFor: bound.queryFor, withEntity: async (id, fn) => fn({ query: run }), pool: {} } };
 const schemaPath = require.resolve(path.join(ROOT, 'lib', 'schema'));
 require(schemaPath).hasTable = async () => true;
 const authPath = require.resolve(path.join(ROOT, 'middleware', 'auth'));
