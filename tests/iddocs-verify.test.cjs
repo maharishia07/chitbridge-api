@@ -81,7 +81,7 @@ it('RECOVERY INVARIANT: only the document route and the verified helper read ide
     const dir = path.join(ROOT, d); if (!fs.existsSync(dir)) continue;
     for (const f of fs.readdirSync(dir)) if (/\.(js|cjs)$/.test(f) && /identity_documents/.test(read(d + '/' + f))) hits.push(d + '/' + f);
   }
-  assert.deepStrictEqual(hits.sort(), ['lib/iddoc-verify.js', 'routes/identity-docs.js'] /* SEC-185: the direct fallback in signin-lookup.js is gone; the doc kind is read only by ops.signin_candidates (b857) */);
+  assert.deepStrictEqual(hits.sort(), ['lib/iddoc-verify.js', 'lib/signin-lookup.js', 'routes/identity-docs.js'] /* SEC-184: signin-lookup.js holds the fallback of the definer lookup's doc kind */);
 });
 it('route wiring: GET exposes verified (status + stamp), never selects verification_ref; PUT clears verification; both routes behind auth', () => {
   const s = read('routes/identity-docs.js');

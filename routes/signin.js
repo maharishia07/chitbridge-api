@@ -40,7 +40,6 @@ const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
-const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read and written under its own binding
 const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
@@ -331,7 +330,7 @@ const askChecks = [
 async function storeCode(identity_id) {
   const code = generateOTP('entity');
   const expires = new Date(Date.now() + 60 * 60 * 1000);
-  await boundRead(query, identity_id, `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [code, expires, identity_id]);
+  await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [code, expires, identity_id]);
   return code;
 }
 /**
@@ -366,7 +365,7 @@ async function sendCode(req, res, { identity_id, email, display_name }, extra) {
       Object.assign(
         {
           message: 'This store signs in with the code its network operator issued.',
-          handle: (await boundRead(query, identity_id, 'SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
+          handle: (await query('SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
           operator_issued: true
         },
         extra || {}
@@ -426,15 +425,17 @@ async function stagePendingUserId(row, typed) {
  * (valid, nobody else holds it) ONLY IF the verify request body repeats that same id as user_id or id (the owner's consent to the value); otherwise verify succeeds without renaming. Either way the staging is cleared. No staged id → the one email_verified statement, as before.
  */
 async function markVerified(identity, body) {
-  const marked = await boundRead(query, identity.identity_id, `UPDATE identities SET email_verified = TRUE WHERE identity_id = $1 RETURNING policy_flags->>'pending_user_id' AS pending_user_id`, [identity.identity_id]);
+  const marked = await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1 RETURNING policy_flags->>'pending_user_id' AS pending_user_id`, [identity.identity_id]);
   const staged = marked && marked.rows && marked.rows[0] ? marked.rows[0].pending_user_id : null; // read on the write that proves the mailbox: the sign-in SELECT stays as it was
   if (!staged) return;
   const typedUserId = (body && (body.user_id || body.id)) || '';
   const consented = String(typedUserId).trim().toLowerCase() === staged;
   try {
     if (consented) {
-      /* SEC-185: the NOT EXISTS guard sees only the rows this binding opens (its own tree); a User ID held in ANOTHER shop is stopped by the unique index idx_identities_user_id (23505), which the catch below turns into "the account keeps its first one" */
-      await boundRead(query, identity.identity_id, `UPDATE identities SET user_id = $2 WHERE identity_id = $1 AND NOT EXISTS (SELECT 1 FROM identities o WHERE LOWER(o.user_id) = $2 AND o.identity_id <> $1)`, [identity.identity_id, staged]);
+      await query(
+        `UPDATE identities SET user_id = $2 WHERE identity_id = $1 AND NOT EXISTS (SELECT 1 FROM identities o WHERE LOWER(o.user_id) = $2 AND o.identity_id <> $1)`,
+        [identity.identity_id, staged]
+      );
     }
     await require('../lib/policy').patchKey(null, identity.identity_id, ['pending_user_id'], null, { op: 'remove' });
   } catch (e) {
@@ -483,7 +484,7 @@ async function ask(req, res, next) {
      */
     if (found.identity && found.identity.identity_type === 'customer') {
       const c = found.identity;
-      const row = (await boundRead(query, c.identity_id, 'SELECT otp_contact, phone FROM identities WHERE identity_id = $1', [c.identity_id])).rows[0] || {};
+      const row = (await query('SELECT otp_contact, phone FROM identities WHERE identity_id = $1', [c.identity_id])).rows[0] || {};
       const to = row.otp_contact || row.phone || '';
       const otp = await identityAuth.issueOtp(query, c, undefined, 'customer');
       if (to) askMail(sendOtp(to.includes('@') ? 'email' : 'phone', to, c.display_name, otp));
@@ -695,7 +696,7 @@ async function verify(req, res) {
           const tz = /^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){1,2}$/.test(String(ctx.timezone || '')) ? String(ctx.timezone) : null;
           const langs = Array.isArray(ctx.languages) ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
           if (cc || cur || tz) {
-            await boundRead(query, identity.identity_id, 
+            await query(
               `UPDATE identities
                   SET country       = COALESCE(country, $2),
                       currency_code = COALESCE(currency_code, $3),
@@ -705,7 +706,7 @@ async function verify(req, res) {
             );
           }
           if (langs.length) {
-            await boundRead(query, identity.identity_id, 
+            await query(
               `UPDATE identities
                   SET locale_prefs = COALESCE(locale_prefs, '{}'::jsonb) || jsonb_build_object('langs_seen', $2::jsonb)
                 WHERE identity_id = $1`,
@@ -920,7 +921,7 @@ async function actorLogin(req, res) {
     if (e.ambiguous || !e.ok) return unknownAccount(req, res); // SEC-139: two businesses of one name get the refusal, not a list (SEC-143)
     const parent_entity = e.entity;
 
-    const actor = await boundRead(query, parent_entity.identity_id, 
+    const actor = await query(
       `SELECT identity_id, bridge_id, display_name, actor_key,
               actor_role, actor_type, break_status,
               otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, max_tasks,
