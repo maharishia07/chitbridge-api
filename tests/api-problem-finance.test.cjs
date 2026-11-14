@@ -145,13 +145,16 @@ const WORLDS = [
 ];
 const BODY_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-/** { 'METHOD /full/path': template } for every route a router holds, read from the router itself */
+/** { 'METHOD /full/path': template } for every route a router holds, read from the router itself, and from the part routers it mounts with router.use (routes/folders-inbox.js, MNT-59) */
 function routesOf(router, mount) {
   const found = {};
-  router.stack.filter((layer) => layer.route).forEach((layer) => Object.keys(layer.route.methods).forEach((method) => {
-    const full = layer.route.path === '/' ? mount : mount + layer.route.path;
-    found[method.toUpperCase() + ' ' + full] = full;
-  }));
+  router.stack.forEach((layer) => {
+    if (!layer.route) return layer.name === 'router' && layer.handle.stack ? Object.assign(found, routesOf(layer.handle, mount)) : undefined;
+    Object.keys(layer.route.methods).forEach((method) => {
+      const full = layer.route.path === '/' ? mount : mount + layer.route.path;
+      found[method.toUpperCase() + ' ' + full] = full;
+    });
+  });
   return found;
 }
 const urlOf = (template, bad) => template.replace(/:(\w+)/g, (all, name) => (bad ? 'nope' : PARAM_VALUES[name] || PARTY));
