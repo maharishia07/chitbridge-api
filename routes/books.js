@@ -2528,7 +2528,7 @@ router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
     // prettier-ignore
-    res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, emirates: form.emirates, staggers: form.staggers });
+    res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, needs_answer: form.needs_answer, emirates: form.emirates, staggers: form.staggers });
   } catch (err) {
     if (err && err.code === 'RETURN_FROM_RAIL') {
       const pack = err.pack || null;
