@@ -14,12 +14,12 @@ of file each thing is; this says what already does the job.
 | 128 | `words` | `variant.browser.js` |  |
 | 127 | `read` | `books-cashflow.js` | Trips: |
 | 122 | `withEntity` | `books-hooks.js` |  |
-| 115 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 116 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 106 | `answer` | `availability.js` | from March; then nearest. |
-| 99 | `money` | `bill-privacy.js` |  |
+| 98 | `money` | `bill-privacy.js` |  |
 | 86 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 82 | `next` | `dayopen.js` | the next thing to do — |
-| 80 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 81 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 77 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 77 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
@@ -54,7 +54,7 @@ of file each thing is; this says what already does the job.
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 48 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 47 | `read` | `cap-print.js` |  |
-| 46 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 47 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 46 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 44 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 44 | `facts` | `bill-steps.js` | MY state_log — |
