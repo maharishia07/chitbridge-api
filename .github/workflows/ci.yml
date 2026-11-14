@@ -310,6 +310,12 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/sec-184-signin-lookup.realstack.cjs
+      - name: SEC-185 (step B of SEC-184) · identities row security (migrations/RUN-2026-11-14-b860, applied by the test as the owner and taken off again): a shop-bound session cannot read, change or plant another shop's rows; login FAILS when ops.signin_candidates is dropped (mutation); real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/sec-185-identities-rls.realstack.cjs
       - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
         env:
           API_BASE: http://127.0.0.1:3000

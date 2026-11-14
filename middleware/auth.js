@@ -5,6 +5,7 @@
 // CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
 const { query } = require('../db');
+const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read under its own binding
 const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
 const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
 const { problem } = require('../lib/problem'); // API-4b — every refusal below is the one Problem body; the old keys ride on it, frozen
@@ -107,7 +108,7 @@ async function judgeDevice(req, res, decoded) {
 async function actorRow(identity_id) {
   const lvlCols = await schema.hasColumn('identities', 'access_level');
   const costCol = await schema.hasColumn('identities', 'can_see_costs'); // b145 — absent = the reader is cost-blind (fail closed)
-  const found = await query(
+  const found = await boundRead(query, identity_id,
     `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''}${costCol ? ', can_see_costs' : ''} FROM identities
      WHERE identity_id = $1 AND identity_type = 'actor'`,
     [identity_id]
@@ -641,7 +642,7 @@ async function keyListed(entity_id, jti, req) {
   let ok = false;
   try {
     const { query: statement } = require('../db');
-    const r = await statement('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+    const r = await boundRead(statement, entity_id, 'SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
     const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
     ok = keyAlive(list, jti);
   } catch (_) {
