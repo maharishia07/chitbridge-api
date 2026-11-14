@@ -1541,6 +1541,12 @@
    "strict_input": true,
    "idempotent_money_write": true
   },
+  "POST /api/books/bank/marks": {
+   "strict_input": true
+  },
+  "POST /api/books/bank/statements": {
+   "strict_input": true
+  },
   "PATCH /api/books/payments/:id": {
    "strict_input": true,
    "idempotent_money_write": true

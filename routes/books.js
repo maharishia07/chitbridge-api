@@ -628,8 +628,8 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
       const chart = await S.accounts(h, e);
-      const a = chart.find((x) => String(x.code) === key) || chart.find((x) => x.role === key) || chart.find((x) => String(x.account_id) === key);
-      if (!a || a.is_group) return null;
+      const a = require('../lib/bank-rec-log').accountIn(chart, key); /* the one reader of an account key: its code, its role or its id */
+      if (!a) return null;
       const lo = await B.ledgerOf(h, e, a, party, from, to),
         open = lo.opening_minor;
       /* PERF1: a page (?limit · ?after) reads its entries only; its first running balance = the range's opening + ONE indexed SUM of the lines before
@@ -1413,6 +1413,52 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
       .map((item) => ({ party_id: item.party_id, name: item.nickname || item.name || null }));
     /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
     res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/* ── FIN-70 · THE BANK RECONCILIATION RECORD (lib/bank-rec-log, b864 bank_rec_log): the page's step actions and its signed statement, insert-only, who and when stamped HERE.
+   Writes are the editor's (a viewer, the auditor, cannot); the read is any login with the Ledger on (the ACC-176 guest actor reads at viewer level). Before b864: 503 in words, the page keeps its marks on the device. ── */
+const BRL = require('../lib/bank-rec-log');
+/** the bank ledger a body or query names (code, role or id) inside this transaction, or the 404 */
+async function bankAccountOf(h, e, key) {
+  const account = BRL.accountIn(await S.accounts(h, e), key);
+  if (!account) throw Object.assign(new Error('That bank account was not found.'), { code: 'BOOKS_NOT_FOUND' });
+  return account;
+}
+/** POST /bank/marks { account, file_hash?, marks: [{ act: accept|undo|note|attach, key, how?, chits?, ledger?, text?, ref? }] } → { marks: [row], by, at } — editor; insert-only, one transaction. `by` and `at` are the server's. */
+router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      b = req.body || {};
+    const marks = await withEntity(e, async (h) => BRL.appendMarks(h, e, await bankAccountOf(h, e, b.account), b, byOf(req)));
+    res.status(201).json({ marks });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
+router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      b = req.body || {};
+    const statement = await withEntity(e, async (h) => BRL.appendStatement(h, e, await bankAccountOf(h, e, b.account), curOf(req), b, byOf(req)));
+    res.status(201).json({ statement });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** GET /bank/log?account&from&to → { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
+router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      from = req.query.from ? dateQ(req.query.from) : null,
+      to = req.query.to ? dateQ(req.query.to) : null;
+    const out = await withEntity(e, async (h) => {
+      const account = await bankAccountOf(h, e, req.query.account);
+      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BRL.read(h, e, account, from, to));
+    });
+    res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

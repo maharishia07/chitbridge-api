@@ -4136,6 +4136,30 @@
     "why": "not reached: answered 404"
    }
   },
+  "POST /api/books/bank/marks": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/bank/statements": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/bank/log": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "PATCH /api/books/payments/:id": {
    "strict_input": {
     "pass": true
