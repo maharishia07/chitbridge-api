@@ -3020,7 +3020,7 @@
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
        (the look dropdowns' font) live on it. Dropping it when this moved into the drawer left an "on" chip
        looking exactly like an "off" one — found by a critic pass, 2026-09-18. -->
-  <dialog class="menu sfull" id="tillmenu" hidden aria-label="Counter menu"></dialog>
+  <dialog data-pop="POP152" class="menu sfull" id="tillmenu" hidden aria-label="Counter menu"></dialog>
 </aside>
 <!-- ⭐⭐ THE IDLE SCREEN — the shop's own picture while nobody is billing. Painted by paintIdle(); shown by a
      timer; dismissed by ANY key, scan or touch (see idleWake). -->
@@ -3031,7 +3031,7 @@
   drawn by the real tile renderer and an Apply that means nothing changed until you pressed it.
 -->
 <!-- ⭐⭐ TO DO ([TILL-79]) — its own popup, its own menu item, list and edit in one place -->
-<dialog id="tododlg" class="dlg" data-testid="till-todo-dlg">
+<dialog data-pop="POP153" id="tododlg" class="dlg" data-testid="till-todo-dlg">
   <h3>To do <span class="u" id="todocount"></span></h3>
   <div class="todoadd">
     <input id="todoin" class="todoin" data-testid="till-todo-add" maxlength="120"
@@ -3050,7 +3050,7 @@
   the group picker and the spacing cannot be judged in a grid of six tiles, and five of the seven settings
   used to change nothing you could see.
 -->
-<dialog id="styledlg" class="dlg studio" data-testid="till-style">
+<dialog data-pop="POP154" id="styledlg" class="dlg studio" data-testid="till-style">
   <div class="sthead">
     <div>
       <h3>Screen style</h3>
@@ -3104,7 +3104,7 @@
      settable; never ours to guess, because a grocery reads nothing like a restaurant. -->
 <!-- ⭐ THE SHOP'S OWN PICTURE, FULL SIZE ([TILL-100]). The morning panel shows a 128px icon; this is what
      opens when it is pressed. Nothing else on the counter needs the big one. -->
-<dialog id="dayimgdlg" class="dlg" data-testid="till-day-img-dlg">
+<dialog data-pop="POP155" id="dayimgdlg" class="dlg" data-testid="till-day-img-dlg">
   <h3>Your picture <span class="u">kept on this counter</span></h3>
   <div id="dayimgbig" class="dayimgbig"></div>
   <div class="dlgbtns">
@@ -3128,10 +3128,10 @@
 <div id="flash" class="flash" data-testid="till-flash" hidden></div>
 <!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
 <!-- ⭐ the caution, at the moment of the act ([TILL-172]) — design-handoff/footer -->
-<dialog id="suredlg" data-testid="till-sure"><div class="dlg" id="surebody"></div></dialog>
+<dialog data-pop="POP156" id="suredlg" data-testid="till-sure"><div class="dlg" id="surebody"></div></dialog>
 <!-- ⭐ F5 W1a: "Veg Meals: GST?" — the ask-once sheet behind the bill's "No tax rate · Fix" (rateAskOpen); the slabs on today's menu as big buttons, the pack's suggestion first -->
-<dialog id="ratedlg" data-testid="till-rate"><div class="dlg" id="ratebody"></div></dialog>
-<dialog id="linedlg" data-testid="till-line-dlg">
+<dialog data-pop="POP157" id="ratedlg" data-testid="till-rate"><div class="dlg" id="ratebody"></div></dialog>
+<dialog data-pop="POP158" id="linedlg" data-testid="till-line-dlg">
   <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
   <div class="lhead"><h3>The line</h3>
     <!-- ⭐ two views of one registry ([TILL-154]) — what is happening, and what works without a line -->
@@ -3143,7 +3143,7 @@
     <button class="pill" data-testid="till-line-close" onclick="lineClose()" data-cbsid="CTR002-B13">Close<span class="kh"> · Esc</span></button></div>
   <div class="lbody" id="linebody"></div>
 </dialog>
-<dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
+<dialog data-pop="POP159" id="updlg" class="dlg wide" data-testid="till-upload-dlg">
   <h3>Your product list <span class="u">we read it first and show you what we found — nothing is added until you say so</span></h3>
   <div id="upbody" class="upbody"></div>
   <div id="upsay" class="shopsay"></div>
@@ -3152,7 +3152,7 @@
     <button id="upgo" class="pri" data-testid="till-upload-go" onclick="upCommit()" disabled data-cbsid="CTR002-B15">Add these products</button>
   </div>
 </dialog>
-<dialog id="startdlg" class="dlg" data-testid="till-start-dlg">
+<dialog data-pop="POP160" id="startdlg" class="dlg" data-testid="till-start-dlg">
   <h3>Start your shop <span class="u">pick what you sell — you can change every price and name afterwards</span></h3>
   <div id="startbody" class="startbody"></div>
   <div id="startsay" class="shopsay"></div>
@@ -3161,18 +3161,18 @@
 <!-- ⭐⭐ WHY THIS COUNTER CANNOT DO THAT YET ([TILL-127]). Athi: *"it has to give a pop up message that store
      is not signed in yet, sign-in prompt has to showcase."* A quiet no-op is what this replaces. -->
 <!-- ⭐⭐⭐ COUNTER HEALTH ([TILL-137]) — the verdict, four checks, what is waiting, the last try, the code. -->
-<dialog id="healthdlg" class="dlg wide" data-testid="till-health-dlg"><div id="healthbody"></div></dialog>
-<dialog id="needdlg" class="dlg" data-testid="till-need-dlg">
+<dialog data-pop="POP161" id="healthdlg" class="dlg wide" data-testid="till-health-dlg"><div id="healthbody"></div></dialog>
+<dialog data-pop="POP162" id="needdlg" class="dlg" data-testid="till-need-dlg">
   <h3>This counter is not ready <span class="u">what is missing, and the one thing that fixes it</span></h3>
   <div id="needbody" class="startbody"></div>
 </dialog>
-<dialog id="signindlg" class="dlg" data-testid="till-signin-dlg">
+<dialog data-pop="POP163" id="signindlg" class="dlg" data-testid="till-signin-dlg">
   <h3>Connect this counter <span class="u">sign in once with your ChitBridge email — afterwards this counter bills with or without the internet</span></h3>
   <div id="signinbody" class="startbody"></div>
   <div id="signinsay" class="shopsay"></div>
   <div class="dlgbtns"><button onclick="signinClose()" data-cbsid="CTR002-B17">Not now<span class="kh"> · Esc</span></button></div>
 </dialog>
-<dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
+<dialog data-pop="POP164" id="shopdlg" class="dlg" data-testid="till-shop-dlg">
   <h3>Your shop <span class="u">what prints on every bill</span></h3>
   <div id="shopform" class="shopform"></div>
   <div id="shopsay" class="shopsay"></div>
@@ -3186,7 +3186,7 @@
   Phase 4.6). "Back to most-used first" used to sit here, beside Cancel, reading as a second undo — it is now
   the first thing inside catbody itself (catModeHtml()), a mode picked once rather than a button pressed.
 -->
-<dialog id="catdlg" class="dlg" data-testid="till-catorder-dlg">
+<dialog data-pop="POP165" id="catdlg" class="dlg" data-testid="till-catorder-dlg">
   <h3>Category order <span class="u">What the hand reaches first — on the chips, the keys and in maintenance.</span></h3>
   <div id="catbody"></div>
   <div class="dlgbtns">
@@ -3201,7 +3201,7 @@
   ⚠️ NO SAVE BUTTON — every row here already saves as it changes (quickGroupToggle/tillOptSet), the same rule
   Settings itself follows; Close is the only footer button, same wording as Settings' own.
 -->
-<dialog id="quickmaintdlg" class="dlg" data-testid="till-quickmaint-dlg">
+<dialog data-pop="POP166" id="quickmaintdlg" class="dlg" data-testid="till-quickmaint-dlg">
   <h3>Quick keys <span class="u">what fills the keys, and what stays hidden</span></h3>
   <div id="quickmaintbody">
     <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
@@ -3220,12 +3220,12 @@
   </div>
   <div class="dlgbtns"><button onclick="quickMaintClose()" data-cbsid="CTR002-B23">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
-<dialog id="stylegal" class="dlg wide" data-testid="till-style-gallery">
+<dialog data-pop="POP167" id="stylegal" class="dlg wide" data-testid="till-style-gallery">
   <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
   <div class="stgal" id="stygal"></div>
   <div class="dlgbtns"><button onclick="galClose()" data-cbsid="CTR002-B24">Cancel<span class="kh"> · Esc</span></button></div>
 </dialog>
-<dialog id="moddlg" class="dlg" data-testid="till-mod">
+<dialog data-pop="POP168" id="moddlg" class="dlg" data-testid="till-mod">
   <h3 id="modtitle">Choose</h3>
   <div id="modbody"></div>
   <div class="dlgbtns">
@@ -3456,7 +3456,7 @@
 <nav class="stepbar" id="stepbar" data-testid="till-stepbar" aria-label="steps"></nav>
 
 <!-- ⭐ ONE BOX FOR ALL THREE — the counter's own alert, confirm and prompt. -->
-<dialog id="askdlg"><div class="dlg">
+<dialog data-pop="POP169" id="askdlg"><div class="dlg">
   <h3 id="asktitle">ChitBridge counter</h3>
   <div id="askbody" data-testid="till-ask-body"></div>
   <label id="asklabel" hidden>Your answer</label>
@@ -3468,9 +3468,9 @@
 </div></dialog>
 
 <!-- ⭐⭐ THE DAY'S SALES, FULL SCREEN AND PRINTABLE — see dayReport() -->
-<dialog id="dayrep" class="dayrep" data-testid="till-dayreport"></dialog>
+<dialog data-pop="POP170" id="dayrep" class="dayrep" data-testid="till-dayreport"></dialog>
 <!-- ⭐⭐ TAKING SOMETHING BACK — see retOpen() -->
-<dialog id="retdlg" data-testid="till-return"><div class="dlg"><h3 id="rettitle">Take a return</h3>
+<dialog data-pop="POP171" id="retdlg" data-testid="till-return"><div class="dlg"><h3 id="rettitle">Take a return</h3>
   <div id="retbody"></div>
   <!-- ⚠️⚠️ [found live 2026-09-27] .dlgbtns, NOT <menu>. Athi, on the expense sheet: "in the HTML page it
        looks good, but not in this panel, check cancel, record chip." Nothing in this file has ever styled a
@@ -3491,14 +3491,14 @@
   the same ?s=<handle>&item=<id>&preview=1. Nothing about a product page is re-drawn here; a second opinion
   about what a customer sees is exactly the drift that would make the preview a lie.
 -->
-<dialog id="shopprevdlg" data-testid="till-shopprev"><div class="dlg"><h3 id="shopprevtitle">What a customer sees</h3>
+<dialog data-pop="POP172" id="shopprevdlg" data-testid="till-shopprev"><div class="dlg"><h3 id="shopprevtitle">What a customer sees</h3>
   <div id="shopprevbody"></div>
   <div class="dlgbtns">
     <button onclick="shopPrevClose()" data-cbsid="CTR003-B03">Close</button>
     <button class="pri" data-testid="till-shopprev-open" onclick="shopPrevOut()" data-cbsid="CTR003-B04">Open the storefront ↗</button>
   </div>
 </div></dialog>
-<dialog id="tvdlg" data-testid="till-tv"><div class="dlg"><h3>📺 Shop screen</h3>
+<dialog data-pop="POP173" id="tvdlg" data-testid="till-tv"><div class="dlg"><h3>📺 Shop screen</h3>
   <div id="tvbody"></div>
   <div class="dlgbtns">
     <button onclick="tvClose()" data-cbsid="CTR003-B05">Close</button>
@@ -3507,26 +3507,26 @@
   </div>
 </div></dialog>
 <!-- ⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER — see expOpen() -->
-<dialog id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
+<dialog data-pop="POP174" id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
   <div id="expbody"></div>
   <div class="dlgbtns">
     <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()" data-cbsid="CTR003-B08">Cancel</button>
     <button id="expgo" class="pri" data-testid="till-expense-go" onclick="expIssue()" data-cbsid="CTR003-B09">Record it</button>
   </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] SIGNING SOMEONE UP — see subOpen() -->
-<dialog id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
+<dialog data-pop="POP175" id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
   <div id="subbody"></div>
   <div class="dlgbtns">
     <button value="cancel" data-testid="till-sub-cancel" onclick="subClose()" data-cbsid="CTR003-B10">Cancel</button>
     <button id="subgo" class="pri" data-testid="till-sub-go" onclick="subIssue()" data-cbsid="CTR003-B11">Sign them up</button>
   </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] EVERY SUBSCRIPTION THIS COUNTER HOLDS — see subListOpen() -->
-<dialog id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
+<dialog data-pop="POP176" id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
   <div id="sublistbody"></div>
   <div class="dlgbtns">
     <button value="cancel" data-testid="till-sub-list-close" onclick="subListClose()" data-cbsid="CTR003-B12">Close</button>
   </div></div></dialog>
-<dialog id="slipdlg"><div class="dlg">
+<dialog data-pop="POP177" id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <!-- ⭐ M41: one line, OUTSIDE the slipbox so it never prints — this bill saved, but not as a tax invoice. Filled by showSlip(). -->
   <div id="slipwarn" data-testid="till-slip-notinvoice" hidden></div>
@@ -3559,7 +3559,7 @@
      sat over EVERY counter on EVERY load, break or not — caught by [TILL-25] before it shipped. The rule lives in the
      stylesheet, where [hidden] can still win. -->
 <!-- ⭐ the identity of this counter, as JSON — see whoAmI(). Openable from the dev bar. -->
-<dialog id="whoamidlg" data-testid="till-whoami"><div class="dlg"><h3>Whose shop is this counter?</h3>
+<dialog data-pop="POP178" id="whoamidlg" data-testid="till-whoami"><div class="dlg"><h3>Whose shop is this counter?</h3>
   <p class="note">The counter is tied to the entity id the server signs — never to a shop name, which can be changed.</p>
   <pre id="whoamibody" class="whoami" data-testid="till-whoami-body"></pre>
   <div class="dlgbtns">
@@ -3590,7 +3590,7 @@
      code, and an authenticated person at the end. Owner or employee, same path.
      ⚠️ NOT #signindlg, which pairs the DEVICE and fetches its key ([TILL-121]). Two different acts, and the
      button that said "Sign in" used to open neither of them — it opened the name picker below. -->
-<dialog id="rcvpaydlg" class="setdlg"><div class="dlg">
+<dialog data-pop="POP179" id="rcvpaydlg" class="setdlg"><div class="dlg">
   <h3>Money received</h3>
   <div id="rcvpaybody" data-testid="till-rp-body"></div>
 </div></dialog>
@@ -3599,20 +3599,20 @@
      box, the chooser and the PIN-setting step; this page paints NOTHING of that (tests/till-vendor: no second id/code form).
      #usignafter is the counter's own after-step — "Opening …", a counter number held elsewhere — and #usignbtns its own
      buttons (Done · Sign out · Close). No <h3>: the window carries its title. -->
-<dialog id="usigndlg" class="setdlg"><div class="dlg">
+<dialog data-pop="POP180" id="usigndlg" class="setdlg"><div class="dlg">
   <div id="usignbody" data-testid="till-usign-body"></div>
   <div id="usignafter" data-testid="till-usign-after"></div>
   <div id="usignbtns" class="dlgbtns"></div>
 </div></dialog>
 
-<dialog id="whodlg"><div class="dlg">
+<dialog data-pop="POP181" id="whodlg"><div class="dlg">
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()" data-cbsid="CTR003-B23">Close</button></div>
   <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person for their counter PIN, or the first code from the owner. The name goes on every bill until somebody takes over.</div>
 </div></dialog>
 
-<dialog id="shiftdlg"><div class="dlg">
+<dialog data-pop="POP182" id="shiftdlg"><div class="dlg">
   <h3 id="shifttitle">Hand over</h3>
   <div id="shiftbody"></div>
   <div class="dlgbtns">
@@ -3621,7 +3621,7 @@
   </div>
 </div></dialog>
 
-<dialog id="billsdlg"><div class="dlg">
+<dialog data-pop="POP183" id="billsdlg"><div class="dlg">
   <h3 id="billstitle">Today</h3>
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button class="pill" id="tab_today" data-testid="till-tab-today" onclick="billsTab('today')" data-cbsid="CTR003-B26">Today · on this device</button>
@@ -3635,7 +3635,7 @@
   <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report" data-cbsid="CTR003-B28">📊</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close" data-cbsid="CTR003-B29">✕</button></div>
 </div></dialog>
 
-<dialog id="setdlg" class="setdlg"><div class="dlg">
+<dialog data-pop="POP184" id="setdlg" class="setdlg"><div class="dlg">
   <!--
     ⭐⭐ SETTINGS, ONE SCROLLING LIST (design-handoff/B-fine-tuning/04-settings, Phase 2.5).
     ⚠️⚠️⚠️ SIX TABS OF WILDLY DIFFERENT FREQUENCY (§1): Voice is touched mid-shift, the ChitBridge address once
@@ -3882,7 +3882,7 @@
   back and Photos on keys are exactly that; Kitchen tickets stands in for Printer, which has no clean
   browser-side on/off to flip (only a picker dialog on the desktop kit).
 -->
-<dialog id="traydlg" class="dlg" data-testid="till-tray-dlg">
+<dialog data-pop="POP185" id="traydlg" class="dlg" data-testid="till-tray-dlg">
   <div class="sethead"><h3>Switches</h3>
     <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B32">✕</button></div>
   <div id="traybody"></div>
@@ -3890,7 +3890,7 @@
 </dialog>
 
 <!-- ⭐⭐ REVIEW BEFORE CLOSE (Phase 4, the order pad) — what is on it, and the one button that bills it -->
-<dialog id="orderdlg" class="dlg" data-testid="till-order-dlg">
+<dialog data-pop="POP186" id="orderdlg" class="dlg" data-testid="till-order-dlg">
   <div class="sethead"><h3 id="orderdlgtitle">Table</h3>
     <button class="setx" onclick="document.getElementById('orderdlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B34">✕</button></div>
   <div id="orderdlgbody"></div>
@@ -3901,7 +3901,7 @@
 </dialog>
 
 <!-- ⭐ M74 ◐ — the 🛒 pill opens THIS: the shop's open online orders, in the till (who · ₹ · age · status); a row opens it in Despatch -->
-<dialog id="onlinedlg" class="dlg" data-testid="till-online-dlg">
+<dialog data-pop="POP187" id="onlinedlg" class="dlg" data-testid="till-online-dlg">
   <div class="sethead"><h3 id="onlinedlgtitle">Online orders</h3>
     <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B37">✕</button></div>
   <div id="onlinedlgbody"></div>
@@ -3909,7 +3909,7 @@
 </dialog>
 
 <!-- ⭐ M127: the modes, named. Receive and Despatch are shown to every shop and greyed WITH the reason when the shop holds no stock. -->
-<dialog id="modedlg" class="dlg" data-testid="till-mode-dlg">
+<dialog data-pop="POP188" id="modedlg" class="dlg" data-testid="till-mode-dlg">
   <div class="sethead"><h3>What are you doing?</h3>
     <button class="setx" onclick="document.getElementById('modedlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B40">✕</button></div>
   <div id="modedlgbody"></div>
