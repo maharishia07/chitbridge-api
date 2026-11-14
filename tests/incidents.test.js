@@ -43,7 +43,7 @@ it('⚠️⚠️ an INCIDENT, a DEFECT and a REQUIREMENT stay three different th
   assert.ok(SRC.indexOf('INC_STATES') > 0 && SRC.indexOf('REQ_STATES') > 0,
     'the two lifecycles have been merged — an incident is not a requirement');
   assert.ok(/defects: \[\]/.test(SRC), 'an incident no longer LINKS to defects; it must not absorb them');
-  assert.ok(/defects\.indexOf\(String\(b\.defect\)\) < 0/.test(SRC),
+  assert.ok(/defects\.indexOf\(String\(body\.defect\)\) < 0/.test(SRC),
     'the same defect can be linked twice, which double-counts it on every report');
 });
 
@@ -80,8 +80,8 @@ it('⭐⭐ TWO CLOCKS: when the shop stopped, and when anybody heard', () => {
 it('⚠️ the durations are COMPUTED on read, never stored', () => {
   /* A stored duration stops being true the moment the row changes and nobody recomputes it — and it is the
      kind of wrong that looks fine, because a number is still printed. */
-  assert.ok(!/unnoticed_mins:\s*mins\(t0, t1\)[\s\S]{0,200}INSERT/.test(SRC), 'a duration is being written down');
-  assert.ok(/const mins = \(a, b2\)/.test(SRC), 'the reader no longer computes the durations');
+  assert.ok(!/unnoticed_mins:\s*mins\(happenedAt, raisedAt\)[\s\S]{0,200}INSERT/.test(SRC), 'a duration is being written down');
+  assert.ok(/const mins = \(startMs, endMs\)/.test(SRC), 'the reader no longer computes the durations');
 });
 
 it('⚠️⚠️ RESOLVED must say what changed', () => {
@@ -90,8 +90,8 @@ it('⚠️⚠️ RESOLVED must say what changed', () => {
    * nobody can tell whether it was fixed or forgotten. A resolution carries the commit that did it, or in words
    * why nothing needed doing.
    */
-  assert.ok(/state === 'resolved' && !b\.change && !why/.test(SRC), 'an incident can be resolved with nothing recorded');
-  assert.ok(/state === 'closed' && !why/.test(SRC), 'an incident can be closed with no reason');
+  assert.ok(/state === 'resolved' && !body\.change && !reason/.test(SRC), 'an incident can be resolved with nothing recorded');
+  assert.ok(/state === 'closed' && !reason/.test(SRC), 'an incident can be closed with no reason');
 });
 
 it('⭐⭐ a change is CITED from git, never re-typed into a second copy', () => {
@@ -103,14 +103,14 @@ it('⭐⭐ a change is CITED from git, never re-typed into a second copy', () =>
    */
   assert.ok(/\[0-9a-f\]\{7,40\}/.test(SRC), 'a commit sha is accepted without being shape-checked');
   assert.ok(SRC.indexOf('repo:') > 0, 'a sha is stored with no repo — it resolves in three places or none');
-  assert.ok(!/message: String\(b\.change\.message/.test(SRC), 'the commit MESSAGE is being copied out of git');
+  assert.ok(!/message: String\(body\.change\.message/.test(SRC), 'the commit MESSAGE is being copied out of git');
 });
 
 it('⭐ the board sorts by severity, then oldest', () => {
   /* Newest-first is right for a log and wrong for a board: the oldest Sev-1 is precisely the row that must not
      sink, and a date sort is what buries it. */
   /* the sort is the database's now (T2-PAGING): severity rank first, then the day it happened, oldest first */
-  assert.ok(/rankOrder\(SV, INC_SEV\)\}, v\.rules->>'happened_at' NULLS LAST/.test(SRC), 'the board no longer sorts by severity first');
+  assert.ok(/rankOrder\(SEVERITY_SQL, INC_SEV\)\}, v\.rules->>'happened_at' NULLS LAST/.test(SRC), 'the board no longer sorts by severity first');
   assert.ok(/open_by_severity/.test(SRC), 'the open-by-severity count a release gate asks for is gone');
 });
 
@@ -135,9 +135,9 @@ it('⚠️⚠️ every move is APPENDED, never overwritten', () => {
   /* The same argument the result ledger and the requirement flag both won. An incident whose state changes with
      no trace is one nobody can be held to, and a support desk is exactly where that matters. */
   const p = SRC.slice(SRC.indexOf("router.patch('/incidents/:id'"));
-  assert.ok(/history: \(ru\.history \|\| \[\]\)\.concat/.test(p), 'a state change no longer lands in the history');
+  assert.ok(/history: \(rules\.history \|\| \[\]\)\.concat/.test(p), 'a state change no longer lands in the history');
   assert.ok(/INSERT INTO definition_version/.test(p), 'a change no longer writes a new version');
-  assert.ok(/ru\.resolved_at \|\| now/.test(p),
+  assert.ok(/rules\.resolved_at \|\| now/.test(p),
     'a re-resolved incident overwrites the day the shop actually got its counter back');
 });
 

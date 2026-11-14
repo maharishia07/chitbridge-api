@@ -118,7 +118,7 @@ ok('audience and counterparty reach raiseticket through supportcopy',
   /audience: origin\.audience,\s*to_bridge_id: origin\.to_bridge_id/.test(copy));
 
 ok('both doors — incidents and requirements — pass them on',
-  (test.match(/audience: b\.audience,\s*to_bridge_id: b\.to_bridge_id/g) || []).length === 2,
+  (test.match(/audience: body\.audience,\s*to_bridge_id: body\.to_bridge_id/g) || []).length === 2,
   'one door wired and the other not is the silence this codebase keeps producing');
 
 ok('the answer names the desk it used',
