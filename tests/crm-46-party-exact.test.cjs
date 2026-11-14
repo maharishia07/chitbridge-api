@@ -37,11 +37,11 @@ const kept = (side, body) => {
 };
 
 check('credit_days 2.7 refused', refused('customer', { credit_days: 2.7 }, /Credit days is a whole number/));
-check('credit_days true refused', refused('supplier', { credit_days: true }, /Credit days is a whole number/));
+check('credit_days true refused', refused('supplier', { credit_days: true }, /Credit days is a number of days/));
 check('credit_days "30" read as 30', (kept('customer', { credit_days: '30' }) || {}).credit_days === 30);
 check('credit_days null clears', (kept('customer', { credit_days: null }) || {}).credit_days === null);
 check('credit_limit_minor 12.5 refused', refused('customer', { credit_limit_minor: 12.5 }, /whole number/));
-check('credit_limit_minor true refused', refused('supplier', { credit_limit_minor: true }, /whole number/));
+check('credit_limit_minor true refused', refused('supplier', { credit_limit_minor: true }, /credit limit is an amount/));
 check('credit_limit_minor 150000 kept', (kept('customer', { credit_limit_minor: 150000 }) || {}).credit_limit_minor === 150000);
 check('credit_limit_minor -5 still refused', refused('customer', { credit_limit_minor: -5 }, /0 or more/));
 check('legal_name of 200 kept whole', ((kept('customer', { legal_name: 'a'.repeat(200) }) || {}).legal_name || '').length === 200);
