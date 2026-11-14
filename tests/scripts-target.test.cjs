@@ -3,6 +3,7 @@
  * tests/scripts-target.test.cjs — PLT-101: NO api SCRIPT CAN REACH PRODUCTION BY FORGETTING A VARIABLE.
  *   1 no file in scripts/ names the live api host (the only home is run-target.cjs PRODUCTION_API);
  *   2 the shared apiBase(): unset → exit 2, production host → exit 3 without CB_ALLOW_PROD=1, production with it → allowed, local → allowed;
+ *   2b no script defaults a variable to a non-local https host (comments stripped, so a header cannot satisfy a check);
  *   3 three real scripts started with CB_API unset exit non-zero and say REFUSED before any request.
  * Offline: step 3 never reaches a network (the refusal is the first thing each script does); no database.
  * CARD      28-platform-and-operations/hosting-and-deploy
@@ -13,6 +14,7 @@ const SCRIPTS = path.join(__dirname, '..', 'scripts');
 let passed = 0;
 function check(what, run) { try { run(); passed++; console.log('  ok  ' + what); } catch (failure) { console.log('  FAIL ' + what + '\n      ' + failure.message); process.exitCode = 1; } }
 
+/* MIN unit-test */
 const LIVE_HOST = /chitbridge-api-production|[a-z0-9-]+\.up\.railway\.app|\.railway\.internal/i;
 const files = fs.readdirSync(SCRIPTS).filter((f) => /\.(js|cjs)$/.test(f));
 
@@ -78,14 +80,24 @@ const CONVERTED = [
   'scripts/source-rules.js',
   'scripts/test-dev.js'
 ];   /* named so the trace row of each converted script has a test (KG1 tested-by) */
+/* comments are stripped first: every script header says "apiBase(" and "run-target", so a deleted real call must not hide behind its own header */
+function stripComments(text) { return text.replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' ')).replace(/(^|[^:\'"`])\/\/[^\n]*/g, '$1'); }
+const code = (file) => stripComments(fs.readFileSync(file, 'utf8'));
 check('every converted script calls apiBase() and exists', () => {
-  const bad = CONVERTED.filter((f) => !/apiBase\(/.test(fs.readFileSync(path.join(__dirname, '..', f), 'utf8')));
+  const bad = CONVERTED.filter((f) => !/\bapiBase\(/.test(code(path.join(__dirname, '..', f))));
   assert.deepStrictEqual(bad, [], 'no apiBase() in: ' + bad.join(', '));
 });
 const NETWORKED = /\bfetch\(|https?\.request|https?\.get\(|require\('(https?|node-fetch|axios|undici)'\)/;
 check('every networked script takes its target from run-target (or _proof, which does)', () => {
-  const bad = files.filter((f) => { const t = fs.readFileSync(path.join(SCRIPTS, f), 'utf8'); return NETWORKED.test(t) && !/run-target|require\('\.\/_proof'\)/.test(t) && f !== 'vendor-till.cjs'; });   /* vendor-till: 'fetch(' is service-worker text it writes out */
+  const bad = files.filter((f) => { const t = code(path.join(SCRIPTS, f)); return NETWORKED.test(t) && !/run-target|require\('\.\/_proof'\)/.test(t) && f !== 'vendor-till.cjs'; });   /* vendor-till: 'fetch(' is service-worker text it writes out */
   assert.deepStrictEqual(bad, [], 'networked without apiBase(): ' + bad.join(', '));
+});
+const DEFAULT_HTTPS = /(\|\||\?\?|[^=!<>]=)\s*['"`]https:\/\/(?!localhost\b|127\.0\.0\.1\b)[^'"`]+/g;
+const THIRD_PARTY_OK = /^https:\/\/graph\.facebook\.com\//;   /* WHATSAPP_GRAPH_BASE: Meta's api, not ours */
+check('no script defaults any variable to a non-local https host', () => {
+  const bad = [];
+  for (const f of files) for (const m of code(path.join(SCRIPTS, f)).match(DEFAULT_HTTPS) || []) { const url = m.replace(/^[^h]*/, ''); if (!THIRD_PARTY_OK.test(url)) bad.push(f + ' -> ' + url); }
+  assert.deepStrictEqual(bad, [], 'non-local https default (name the target with the variable, no default): ' + bad.join(', '));
 });
 check('a script loaded by a test (entry file outside scripts/) gets no target and is not refused', () => {
   const entry = path.join(require('os').tmpdir(), 'plt101-entry-' + process.pid + '.cjs');
@@ -115,7 +127,7 @@ check('apiBase: a local or SIT host is accepted, trailing slash trimmed', () => 
   assert.strictEqual(RT.resolveApi({ CB_API: 'http://127.0.0.1:9/' }).base, 'http://127.0.0.1:9');
   assert.strictEqual(RT.resolveApi({ CB_API: 'https://staging.144-24-145-121.sslip.io' }).ok, true);
 });
-for (const f of ['register-mint.js', 'regression.js', 'prove-lifecycle.js']) {
+for (const f of ['register-mint.js', 'regression.js', 'prove-lifecycle.js', path.basename('scripts/send-test-message.js')]   /* send-test-message.js reaches _proof, not apiBase(): named by its path so its trace row has this test */) {
   check(f + ' with CB_API unset exits non-zero, REFUSED, before any request', () => {
     const env = Object.assign({}, process.env); delete env.CB_API; delete env.CB_ALLOW_PROD; delete env.API;
     const r = spawnSync(process.execPath, [path.join(SCRIPTS, f)], { env, encoding: 'utf8', timeout: 15000 });
