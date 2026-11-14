@@ -4,7 +4,8 @@
 -- ⚠️⚠️ THIS IS THE FILE THE b857 HEADER MEANS BY "b858". Its text says "Do NOT run b858 (the row-security policies on identities, step B, HOLD)":
 --    b858 and b859 were taken by other work (b858_till_invoice_lease, b859_trigram_search_indexes), so the identities policies are THIS file, b860.
 -- ⚠️⚠️ DRAFT · NOT RUN anywhere · Athi runs it AS postgres (Supabase SQL editor), on SIT first, then production. RUN ORDER, no other:
---    1. b857_signin_candidates_definer.sql is run (the sign-in lookup function exists, `SELECT * FROM ops.signin_candidates('email','x@y.z')` answers), AND
+--    0. SEC-186 (the counterparty view without otp_code, otp_code_hash, pin_hash) runs before b860: b860's counterparty arm reads whole identity rows until it does, so it is NOT run first.
+--    1. b857_signin_candidates_definer.sql is run, AND its CHECK row is all true (the api now refuses to boot without ops.signin_candidates: lib/db-role.js signinDoorVerdict), (the sign-in lookup function exists, `SELECT * FROM ops.signin_candidates('email','x@y.z')` answers), AND
 --    2. the api that carries SEC-185 is deployed and live (lib/signin-lookup.js no longer falls back to a direct read; sign-in credentials are read through db.queryAs), AND
 --    3. node tools/identities-sweep.cjs --check prints "context-free sites: 0" on that api (every remaining read/write of identities has a shop or an identity bound), THEN
 --    4. THIS file once, then the read-only CHECK below, then `node scripts/rls-census.cjs --save` so db/rls-baseline.json shows identities as RLS + FORCE.

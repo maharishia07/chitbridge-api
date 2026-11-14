@@ -21,8 +21,9 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const ROOT = path.join(__dirname, '..');
-const BASELINE = path.join(ROOT, 'db', 'identities-sweep.baseline.json');
+const HOME_ROOT = path.join(__dirname, '..');
+let ROOT = HOME_ROOT; /* sweep(root) points it at a temp copy for the break checks */
+const BASELINE = path.join(HOME_ROOT, 'db', 'identities-sweep.baseline.json');
 const TOUCH = /\b(FROM|JOIN|INTO|UPDATE)\s+(public\.)?identities\b/i;
 const CALL = /(\b[\w.]*query|\breadBatch|\bexecute|\bboundRead|\bboundEach|\bqueryAs|\bqueryAsEach|\bonEntity|\bwithEntity|\bwithTransaction|\brun|\bq)\s*\(/;
 const RUNTIME = ['lib', 'routes', 'middleware', 'server.js'];
@@ -49,7 +50,8 @@ function calleeOf(lines, at) {
 }
 /** the class of a callee: bound doors, a plain module query (open), or a handle the caller owns (in-tx) */
 function classOfCallee(callee) {
-  if (/^(boundRead|boundEach|queryAs|queryAsEach)$/.test(callee) || /.as(Each)?$/.test(callee)) return 'bound';
+  if (/^(boundRead|boundEach|queryAs|queryAsEach)$/.test(callee) || /\.as(Each)?$/.test(callee)) return 'bound';
+  if (/(^|\.)pool\.query$/.test(callee)) return 'open'; /* the module pool is never bound to a shop */
   return ['query', '', 'q', 'run', 'execute'].indexOf(callee) !== -1 ? 'open' : 'in-tx';
 }
 /** the class of one matching line, by the call that opens its statement */
@@ -61,7 +63,8 @@ function classify(relPath, lines, at) {
   return { cls: siteClass, callee: callee || '(none)' };
 }
 /** every statement that names identities, as { file, line, text, cls, callee } */
-function sweep() {
+function sweep(root) {
+  ROOT = root || HOME_ROOT;
   const out = [];
   for (const relPath of RUNTIME.concat(JOBS).flatMap(files)) {
     const lines = fs.readFileSync(path.join(ROOT, relPath), 'utf8').split('\n');
@@ -71,6 +74,16 @@ function sweep() {
     });
   }
   return out;
+}
+/**
+ * the ratchet: neither the open count (module query(), pool.query) NOR the in-tx count (every other query alias: db.query, client.query, h.query, a renamed import)
+ * may rise above the baseline. A read through an alias is a read through the same door, so it is counted, not trusted.
+ */
+function judge(counts, base) {
+  const problems = [];
+  if ((counts.open || 0) > base.open) problems.push('a new unbound read or write of identities (open ' + (counts.open || 0) + ' > ' + base.open + '): use db.queryAs(id, ...) / boundRead, or withEntity(shop, ...)');
+  if ((counts['in-tx'] || 0) > base.inTx) problems.push('a new read or write of identities through a handle (in-tx ' + (counts['in-tx'] || 0) + ' > ' + base.inTx + '): db.query / client.query only inside withEntity / onEntity, otherwise db.queryAs');
+  return { ok: problems.length === 0, problems };
 }
 /** how many sites per class */
 const count = (sites) => sites.reduce((tally, site) => { tally[site.cls] = (tally[site.cls] || 0) + 1; return tally; }, {});
@@ -83,15 +96,13 @@ if (require.main === module) {
     console.log('| class | file:line | called as | statement |\n|---|---|---|---|');
     sites.forEach((site) => console.log('| ' + site.cls + ' | ' + site.file + ':' + site.line + ' | `' + site.callee + '` | `' + site.text.replace(/\|/g, '\\|').replace(/`/g, "'") + '` |'));
   } else if (arg === '--save') {
-    fs.writeFileSync(BASELINE, JSON.stringify({ at: new Date().toISOString().slice(0, 10), open: by.open || 0, counts: by }, null, 1) + '\n');
+    fs.writeFileSync(BASELINE, JSON.stringify({ at: new Date().toISOString().slice(0, 10), open: by.open || 0, inTx: by['in-tx'] || 0, counts: by }, null, 1) + '\n');
     console.log('saved', JSON.stringify(by));
   } else if (arg === '--check') {
-    const base = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
-    const open = by.open || 0;
-    console.log('context-free sites: ' + open + ' (baseline ' + base.open + ') · ' + JSON.stringify(by));
-    if (open > base.open) { console.log('FAIL: a new unbound read or write of identities (the count may only fall). Use db.queryAs(id, ...) / boundRead, or withEntity(shop, ...).'); process.exit(1); }
-    if (open < base.open) console.log('note: the count fell; run --save to lower the baseline.');
-    process.exit(0);
+    const verdict = judge(by, JSON.parse(fs.readFileSync(BASELINE, 'utf8')));
+    console.log('context-free sites: ' + (by.open || 0) + ' · in a handle (every other query alias: db.query, client.query, h.query ...): ' + (by['in-tx'] || 0) + ' · ' + JSON.stringify(by));
+    verdict.problems.forEach((line) => console.log('FAIL: ' + line));
+    process.exit(verdict.ok ? 0 : 1);
   } else console.log(JSON.stringify(by), '· total', sites.length);
 }
-module.exports = { sweep, classify, count };
+module.exports = { sweep, classify, count, judge };

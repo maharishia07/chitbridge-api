@@ -18,10 +18,53 @@ const B860 = read('migrations/RUN-2026-11-14-b860-identities-rls.sql');
 const code = (sql) => sql.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n');
 
 (async () => {
-  await check('ratchet: the open (unbound) count has not risen above db/identities-sweep.baseline.json', () => {
-    const base = JSON.parse(read('db/identities-sweep.baseline.json'));
-    const open = sweepTool.count(sweepTool.sweep()).open || 0;
-    assert(open <= base.open, 'open ' + open + ' > baseline ' + base.open + ': a new unbound read of identities (use db.queryAs / boundRead / withEntity)');
+  const baseline = () => JSON.parse(read('db/identities-sweep.baseline.json'));
+  await check('ratchet: neither the open count nor the in-tx count (every other query alias) has risen above db/identities-sweep.baseline.json', () => {
+    const verdict = sweepTool.judge(sweepTool.count(sweepTool.sweep()), baseline());
+    assert(verdict.ok, verdict.problems.join(' | '));
+  });
+  /** a temp copy of the runtime dirs with ONE extra read of identities appended to lib/policy.js: the counts the ratchet then sees */
+  const withExtraLine = (line) => {
+    const os = require('os');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sec185-'));
+    try {
+      for (const dir of ['lib', 'routes', 'middleware']) fs.cpSync(path.join(ROOT, dir), path.join(tmp, dir), { recursive: true });
+      fs.appendFileSync(path.join(tmp, 'lib', 'policy.js'), '\n' + line + '\n');
+      return sweepTool.judge(sweepTool.count(sweepTool.sweep(tmp)), baseline());
+    } finally { fs.rmSync(tmp, { recursive: true, force: true }); sweepTool.sweep(); }
+  };
+  const clean = withExtraLine('/* a comment only */');
+  await check('break check 0: a temp copy with no new read stays green (the copy omits scripts/tools, so counts can only be lower)', () => assert(clean.ok, clean.problems.join(' | ')));
+  await check('break check 1: a raw db.query read of identities in a temp copy turns the ratchet RED (in-tx rises)', () => {
+    const verdict = withExtraLine("async function probe(db) { return db.query('SELECT otp_code FROM identities WHERE email = $1', [1]); }");
+    assert(!verdict.ok && /in-tx/.test(verdict.problems.join()), JSON.stringify(verdict));
+  });
+  await check('break check 2: a pool.query read of identities in a temp copy turns the ratchet RED (open rises: the module pool is never bound)', () => {
+    const verdict = withExtraLine("async function probe(db) { return db.pool.query('SELECT otp_code FROM identities WHERE email = $1', [1]); }");
+    assert(!verdict.ok && /open/.test(verdict.problems.join()), JSON.stringify(verdict));
+  });
+  await check('break check 3: a renamed import (statement(...)) is counted too, as in-tx', () => {
+    const verdict = withExtraLine("async function probe(statement) { return statement('SELECT 1 FROM identities WHERE email = $1', [1]); }");
+    assert(!verdict.ok, JSON.stringify(verdict));
+  });
+  await check('boot: the sign-in door verdict is fatal when ops.signin_candidates is missing or not executable (warn on a local stack), ok when both are true', () => {
+    const role = require('../lib/db-role');
+    assert.strictEqual(role.signinDoorVerdict({ present: true, may_run: true }, false).level, 'ok');
+    assert.strictEqual(role.signinDoorVerdict({ present: false, may_run: false }, false).level, 'fatal');
+    assert.strictEqual(role.signinDoorVerdict({ present: true, may_run: false }, false).level, 'fatal');
+    assert.strictEqual(role.signinDoorVerdict(null, false).level, 'fatal');
+    assert.strictEqual(role.signinDoorVerdict({ present: false, may_run: false }, true).level, 'warn');
+    assert(/b857/.test(role.signinDoorVerdict({ present: false, may_run: false }, false).reason));
+    assert(/signinDoorFacts/.test(read('server.js')) && /process\.exit\(1\)/.test(read('server.js')), 'server.js asks before listening and exits on fatal');
+  });
+  await check('queryAs shares the one guard and the one error log with query() (no second code path)', () => {
+    const src = read('db/index.js');
+    assert(/function logQueryError/.test(src) && (src.match(/logQueryError\(text, err\)/g) || []).length >= 3, 'query, queryAs and queryAsEach all log through it');
+    assert((src.match(/rlsGuardCheck\(text\)/g) || []).length >= 3);
+  });
+  await check('headers: signin-lookup names the RUN- file; the RUN file lists SEC-186 as a precondition line', () => {
+    assert(!/b860_identities_rls/.test(read('lib/signin-lookup.js')) && /RUN-2026-11-14-b860-identities-rls\.sql/.test(read('lib/signin-lookup.js')));
+    assert(/SEC-186 \(the counterparty view without otp_code, otp_code_hash, pin_hash\) runs before b860/.test(B860));
   });
   await check('classifier: a module query() is open, boundRead / queryAs is bound, a handle is in-tx, scripts are jobs', () => {
     const cls = (file, text) => sweepTool.classify(file, [text, 'SELECT x FROM identities WHERE identity_id = $1'], 1).cls;

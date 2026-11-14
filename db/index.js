@@ -192,6 +192,12 @@ function rlsGuardCheck(text) {
   console.warn(msg);
 }
 
+/** E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js). The ONE error log of query(), queryAs and queryAsEach (SEC-185: no second code path). */
+function logQueryError(text, err) {
+  const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
+  require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message });
+}
+
 const query = async (text, params) => {
   if (!pool) await ensurePool();
   require('../lib/limits').refuseIfReaderGone();   /* PLT-85: a GET/HEAD whose client has gone takes no pool connection */          // cold start: wait for the pool instead of failing the request
@@ -214,9 +220,7 @@ const query = async (text, params) => {
     }
     return result;
   } catch (err) {
-    /* E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js) */
-    { const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
-      require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message }); }
+    logQueryError(text, err);
     throw err;
   }
 };
@@ -411,8 +415,14 @@ const queryAs = async (identityId, text, params) => {
   if (!pool) await ensurePool();
   require('../lib/limits').refuseIfReaderGone();
   try { require('../lib/trips').tick('query'); } catch (_) {}
-  const res = await pool.query(boundParts(identityId, text, params).join(';\n') + ';');
-  return Array.isArray(res) ? res[1] : res;
+  rlsGuardCheck(text);
+  try {
+    const res = await pool.query(boundParts(identityId, text, params).join(';\n') + ';');
+    return Array.isArray(res) ? res[1] : res;
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
 };
 /**
  * queryAsEach(ids, text, paramsOf) — the same statement once PER identity, each under its own binding, all in ONE message and ONE round trip; the rows come back joined, in ids order.
@@ -426,7 +436,14 @@ const queryAsEach = async (ids, text, paramsOf) => {
   const list = ids && ids.length ? ids : [null];
   const parts = [];
   list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
-  const res = await pool.query(parts.join(';\n') + ';');
+  rlsGuardCheck(text);
+  let res;
+  try {
+    res = await pool.query(parts.join(';\n') + ';');
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
   const all = Array.isArray(res) ? res : [res];
   const rows = [];
   list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
