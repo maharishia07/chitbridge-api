@@ -83,8 +83,6 @@ async function partyAnswer(owner, party, routeFields, partyId) {
   const changed = routeFields.concat((party && party.changed) || []);
   return party && party.party_id ? Object.assign({}, party, { changed }) : { changed, party_no: await numberParty(owner, partyId), party_id: partyId }; /* the answer's one shape: changed, party_no, party_id */
 }
-/** CRM-45: the supplier's own fields a PATCH body saved (a blank display_name renames nothing) */
-const supplierFieldsSaved = (body) => ['nickname', 'category', 'notes', 'preferred', 'supply_kind'].concat(String(body.display_name || '').trim() ? ['display_name'] : []).filter((key) => key in body);
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
@@ -429,34 +427,17 @@ router.patch(
       const owner = ctx(req);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
-      const sets = [],
-        vals = [];
-      let index = 1;
-      if ('nickname' in req.body) {
-        sets.push(`nickname = $${index++}`);
-        vals.push(sanitise(req.body.nickname || '') || null);
-      }
-      if ('category' in req.body) {
-        sets.push(`category = $${index++}`);
-        vals.push(sanitise(req.body.category || '') || null);
-      }
-      if ('notes' in req.body) {
-        sets.push(`notes = $${index++}`);
-        vals.push(sanitise(req.body.notes || '') || null);
-      }
-      if ('preferred' in req.body) {
-        sets.push(`preferred = $${index++}`);
-        vals.push(req.body.preferred === true || req.body.preferred === 'true');
-      }
+      const own = {}; /* CRM-45: the list-row fields this body saves, column -> value (partyFields.saveOwn writes, names and logs them) */
+      if ('nickname' in req.body) own.nickname = sanitise(req.body.nickname || '') || null;
+      if ('category' in req.body) own.category = sanitise(req.body.category || '') || null;
+      if ('notes' in req.body) own.notes = sanitise(req.body.notes || '') || null;
+      if ('preferred' in req.body) own.preferred = req.body.preferred === true || req.body.preferred === 'true';
       /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
          sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
          and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
          what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
          supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
-      if ('supply_kind' in req.body) {
-        sets.push(`supply_kind = $${index++}`);
-        vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale');
-      }
+      if ('supply_kind' in req.body) own.supply_kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
 
       /**
        * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
@@ -472,10 +453,11 @@ router.patch(
        * ⚠️ A duplicate name is REFUSED by the b218 index rather than merged: two suppliers with one name is the
        * mix-up he is guarding against, and a silent merge would move history between two real records.
        */
+      let renamed = null; /* CRM-45: set when display_name was saved: { name, party_id, changed } */
       if ('display_name' in req.body && String(req.body.display_name || '').trim()) {
         const who = await withEntity(owner, (db) =>
           db.query(
-            `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
+            `SELECT i.identity_id, i.user_id, i.display_name FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
             WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`,
             [req.params.id, owner]
           )
@@ -490,20 +472,18 @@ router.patch(
           if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + nm + '.') });
           throw e;
         }
-        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm, party: await partyAnswer(owner, party, supplierFieldsSaved(req.body), row.identity_id) });
+        renamed = { name: nm, party_id: row.identity_id, changed: nm === row.display_name ? [] : ['display_name'] };
+        if (renamed.changed.length)
+          await withEntity(owner, (db) =>
+            require('../db').trySavepoint(db, () => require('../lib/books-store').logChange(db, owner, { by: req.identity && req.identity.identity_id, table_name: 'identities', row_id: row.identity_id, field: 'display_name', old: row.display_name, new: nm }), null)
+          );
       }
-      if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
-      if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
-      vals.push(req.params.id, owner);
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_entity_id`,
-          vals
-        )
-      );
-      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Supplier updated', party: await partyAnswer(owner, party, supplierFieldsSaved(req.body), r.rows[0].supplier_entity_id) });
+      if (!Object.keys(own).length && renamed) return res.json({ message: 'Supplier updated', display_name: renamed.name, party: await partyAnswer(owner, party, renamed.changed, renamed.party_id) });
+      if (!Object.keys(own).length && party) return res.json({ message: 'Supplier updated', party });
+      if (!Object.keys(own).length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
+      const saved = await withEntity(owner, (db) => partyFields.saveOwn(db, owner, 'supplier', req.params.id, own, req.identity && req.identity.identity_id));
+      if (!saved.party_id) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Supplier updated', party: await partyAnswer(owner, party, (renamed ? renamed.changed : []).concat(saved.changed), saved.party_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
@@ -1034,15 +1014,11 @@ router.patch(
           ...words.nothingToUpdate('Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)')
         });
       }
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `UPDATE customer_list SET segment_override = $1
-         WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_identity_id`,
-          [req.body.segment_override, req.params.id, owner]
-        )
+      const saved = await withEntity(owner, (db) =>
+        partyFields.saveOwn(db, owner, 'customer', req.params.id, { segment_override: req.body.segment_override }, req.identity && req.identity.identity_id)
       );
-      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Segment updated', party: await partyAnswer(owner, party, ['segment_override'], r.rows[0].customer_identity_id) });
+      if (!saved.party_id) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Segment updated', party: await partyAnswer(owner, party, saved.changed, saved.party_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update segment failed'));
     }
