@@ -47,6 +47,11 @@ try {
 /* 4 - the readers: a literal read of the chits route (readFileSync / read( / src( with routes/chits.js on the line) must go through the list */
 const PINNED = {
   /* none: every by-path reader of the chits code uses the list. A reader that must pin ONE file on purpose is named here WITH its reason. */
+  'tests/con-74-send-via-whitelist.test.cjs': 'lifts sendViaOf and its helpers out of this ONE file by name and throws "is gone" if one moves, so a split cannot leave it green on the wrong file',
+  'tests/rail-121-dispute-participants-both-sides.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
+  'tests/rail-30-meter-chit-send.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
+  'tests/rail-65-labelled-never-converted.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
+  'tests/rail-71-with-transaction.test.cjs': 'the proof breaks ONE line of routes/chits.js and loads or lifts from that one file (tests/lib-proof-mutate.cjs read), so the joined list text would hide the mutated line',
 };
 const READS = /(readFileSync|\bread|\bsrc)\([^\n]*(routes\/chits\.js|'routes', 'chits\.js')/;
 const strays = [];
