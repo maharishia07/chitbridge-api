@@ -10,6 +10,7 @@ const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem');
 const { ownerOnly } = require('../lib/owner');
 const grants = require('../lib/books-grant');
+const frontMiddleware = require('../middleware/books-grant');
 const contract = require('../lib/books-grants-contract');
 
 const entityOf = (req) => auth.entityOf(req);
@@ -30,9 +31,19 @@ function answer(req, res, err) {
 
 router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false', req.query.preset)));
 
-router.get('/', auth, noKey, memberOnly, ...contract.checked('GET /'), async (req, res) => {
+/**
+ * who may read the list: the owner of the books (the grants he gave and the ones he holds) and, for the `received` side only, any person who may use a grant (a firm's team member or auditor): he learns which stores his own
+ * firm works for. A person of the firm sees the firm's grants and no other firm's (row security: a grantee sees its own rows); a person who may use no grant is refused as before.
+ */
+function ownerOrGrantUser(req, res, next) {
+  const grantUser = !req.api_key && ['adviser', 'auditor'].some((role) => frontMiddleware.mayUseGrant(req, role));
+  if (grantUser) return next();
+  return memberOnly(req, res, next);
+}
+router.get('/', auth, noKey, ownerOrGrantUser, ...contract.checked('GET /'), async (req, res) => {
   try {
-    res.json(await grants.list(entityOf(req)));
+    const listed = await grants.list(entityOf(req));
+    res.json(req.identity.parent_entity_id ? { given: [], received: listed.received } : listed);
   } catch (err) {
     answer(req, res, err);
   }

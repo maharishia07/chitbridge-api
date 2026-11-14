@@ -264,6 +264,14 @@ async function main() {
     /* ── the fix round, part 1: F1 two firms on one store, F7 named people, F3 date, F4 reference, F6 reverse, F10 totals, STORE_MISMATCH on every POST, the database itself ── */
     const g2 = await giveGrant(P2, M1, { preset: 'adviser' });
     ok('F1 a second firm (the store\'s network ancestor) is given its OWN adviser grant on M1', g2.status === 201 && g2.body.grant_id !== adviserGrant.body.grant_id, JSON.stringify(g2));
+    const seesA = await call(A, 'GET', '/api/books-grants');
+    const seesZ2 = await call(Z2, 'GET', '/api/books-grants');
+    const seesStranger = await call(Z, 'GET', '/api/books-grants');
+    const seesOneNode = await call(C, 'GET', '/api/books-grants');
+    ok('the grants a firm works under: a team member of P reads its `received` (its own firm\'s grants, none given), another firm sees only its own, a stranger business sees none, a person who may use no grant is refused (403)',
+      seesA.status === 200 && seesA.body.given.length === 0 && seesA.body.received.length >= 4 && seesA.body.received.every((g) => g.grantee_entity === P.id) && seesA.body.received.some((g) => g.preset === 'adviser') && seesA.body.received.some((g) => g.preset === 'auditor')
+        && seesZ2.status === 200 && seesZ2.body.received.length >= 1 && seesZ2.body.received.every((g) => g.grantee_entity === P2.id) && !seesZ2.body.received.some((g) => g.grantee_entity === P.id)
+        && seesStranger.status === 200 && seesStranger.body.received.length === 0 && seesStranger.body.given.length === 0 && seesOneNode.status === 403, JSON.stringify([seesA.status, seesA.body.received && seesA.body.received.length, seesZ2.body, seesStranger.body, seesOneNode.status]));
     const f1 = await firm(A, M1, 'POST', '', journal('jf1'));
     const z2Review = await firm(Z2, M1, 'POST', '/' + f1.body.action_id + '/review', { body_hash: f1.body.body_hash });
     const z2Return = await firm(Z2, M1, 'POST', '/' + f1.body.action_id + '/return', { body_hash: f1.body.body_hash, reason: 'not your firm' });

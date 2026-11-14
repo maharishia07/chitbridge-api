@@ -1439,3 +1439,4 @@ The firm's team PREPARES, a colleague REVIEWS, the owner ACCEPTS; the existing w
 | `books_action_step` | `action_ref` | text · the preparer's reference (the API key is `client_ref`): one open action per reference and per body in a store. |
 | `books_action_step` | `actor_identity_id` · `actor_name` · `firm_name` · `role` | the real person, their name, the firm's name, and `maker`, `checker` or `owner`. |
 | `books_action_step` | `reason` · `grant_id` · `entry_id` · `at` | why a return or a withdrawal happened · the adviser grant the action works under · the entry the accept posted · when. |
+| `GET /api/books-grants` answer, for a person of a firm | `given` · `received` | a team member who may use a grant (an editor with whole-entity reach, or an auditor-preset person) reads the same list, but `given` is empty and `received` holds only the grants of HIS OWN firm; another firm's grants are invisible (row security). |
