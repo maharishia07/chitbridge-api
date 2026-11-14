@@ -26,7 +26,7 @@ of file each thing is; this says what already does the job.
 | 70 | `list` | `cap-settings.js` |  |
 | 70 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 70 | `register` | `regulation.js` | register(pack) → the pack — |
-| 68 | `entry` | `books-store.js` |  |
+| 69 | `entry` | `books-store.js` |  |
 | 67 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 67 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 67 | `failed` | `service.js` | what every catch answers: |
@@ -74,12 +74,12 @@ of file each thing is; this says what already does the job.
 | 37 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 36 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 36 | `page` | `cap-catalogue.js` |  |
+| 36 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 36 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 35 | `closeModal` | `app.html` |  |
 | 35 | `shell` | `pick.js` |  |
 | 35 | `changes` | `books-store.js` |  |
 | 35 | `hold` | `orders.js` |  |
-| 35 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 34 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 34 | `note` | `dbwatch.js` |  |
 | 33 | `modal` | `app.html` |  |
@@ -103,10 +103,10 @@ of file each thing is; this says what already does the job.
 | 29 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 29 | `sheet` | `cap-employees.js` |  |
 | 29 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
+| 29 | `group` | `identity.js` | again in a different costume. |
 | 28 | `money` | `cart.js` |  |
 | 28 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 28 | `guard` | `amend.js` | would disturb what has gone out. |
-| 28 | `group` | `identity.js` | again in a different costume. |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `opts` | `cap-stock.js` |  |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
@@ -181,6 +181,7 @@ of file each thing is; this says what already does the job.
 | 16 | `resolve` | `page.js` |  |
 | 16 | `verdict` | `rail-thread.js` |  |
 | 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
+| 16 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 16 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
@@ -193,10 +194,10 @@ of file each thing is; this says what already does the job.
 | 15 | `bkDate` | `cap-books.js` |  |
 | 15 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 15 | `offers` | `network-app.js` |  |
-| 15 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
+| 15 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 15 | `fault` | `sellable-price.js` | Zero IS a price (a free sample). |
 | 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 14 | `cols` | `cap-catalogue.js` |  |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 14 | `minor` | `bounds.js` | B.minor({ column, signed }) → whole minor units (a fraction of a minor unit is refused), at least 0 unless a c |
 | 14 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
 | 14 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
-| 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
