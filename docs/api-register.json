@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 0,
-  "partial": 1,
-  "meets": 633,
+  "partial": 0,
+  "meets": 634,
   "columns": {
    "strict_input": {
     "applies": 323,
@@ -2574,11 +2574,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "287a514679431eba"
+    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
