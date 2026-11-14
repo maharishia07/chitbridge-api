@@ -23801,11 +23801,16 @@ function slipHeadHTML(kind){
  * taxInvoice member, so an Indian slip prints exactly what it did.
  */
 function slipBuyerHTML(bill, t){
-  if (!bill || bill.kind !== 'tax' || !invoiceRule(bill.total, bill.customer && bill.customer.gstin)) return '';
-  var g = bill.customer && bill.customer.gstin;
-  return (g ? t('Buyer ' + taxIdLabel(), esc(g)) : '')
-    + (bill.not_invoice === 'buyer_identity' ? '<div data-testid="till-slip-nobuyer" style="font-size:.9em">Over ' + money(buyerFromMajor())
-      + ' a tax invoice names the buyer or their ' + taxIdLabel() + ' — none was given.</div>' : '');
+  if (!bill || !slipBuyerKind(bill.kind) || !invoiceRule(bill.total, bill.customer && bill.customer.gstin)) return '';
+  var g = bill.customer && bill.customer.gstin, row = g ? t('Buyer ' + taxIdLabel(), esc(g)) : '';
+  return bill.kind === 'supply' ? row : row + slipNoBuyerHTML(bill);
+}
+/** ⭐ CTR-166: the bills that name their buyer: a tax invoice, and a BILL OF SUPPLY when the buyer is registered (CGST Rules r.49(1) lists the recipient's GSTIN); the no-buyer sentence below is a tax invoice's alone */
+function slipBuyerKind(kind){ return kind === 'tax' || kind === 'supply'; }
+/** why a bill saved without a named buyer above the pack's line is not a tax invoice */
+function slipNoBuyerHTML(bill){
+  return bill.not_invoice === 'buyer_identity' ? '<div data-testid="till-slip-nobuyer" style="font-size:.9em">Over ' + money(buyerFromMajor())
+    + ' a tax invoice names the buyer or their ' + taxIdLabel() + ' — none was given.</div>' : '';
 }
 /* the English titles a slip printed before the packs carried their own (pack.slip) — the fallback, so a shop with no pack prints what it always did */
 var SLIP_TITLE_EN = { tax: 'TAX INVOICE', supply: 'BILL OF SUPPLY', plain: 'CASH MEMO' };
@@ -23992,8 +23997,17 @@ function slipHTML(bill, m){
      */
     + rewardOnSlip(bill, t, dash)
     + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
-    + '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>'
+    + slipFooterHTML(shop)
     + '<div style="height:10mm"></div></div>';
+}
+/**
+ * ⭐ CTR-158: THE SLIP'S CLOSING LINE is the footer the shop saved in Print setup (shop.slip_footer, the one bill-print.html prints on the preview): the words,
+ * nothing at all when the shop saved one and unticked it, and today's two lines only when none is saved (an older snapshot, a shop that never set one).
+ */
+function slipFooterHTML(shop){
+  var saved = shop && shop.slip_footer;
+  if (typeof saved === 'string') return saved ? '<div data-testid="till-slip-footer" style="text-align:center">' + esc(saved) + '</div>' : '';
+  return '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>';
 }
 /** a tax head's word on the paper and the screen: under a pack with ONE head (Sales tax · Consumption tax · GST · VAT) the pack's own word,
     never its code ("STAX" and "JCT" were printed, 17 Oct audit); India's four heads keep their names (CGST · SGST · IGST · cess) */
@@ -29353,7 +29367,12 @@ var STALE_DOOR_MODE = 'wait', STALE_DOOR_MAX = 9;
 /** a queued SALE bill the gate may ask about: finished with the catalogue unchecked, never sent, not yet confirmed or held, no owner override on the money */
 function staleCandidate(row){
   var basis = row && row.price_basis;
-  return !!(basis && basis.checked !== true && !basis.stale_ack && !basis.stale_unchecked && staleSaleRow(row) && !row._tries && !row._price_hold && !row._parked);
+  /* ⭐ CTR-253: a bill with no item_id line (free text only) has nothing to re-check — it is not a candidate, so it passes the gate and never reads as a price door down */
+  return !!(basis && staleHasItem(row) && basis.checked !== true && !basis.stale_ack && !basis.stale_unchecked && staleSaleRow(row) && !row._tries && !row._price_hold && !row._parked);
+}
+/** the bill has at least one line rung from a product (item_id), the only kind the price door can re-check */
+function staleHasItem(row){
+  return !!(row && Array.isArray(row.lines) && row.lines.some(function(line){ return !!(line && line.item_id); }));
 }
 /** a queued SALE bill (lines, not a document, a change, a shift or a delivery) with no owner override on its money */
 function staleSaleRow(row){
