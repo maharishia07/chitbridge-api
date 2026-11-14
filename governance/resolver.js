@@ -3,6 +3,7 @@
 // resolve(constitution, override) -> { effective, exceptions }
 // Hard rejects (Class A invariant / Class B capability) throw GovernanceError.
 // Class C (advisory/reference) is recorded in `exceptions` and allowed.
+// CARD      20-settings-governance-and-plan/governance-7-layers-govcontext
 
 class GovernanceError extends Error {
   constructor(code, message) {
