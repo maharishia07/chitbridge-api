@@ -4670,8 +4670,8 @@ var DB = (function(){
   function reopenOnce(what, fn, first){
     var old = p; p = null;
     if (old) old.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.reopenOnce:1', e); });
-    return fn().catch(function(e2){
-      lastErr = { at: Date.now(), op: what, why: refusedBecause(e2 || first) };
+    return fn().catch(function(reopenError){
+      lastErr = { at: Date.now(), op: what, why: refusedBecause(reopenError || first) };
       var err = new Error(STORAGE_REFUSED); err.code = 'DB_REFUSED';
       throw err;
     });
@@ -4684,10 +4684,10 @@ var DB = (function(){
     release: function(){ var opening = p; p = null; return opening ? opening.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.release:1', e); }) : Promise.resolve(); },
     lastErr: function(){ return lastErr; },
     /** T4-03: ask the database one cheap question; a refusal rejects with code DB_REFUSED. Billing asks this before it takes a number. */
-    ping: function(){ return stopped() || fall('ping', function(){ return tx('kv','readonly',function(s){ return s.count(); }); }, function(){ return 0; }); },
+    ping: function(){ return stopped() || fall('ping', function(){ return tx('kv','readonly',function(store){ return store.count(); }); }, function(){ return 0; }); },
     /** T4-03: is this key already stored? A refusal rejects (never "no") — a number is only given out when this could be answered */
-    exists: function(store,key){ return stopped() || fall('exists', function(){ return tx(store,'readonly',function(s){ return s.count(key); }); }, function(){ return MEM.get(store,key) !== undefined; })
-                                   .then(function(v){ return v === true || v > 0; }); },
+    exists: function(store,key){ return stopped() || fall('exists', function(){ return tx(store,'readonly',function(storeObject){ return storeObject.count(key); }); }, function(){ return MEM.get(store,key) !== undefined; })
+                                   .then(function(found){ return found === true || found > 0; }); },
     /**
      * ⚠️ THE SAME GUARD ON THE KEY-VALUE SIDE. Athi, 2026-09-09: *"by mixing up, we are making TWO entities' data wrong. So this has
      * to be well guarded — while writing data in the first place, while reading the data, and when syncing, in all the places."*
@@ -6312,7 +6312,7 @@ var LAST_SERIES = null;
 /** T4-01: the number a failed save took, kept for the retry of the same bill (see CloudHost.bill); null once a save has fully answered */
 var TAKEN_FOR = null;
 /** what makes a retry "the same bill": its lines and its total (a change of tender is still the same sale) */
-function billSig(b){ return JSON.stringify([b && b.lines, b && b.total]); }
+function billSig(bill){ return JSON.stringify([bill && bill.lines, bill && bill.total]); }
 /**
  * ⭐ TILL-FIX2 (M6): ONE NUMBER-TAKER AT A TIME. takeNumber() reads the series, waits on the database, then writes it back; a sale rung
  * while a background renumber (drain → renumberBill) takes a number — or a second tab of the same counter — interleaved on that wait and
@@ -22323,13 +22323,13 @@ function confirmOnF9(e){
 }
 /** the Save button: greyed while a bill is being saved, and (as always) while there is nothing on the bill */
 function paintSaving(busy){
-  var b = document.getElementById('save'); if (!b) return;
-  b.disabled = busy || !CART.length;
-  b.setAttribute('aria-busy', busy ? 'true' : 'false');
+  var button = document.getElementById('save'); if (!button) return;
+  button.disabled = busy || !CART.length;
+  button.setAttribute('aria-busy', busy ? 'true' : 'false');
 }
 /** a button that is greyed only while its own save is running */
 function holdButton(id){
-  return function(busy){ var b = document.getElementById(id); if (b) { b.disabled = busy; b.setAttribute('aria-busy', busy ? 'true' : 'false'); } };
+  return function(busy){ var button = document.getElementById(id); if (button) { button.disabled = busy; button.setAttribute('aria-busy', busy ? 'true' : 'false'); } };
 }
 finish = singleFlight(finish, paintSaving);
 retIssue = singleFlight(retIssue, holdButton('retgo'));

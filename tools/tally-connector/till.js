@@ -506,6 +506,20 @@ async function refresh() {
  * catch below already handles. The `finally` and the watchdog mean that whatever a deadline cannot cover — a
  * bug in here, an await that resolves never for some other reason — costs one cycle rather than the day's takings.
  */
+/** the body of the points post: what the bill earned, taken from the bill as it stands */
+function pointsBody(bill) {
+  return {
+    ref: bill.no, holder: bill.reward.holder, spend: bill.reward.spend || 0,
+    net: bill.total, gross: (bill.total || 0) + (bill.saved || 0),
+    count: (bill.lines || []).length,
+    lines: (bill.lines || []).map((l) => ({ item_id: l.item_id, qty: l.qty, net: l.net, category: l.category })),
+  };
+}
+/** the log line for what the server answered (nothing when it added and spent nothing) */
+function logPointsAnswer(rewardAnswer) {
+  if (!(rewardAnswer && (rewardAnswer.added || rewardAnswer.spent))) return;
+  log('  points ' + (rewardAnswer.added ? '+' + rewardAnswer.added : '') + (rewardAnswer.spent ? ' −' + rewardAnswer.spent : '') + ' → ' + rewardAnswer.points + ' held');
+}
 /**
  * ⭐⭐ THE POINTS RIDE THE SAME QUEUE AS THE BILL THEY CAME FROM (2026-09-10). A counter that was offline
  * when it sold has already told the customer what they earned; this is what makes that true afterwards.
@@ -520,14 +534,8 @@ async function refresh() {
 async function postPointsFor(bill) {
   if (!(bill.reward && bill.reward.holder)) return;
   try {
-    const rw = await cb.call('POST', '/api/till/reward', {
-      ref: bill.no, holder: bill.reward.holder, spend: bill.reward.spend || 0,
-      net: bill.total, gross: (bill.total || 0) + (bill.saved || 0),
-      count: (bill.lines || []).length,
-      lines: (bill.lines || []).map((l) => ({ item_id: l.item_id, qty: l.qty, net: l.net, category: l.category })),
-    }, undefined, { 'Idempotency-Key': 'till-reward:' + bill.no + ':agent' }); /* idem3: the points write takes one key per bill */
-    if (rw && (rw.added || rw.spent)) log('  points ' + (rw.added ? '+' + rw.added : '') + (rw.spent ? ' −' + rw.spent : '')
-      + ' → ' + rw.points + ' held');
+    const rewardAnswer = await cb.call('POST', '/api/till/reward', pointsBody(bill), undefined, { 'Idempotency-Key': 'till-reward:' + bill.no + ':agent' }); /* idem3: the points write takes one key per bill */
+    logPointsAnswer(rewardAnswer);
   } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
 }
 let draining = false, drainAt = 0;

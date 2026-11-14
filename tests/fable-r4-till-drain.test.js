@@ -36,6 +36,7 @@ function program(send) {
     liftLine(/const appendLine = [^\n]*;/), liftLine(/const readLines = [^\n]*;/),
     /* an old copy of till.js has no helpers: it is run as it is, so its failure is the real one */
     SRC.includes('function readQueueEntries(') ? liftLine(/const TORN_SAID = [^\n]*;/) + lift('parseQueueLine') + lift('readQueueEntries') + lift('removeSentFromQueue') : '',
+    SRC.includes('function pointsBody(') ? lift('pointsBody') + lift('logPointsAnswer') : '', /* the points post's two helpers (readability split) */
     SRC.includes('function postPointsFor(') ? lift('postPointsFor') : '', lift('drain'),
     'return { drain, appendLine, readLines };',
   ].join('\n');
