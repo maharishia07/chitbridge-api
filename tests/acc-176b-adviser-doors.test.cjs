@@ -141,6 +141,11 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
   await t('a prepare needs a client_ref (the contract requires it) and every action door carries the store', () => {
     assert.ok(actionContract.ROUTES['POST /'].required.includes('client_ref'));
   });
+  await t('the extra reads of the adviser are the owner reads the auditor list holds back; the auditor list is unchanged and nothing with party or bank details, files or stores is added', () => {
+    for (const route of A.ADVISER_EXTRA_READS) { assert.ok(route in A.GRANT_HELD_BACK, route + ' is held back from the auditor'); assert.ok(!A.GRANT_READS.has(route), route + ' is not on the auditor list'); }
+    for (const held of ['/bank/rail', '/party/:id/statement', '/payments/:id/advice', '/compare', '/compare/:id', '/compare/:id/csv', '/packs/:id/file', '/move-in/imports', '/fx-revalue']) assert.ok(!A.ADVISER_EXTRA_READS.has(held), held + ' stays held back from the adviser');
+    assert.ok(A.ADVISER_EXTRA_READS.has('/events') && A.ADVISER_EXTRA_READS.has('/status'));
+  });
   console.log(fail ? '\n' + fail + ' failed' : '\nall ok');
   process.exit(fail ? 1 : 0);
 })();

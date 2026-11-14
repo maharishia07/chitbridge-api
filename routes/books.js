@@ -127,6 +127,11 @@ function owner(req, res, next) {
   if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } });
   next();
 }
+/** ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only); every write stays owner-only and reaches the books through /api/books-actions */
+function ownerOrAdviserReads(req, res, next) {
+  if (req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') return next();
+  return owner(req, res, next);
+}
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -173,7 +178,7 @@ const onceOnly = require('../middleware/idempotency').requireKey();
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
-router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) => {
+router.get('/status', auth, ownerOrAdviserReads, ...checked('GET /status'), async (req, res) => {
   try {
     const e = ctx(req);
     /* ⭐ CS1: `country` says whether the books MAY open here — { books, code, why, required, country } — so the switch is greyed WITH its sentence */
@@ -2293,7 +2298,7 @@ function manifestView(manifest) {
     controls: { counts: x.counts || null, totals: x.totals || null, checks: x.checks || null }
   });
 }
-router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res) => {
+router.get('/packs', auth, ownerOrAdviserReads, on, ...checked('GET /packs'), async (req, res) => {
   try {
     const e = ctx(req);
     const rows = await withEntity(e, (h) => S.packs(h, e));
@@ -2331,7 +2336,7 @@ router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, re
  *             the web saved this JSON as "the pack" and then acknowledged it)
  *   download  the same path, or null when has_file is false (kept for the first web build)
  */
-router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (req, res) => {
+router.get('/packs/:id', auth, ownerOrAdviserReads, on, ...checked('GET /packs/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -2413,7 +2418,7 @@ router.post('/packs/:id/ack', auth, owner, on, ...checked('POST /packs/:id/ack')
 /* ── recurring entries (b281, DRAFT) and the To-do ─────────────────────────────────────────────────────────── */
 const RC = () => require('../lib/books-recurring');
 /** GET /recurring → { recurring: [{ recurring_id, name, event, frequency, next_on, end_on, auto, active, last_done_on, due }] } · 503 BOOKS_NOT_MIGRATED until b281 runs */
-router.get('/recurring', auth, owner, on, ...checked('GET /recurring'), async (req, res) => {
+router.get('/recurring', auth, ownerOrAdviserReads, on, ...checked('GET /recurring'), async (req, res) => {
   try {
     res.json({ recurring: await RC().list(ctx(req)) });
   } catch (err) {
@@ -2492,7 +2497,7 @@ const route = (method, p, fn, gates) =>
     }
   });
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
-router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, res) => {
+router.get('/assets', auth, ownerOrAdviserReads, on, ...checked('GET /assets'), async (req, res) => {
   try {
     const assetBook = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
     res.json({ currency: assetBook.currency, asOf: assetBook.asOf, assets: assetBook.assets, net_block: assetBook.net_block, total_wdv_minor: assetBook.total_wdv_minor });

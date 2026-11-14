@@ -178,6 +178,19 @@ async function main() {
     const noOwner = await firm(A, M1, 'POST', '/' + id1 + '/accept', { body_hash: hash1, total_minor: 10000, currency: 'INR' });
     ok('7 a firm person cannot reach the owner\'s accept', noOwner.status === 403 && code(noOwner) === 'GRANT_ROUTE_NOT_LISTED', JSON.stringify(noOwner));
 
+    /* the owner's reads the adviser also makes (the auditor's held-back list is unchanged) */
+    const asAdviser = (route) => call(A, 'GET', '/api/books' + route, { member: M1.id, role: 'adviser' });
+    const reads = {};
+    for (const route of ['/events', '/status', '/todo', '/recurring', '/assets', '/packs']) reads[route] = (await asAdviser(route)).status;
+    const evAuditor = await call(U, 'GET', '/api/books/events', { member: M1.id });
+    const stAuditor = await call(U, 'GET', '/api/books/status', { member: M1.id });
+    const postEvents = await call(A, 'POST', '/api/books/events', { member: M1.id, role: 'adviser', body: { kind: 'sale' } });
+    const partyRead = await asAdviser('/party/' + newId() + '/statement');
+    const railRead = await asAdviser('/bank/rail');
+    ok('the adviser reads what the owner reads on the books screen (/events /status /todo /recurring /assets /packs: 200 each), read only', Object.values(reads).every((status) => status === 200), JSON.stringify(reads));
+    ok('the AUDITOR still cannot read them (403 GRANT_ROUTE_NOT_LISTED), and party statements and the bank rail stay held back from the adviser too', evAuditor.status === 403 && code(evAuditor) === 'GRANT_ROUTE_NOT_LISTED' && stAuditor.status === 403 && code(stAuditor) === 'GRANT_ROUTE_NOT_LISTED' && partyRead.status === 403 && railRead.status === 403, JSON.stringify([evAuditor.status, stAuditor.status, partyRead.status, railRead.status]));
+    ok('the adviser\'s direct POST /events is still refused (not listed): writes go only through /api/books-actions', postEvents.status === 403 && code(postEvents) === 'GRANT_ROUTE_NOT_LISTED', JSON.stringify(postEvents));
+
     /* 8 stale tab */
     const beforeStale = await stepsOf(M1);
     const stale = await call(A, 'POST', '/api/books-actions', { member: M1.id, role: 'adviser', body: Object.assign({ store_id: M2.id }, journal('jstale')) });

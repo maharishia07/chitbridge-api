@@ -52,10 +52,17 @@ const GRANT_HELD_BACK = {
  */
 const ADVISER_DOORS = new Set(['POST /api/books/preview', 'GET /api/books-actions', 'GET /api/books-actions/:id', 'POST /api/books-actions', 'POST /api/books-actions/:id/review', 'POST /api/books-actions/:id/return']);
 const ADVISER_TESTS = [...ADVISER_DOORS].map((door) => ({ door, test: new RegExp('^' + door.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
+/**
+ * THE OWNER'S READS THE ADVISER ALSO MAKES (Athi: the adviser acts from the owner's perspective): the books screen's own reads that the auditor's list holds back. Still held back from the adviser, each for its reason: party statements, payment
+ * advice, the bank rail (party and bank details, C6, cb-country), compare (stores), the import history, file downloads and the FX preview. An adviser GET is always read only; its writes go through /api/books-actions.
+ */
+const ADVISER_EXTRA_READS = new Set(['/events', '/status', '/todo', '/recurring', '/assets', '/packs', '/packs/:id']);
+const EXTRA_TESTS = [...ADVISER_EXTRA_READS].map((pattern) => ({ test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
+const adviserReadsExtra = (path) => EXTRA_TESTS.some((item) => item.test.test(path));
 /** the adviser door a request is, or null */
 const adviserDoor = (method, fullPath) => (ADVISER_TESTS.find((item) => item.test.test(method + ' ' + fullPath)) || {}).door || null;
 /** is this request one the role may make: an auditor reads the listed GETs; an adviser reads them too and passes through the adviser doors, and only those */
-const listedFor = (role, req) => (role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || (req.method === 'GET' && listedPattern(req.path) !== null) : listedPattern(req.path) !== null);
+const listedFor = (role, req) => (role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path))) : listedPattern(req.path) !== null);
 
 /** each listed pattern as a path test: ':name' is any one segment */
 const LISTED = [...GRANT_READS].map((pattern) => ({ pattern, test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
@@ -160,4 +167,4 @@ function frontOf(auth) {
   };
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { frontOf, ROLE_HEADER, ADVISER_DOORS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
