@@ -667,6 +667,7 @@ const GUARDS = [
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'sec-185-identities-sweep.test.cjs', // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
   'sec-75-entity-schemas.test.cjs', // ⭐⭐ SEC-75: entity_schemas + schema_fields — the widened sweep ratchet and its break checks, the two held RUN files (b861 doors, b862 policies), the boot check, one defaultSchemaId, bound readers, the freeze through the definer, T8
+  'bound-db.test.cjs', // ⭐ SEC-75: the offline shop-binding double keeps its claims (blank id, other-shop predicate, schema_id-only, the documented limits)
   'sec-75-order-freeze.test.cjs', // ⭐ SEC-75: POST /:bridge_id/order/confirm through the real router, commerce AND payload pipeline, b50 AND pre-b50: the freeze reads the shop's default schema through the ONE definer with the shop id, and the copies carry it
   'sec-184-signin-lookup.test.cjs', // ⭐⭐ SEC-184 A: the SECURITY DEFINER sign-in lookup (b857) — function text, fallback with one warning, every pre-binding caller through it, role must not bypass RLS, break check per fix
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof

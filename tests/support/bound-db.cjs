@@ -8,6 +8,10 @@
  *           · a blank id binds nothing and sees no row;
  *           · a statement whose own predicate (`entity_id = $n`) names ANOTHER shop than the binding sees no row;
  *           · every call is recorded ({ id, sql, params }) so a test can assert that the read was bound, and to whom.
+ * LIMITS  (proved by tests/bound-db.test.cjs)
+ *           · it does NOT model the public-read policy (a public + active schema of ANOTHER shop stays visible to everyone on the real table; here it is invisible unless the double's rows say so);
+ *           · a statement with no `entity_schemas.entity_id = $n` predicate (schema_id only, e.g. `FROM schema_fields WHERE schema_id = $1`) is NOT refused by boundDb: the shop's rows are
+ *             picked by the rowsFor you pass. Use schemaRows (it answers a schema_id of another shop with nothing) or refuseUnbound, or the double proves nothing for that statement.
  * Usage   const bound = boundDb((sql, params, id) => rows);  exports: { query, queryAs: bound.queryAs, queryFor: bound.queryFor }; bound.calls, bound.boundTo()
  */
 const PREDICATE = /\bentity_id\s*=\s*\$(\d+)/;
