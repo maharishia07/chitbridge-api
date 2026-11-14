@@ -12,9 +12,16 @@
 -- OWNER: lib/bank-rec-log.js (validate, append, read, the cross-check); routes/books.js only reads the request.
 -- ROLL BACK (before the build ships it loses nothing; after, the shared record is gone, the device copy stays):
 --    DROP TABLE IF EXISTS bank_rec_log;
--- CHECK (read-only, one row):   SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'bank_rec_log';   Expect 1.
+-- CHECK (read-only, five rows, every ok must be true):
+--   SELECT 'table exists' AS what, count(*) = 1 AS ok FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'bank_rec_log'
+--   UNION ALL SELECT 'RLS enabled and forced', relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid = 'public.bank_rec_log'::regclass
+--   UNION ALL SELECT 'entity policy present', count(*) = 1 FROM pg_policies WHERE tablename = 'bank_rec_log' AND policyname = 'rls_entity'
+--   UNION ALL SELECT 'insert-only trigger present', count(*) = 1 FROM pg_trigger WHERE tgrelid = 'public.bank_rec_log'::regclass AND tgname = 'bank_rec_log_insert_only'
+--   UNION ALL SELECT 'cb_app has no UPDATE or DELETE', count(*) = 0 FROM information_schema.role_table_grants WHERE table_name = 'bank_rec_log' AND grantee = 'cb_app' AND privilege_type IN ('UPDATE', 'DELETE');
 -- RLS: ENABLE + FORCE + the one entity policy (as books_counter). cb_app may SELECT and INSERT only; no UPDATE and no DELETE grant, and public.books_insert_only() (b273) refuses both
 --    for any role that has the right anyway.
+
+BEGIN;
 
 CREATE TABLE IF NOT EXISTS bank_rec_log (
   id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -66,3 +73,5 @@ REVOKE ALL ON bank_rec_log FROM cb_app, cb_backup;
 GRANT SELECT, INSERT ON bank_rec_log TO cb_app;
 GRANT SELECT ON bank_rec_log TO cb_backup;
 COMMENT ON TABLE bank_rec_log IS 'FIN-70: the bank reconciliation record, insert-only. kind mark = a step action (accept, undo, note, attach) on a statement line, replayed newest-wins; kind statement = the signed BRS figures with their currency and the file hash. Never a statement line or the file itself.';
+
+COMMIT;
