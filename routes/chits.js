@@ -1208,7 +1208,7 @@ async function sendFanOut(sendState, req, res) {
 
   // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
   const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
-  const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
+  const ROLE_MAP = railActions.HEADER_ROLE; /* the one table (rail-actions), read by the CTP door too */
   const rawList = recipientListOf(req.body).map((item) => ({
     ...item,
     kind: String(item.role || 'to').toLowerCase()

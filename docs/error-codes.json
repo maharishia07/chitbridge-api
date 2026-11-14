@@ -1607,7 +1607,7 @@
    "code": "CTP_EVENT_CHANGE_NOT_APPLIED",
    "status": "409",
    "title": "Change not applied here",
-   "shopkeeper": "This installation could not apply the agreed version to its own copy.",
+   "shopkeeper": "This installation could not apply the agreed version to its own copy, or the decision or round that arrived was not the sender’s to make or came after a newer round (it is refused back, never acknowledged).",
    "hint": "Check the lines on this side; the sender can propose again.",
    "owner_area": "ctp",
    "since": "2026-10-25"
@@ -4325,7 +4325,7 @@
    "code": "PROPOSAL_NOT_YOURS",
    "status": "403",
    "title": "Your own proposal",
-   "shopkeeper": "You made this proposal, so the other side decides it.",
+   "shopkeeper": "You made this proposal, or it is put to another party (a CC or For party is only told of a round), so you cannot decide it. Over CTP (409) it also refuses a round a peer was not entitled to put forward or to decide.",
    "hint": "Wait for the other side.",
    "owner_area": "rail",
    "since": "2026-10-25"
