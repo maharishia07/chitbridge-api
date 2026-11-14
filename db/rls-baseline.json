@@ -484,7 +484,7 @@
    "policies": 0,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; 18 files read it, some across shops (visibility); needs its own PR"
+   "why": "entity_id; 19 lib and routes files name it (git grep 14 Nov), and at least five read other shops' rows on purpose: lib/business-search.js, routes/relationships.js (two reads), routes/chits.js, routes/catalogue-face.js (public view). The call sites that run a plain query() with no shop bound would read 0 rows after a SQL-only close. Decided 14 Nov (SEC-75): stays owed, not deliberate; the PR that closes it first moves those reads under withEntity, writes the policy entity_id = current_entity OR visibility = public, and then names the migration as `fix`"
   },
   "entity_wallet": {
    "rls": true,
@@ -587,6 +587,14 @@
    "class": "shared",
    "why": "entity_id; served to other shops through public image links; K-SEC follow-up design",
    "fix": "b855_rls_shared_tables_sec75_db103.sql"
+  },
+  "membership_kind": {
+   "rls": true,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "platform-wide dictionary of groupings (b297, b768): RLS on with the one read-all SELECT policy, cb_app holds SELECT only and writes nothing; no shop key, so no tenant policy; deliberately not FORCEd (the owner role seeds it in migrations, FORCE would need a write policy)"
   },
   "network_design": {
    "rls": true,
@@ -745,7 +753,7 @@
    "policies": 0,
    "app_reads": true,
    "class": "entity",
-   "why": "child of entity_schemas (schema_id); goes with entity_schemas"
+   "why": "child of entity_schemas (schema_id, no shop key of its own); closes with entity_schemas by an EXISTS on the parent, so it waits on the same call-site move (decided 14 Nov, SEC-75)"
   },
   "signup_context": {
    "rls": true,
@@ -884,6 +892,13 @@
    "forced": true,
    "policies": 1,
    "app_reads": true
+  },
+  "till_invoice_lease": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "note": "b858 (CTR-213) ENABLE+FORCE+rls_entity; not run in production yet, so the live census lists it under \"no longer exist\" until it has run"
   },
   "usage_ledger": {
    "rls": true,

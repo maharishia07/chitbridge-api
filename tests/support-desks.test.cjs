@@ -118,7 +118,7 @@ ok('audience and counterparty reach raiseticket through supportcopy',
   /audience: origin\.audience,\s*to_bridge_id: origin\.to_bridge_id/.test(copy));
 
 ok('both doors — incidents and requirements — pass them on',
-  (test.match(/audience: b\.audience,\s*to_bridge_id: b\.to_bridge_id/g) || []).length === 2,
+  (test.match(/audience: body\.audience,\s*to_bridge_id: body\.to_bridge_id/g) || []).length === 2,
   'one door wired and the other not is the silence this codebase keeps producing');
 
 ok('the answer names the desk it used',
@@ -249,7 +249,7 @@ if (shop) {
   /* ⚠️⚠️ THE DOOR WAS INSIDE THE PRODUCT LIST. A shop with an empty catalogue drew no support link at all —
      and the emptier a shop is, the more likely the person reading it is the one with a problem. */
   ok('an EMPTY shop still has a door',
-    /nothing on display yet[\s\S]{0,400}supLinkHtml\(\)/.test(shop),
+    /nothing on display(?: yet)?[\s\S]{0,400}supLinkHtml\(\)/i.test(shop),
     'support belongs to the shop, not to its shelves');
   ok('and so does one whose catalogue is private or gone',
     /no public catalogue[\s\S]{0,300}supLinkHtml\(\)/.test(shop),

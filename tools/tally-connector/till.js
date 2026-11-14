@@ -446,7 +446,7 @@ async function refresh() {
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
       /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's) */
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js'], staged: STAGED });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js', 'tax-slab-ui.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -1067,6 +1067,18 @@ function foreignRequest(req) {
   return null;
 }
 
+/* ⭐ the files the kit carries a byte copy of and serves at the web's own path: [file, what it is called when it is missing]. The sign-in window; FX-F10W2 the ONE comparison of their bill total (api lib/their-bill.js); CTR-161 the ask-once rate menu (web public/app/tax-slab-ui.js), so the page's onerror hook never fires offline */
+const KIT_SERVED = {
+  '/app/signin-ui.js': ['signin-ui.js', 'the sign-in window'],
+  '/app/their-bill.js': ['their-bill.js', 'the bill check'],
+  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu']
+};
+function serveKitFile(res, served) {
+  const file = path.join(__dirname, served[0]);
+  if (!fs.existsSync(file)) return send(res, 503, 'text/plain', '// ' + served[1] + ' is not in this kit yet — update the kit while online');
+  return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(file, 'utf8'));
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
   const refused = foreignRequest(req);
@@ -1086,17 +1098,7 @@ const server = http.createServer(async (req, res) => {
      * the same path the web serves it from; here it is the kit's byte copy of web public/app/signin-ui.js (scripts/vendor-till.cjs),
      * refreshed by the kit update like till.html (core.kitUpdate live:[]). Not an engine: nothing fetches it per shop.
      */
-    if (req.method === 'GET' && url.pathname === '/app/signin-ui.js') {
-      const f = path.join(__dirname, 'signin-ui.js');
-      if (!fs.existsSync(f)) return send(res, 503, 'text/plain', '// the sign-in window is not in this kit yet — update the kit while online');
-      return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(f, 'utf8'));
-    }
-    /* ⭐ FX-F10W2: the ONE comparison of their bill total (api lib/their-bill.js) — the kit's byte copy, served like the sign-in window */
-    if (req.method === 'GET' && url.pathname === '/app/their-bill.js') {
-      const f = path.join(__dirname, 'their-bill.js');
-      if (!fs.existsSync(f)) return send(res, 503, 'text/plain', '// the bill check is not in this kit yet — update the kit while online');
-      return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(f, 'utf8'));
-    }
+    if (req.method === 'GET' && KIT_SERVED[url.pathname]) return serveKitFile(res, KIT_SERVED[url.pathname]);
 
     if (req.method === 'GET' && ENGINE_RE.test(url.pathname)) {
       const n = url.pathname.split('/')[2].replace('.js', '');

@@ -37,7 +37,7 @@ const ALLOWED = [
   /* the invoice / money.total copies: producers, writers and checks of ONE carried document are not readers of the shown total */
   { file: 'lib/tax.js', any: true, why: 'the engine (vendored tax pack): it PRODUCES TotInvVal and money.total, the one calculation' },
   { file: 'lib/tax-engine.browser.js', any: true, why: 'the same engine, browser build: produces the figures' },
-  { file: 'lib/tax-lines.js', has: 'v.TotInvVal', why: 'maps the engine\'s invoice answer into the money block (a producer step, no second figure)' },
+  { file: 'lib/tax-lines.js', has: 'values.TotInvVal', why: 'maps the engine\'s invoice answer into the money block (a producer step, no second figure)' },
   { file: 'lib/tax-copy.js', has: 'TotInvVal: paid', why: 'a counter note builds its own invoice ValDtls from the paid figure (writer)' },
   { file: 'lib/send-money.js', any: true, why: 'writer: pairs the engine figures into the chit (pair table, stamps) at send, ACC-206 A' },
   { file: 'lib/chit-proposal.js', has: 'priced2.block.total', why: 'writer: the change order stores the engine block total (ACC-206 A)' },

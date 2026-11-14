@@ -969,7 +969,7 @@ JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served 
   assert.ok(fs.existsSync(kit), 'the kit has no signin-ui.js — run scripts/vendor-till.cjs');
   assert.strictEqual(norm(fs.readFileSync(kit, 'utf8')), norm(fs.readFileSync(path.join(WEB, 'app', 'signin-ui.js'), 'utf8')), 'the kit copy drifted from web public/app/signin-ui.js');
   const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
-  assert.ok(/url\.pathname === '\/app\/signin-ui\.js'/.test(prog), 'the program does not serve /app/signin-ui.js');
+  assert.ok(/url\.pathname === '\/app\/signin-ui\.js'|'\/app\/signin-ui\.js': \[/.test(prog), 'the program does not serve /app/signin-ui.js');
   assert.ok(/live: \['till\.html', 'signin-ui\.js'(, '[a-z-]+\.js')*\]/.test(prog), 'the kit update does not refresh the window');
   assert.ok(/url\.pathname === '\/api\/signin\/ask' \|\| url\.pathname === '\/api\/signin\/verify' \|\| url\.pathname === '\/api\/signin\/pin'/.test(prog), 'the program does not pass the window\'s calls through');
   assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
@@ -996,7 +996,7 @@ JOBS.push(['⭐⭐ the bill check reaches both hosts: web + kit copies = lib/the
     assert.strictEqual(fs.existsSync(copy) ? norm(fs.readFileSync(copy, 'utf8')) : '', master, copy + ' drifted from lib/their-bill.js — run scripts/vendor-till.cjs');
   assert.ok(/require\('\.\/their-bill'\)\.check\(/.test(fs.readFileSync(path.join(API, 'lib', 'books-hooks.js'), 'utf8')), 'the books do not ask lib/their-bill');
   const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
-  assert.ok(/url\.pathname === '\/app\/their-bill\.js'/.test(prog), 'the program does not serve /app/their-bill.js');
+  assert.ok(/url\.pathname === '\/app\/their-bill\.js'|'\/app\/their-bill\.js': \[/.test(prog), 'the program does not serve /app/their-bill.js');
   assert.ok(/live: \[[^\]]*'their-bill\.js'/.test(prog), 'the kit update does not refresh the bill check');
   const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
   assert.ok(/'their-bill\.js'/.test(kitNames), 'the kit zip does not carry the bill check');

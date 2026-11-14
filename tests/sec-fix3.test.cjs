@@ -43,7 +43,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   await it('the platform root may cite another shop\'s incident', () => assert.strictEqual(testing.citedEntityOf(ROOT, { entity_id: SHOP_B }), SHOP_B));
   await it('/releases follows another entity or `origin` only as the root', () => {
     const s = src('routes/testing.js');
-    assert.ok(/mayFollow = require\('\.\.\/lib\/platformroot'\)\.isRoot/.test(s) && /if \(mayFollow\) await tellOriginShop/.test(s) && /if \(!mayFollow && String\(c\.entity_id\)/.test(s));
+    assert.ok(/mayFollow = require\('\.\.\/lib\/platformroot'\)\.isRoot/.test(s) && /if \(mayFollow\) await tellOriginShop/.test(s) && /if \(!mayFollow && String\(cites\.entity_id\)/.test(s));
   });
 
   console.log('\nS2 · adopt writes to the shop\'s own schema only');
@@ -119,7 +119,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   await it('the tester name is the token\'s, not the body\'s', () => {
     /* #721 moved the row into resultRowOf(item, by, tester): the name still comes only from testerOf(req), the signed-in identity */
     const t = src('routes/testing.js');
-    assert.ok(/tester_name: tester\.name\b/.test(t) && /resultRowOf\(item, by, who\)/.test(t) && /const who = testerOf\(req\)/.test(t));
+    assert.ok(/tester_name: tester\.name\b/.test(t) && /resultRowOf\(item, by, tester\)/.test(t) && /const tester = testerOf\(req\)/.test(t));
   });
 
   console.log('\nS11 · an unowned shared source is claimed by the root only');

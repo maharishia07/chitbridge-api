@@ -70,7 +70,7 @@ const BREAKS = [
   [TEST_NAME, 'routes/folders.js', '  if (sys) return sys.on ? sys : false;', '  if (sys) return sys;', 'an OFF folder still answers'],
   [
     TEST_NAME,
-    'routes/folders.js',
+    'routes/folders-totals.js', /* moved out of routes/folders.js (MNT-59) */
     '    const inBills = rows.filter((x) => !x.folder_id && leaves.has(x.doc_kind)).length;',
     '    const inBills = 0;',
     'reconcile loses the bills'

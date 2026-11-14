@@ -18,7 +18,7 @@
  *      scripts/cleanup-test-entities.sql sweeps them.
  *
  *   Run:  node scripts/journey-document-store.js
- *         API=https://… node scripts/journey-document-store.js     (defaults to production)
+ *         CB_API=http://127.0.0.1:3100 node scripts/journey-document-store.js     (CB_API is required; production also needs CB_ALLOW_PROD=1)
  *
  * STRUCTURAL NOTE discovered while writing this: the storefront's orderable list is built ONLY from `finishes`
  * (the adopted reference catalogue). `items` (a store's own catalogue_items) render read-only with NO order button.

@@ -1,4 +1,8 @@
 /* signin-ui.js — CBSignin.mount: THE ONE SIGN-IN WINDOW, for every app (M14, DECISIONS 2026-10-08).
+ * OWNS      CBSignin.mount: the one sign-in window for every app, its state machine (id, choose, secret, set PIN, in) and its paint; the rules stay in /engine/signin.js
+ * CALLED BY app/shell.js (the Home sign-in), public/accounts.html, crm.html, finance.html, signin-lab.html and till.html (CBSignin.mount); the script tag is on 13 pages (accounts, authority-forms, catalogue, crm, employees, finance, know-your-business, network, operations, settings, signin-lab, tasks, till); the api's kit carries a byte copy of this file
+ * FLOW      mount(host, opts) ──▶ id ──▶ [choose account] ──▶ secret (PIN or code) ──▶ [set PIN] ──▶ in ──▶ onIn(session, answer)
+ * CARD      18-identity-sign-in-and-access/sign-in
  *
  * Athi: *"the register, sign-in module should be a common module and the very first page anyone is going to see is the index
  * app"* · *"only the mobile number or email should be used for sign-in … .br / .cr can be combined behind the scene"* · *"the
@@ -51,7 +55,6 @@
  *      the host may give (registerHref) and nothing else.
  *
  * Reuse: CBSignin (engine) · CBOnePerson.claim / who (one browser, one shop) · CBAvatar (the sign-out side; signOut is there, not here).
- * CARD 18-identity-sign-in-and-access/sign-in
  */
 (function (root) {
   'use strict';
@@ -233,17 +236,17 @@
       var shop = c.shop || s.person.shop || '';
       try {
         (own ? store : root.sessionStorage || store).setItem('cb_cust@' + shop, JSON.stringify({ token: s.token, name: s.name }));
-      } catch (_) {}
+      } catch (_) { /* storage blocked or full: the page works without it */ }
       return;
     }
     var sess = { token: s.token, role: s.role, name: s.name, entity: s.entity, bridgeId: s.bridgeId };
     if (s.duty) sess.duty = s.duty;
     try {
       store.setItem('cb_sess', JSON.stringify(sess));
-    } catch (_) {}
+    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
     try {
       if (!own && root.CBOnePerson && root.CBOnePerson.claim) root.CBOnePerson.claim(root.CBOnePerson.who(sess));
-    } catch (_) {}
+    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
   }
 
   /* ── the state machine ──────────────────────────────────────────────────────────────────────────────────────────── */
@@ -305,7 +308,7 @@
       subs.forEach(function (fn) {
         try {
           fn(S);
-        } catch (_) {}
+        } catch (_) { /* best effort: failing here changes nothing the user sees */ }
       });
     }
     function set(p) {
@@ -478,7 +481,7 @@
       if (typeof c.onIn === 'function') {
         try {
           c.onIn(s, answer || null);
-        } catch (_) {}
+        } catch (_) { /* best effort: failing here changes nothing the user sees */ }
       }
       return S;
     }
@@ -601,7 +604,7 @@
         .methods()
         .map(function (item) {
           return (
-            '<button type="button" class="cbsi-m" data-cbsi="method" data-method="' +
+            '<button data-cbsid="SCR054-B01" type="button" class="cbsi-m" data-cbsi="method" data-method="' +
             item +
             '" data-testid="signin-' +
             item +
@@ -618,10 +621,10 @@
         why +
         '<label>' +
         esc(W.id) +
-        '<input name="id" data-testid="signin-id" type="text" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" value="' +
+        '<input data-cbsid="SCR054-I01" name="id" data-testid="signin-id" type="text" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" value="' +
         esc(S.typed) +
         '"></label>' +
-        '<button type="submit" class="cbsi-go" data-testid="signin-go"' +
+        '<button data-cbsid="SCR054-B02" type="submit" class="cbsi-go" data-testid="signin-go"' +
         busy +
         '>' +
         esc(S.busy ? W.working : W.go) +
@@ -639,7 +642,7 @@
         S.choices
           .map(function (item, index) {
             return (
-              '<button type="button" class="cbsi-ch" data-cbsi="choose" data-i="' +
+              '<button data-cbsid="SCR054-B03" type="button" class="cbsi-ch" data-cbsi="choose" data-i="' +
               index +
               '" data-testid="signin-choice"><b>' +
               esc(item.name || item.id) +
@@ -649,7 +652,7 @@
             );
           })
           .join('') +
-        '<button type="button" class="cbsi-ln" data-cbsi="back" data-testid="signin-back">' +
+        '<button data-cbsid="SCR054-B04" type="button" class="cbsi-ln" data-cbsi="back" data-testid="signin-back">' +
         esc(W.back) +
         '</button>';
     } else if (S.at === 'credential') {
@@ -665,20 +668,20 @@
         '<label>' +
         esc(local ? W.localPin : W.secret) +
         /* UI element SGN-secret · path CBSignin.mount@<host page>›sign-in window›credential: the ONE masked box (testid kept: signin-code) */
-        '<input name="cred" data-el="CBSignin.secret@signin-ui.js›credential" data-testid="' +
+        '<input data-cbsid="SCR054-I02" name="cred" data-el="CBSignin.secret@signin-ui.js›credential" data-testid="' +
         (pin ? 'signin-pin' : 'signin-code') +
         '" type="password" inputmode="numeric"' +
         (pin ? ' pattern="[0-9]*" maxlength="4"' : ' maxlength="64"') +
         ' autocomplete="one-time-code" enterkeyhint="go"></label>' +
-        '<button type="submit" class="cbsi-go" data-testid="signin-verify"' +
+        '<button data-cbsid="SCR054-B05" type="submit" class="cbsi-go" data-testid="signin-verify"' +
         busy +
         '>' +
         esc(S.busy ? W.working : W.verify) +
         '</button>' +
         '<div class="cbsi-row">' +
-        (local ? '' : '<button type="button" class="cbsi-ln" data-cbsi="again" data-testid="signin-again">' + esc(W.again) + '</button>') +
-        (local && m.online() ? '<button type="button" class="cbsi-ln" data-cbsi="line" data-testid="signin-line">' + esc(W.line) + '</button>' : '') +
-        '<button type="button" class="cbsi-ln" data-cbsi="back" data-testid="signin-back">' +
+        (local ? '' : '<button data-cbsid="SCR054-B06" type="button" class="cbsi-ln" data-cbsi="again" data-testid="signin-again">' + esc(W.again) + '</button>') +
+        (local && m.online() ? '<button data-cbsid="SCR054-B07" type="button" class="cbsi-ln" data-cbsi="line" data-testid="signin-line">' + esc(W.line) + '</button>' : '') +
+        '<button data-cbsid="SCR054-B08" type="button" class="cbsi-ln" data-cbsi="back" data-testid="signin-back">' +
         esc(W.back) +
         '</button></div>';
     } else if (S.at === 'setpin') {
@@ -692,16 +695,16 @@
         why +
         '<label>' +
         esc(W.pin1) +
-        '<input name="pin1" data-testid="signin-pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password"></label>' +
+        '<input data-cbsid="SCR054-I03" name="pin1" data-testid="signin-pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password"></label>' +
         '<label>' +
         esc(W.pin2) +
-        '<input name="pin2" data-testid="signin-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" enterkeyhint="done"></label>' +
-        '<button type="submit" class="cbsi-go" data-testid="signin-pinsave"' +
+        '<input data-cbsid="SCR054-I04" name="pin2" data-testid="signin-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" enterkeyhint="done"></label>' +
+        '<button data-cbsid="SCR054-B09" type="submit" class="cbsi-go" data-testid="signin-pinsave"' +
         busy +
         '>' +
         esc(S.busy ? W.working : W.save) +
         '</button>' +
-        (lp ? '<button type="button" class="cbsi-ln" data-cbsi="later" data-testid="signin-later">' + esc(W.later) + '</button>' : '');
+        (lp ? '<button data-cbsid="SCR054-B10" type="button" class="cbsi-ln" data-cbsi="later" data-testid="signin-later">' + esc(W.later) + '</button>' : '');
     } else if (S.at === 'in') {
       h = '<p class="cbsi-in" data-testid="signin-in">' + esc(S.said) + '</p>';
     }
@@ -709,7 +712,7 @@
     try {
       var ae = doc.activeElement;
       if (ae && host.contains(ae) && ae.name) nestedKeep = { name: ae.name, v: ae.value };
-    } catch (_) {}
+    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
     host.innerHTML = '<div class="cbsi" data-testid="signin-window" data-at="' + esc(S.at) + '"><form novalidate autocomplete="on">' + h + '</form></div>';
     var first = host.querySelector('input');
     if (nestedKeep) {
@@ -718,12 +721,12 @@
         same.value = nestedKeep.v;
         try {
           same.focus({ preventScroll: true });
-        } catch (_) {}
+        } catch (_) { /* cosmetic (focus/scroll): nothing to recover */ }
       }
     } else if (first && S.at !== 'out') {
       try {
         first.focus({ preventScroll: true });
-      } catch (_) {}
+      } catch (_) { /* cosmetic (focus/scroll): nothing to recover */ }
     }
   }
 
