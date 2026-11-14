@@ -1,14 +1,14 @@
 // routes/folders-inbox.js — the messages inbox and the worklist of /api/folders
 /**
  * OWNS      GET /messages (the inbox and its ?count=1 badge) · POST /messages/:message_id/mark · GET /worklist.
- * PART OF  routes/folders.js (mounted there with router.use at the end, so every path keeps its order under /api/folders). Moved verbatim with its leading comments (MNT-59); the only changes to the moved code are the one-line require and `ent` declarations each part needs and, in routes/folders.js, `checked`, PAGE_DEFAULT and PAGE_MAX (now from lib/folders-contract.js). The short names PL, ent, INV are kept on purpose: renaming them would make every moved function new code for the readability guard (cleanup PR).
+ * PART OF  routes/folders.js (mounted there with router.use at the end, so every path keeps its order under /api/folders). Moved verbatim with its leading comments (MNT-59); the only changes to the moved code are the one-line require and `ent` declarations each part needs and, in routes/folders.js, `checked`, PAGE_DEFAULT and PAGE_MAX (now from lib/folders-contract.js). The short names PL, ent, INV are renamed here to pageLimit, entityIdOf, folderInventory (alpha-equal, MNT-59 cleanup).
  * CALLED BY routes/folders.js (router.use), the web rail inbox, the messages badge and the worklist.
- * FLOW      auth → schema check (lib/folders-contract.js) → withEntity → the rows → PL.pageOut; a refusal → problem(req, res, said(...) | failed(...))
+ * FLOW      auth → schema check (lib/folders-contract.js) → withEntity → the rows → pageLimit.pageOut; a refusal → problem(req, res, said(...) | failed(...))
  * CARD      01-rail-core-the-chit/folders
  */
 const express = require('express');
 const router = express.Router();
-const PL = require('../lib/page-limit');
+const pageLimit = require('../lib/page-limit');
 const { withEntity } = require('../db');
 const { problem } = require('../lib/problem');
 const { isCalendarDay } = require('../middleware/validate');
@@ -17,7 +17,7 @@ const { UUID } = require('../lib/namedentity');
 const auth = require('../middleware/auth');
 
 /** the caller's shop (declared as a function so the endpoint card reads it as its own body) */
-function ent(req) {
+function entityIdOf(req) {
   return auth.entityOf(req);
 }
 const assign = require('../lib/assign');
@@ -39,12 +39,30 @@ const assign = require('../lib/assign');
 router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
-    const isActor = req.identity && req.identity.identity_type === 'actor';
-    const actorId = isActor ? String(req.identity.identity_id) : null;
-    const params = [];
-    const actorCond = isActor
-      ? (params.push(actorId),
-        `
+    const scope = actorScope(req);
+    /**
+     * ⭐ ?count=1 — the badge, without the payload (called on every app boot: one integer, not 200 rows and two joins).
+     * Unread only: a KEPT message is not news, and a badge that counted it would never fall to zero while anything was pinned.
+     */
+    if (req.query.count === '1' || req.query.count === 'true') return res.json({ count: await countUnreadMessages(req, scope) });
+    const rows = await listMessageRows(req, all, scope);
+    const answer = pageLimit.pageOut('messages', rows, pageLimit.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a message is the columns listMessageRows selects (chit_messages: migrations/000_baseline_2026-10-21.sql, read_at and kept through to_jsonb), then the pager's keys (capped and cap_note only when it cut the list) */
+    // prettier-ignore
+    res.json({ count: rows.length, messages: answer.messages.map((x) => ({ message_id: x.message_id, chit_id: x.chit_id, line_id: x.line_id, sender_display_name: x.sender_display_name, sender_entity_id: x.sender_entity_id, message_text: x.message_text, created_at: x.created_at, msg_type: x.msg_type, read_at: x.read_at, kept: x.kept, manual_subject: x.manual_subject, auto_subject: x.auto_subject, track: x.track, particulars: x.particulars, chit_status: x.chit_status })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
+  } catch (err) {
+    console.error('messages inbox:', err);
+    problem(req, res, failed(err, req, 'Failed'));
+  }
+});
+/** step 1 of GET /messages: who is asking. An actor is scoped to the conversations about work they hold, and the scope is the SQL fragment plus its bound parameter. */
+function actorScope(req) {
+  const isActor = req.identity && req.identity.identity_type === 'actor';
+  const actorId = isActor ? String(req.identity.identity_id) : null;
+  const params = [];
+  const actorCond = isActor
+    ? (params.push(actorId),
+      `
             AND EXISTS (
               SELECT 1 FROM chit_line_assignment a
                WHERE a.entity_id = m.entity_id
@@ -54,48 +72,55 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
                  /* the LATEST assignment for that line — a line handed on is no longer theirs */
                  AND a.seq = (SELECT MAX(s.seq) FROM chit_line_assignment s
                                WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`)
-      : '';
-    /**
-     * ⭐ ?count=1 — the badge, without the payload (called on every app boot: one integer, not 200 rows and two joins).
-     * Unread only: a KEPT message is not news, and a badge that counted it would never fall to zero while anything was pinned.
-     */
-    if (req.query.count === '1' || req.query.count === 'true') {
-      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST: a badge counting what the actor cannot open would leak HOW MANY customer conversations the business has. */
-      const c = await withEntity(ent(req), (db) =>
-        db.query(
-          `SELECT count(*)::int AS n FROM chit_messages m
+    : '';
+  return { params, actorCond };
+}
+/** step 2 of GET /messages: the badge count of unread external messages, scoped the same way as the list. */
+async function countUnreadMessages(req, { params, actorCond }) {
+  /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST: a badge counting what the actor cannot open would leak HOW MANY customer conversations the business has. */
+  const c = await withEntity(entityIdOf(req), (db) =>
+    db.query(
+      `SELECT count(*)::int AS n FROM chit_messages m
           WHERE m.thread_type = 'external'
             AND COALESCE(m.is_dispute, false) = false
             AND m.sender_entity_id <> m.entity_id
             AND to_jsonb(m)->>'read_at' IS NULL
             ${actorCond}`,
-          params
-        )
-      );
-      return res.json({ count: (c.rows[0] && c.rows[0].n) || 0 });
-    }
-    /**
-     * ── ⚠️ AN ACTOR SEES ONLY CONVERSATIONS ABOUT WORK THEY HOLD ────────────────────────────────────────────
-     *
-     * Athi, 2026-08-15: *"can you check all sides, like actor replying, and how does it filter for actors?"*
-     *
-     * ⚠️ AND WITHOUT THIS IT FILTERED FOR NOBODY. ent(req) resolves an actor to their PARENT ENTITY, so every
-     * co-assist opening this screen would read every customer conversation in the business — pricing arguments,
-     * complaints, the lot. RLS cannot catch it: every row belongs to the same entity, which is precisely what RLS
-     * scopes to. The boundary here is between two people INSIDE one business, and only this route knows it
-     * exists. Exactly the hole the worklist had, in a place where the content is far more sensitive.
-     *
-     * The rule matches the worklist's: the caller's own actor id WINS when the caller is an actor, and is never
-     * a parameter they can set. A line message reaches them if the line is theirs; a chit-wide message reaches
-     * them if they hold ANY line on that chit — otherwise "ring me before you load" would be invisible to the
-     * person actually loading.
-     */
-    const rows = await withEntity(ent(req), async (db) => {
-      /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
+      params
+    )
+  );
+  return (c.rows[0] && c.rows[0].n) || 0;
+}
+/** step 3 of GET /messages: the external messages that still want this caller, newest first, at most 200. */
+async function listMessageRows(req, all, { params, actorCond }) {
+  /**
+   * ── ⚠️ AN ACTOR SEES ONLY CONVERSATIONS ABOUT WORK THEY HOLD ────────────────────────────────────────────
+   *
+   * Athi, 2026-08-15: *"can you check all sides, like actor replying, and how does it filter for actors?"*
+   *
+   * ⚠️ AND WITHOUT THIS IT FILTERED FOR NOBODY. entityIdOf(req) resolves an actor to their PARENT ENTITY, so every
+   * co-assist opening this screen would read every customer conversation in the business — pricing arguments,
+   * complaints, the lot. RLS cannot catch it: every row belongs to the same entity, which is precisely what RLS
+   * scopes to. The boundary here is between two people INSIDE one business, and only this route knows it
+   * exists. Exactly the hole the worklist had, in a place where the content is far more sensitive.
+   *
+   * The rule matches the worklist's: the caller's own actor id WINS when the caller is an actor, and is never
+   * a parameter they can set. A line message reaches them if the line is theirs; a chit-wide message reaches
+   * them if they hold ANY line on that chit — otherwise "ring me before you load" would be invisible to the
+   * person actually loading.
+   */
+  const rows = await withEntity(entityIdOf(req), async (db) => {
+    /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
          gets every external message rather than a 500, which is the honest degradation. */
-      const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
-      const q = await db.query(
-        `SELECT m.message_id, m.chit_id, m.line_id, m.sender_display_name, m.sender_entity_id,
+    const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
+    const q = await db.query(messageListSql(cond, actorCond), params);
+    return q.rows;
+  });
+  return rows;
+}
+/** the SELECT for GET /messages: every external message that is not mine, with its chit subject, track and status; cond narrows to unread-or-kept, actorCond to the actor's own work. */
+function messageListSql(cond, actorCond) {
+  return `SELECT m.message_id, m.chit_id, m.line_id, m.sender_display_name, m.sender_entity_id,
                 m.message_text, m.created_at, m.msg_type,
                 to_jsonb(m)->>'read_at'                            AS read_at,
                 COALESCE((to_jsonb(m)->>'kept')::boolean, false)   AS kept,
@@ -151,20 +176,8 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
             ${cond}
             ${actorCond}
           ORDER BY m.created_at DESC
-          LIMIT 200`,
-        params
-      );
-      return q.rows;
-    });
-    const answer = PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
-    /* S34: a message is the columns the statement above selects (chit_messages: migrations/000_baseline_2026-10-21.sql, read_at and kept through to_jsonb), then the pager's keys (capped and cap_note only when it cut the list) */
-    // prettier-ignore
-    res.json({ count: rows.length, messages: answer.messages.map((x) => ({ message_id: x.message_id, chit_id: x.chit_id, line_id: x.line_id, sender_display_name: x.sender_display_name, sender_entity_id: x.sender_entity_id, message_text: x.message_text, created_at: x.created_at, msg_type: x.msg_type, read_at: x.read_at, kept: x.kept, manual_subject: x.manual_subject, auto_subject: x.auto_subject, track: x.track, particulars: x.particulars, chit_status: x.chit_status })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
-  } catch (err) {
-    console.error('messages inbox:', err);
-    problem(req, res, failed(err, req, 'Failed'));
-  }
-});
+          LIMIT 200`;
+}
 /**
  * POST /api/folders/messages/:message_id/mark  { read?: bool, kept?: bool }
  *
@@ -179,7 +192,9 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
   const read = 'read' in req.body ? !!req.body.read : null;
   const kept = 'kept' in req.body ? !!req.body.kept : null;
   try {
-    const n = await withEntity(ent(req), (db) => db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS marked_count', [id, read, kept]));
+    const n = await withEntity(entityIdOf(req), (db) =>
+      db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS marked_count', [id, read, kept])
+    );
     const touched = (n.rows[0] && Number(n.rows[0].marked_count)) || 0;
     /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
        and both deserve to be said rather than reported as a successful no-op. */
@@ -208,8 +223,8 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
  */
 router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
   try {
-    const due = String(req.query.due_on || '').trim();
-    if (due && !isCalendarDay(due)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
+    const dueOn = String(req.query.due_on || '').trim();
+    if (dueOn && !isCalendarDay(dueOn)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
     /**
      * ── ⚠️ AN ACTOR SEES ONLY THEIR OWN WORK, AND IT IS NOT THEIR CHOICE ────────────────────────────────────────
      *
@@ -222,10 +237,10 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
      * "show me what Murugan has" is the whole point of running the business.
      */
     const isActor = req.identity.identity_type === 'actor';
-    const aid = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
-    const answer = await assign.byPerson(ent(req), {
-      due_on: due || undefined,
-      actor_id: UUID.test(aid) ? aid : undefined,
+    const actorIdWanted = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
+    const answer = await assign.byPerson(entityIdOf(req), {
+      due_on: dueOn || undefined,
+      actor_id: UUID.test(actorIdWanted) ? actorIdWanted : undefined,
       /* So the screen can say "your work" honestly rather than guessing from the row count. */
       _scoped_to_self: isActor
     });
