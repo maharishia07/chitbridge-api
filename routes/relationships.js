@@ -409,7 +409,7 @@ router.patch(
     body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
     body('notes').optional({ nullable: true }).trim().isLength({ max: 2000 }),
     body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
-    body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
+    body('display_name').optional({ nullable: true }).isString().withMessage('Type the name as text').trim().isLength({ max: 120 }), // CRM-257: as POST /suppliers name (CRM-251)
     body('preferred').optional().isBoolean()
   ],
   auth,
