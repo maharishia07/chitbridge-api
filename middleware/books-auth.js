@@ -48,10 +48,10 @@ function unclassifiedGets(router) {
 
 /** is this identity one the parent may use a grant with: its owner, or a person holding the auditor preset (commenter, whole entity, sees costs) */
 function mayUseGrant(req) {
-  const who = req.identity;
-  if (!who || req.api_key) return false;
-  if (who.identity_type !== 'actor') return !who.parent_entity_id;
-  return who.access_level === 'commenter' && who.whole_entity === true && who.can_see_costs === true;
+  const holder = req.identity;
+  if (!holder || req.api_key) return false;
+  if (holder.identity_type !== 'actor') return !holder.parent_entity_id;
+  return holder.access_level === 'commenter' && holder.whole_entity === true && holder.can_see_costs === true;
 }
 
 /** the synthetic auditor of the member: the existing auditor preset, as a value */
@@ -82,6 +82,7 @@ function refuse(req, res, status, code, words) {
 /** the real caller's own entity: the business (an owner) or the business its person acts for */
 const entityOfReal = (real) => real.parent_entity_id || real.identity_id;
 
+/** the one look of this request: the member the header names, the route and the shape of the question */
 async function decide(req) {
   const member = String(req.headers[HEADER] || '').trim();
   const pattern = req.method + ' ' + (req.route && req.route.path);
@@ -112,6 +113,7 @@ function answerFailure(req, res, failure) {
   require('../lib/logger').error('books grant: the look failed, answered 503', { code: (failure && failure.code) || null });
   return refuse(req, res, 503, 'BOOKS_GRANT_LOG_UNAVAILABLE', words);
 }
+/** a request that names a member: who may, the look, then the synthetic auditor and READ ONLY for the rest of the request */
 async function actOn(req, res, next) {
   if (!mayUseGrant(req)) {
     const words = 'Only an owner, or a person with the auditor role, can open another business\'s books.';
