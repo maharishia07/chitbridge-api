@@ -173,7 +173,7 @@ test('7 · the governance row is read FOR UPDATE, and every path of save ends wi
   await save(base());
   assert.ok(SQLS.some((s) => /FROM entity_governance WHERE entity_id = \$1 FOR UPDATE/.test(s)), 'the row lock rides the one read save already makes (no extra trip)');
   const code = fs.readFileSync(path.join(__dirname, '..', 'lib', 'country-setup.js'), 'utf8');
-  const body = /async function save\(h, entity, body, by\) \{[\s\S]*?\n\}\n/.exec(code)[0];
+  const body = /async function save\(handle, entity, body, by\) \{[\s\S]*?\n\}\n/.exec(code)[0];
   const returns = body.match(/\n\s+return /g).length;
   const forgets = body.match(/forget\(entity\);\n\s+(?:const out = await profile|return profile)/g).length;
   assert.equal(forgets, returns, 'each of the ' + returns + ' returns is preceded by forget(entity)');

@@ -306,7 +306,7 @@ async function staticChecks() {
     for (const site of sites) {
       const named = /method\s*:\s*'(\w+)'/.exec(site);
       assert.ok(!named || named[1] === 'GET', site.slice(0, 120));
-      assert.ok(/^this\.api \+ p, \{ method,|^cb\.api \+ '\/api\/events\/stream/.test(site), 'an unexpected fetch: ' + site.slice(0, 120));
+      assert.ok(/^this\.api \+ urlPath, \{ method,|^cb\.api \+ '\/api\/events\/stream/.test(site), 'an unexpected fetch: ' + site.slice(0, 120));
     }
   });
 }
