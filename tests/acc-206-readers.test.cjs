@@ -55,7 +55,7 @@ ok(costView.detailTotalOf('0.00', { summary_json: { total_value: 0, money: { tot
 ok(costView.detailTotalOf('0.00', WITHHELD) === null, 'detail answer: a withheld copy stays null');
 /* #1311 finding 1 (CUR-1): the detail answer's header carries the currency the money block stores; the column wins when filled; no money = no key invented */
 const MONEY_HEADER = { chit_id: 'h', currency_code: null, summary_json: { money: { total: 189, currency_code: 'AUD' } } };
-ok(costView.headerWithCurrency(MONEY_HEADER).currency_code === 'AUD', 'detail answer: header.currency_code is the money block's AUD');
+ok(costView.headerWithCurrency(MONEY_HEADER).currency_code === 'AUD', 'detail answer: header.currency_code is the money block AUD');
 ok(costView.headerWithCurrency({ ...MONEY_HEADER, currency_code: 'INR' }).currency_code === 'INR', 'detail answer: a filled header column stands');
 ok(costView.headerWithCurrency({ chit_id: 'i', currency_code: null, summary_json: { total_value: null } }).currency_code === null, 'detail answer: a chit with no money stays null (never defaulted)');
 ok(costView.headerWithCurrency({ chit_id: 'w', summary_json: { oversight: true } }).currency_code === undefined, 'detail answer: the TR-6 copy invents no code');
