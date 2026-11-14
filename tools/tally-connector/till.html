@@ -11141,7 +11141,6 @@ function menuOpenModal(panel){
   MENU_OPENER = document.activeElement;
   if (panel.showModal && !panel.open) { try { panel.showModal(); } catch (e) { cbQuiet('menuOpenModal:1', e); } }
 }
-function menuShutModal(panel){ if (panel.open) { try { panel.close(); } catch (e) { cbQuiet('menuShutModal:1', e); } } }
 /** where the caret goes when the menu is gone: back to what opened it when the person shut it, else the search box */
 function menuFocusBack(toOpener){
   var opener = MENU_OPENER; MENU_OPENER = null;
@@ -11156,7 +11155,7 @@ function closeMenu(back){
   var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = true;
   var m = document.getElementById('tillmenu'); if (!m || m.hidden) return;
   m.hidden = true;
-  menuShutModal(m);
+  if (m.open) { try { m.close(); } catch (e) { cbQuiet('closeMenu:2', e); } }
   var side = document.getElementById('tillside'); if (side) side.classList.remove('on');
   menuFocusBack(back === true);
 }
@@ -29086,9 +29085,13 @@ setInterval(function(){ checkAbsorbed(false); }, 600000);
 window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
 
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
-document.addEventListener('keydown', function(e){
+/**
+ * Escape is claimed in a fixed order BEFORE it can reach the basket: the open menu, then the pay card, then arrange mode.
+ * Returns true when one of them took it, so the key handler stops there and the sale is never thrown away.
+ */
+function escapeClaimed(e){
   /* ⚠️ BEFORE Escape reaches the basket: a person pressing Escape at an open menu means "shut this", never "throw the sale away" */
-  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(true); e.preventDefault(); return; } }
+  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(true); e.preventDefault(); return true; } }
   /**
    * ⚠️⚠️ BEFORE ESCAPE REACHES THE BASKET. Escape clears the bill, and [TILL-30] is already the scar from
    * exactly this — somebody pressed it to back out of something they had opened and lost the sale instead.
@@ -29101,39 +29104,52 @@ document.addEventListener('keydown', function(e){
    * that throws the sale away.
    */
   if (e.key === 'Escape' && document.body.classList.contains('paying')){
-    payClose(); e.preventDefault(); return;
+    payClose(); e.preventDefault(); return true;
   }
   if (e.key === 'Escape' && QK_ARRANGE){
     if (QK_FROM) { QK_FROM = null; toastLine('Put back. Nothing moved.'); }
     else { QK_ARRANGE = false; toastLine('Done arranging.'); }
     try { paintQuick(); } catch (e) { cbQuiet('top:5', e); }
-    e.preventDefault(); return;
+    e.preventDefault(); return true;
   }
-  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
-  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
-  /**
-   * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
-   * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
-   * promise fails silently again.
-   * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
-   * line twice — once here and once in searchKey(). And never over an open dialog.
-   */
+  return false;
+}
+/**
+ * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
+ * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
+ * promise fails silently again.
+ * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
+ * line twice — once here and once in searchKey(). And never over an open dialog.
+ * Returns true when it added the line, so the key handler stops there.
+ */
+function enterAddsSelected(e){
   if (e.key === 'Enter' && MODE === 'sell' && !e.ctrlKey && !e.metaKey && !e.altKey
       && (!document.activeElement || document.activeElement === document.body)
       && !document.querySelector('dialog[open]')
       && hits().length) {
-    add(SEL); e.preventDefault(); return;
+    add(SEL); e.preventDefault(); return true;
   }
+  return false;
+}
+/** F2, F3, F4, F9, F10 and Ctrl+↑/↓: the bill's own keys, the same in every mode that has a bill */
+function billFunctionKeys(e){
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
   if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
+  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
+}
+/** F6, F7, F8: park, who is serving, the bills list (or the next carton in Despatch) */
+function shopFunctionKeys(e){
   if (e.key === 'F8' && MODE !== 'despatch'){ openBills(); e.preventDefault(); }   /* M127: bills are not a Sell-only thing (F8 packs the next carton in Despatch) */
   if (e.key === 'F7'){ whoAct(); e.preventDefault(); }
   if (e.key === 'F6'){ if (MODE === 'sell') parkBill(); else toastLine('Park is for the Sell screen. Tap Sell.'); e.preventDefault(); }
-  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
+  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
+}
+/** F5, F11, F12: costs in Receive, voice and the tray in Sell */
+function modeFunctionKeys(e){
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
   /**
    * ⭐⭐ VOICE, BY THE KEYBOARD (design-handoff corrections §1, §5.7: "F5 = hearing, Shift F5 = speaking" —
@@ -29154,13 +29170,22 @@ document.addEventListener('keydown', function(e){
    */
   if (e.key === 'F11' && MODE === 'sell'){ trayToggle('photos'); e.preventDefault(); }
   if (e.key === 'F12' && MODE === 'sell'){ trayOpen(); e.preventDefault(); }
-  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
-  /* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
-     Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
-     because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
-     next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+}
+/* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
+   Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
+   because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
+   next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+function escapeClearsBill(e){
   if (e.key === 'Escape' && !document.querySelector('dialog[open]'))
     (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && escapeClaimed(e)) return;
+  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
+  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
+  if (enterAddsSelected(e)) return;
+  billFunctionKeys(e); shopFunctionKeys(e); modeFunctionKeys(e);
+  escapeClearsBill(e);
 });
 /**
  * ── ⭐⭐⭐ BACK MUST NEVER LEAVE THE TILL (T66, Athi's phone test 2026-10-04) ───────────────────────────────────
