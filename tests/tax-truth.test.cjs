@@ -144,7 +144,7 @@ async function ring(o) {
     paintRw() {}, price() {}, menuFresh() {}, load() {}, loadQuick() {}, stepGo() {},
     showSlip: (b, m) => { saved.slip = { bill: b, m }; },
     HOST: { bill: async (body) => { saved.called = true; saved.body = JSON.parse(JSON.stringify(body));
-      return { ok: true, bill: Object.assign({ no: o.no, at: '2026-10-01T17:32:00.000Z', till: 'C2' }, JSON.parse(JSON.stringify(body))) }; } },
+      return { ok: true, bill: Object.assign({ no: o.no, at: '2025-09-01T17:32:00.000Z', till: 'C2' }, JSON.parse(JSON.stringify(body))) }; } },
     document: { getElementById: (id) => els[id] || el('') },
   };
   ctx.window.CBTax = ctx.CBTax;
@@ -189,14 +189,14 @@ async function sixWays(port, o) {
   const shopCopy = (COPIES || []).find((c) => c.entity_id === SHOP), custCopy = (COPIES || []).find((c) => c.entity_id === CUST);
   const asHdr = (c, status) => c && { chit_id: 'ch-' + o.no, sender_entity_id: c.sender_entity_id || SHOP, all_recipients: c.all_recipients,
     business_json: c.business_json, purpose: c.purpose, line_items: c.line_items, currency_code: 'INR', current_status: status,
-    sent_at: '2026-10-01T17:32:05.000Z', created_at: '2026-10-01T17:32:05.000Z', summary_json: c.summary_json };
+    sent_at: '2025-09-01T17:32:05.000Z', created_at: '2025-09-01T17:32:05.000Z', summary_json: c.summary_json };
   const sHdr = asHdr(shopCopy, 'pending'), cHdr = asHdr(custCopy, 'accepted');
   const sEntry = sHdr ? await TC.entryFor(sHdr, SHOP) : null, cEntry = cHdr ? await TC.entryFor(cHdr, CUST) : null;
   const setting = { enabled: true, country: 'IN', walkin_grain: 'day' };
   const sPost = sEntry ? classify({ chit: sHdr, entry: sEntry, setting }) : null;
   const cPost = cEntry ? classify({ chit: cHdr, entry: cEntry, setting, status: 'accepted' }) : null;
   /* the reprint: the row the real GET /api/till/bills returns from the stored copy, through the page's own reprintOld() */
-  BILL_ROWS = shopCopy ? [{ chit_id: 'ch-' + o.no, created_at: '2026-10-01T17:32:05.000Z', business_json: shopCopy.business_json,
+  BILL_ROWS = shopCopy ? [{ chit_id: 'ch-' + o.no, created_at: '2025-09-01T17:32:05.000Z', business_json: shopCopy.business_json,
     line_items: shopCopy.line_items, summary_json: shopCopy.summary_json }] : [];
   const listed = await (await fetch(`http://127.0.0.1:${port}/api/till/bills`)).json().catch(() => ({}));
   const row = ((listed && listed.bills) || [])[0] || null;
@@ -295,7 +295,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…its invoice is the issued one (frozen, not provisional), output CGST + SGST — never IGST', W.sEntry.issued && W.sEntry.frozen && !W.sEntry.provisional
       && T.heads(W.sEntry.invoice).igst === 0 && T.heads(W.sEntry.invoice).cgst === 59.97 && T.heads(W.sEntry.invoice).sgst === 59.97, J(T.heads(W.sEntry.invoice)));
     ok('…GSTR-1 reports it b2b to the buyer\'s GSTIN, place of supply 33, under the bill\'s number, value 1118.15', (() => {
-      const g = T.gstr1(T.ledger([W.sEntry], W.sEntry.me), W.sEntry.me, '102026');
+      const g = T.gstr1(T.ledger([W.sEntry], W.sEntry.me), W.sEntry.me, '092025');
       const e = (g.b2b[0] || {}).inv || [];
       return g.b2b.length === 1 && g.b2b[0].ctin === '29BBBBB0000B1Z5' && e[0] && e[0].pos === '33' && e[0].inum === 'C2/26-27/0007' && e[0].val === 1118.15;
     })());

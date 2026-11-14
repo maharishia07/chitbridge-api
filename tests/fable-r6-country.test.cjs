@@ -14,6 +14,7 @@ const fs = require('fs');
 require.cache[require.resolve(path.join(__dirname, '..', 'db'))] = {
   exports: { query: async (sql) => { throw new Error('unstubbed query: ' + sql); }, withEntity: async (_id, fn) => fn({ query: async (sql) => { throw new Error('unstubbed query: ' + sql); } }) }
 };
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const BP = require('../lib/bill-paper');
 const TL = require('../lib/tax-lines');
 const COUNTRY = require('../lib/country');
@@ -70,7 +71,7 @@ console.log('— R6-01 · the export answer —');
   ok('exportStatedOf: false → false (answered: not an export)', TL.exportStatedOf({ is_export: false }) === false);
   ok('exportStatedOf: the string "true", 1, null, nothing → no answer (never defaulted)', [{ is_export: 'true' }, { is_export: 1 }, { is_export: null }, {}, null, undefined].every((b) => TL.exportStatedOf(b) === undefined));
   const src = (f) => fs.readFileSync(path.join(root, f), 'utf8');
-  ok('invoiceFor hands isExport to tax.determine', /isExport: typeof i\.is_export === 'boolean'/.test(src('lib/tax-lines.js')));
+  ok('invoiceFor hands isExport to tax.determine', /isExport: exportStatedOf\(i\)/.test(src('lib/tax-lines.js')));
   ok('the send path and the copy path ask the same reader', /is_export: taxLines\.exportStatedOf\(business_json\)/.test(src('lib/send-money.js')) && /is_export: T\.exportStatedOf\(bj\)/.test(src('lib/tax-copy.js')));
   const answer = TL.invoiceFor({ lines: [{ name: 'Goods', qty: 1, price: 2000, gst_rate: 5 }], seller: { Country: 'AE', RegType: 'regular', Gstin: '100123456789012' }, buyer: { Country: 'IN' }, currency: 'AED', is_export: true });
   ok('invoiceFor accepts is_export without throwing; after the engines adopt a stated export is VAT 0 and the answer says _cb.export "stated"', !!answer.invoice && answer.invoice.ValDtls.TotInvVal >= 2000);
@@ -84,7 +85,7 @@ console.log('— the register and the wire —');
   ok('INVOICE_HELD_HSN and INVOICE_HELD_RATE are in the register', has('INVOICE_HELD_HSN') && has('INVOICE_HELD_RATE'));
   const md = fs.readFileSync(path.join(root, 'docs', 'ERROR-CODES.md'), 'utf8');
   ok('and in ERROR-CODES.md', /\| INVOICE_HELD_HSN \|/.test(md) && /\| INVOICE_HELD_RATE \|/.test(md));
-  ok('sendPaper answers the reason\'s own code', /code: paper\.held\.code \|\| 'INVOICE_HELD_BUYER'/.test(fs.readFileSync(path.join(root, 'routes', 'chits.js'), 'utf8')));
+  ok('sendPaper answers the reason\'s own code', /code: paper\.held\.code \|\| 'INVOICE_HELD_BUYER'/.test(CF.read(root)));
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
