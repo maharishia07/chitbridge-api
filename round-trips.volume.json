@@ -396,6 +396,45 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/books-grants": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/consent": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/log": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
   "GET /api/books/accounts": {
    "0": {
     "trips": 2
