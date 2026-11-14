@@ -55889,6 +55889,66 @@
      }
     },
     {
+     "scenario": "supplier-rename-not-text-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     },
+    {
+     "scenario": "supplier-rename-not-text-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     },
+    {
+     "scenario": "supplier-rename-not-text-flag",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Type the name as text"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Type the name as text",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "display_name"
+     },
+    {
      "scenario": "supplier-rename-not-yours",
      "status": 403,
      "body_keys": {
