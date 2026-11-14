@@ -10,7 +10,7 @@
  *   no header: nothing changes · a person without the auditor role is refused · the look failing answers 503 and runs nothing · the request after a grant runs BEGIN READ ONLY
  *   the member's id comes from the grant row, never from the header
  * The database half (RLS, revoke, edge, the log, READ ONLY in Postgres) is tests/acc-176-books-grant.realstack.cjs, run by the CI integration job.
- * OWNS      the offline checks of middleware/books-auth.js.   CALLED BY scripts/guards.cjs (CI guards job).   CARD  04-network/ACC-176-AUDITOR-GRANT
+ * OWNS      the offline checks of middleware/books-grant.js.   CALLED BY scripts/guards.cjs (CI guards job).   CARD  04-network/ACC-176-AUDITOR-GRANT
  */
 'use strict';
 process.env.NODE_ENV = 'test';
@@ -37,7 +37,7 @@ const real = require(storePath);
 let nextLook = null;
 const stub = Object.assign({}, real, { look: async (...args) => (typeof nextLook === 'function' ? nextLook(...args) : nextLook) });
 require.cache[storePath].exports = stub;
-const A = require(path.join(API, 'middleware', 'books-auth.js'));
+const A = require(path.join(API, 'middleware', 'books-grant.js'));
 const books = require(path.join(API, 'routes', 'books.js'));
 const { isOwner } = require(path.join(API, 'lib', 'owner.js'));
 const access = require(path.join(API, 'lib', 'access.js'));
@@ -53,8 +53,8 @@ const refused = { allowed: false, grant: null, outcome: 'no_grant', status: 403,
 /** run the books router's `auth` over a fake request through a fake base auth; resolves { nexted, req, status, body } */
 function drive(identity, headers, method, routePath) {
   const base = Object.assign((req, res, next) => { req.identity = Object.assign({}, identity); next(); }, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id });
-  const gate = A.afterAuth(base);
-  const req = { headers: headers || {}, method: method || 'GET', route: { path: routePath || '/daybook' }, query: {}, id: 'r1' };
+  const gate = A.frontOf(base);
+  const req = { headers: headers || {}, method: method || 'GET', path: routePath || '/daybook', query: {}, id: 'r1' };
   const out = { nexted: false, readOnlyInside: null };
   const res = {
     headers: {}, status(code) { out.status = code; return this; }, set() { return this; }, setHeader() {}, type() { return this; },
@@ -88,16 +88,23 @@ function drive(identity, headers, method, routePath) {
       assert.ok(held in A.GRANT_HELD_BACK, held + ' must carry a reason');
     }
   });
-  await t('the books router signs in through the wrapped auth: its first handler is middleware/books-auth itself', () => {
-    const first = books.stack.find((l) => l.route && l.route.path === '/daybook').route.stack[0].handle;
-    assert.strictEqual(first, A);
-    assert.strictEqual(typeof first.entityOf, 'function');
+  await t('the books router carries the grant as ONE router-level layer (no route gate list is touched)', () => {
+    assert.ok(books.stack.some((layer) => !layer.route && layer.handle === A));
+    const daybook = books.stack.find((layer) => layer.route && layer.route.path === '/daybook').route.stack[0].handle;
+    assert.strictEqual(daybook, require(path.join(API, 'middleware', 'auth.js')), 'the route keeps middleware/auth as its sign-in');
+  });
+  await t('the log names the route by its listed pattern or with ids made :id, never a value', () => {
+    assert.strictEqual(A.routeForLog('GET', '/ledger/cash-in-hand'), 'GET /ledger/:account');
+    assert.strictEqual(A.routeForLog('GET', '/packs/3f2c9e1a-1111-4222-8333-444455556666/file'), 'GET /packs/:id/file');
+    assert.strictEqual(A.listedPattern('/year/2026-27/status'), '/year/:fy/status');
+    assert.strictEqual(A.listedPattern('/packs'), null);
+    assert.strictEqual(A.listedPattern('/daybook/extra'), null);
   });
 
-  await t('no X-Books-For header: the caller runs as itself, untouched, not read-only', async () => {
+  await t('no X-Books-For header: the front does nothing (not even a sign-in), the request is not read-only', async () => {
     nextLook = () => { throw new Error('the look must not run'); };
     const out = await drive(owner, {});
-    assert.ok(out.nexted && out.req.identity.identity_id === owner.identity_id && !out.req.acting_for_grant && out.readOnlyInside === false);
+    assert.ok(out.nexted && !out.req.identity && !out.req.acting_for_grant && out.readOnlyInside === false);
   });
   await t('a person without the auditor role is refused (403 BOOKS_GRANT_NOT_FOR_YOU) and no look is made', async () => {
     nextLook = () => { throw new Error('the look must not run'); };
@@ -116,7 +123,7 @@ function drive(identity, headers, method, routePath) {
     const out = await drive(owner, { 'x-books-for': "' OR 1=1 --" });
     assert.ok(!out.nexted && out.status === 403);
   });
-  await t('FAIL CLOSED: the look failing (the log row not written) answers 503 and runs nothing', async () => {
+  await t('fail-closed: the look failing (the log row not written) answers 503 and runs nothing', async () => {
     nextLook = () => { throw Object.assign(new Error('insert failed'), { code: '22P02' }); };
     const out = await drive(owner, { 'x-books-for': MEMBER });
     assert.ok(!out.nexted && out.status === 503 && out.body.code === 'BOOKS_GRANT_LOG_UNAVAILABLE');
@@ -148,7 +155,7 @@ function drive(identity, headers, method, routePath) {
   await t('the look is asked as the PARENT business (an owner: itself; a person: the business it acts for) with the route pattern and the query keys only', async () => {
     let seen = null;
     nextLook = (...args) => { seen = args; return granted(true); };
-    await drive(auditorActor, { 'x-books-for': MEMBER }, 'GET', '/ledger/:account');
+    await drive(auditorActor, { 'x-books-for': MEMBER }, 'GET', '/ledger/cash');
     assert.strictEqual(seen[0], owner.identity_id);
     assert.strictEqual(seen[2].pattern, 'GET /ledger/:account');
     assert.strictEqual(seen[2].listed, true);

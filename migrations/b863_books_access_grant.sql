@@ -13,6 +13,7 @@
 --    books_access_log    one row per request a grantee makes on a member's books, allowed or refused: no row bodies. INSERT-ONLY (no UPDATE, no DELETE privilege, no policy for them).
 --                        RLS: the grantee inserts its own looks; the grantor reads every look at its books. The write FAILS CLOSED in the api: no log row, no read.
 --    access_events       action also allows 'books_grant_given', 'books_grant_changed', 'books_grant_revoked'.
+-- OWNER: lib/books-grant.js (the grant, the revoke and the log of looks); middleware/books-grant.js reads it on every request that names a member's books.
 -- ROLL BACK (before the build ships it loses nothing; after, the grants and the log of looks are lost, the books themselves are untouched):
 --    DROP TABLE IF EXISTS books_access_log; DROP TABLE IF EXISTS books_access_grant;
 --    (the access_events constraint stays widened; narrowing it is refused while a books_grant_* row exists)
@@ -76,10 +77,13 @@ DROP POLICY IF EXISTS log_insert ON books_access_log;
 CREATE POLICY log_insert ON books_access_log FOR INSERT
   WITH CHECK (grantee_entity = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
-REVOKE ALL ON books_access_grant, books_access_log FROM cb_app, cb_backup;
+REVOKE ALL ON books_access_grant FROM cb_app, cb_backup;
+REVOKE ALL ON books_access_log FROM cb_app, cb_backup;
 GRANT SELECT, INSERT, UPDATE ON books_access_grant TO cb_app;
 GRANT SELECT, INSERT ON books_access_log TO cb_app;
-GRANT SELECT ON books_access_grant, books_access_log TO cb_backup;
+REVOKE UPDATE, DELETE ON books_access_log FROM cb_app;
+GRANT SELECT ON books_access_grant TO cb_backup;
+GRANT SELECT ON books_access_log TO cb_backup;
 COMMENT ON TABLE books_access_grant IS 'ACC-176: the member owner lets its network parent read its books (read-only, purpose and expiry required); live only while an active edge makes the grantee the parent';
 COMMENT ON TABLE books_access_log IS 'ACC-176: one row per request on another business''s books, allowed or refused, no row bodies; insert-only';
 
