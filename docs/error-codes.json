@@ -3368,6 +3368,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_STORE_CLAIMED",
+   "status": "403",
+   "title": "Store taken over",
+   "shopkeeper": "This store has been taken over by its owner, so a new code cannot be issued.",
+   "hint": "You can open it only if its owner gives you access.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "NETWORK_TOO_LARGE",
    "status": "413",
    "title": "Drawing too large",

@@ -340,6 +340,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_REMOTE_NOT_YET | 409 | Business on another installation | That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved. | Add them as a supplier for now; connecting across installations is coming. | network | 2026-11-07 |
 | NET_KEY_TAKEN | 409 | Installation key already taken | That installation key is already in the member registry (hosted here, retired, or an active member), so it was not overwritten. Nothing was changed. | Pick a new key, or add --update to change an active member. | network | 2026-11-12 |
 | NETWORK_REQUEST_INVALID | 400 | Network request not valid | That request is not valid: the sentence says what to change. | Fix what the sentence says and send again. | network-offers | 2026-10-23 |
+| NETWORK_STORE_CLAIMED | 403 | Store taken over | This store has been taken over by its owner, so a new code cannot be issued. | You can open it only if its owner gives you access. | network | 2026-11-14 |
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
 | NOTHING_TO_UPDATE | 400 | Nothing to update | Nothing was sent to change. | Fill in at least one field. | actors | 2026-10-23 |

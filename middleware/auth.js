@@ -5,6 +5,7 @@
 // CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
 const { query } = require('../db'), { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read under its own binding
+const { businessEnded } = require('../lib/business-status'); // R2-03 — an erased or closed business opens no door
 const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
 const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
 const { problem } = require('../lib/problem'); // API-4b — every refusal below is the one Problem body; the old keys ride on it, frozen
@@ -25,8 +26,10 @@ const refusedWith = (req, res, status, code, legacy) => problem(req, res, { stat
  */
 const DECIDED = new WeakSet();
 
-/** the key half of the decision: an API key is only as alive as its listing, its counter and its scopes → { keyRec } (null for a person) or { refusal } */
+/** the first half of the decision: the business behind the credential is open, and an API key is only as alive as its listing, its counter and its scopes → { keyRec } (null for a person) or { refusal } */
 async function judgeKey(req, decoded) {
+  /* R2-03: a token, a session and a key are all as alive as the business behind them — an erased or closed business keeps none of them */
+  if (await businessEnded(decoded.parent_entity_id || decoded.identity_id, query)) return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
   /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
      the token's own expiry says. One read per request, cached a minute per jti. */
   let keyRec = null;
