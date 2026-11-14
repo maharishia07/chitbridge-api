@@ -78,6 +78,9 @@ async function numberParty(owner, party_id) {
   }
 }
 
+/** CRM-45: the party answer of a PATCH names EVERY field saved - the route's own (segment_override, nickname, notes ...) first, then the party fields partyPatch saved - one shape: party.changed */
+const partyAnswer = (party, own) => Object.assign({}, party, { changed: own.concat((party && party.changed) || []) });
+
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
 
@@ -423,7 +426,8 @@ router.patch(
       if (party === false) return;
       const sets = [],
         vals = [];
-      let index = 1;
+      let index = 1,
+        renamed = false;
       if ('nickname' in req.body) {
         sets.push(`nickname = $${index++}`);
         vals.push(sanitise(req.body.nickname || '') || null);
@@ -482,7 +486,8 @@ router.patch(
           if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + nm + '.') });
           throw e;
         }
-        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
+        renamed = true;
+        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm, party: partyAnswer(party, ['display_name']) });
       }
       if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
       if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
@@ -495,7 +500,8 @@ router.patch(
         )
       );
       if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
+      const saved = ['nickname', 'category', 'notes', 'preferred', 'supply_kind'].filter((key) => key in req.body).concat(renamed ? ['display_name'] : []);
+      res.json({ message: 'Supplier updated', party: partyAnswer(party, saved) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
@@ -1034,7 +1040,7 @@ router.patch(
         )
       );
       if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Segment updated' });
+      res.json({ message: 'Segment updated', party: partyAnswer(party, ['segment_override']) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update segment failed'));
     }
