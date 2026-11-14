@@ -320,7 +320,18 @@ const MONTHS_PACKS_RATES = [
   X('compare-snapshot-second-part', 'POST /api/books/compare/snapshots', 200, { body: { snapshot_id: PARTY, part: 'pl', source: 'tally', csv: 'Particulars,Amount\nSales,100', decisions: [{ incoming: 'Particulars', field: 'account' }, { incoming: 'Amount', field: 'amount' }] }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30' }], insertComparePart: async () => PARTY } } }),
   X('move-in-preflight-csv', 'POST /api/books/move-in/preflight', 200, { body: { kind: 'contacts', source: 'xero', csv: 'ContactName,PhoneNumber,EmailAddress\nAsha Traders,9999,a@x.in' } })
 ];
-const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
+/* FIN-70: the bank reconciliation record: the lib is swapped (the stand-in db has no bank_rec_log); the stand-in chart has no bank ledger */
+const BANK_ACCOUNT = { account_id: PARTY, code: '1510', name: 'Bank', role: 'bank', is_group: false };
+const BANK_MARK = { id: PARTY, seq: 1, account_id: PARTY, kind: 'mark', line_key: '2026-09-30|D|10000|CHQ1', act: 'accept', how: 'ledger', entry_ids: ['JV-1#0'], chit_ids: [], note: null, attach_ref: null, file_hash: 'abc123', by: SHOP, at: STAMP };
+const BANK_STATEMENT = { id: PARTY, seq: 2, account_id: PARTY, kind: 'statement', file_hash: 'abc123', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', tied: true, by: SHOP, at: STAMP };
+const BANK_RECORD = [
+  X('bank-marks-added', 'POST /api/books/bank/marks', 201, { body: { account: '1510', file_hash: 'abc123', marks: [{ act: 'accept', key: BANK_MARK.line_key, how: 'ledger', ledger: ['JV-1#0'] }] }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendMarks: async () => [BANK_MARK] } } }),
+  X('bank-statement-signed', 'POST /api/books/bank/statements', 201, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendStatement: async () => BANK_STATEMENT } } }),
+  X('bank-log-read', 'GET /api/books/bank/log', 200, { url: MOUNT + '/bank/log?account=1510', patch: { brl: { accountIn: () => BANK_ACCOUNT, read: async () => ({ marks: [BANK_MARK], statements: [BANK_STATEMENT], exceptions: [{ code: 'POSTED_NOT_ACCEPTED', entry_id: PARTY, entry_no: 'JV-2', posting_date: DAY, amount_minor: 5000, currency: 'INR', file_hash: 'abc123', line_no: 3, why: 'Entry JV-2 was posted from a bank line, but no accept mark names it.' }] }) } } }),
+  X('bank-log-before-migration', 'GET /api/books/bank/log', 503, { url: MOUNT + '/bank/log?account=1510', patch: { brl: { accountIn: () => BANK_ACCOUNT } } }), /* the real lib: the stand-in database has no table, so the shared record is not set up yet */
+  X('bank-account-unknown', 'POST /api/books/bank/marks', 404, { body: { account: 'nope', marks: [{ act: 'undo', key: 'k' }] }, patch: { brl: { accountIn: () => null } } })
+];
+const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
   X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
   X('returns-from-rail-other-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP('AU') } } }),
@@ -450,7 +461,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);

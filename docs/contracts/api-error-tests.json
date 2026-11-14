@@ -238,6 +238,13 @@
   404,
   500
  ],
+ "GET /api/books/bank/log": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "GET /api/books/bank/rail": [
   400,
   401,
@@ -1768,6 +1775,20 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/books/bank/marks": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/books/bank/statements": [
+  401,
+  403,
+  404,
+  422,
   500
  ],
  "POST /api/books/check": [
