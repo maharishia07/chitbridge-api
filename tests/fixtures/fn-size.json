@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 139,
+  "long_functions": 138,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -213,9 +213,6 @@
       "GET /me",
       "GET /mis",
       "PATCH /profile"
-    ],
-    "routes/folders-inbox.js": [
-      "GET /messages"
     ],
     "routes/folders.js": [
       "POST /move"

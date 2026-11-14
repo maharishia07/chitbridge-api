@@ -1,7 +1,7 @@
 // routes/folders-totals.js — the cross-chit sums of /api/folders
 /**
  * OWNS      GET /groupsum · GET /reconcile · GET /mis: what a pile of chits adds up to, whether the folders add up to the track, and the MIS view.
- * PART OF  routes/folders.js (mounted there with router.use at the end, so every path keeps its order under /api/folders). Moved verbatim with its leading comments (MNT-59); the only changes to the moved code are the one-line require and `ent` declarations each part needs and, in routes/folders.js, `checked`, PAGE_DEFAULT and PAGE_MAX (now from lib/folders-contract.js). The short names PL, ent, INV are kept on purpose: renaming them would make every moved function new code for the readability guard (cleanup PR).
+ * PART OF  routes/folders.js (mounted there with router.use at the end, so every path keeps its order under /api/folders). Moved verbatim with its leading comments (MNT-59); the only changes to the moved code are the one-line require and `ent` declarations each part needs and, in routes/folders.js, `checked`, PAGE_DEFAULT and PAGE_MAX (now from lib/folders-contract.js). The short names PL, ent, INV are renamed here to pageLimit, entityIdOf, folderInventory (alpha-equal, MNT-59 cleanup).
  * CALLED BY routes/folders.js (router.use), the web group-sum pane, the metrics pane and the MIS screens.
  * FLOW      auth → schema check → select.rows → lib/measure through costView → res.json; a refusal → problem(req, res, said(...) | failed(...))
  * CARD      01-rail-core-the-chit/folders
@@ -14,14 +14,14 @@ const { queryDay } = require('../middleware/validate');
 const { said, failed, routeChecks: checked } = require('../lib/folders-contract');
 const { UUID } = require('../lib/namedentity');
 const auth = require('../middleware/auth');
-const INV = require('../lib/folder-inventory');
+const folderInventory = require('../lib/folder-inventory');
 const select = require('../lib/select');
 const cost = require('../lib/cost');
 const costView = require('../lib/cost-view');
 const policy = require('../lib/policy');
 
 /** the caller's shop (declared as a function so the endpoint card reads it as its own body) */
-function ent(req) {
+function entityIdOf(req) {
   return auth.entityOf(req);
 }
 const groupsum = require('../lib/groupsum');
@@ -40,9 +40,9 @@ const groupsum = require('../lib/groupsum');
  */
 router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
-    const me = ent(req);
-    const flags = await policy.get(me);
-    const fid = String(req.query.folder_id || '').trim();
+    const shopId = entityIdOf(req);
+    const flags = await policy.get(shopId);
+    const folderId = String(req.query.folder_id || '').trim();
     /* ⭐ Optional ticked selection. ⚠️ VALIDATE THE SHAPE AND CAP THE COUNT before it reaches the lib: only
        well-formed uuids pass, so a junk id can never reach a query, and 500 is far above any real selection
        (paging is 50) while keeping an unbounded list out of the request. The lib INTERSECTS these with the
@@ -52,13 +52,13 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
       .map((item) => item.trim())
       .filter((item) => UUID.test(item))
       .slice(0, 500);
-    const sum = await groupsum.requirement(me, {
+    const sum = await groupsum.requirement(shopId, {
       scope: req.query.scope === 'order' ? 'order' : 'task',
-      folder_id: UUID.test(fid) ? fid : null,
+      folder_id: UUID.test(folderId) ? folderId : null,
       archived: req.query.archived === '1',
       chit_ids: ids.length ? ids : undefined,
       overdue_days: flags.overdue_days,
-      blind: await cost.isCostBlind(req, me) /* RAIL-146g: ONE cost read; a blind actor's sum counts the shop's sales only */
+      blind: await cost.isCostBlind(req, shopId) /* RAIL-146g: ONE cost read; a blind actor's sum counts the shop's sales only */
     });
     /* S34: every key lib/groupsum requirement answers (selected and selection_requested only for a ticked selection) */
     // prettier-ignore
@@ -90,16 +90,16 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
  */
 router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) => {
   try {
-    const me = ent(req);
+    const shopId = entityIdOf(req);
     const scope = req.query.scope === 'order' ? 'order' : 'task';
     const direction = scope === 'order' ? 'sent' : 'received';
-    const flags = await policy.get(me);
+    const flags = await policy.get(shopId);
 
     // ONE read of every copy on this track — filed and unfiled alike. Counting the pieces separately is how two
     // numbers come to disagree; here they are literally partitions of the same array.
-    const rows = await select.rows(me, { direction, limit: 5000 });
-    const measureSeg = await costView.measurerFor(req, me, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: ONE side read for overall and every segment */
-    const folders = (await withEntity(me, (db) => db.query(`SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [me])))
+    const rows = await select.rows(shopId, { direction, limit: 5000 });
+    const measureSeg = await costView.measurerFor(req, shopId, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: ONE side read for overall and every segment */
+    const folders = (await withEntity(shopId, (db) => db.query(`SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [shopId])))
       .rows;
 
     const byFolder = new Map();
@@ -143,7 +143,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
      * ⭐ THE BILLS LEFT THE INBOX, SO THEY ARE COUNTED, NOT LOST (2026-10-01). An unfiled bill is in the Bills folders, not in
      * Task: unfiled = inbox + in_bills, by the same classification the inbox uses (lib/folder-inventory LEAVES over doc_kind).
      */
-    const leaves = new Set(INV.LEAVES);
+    const leaves = new Set(folderInventory.LEAVES);
     const inBills = rows.filter((x) => !x.folder_id && leaves.has(x.doc_kind)).length;
     const inbox = unfiled - inBills;
     res.json({
@@ -191,8 +191,8 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
  */
 router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, res) => {
   try {
-    const me = ent(req);
-    const flags = await policy.get(me);
+    const shopId = entityIdOf(req);
+    const flags = await policy.get(shopId);
     const opts = { overdue_days: flags.overdue_days };
     /* ⚠️ THE PERIOD MUST TRAVEL WITH THE QUESTION. MIS has a window selector (all · 30d · 90d). If it showed
        "last 30 days" beside a figure measured over all time, wiring MIS to this endpoint would fix one
@@ -202,22 +202,22 @@ router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, 
     const since = sinceRaw && !Number.isNaN(Date.parse(sinceRaw)) ? sinceRaw : undefined;
     /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
        Same discipline as /reconcile above, and the same limit. */
-    const rows = await select.rows(me, { limit: 5000, since });
-    const measured = await costView.measurerFor(req, me, rows, opts); /* RAIL-146k: the reader sides ride in opts.sides */
+    const rows = await select.rows(shopId, { limit: 5000, since });
+    const measured = await costView.measurerFor(req, shopId, rows, opts); /* RAIL-146k: the reader sides ride in opts.sides */
     const received = rows.filter((item) => item.direction === 'received');
     const sent = rows.filter((item) => item.direction === 'sent');
     /* T3-P4-ACCOUNT: `overdue` follows the rail's one rule (lib/home-facts railMeasure — the shop's own notes are never overdue), so CB Finance › Reports'
        overdue opens CB CRM's stuck list and counts the same chits as Home's rail. Every other figure is lib/measure's own, as before. */
-    const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, measured.opts);
+    const measureRows = (xs) => require('../lib/home-facts').railMeasure(xs, shopId, measured.opts);
     res.json({
       overdue_days: flags.overdue_days,
       /* ⚠️ Echoed back so the caller can prove the window it asked for is the window it got — an ignored `since`
          would otherwise be indistinguishable from an empty one. */
       since: since || null,
       truncated: rows.length >= 5000 /* T3-P4-ACCOUNT: a count over a cut read is said, never painted as the whole */,
-      all: M(rows),
-      received: M(received),
-      sent: M(sent)
+      all: measureRows(rows),
+      received: measureRows(received),
+      sent: measureRows(sent)
     });
   } catch (err) {
     console.error('mis:', err.message);
