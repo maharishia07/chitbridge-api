@@ -53,7 +53,7 @@ async function main() {
   check('an editor lists editor / false', got.json.actors[1].access_level === 'editor' && got.json.actors[1].whole_entity === false, JSON.stringify(got.json.actors[1]));
 
   check('an auditor login (hat act, commenter, whole entity, sees costs) lists preset auditor and its level', got.json.actors[2].preset === 'auditor' && got.json.actors[2].access_level === 'commenter', JSON.stringify(got.json.actors[2]));
-  check('other logins are unchanged: a view-only reader and an editor match no preset (null), level as stored', got.json.actors[0].preset === null && got.json.actors[1].preset === null && got.json.actors[1].access_level === 'editor', JSON.stringify(got.json.actors.slice(0, 2)));
+  check('the other logins read the way the access screen does: a whole-entity viewer without cost sight matches no preset (null); a plain editor is the counter preset; level as stored', got.json.actors[0].preset === null && got.json.actors[1].preset === 'counter' && got.json.actors[1].access_level === 'editor', JSON.stringify(got.json.actors.slice(0, 2)));
   check('the SELECT names can_see_costs (the preset needs it)', /hat, can_see_costs,/.test(listSql), listSql.slice(0, 200));
 
   columns = false;
