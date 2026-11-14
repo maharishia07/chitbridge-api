@@ -1236,8 +1236,7 @@ router.patch(
         const { schemaVisibilityFor } = require('../lib/schema-bootstrap');
         const schemaVisibility = schemaVisibilityFor(req.body.catalogue_visibility);
         try {
-          await queryAs(
-            id, // SEC-75: this shop's own default schema, bound to the shop
+          await queryAs(id, /* SEC-75: this shop's own default schema, bound to the shop */
             `UPDATE entity_schemas SET visibility = $1
               WHERE entity_id = $2 AND status = 'active' AND is_default = true`,
             [schemaVisibility, id]

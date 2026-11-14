@@ -101,8 +101,8 @@ function judgeTables(base) {
   const problems = [];
   for (const table of TABLES.slice(1)) {
     const have = count(sweep(null, table));
-    const was = (base.tables && base.tables[table]) || { open: 0, inTx: 0 };
-    const verdict = judge(have, was);
+    const allowed = (base.tables && base.tables[table]) || { open: 0, inTx: 0 };
+    const verdict = judge(have, allowed);
     verdict.problems.forEach((line) => problems.push(table + ': ' + line));
   }
   sweep();
