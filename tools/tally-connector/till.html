@@ -4610,6 +4610,8 @@ function tillStoresMake(db){
   if (!db.objectStoreNames.contains('bills')) db.createObjectStore('bills', { keyPath:'no' });
   if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { keyPath:'no' });
 }
+/** T4-03: what the cashier is told when the browser's database refuses a call after it had been working */
+var STORAGE_REFUSED = 'This counter’s storage stopped answering. No bill was taken and no bill number was used.';   /* no comma in the string: the one-name guard reads a var line comma by comma */
 var DB = (function(){
   var p = null;
   /* ⭐ till-park: set when a clear of the store was BLOCKED by another tab — that delete stays queued and will empty the store whenever the tab closes, so until a reload nothing may be written */
@@ -4621,20 +4623,27 @@ var DB = (function(){
   };
   /* ⭐ why the database last refused — read by the 🩺 panel. A local, so nothing outside can half-assign it. */
   var lastErr = null;
+  /* ⭐ T4-03: has IndexedDB given this page a database? Once it has, the smaller store is never the truth again (see fall) */
+  var opened = false;
   function open(){
     if (p) return p;
     p = new Promise(function(res, rej){
       var rq = indexedDB.open(tillStore(), 1);
       rq.onupgradeneeded = function(){ tillStoresMake(rq.result); };
-      rq.onsuccess = function(){ res(rq.result); }; rq.onerror = function(){ rej(rq.error); };
+      rq.onsuccess = function(){ opened = true; markIdbSeen(); res(rq.result); }; rq.onerror = function(){ rej(rq.error); };
     });
     return p;
   }
+  /** this device has given us a database before — kept in the small store, which is the one place that survives IndexedDB being refused */
+  function markIdbSeen(){ if (!MEM.get('mark', 'idb')) MEM.put('mark', { no: 'idb', at: Date.now() }, 'idb'); }
+  function idbSeenBefore(){ return opened || !!MEM.get('mark', 'idb'); }
   /* ⚠️ RESOLVE WITH THE REQUEST'S RESULT, NEVER THE REQUEST. A missing key gives result === undefined, and handing back the IDBRequest
      instead made the caller store a request object — "IDBRequest object could not be cloned", and no bill at all ([TILL-01]). */
   function tx(store, mode, fn){ return open().then(function(db){ return new Promise(function(res, rej){
     var t = db.transaction(store, mode), s = t.objectStore(store); var rq = fn(s);
-    t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); }; t.onerror = function(){ rej(t.error); }; }); }); }
+    t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); }; t.onerror = function(){ rej(t.error); };
+    t.onabort = function(){ rej(t.error || new Error('the database stopped the save')); };   /* T4-18: a write aborted for quota neither resolved nor rejected, so finish() hung with no words */
+  }); }); }
   /* every call falls back to localStorage if IndexedDB refuses — the till keeps billing on a device that will not give us a database */
   /**
    * ⚠️⚠️ THE FALLBACK IS NOT A NON-EVENT. This threw the database's own reason away, so a counter that had
@@ -4643,11 +4652,30 @@ var DB = (function(){
    * shop billing, which is right; doing it without a word is what made "the IndexedDB got stuck somewhere I
    * guess" the best anyone could say.
    */
-  var fall = function(what, fn, alt){ return fn().catch(function(e){
-    MEM.on = true;
-    lastErr = { at: Date.now(), op: what, why: (e && (e.name || e.message)) || 'the database refused' };
-    return alt();
+  var refusedBecause = function(e){ return (e && (e.name || e.message)) || 'the database refused'; };
+  var fall = function(what, fn, smallStore){ return fn().catch(function(e){
+    lastErr = { at: Date.now(), op: what, why: refusedBecause(e) };
+    /**
+     * ⭐⭐ T4-03 (Fable risk 4) — THE SMALLER STORE IS NOT A SPARE. One decision per page load, never one per call. A device that has
+     * NEVER given this counter a database (a private window, a locked-down browser) bills from the small store for the whole load: it
+     * is the only store there is. But once IndexedDB HAS answered on this device, the bills, the queue and the number series live
+     * there, and the small store is empty or stale: answering one refused read from it restarted the series at 0001 and wrote a
+     * bill over an earlier one. So a refusal after that reopens the database once and asks again; if it still refuses, the call
+     * FAILS with a code and words, and the sale stops. A refused call must never become an empty answer.
+     */
+    if (!idbSeenBefore()) { MEM.on = true; return smallStore(); }
+    return reopenOnce(what, fn, e);
   }); };
+  /** reopen the database once (a connection closed under a backgrounded tab is the usual cause) and repeat the call; else refuse it in words */
+  function reopenOnce(what, fn, first){
+    var old = p; p = null;
+    if (old) old.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.reopenOnce:1', e); });
+    return fn().catch(function(e2){
+      lastErr = { at: Date.now(), op: what, why: refusedBecause(e2 || first) };
+      var err = new Error(STORAGE_REFUSED); err.code = 'DB_REFUSED';
+      throw err;
+    });
+  }
   return {
     /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database, and the owner we
         are holding belongs to the shop we just left */
@@ -4655,6 +4683,11 @@ var DB = (function(){
     /** ⭐ till-park: close our connection so a deleteDatabase goes through at once (it was only ever "blocked" until the reload); the next call reopens */
     release: function(){ var opening = p; p = null; return opening ? opening.then(function(db){ db.close(); }, function(e){ cbQuiet('DB.release:1', e); }) : Promise.resolve(); },
     lastErr: function(){ return lastErr; },
+    /** T4-03: ask the database one cheap question; a refusal rejects with code DB_REFUSED. Billing asks this before it takes a number. */
+    ping: function(){ return stopped() || fall('ping', function(){ return tx('kv','readonly',function(s){ return s.count(); }); }, function(){ return 0; }); },
+    /** T4-03: is this key already stored? A refusal rejects (never "no") — a number is only given out when this could be answered */
+    exists: function(store,key){ return stopped() || fall('exists', function(){ return tx(store,'readonly',function(s){ return s.count(key); }); }, function(){ return MEM.get(store,key) !== undefined; })
+                                   .then(function(v){ return v === true || v > 0; }); },
     /**
      * ⚠️ THE SAME GUARD ON THE KEY-VALUE SIDE. Athi, 2026-09-09: *"by mixing up, we are making TWO entities' data wrong. So this has
      * to be well guarded — while writing data in the first place, while reading the data, and when syncing, in all the places."*
@@ -5749,15 +5782,25 @@ var CloudHost = {
     this.drain();
     return { ok: true, bill: doc };
   },
+  /**
+   * ⭐ T4-01/T4-03: A RETRY OF A SAVE THAT FAILED IS THE SAME BILL. The number (the bill's client_ref) and its moment are kept in
+   * TAKEN_FOR from the instant they are taken until the save has fully answered; a second try of the same lines reuses both, so the
+   * server's replay answers the one chit it already has, and a failed save never burns a second number. A different cart takes a
+   * new number. A fresh number that is already in this device's bills is refused in words, never written over (T4-03).
+   */
   async bill(b){
     LAST_SERIES = null;
-    var no = await nextNumber(undefined, false, b && b.at);
-    var bill = Object.assign({ no: no, at: new Date().toISOString(), till: tillId(),
-                               catalogue_version: S && S.version, series: LAST_SERIES }, b);
+    var again = TAKEN_FOR && TAKEN_FOR.sig === billSig(b) ? TAKEN_FOR : null;
+    var no = again ? again.no : await nextNumber(undefined, false, b && b.at);
+    if (!again && await DB.exists('bills', no)) throw new Error('Bill number ' + no + ' is already used on this counter, so nothing was saved and nothing was changed.');
+    var bill = Object.assign({ no: no, at: again ? again.at : new Date().toISOString(), till: tillId(),
+                               catalogue_version: S && S.version, series: again ? again.series : LAST_SERIES }, b);
+    TAKEN_FOR = { sig: billSig(b), no: no, at: bill.at, series: bill.series };
     await DB.put('bills', bill);
     await DB.put('queue', bill);
     this.drain();
     var st = await this.state();
+    TAKEN_FOR = null;
     return { ok:true, bill: bill, today: st.today };
   },
   /**
@@ -6098,8 +6141,21 @@ async function tillGivenOK(){
   if (ls.get(tillGivenKey(), '')) return true;
   return await tillIssued();
 }
+/**
+ * ⭐ T4-03: BILLING ASKS THE STORAGE BEFORE IT TAKES A NUMBER. A database that refuses stops the sale in words — it never falls back to
+ * an empty second store, where the series would restart at 0001 and the first bill of the day would be written over.
+ */
+async function storageRefused(){
+  try { await DB.ping(); return false; }
+  catch (e) {
+    if (!e || e.code !== 'DB_REFUSED') return false;   /* a frozen counter is frozenStop's to say */
+    saleStop(STORAGE_REFUSED + '\n\nNothing on the screen was changed. Reload this page (F5) and bill again; if it happens again, call support.');
+    return true;
+  }
+}
 async function tillStopped(){
   if (frozenStop('taking this bill')) return true;
+  if (await storageRefused()) return true;
   if (BREAK) { paintLock(); return true; }         /* ☕ nobody is at the counter */
   if (typeof LOCK !== 'undefined' && LOCK) { paintLock(); return true; }   /* 🔒 nobody has signed in to it */
   if (!(await tillGivenOK())) {
@@ -6253,6 +6309,10 @@ async function tillClaim(t){
  * exists to prove. The only thing that may change is the TAG, and only for a series that has issued nothing.
  */
 var LAST_SERIES = null;
+/** T4-01: the number a failed save took, kept for the retry of the same bill (see CloudHost.bill); null once a save has fully answered */
+var TAKEN_FOR = null;
+/** what makes a retry "the same bill": its lines and its total (a change of tender is still the same sale) */
+function billSig(b){ return JSON.stringify([b && b.lines, b && b.total]); }
 /**
  * ⭐ TILL-FIX2 (M6): ONE NUMBER-TAKER AT A TIME. takeNumber() reads the series, waits on the database, then writes it back; a sale rung
  * while a background renumber (drain → renumberBill) takes a number — or a second tab of the same counter — interleaved on that wait and
@@ -21405,7 +21465,7 @@ function paintTotals(){
     /* ⭐ THE FOOTNOTE, BELOW THE TOTAL — where a footnote belongs, and where it cannot push the figure a
        shopkeeper is reading off the bottom of the panel. Only when the sum was too long to sit inline. */
     + (SAVED_FOOTNOTE ? '<div class="t note" data-testid="till-saved-note">* ' + esc(SAVED_FOOTNOTE) + '</div>' : '');
-  var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
+  paintSaving(finish.running());   /* T4-01: the Save button is never re-armed under a save that is running */
   /* ⚠️ the sentence names an AMOUNT, so it changes when the total does — not only when a button is pressed */
   paintPays();
   /* ⭐ and what this bill earns depends on what is on it, so the points line follows the total too */
@@ -22233,6 +22293,48 @@ async function finish(){
   load(); loadQuick();
   stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
 }
+/**
+ * ⭐ T4-01 (Fable risk 4) — ONE SALE IS ONE BILL, WHATEVER IS PRESSED TWICE. finish() awaits five things before the cart is emptied
+ * (the stop check, the reopen question, the price recheck over the network, HOST.bill, the state read), and nothing said a finish was
+ * already running: a double click on Save, or F9 held down, found the cart still full and saved it again — two numbers, two slips, two
+ * payments, stock and tax counted twice. Now the first call owns the sale: a second answers { ok:false, busy:true } at once, and the
+ * button is greyed until the first is over. The flag is released in a `finally`, so a throw can never leave the till stuck.
+ * ⭐ The same door guards the other documents that move money from a button: a credit note, an expense and a subscription.
+ * ⚠️ The wrap sits BELOW each function and replaces its name, so every caller (the button, F9, the order pad) goes through it
+ * and finish() itself stays the plain function the source-pinned tests read.
+ */
+function singleFlight(action, paintBusy){
+  var running = false;
+  var guarded = async function(){
+    if (running) return { ok: false, busy: true };
+    running = true; paintBusy(true);
+    try { return await action.apply(this, arguments); }
+    finally { running = false; paintBusy(false); }
+  };
+  guarded.running = function(){ return running; };
+  return guarded;
+}
+/** F9 confirms whatever the screen is making: a bill, a goods receipt or a despatch note. A held key is ONE press (T4-01), so key repeats do nothing. */
+function confirmOnF9(e){
+  if (e.repeat) return;
+  if (MODE === 'receive') rcvConfirm();
+  else if (MODE === 'despatch') dspConfirm();
+  else finish();
+}
+/** the Save button: greyed while a bill is being saved, and (as always) while there is nothing on the bill */
+function paintSaving(busy){
+  var b = document.getElementById('save'); if (!b) return;
+  b.disabled = busy || !CART.length;
+  b.setAttribute('aria-busy', busy ? 'true' : 'false');
+}
+/** a button that is greyed only while its own save is running */
+function holdButton(id){
+  return function(busy){ var b = document.getElementById(id); if (b) { b.disabled = busy; b.setAttribute('aria-busy', busy ? 'true' : 'false'); } };
+}
+finish = singleFlight(finish, paintSaving);
+retIssue = singleFlight(retIssue, holdButton('retgo'));
+expIssue = singleFlight(expIssue, holdButton('expgo'));
+subIssue = singleFlight(subIssue, holdButton('subgo'));
 /** the buyer as the bill stores it: name and phone as typed (Walk-in when blank), the known customer by id, a business on the rail by entity, and the buyer's ABN / TRN where the pack's tax invoice names it */
 function billCustomerOf(cust, billTotal){
   return Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
@@ -24619,7 +24721,7 @@ async function keepParked(){
  */
 var BLOCKED_WORDS = 'Another counter tab or window on this PC is still open, so the clearing could not finish. Close the other counter tab and then press Reload this counter. Until then this counter takes no new bills or changes — nothing is lost, and the changes the shop refused are kept.';
 /** a read or write that came back DB_FROZEN must not be swallowed as "nothing there": rethrow it so the caller stops */
-function throwIfFrozen(err){ if (err && err.code === 'DB_FROZEN') throw err; }
+function throwIfFrozen(err){ if (err && (err.code === 'DB_FROZEN' || err.code === 'DB_REFUSED')) throw err; }   /* T4-03: a refused store, like a frozen one, must never read as an empty one */
 /** the one "Reload this counter" offer (a dialog, not a toast): yes reloads, "Not yet" leaves the banner and the frozen status line in place */
 function askReload(words, title){
   sure(words, 'Reload this counter', title, 'Not yet').then(function(yes){ if (yes) location.reload(); });
@@ -29151,7 +29253,7 @@ function billFunctionKeys(e){
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
   if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
-  if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
+  if (e.key === 'F9'){ confirmOnF9(e); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
 }

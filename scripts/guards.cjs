@@ -130,6 +130,7 @@ const GUARDS = [
   'categories.test.js', // a product CITES its category; nothing writes the legacy single-category key
   'till-agent-says.test.js', // the desktop counter names a wrong key as a wrong key, never as an outage
   'till-shop-folder.test.js', // one folder per shop per server — a test bill never lands in the live takings
+  'fable-r4-till-drain.test.js', // Fable risk 4 T4-02: the shop-PC drain removes only the lines it sent; a bill rung during the sends is never erased
   'rollup.test.js', // day/week/month: a return is not a sale, and folding equals summarising
   'verdict.test.js', // one cause, one sentence, one button — the message has a single home
   'counter-claim.test.js', // one counter, one holder — two PCs on C1 fork the bill numbers
