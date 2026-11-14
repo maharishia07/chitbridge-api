@@ -11,10 +11,9 @@ assert.ok(/live: \[[^\]]*'tax-slab-ui\.js'/.test(prog), 'the kit update does not
 assert.ok(/'tax-slab-ui\.js'/.test((read(path.join(API, 'routes', 'integrations.js')).match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || ''), 'the kit zip does not carry tax-slab-ui.js');
 assert.ok(/WEB_MASTERED_KIT = \(\) => \[\[path\.join\(WEB, 'app', 'tax-slab-ui\.js'\), path\.join\(API, 'tools', 'tally-connector', 'tax-slab-ui\.js'\), 'copy'\]\]/.test(read(path.join(API, 'scripts', 'vendor-till.cjs'))), 'vendor-till has no web to kit pair for tax-slab-ui.js');
 /* what the kit copy must carry, offline, for every country's bill (IN · AU · AE): the vendored byte copy of the web master, its functions named so the trace reaches it */
-const carried = [cbSlabOptionsHTML, cbTaxCharges, cbRateColumnKeys, cbSlabSourceWords];
-function cbSlabOptionsHTML() {} function cbTaxCharges() {} function cbRateColumnKeys() {} function cbSlabSourceWords() {}
+const carried = ['cbSlabOptionsHTML', 'cbTaxCharges', 'cbRateColumnKeys', 'cbSlabSourceWords'];
 const copy = path.join(kit, 'tax-slab-ui.js');
-assert.ok(carried.every((fn) => new RegExp('function ' + fn.name + '\\(').test(read(copy))), 'the kit copy lacks a function the page calls');
+assert.ok(carried.every((fn) => read(copy).includes('function ' + fn + '(')), 'the kit copy lacks a function the page calls');
 assert.ok(fs.existsSync(copy) && /cbSlabMenu/.test(read(copy)), 'the kit has no tax-slab-ui.js (run scripts/vendor-till.cjs)');
 assert.ok(/<script src="\/app\/tax-slab-ui\.js" onerror="engineMissed\('tax-slab-ui'\)">/.test(read(path.join(kit, 'till.html'))), 'the page no longer loads it');
 console.log('till-s4-ctr161-kit-taxslab ok · 6 checks');
