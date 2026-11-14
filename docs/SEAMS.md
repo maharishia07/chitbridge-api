@@ -10,19 +10,19 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 161 | `list` | `amend.js` |  |
-| 136 | `rows` | `crm.js` | still in them: |
+| 140 | `rows` | `crm.js` | still in them: |
 | 127 | `words` | `variant.browser.js` |  |
 | 125 | `read` | `books-cashflow.js` | Trips: |
 | 121 | `withEntity` | `books-hooks.js` |  |
 | 115 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 104 | `answer` | `availability.js` | from March; then nearest. |
 | 99 | `money` | `bill-privacy.js` |  |
-| 87 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 88 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 80 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 80 | `next` | `dayopen.js` | the next thing to do — |
 | 77 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
-| 75 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 78 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 72 | `list` | `cap-settings.js` |  |
 | 70 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 70 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -125,7 +125,7 @@ of file each thing is; this says what already does the job.
 | 24 | `governance` | `home-facts.js` |  |
 | 24 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 23 | `says` | `adopt.js` |  |
-| 23 | `entries` | `books-store.js` |  |
+| 27 | `entries` | `books-store.js` |  |
 | 23 | `match` | `itemmatch.js` | actually state. |
 | 23 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 22 | `note` | `device-id.js` | note(where, problem) — |
@@ -145,7 +145,7 @@ of file each thing is; this says what already does the job.
 | 21 | `move` | `rail.js` | Order = the order the server refused in: |
 | 20 | `chip` | `screen-id.js` | var S = { app: |
 | 20 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
-| 20 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
+| 19 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 19 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
