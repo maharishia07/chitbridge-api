@@ -43,7 +43,7 @@
  "lib/kyb.js": 3,
  "lib/ledger.js": 17,
  "lib/measure.js": 4,
- "lib/money.js": 6,
+ "lib/money.js": 2,
  "lib/move-in-proof.js": 1,
  "lib/move-in.js": 1,
  "lib/network-view.js": 2,

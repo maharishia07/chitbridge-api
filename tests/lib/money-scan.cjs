@@ -45,7 +45,9 @@ function hitsIn(file, body, exceptions) {
 }
 
 /** the files a tree scan reads: every top-level lib/*.js and routes/*.js */
-const treeFiles = () => ['lib', 'routes'].flatMap((dir) => fs.readdirSync(path.join(API, dir)).filter((name) => name.endsWith('.js')).map((name) => dir + '/' + name));
+/* an ADOPTED engine copy (lib/money.js, pricing-engine.js ...) is judged at its engines master, like the filesize ratchet: it is not scanned here */
+const isAdopted = (file) => /^\/\* ADOPTED (BUNDLE )?from chitbridge-engines/.test(fs.readFileSync(path.join(API, file), 'utf8').slice(0, 80));
+const treeFiles = () => ['lib', 'routes'].flatMap((dir) => fs.readdirSync(path.join(API, dir)).filter((name) => name.endsWith('.js')).map((name) => dir + '/' + name)).filter((file) => !isAdopted(file));
 
 /** hit count per file over a set of files; read(file) is injectable so a guard test can plant a file that is not on disk → { file: count } (files with 0 hits left out) */
 function countsOver(files, read) {
