@@ -456,6 +456,7 @@ const GUARDS = [
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-17-query-day.test.cjs', // API-17: a ?since= that is not a day (7, -1, abc, 2026-02-30, twice) answers 400 VALIDATION_FAILED on folders/mis, relationships/scorecard and capture/consolidate, the db never asked
   'folders-split-pin.test.cjs', // MNT-59 pin: GET /messages, POST /messages/:id/mark, GET /rules/vocabulary and GET /rules answer the bodies they answer today (red under the kept filter dropped, the read flag flipped, a key renamed, the entity filter removed)
+  'round-trips-parts.test.cjs', // MNT-59: a split route file is listed under its parent by tools/round-trips.cjs (folders-inbox and folders-totals under folders.js, chits-trace under chits.js)
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
   'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
