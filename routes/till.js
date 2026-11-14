@@ -817,7 +817,32 @@ async function readParticulars(entity_id, row, profile) {
   const stateSplit = require('../lib/tax-lines').splitsByState(country);
   /* CX0 + STD2: the money the counter bills in — the shop's own, else its PACK's; neither → null and the ONE sentence (country-setup.MONEY_UNSTATED) */
   const shopMoney = countrySetup.shopMoney(party.currency, country); /* SEC3: the one reader */
-  return { party, gstin, country, stateSplit, shopMoney };
+  /* CTR-158: the footer the shop saved in Print setup; the slip reads the one the preview prints (bill-print) */
+  const slipFooter = await slipFooterOf(entity_id);
+  return { party, gstin, country, stateSplit, shopMoney, slipFooter };
+}
+
+/** the vault's 'signature' section as { tag: value } */
+function signatureRowsByTag(vault) {
+  const signature = (vault.sections || []).filter((section) => section && section.type === 'signature')[0];
+  return Object.fromEntries(((signature && signature.rows) || []).filter((row) => row && row.tag).map((row) => [row.tag, row.value || '']));
+}
+/**
+ * ⭐ CTR-158: THE SLIP'S FOOTER LINE, as Print setup saved it (vault section 'signature': rows footer + order, the same rule as web public/app/cap-print.js).
+ * A string the slip prints; '' when the footer is saved but unticked (R25: nothing prints); null when none is saved, and the counter keeps its own words.
+ */
+async function slipFooterOf(entity_id) {
+  let vault = {};
+  try {
+    vault = (await require('../lib/profile').getVault(entity_id)) || {};
+  } catch (e) {
+    log.warn('till.slip_footer', { entity_id, why: String(e && e.message) });
+    return null;
+  }
+  const byTag = signatureRowsByTag(vault);
+  const words = String(byTag.footer || '').replace(/[\s\u00a0]{2,}/g, ' ').trim();
+  if (!words) return null;
+  return (byTag.order ? byTag.order.split(',') : []).indexOf('footer') >= 0 ? words : '';
 }
 
 /**
@@ -1272,8 +1297,10 @@ function taxBlock(shelf) {
 
 /** the `shop` block of the snapshot: who the shop is, how it is registered (`registration` = country-setup.registrationOfShop's answer), and how it is paid — in three runs of fields */
 function shopBlock(row, flags, particulars, holdsStock, registration) {
-  const { party, gstin, country, stateSplit, shopMoney } = particulars;
+  const { party, gstin, country, stateSplit, shopMoney, slipFooter } = particulars;
   return {
+    /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
+    slip_footer: slipFooter,
     ...shopIdentity(party, row),
     ...shopAddressParts(party),
     ...shopRegistration(row, flags, gstin, stateSplit, registration),
