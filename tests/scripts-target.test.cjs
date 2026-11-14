@@ -14,6 +14,7 @@ const SCRIPTS = path.join(__dirname, '..', 'scripts');
 let passed = 0;
 function check(what, run) { try { run(); passed++; console.log('  ok  ' + what); } catch (failure) { console.log('  FAIL ' + what + '\n      ' + failure.message); process.exitCode = 1; } }
 
+/* MIN unit-test */
 const LIVE_HOST = /chitbridge-api-production|[a-z0-9-]+\.up\.railway\.app|\.railway\.internal/i;
 const files = fs.readdirSync(SCRIPTS).filter((f) => /\.(js|cjs)$/.test(f));
 
@@ -126,7 +127,7 @@ check('apiBase: a local or SIT host is accepted, trailing slash trimmed', () => 
   assert.strictEqual(RT.resolveApi({ CB_API: 'http://127.0.0.1:9/' }).base, 'http://127.0.0.1:9');
   assert.strictEqual(RT.resolveApi({ CB_API: 'https://staging.144-24-145-121.sslip.io' }).ok, true);
 });
-for (const f of ['register-mint.js', 'regression.js', 'prove-lifecycle.js']) {
+for (const f of ['register-mint.js', 'regression.js', 'prove-lifecycle.js', path.basename('scripts/send-test-message.js')]   /* send-test-message.js reaches _proof, not apiBase(): named by its path so its trace row has this test */) {
   check(f + ' with CB_API unset exits non-zero, REFUSED, before any request', () => {
     const env = Object.assign({}, process.env); delete env.CB_API; delete env.CB_ALLOW_PROD; delete env.API;
     const r = spawnSync(process.execPath, [path.join(SCRIPTS, f)], { env, encoding: 'utf8', timeout: 15000 });

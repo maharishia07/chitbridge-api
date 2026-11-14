@@ -2,6 +2,11 @@
 'use strict';
 /**
  * send-test-message.js — put a message into YOUR intake inbox, so you can WATCH it become a chit in the app.
+ * OWNS      one signed, Meta-shaped test message delivered to the webhook of the api named by CB_API (target from scripts/_proof.js → tests/lib/run-target.cjs apiBase(); no default).
+ * CALLED BY by hand only: CB_API=<local or SIT api> node scripts/send-test-message.js "..." (seed-folders-demo.js only names it in a hint; grep both ways found no caller); tests/scripts-target.test.cjs checks it refuses with CB_API unset.
+ * FLOW      _proof.js resolves CB_API (refuses before any request) ──▶ sign the payload with WHATSAPP_APP_SECRET ──▶ POST to the webhook ──▶ print where to watch the chit (CB_WEB).
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ *
  *
  * Athi, 2026-08-09: *"how do i test the message given to that number becomes the chit, i wanted to see that"*.
  * The other scripts assert; this one just delivers, then gets out of the way so you can do the rest on screen.
