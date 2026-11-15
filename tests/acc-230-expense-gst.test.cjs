@@ -42,6 +42,10 @@ const S_AU = { enabled: true, walkin_grain: 'day', country: 'AU', functional_cur
   ok('AU · an Indian head (cgst) the AU books do not post WAITS, in words', auCgst.kind === 'queue' && /cgst/.test(auCgst.why), JSON.stringify(auCgst));
   const inGst = run(S_IN, 'INR', { what: 'x', mode: 'Cash', amount: 118, input_tax: { gst: 18 } });
   ok('IN · a bare "gst" (no intra/inter split known) WAITS — never guessed', inGst.kind === 'queue' && /gst/.test(inGst.why), JSON.stringify(inGst));
+  const stray = run(S_AU, 'AUD', { what: 'Electricity (Origin Energy)', mode: 'Bank', amount: 242, class: 'electricity', gst: 22, tax_amount: 22 });
+  ok('BNK-new-3: a tax figure under gst / tax_amount (no input_tax) WAITS in words — Origin 242.00 incl GST 22.00 is never posted whole', stray.kind === 'queue' && /"gst"/.test(stray.why) && /input_tax/.test(stray.why), JSON.stringify(stray));
+  const strayZero = run(S_AU, 'AUD', { what: 'Tea', mode: 'Cash', amount: 40, gst: 0 });
+  eq('a gst of 0 beside no input_tax → as before', [strayZero.kind, strayZero.event.amount], ['post', 40]);
   const big = run(S_AU, 'AUD', { what: 'x', mode: 'Cash', amount: 15, input_tax: { gst: 15 } });
   ok('tax equal to the amount paid WAITS', big.kind === 'queue' && /not less than/.test(big.why), JSON.stringify(big));
   const bad = run(S_AU, 'AUD', { what: 'x', mode: 'Cash', amount: 15, input_tax: 15 });
