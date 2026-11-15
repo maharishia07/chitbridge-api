@@ -20,6 +20,7 @@ const ALLOWED_HOSTS = /^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(url);
 if (!parts || parts[1] !== 'cb_app' || !ALLOWED_HOSTS.test(parts[2])) { console.error('REFUSED: needs DATABASE_URL as cb_app on localhost, the compose db or a SIT host'); process.exit(3); }
 process.env.NODE_ENV = 'test';
+process.env.CB_TRIPS = '1'; /* the round trips of each marks route are measured here (X-DB-Trips) for round-trips.budget.json */
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'review_mark_test_secret_at_least_32_chars_padding';
 const path = require('path');
 const crypto = require('crypto');
@@ -66,6 +67,7 @@ async function person(biz, tag, level) {
   return { identity_id: row.identity_id, identity_type: 'actor', parent_entity_id: biz.id, bridge_id: biz.bridgeId, display_name: row.display_name };
 }
 
+const TRIPS = {}; /* the dearest successful call of each route: X-DB-Trips */
 const RECORDED = {}; /* MARK_CAPTURE_OUT: every answer, keyed 'METHOD /pattern|n', for tools/api-allowlist.cjs (the derived output shapes) */
 const patternOf = (route) => route.split('?')[0].replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':thread_id');
 let base = '';
@@ -79,6 +81,7 @@ async function call(who, method, route, opts) {
   let body = null;
   try { body = await res.json(); } catch (_) { body = null; }
   const key = method + ' ' + patternOf(route0);
+  if (res.status < 300 && res.headers.get('x-db-trips')) TRIPS[key] = Math.max(TRIPS[key] || 0, Number(res.headers.get('x-db-trips')));
   RECORDED[key + '|' + Object.keys(RECORDED).length] = { route: key, status: res.status, request: { url: route0, body: o.body }, body };
   return { status: res.status, body };
 }
@@ -91,6 +94,7 @@ async function main() {
   await join(P, M1); await join(P, M3);
   const U = await person(P, 'u', 'commenter'); const A = await person(P, 'a', 'editor');
   const app = express();
+  app.use(require(path.join(API, 'lib', 'trips')).middleware());
   app.use(express.json());
   app.use('/api/books', require(path.join(API, 'routes', 'books.js')));
   app.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
@@ -250,6 +254,7 @@ async function main() {
     ok('13f and the auditor can no longer read either (the same look)', readAfter.status === 403, JSON.stringify(readAfter));
   } finally {
     server.close();
+    console.log('TRIPS ' + JSON.stringify(TRIPS));
     if (process.env.MARK_CAPTURE_OUT) require('fs').writeFileSync(process.env.MARK_CAPTURE_OUT, JSON.stringify(RECORDED));
   }
   console.log('\n' + pass + ' ok, ' + fail + ' failed');
