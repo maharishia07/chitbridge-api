@@ -4,7 +4,7 @@
 //           → schema check (lib/books-actions-contract) → lib/books-action → the answer; a refusal → problem(req, res, refusal in words)
 // CARD      04-network/ACC-176B-ADVISER-REQUIREMENT
 // ⚠️ The adviser has NO direct write on the books: the doors that run under an adviser grant are the allow-list ADVISER_DOORS of the grant front, and this file's prepare, review and return are the only writes among them (each writes a STEP, never a book row).
-// ⚠️ ACCEPT is the owner's own door: the owner signs in as himself (no X-Books-For), so no grant is involved and no firm person can reach it.
+// ⚠️ ACCEPT is the owner's own door: the owner signs in as himself (no X-Books-For), so no grant is involved and no firm person can reach it. Under adviser_posts the server accepts for the owner in the preparer's own transaction, stamped delegated.
 const express = require('express');
 const router = express.Router();
 router.use(require('../middleware/books-grant'));

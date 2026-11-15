@@ -10,7 +10,7 @@
  * CARD      04-network/ACC-176-AUDITOR-GRANT
  * ⚠️ auth.entityOf IS NOT CHANGED (267 call sites) and no route's own gate list is touched: the member's id is the synthetic identity's parent_entity_id, taken ONLY from the grant row, never from the header, a query or a body.
  * ACC-176b · A SECOND, SEPARATE ROLE: X-Books-Role: adviser picks the member's ADVISER grant (the auditor's is the default, and can only read). An adviser has NO direct write on the books: it passes only ADVISER_DOORS (the server's own preview and the
- *           maker-checker doors of routes/books-actions.js); the owner accepts, through his own door. The preset, the person's firm and the stamp come from the live grant row; the header only names which row.
+ *           maker-checker doors of routes/books-actions.js); the owner accepts through his own door, or, under adviser_posts, the server accepts for the owner in the preparer's own transaction, stamped delegated. The preset, the person's firm and the stamp come from the live grant row; the header only names which row.
  * ⚠️ AN ALLOW-LIST, NOT A DENY-LIST: a GET not in GRANT_READS is refused (a new route is born closed); every other method is refused. tests/acc-176-grant-classification.test.cjs fails a books GET in neither list.
  * ⚠️ FAILS CLOSED: any failure of the look (the log row included) answers 503 in words; it never falls back to the caller's own books or to an open answer.
  */
@@ -49,7 +49,7 @@ const GRANT_HELD_BACK = {
 };
 /**
  * THE ADVISER'S DOORS (ACC-176b), keyed by METHOD and the full path: the books the adviser may read (the auditor's list), the server's own preview, and the maker-checker action doors (prepare, review, return, and the queue).
- * Nothing else: an adviser has NO direct write on the books, and accept is the owner's own door (no grant is ever involved in it). A new books POST is born refused for an adviser as it is for an auditor.
+ * Nothing else: an adviser has NO direct write on the books, and accept is the owner's own door (no grant is involved in it; under adviser_posts the server accepts for the owner inside the prepare, stamped delegated). A new books POST is born refused for an adviser as it is for an auditor.
  */
 const ADVISER_DOORS = new Set(['POST /api/books/preview', 'GET /api/books-actions', 'GET /api/books-actions/:id', 'POST /api/books-actions', 'POST /api/books-actions/:id/review', 'POST /api/books-actions/:id/return']);
 const ADVISER_TESTS = [...ADVISER_DOORS].map((door) => ({ door, test: new RegExp('^' + door.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
@@ -168,4 +168,12 @@ function frontOf(auth) {
   };
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+/** a request that names a client's books (X-Books-For) is for the books screens only: anywhere else the header would be ignored and the firm would act as ITSELF under a client banner, so it is refused, nothing done (ACC-176b) */
+const BOOKS_HOME = /^\/api\/books(-actions|-grants)?(\/|$)/;
+const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the books screens use. Nothing was done.";
+function refuseElsewhere(req, res, next) {
+  if (req.headers[HEADER] === undefined || BOOKS_HOME.test(req.path)) return next();
+  return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
+}
+
+module.exports = Object.assign(frontOf(require('./auth')), { refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });

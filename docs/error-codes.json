@@ -794,6 +794,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BOOKS_FOR_NOT_HERE",
+   "status": "403",
+   "title": "Not a books request",
+   "shopkeeper": "This request names a client's books, which only the books screens use. Nothing was done.",
+   "hint": "Open the client's books from the books screens.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
    "code": "BOOKS_GRANT_CAP_INVALID",
    "status": "422",
    "title": "Limit not accepted",

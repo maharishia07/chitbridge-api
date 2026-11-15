@@ -11,15 +11,23 @@
 --    books_access_log    + preset (which role the request ran under), actor_name (the person), actor_entity_name (the firm), all kept AT THE LOOK so the owner reads them with no read into another business's identities.
 --    journal_entry       + grant_id: an entry posted by an adviser names the grant (created_by already holds the real person).   books_change_log + grant_id: the same for a change (by already holds the real person).
 -- OWNER: lib/books-grant.js (the grant and its log) · lib/books-store.js insertEntry / logChange (the two stamps).
--- ROLL BACK (loses only the role, the names and the stamps; refused while an adviser grant exists: delete or revoke those first):
---    DROP POLICY IF EXISTS log_insert ON books_access_log; then re-create log_insert exactly as b863 has it (the same EXISTS, without the preset line).
---    DROP INDEX IF EXISTS books_access_grant_open_uq; CREATE UNIQUE INDEX books_access_grant_open_uq ON books_access_grant (grantee_entity, grantor_entity) WHERE revoked_at IS NULL;   (only with no adviser grant left)
---    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_preset_check; ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_preset_check CHECK (preset = 'auditor');   (only with no adviser grant left)
+-- ROLL BACK (run top to bottom, one statement per line, as postgres; first revoke or delete every adviser grant and delete the books_delegated_* rows of access_events; the role, the names, the stamps and the posting choice are lost):
+--    DROP POLICY IF EXISTS log_insert ON books_access_log;
+--    CREATE POLICY log_insert ON books_access_log FOR INSERT WITH CHECK (grantee_entity = NULLIF(current_setting('app.current_entity', true), '')::uuid AND EXISTS (SELECT 1 FROM books_access_grant g WHERE g.grantor_entity = books_access_log.grantor_entity AND g.grantee_entity = books_access_log.grantee_entity AND g.revoked_at IS NULL));
+--    DROP INDEX IF EXISTS books_access_grant_open_uq;
+--    CREATE UNIQUE INDEX books_access_grant_open_uq ON books_access_grant (grantee_entity, grantor_entity) WHERE revoked_at IS NULL;
+--    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_check;
+--    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_cap_pair;
+--    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_adviser_only;
+--    ALTER TABLE books_access_grant DROP COLUMN IF EXISTS posting, DROP COLUMN IF EXISTS posting_cap_minor, DROP COLUMN IF EXISTS posting_cap_currency;
+--    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_preset_check;
+--    ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_preset_check CHECK (preset = 'auditor');
 --    ALTER TABLE books_access_log DROP CONSTRAINT IF EXISTS books_access_log_preset_check;
---    ALTER TABLE journal_entry DROP COLUMN IF EXISTS grant_id; ALTER TABLE books_change_log DROP COLUMN IF EXISTS grant_id;
---    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_check, DROP CONSTRAINT IF EXISTS books_access_grant_cap_pair, DROP CONSTRAINT IF EXISTS books_access_grant_posting_adviser_only; ALTER TABLE books_access_grant DROP COLUMN IF EXISTS posting, DROP COLUMN IF EXISTS posting_cap_minor, DROP COLUMN IF EXISTS posting_cap_currency;   (the choice of who posts is lost)
---    ALTER TABLE access_events DROP CONSTRAINT IF EXISTS access_events_action_check; then re-add it as b863 has it (without the three books_delegated_* values; delete those rows first).
 --    ALTER TABLE books_access_log DROP COLUMN IF EXISTS preset, DROP COLUMN IF EXISTS actor_name, DROP COLUMN IF EXISTS actor_entity_name;
+--    ALTER TABLE journal_entry DROP COLUMN IF EXISTS grant_id;
+--    ALTER TABLE books_change_log DROP COLUMN IF EXISTS grant_id;
+--    ALTER TABLE access_events DROP CONSTRAINT IF EXISTS access_events_action_check;
+--    ALTER TABLE access_events ADD CONSTRAINT access_events_action_check CHECK (action IN ('created', 'hat_changed', 'costs_changed', 'break_changed', 'removed', 'reactivated', 'reach_changed', 'code_issued', 'books_grant_given', 'books_grant_changed', 'books_grant_revoked'));
 -- CHECK (read-only, all-true multi-row block; every row must read ok = true):
 --    SELECT 'preset allows adviser' AS what, pg_get_constraintdef(oid) LIKE '%adviser%' AS ok FROM pg_constraint WHERE conname = 'books_access_grant_preset_check'
 --    UNION ALL SELECT 'one open grant per pair and preset', EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'books_access_grant_open_uq' AND indexdef LIKE '%preset%')

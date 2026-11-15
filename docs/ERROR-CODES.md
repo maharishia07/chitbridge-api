@@ -53,6 +53,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
+| BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
 | BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
 | BOOKS_GRANT_ENDED | 403 | Access has ended | This access was ended, or has run out. Ask the owner of the books to renew it. | The owner gives a new access from its grant screen. | network | 2026-11-14 |
 | BOOKS_GRANT_EXISTS | 409 | Access already given | This business can already read your books. Change the end date instead. | Open the access and edit its end date. | network | 2026-11-14 |
