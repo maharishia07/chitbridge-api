@@ -6,7 +6,7 @@
  *           the list still answers 200 and does not ask for them (lib/schema hasColumn guard).
  * CALLED BY scripts/guards.cjs.
  * FLOW      stand-in sign-in + db (tests/lib/problem-world.cjs) → the real routes/actors.js over http → read the list as the owner
- * CARD      17-people-employees-hr-and-payroll/functions
+ * CARD      17-people-employees-hr-and-payroll/add-edit-switch-off-a-person
  *
  *   node tests/acc-237-actors-list-level.test.cjs
  */
