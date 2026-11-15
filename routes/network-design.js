@@ -326,11 +326,17 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     if (r.rows[0].last_active_at) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
     const claim = newClaimCode();
     const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
-    await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [claim, expires, r.rows[0].identity_id]);
+    /* R2-01c: the claim test rides in the write, so a first sign-in committing after the SELECT above still wins (zero rows). */
+    const w = await query(
+      `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
+        WHERE identity_id = $3 AND created_by = $4 AND last_active_at IS NULL RETURNING user_id, display_name`,
+      [claim, expires, r.rows[0].identity_id, me]
+    );
+    if (!w.rows.length) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
     res.json({
       ok: true,
-      user_id: r.rows[0].user_id,
-      display_name: r.rows[0].display_name,
+      user_id: w.rows[0].user_id,
+      display_name: w.rows[0].display_name,
       claim_code: claim,
       expires_at: expires,
       ...(devOtp.mayExposeOtp() && { dev_otp: claim }),
