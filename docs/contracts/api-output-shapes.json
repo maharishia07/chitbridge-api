@@ -2238,6 +2238,9 @@
               "additionalProperties": false,
               "x-closed-by": "recordings"
             }
+          },
+          "parents": {
+            "type": "array"
           }
         },
         "additionalProperties": false,

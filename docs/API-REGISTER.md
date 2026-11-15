@@ -1464,7 +1464,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-api.js 1/14, books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_access_grant, identities · writes (derived): - · callers: books-grant-api.js, books-grant-member.js · actions: -
+- reads (derived): books_access_grant, cb_edge, cb_entity, identities · writes (derived): - · callers: books-grant-api.js, books-grant-member.js · actions: -
 
 **GET /api/books-grants/consent** · books-grants · cb-accounting · partial
 - does: Whether costs are shared in the query -> we give the words the owner reads (any signed-in shop session) before sharing the books -> the consent wording.

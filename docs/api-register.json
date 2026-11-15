@@ -4453,7 +4453,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 46,
-   "hash": "6d805a0117fb327d",
+   "hash": "8d118a21c029ea52",
    "does": "Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).",
    "errors": {
     "count": 1,
@@ -4469,6 +4469,8 @@
    },
    "reads": [
     "books_access_grant",
+    "cb_edge",
+    "cb_entity",
     "identities"
    ],
    "writes": [],
@@ -4529,7 +4531,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6d805a0117fb327d"
+    "stale_since": "8d118a21c029ea52"
    },
    "status": "partial",
    "callers": [

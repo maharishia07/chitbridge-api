@@ -116,8 +116,8 @@ of file each thing is; this says what already does the job.
 | 29 | `group` | `identity.js` | again in a different costume. |
 | 28 | `opts` | `cap-stock.js` | the options the stock list is mounted with |
 | 28 | `names` | `shortcuts.js` |  |
+| 28 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 27 | `call` | `cap-assist.js` |  |
-| 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 27 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 26 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 25 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -178,7 +178,6 @@ of file each thing is; this says what already does the job.
 | 18 | `label` | `screen-id.js` |  |
 | 18 | `post` | `books-manual.js` | POST /events — |
 | 18 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
-| 18 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 17 | `done` | `attach-ui.js` |  |
 | 17 | `message` | `cap-print.js` | the one message: |
@@ -189,6 +188,7 @@ of file each thing is; this says what already does the job.
 | 17 | `series` | `gst-returns.js` | `paid_on`: |
 | 17 | `orders` | `home-facts.js` | the till said 2 — |
 | 17 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
+| 17 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 17 | `heads` | `tax-lines.js` | The heads, summed. |
