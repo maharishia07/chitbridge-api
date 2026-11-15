@@ -409,6 +409,7 @@ async function pickAutoAssignTarget(client, entity_id, mode, settings) {
 
 // ─── POST /chits/send ─────────────────────────────────────────
 // Send a chit from sender to one or more receivers
+// @does A chit with its receivers in -> we check, seal, store and deliver it to each party, treating a lost duplicate race as a duplicate -> the sent chit, or the reason it was refused.
 router.post(
   '/send',
   /* ⭐ M04 (IAM §35): WHO before WHAT. auth runs ahead of the validator chain, so an unauthenticated or refused caller never
@@ -3425,6 +3426,7 @@ const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.se
 // prettier-ignore
 const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type, bill_total: x.bill_total });
 
+// @does Search words, filters and paging in -> we list the chits you sent that are not drafts, trashed or archived -> a page of chits.
 router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -3492,6 +3494,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
 
 // GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
+// @does A view of drafts, trash or archive with search and paging in -> we list that mailbox folder of yours, drafts only your own -> a page of chits.
 router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -3587,6 +3590,7 @@ function rollupGroups(rows) {
 
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
+// @does Group by counterparty or state, direction and assignment in -> we count and total your live chits -> the grouped summary.
 router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -3688,6 +3692,7 @@ async function cancelCols() {
   return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
+// @does Status, search, filters and paging in -> we list the chits you received that are not trashed or archived -> a page of chits.
 router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
@@ -3875,6 +3880,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
  * ⚠️ THE WATERMARK IS OPAQUE ON PURPOSE. The client compares it and never parses it, so its composition can
  * change — a sixth table, a different column — without touching the client or inventing a version negotiation.
  */
+// @does Nothing in -> we read when your chits, their statuses and logs last changed -> a short marker the screen polls to know whether to refresh.
 router.get('/pulse', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -3902,6 +3908,7 @@ router.get('/pulse', auth, async (req, res) => {
   }
 });
 
+// @does Nothing in -> we list the chits you have not read since they last changed, for actors only -> the unread chit ids.
 router.get('/unread', auth, async (req, res) => {
   try {
     if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
@@ -3937,6 +3944,7 @@ const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, c
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
+// @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -4431,6 +4439,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 // ⚠️ preview:true COMPUTES AND WRITES NOTHING. Pricing a whole chit in one tap is the useful version and also the
 //    dangerous one, so the decision is made against a list rather than a promise.
 // ⚠️ It writes AMENDMENTS, never a direct price. The old figure stays struck through — a chit is a record.
+// @does A chit id, optional lines and a preview flag in -> we price lines from your catalogue as amendments, or only show what would be priced -> the plan, or how many were applied.
 router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4470,6 +4479,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
 // POST body: { rows: [{ line_id?, kind, amount | (minutes + rate_per_hour), currency?, note }] }
 // ⚠️ line_id omitted = a whole-chit cost (one auto fare for one trip). Splitting that across lines would invent
 //    an allocation nobody agreed to.
+// @does A chit id and cost rows in -> we record the costs against the chit or a line, anyone on the chit may enter -> the cost rows.
 router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4488,6 +4498,7 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
 });
 
 // GET — everything if permitted; otherwise ONLY the caller's own rows and no totals at all.
+// @does A chit id in -> we read the costs recorded on it, with totals only if you may see costs, otherwise just your own rows -> the cost rows and totals by kind and currency.
 router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4517,6 +4528,7 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
 // answer EMPTY rather than 404 — a silent wrong answer, which is the worse failure.
 
 /** What a register may be attached to. A registry, so a new kind is data. */
+// @does Nothing in -> we list the kinds of thing a register can be attached to -> the attachable types.
 router.get('/register/attachables', auth, requireRegister('Failed'), async (req, res) => {
   try {
     const found = await raida.attachables();
@@ -4527,6 +4539,7 @@ router.get('/register/attachables', auth, requireRegister('Failed'), async (req,
   }
 });
 
+// @does Optional type and open-only flag in -> we list the registers you hold -> the registers with their open counts.
 router.get('/register/subjects', auth, requireRegister('Failed to list registers'), ...checked('GET /register/subjects'), async (req, res) => {
   try {
     const found = await raida.listSubjects(entityId(req), {
@@ -4541,6 +4554,7 @@ router.get('/register/subjects', auth, requireRegister('Failed to list registers
   }
 });
 
+// @does A type, reference and name in -> we open the register for that thing, or reuse the one already open -> the register id.
 router.post('/register/subjects', auth, requireRegister('Failed to open the register'), ...checked('POST /register/subjects'), async (req, res) => {
   try {
     const subject = await raida.subjectFor(entityId(req), {
@@ -4559,6 +4573,7 @@ router.post('/register/subjects', auth, requireRegister('Failed to open the regi
  * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
  * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
  */
+// @does A register id in -> we close it unless entries are still undispositioned, and name them if so -> the closing time, or a 409 listing what is outstanding.
 router.post('/register/subjects/:subject_id/close', auth, requireRegister('Cannot close yet'), ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
     const closed = await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name });
@@ -4569,6 +4584,7 @@ router.post('/register/subjects/:subject_id/close', auth, requireRegister('Canno
 });
 
 /** The library — the same risk turns up everywhere, worded slightly differently. */
+// @does Nothing in -> we read the library of reusable register wordings with how often each was raised and closed -> the templates.
 router.get('/register/templates', auth, requireRegister('Failed to read the library'), async (req, res) => {
   try {
     const found = await raida.templates(entityId(req));
@@ -4580,6 +4596,7 @@ router.get('/register/templates', auth, requireRegister('Failed to read the libr
   }
 });
 
+// @does A risk or issue wording in -> we save it in the reusable library -> the template id.
 router.post('/register/templates', auth, requireRegister('Failed to save it'), ...checked('POST /register/templates'), async (req, res) => {
   try {
     const added = await raida.addTemplate(entityId(req), req.body || {});
@@ -4601,6 +4618,7 @@ router.post('/register/templates', auth, requireRegister('Failed to save it'), .
  * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
  * subject: the register is attached to the THING, and an order is only one kind of thing.
  */
+// @does A register id and an entry in -> we record the entry on a standalone register that belongs to no order -> the new entry.
 router.post('/register/subjects/:subject_id/entries', auth, requireRegister('Failed to record it'), ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
     const made = await raida.add(
@@ -4624,6 +4642,7 @@ router.post('/register/subjects/:subject_id/entries', auth, requireRegister('Fai
  * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
  * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
  */
+// @does A register entry id and disposition in -> we end that entry wherever it lives -> the closing record.
 router.post('/register/entries/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
     const ended = await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
@@ -4634,6 +4653,7 @@ router.post('/register/entries/:raida_id/close', auth, requireRegister('Failed t
   }
 });
 
+// @does A starting entry, direction and depth in -> we follow what it breaks, or backwards what broke it -> the hops reached and whether the walk was cut.
 router.get('/register/walk/:from', auth, requireRegister('Failed to walk it'), ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
     const walked = await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth });
@@ -4645,6 +4665,7 @@ router.get('/register/walk/:from', auth, requireRegister('Failed to walk it'), .
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
+// @does A register entry id and new wording in -> we append a revision and keep what it said before -> the revision and what changed.
 router.post('/register/entries/:raida_id/revise', auth, requireRegister('Failed to revise it'), ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
     const revised = await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
@@ -4655,6 +4676,7 @@ router.post('/register/entries/:raida_id/revise', auth, requireRegister('Failed 
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
+// @does An entry id, authority level, rationale and review date in -> we record the signed acceptance of a residual risk -> the acceptance id and entry severity.
 router.post('/register/entries/:raida_id/accept', auth, requireRegister('Failed to record the acceptance'), ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
     const accepted = await raida.accept(entityId(req), req.params.raida_id, {
@@ -4677,6 +4699,7 @@ router.post('/register/entries/:raida_id/accept', auth, requireRegister('Failed 
  * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
+// @does Optional register and standard in -> we read every register entry you hold across all chits -> the entries counted by kind and disposition.
 router.get('/raida/report', auth, requireRegister('Failed to read the register'), ...checked('GET /raida/report'), async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
@@ -4695,6 +4718,7 @@ router.get('/raida/report', auth, requireRegister('Failed to read the register')
   }
 });
 
+// @does A chit id and optional line in -> we read the register entries on it, that line plus the order-level ones -> the entries, open and closed counts.
 router.get('/:chit_id/raida', auth, requireRegister('Failed to read the register'), ...checked('GET /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4709,6 +4733,7 @@ router.get('/:chit_id/raida', auth, requireRegister('Failed to read the register
   }
 });
 
+// @does A chit id and an entry in -> we record a risk, issue or other register entry on your chit or one of its lines -> the new entry.
 router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...checked('POST /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4765,6 +4790,7 @@ router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...
 /* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
    closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
    different endings and a flag cannot tell them apart. */
+// @does A chit id, an entry id and a disposition in -> we end that register entry, saying where a carried-forward one goes -> the closing record.
 router.post('/:chit_id/raida/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
     /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
@@ -4785,6 +4811,7 @@ router.post('/:chit_id/raida/:raida_id/close', auth, requireRegister('Failed to 
  * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
  * of that lifecycle here would be a second answer to a question that already has one.
  */
+// @does A chit id, an entry id and a dispute id in -> we link the register entry to a dispute raised the normal way -> the link.
 router.post('/:chit_id/raida/:raida_id/dispute', auth, requireRegister('Failed to link the dispute'), ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
     const linked = await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id);
@@ -4806,6 +4833,7 @@ router.post('/:chit_id/raida/:raida_id/dispute', auth, requireRegister('Failed t
  * { use?, lines? } records a choice — merged, and refused (409) once the bill is accepted. Goods-in may carry the same
  * `use` on deliver-lines.
  */
+// @does A chit id in -> we read what each line of a bill you received is for, resale, use or asset, and whether it can still change -> the bill, lines and uses, or 409 if it is not a received bill.
 router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4829,6 +4857,7 @@ router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, r
     problem(req, res, failed(err, req, 'Failed'));
   }
 });
+// @does A chit id and a use choice in -> we record what a received bill's goods are for on your copy, refused once accepted -> the saved use and what each line will post as.
 router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, res) => {
   try {
     const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
@@ -4840,6 +4869,7 @@ router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, r
   }
 });
 
+// @does A chit id and delivered quantities per line in -> we record the delivery on every party's copy, a negative quantity correcting an earlier one -> the delivery record.
 router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-lines'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -5030,6 +5060,7 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
 //
 // POST body: { edits: [{ line_id, assignee_actor_id|null, assignee_name, assignee_type, task, due_date, note }] }
 // ⚠️ assignee_actor_id: null means UNASSIGN — a deliberate act, and not the same as never having been assigned.
+// @does A chit id and per-line assignees in -> we record who does which line, private to you, and log it -> the assignments.
 router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-lines'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -5179,6 +5210,7 @@ async function amountTooLargeSpec(refusal, req) {
   }
   return faultOf(chitCeiling.inCurrency(refusal, currency), req, 'Failed to amend', { words: true });
 }
+// @does A chit id and line corrections in -> we record them as amendments on your held copy, never changing an issued invoice's money -> the recorded amendment, or the reason it is refused.
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -5265,6 +5297,7 @@ function overlayPicks(found, shortlist) {
   return { ambiguous: found.ambiguous ? found.matches : undefined, candidates: found.ambiguous || found.variant_unspecified ? shortlist(found) : undefined, unmatched: found.unmatched ? found.reason : undefined };
 }
 
+// @does A chit id and search words in -> we read your catalogue so an amend can pick an item and its price with currency -> the items and best match, or has_catalogue false.
 router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -5417,6 +5450,7 @@ function payFailure(req, res, err) {
  */
 /* idem3 (7 Nov): "Mark unpaid" (DELETE below) rides the same gate — a retry answers the first clear and never names the books entries twice; the web sends idem:'attempt' (EP chitUnpay) */
 const payOnce = require('../middleware/idempotency').requireKey();
+// @does A chit id with a payment reference in -> we mark your bill paid and post it to the books once per press -> the paid chit, or 409 if the bill was withdrawn.
 router.post(
   '/:chit_id/payment',
   auth,
@@ -5460,6 +5494,7 @@ router.post(
     }
   }
 );
+// @does A chit id in -> we clear the Mark-paid on your bill, close any payment still waiting for the books and name the books entry to reverse -> the cleared chit, or 404.
 router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -5515,6 +5550,7 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
  * is "send it now, do not wait for the state". Marks MY copy (business_json.books_request) and rings my own bell so the watching
  * connector books it within a second; the kit's five-minute catch-up would find it anyway.
  */
+// @does A chit id in -> we mark the chit as sent to your books and signal the books screen, for a signed-in person only -> ok and the request time.
 router.post('/:chit_id/books-request', auth, ...checked('POST /:chit_id/books-request'), async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }, 'CHIT_NOT_PERMITTED') });
@@ -5559,6 +5595,7 @@ function answerMoved(req, res, moved) {
   else res.json(moved.body);
   return !!moved.moved;
 }
+// @does A chit id, a new status and a note in -> we move your copy to that status if the rail allows and log it -> the updated status, or the reason it is refused.
 router.put(
   '/:chit_id/status',
   auth,
@@ -5716,6 +5753,7 @@ function tellMessageElsewhere(entity_id, chit_id, result, posted) {
   return ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type, sender_display_name: senderName, line_id }, result);
 }
 
+// @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5857,6 +5895,7 @@ router.post(
 /** true only for "the chit_messages table does not exist yet" (42P01 naming it): the one failure an empty thread is honest for */
 const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
+// @does A chit id and thread filter in -> we read your copies of its messages, internal, external or dispute -> the message thread, or 404 if you are not on the chit.
 router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
@@ -6100,6 +6139,7 @@ function answeredTooLong(req, res, err) {
 }
 
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
+// @does A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.
 router.post(
   '/:chit_id/disputes',
   auth,
@@ -6279,6 +6319,7 @@ async function finishDisputes(rows, entity_id, viewer) {
     };
   });
 }
+// @does A chit id in -> we read your copies of its disputes and work out who a new dispute may name -> the disputes and those parties, or 404.
 router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
@@ -6325,6 +6366,7 @@ const FAULT_SUMMARY = {
   defunct: 'Counterparty no longer active',
   absent: 'No counterparty copy found on this chit'
 };
+// @does A chit id in -> we read your copy's disputes and line items and say what is wrong, who it concerns and how it is handled -> one diagnosis per dispute, or 404.
 router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
@@ -6404,6 +6446,7 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
 
 // ─── PUT /chits/:chit_id/disputes/:dispute_id/resolve ────────
 // Only the entity that raised the dispute can resolve it
+// @does A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.
 router.put(
   '/:chit_id/disputes/:dispute_id/resolve',
   auth,
@@ -6486,6 +6529,7 @@ router.put(
  * rows · total · page · limit · counts { open, resolved } and, per row, others · mine · actions.resolve (finishDisputes above).
  * Trips: ONE withEntity transaction (the page + the counts) + ONE roster read for the whole page (was one per row).
  */
+// @does Status, side, search words and paging in -> we list the disputes on your own copies across all chits, open ones by default -> a page of disputes.
 router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (req, res) => {
   const entity_id = entityId(req);
   const list = req.query || {};
@@ -6585,6 +6629,7 @@ async function housekeepFacts(db, chit_id, entity_id) {
   if (copy.rows.length === 0) return null;
   return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) };
 }
+// @does A chit id in -> we move your own copy to Trash if the rail allows it (never with a dispute open) and log it -> a confirmation, or the reason it is refused.
 router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6630,6 +6675,7 @@ router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res
 
 // PUT /chits/:chit_id/priority — INTERNAL queue priority. Never crosses the edge.
 // urgent requires a reason, logged as an internal action message.
+// @does A chit id, a priority and a reason (urgent needs one) in -> we set your private queue priority, never shown to the other side -> the new priority.
 router.put(
   '/:chit_id/priority',
   auth,
@@ -6686,6 +6732,7 @@ router.put(
 // PUT /chits/:chit_id/priority-flag — CUSTOMER cross-edge priority, WRITE-ONCE.
 // DESIGN (review): set + lock on EVERY participant row so the counterparty sees it;
 // reject once customer_priority_locked is true.
+// @does A chit id and a priority flag in -> we set the customer priority once on every party's copy and lock it -> the flag, or 409 if already set.
 router.put('/:chit_id/priority-flag', auth, ...checked('PUT /:chit_id/priority-flag'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6738,6 +6785,7 @@ router.put('/:chit_id/priority-flag', auth, ...checked('PUT /:chit_id/priority-f
 // POST /chits/:chit_id/archive — hide MY copy from inbox/sent (reversible; never deletes).
 // ⭐ W2-RAIL R2: the open-dispute guard FAILS CLOSED — the count that could not be read used to answer 0 (`.catch(() => count 0)`)
 // and the chit was archived; now it is 503 disputes_unknown, logged (lib/dispute-may openOn). One transaction, not two.
+// @does A chit id in -> we hide your copy from inbox and sent, refused while a dispute is open -> a confirmation, or 404.
 router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), async (req, res) => {
   try {
     const entity_id = entityId(req),
@@ -6761,6 +6809,7 @@ router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), asy
 });
 
 // PUT /chits/:chit_id/star — toggle the star/flag on MY copies (kept in sync across both directions).
+// @does A chit id in -> we toggle the star on your copy -> the new star state.
 router.put('/:chit_id/star', auth, ...checked('PUT /:chit_id/star'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -6778,6 +6827,7 @@ router.put('/:chit_id/star', auth, ...checked('PUT /:chit_id/star'), async (req,
 });
 
 // POST /chits/:chit_id/unread — mark MY copy unread (clear read_at).
+// @does A chit id in -> we mark your copy unread -> a confirmation, or 404.
 router.post('/:chit_id/unread', auth, ...checked('POST /:chit_id/unread'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -6796,6 +6846,7 @@ router.post('/:chit_id/unread', auth, ...checked('POST /:chit_id/unread'), async
 });
 
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
+// @does A chit id in -> we put your archived copy back in inbox or sent -> a confirmation, or 404.
 router.post('/:chit_id/unarchive', auth, ...checked('POST /:chit_id/unarchive'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -6817,6 +6868,7 @@ router.post('/:chit_id/unarchive', auth, ...checked('POST /:chit_id/unarchive'),
 
 // POST /chits/:chit_id/restore — bring MY copy back from Trash (undo a soft delete).
 // Mirrors DELETE /:chit_id (which sets deleted_at); clears deleted_at on this entity's copy only + logs it.
+// @does A chit id in -> we bring your copy back from Trash and log it -> a confirmation, or 404.
 router.post('/:chit_id/restore', auth, ...checked('POST /:chit_id/restore'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6846,6 +6898,7 @@ router.post('/:chit_id/restore', auth, ...checked('POST /:chit_id/restore'), asy
 
 // DELETE /chits/:chit_id/purge — permanently remove a DRAFT (owner only). Real chits are immutable co-held
 // records and can NEVER be hard-deleted here; only role='Draft' (un-bridged, sender-only) qualifies.
+// @does A draft id in -> we permanently delete your own un-sent draft with its messages and attachments, never a real chit -> a confirmation, or the reason it is refused.
 router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6916,6 +6969,7 @@ function withdrawRefusalSpec(refusal) {
 // rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
 //
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
+// @does A chit id and a reason in -> we withdraw your own copy as cancelled and ask each recipient to cancel, sender only -> a confirmation.
 router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody(['reason']), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -7059,6 +7113,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 });
 
 // POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).
+// @does Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.
 router.post(
   '/assign-bulk',
   auth,

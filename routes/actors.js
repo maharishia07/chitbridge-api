@@ -215,6 +215,7 @@ const isKeyAvailable = async (actor_key, parent_entity_id) => {
 // ── POST /api/actors/suggest-key ────────────────────────────
 // Suggest actor_key from display_name
 // Used live as admin types name
+// @does A display name in -> we suggest a free login key, adding a number if it is taken -> the suggested key and whether it is available.
 router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withMessage(PLAIN).trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -244,6 +245,7 @@ router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withM
 
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
+// @does Name, optional e-mail, login key and role in -> we let the owner add a co-assist under the shop with a first sign-in code -> the new co-assist (owner only).
 router.post(
   '/',
   auth,
@@ -505,6 +507,7 @@ async function accessRowBefore(actor_id, entity_id) {
 // ── PATCH /api/actors/:id ────────────────────────────────────
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
+// @does Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).
 router.patch(
   '/:id',
   auth,
@@ -688,13 +691,16 @@ router.patch(
 
 // ── GET /api/actors/check-login — MOVED to routes/signin.js (checkLogin), answering exactly as before (M06) ─────────
 // ⚠️ NOT 410 YET: app.html#/login reads it before every key@Display Name sign-in, and app.html is untouched until PR 14.
+// @does A typed co-assist login in, no sign-in needed -> we look nothing up, so nobody can learn who exists -> the same fixed answer for everyone (valid, no PIN known).
 router.get('/check-login', ...checked('GET /check-login'), signin.handlers.checkLogin);
 
 // ── POST /api/actors/set-pin — ALIAS (M06): the SAME handler as POST /api/signin/pin ───────────────────────────────
+// @does A new 4-digit PIN and its repeat in -> we save the PIN for the signed-in co-assist, the same as the common sign-in PIN door (old address) -> a confirmation.
 router.post('/set-pin', auth, ...checked('POST /set-pin'), signin.pinChecks, validate, signin.handlers.pin);
 
 // ── PUT /api/actors/change-pin ──────────────────────────────
 // Actor changes own PIN from profile page
+// @does Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.
 router.put(
   '/change-pin',
   auth,
@@ -766,6 +772,7 @@ async function endSessionsOnReset(entity_id, actor_id) {
 
 // ── DELETE /api/actors/:id/pin ──────────────────────────────
 // Admin clears actor PIN — forces new PIN setup on next OTP login
+// @does Which co-assist in -> we let the owner wipe that person's PIN so they must set a new one at their next code sign-in -> a confirmation (owner only).
 router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -810,6 +817,7 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
 // ── POST /api/actors/login — ALIAS (M06): the SAME handler as POST /api/signin/verify, on its actor-login door ──────
 // key@Display Name or key@user-id · OTP the first time, PIN after. The lookup, the words and the token are unchanged;
 // the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
+// @does Co-assist key and PIN or first code in -> we sign them in exactly as the common sign-in does (an old address kept alive) -> a session token or a refusal.
 router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /login'), signin.verifyChecks, validate, signin.handlers.verify);
 
 /* ACC-237: the level and the reach for the list's SELECT, so the owner sees a viewer / commenter login is read-only. Read off the row's JSON: a database before b173 (no such column)
@@ -818,6 +826,7 @@ const LEVEL_COLUMNS = " (to_jsonb(identities) ->> 'access_level') AS access_leve
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
+// @does Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     // Actors can also call this to see colleagues — use parent entity id
@@ -909,6 +918,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
 
 // ── POST /api/actors/:id/otp ─────────────────────────────────
 // Regenerate OTP for actor — admin only
+// @does Which co-assist in -> we let the owner issue a fresh one-time sign-in code for that person -> the new code details (owner only).
 router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -986,6 +996,7 @@ async function clearDisputeHandlerIn(client, entity_id, actor_id) {
 
 // ── PUT /api/actors/:id/status ───────────────────────────────
 // Deactivate or remove actor — admin only
+// @does Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).
 router.put(
   '/:id/status',
   auth,
@@ -1200,6 +1211,7 @@ async function coverConflict(actor_id, subject, youre) {
 }
 // ── PUT /api/actors/break ────────────────────────────────────
 // Actor goes on break — short or leave. PEOPLE-SRV1 (G6): the owner may name the person (actor_id).
+// @does Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).
 router.put(
   '/break',
   auth,
@@ -1338,6 +1350,7 @@ router.put(
 
 // ── PUT /api/actors/assign/:chit_id ─────────────────────────
 // Pull push or return a chit assignment
+// @does A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.
 router.put(
   '/assign/:chit_id',
   auth,
@@ -1512,6 +1525,7 @@ async function returnChit(work) {
 const ASSIGN_JOBS = { pull: pullChit, push: pushChit, return: returnChit };
 
 // ── GET /api/actors/settings ─────────────────────────────────
+// @does Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.
 router.get('/settings', auth, async (req, res) => {
   try {
     const entity_id = req.identity.identity_type === 'actor' ? req.identity.parent_entity_id : req.identity.identity_id;
@@ -1533,6 +1547,7 @@ router.get('/settings', auth, async (req, res) => {
 });
 
 // ── PUT /api/actors/settings ─────────────────────────────────
+// @does Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).
 router.put(
   '/settings',
   auth,
@@ -1604,6 +1619,7 @@ router.put(
 // ── PUT /api/actors/:id/delegate ── leave-cover delegate (D1) ──
 // Who covers this actor's auto-assigned work while they're on leave. Loop-prevented: the chain that
 // starts at the new delegate must never lead back to this actor.
+// @does Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).
 router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optional({ nullable: true }).isUUID()], validateAsProblem, ...checked('PUT /:id/delegate'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1641,6 +1657,7 @@ router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optiona
 // ── GET /api/actors/:id/tasks ───────────────────────────────
 // Entity admin views tasks assigned to a specific actor
 // Returns chits currently assigned to that actor
+// @does A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.
 router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -1739,6 +1756,7 @@ async function routeTargetMissing(handle, chit_id, from_actor_id, entity_id) {
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
+// @does A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).
 router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/route'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -1830,6 +1848,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
+// @does Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.
 router.get('/access-events', auth, ...checked('GET /access-events'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

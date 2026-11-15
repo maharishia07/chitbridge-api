@@ -25,6 +25,7 @@ const people = require('../lib/people');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; its old body is frozen in docs/contracts/api-legacy.json
 const { failed, contract } = require('../lib/people-contract'); // the contract (the route's operation) and the words of a fault
 
+// @does Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     /* ?for=add — the Add-a-person form only needs may/why + the picker: no list is read (no query past auth) */

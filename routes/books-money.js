@@ -21,6 +21,7 @@ const CHIT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const ROUTE = 'POST /money-check/resolve';
 
 /** the sale (its chit id is in the body, so the route is not addressed by a path id) is settled: confirmed as right, or answered by a credit note / a corrected bill. Owner or editor. */
+// @does A sale's chit id and how it was settled in -> we mark the money check resolved as right or answered by a credit note or corrected bill -> the outcome (owner or editor).
 router.post('/money-check/resolve', auth, noKey, editor, on, schemaValidate(operationFor(ROUTE)), async (req, res) => {
   try {
     const chitId = String((req.body && req.body.chit_id) || '');

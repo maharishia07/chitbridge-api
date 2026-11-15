@@ -283,6 +283,7 @@ const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'pe
  * (`chitbridge-api/scripts/_proof.js`), so a path parameter would break on the slashes for exactly the cases
  * most likely to need closing in bulk one day.
  */
+// @does A case key, and open to reopen, in -> we close or reopen a shared test case, for board writers only -> a confirmation.
 router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: closing a shared case is authoring the board */
@@ -340,6 +341,7 @@ router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, r
   }
 });
 
+// @does Minutes to trace, or off, in -> we switch round-trip tracing on or off for your shop for a short while -> the trace state.
 router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
   try {
     const myEntity = auth.entityOf(req);
@@ -353,6 +355,7 @@ router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
     problem(req, res, faultOf(e, req, 'Failed'));
   }
 });
+// @does Nothing in, signed in -> we say whether round-trip tracing is switched on for your shop and until when -> the trace state.
 router.get('/trace', auth, ...checked('GET /trace'), (req, res) => {
   try {
     const myEntity = auth.entityOf(req);
@@ -365,6 +368,7 @@ router.get('/trace', auth, ...checked('GET /trace'), (req, res) => {
   }
 });
 
+// @does Nothing in, no sign-in needed -> we list the words the board uses for run kinds, layers, statuses and test types -> the vocabulary.
 router.get('/vocabulary', (req, res) => {
   try {
     res.json({
@@ -430,6 +434,7 @@ function testerOf(req) {
  * ⚠️ ONE QUERY, not one per case: the version join is done in SQL. A board that opens 110 cases would otherwise
  * make 110 round trips, and at 1.4–2.4 s per Railway↔Supabase call that is not a screen, it is an afternoon.
  */
+// @does Filters and a page in -> we read the product's shared test cases with their steps and current version, for any signed-in tester -> a page of test cases.
 router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -862,6 +867,7 @@ async function importCases(entity_id, tester, rows, mode) {
   return out;
 }
 
+// @does A list of cases and a mode in -> we rebuild the shared suite, or only add with mode add, for board writers only -> counts of what was stored.
 router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a rebuild of the shared suite is the board writer's act */
@@ -923,6 +929,7 @@ router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req,
  * ⚠️ These are NOT cases and must never be loaded as definitions: they are what the tests are about, and
  * putting them in the case table would make them countable as coverage.
  */
+// @does Nothing in -> we read the shipped engine manifest of what the test suite covers, from the data file -> its contents and notes.
 router.get('/engine', auth, boardReadGate, ...checked('GET /engine'), (req, res) => {
   try {
     const filePath = require('path').join(__dirname, '..', 'data', 'test-cases.json');
@@ -935,6 +942,7 @@ router.get('/engine', auth, boardReadGate, ...checked('GET /engine'), (req, res)
   }
 });
 
+// @does Nothing in -> we load the test cases shipped with the product into the shared board, for board writers only -> counts of what was loaded.
 router.post('/cases/seed', auth, ...checked('POST /cases/seed'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: "Load cases" reseeds what every shop reads */
@@ -1087,6 +1095,7 @@ function cmdbListRow(row) {
   };
 }
 /** GET /api/testing/cmdb — every record, PAGED (W1-SET: readPage → top-level total · page · limit, ?page= ?limit=; `records` stays) */
+// @does A page in -> we read every configuration record the shared test board holds, for any signed-in tester -> a page of records.
 router.get('/cmdb', auth, boardReadGate, ...checked('GET /cmdb'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -1111,6 +1120,7 @@ router.get('/cmdb', auth, boardReadGate, ...checked('GET /cmdb'), async (req, re
 });
 
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
+// @does A record id like CAP-SIGNIN and an optional version in -> we read that configuration record as stored -> the record, or not found.
 router.get('/cmdb/:ci', auth, boardReadGate, ...checked('GET /cmdb/:ci'), async (req, res) => {
   try {
     const cmdbCode = String(req.params.ci || '');
@@ -1135,6 +1145,7 @@ router.get('/cmdb/:ci', auth, boardReadGate, ...checked('GET /cmdb/:ci'), async 
 });
 
 /** PUT /api/testing/cmdb/:ci — save one record; a new version only when it actually changed */
+// @does A configuration record for one id in -> we save it to the shared board, making a new version only if it changed, board writers only -> the version stored.
 router.put('/cmdb/:ci', auth, ...checked('PUT /cmdb/:ci'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return;
@@ -1151,6 +1162,7 @@ router.put('/cmdb/:ci', auth, ...checked('PUT /cmdb/:ci'), async (req, res) => {
 });
 
 /** POST /api/testing/cmdb/seed — load every record shipped in data/cmdb/*.json, the way cases/seed loads cases */
+// @does Nothing in -> we load the configuration records shipped with the product into the shared board, for board writers only -> counts of what was loaded.
 router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return;
@@ -1434,6 +1446,7 @@ async function recordResults(entity_id, tester, requestBody) {
   }
 }
 
+// @does A run and each case's pass or fail with who tested in -> we append the results, a re-test being a new row -> the run and what was recorded.
 router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
   try {
     const out = await recordResults(resultsEntityOf(req), testerOf(req), req.body || {});
@@ -1463,6 +1476,7 @@ router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
  * we?" The history is there on request (?case_key= or ?run_id=), and a case's history is the interesting half
  * when something is flaky.
  */
+// @does A case or run and optional project in -> we read the recorded pass and fail results with who tested -> a page of results.
 router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -1515,6 +1529,7 @@ router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (r
 });
 
 /** GET /api/testing/runs — the sittings, newest first, each with its totals. */
+// @does Optional project in -> we list the test sittings, newest first, with their totals and the projects seen -> the runs.
 router.get('/runs', auth, boardReadGate, ...checked('GET /runs'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -1612,6 +1627,7 @@ function layerOfCase(key) {
   }
 }
 
+// @does A JUnit XML report with run kind and layer in -> we read the cases and record each as a result, as CI does -> the run and counts recorded.
 router.post('/results/junit', auth, ...checked('POST /results/junit'), async (req, res) => {
   try {
     const text = String((req.body && req.body.xml) || '');
@@ -1693,6 +1709,7 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
  */
 
 /** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
+// @does Optional module in -> we write the shared test cases out as feature-file text, for any signed-in tester -> the .feature text to download.
 router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -1751,6 +1768,7 @@ router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin
  * clause gains a version — which marks every case citing the old one as needing another look. Edit a Scenario
  * and the case gains a version. Nothing has to be remembered, because the versions do the remembering.
  */
+// @does Feature-file text in -> we turn it into shared test cases, adding a version where one changed, for board writers only -> what was added or updated.
 router.post('/cases/gherkin', auth, ...checked('POST /cases/gherkin'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a feature file authors shared cases */
@@ -1862,6 +1880,7 @@ const REQ_PRI = ['High', 'Medium', 'Low']; // the list's order, first to last
 const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rejected: 'retired' };
 
 /** POST /api/testing/requirements — raise one from the case that found it. */
+// @does What was observed and what is needed, with the case that found it, in -> we raise a requirement under the person who raised it -> the stored requirement.
 router.post('/requirements', auth, ...checked('POST /requirements'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2057,6 +2076,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
  * somebody, which is the question the person opening this screen is asking. ⚠️ Not the same as "raised" alone —
  * an accepted requirement nobody has built is exactly the one that gets forgotten.
  */
+// @does Optional state in -> we list the requirements raised from test findings, by priority, kept with their raiser -> a list of requirements.
 router.get('/requirements', auth, ...checked('GET /requirements'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2136,6 +2156,7 @@ router.get('/requirements', auth, ...checked('GET /requirements'), async (req, r
  * can be changed with no trace is a requirement nobody can be held to.
  * ⚠️ REJECTING NEEDS A REASON. "No" without one gets re-raised by the next tester, and rightly.
  */
+// @does A requirement id with a new state or priority, and a reason to reject, in -> we record the decision with who made it -> the updated requirement.
 router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2271,6 +2292,7 @@ const SEV_MEANS = {
 };
 
 /** POST /api/testing/incidents — record one where it happened. */
+// @does What was observed, where and how bad in -> we record an incident under the person who raised it, refusing one with no account -> the stored incident.
 router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2405,6 +2427,7 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
  * ⭐ `open` MEANS RAISED OR BEING INVESTIGATED, and it is the default for the same reason it is on the
  * requirements list: the person opening this screen is asking what is still waiting on somebody.
  */
+// @does Optional state in -> we list the incidents you recorded where they happened, worst first, kept with their raiser -> a list of incidents.
 router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2516,6 +2539,7 @@ router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) =>
  * incident whose state can change with no trace is an incident nobody can be held to, and the support desk is
  * exactly where that matters.
  */
+// @does An incident id with a new state or severity and a reason in -> we move or regrade that incident, recording who and why -> the updated incident.
 router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2669,6 +2693,7 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
  * ⚠️ IMAGES ONLY, AND 4 MB. A tester pasting a PDF of a spec into an incident is not evidence of what they
  * saw, and an unbounded upload from a browser is a way to fill a database by accident.
  */
+// @does A screenshot image as base64 in -> we check its type and size and keep it as evidence for a finding -> the stored evidence id.
 router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -2706,6 +2731,7 @@ router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) =>
   }
 });
 
+// @does Nothing in -> we find test cases written against a clause that has since changed -> the cases that need a second look.
 router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -2767,6 +2793,7 @@ router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, 
  * ⚠️ ONE QUERY. A per-module loop here would be sixteen Pacific crossings to answer a question the panel asks on
  * every open. [[project-roundtrip-cost]]
  */
+// @does Optional run and project in -> we count which shared test cases have a latest result and which have none -> the coverage picture for the board.
 router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -2951,6 +2978,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
  * ⭐ So every section is marked `source: 'measured'` or `source: 'needs a person'`, and the ones that need a
  * person carry the QUESTION rather than an answer. The screen renders that difference plainly.
  */
+// @does Optional run and project in -> we gather the test board's cases and their latest results into one report -> the report for the screen.
 router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -3586,6 +3614,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
  * ⚠ It reads RESULTS, not cases — so a guard file that has never been written up as a case still gets its
  * history. The board answers "what should be tested"; this answers "what can be believed".
  */
+// @does Optional run kind in -> we read the history of results to say which cases can be believed and which flip -> a reliability table.
 router.get('/reliability', auth, boardReadGate, ...checked('GET /reliability'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -3777,6 +3806,7 @@ function citedEntityOf(callerEntity, cites) {
 }
 
 /** POST /api/testing/changes — record what we did, to which code, why, and how to undo it. */
+// @does What we did, to which code, why and how to undo it in -> we record the change under your own shop, refusing one with no way back -> the stored change.
 router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
   try {
     /* ⚠️ entityForFinding, NOT entityFor: a change is ours and never goes on the shared board. */
@@ -3851,6 +3881,7 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
 });
 
 /** GET /api/testing/changes */
+// @does Optional state in -> we read the changes our own team logged (what, why, how to undo), kept with the person who raised them -> a list of changes.
 router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -3916,6 +3947,7 @@ router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
  * which is why `cites.entity_id` is captured when the change is recorded and not looked up now. withEntity pins
  * a transaction to ONE entity, so each shop's incident is moved in its own, after ours is committed.
  */
+// @does A release name and the changes it bundles in -> we record the release and move those changes and their incidents along -> the stored release.
 router.post('/releases', auth, ...checked('POST /releases'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -4098,6 +4130,7 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, teste
 }
 
 /** GET /api/testing/releases */
+// @does Nothing in -> we list the releases you recorded, each with the changes it bundles, kept with their raiser -> a list of releases.
 router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));

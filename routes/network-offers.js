@@ -239,6 +239,7 @@ const reads = { storeSide: readStoreSide };
 router.reads = reads;
 
 /** GET / — the three trips of the note above readOwn (readOwn · readPeople · readReleased), then the brand's and the store's halves of the screen */
+// @does Signed-in owner session -> we read the offers the brand made, the ones its stores received and what was released -> both halves of the offers screen.
 router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -292,6 +293,7 @@ router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res
   }
 });
 
+// @does A policy of opt_in or opt_out (brand owner) -> we save how its offers reach the stores by default -> the saved policy.
 router.put('/policy', auth, sessionOnly, brandOwnerOnly, ...contract.checked('PUT /policy'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -311,6 +313,7 @@ const who = (req) => (req.identity && (req.identity.display_name || req.identity
 /** a refused catalogue step: not_yours 404 · validation 400 · the rest 409, the old { error, message } kept */
 const fail = (res, out) => problem(res.req, res, refusalOf(out));
 
+// @does A source key with items to add (brand owner) -> we publish that catalogue to its network stores -> the published result.
 router.post('/catalogue/publish', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/publish'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -329,6 +332,7 @@ router.post('/catalogue/publish', auth, sessionOnly, brandOwnerOnly, ...contract
   }
 });
 
+// @does A catalogue source key (brand owner) -> we cancel that catalogue offer to the network -> the result.
 router.post('/catalogue/cancel', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/cancel'), async (req, res) => {
   try {
     const out = await ncat.cancel(auth.entityOf(req), String((req.body || {}).source_key || ''));
@@ -339,6 +343,7 @@ router.post('/catalogue/cancel', auth, sessionOnly, brandOwnerOnly, ...contract.
   }
 });
 
+// @does A source key, item name and prices (brand owner) -> we record the brand price answer for that catalogue item -> the saved answer.
 router.post('/catalogue/price', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/price'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -378,6 +383,7 @@ async function releaseRecord(brandId, offer, at, until, req) {
   };
 }
 
+// @does An offer id (brand owner) -> we release that live offer to the stores that may take it -> the offer now released, or a refusal.
 router.post('/:id/release', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /:id/release'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -400,6 +406,7 @@ router.post('/:id/release', auth, sessionOnly, brandOwnerOnly, ...contract.check
   }
 });
 
+// @does An offer id (brand owner) -> we withdraw that offer from its stores -> the offer now withdrawn, or a refusal.
 router.post('/:id/withdraw', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /:id/withdraw'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -436,6 +443,7 @@ async function choiceAllowed(shopId, offerId, choice) {
   return Boolean(open) || (choice === null && holdsRecord);
 }
 
+// @does An offer id and in or out (signed-in owner session) -> we record whether this store takes that brand offer -> the store's choice.
 router.post('/:id/choice', auth, sessionOnly, ...contract.checked('POST /:id/choice'), async (req, res) => {
   try {
     const me = auth.entityOf(req);

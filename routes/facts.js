@@ -33,6 +33,7 @@ function checked(route) {
 const failed = (e, req) => internalSpec(req, e, { error: 'Failed', message: SAFE_SENTENCE });
 
 /* the chits behind the rail's In · Out · Stuck (H1): the same rows and the same overdue test as the counts. Before /:card, which would call it a card. */
+// @does Nothing in -> we read the chits behind the rail's In, Out and Stuck counts -> the chit list (signed-in people, not keys).
 router.get('/rail/chits', auth, ...checked('GET /rail/chits'), async (req, res) => {
   if (req.api_key) return problem(req, res, { status: 403, ...keyRefused() });
   try {
@@ -42,6 +43,7 @@ router.get('/rail/chits', auth, ...checked('GET /rail/chits'), async (req, res) 
   }
 });
 
+// @does A Home card name in -> we work out that card's figures for the shop, refusing an unknown card -> the card's facts (signed-in people, not keys).
 router.get('/:card', auth, ...checked('GET /:card'), async (req, res) => {
   const build = Object.prototype.hasOwnProperty.call(home.BUILD, req.params.card) ? home.BUILD[req.params.card] : null;
   if (!build) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'There is no Home card called "' + String(req.params.card).slice(0, 40) + '".') });

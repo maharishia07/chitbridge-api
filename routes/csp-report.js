@@ -79,6 +79,7 @@ function reportsOf(body) {
   });
 }
 
+// @does A browser's content-policy violation report in -> we log it -> nothing, 204 (public, rate limited).
 router.post('/', reportLimiter, express.json({ type: TYPES, limit: '8kb' }), declaresStatuses([413, 429]), ...contract.checked('POST /'), (req, res, next) => {
   try {
     reportsOf(req.body).forEach((item) => {

@@ -12,6 +12,7 @@ const log = require('../lib/logger');
 
 const router = express.Router();
 
+// @does Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).
 router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
   try {
     /* E07: one `SELECT 1`, given 2 s — db 'ok' under DB_SLOW_MS, 'slow' over it, 'down' when it fails or never answers.

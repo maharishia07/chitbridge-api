@@ -42,6 +42,7 @@ const FIELDS = {
   price_range: ['min', 'max', 'applies_to']
 };
 
+// @does Nobody needs to sign in -> we list the kinds of offer our engine understands and the fields each takes -> the offer kinds.
 router.get('/kinds', (req, res) => {
   try {
     const kinds = (eng && eng.kinds) || [];
@@ -98,10 +99,13 @@ const answer = (explain) =>
       problem(req, res, faultOf(e, req));
     }
   };
+// @does Basket lines and optional offers from a key with the offers scope -> we price the basket with those offers, or the shop's own, and refuse bad quantities or prices -> subtotal, total and each adjustment.
 router.post('/evaluate', auth, auth.requireScope('offers'), ...checked('POST /evaluate'), answer(false));
+// @does The same basket lines and offers from a key with the offers scope -> we price them as evaluate does and add a reason for each discount -> the totals with an explanation per adjustment.
 router.post('/explain', auth, auth.requireScope('offers'), ...checked('POST /explain'), answer(true));
 
 /* OpenAPI 3.0 — what another system reads to attach. Kept beside the code that it describes so it cannot drift far. */
+// @does Nobody needs to sign in -> we assemble the offers API description other systems read to connect -> the OpenAPI document.
 router.get('/openapi.json', (req, res) => {
   try {
     res.json(require('./openapi').assemble(req));

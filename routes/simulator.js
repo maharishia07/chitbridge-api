@@ -63,6 +63,7 @@ const ratingOf = (given) => {
 const esc = (s) => String(s == null ? '' : s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
 // GET /api/simulator/content — everything the page renders from.
+// @does Nothing in (public) -> we read every layer, item, shape, rule, comparison and selling point the simulator page shows -> the simulator content.
 router.get('/content', ...contract.checked('GET /content'), async (req, res) => {
   try {
     const [layers, items, shapes, rules, compare, usps] = await Promise.all([
@@ -88,6 +89,7 @@ router.get('/content', ...contract.checked('GET /content'), async (req, res) => 
 });
 
 // POST /api/simulator/lead — the gate. { name, email, org? } → { token, leadId }.
+// @does A name, e-mail and optional organisation (public) -> we record the visitor as a lead and let them into the simulator -> a token and lead id.
 router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
@@ -113,6 +115,7 @@ router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (re
 });
 
 // POST /api/simulator/feedback — { section, rating, message, leadId? }.
+// @does A message, an optional section and rating (public) -> we keep the visitor's feedback against their lead -> a done answer, or a refusal if the message is empty.
 router.post('/feedback', ...contract.checked('POST /feedback', schemaOptions), async (req, res) => {
   try {
     const message = String(req.body.message || '').trim();

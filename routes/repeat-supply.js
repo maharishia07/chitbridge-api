@@ -65,6 +65,7 @@ const customerGate = (action) => (req, res, next) => {
 };
 
 /** GET /api/repeat → { agreements: [...], migrated } — the seller's agreements, each with its actions (may/why) */
+// @does Nothing but the signed-in seller -> we list their repeat-supply agreements with what each side may do -> the agreements, or not-migrated.
 router.get('/', auth, async (req, res) => {
   try {
     const R = RS();
@@ -75,6 +76,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 /** POST /api/repeat { chit_id, every, unit, start_on, anchor_day?, until: { runs? | on? }, mode? } → { agreement } — the agreement chit is sent */
+// @does A sent chit and how often it repeats, when it starts and ends -> we create the repeat agreement and send it to the customer -> the agreement.
 router.post('/', auth, writeGate, ...checked('POST /'), async (req, res) => {
   try {
     res.json({ agreement: agreementOf(await RS().create(me(req), who(req), req.body || {})) });
@@ -83,6 +85,7 @@ router.post('/', auth, writeGate, ...checked('POST /'), async (req, res) => {
   }
 });
 /** POST /api/repeat/sweep → { ran, problems } — the seller runs everything due now (what the nightly would do) */
+// @does The seller asks to run what is due now -> we run every agreement that is due, as the nightly would -> how many ran and any problems.
 router.post('/sweep', auth, writeGate, ...checked('POST /sweep'), async (req, res) => {
   try {
     const swept = await RS().sweep(me(req), null, { request_id: req.id || null }); /* SEC-90: a fault in problems[] says the safe sentence and this id */
@@ -92,6 +95,7 @@ router.post('/sweep', auth, writeGate, ...checked('POST /sweep'), async (req, re
   }
 });
 /** GET /api/repeat/:id?chit= → { agreement } — either side; the customer names the chit they hold */
+// @does An agreement id from either side, the customer naming their chit -> we read that agreement -> the agreement, read-only for a third party.
 router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
   try {
     const found = await RS().one(me(req), req.params.id, chitOf(req));
@@ -102,6 +106,7 @@ router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
 });
 
 /* ── the customer's side (through the rail: they hold the agreement chit) ── */
+// @does An agreement id from the customer who holds it -> we record their acceptance -> the updated agreement.
 router.post('/:id/accept', auth, customerGate('accept'), chitNamed, ...checked('POST /:id/accept'), async (req, res) => {
   try {
     res.json({ agreement: agreementOf(await RS().accept(me(req), req.params.id, chitOf(req), who(req), railActions.meOf(req))) });
@@ -110,6 +115,7 @@ router.post('/:id/accept', auth, customerGate('accept'), chitNamed, ...checked('
   }
 });
 /** POST /:id/counter { chit_id, lines?: [{ line_id, quantity }], every?, unit?, start_on?, note } */
+// @does An agreement id and the customer's counter-offer of quantities, timing or note -> we record the counter for the seller to answer -> the updated agreement.
 router.post('/:id/counter', auth, customerGate('amend'), chitNamed, ...checked('POST /:id/counter'), async (req, res) => {
   try {
     res.json({ agreement: agreementOf(await RS().counter(me(req), req.params.id, chitOf(req), who(req), req.body || {})) });
@@ -117,6 +123,7 @@ router.post('/:id/counter', auth, customerGate('amend'), chitNamed, ...checked('
     problem(req, res, repeatFault(e, req));
   }
 });
+// @does An agreement id and a reason from the customer -> we record that they decline the agreement -> the updated agreement.
 router.post('/:id/decline', auth, customerGate('reject'), chitNamed, ...checked('POST /:id/decline'), async (req, res) => {
   try {
     res.json({ agreement: agreementOf(await RS().decline(me(req), req.params.id, chitOf(req), who(req), req.body || {}, railActions.meOf(req))) });
@@ -126,6 +133,7 @@ router.post('/:id/decline', auth, customerGate('reject'), chitNamed, ...checked(
 });
 
 /* ── either side: skip the next run (the customer says why) ── */
+// @does An agreement id and a reason from either side -> we mark the next run to be skipped -> the updated agreement.
 router.post('/:id/skip', auth, writeGate, chitNamed, ...checked('POST /:id/skip'), async (req, res) => {
   try {
     res.json({ agreement: agreementOf(await RS().skip(me(req), req.params.id, chitOf(req), who(req), req.body || {})) });
@@ -147,31 +155,37 @@ const seller = (route, answer) => [
     }
   }
 ];
+// @does An agreement id from the seller -> we agree to the customer's counter so its quantities and timing become the terms -> the updated agreement.
 router.post(
   '/:id/agree',
   auth,
   ...seller('POST /:id/agree', async (req) => ({ agreement: agreementOf(await RS().agree(me(req), req.params.id, who(req))) }))
 );
+// @does An agreement id and a reason from the seller -> we refuse the customer's counter and end the agreement -> the updated agreement.
 router.post(
   '/:id/refuse',
   auth,
   ...seller('POST /:id/refuse', async (req) => ({ agreement: agreementOf(await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {})) }))
 );
+// @does An agreement id from the seller -> we pause the agreement so no runs happen -> the updated agreement.
 router.post(
   '/:id/pause',
   auth,
   ...seller('POST /:id/pause', async (req) => ({ agreement: agreementOf(await RS().pause(me(req), req.params.id, who(req), req.body || {})) }))
 );
+// @does An agreement id from the seller -> we resume a paused agreement -> the updated agreement.
 router.post(
   '/:id/resume',
   auth,
   ...seller('POST /:id/resume', async (req) => ({ agreement: agreementOf(await RS().resume(me(req), req.params.id, who(req))) }))
 );
+// @does An agreement id from the seller -> we end the agreement for good -> the updated agreement.
 router.post(
   '/:id/end',
   auth,
   ...seller('POST /:id/end', async (req) => ({ agreement: agreementOf(await RS().end(me(req), req.params.id, who(req), req.body || {})) }))
 );
+// @does An agreement id from the seller -> we run that agreement now and make the order it is due -> the agreement, whether it ran and any problems.
 router.post(
   '/:id/run',
   auth,

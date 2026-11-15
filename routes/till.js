@@ -186,6 +186,7 @@ async function holdsStockOf(entity_id) {
  * GET /snapshot — everything a counter needs to bill offline, in one call (the story is at the top of this file). The handler only hands the
  * finished body to a counter, or its allow-listed cut to a TV; takeSnapshot below reads the shop in the order its comments explain.
  */
+// @does Optional since time in -> we read the shop's products, customers, suppliers and stock for a counter to hold offline, or a trimmed cut for a screen -> the snapshot.
 router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
   try {
     const taken = await takeSnapshot(req);
@@ -1414,6 +1415,7 @@ function policyBlock(row, flags) {
  * ⚠️ THE STAMP IS THE CATALOGUE'S OWN (itemstatus.stamp), so a status set at the counter is indistinguishable in shape from one
  * set on the product page — one status model, not a counter dialect of it.
  */
+// @does A product and available or unavailable in, a counter key -> we mark the product's counter status, never retired -> the product's new status.
 router.post('/stock', auth, auth.requireScope('till'), ...checked('POST /stock'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1472,6 +1474,7 @@ function stockInput(body) {
  * when it is not. [[feedback-silence-is-the-bug]]
  */
 const STOCK_BULK_MAX = 500;
+// @does Up to 500 product ids and a status in, a counter key -> we mark them all available or unavailable in one go -> how many changed.
 router.post('/stock/bulk', auth, auth.requireScope('till'), ...checked('POST /stock/bulk'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1545,6 +1548,7 @@ function bulkMessage(moved, asked, status) {
  * ⚠️ IT ACCEPTS FACTS, NOT PROSE. Counts, flags, reasons and bill numbers — capped, and never a customer name, a
  * phone number or a line item, because a shop's sales are not ours to collect on a support call.
  */
+// @does A counter's health code in, a paired counter key -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.
 router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /diagnostic'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1615,6 +1619,7 @@ async function lockedCounter(db, entity_id, counterId) {
  * ⚠️ A TILL KEY MAY CLOSE ONLY ITSELF. Keys still cannot manage keys; ending your own is the one exception, and it
  * can only ever make a leaked key less useful.
  */
+// @does A paired counter's own key -> we close that counter for the day so it is no longer listed as open -> a confirmation.
 router.post('/close', auth, auth.requireScope('till'), ...checked('POST /close'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1681,6 +1686,7 @@ function seriesContinues(counter, till, period) {
  * can take the series while unsent bills may still be here. This only tells the shop's Counters screen what it would
  * see if it walked over. Best effort — a break never waits for the line.
  */
+// @does Break or billing in, a paired counter key -> we note what this counter is doing, if it holds the counter -> whether it was recorded.
 router.post('/state', auth, auth.requireScope('till'), ...checked('POST /state'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1710,6 +1716,7 @@ async function recordCounterState(entity_id, counterId, keyId, state, body) {
   });
 }
 
+// @does A product and a screen pick or offer opt-out in, a counter key -> we put the product on the shop screen or off it, or opt it out of an offer -> the product's flags.
 router.post('/flags', auth, auth.requireScope('till'), ...checked('POST /flags'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1799,6 +1806,7 @@ const quickKeys = require('../lib/quick-keys');
  * offered "Front desk, Take-away" to the person standing at Front desk). The key knows, because the register
  * binds it; so the server says, and the page filters on `me` rather than guessing at its own name.
  */
+// @does Nothing in, a counter key -> we list the shop's counters and say which one is this caller -> the counters and me.
 router.get('/counters', auth, auth.requireScope('till'), ...checked('GET /counters'), async (req, res) => {
   try {
     const counters = await require('./counters').listNarrow(auth.entityOf(req));
@@ -1808,6 +1816,7 @@ router.get('/counters', auth, auth.requireScope('till'), ...checked('GET /counte
   }
 });
 
+// @does Nothing in, a counter key -> we list the quick-key groups and their items for the shop -> the groups.
 router.get('/quick-keys/groups', auth, auth.requireScope('till'), ...checked('GET /quick-keys/groups'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1818,6 +1827,7 @@ router.get('/quick-keys/groups', auth, auth.requireScope('till'), ...checked('GE
   }
 });
 
+// @does A business date in, a counter key -> we read which quick-key groups are on for this counter that day -> the active groups.
 router.get('/quick-keys/state', auth, auth.requireScope('till'), ...checked('GET /quick-keys/state'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1832,6 +1842,7 @@ router.get('/quick-keys/state', auth, auth.requireScope('till'), ...checked('GET
   }
 });
 
+// @does A business date and the groups to switch on in, a counter key -> we save which quick-key groups are active for this counter that day -> the saved state.
 router.post('/quick-keys/state', auth, auth.requireScope('till'), ...checked('POST /quick-keys/state'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1848,6 +1859,7 @@ router.post('/quick-keys/state', auth, auth.requireScope('till'), ...checked('PO
   }
 });
 
+// @does Nothing in, a counter key -> we list the products this counter has marked sold out, none for a shop login -> the hidden products.
 router.get('/quick-keys/hidden', auth, auth.requireScope('till'), ...checked('GET /quick-keys/hidden'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1864,6 +1876,7 @@ router.get('/quick-keys/hidden', auth, auth.requireScope('till'), ...checked('GE
 /* ⚠️ IDEMPOTENT ON PURPOSE — a queued offline write can replay, and re-hiding an already-hidden item must be a
    no-op, never a conflict. also_counters (decision 3): the OTHER counters a person chose in the "also mark sold
    out on...?" prompt; this counter itself is always included. */
+// @does A product and optional other counters in, a counter key -> we mark it sold out on this counter and the ones chosen -> the hidden entry.
 router.post('/quick-keys/hide', auth, auth.requireScope('till'), ...checked('POST /quick-keys/hide'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1881,6 +1894,7 @@ router.post('/quick-keys/hide', auth, auth.requireScope('till'), ...checked('POS
   }
 });
 
+// @does A product in, a counter key -> we put it back on this counter and any others chosen -> what was restored.
 router.post('/quick-keys/unhide', auth, auth.requireScope('till'), ...checked('POST /quick-keys/unhide'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1895,6 +1909,7 @@ router.post('/quick-keys/unhide', auth, auth.requireScope('till'), ...checked('P
   }
 });
 
+// @does Nothing in, a counter key -> we read this counter's saved screen layout for its quick keys -> the config and when it changed.
 router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), ...checked('GET /quick-keys/screen-config'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1906,6 +1921,7 @@ router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), ...chec
   }
 });
 
+// @does A screen layout in, a counter key -> we save it as this counter's quick-key layout -> the saved config.
 router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), ...checked('POST /quick-keys/screen-config'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1960,6 +1976,7 @@ router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), ...che
  * ⚠️ AND IT NEVER INVENTS AN URGENCY. "Soon" is not one number — milk is hours, biscuits are weeks — so the caller
  * passes the window and the counter takes it from the shop's own sector, the same place lotfields reads.
  */
+// @does Optional days and quiet window in, a counter key -> we find products near expiry or quiet that are worth putting on offer -> the suggestions.
 router.get('/worth-an-offer', auth, auth.requireScope('till'), ...checked('GET /worth-an-offer'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2104,6 +2121,7 @@ function moveRefusal(done) {
   if (done.refused) return { kind: 'bad', words: said('TILL_BAD_REQUEST', 'validation', done.refused) };
   return done.clash ? { kind: 'clash', words: require('../lib/definitions-contract').words.clash(done.clash.body) } : null;
 }
+// @does An offer and a product in, a counter key -> we move that product into or out of the offer, refusing a clash -> the updated offer.
 router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /offer-item'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2191,6 +2209,7 @@ async function liveOffer(db, entity_id, offer_id) {
 
 /* the price column as the catalogue declares it: required, a number (catwrite.validateAgainst reads this row as it reads schema_fields) */
 const PRICE_FIELD = [{ field_key: 'price', field_name: 'Price', field_type: 'number', required: true }];
+// @does A product and a new price in, a counter key -> we change the shelf price in the shop's currency if the person may, and tell open counters -> the old and new price.
 router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2239,6 +2258,7 @@ function priceInput(body) {
  * Who: a till key (scope till). Trips: the rows (one transaction), the category master, the tax shelf, and the adoption read only when a network line is asked.
  */
 const RECHECK_MAX = 200; /* item ids in one ask: a cart is a handful; 200 is a generous ceiling, as POST /stock/bulk's 500 is for a shelf edit */
+// @does Product ids from the cart in, a counter key, up to 200 -> we read the catalogue's current row for each, saying not found for a deleted one -> the current rows, never any money worked out.
 router.post('/recheck', auth, auth.requireScope('till'), ...checked('POST /recheck'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2447,6 +2467,7 @@ const leaseFault = (e, req) => (e && e.refused ? { status: e.status, ...relayed(
 const leaseDeps = (facts) => ({ knownTill: async (till) => facts.tills.includes(till), withEntity });
 /** is the table there yet (Athi runs b858 by hand)? an answer in words, never a 500 */
 const leaseNotReady = async () => ((await require('../lib/schema').hasTable('till_invoice_lease')) ? null : { status: 409, ...said('LEASE_NOT_READY', 'refused', invoiceLease.NOT_READY_WORDS) });
+// @does How many invoice numbers it wants and how many it has left, from a counter key -> we reserve a block of numbers for this counter to print from, offline too -> the leased block.
 router.post('/invoice-lease', auth, auth.requireScope('till'), ...checked('POST /invoice-lease'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2462,6 +2483,7 @@ router.post('/invoice-lease', auth, auth.requireScope('till'), ...checked('POST 
     problem(req, res, leaseFault(e, req));
   }
 });
+// @does Optional counter and page in, a counter key -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.
 router.get('/invoice-lease/report', auth, auth.requireScope('till'), ...checked('GET /invoice-lease/report'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2476,6 +2498,7 @@ router.get('/invoice-lease/report', auth, auth.requireScope('till'), ...checked(
     problem(req, res, leaseFault(e, req));
   }
 });
+// @does A block id and unused numbers in, a counter key -> we close the block and say what became of every number -> the closed block.
 router.post('/invoice-lease/close', auth, auth.requireScope('till'), ...checked('POST /invoice-lease/close'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2489,6 +2512,7 @@ router.post('/invoice-lease/close', auth, auth.requireScope('till'), ...checked(
     problem(req, res, leaseFault(e, req));
   }
 });
+// @does A product and a tax slab in, the owner only (a key or cashier is refused) -> we set that product's tax rate -> the product with its new rate.
 router.post('/rate', auth, ...checked('POST /rate'), async (req, res) => {
   try {
     /* the door, before any lookup (cb-api round 1, rule 2): a key or a cashier is refused with the same sentence, and nothing is read */
@@ -2549,6 +2573,7 @@ const holderFrom = store.holderFrom;
  * the number a customer is quoted is the number the till can spend, always — and the entries it produces are
  * written the next time that balance is touched, so the ledger catches up on use rather than on a timer.
  */
+// @does A customer by identity or phone in, a counter key -> we add up that customer's reward points and recent entries -> the programme, points and entries.
 router.get('/reward', auth, auth.requireScope('till'), ...checked('GET /reward'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2589,6 +2614,7 @@ function rewardHeld(holder, prog, balance) {
  * → 409 { code: 'BILL_NOT_RECORDED', message } when the server holds no such bill yet — the shop-PC queue retries it after
  *   the bill lands; the web counter had the bill answered before it asked. Nothing is written on a refusal.
  */
+// @does A bill number, customer and spend in, a counter key -> we add the points earned and spend any redeemed once per bill, or note no customer -> the points now.
 router.post('/reward', auth, auth.requireScope('till'), pointsOnce, ...checked('POST /reward'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2661,6 +2687,7 @@ function rewardSettled(holder, prog, spend, settled) {
  * ⚠️ SOMEBODY AT THE COUNTER HAS TO ASK FOR IT. A phone number is not proof of identity, and an automatic merge
  * on a matching number would hand one person's balance to another who typed the same digits.
  */
+// @does Two customers (from, to) in, a counter key -> we move the points from one identity to the other so they are not lost -> how many points moved.
 router.post('/reward/claim', auth, auth.requireScope('till'), pointsOnce, ...checked('POST /reward/claim'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2728,6 +2755,7 @@ function pairCode() {
 }
 
 /** the shop asks for a code — one per screen, so two televisions can be revoked apart */
+// @does A screen name in, a signed-in person (not a key) -> we make a one-time pairing code for a new shop screen -> the code.
 router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
   try {
     pairSweep();
@@ -2795,6 +2823,7 @@ router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
  * ⭐ counters.claim() is the one path, shared with POST /api/counters/:id/open — same 409 COUNTER_HELD,
  * same deliberate takeover. Athi: *"without knock of this counter, the other one should not open?"*
  */
+// @does A counter id, name and takeover choice in, a signed-in owner only -> we connect that counter to the shop and give it a key, taking it over only if asked -> the key, the counter and the shop's name.
 router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), ...checked('POST /enrol'), async (req, res) => {
   /* SEC-FIX3 S9 */
   try {
@@ -2837,6 +2866,7 @@ function enrolClaim(entity_id, owner, body) {
 }
 
 /** the screen exchanges it — no key, because it does not have one yet; that is the entire point */
+// @does A pairing code in, no key yet -> we swap a right code for the screen's own key and shut out repeated wrong guesses -> the screen's key and shop name.
 router.post('/pair/claim', ...checked('POST /pair/claim'), async (req, res) => {
   try {
     pairSweep();
@@ -2900,6 +2930,7 @@ function countWrongCode(address) {
  * nor revocable here, so a counter can never see or switch off another counter or a connector.
  * ⚠️ The key itself is never returned — only its name, dates and last four characters, as the keys screen shows.
  */
+// @does Nothing in, a counter key -> we list the shop screens (televisions) paired to the shop, never their keys -> the screens, their count and the limit.
 router.get('/screens', auth, auth.requireScope('till'), ...checked('GET /screens'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2947,6 +2978,7 @@ async function changeScreenKey(entity_id, keyId, edit) {
   return outcome;
 }
 
+// @does A screen id in, a counter key -> we switch that shop screen off, refusing a counter's own key -> a confirmation.
 router.post('/screens/revoke', auth, auth.requireScope('till'), ...checked('POST /screens/revoke'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2967,6 +2999,7 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), ...checked('POST
  * POST /api/till/screens/rename — { jti, name }: give a paired screen its own name (M151). Screen keys only, like revoke;
  * one transaction, one lock + one write on the shop row. An empty name puts the default ("Screen 1/2…", said by the till) back.
  */
+// @does A screen id and name in, a counter key -> we rename that shop screen, an empty name restoring its default -> the screen's new name.
 router.post('/screens/rename', auth, auth.requireScope('till'), ...checked('POST /screens/rename'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3023,6 +3056,7 @@ router.post('/screens/rename', auth, auth.requireScope('till'), ...checked('POST
  *
  * ⚠️ ONE QUERY for the whole batch. ⚠️ Read-only: it answers, the counter decides and re-sends.
  */
+// @does A counter's list of bills in, a counter key -> we check which the server already holds and which the counter must resend, changing nothing -> a verdict per bill.
 router.post('/reconcile', auth, auth.requireScope('till'), ...checked('POST /reconcile'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3075,6 +3109,7 @@ function reconcileVerdict(item, found) {
   return { no: item.no, verdict: same ? 'ok' : 'absorbed', recorded_as: chit.ref || null };
 }
 
+// @does Nothing in, a counter key -> we count the products the shop can sell and sample a spread of them so the counter can check its own copy -> the total and sample.
 router.get('/verify', auth, auth.requireScope('till'), ...checked('GET /verify'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3173,6 +3208,7 @@ const TILL_SHOP_REFUSED = {
   currency: 'the currency belongs to the whole installation, not to a counter — changing it here would relabel every price rather than convert it',
   reg_type: 'regular or composition is a registration held with the tax authority, and it decides whether tax is charged at all'
 };
+// @does Shop name, address, phone, e-mail or tax number in, a counter key -> we save only those listed fields and say what changed, refusing others with the reason -> the shop's details.
 router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3341,6 +3377,7 @@ function stockBalancesOf(by, inventoryEngine, detail) {
   }
   return { out, notCounted };
 }
+// @does Optional detail flag in, a counter key -> we read the stock on hand per product, with batches and expiry on request -> the balances.
 router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3415,6 +3452,7 @@ async function addItemNames(entity_id, balances) {
  * connect."* The counter's offline job stays what [TILL-106] proved: selling what it already holds.
  */
 /* ⚠️ a whole starter catalogue, or a whole uploaded list — a bulk door, and limited as one ([TILL-112]) */
+// @does A starter catalogue or an uploaded list in, a counter key -> we write the products through the shared catalogue writer, refusing a shop already started -> the products created.
 router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter, ...checked('POST /catalogue'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3503,6 +3541,7 @@ function catalogueAddedWords(added, refusedCount) {
 }
 
 /** ⭐ what a counter may start from — the trades, their outcomes, and what the axiom actually is */
+// @does Nothing in, a counter key -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.
 router.get('/catalogue/blueprints', auth, auth.requireScope('till'), ...checked('GET /catalogue/blueprints'), async (req, res) => {
   try {
     const blueprints = require('../lib/catalogue-blueprint');
@@ -3571,6 +3610,7 @@ const SUMMARY_BILLS = 60,
  * the shop's year + the summaries). 422 NO_COUNTRY / NO_MONEY with the one sentence when the shop's country, money or year is unstated.
  * Who may call: the shop's own session or key (auth, own entity, RLS through readBatch). Without compare=1 the answer is unchanged.
  */
+// @does Optional period, compare and page in -> we roll the counters' bills into the day, week or month, or the trend against last year -> the takings summary.
 router.get('/summary', auth, ...checked('GET /summary'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3705,6 +3745,7 @@ function markLive(rows, liveSummaries) {
 
 const BILLS_PAGE = 100,
   BILLS_MAX = 500; /* the day report's bills: the statement always cuts at the page */
+// @does Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.
 router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3902,6 +3943,7 @@ const select = require('../lib/select'); /* ⭐ the shared selector: one definit
 const { sideOf, CLOSED_STATES } = require('../lib/open-orders'); /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
 const TASKS_PAGE = 40,
   TASKS_MAX = 100; /* the counter's open-order tasks */
+// @does Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.
 router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -3932,6 +3974,7 @@ router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
  * ⚠️ RECEIVED comes from lib/deliverline (events, never a stored total), so a part delivery, a correction, or the counterparty's own
  * claim are all already in it.
  */
+// @does Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.
 router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -4326,6 +4369,7 @@ function doorReason(item, receipts) {
  * ⚠️ THE NARROWEST POSSIBLE WRITE. A till key cannot touch products; this endpoint can append an alias and do nothing else, which is
  * why it exists rather than widening the scope to PATCH /api/products.
  */
+// @does A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.
 router.post('/alias', auth, ...checked('POST /alias'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -4387,6 +4431,7 @@ async function addAlias(db, entity_id, input) {
  * recogniser — a microphone must never be the reason a sale stops.
  * ⚠️ AND IT IS RATE-LIMITED BY SIZE, not by a counter: two megabytes is about a minute, and a counter says three seconds at a time.
  */
+// @does A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.
 router.post('/listen', auth, ...checked('POST /listen'), async (req, res) => {
   try {
     const body = req.body || {};
@@ -4453,6 +4498,7 @@ const ENGINES = {
   verdict: '../lib/verdict.js' /* ADOPTED — one file for node and the page */,
   qr: '../node_modules/qrcode-generator/qrcode.js'
 };
+// @does An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.
 router.get('/engine/:name', auth, ...checked('GET /engine/:name'), (req, res) => {
   const enginePath = ENGINES[String(req.params.name || '')];
   if (!enginePath) return problem(req, res, { status: 404, ...notFound() });

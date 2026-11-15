@@ -49,6 +49,7 @@ const h = (fn) => async (req, res) => {
     problem(req, res, contract.netFault(e, req));
   }
 };
+// @does The details of a business to add to the network (signed-in) -> we register it as a node -> the new network entity.
 router.post(
   '/entities',
   auth,
@@ -56,6 +57,7 @@ router.post(
   checked('POST /entities'),
   h((req) => net.register(req.body))
 );
+// @does A bridge id in the query (signed-in) -> we look up that business in the network -> found with its card, or not found.
 router.get(
   '/entities/lookup',
   auth,
@@ -65,6 +67,7 @@ router.get(
     return c ? { found: true, entity: c } : { found: false };
   })
 );
+// @does A network business id in the address (signed-in) -> we link that listed business to the caller -> the claimed entity.
 router.post(
   '/entities/:id/claim',
   auth,
@@ -89,6 +92,7 @@ router.post(
  * ⚠️ IT DISCLOSES NOTHING NEW. Every field here is already reachable by the caller through the exact calls it
  * replaces — this removes trips, not permission checks. `auth` still applies, as on every route in this file.
  */
+// @does A bridge id in the query (signed-in) -> we find where the business sits and the whole network above it in one call -> the business, its root and all nodes.
 router.get(
   '/place',
   auth,
@@ -134,18 +138,21 @@ router.get(
 );
 
 /* ⚠️ every write and scoped read acts AS the signed-in business — anything in the body that claims to be the actor is ignored */
+// @does A business id in the address (signed-in) -> we read that business and the ones below it, as the caller may see them -> the branch of the network.
 router.get(
   '/entities/:id/subtree',
   auth,
   checked('GET /entities/:id/subtree'),
   h(async (req) => net.subtree(req.params.id, await actorOf(req)))
 );
+// @does A business id in the address (signed-in) -> we read its connections as the caller may see them -> the connections.
 router.get(
   '/entities/:id/connections',
   auth,
   checked('GET /entities/:id/connections'),
   h(async (req) => net.connections(req.params.id, await actorOf(req)))
 );
+// @does Two sides of a connection (signed-in) -> we raise a connection request between those businesses -> the new connection.
 router.post(
   '/connections',
   auth,
@@ -161,6 +168,7 @@ router.post(
     return net.edgeView(_told(out), net.EDGE_ASKED_KEYS);
   })
 );
+// @does A connection id in the address (business owner only) -> we approve that requested connection -> the connection now live.
 router.post(
   '/connections/:id/approve',
   auth,
@@ -169,6 +177,7 @@ router.post(
   checked('POST /connections/:id/approve'),
   h(async (req) => _answer(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we decline that requested connection -> the connection as declined.
 router.post(
   '/connections/:id/decline',
   auth,
@@ -177,6 +186,7 @@ router.post(
   checked('POST /connections/:id/decline'),
   h(async (req) => _answer(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we pause that connection without ending it -> the connection as suspended.
 router.post(
   '/connections/:id/suspend',
   auth,
@@ -185,6 +195,7 @@ router.post(
   checked('POST /connections/:id/suspend'),
   h(async (req) => _answer(await net.suspend(req.params.id, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we turn a suspended connection back on -> the connection as active.
 router.post(
   '/connections/:id/resume',
   auth,
@@ -193,6 +204,7 @@ router.post(
   checked('POST /connections/:id/resume'),
   h(async (req) => _answer(await net.resume(req.params.id, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we end that connection -> the connection as ended.
 router.post(
   '/connections/:id/disconnect',
   auth,

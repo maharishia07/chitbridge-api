@@ -32,6 +32,7 @@ function checked(route) {
  */
 
 /** GET /api/tax/invoice/:chit_id — the INV-01 block for MY copy of one chit (frozen, or live + provisional). */
+// @does A chit id in the address (signed-in) -> we read the tax invoice block of the caller's own copy, hiding purchases from a cost-blind assistant -> the invoice, or not found.
 router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async (req, res) => {
   try {
     const me = ctx(req);
@@ -45,6 +46,7 @@ router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async
 });
 
 /** GET /api/tax/ledger?month=YYYY-MM — output · ITC · net for my GSTIN in that month, with the rows behind it. */
+// @does Signed-in shop with a month -> we total output tax, input credit and the net for that month with the rows behind them -> the monthly tax ledger.
 router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   try {
     const me = ctx(req);
@@ -97,6 +99,7 @@ function droppedWords(dropped, reasons) {
 
 /** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 const GSTR_FORMS = ['gstr1', 'gstr3b']; /* the returns this file builds; absent → gstr1 (the contract's default), a form GIVEN and not one of these is a 400, never gstr1 (ACC-334) */
+// @does Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const form = String(req.query.form || 'gstr1').toLowerCase();
@@ -144,6 +147,7 @@ function badLine(lines) {
   return null;
 }
 
+// @does Lines naming items (signed-in, tax scope) -> we look up the tax rate that applies to each, with no quantity or price needed -> the rate per line.
 router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);
@@ -183,6 +187,7 @@ router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), a
  * Who may call: a signed-in session of the shop, or the shop's API key with scope `tax` (or `services`). Trips: 2 (identities, shelf) — the shelf
  * is read only when a line needs a rate or a price.
  */
+// @does Lines with items, quantities and prices (signed-in, tax scope) -> we work out the tax on each line from the shop's catalogue and country -> the tax per line and the totals.
 router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /compute'), async (req, res) => {
   try {
     const body = req.body || {};

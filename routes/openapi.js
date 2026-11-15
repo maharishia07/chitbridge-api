@@ -33,6 +33,7 @@ function assemble(req) {
     paths
   };
 }
+// @does Nothing in -> we assemble the description of the API's doors -> the OpenAPI document (public).
 router.get('/openapi.json', ...OPENAPI.checked('GET /openapi.json'), (req, res, next) => {
   try {
     res.json(assemble(req));

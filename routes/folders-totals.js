@@ -38,6 +38,7 @@ const groupsum = require('../lib/groupsum');
  * ⚠️ NO ARITHMETIC LIVES HERE. The requirement is lib/consolidate.js (proved 27/0), the matching is
  * lib/itemmatch.js, the value is lib/measure.js. This route chooses the rows and nothing else.
  */
+// @does Track, optional folder and ticked chits in -> we add up the lines and money across those chits you hold -> one combined sum, cost-blind for readers who may not see costs.
 router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);
@@ -88,6 +89,7 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
  * its visible branches — so each folder carries `own` (filed directly here) and `tree` (this folder and everything
  * under it). Both are given, because collapsing them loses the ability to check either.
  */
+// @does Task or Order track in -> we count every chit on the track once and check total equals unfiled plus each folder -> the counts per folder and whether they reconcile.
 router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);
@@ -189,6 +191,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
  * it is measure() over the whole array, so medians and rates are computed across the real population rather
  * than averaged from two halves, which is the classic way a "combined" figure becomes quietly wrong.
  */
+// @does An optional since-date in -> we measure the chits you received and sent from that date, overdue by the rail's one rule -> the MIS figures for both sides.
 router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);

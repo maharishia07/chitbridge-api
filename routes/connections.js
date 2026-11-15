@@ -20,6 +20,7 @@ const checked = (route) => [contract.trimmedFor(route), schemaValidate(contract.
 
 // ─── POST /connections/request ───────────────────────────────
 // Entity A sends connection request to Entity B
+// @does Another shop's id and a note in -> we send them a connection request, refusing yourself -> the pending request.
 router.post('/request', auth, checked('POST /request'), async (req, res) => {
   try {
     const from_id = req.identity.identity_id;
@@ -103,6 +104,7 @@ router.param('id', uuidParam(contract.words.requestUnknown));
 
 // ─── PUT /connections/:id/respond ────────────────────────────
 // Entity B accepts or rejects connection request
+// @does A connection id and accept or reject in -> the shop asked answers that pending request -> the updated connection.
 router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) => {
   try {
     const connection_id = req.params.id;

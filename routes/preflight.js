@@ -13,6 +13,7 @@ const { PREFLIGHT } = require('../lib/plumbing-contract');
 const router = express.Router();
 let options = {};
 
+// @does A browser's permission check in -> we answer with the cross-origin headers for allowed origins -> an empty preflight reply (public).
 router.options('*', ...PREFLIGHT.checked('OPTIONS *'), (req, res, next) => {
   try {
     cors(options)(req, res, (err) => next(err));

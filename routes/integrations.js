@@ -248,6 +248,7 @@ function kitManifest() {
   return { version, at: new Date().toISOString(), files };
 }
 
+// @does Signed-in caller -> we read the connector kit manifest -> the kit version, time and file list.
 router.get('/kit', auth, ...filterFor('/kit'), (req, res) => {
   try {
     const manifest = kitManifest();
@@ -257,6 +258,7 @@ router.get('/kit', auth, ...filterFor('/kit'), (req, res) => {
     fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
   }
 });
+// @does A kit file name in the address (signed-in) -> we serve it only when it is on the kit list -> that kit file, or not found.
 router.get('/kit/*', auth, schemaValidate(KIT_FILE_OPERATION), (req, res) => {
   try {
     /* ⚠️ the whitelist IS the path check: a name not on the list is not a file, whatever it looks like */
@@ -274,6 +276,7 @@ router.get('/kit/*', auth, schemaValidate(KIT_FILE_OPERATION), (req, res) => {
 });
 
 /** the instruction document of a connector, as markdown — shown on the Integrations screen and shipped in the kit */
+// @does A connector id in the address (public) -> we read its instruction document -> the document as markdown, or not found.
 router.get('/docs/:id', schemaValidate(DOCS_OPERATION), (req, res) => {
   try {
     const c = CATALOGUE.find((x) => x.id === req.params.id);
@@ -361,6 +364,7 @@ async function countryOf(req) {
 
 /* signed in → the zip carries a key; anonymous (a bare link) → the placeholder, as before. auth only runs when credentials are offered. */
 const authIfOffered = (req, res, next) => (req.headers.authorization || req.headers['x-api-key'] ? auth(req, res, next) : next());
+// @does Optionally signed in, with the shop country -> we list the connectors available for that country with download links -> the connector catalogue.
 router.get('/catalogue', authIfOffered, ...filterFor('/catalogue'), async (req, res) => {
   try {
     const country = await countryOf(req);
@@ -379,6 +383,7 @@ router.get('/catalogue', authIfOffered, ...filterFor('/catalogue'), async (req, 
     fromError(req, res, e); /* ⚠️ was outside any try: a failing country pack left the request unanswered — no old keys to keep */
   }
 });
+// @does A connector id in the address, optionally signed in -> we pack that connector, with the shop key when signed in -> the connector kit file, or a refusal if not allowed here.
 router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), async (req, res) => {
   try {
     const c = CATALOGUE.find((x) => x.id === req.params.id);
@@ -457,6 +462,7 @@ router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), a
 /* the checked-in connectors: ONE statement and row shape — lib/connector-rows.js (SET-35: the Home card reads it too); health stays routes/connectors' */
 const { KIT_ROWS, rowOut, connectorsOf, unknownKits } = require('../lib/connector-rows');
 
+// @does A connector's name, host and state sent with its key -> we record that this connector is alive -> the saved status.
 router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(HEARTBEAT_OPERATION, KIT_REFUSAL()), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -638,6 +644,7 @@ const approverIsOwner = (req, res, next) =>
   req.api_key || isOwner(req)
     ? next()
     : problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: OWNER_ONLY_WORDS, legacy: { error: 'Forbidden', code: 'OWNER_ONLY', may: false, why: OWNER_ONLY_WORDS, message: OWNER_ONLY_WORDS } });
+// @does A connector id in the address (signed-in owner, never a key) -> we approve its enrolment so it may connect -> the enrolment now approved.
 router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), approverIsOwner, async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.approveKey, legacy: { error: 'Forbidden', message: SAID.approveKey } });
@@ -683,6 +690,7 @@ function refKept(body) {
   if (ref.length > REF_MAX) logger.warn('integrations POST /books: the kit sent a ref of ' + ref.length + ' characters; kept the first ' + REF_MAX, { chit_id: body.chit_id });
   return ref.slice(0, REF_MAX);
 }
+// @does A chit id with kind, system, reference and outcome from a connector key -> we note on our copy of the chit what the books system did with it -> the saved record.
 router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, BOOKS_REFUSAL), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -729,6 +737,7 @@ router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
+// @does Signed-in shop with an optional page -> we read its connectors and when each was last seen -> a page of connector status.
 router.get('/status', auth, schemaValidate(STATUS_OPERATION), ...filterFor('/status'), async (req, res) => {
   try {
     const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]);
@@ -762,6 +771,7 @@ const STREAM_LIST = [
   { id: 'receipt', label: 'Receipt', dir: 'out', what: 'a payment you marked becomes a receipt against the invoice' },
   { id: 'party', label: 'Parties', dir: 'out', what: 'a counterparty becomes a customer or supplier record' }
 ];
+// @does Signed-in shop -> we read which data streams exist, which system owns each, and its connectors -> the streams, their owners and connectors.
 router.get('/streams', auth, ...filterFor('/streams'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -787,6 +797,7 @@ function ownersAfter(current, body) {
   }
   return { next, touched };
 }
+// @does Which system owns each data stream (signed-in person, never a key) -> we save those owners for the shop -> the streams as saved.
 router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, res) => {
   try {
     if (!req.identity || req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.streamsKey, legacy: { error: 'Forbidden', message: SAID.streamsKey } });
@@ -822,6 +833,7 @@ router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, 
  * outside. The flag is on the chit, so the connector obeys it (core.booksGate) and stops retrying, and reconciliation stops asking for
  * a person. Reversible: sending false lifts it. Recorded with who and when — a row that vanishes with no trace is worse than a row.
  */
+// @does A chit id and on or off (signed-in person, never a key) -> we mark that order as not meant for the books, or lift it, with who and when -> a skipped true or false.
 router.post('/books/skip', auth, schemaValidate(SKIP_OPERATION, KIT_REFUSAL(CHIT_SAID)), async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.skipKey, legacy: { error: 'Forbidden', message: SAID.skipKey } });
@@ -854,6 +866,7 @@ function nameOfParty(list) {
   if (typeof pick === 'string') return pick;
   return pick.display_name || pick.name || pick.user_id || pick.handle || null;
 }
+// @does Signed-in shop with an optional number of days -> we check each order for an answer from the books system -> one row per order with its state and the counts.
 router.get('/reconcile', auth, schemaValidate(RECONCILE_OPERATION), ...filterFor('/reconcile'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -961,6 +974,7 @@ async function publicEntityOfHandle(h) {
 }
 /* K-1 (API-10): a handle holding a character text cannot store (a NUL) names no shop — the unknown-handle 404 (S41), before the database turns it into a 500 */
 router.param('handle', textParam({ status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } }));
+// @does A shop handle and optional codes (public) -> we ask any listening connector of that shop to re-read stock -> whether anyone is listening and an ask id.
 router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);
@@ -982,6 +996,7 @@ router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
+// @does A shop handle in the address (public) -> we read the stock figures that shop shows publicly, if it is not private -> the available quantities, or not found.
 router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), ...filterFor('/stock/:handle'), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);
@@ -1004,6 +1019,7 @@ router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), ...filterFor('/sto
 });
 /* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */
 const PM = require('../lib/profile-map');
+// @does Signed-in shop -> we read its profile and show what we look for, where each piece can come from and how far it is trusted -> the profile map.
 router.get('/profile-map', auth, ...filterFor('/profile-map'), async (req, res) => {
   try {
     const P = require('../lib/profile');
@@ -1040,6 +1056,7 @@ async function sendsOtherTaxId(req) {
   const current = await require('../lib/profile').profileValues(auth.entityOf(req));
   return taxIdDoor.taxIdDiffers(current.gstin && current.gstin.value, sent);
 }
+// @does Shop profile fields read from their system, sent with a connector key -> we keep them with their source, refusing a different tax number -> the profile now held.
 router.post('/profile', auth, auth.requireScope('connector'), schemaValidate(PROFILE_OPERATION, KIT_REFUSAL(PROFILE_FIELDS_SAID())), ...filterFor('/profile', 'POST'), taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the tax number is the owner's; a connector key is not a person */, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

@@ -148,6 +148,7 @@ async function senderWithKind(entity_id, chit) {
 }
 
 /** ⭐ WHAT THIS DELIVERY OFFERS — reads only. Grouped the way a person reads it, never as forty rows. */
+// @does A delivery chit id in -> we read what its lines would add to your catalogue, grouped the way a person reads it, writing nothing -> the offer.
 router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -185,6 +186,7 @@ router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, 
  * your own way of doing" — so the shop has to have looked at it. Accepting a supplier's wording by default is how
  * a catalogue slowly becomes somebody else's.
  */
+// @does A delivery chit id and the lines you accept in -> we add each as your own catalogue item under your name and SKU, refusing those that fail the rules now -> what was added and what was refused.
 router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);

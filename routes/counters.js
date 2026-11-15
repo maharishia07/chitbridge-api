@@ -58,6 +58,7 @@ const ownerOnly = require('../lib/owner').gate(OWNER_SAYS);
 const bookedPrefixes = (db, entity_id) => keys.bookedPrefixes(db, entity_id);
 
 
+// @does A signed-in session in -> we read your shop's till counters with who holds each and the phone assigned -> the counters, how many are free and whether you may manage them.
 router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -74,6 +75,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
 });
 
 /** ⭐ CREATE — online by construction (this is the web). The id is the lowest one no counter holds and nothing was billed under. */
+// @does A counter name in -> we make the next free till counter id for your shop, owner only, refusing when none is left -> the new counter.
 router.post('/', auth, sessionOnly, ownerOnly, checked('POST /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -101,6 +103,7 @@ router.post('/', auth, sessionOnly, ownerOnly, checked('POST /'), async (req, re
   }
 });
 
+// @does A counter id and a name in -> we rename that till counter, owner only -> ok with the new name, or 404.
 router.patch('/:id', auth, sessionOnly, ownerOnly, checked('PATCH /:id'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -130,6 +133,7 @@ router.patch('/:id', auth, sessionOnly, ownerOnly, checked('PATCH /:id'), async 
  * ⚠️ A label still held by another phone is NOT taken from it here: that phone may be billing under it offline right now.
  * It moves off at its next sign-in/snapshot, and the newly assigned phone takes the label after that (`held_by` says who).
  */
+// @does A counter id and a mobile number in -> we assign that phone to the counter, or clear it, owner only -> the updated counter.
 router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only the owner can assign a counter.'), checked('POST /:id/assign'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -158,6 +162,7 @@ router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only
  * writes the same row, so doing it inside the lock would wait on itself — and then the key is bound. Two people
  * pressing Open at the same moment: one gets the counter, the other is told who has it.
  */
+// @does A counter id in -> we open that till counter for the owner and hand it a key, refusing one already open -> the open counter, or a 409 naming who holds it.
 router.post('/:id/open', auth, sessionOnly, ownerOnly, checked('POST /:id/open'), async (req, res) => {
   const entity_id = auth.entityOf(req);
   const id = String(req.params.id || '').toUpperCase();
@@ -222,6 +227,7 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, checked('POST /:id/open')
  * CLOSE, from the counter. If that PC ever comes back, its key is refused, and its bills are recovered by pairing
  * it and bringing them in (the clash guard and renumbering then keep the books unique).
  */
+// @does A counter id in -> we close the till key held on that counter and free it, owner only -> a confirmation, or 404.
 router.post('/:id/release', auth, sessionOnly, ownerOnly, checked('POST /:id/release'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

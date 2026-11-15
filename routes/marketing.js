@@ -33,6 +33,7 @@ function noKey(req, res, next) {
   next();
 }
 
+// @does Optional filters in -> we read which customers came back after an offer -> the who-came-back results (signed-in people, not keys).
 router.get('/came-back', auth, noKey, schemaValidate(contract.operationFor('GET /came-back')), async (req, res) => {
   try {
     res.json(await results.cameBack(auth.entityOf(req), { query: req.query, sidesOf: (rows) => costView.sidesFor(req, auth.entityOf(req), rows) }));
