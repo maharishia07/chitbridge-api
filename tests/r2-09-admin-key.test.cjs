@@ -50,6 +50,11 @@ const ask = (server, door, key) => new Promise((resolve) => {
     process.env.CB_ADMIN_KEY = 'x'.repeat(32);
     check((await ask(server, door, 'x'.repeat(32))).status !== 503, door + ': 32 characters arms it');
   }
+  /* past the budget: the 31st wrong key in one window is a 429 from the limiter, not a 403 */
+  process.env.CB_ADMIN_KEY = LONG;
+  let last = 0;
+  for (let i = 0; i < 32; i++) last = (await ask(server, 'revoke', 'wrong')).status;
+  check(last === 429, 'revoke: past the 30-per-window budget the door answers 429 (last answer ' + last + ')');
   server.close();
   console.log(checks + ' checks' + (failed ? ', ' + failed + ' did not hold' : ''));
   process.exit(failed ? 1 : 0);

@@ -595,7 +595,7 @@ const EXTRAS = [
   X('overlay-grade-not-named', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=rice', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, GRADED_ROWS) } }),
   X('delivery-recorded', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } } }),
   /* R2-07: bill-use.set throws the database's words inside a 200 answer: the caller reads the safe sentence and the request id, never the cause */
-  X('delivery-use-fails-inside-200', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }], use: 'resale' }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, 'bill-use': { set: async () => { throw new Error(SECRET_SQL); } }, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } } }),
+  X('delivery-use-fails-inside-200', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }], use: 'resale' }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, 'bill-use': { set: async () => { throw new Error(SECRET_SQL); } }, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } }, say: (b) => !!(b && b.use && /^Something went wrong.* [(]request [^)]+[)]$/.test(b.use.refused)) }),
   X('delivery-replayed', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2, client_ref: 'd1' }] }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 0, replayed: true }] }) } } }),
   /* ── S34 (API-8 output_allowlist, part 2): the READY answer of the housekeeping, message, dispute and trace routes ── */
   X('messages-paged', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?page=1&limit=1', setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
@@ -747,6 +747,7 @@ async function checkRoutes(port, scenarios, recording, held) {
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     check(label + ': answers (not a hang)', answer.status !== 0);
     if (scenario.expect !== undefined) check(label + ': answers the status it is built to reach (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.text.slice(0, 200)]);
+    if (scenario.say) check(label + ': the answer says the safe sentence with its request id', scenario.say(answer.json), answer.text.slice(0, 200));
     if (answer.status < 400) continue;
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (inherited(scenario, answer)) continue;

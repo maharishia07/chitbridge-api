@@ -15,6 +15,8 @@ const auth = require('../middleware/auth');
 const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { faultOf, bindingUnknown, adminOff, adminWrongKey, checked } = require('../lib/channels-contract'); // API-4: the contract (each route's operation) and the words of a refusal
 const channels = require('../lib/channels');
+const crypto = require('crypto');
+const log = require('../lib/logger');
 
 const entityId = (req) => auth.entityOf(req);
 
@@ -101,11 +103,12 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
  * work at all. A missing secret must never widen access; that is the same rule the webhooks follow.
  */
 const ADMIN_KEY_MIN = 32;
+if (process.env.CB_ADMIN_KEY && process.env.CB_ADMIN_KEY.length < ADMIN_KEY_MIN) log.warn('channels: CB_ADMIN_KEY is under ' + ADMIN_KEY_MIN + ' characters, so the platform approval doors stay off until it is lengthened');
 /* R2-09: both sides hashed first, so the compare is of two equal-length digests and a wrong key leaks neither its content nor the real key's length */
 const sameSecret = (given, key) => {
   if (typeof given !== 'string') return false;
-  const digest = (v) => require('crypto').createHash('sha256').update(v).digest();
-  return require('crypto').timingSafeEqual(digest(given), digest(key));
+  const digest = (v) => crypto.createHash('sha256').update(v).digest();
+  return crypto.timingSafeEqual(digest(given), digest(key));
 };
 function admin(req, res, next) {
   const key = process.env.CB_ADMIN_KEY;
