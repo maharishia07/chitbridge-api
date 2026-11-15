@@ -10,15 +10,15 @@
   "columns": {
    "strict_input": {
     "applies": 332,
-    "failing": 4
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 649,
-    "failing": 6
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 203,
-    "failing": 4
+    "failing": 0
    },
    "idempotent_money_write": {
     "applies": 10,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 151
+  "output_allowlist_from_recordings": 157
  },
  "machine_columns": [
   "schema_in",
@@ -4246,19 +4246,24 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 85,
-   "hash": "6838c4ea85a3a23e",
+   "line": 93,
+   "hash": "34babbd8baf53839",
    "does": "A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.",
    "errors": {
-    "count": 0,
+    "count": 3,
     "statuses": [
      401,
      403,
+     404,
      422,
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "ACTION_NOT_FOR_YOU",
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -4272,13 +4277,13 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -4295,13 +4300,16 @@
    "declared": [
     401,
     403,
+    404,
     422,
     500,
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -4341,11 +4349,11 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 87,
-   "hash": "1efe3c4efef536c6",
+   "line": 95,
+   "hash": "b28d95fd3434f0b4",
    "does": "An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).",
    "errors": {
-    "count": 0,
+    "count": 3,
     "statuses": [
      401,
      403,
@@ -4354,7 +4362,11 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "ACTION_NOT_FOR_YOU",
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -4368,14 +4380,14 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -4397,8 +4409,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -4454,7 +4468,8 @@
     ]
    },
    "reads": [
-    "books_access_grant"
+    "books_access_grant",
+    "identities"
    ],
    "writes": [],
    "money": false,
@@ -29571,7 +29586,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 67,
-   "hash": "f58ea48fddcbdba6",
+   "hash": "968b93945cedab0f",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
     "count": 1,
@@ -29579,7 +29594,6 @@
      401,
      403,
      404,
-     409,
      422,
      500,
      503
@@ -29607,7 +29621,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -29628,7 +29642,6 @@
     401,
     403,
     404,
-    409,
     422,
     500,
     503
@@ -29654,7 +29667,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f58ea48fddcbdba6"
+    "stale_since": "968b93945cedab0f"
    },
    "status": "partial",
    "callers": [
@@ -33452,11 +33465,11 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 89,
-   "hash": "315bc7629275e2cb",
+   "line": 97,
+   "hash": "5e0ee615a7af015a",
    "does": "A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.",
    "errors": {
-    "count": 0,
+    "count": 4,
     "statuses": [
      401,
      403,
@@ -33466,7 +33479,12 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "ACTION_FIRM_ONLY",
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER",
+     "STORE_MISMATCH"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -33480,13 +33498,13 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -33510,8 +33528,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -33551,11 +33571,11 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 98,
-   "hash": "887553d588b8f0b6",
+   "line": 106,
+   "hash": "6de8ed14ad8d4b05",
    "does": "An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.",
    "errors": {
-    "count": 0,
+    "count": 4,
     "statuses": [
      401,
      403,
@@ -33565,7 +33585,12 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "LEDGER_OFF",
+     "OWNER_ONLY",
+     "SIGN_IN_FOR_LEDGER",
+     "STORE_MISMATCH"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -33579,14 +33604,14 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -33609,8 +33634,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -33650,11 +33677,11 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 93,
-   "hash": "3ef0640a42dde5ec",
+   "line": 101,
+   "hash": "a73d432e769c87eb",
    "does": "An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.",
    "errors": {
-    "count": 0,
+    "count": 4,
     "statuses": [
      401,
      403,
@@ -33664,7 +33691,12 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "ACTION_NOT_FOR_YOU",
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER",
+     "STORE_MISMATCH"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -33678,14 +33710,14 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -33708,8 +33740,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -33749,11 +33783,11 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 91,
-   "hash": "88201fd6d91bb3e6",
+   "line": 99,
+   "hash": "16150ea11b6d4d93",
    "does": "An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.",
    "errors": {
-    "count": 0,
+    "count": 4,
     "statuses": [
      401,
      403,
@@ -33763,7 +33797,12 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "ACTION_FIRM_ONLY",
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER",
+     "STORE_MISMATCH"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -33777,14 +33816,14 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -33807,8 +33846,10 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
