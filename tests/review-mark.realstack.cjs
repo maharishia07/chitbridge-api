@@ -91,7 +91,7 @@ const day = new Date().toISOString().slice(0, 10);
 
 async function main() {
   const P = await business('p'); const M1 = await business('1'); const M3 = await business('3'); const Q = await business('q');
-  await join(P, M1); await join(P, M3); await join(Q, M1);
+  await join(P, M1); await join(P, M3); await join(Q, P);
   const U = await person(P, 'u', 'commenter'); const A = await person(P, 'a', 'editor'); const V = await person(Q, 'v', 'commenter');
   const app = express();
   app.use(require(path.join(API, 'lib', 'trips')).middleware());
