@@ -2367,7 +2367,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
     problem(req, res, refusalOf(err, req));
   }
 });
-// @does Optionally a year in -> we read each month's lock state, figures, tax return state and change trail -> the periods.
+// @does Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.
 router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2375,7 +2375,13 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
     const { rows, figures, setting, taxStates, trail } = await withEntity(e, async (h) => {
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
-      return { rows: all, figures: await S.periodFigures(h, e, fy), setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy) };
+      const figures = await S.periodFigures(h, e, fy);
+      /* ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
+      const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
+      const withSales = figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
+      const pls = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
+      withSales.forEach((item, n) => { item.sales_minor = Number(pls[n].total_income_minor || 0); });
+      return { rows: all, figures, setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy) };
     });
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));

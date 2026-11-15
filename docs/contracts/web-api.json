@@ -784,7 +784,12 @@
      "counted": false,
      "why": null,
      "form": "GSTR-3B",
-     "short": "GST"
+     "short": "GST",
+     "earlier": {
+      "payable_minor": 0,
+      "before": "2027-04-01",
+      "counted": false
+     }
     },
     "series": [
      {
@@ -809,7 +814,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "gst.earlier",
+    "gst.earlier.before",
+    "gst.earlier.counted",
+    "gst.earlier.payable_minor"
+   ]
   },
   "GET /api/books/cheques": {
    "status": 200,
