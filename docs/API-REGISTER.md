@@ -224,8 +224,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/kyb/risk | kyb | routes/kyb.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/kyb/yourself | kyb | routes/kyb.js:18 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/marketing/came-back | marketing | routes/marketing.js:37 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/marks | marks | routes/marks.js:66 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| GET | /api/marks/:thread_id/messages | marks | routes/marks.js:103 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial | yes | yes | no |
+| GET | /api/marks | marks | routes/marks.js:66 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/marks/:thread_id/messages | marks | routes/marks.js:103 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/network-design | network-design | routes/network-design.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/network-design/availability | network-design | routes/network-design.js:482 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/network-design/stores | network-design | routes/network-design.js:444 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -521,9 +521,9 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/keys | keys | routes/keys.js:159 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/kyb/credential | kyb | routes/kyb.js:27 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/kyb/field | kyb | routes/kyb.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/marks | marks | routes/marks.js:95 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
-| POST | /api/marks/:thread_id/messages | marks | routes/marks.js:106 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial | yes | yes | no |
-| POST | /api/marks/query | marks | routes/marks.js:81 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
+| POST | /api/marks | marks | routes/marks.js:95 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/marks/:thread_id/messages | marks | routes/marks.js:106 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/marks/query | marks | routes/marks.js:81 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/network-design/build | network-design | routes/network-design.js:205 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/network-design/reissue | network-design | routes/network-design.js:321 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/network-design/validate | network-design | routes/network-design.js:166 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -3306,31 +3306,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/marks** · marks · unassigned · partial
 - does: An adopter and a list of record ids, or open=1 for the open items -> we read the latest mark of each record (or the open queries with their age and "checked n of m") in one read -> the marks, the words and what you may do.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/marks/:thread_id/messages** · marks · unassigned · partial
 - does: A thread id in -> we read the marked record's mark, its history and the replies with what you may do -> the conversation, or 404 for a thread that is not these books'.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/marks** · marks · unassigned · partial
 - does: An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/marks/:thread_id/messages** · marks · unassigned · partial
 - does: A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/marks/query** · marks · unassigned · partial
 - does: An adopter and more record ids than a query string carries in a body -> we read the latest mark of each (a read, not a write) -> the marks, the words and what you may do.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 ### network (cb-network, 12 of 12 with a description)

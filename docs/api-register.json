@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 654,
-    "failing": 5
+    "failing": 0
    }
   },
   "reported": {
@@ -21026,7 +21026,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -21068,7 +21068,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 1,
     "wire": null,
     "screens": []
    },
@@ -21125,7 +21125,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -21167,7 +21167,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 3,
     "wire": null,
     "screens": []
    },
@@ -51715,7 +51715,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51757,7 +51757,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -51815,7 +51815,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51858,7 +51858,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -51914,7 +51914,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51956,7 +51956,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 1,
     "wire": null,
     "screens": []
    },

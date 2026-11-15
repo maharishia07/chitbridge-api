@@ -5352,6 +5352,51 @@
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"
       }
+    },
+    "GET /api/marks": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/query": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
     }
   }
 }
