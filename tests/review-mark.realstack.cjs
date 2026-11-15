@@ -128,6 +128,8 @@ async function main() {
     const day1 = await call(owner, 'GET', '/api/books/daybook?from=' + day + '&to=' + day);
     const e1row = (day1.body.entries || []).find((e) => e.entry_id === E1.entry_id), e2row = (day1.body.entries || []).find((e) => e.entry_id === E2.entry_id);
     ok('1d the day book embeds the mark on E1 and null on E2, with the actions and the words', e1row && e1row.mark && e1row.mark.class === 'clear' && e2row && e2row.mark === null && day1.body.mark_actions && Array.isArray(day1.body.mark_vocabulary), JSON.stringify(day1.body).slice(0, 400));
+    const byBody = await call(owner, 'POST', '/api/marks/query', { body: { adopter: 'acc.audit', ids: [E1.entry_id, E2.entry_id] } });
+    ok('1e POST /query (ids in a body, a READ) answers as the list does; a stranger\'s ids read null', byBody.status === 200 && byBody.body.marks[E1.entry_id].class === 'clear' && byBody.body.marks[E2.entry_id] === null && Array.isArray(byBody.body.not_found), JSON.stringify(byBody));
     const again = await asAud('POST', '/api/marks', mk(E1.entry_id, 'checked'));
     ok('2 an identical press is 200 unchanged and writes no row', again.status === 200 && again.body.unchanged === true && (await marksOf(M1)) === before + 1, JSON.stringify(again));
 
