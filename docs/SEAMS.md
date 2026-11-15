@@ -68,10 +68,10 @@ of file each thing is; this says what already does the job.
 | 43 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 43 | `gate` | `country-setup.js` | gate(h, entity): |
 | 41 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
+| 41 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 41 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 40 | `page` | `cap-catalogue.js` |  |
 | 40 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
-| 40 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 40 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 39 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 39 | `shell` | `pick.js` |  |
