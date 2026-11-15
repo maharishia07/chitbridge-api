@@ -120,15 +120,14 @@
    "foreign_id_404": true
   },
   "GET /api/books-grants": {
-   "bfla_role_check": true,
    "output_allowlist": true
   },
   "GET /api/books-grants/consent": {
    "output_allowlist": true
   },
   "GET /api/books-grants/log": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "GET /api/books/accounts": {
    "output_allowlist": true
@@ -762,8 +761,8 @@
    "bfla_role_check": true
   },
   "PATCH /api/books-grants/:id": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/books/payments/:id": {
    "output_allowlist": true,
@@ -880,12 +879,12 @@
    "output_allowlist": true
   },
   "POST /api/books-grants": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books-grants/:id/revoke": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books/accounts": {
    "output_allowlist": true

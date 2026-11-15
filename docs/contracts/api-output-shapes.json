@@ -8183,7 +8183,10 @@
             "type": "string"
           },
           "revoked_at": {},
-          "revoked_by": {}
+          "revoked_by": {},
+          "warnings": {
+            "type": "array"
+          }
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -8252,6 +8255,9 @@
           },
           "revoked_by": {
             "type": "string"
+          },
+          "actions_withdrawn": {
+            "type": "integer"
           }
         },
         "additionalProperties": false,
