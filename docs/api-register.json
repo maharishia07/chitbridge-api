@@ -3,7 +3,7 @@
  "stage": "2b",
  "counts": {
   "routes": 649,
-  "no_does": 7,
+  "no_does": 0,
   "not_started": 0,
   "partial": 56,
   "meets": 593,
@@ -4246,9 +4246,9 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 84,
+   "line": 85,
    "hash": "2005d42e7dfb3e95",
-   "does": "",
+   "does": "A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -4341,9 +4341,9 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 85,
+   "line": 87,
    "hash": "1efe3c4efef536c6",
-   "does": "",
+   "does": "An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).",
    "errors": {
     "count": 0,
     "statuses": [
@@ -4440,7 +4440,7 @@
    "file": "routes/books-grants.js",
    "line": 46,
    "hash": "6d805a0117fb327d",
-   "does": "",
+   "does": "Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).",
    "errors": {
     "count": 1,
     "statuses": [
@@ -33450,9 +33450,9 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 86,
+   "line": 89,
    "hash": "315bc7629275e2cb",
-   "does": "",
+   "does": "A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -33549,9 +33549,9 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 92,
+   "line": 98,
    "hash": "887553d588b8f0b6",
-   "does": "",
+   "does": "An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -33648,9 +33648,9 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 88,
+   "line": 93,
    "hash": "3ef0640a42dde5ec",
-   "does": "",
+   "does": "An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -33747,9 +33747,9 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 87,
+   "line": 91,
    "hash": "88201fd6d91bb3e6",
-   "does": "",
+   "does": "An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.",
    "errors": {
     "count": 0,
     "statuses": [

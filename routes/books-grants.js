@@ -33,7 +33,6 @@ function answer(req, res, err) {
 // @does Whether costs are shared in the query -> we give the words the owner reads (any signed-in shop session) before sharing the books -> the consent wording.
 router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false', req.query.preset)));
 
-// @does Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).
 /**
  * who may read the list: the owner of the books (the grants he gave and the ones he holds) and, for the `received` side only, any person who may use a grant (a firm's team member or auditor): he learns which stores his own
  * firm works for. A person of the firm sees the firm's grants and no other firm's (row security: a grantee sees its own rows); a person who may use no grant is refused as before.
@@ -43,6 +42,7 @@ function ownerOrGrantUser(req, res, next) {
   if (grantUser) return next();
   return memberOnly(req, res, next);
 }
+// @does Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).
 router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
   try {
     const listed = await grants.list(entityOf(req));

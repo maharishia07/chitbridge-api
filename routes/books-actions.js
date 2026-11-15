@@ -81,14 +81,20 @@ const door = (status, work) => async (req, res) => {
   }
 };
 
+// @does A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.
 router.get('/', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('GET /'), door(200, (req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
+// @does An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).
 router.get('/:id', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('GET /:id'), door(200, (req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
+// @does A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.
 router.post('/', auth, noKey, firmOnly, ledgerOn, ...contract.checked('POST /'), rightStore, door(201, (req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
+// @does An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.
 router.post('/:id/review', auth, noKey, firmOnly, ledgerOn, ...contract.checked('POST /:id/review'), rightStore, door(200, (req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
+// @does An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.
 router.post('/:id/return', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('POST /:id/return'), rightStore, door(200, (req) => {
   const byFirm = actingAdviser(req);
   return actions.returnAction(storeOf(req), byFirm ? firmActor(req) : ownerActor(req), req.params.id, req.body, !byFirm);
 }));
+// @does An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.
 router.post('/:id/accept', auth, noKey, ownerOnly, ledgerOn, ...contract.checked('POST /:id/accept'), rightStore, door(200, (req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
 
 router.openapi = { paths: contract.pathsOf() };
