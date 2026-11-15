@@ -12,7 +12,7 @@ Money is never in a mark. Dates are ISO 8601 UTC (`2026-11-15T09:30:00.000Z`). K
 | Caller | Sends | Sees |
 |---|---|---|
 | The owner of the books | his own sign-in, no extra header | the marks, the thread, may reply (never sets a class) |
-| The auditor (a network parent holding the `auditor` grant) | sign-in + `X-Books-For: <member entity id>` (the books' own header) | reads, sets marks, replies |
+| The auditor (a network parent holding the `auditor` grant) | sign-in + `X-Books-For: <member entity id>` (the books' own header) | reads, sets marks, replies in the thread of his own query |
 | The adviser (`adviser` grant, #1349) | sign-in + `X-Books-For: <member>` + `X-Books-Role: adviser` | reads, replies; never sets |
 
 The header is honoured on `/api/marks` exactly as on `/api/books`; anywhere else it is refused (`BOOKS_FOR_NOT_HERE`).
@@ -57,7 +57,7 @@ Used everywhere. `null` = no mark (or the reviewer removed it).
   "message_count": 2,
   "actions": {
     "set":   { "ok": true,  "why": null },
-    "reply": { "ok": false, "why": "Only the owner and the adviser answer a Query." }
+    "reply": { "ok": true, "why": null }
   }
 }
 ```
@@ -143,7 +143,7 @@ Body `{ "message_text": "Posted to 4100 because ...", "msg_type": "info" }` (`ms
 ```json
 { "message": { "message_id": "<uuid>", "sender_display_name": "...", "message_text": "...", "msg_type": "info", "created_at": "...", "mine": true }, "mark": { Mark } }
 ```
-A reply never changes the class. Refusals: `MARK_REPLY_NOT_ALLOWED` 403, `MARK_THREAD_CLOSED` 409, `MARK_THREAD_NOT_FOUND` 404, `MESSAGE_TOO_LONG` 422 (existing).
+Who may reply: the owner, the adviser and the auditor (set: the auditor only). A reply never changes the class. Refusals: `MARK_REPLY_NOT_ALLOWED` 403, `MARK_THREAD_CLOSED` 409, `MARK_THREAD_NOT_FOUND` 404, `MESSAGE_TOO_LONG` 422 (existing).
 Nothing leaves the installation: no WhatsApp, no mail, no other business hears it.
 
 ## 4 · Embedded in the books lists (adopter 1; no extra trip)
@@ -179,7 +179,7 @@ The reversal entry and the re-post carry no mark (new records).
 | `MARK_IDS_TOO_MANY` | 422 | Ask for 200 records at a time or fewer. |
 | `MARK_SUBJECT_NOT_FOUND` | 404 | We could not find that entry in these books. |
 | `MARK_THREAD_NOT_FOUND` | 404 | We could not find that question. |
-| `MARK_REPLY_NOT_ALLOWED` | 403 | Only the owner and the adviser answer a question. |
+| `MARK_REPLY_NOT_ALLOWED` | 403 | Only the owner, the adviser and the auditor take part in a query. |
 | `MARK_THREAD_CLOSED` | 409 | This question is closed. The auditor can open it again by marking the entry. |
 | `MARK_WRITE_NOT_LISTED` | 403 | This part of the books is not open to an auditor. |
 | `BOOKS_GRANT_*` (existing) | 403/429/503 | as the books say them: no access given, ended, expired, too many requests, could not record the look. |

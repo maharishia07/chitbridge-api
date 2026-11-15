@@ -39,6 +39,7 @@ const B = require('../lib/books');
 const E = require('../lib/books-engines');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
+const { marksIn } = require('../lib/mark-embed'); /* MARK & QUERY: the marks of the entries a list serves, in the list's own transaction */
 const ctx = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
@@ -563,6 +564,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
       to = dateQ(req.query.to, from),
       pg = pageQ(req.query);
     let paged = null;
+    let markSide = null; /* MARK & QUERY: the marks of these entries, read in this same transaction (null while b868 is not run) */
     const out = await withEntity(e, async (h) => {
       let lines;
       if (pg && pg.entries) lines = await S.entryLines(h, e, from, to, null, null, pg);
@@ -608,7 +610,10 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
           rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate)
         }); /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
       }
-      return LiveBill.markReverseAnswers(h, e, entries);
+      const answered = await LiveBill.markReverseAnswers(h, e, entries);
+      markSide = await marksIn(h, req, 'acc.audit', entries.map((item) => item.entry_id));
+      if (markSide) for (const item of entries) item.mark = markSide.byId[String(item.entry_id)] || null;
+      return answered;
     });
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
     const page = paged
@@ -621,7 +626,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         }
       : {};
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals }));
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -637,6 +642,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
       from = dateQ(req.query.from, fyStart(req, to)),
       pg = pageQ(req.query);
     const party = UUID.test(String(req.query.party || '')) ? String(req.query.party) : null;
+    let markSide = null; /* MARK & QUERY: the marks of these lines' entries, in this same transaction */
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
       const chart = await S.accounts(h, e);
@@ -682,6 +688,8 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
         lines,
         closing_minor: t ? open + t.dr - t.cr : run
       };
+      markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
+      if (markSide) for (const item of lines) item.mark = markSide.byId[String(item.entry_id)] || null;
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {
@@ -696,7 +704,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
     /* every root key named (the page keys are undefined on an unpaged read and leave the JSON): the output allow-list reads them here */
-    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals }, { account: out.chart_account }));
+    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }, { account: out.chart_account }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

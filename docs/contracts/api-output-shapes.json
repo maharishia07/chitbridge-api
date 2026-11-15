@@ -3068,7 +3068,9 @@
           },
           "cost_hidden": {
             "type": "boolean"
-          }
+          },
+          "mark_actions": {},
+          "mark_vocabulary": {}
         },
         "additionalProperties": false
       },
@@ -33258,7 +33260,9 @@
           "next": {},
           "totals": {
             "type": "object"
-          }
+          },
+          "mark_actions": {},
+          "mark_vocabulary": {}
         },
         "additionalProperties": false
       },
