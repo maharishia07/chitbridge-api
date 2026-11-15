@@ -13,16 +13,16 @@ of file each thing is; this says what already does the job.
 | 142 | `rows` | `crm.js` | still in them: |
 | 132 | `read` | `bank-rec-log.js` | The period (from · to, either may be absent) narrows the statements that overlap it and the posted refs; the m |
 | 131 | `words` | `variant.browser.js` |  |
-| 125 | `withEntity` | `books-hooks.js` |  |
-| 119 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 126 | `withEntity` | `books-hooks.js` |  |
+| 120 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 112 | `answer` | `availability.js` | from March; then nearest. |
 | 100 | `money` | `bill-privacy.js` |  |
-| 90 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 82 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 82 | `next` | `dayopen.js` | the next thing to do — |
+| 91 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 83 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 83 | `next` | `dayopen.js` | the next thing to do — |
 | 80 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 77 | `list` | `cap-settings.js` |  |
-| 76 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 78 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 73 | `entry` | `books-store.js` |  |
 | 72 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
@@ -63,9 +63,9 @@ of file each thing is; this says what already does the job.
 | 44 | `host` | `chit-sheet.js` |  |
 | 44 | `holds` | `bounds.js` | holds(fragment, figure) → true when a figure is a finite number inside the fragment's min / max (the derived f |
 | 44 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
-| 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 45 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 43 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 43 | `live` | `receivables.js` | the allocations that still count: |
+| 44 | `live` | `receivables.js` | the allocations that still count: |
 | 42 | `gate` | `country-setup.js` | gate(h, entity): |
 | 41 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 41 | `missing` | `variant.browser.js` | refusing with no reason. |
@@ -125,7 +125,7 @@ of file each thing is; this says what already does the job.
 | 25 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 24 | `form` | `accounts-shell.js` |  |
 | 24 | `says` | `adopt.js` |  |
-| 24 | `entries` | `books-store.js` |  |
+| 25 | `entries` | `books-store.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |

@@ -37,7 +37,7 @@ const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const B = require('../lib/books');
 const E = require('../lib/books-engines');
-const S = require('../lib/books-store');
+const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
 const ctx = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gates: a route that takes no input has none */
@@ -608,7 +608,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
           rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate)
         }); /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
       }
-      return entries;
+      return LiveBill.markReverseAnswers(h, e, entries);
     });
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
     const page = paged
@@ -1890,7 +1890,7 @@ router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req
  *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
  *  M29: an entry already reversed answers 409 ALREADY_REVERSED naming the reversal (a second Reverse is not a replay — it would be a second correction). */
 // @does An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).
-router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), async (req, res) => {
+router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), LiveBill.refuseLiveBill, async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });

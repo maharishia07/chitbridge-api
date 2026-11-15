@@ -371,6 +371,7 @@ const GUARDS = [
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-221-unreadable-number.test.cjs', // ⭐ ACC-221 (+222): a figure the caller sent that is not a number (abc, NaN, Infinity, blank, null price) is NAMED and refused (BAD_QTY / BAD_PRICE / BAD_RATE, thrown as line_unreadable), never priced at 0 and said ok; engines num() follow-up
   'acc-265-cancel-credit-note.test.cjs', // ⭐ ACC-265: a sale with a live credit note against it is not cancelled (409 CHIT_HAS_CREDIT_NOTE at /void and PUT /status), asked after paid, under the cap's own lock and reader; real-Postgres run: acc-265-cancel-credit-note.realstack.cjs
+  'r103-reverse-live-bill.test.cjs', // ⭐ R1-03 (DEC-267): Reverse on a live sale_bill / purchase_bill is refused at the route (409 ENTRY_OF_LIVE_BILL), not in reverseEntry (the cancel path stays); the day book says may_reverse + why; real-Postgres: r103-reverse-live-bill.realstack.cjs
   'acc-265b-note-after-cancel.test.cjs', // ⭐ ACC-265b: a credit note against a cancelled or rejected bill is refused (409 BILL_WITHDRAWN, billOf's own withdrawn flag); a sale with a live note is not REJECTED either (rail WITHDRAWN list); real-Postgres: acc-265b-note-after-cancel.realstack.cjs
   'acc-328-opening-twice.test.cjs', // ⭐ ACC-328/329: the same opening posted twice is 409 BOOKS_CONFLICT (a retry of the same ref still replays), a NEW opening dated in the future is 422; a reversal of an old future opening still works
   'acc-286-credit-note-cap.test.cjs', // ⭐ ACC-286: a counter credit note cannot credit more than its bill (409 CREDIT_NOTE_OVER_BILL), four in a row and ten at once, under the bill's lock
@@ -1057,7 +1058,6 @@ const files = all
       console.log('  ⚠️  ' + item + ' is listed but missing — renamed, or deleted without updating this list');
       return false;
     });
-
 /**
  * ⚠️ CI WITHOUT THE ENGINES REPO (2026-09-28). chitbridge-engines is PRIVATE; CI clones it only when the
  * ENGINES_READ_TOKEN secret exists. Without it, exactly these two guards cannot run — measured by moving the repo

@@ -1094,6 +1094,11 @@
       "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
       "reversed_by_id": "00000000-0000-4000-8000-000000000119",
+      "may_reverse": false,
+      "why": {
+       "code": "ENTRY_OF_LIVE_BILL",
+       "words": "This entry is a bill that is still live. Make a credit note instead."
+      },
       "source": {
        "chit_id": null,
        "ref": null,
@@ -1144,6 +1149,8 @@
       "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
       "reversed_by_id": "00000000-0000-4000-8000-000000000119",
+      "may_reverse": true,
+      "why": null,
       "source": {
        "chit_id": null,
        "ref": null,
