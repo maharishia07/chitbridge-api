@@ -892,6 +892,7 @@ const GUARDS = [
   'run-tests-exit.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'schedule.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'acc-313-pack-shop-day.test.cjs', // ACC-313: the exit pack reads the shop's local day (api #1346)
+  'con-98-adapter-total.test.cjs', // CON-98: the GoFrugal and Tally adapters book the one bill total; an order syncs once
   'schema-probe.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec-126-network-store-public.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec105-dispute-queue.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline

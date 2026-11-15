@@ -20872,7 +20872,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 477,
+   "line": 482,
    "hash": "b97d02176fbfb866",
    "does": "A search text of two letters or more (signed-in) -> we check which of the business's stores carry matching items -> the availability, or a refusal if too short.",
    "errors": {
@@ -20976,7 +20976,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 439,
+   "line": 444,
    "hash": "25df31a097bacda5",
    "does": "Signed-in business -> we read the stores in its own network from where it sits -> the list of stores, or not found if the account cannot be read.",
    "errors": {
@@ -50918,8 +50918,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 308,
-   "hash": "62b0989a419933b9",
+   "line": 321,
+   "hash": "36ca54f8b7aa1044",
    "does": "The design to reissue for (owner only, not an assistant) -> we issue fresh claim codes for its stores -> the new codes.",
    "errors": {
     "count": 0,
@@ -50993,7 +50993,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1315 stage2 R2-01: handler diff read; a claimed store (last_active_at set) answers 403 NETWORK_STORE_CLAIMED (registered with its shopkeeper sentence in ERROR-CODES.md and error-codes.json, tested), 404 and 200 unchanged, no raw text; 13 columns true from the CI register; cb-api 2026-11-15 PR#1337 stage2 re-sign R2-01c: reissue folds the claim test (created_by, last_active_at IS NULL) into the UPDATE, zero rows answers the same 403 NETWORK_STORE_CLAIMED; no new code, no status or key change, input and output schemas unchanged, 13 columns true; handler diff read",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1315 stage2 R2-01: handler diff read; a claimed store (last_active_at set) answers 403 NETWORK_STORE_CLAIMED (registered with its shopkeeper sentence in ERROR-CODES.md and error-codes.json, tested), 404 and 200 unchanged, no raw text; 13 columns true from the CI register; cb-api 2026-11-15 PR#1337 stage2 re-sign R2-01c: reissue folds the claim test (created_by, last_active_at IS NULL) into the UPDATE, zero rows answers the same 403 NETWORK_STORE_CLAIMED; no new code, no status or key change, input and output schemas unchanged, 13 columns true; handler diff read; cb-maintainability 2026-11-15 batch I hash refresh (behaviour-identical extraction, not a review: the already-claimed check, the claim UPDATE and its zero-rows 403 moved into the helper reissueClaim, the handler text changed so the hash moved; statuses, codes, keys and schemas unchanged, register diff shows only this hash moved of 643); cb-api to confirm on batch I review",
     "lifecycle": "stable"
    },
    "status": "meets standard",

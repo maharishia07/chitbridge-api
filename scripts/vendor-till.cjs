@@ -169,6 +169,8 @@ const VERSIONS = () => {
 
 /* ⭐ CTR-161: web-mastered files the kit carries a byte copy of (till.js serves each at the same path as the web): the ask-once rate menu, public/app/tax-slab-ui.js, which the page loads with an onerror hook */
 const WEB_MASTERED_KIT = () => [[path.join(WEB, 'app', 'tax-slab-ui.js'), path.join(API, 'tools', 'tally-connector', 'tax-slab-ui.js'), 'copy']];
+/* CON-98: the kit reads a bill's total through the ONE pick, lib/counter-bill.js (no requires), carried beside core.js; the master is the lib file */
+const API_MASTERED_KIT = () => [[path.join(API, 'lib', 'counter-bill.js'), path.join(API, 'tools', 'tally-connector', 'counter-bill.js'), 'copy']];
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
   /* ⭐⭐ THE ROLLUP RULE GOES INTO THE KIT, because the program on the shop PC requires it directly — the day,
@@ -200,8 +202,6 @@ const COPIES = () => [
    */
   [path.join(API, 'lib', 'their-bill.js'), path.join(WEB, 'app', 'their-bill.js'), 'copy'],
   [path.join(API, 'lib', 'their-bill.js'), path.join(API, 'tools', 'tally-connector', 'their-bill.js'), 'copy'],
-  /* CON-98: the kit reads a bill's total through the ONE pick, lib/counter-bill.js (no requires), carried beside core.js; the master is the lib file */
-  [path.join(API, 'lib', 'counter-bill.js'), path.join(API, 'tools', 'tally-connector', 'counter-bill.js'), 'copy'],
   /* offers: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/offers.js, engine/offers.js and lib/offers-engine.js are
      written only by chitbridge-engines/tools/adopt.cjs; the hand cp to the server and this copy are both retired. */
   /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written
@@ -398,7 +398,7 @@ const touchesWeb = (file) => Boolean(file) && file.startsWith(WEB + path.sep);
 const SCOPE = process.argv.includes('--kit-only') ? (pair) => !touchesWeb(pair[0]) && !touchesWeb(pair[1]) : process.argv.includes('--web-only') ? (pair) => touchesWeb(pair[1]) : () => true;
 
 if (process.argv.includes('--check')) {
-  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT()).filter(SCOPE)) {
+  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT()).filter(SCOPE)) {
     const text = want(from, body);
     const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
     if (have !== text) {
@@ -410,7 +410,7 @@ if (process.argv.includes('--check')) {
   process.exit(0);
 }
 
-for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT())) {
+for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT())) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.writeFileSync(to, want(from, body));
   console.log('wrote ' + to);

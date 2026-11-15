@@ -28,13 +28,14 @@ const path = require('path');
 const crypto = require('crypto');
 
 /* one unit, three names — the same table the API and the app hold (lib/units.js / app/units.js); a unit we cannot map is kept as spelt */
+const missingBill = () => ({ total: null, source: 'missing' });
 /**
  * the ONE pick of a bill's total (lib/counter-bill.js, a byte copy the kit ships beside this file), never read off the chit here. Loaded at the CALL, not at start:
  * an older till.js stages this core without fetching the new file, and a missing file must never stop the counter. Absent = no total = the voucher is refused with words.
  */
 function billPick(header) {
   let reader = null;
-  try { reader = require('./counter-bill'); } catch (_) { return { total: null, source: 'missing' }; }
+  try { reader = require('./counter-bill'); } catch (_) { return missingBill(); }
   return reader.pickOf(header);
 }
 const UNITS = (() => { try { return require('../../lib/units'); } catch (_) { return null; } })();
@@ -193,9 +194,8 @@ function orderOf(chit) {
     name: l.name || l.particulars || '', code: (l.ref && (l.ref.code || l.ref.sku)) || l.code || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
     qty: Number(l.quantity != null ? l.quantity : l.qty) || 0, unit: l.unit || '', price: Number(l.price) || 0, list_price: l.list_price != null ? Number(l.list_price) : null,
     offer: l.offer ? { label: l.offer.label, off: Number(l.offer.off) || 0 } : null, total: Number(l.total) || 0, gst_rate: l.gst_rate != null ? Number(l.gst_rate) : null, hsn: l.hsn || null }));
-  const billTotal = billPick(header);
   /* a counter bill (Record a sale) names its customer on the chit — the voucher's party is that person, never the shop itself */
-  const cust = (header.business_json && header.business_json.customer) || null;
+  const billTotal = billPick(header); const cust = (header.business_json && header.business_json.customer) || null;
   return { chit_id: header.chit_id, at: header.created_at || header.at || null, purpose: header.purpose || null, status: header.current_status || header.status || null,
            subject: header.manual_subject || header.auto_subject || '', buyer: (cust && cust.name) || header.sender_entity_display_name || (header.sender && header.sender.display_name) || 'Customer', customer: cust, currency: detail.currency_code || 'INR',
            total: billTotal.total, total_why: billTotal.total === null ? noTotalWhy(billTotal) : null, lines };
@@ -213,15 +213,16 @@ async function refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind,
 }
 /** the payment the seller recorded on their copy (business_json.payment) — level 1 by hand, level 2 by a gateway */
 function paymentOf(chit) { const header = chit.header || chit.chit || chit; const business = (header && header.business_json) || chit.business_json || {}; return business.payment || null; }
+/** what the receipt carries: the amount the seller recorded, else the bill total (null when neither exists) */
+const receiptAmount = (payment, order) => (payment.amount != null ? Number(payment.amount) : order.total);
 async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'receipt', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('receipt', chit_id);
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   const chit = await cb.chit(chit_id); const payment = paymentOf(chit); const order = orderOf(chit);
-  if (!payment) return { chit_id, outcome: 'unpaid' };
-  if (payment.amount == null && order.total === null) return refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind: 'receipt', last });
+  if (!payment) return { chit_id, outcome: 'unpaid' }; if (receiptAmount(payment, order) === null) return refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind: 'receipt', last });
   const orderReceipt = receipts.last('order', chit_id) || {};   /* what THEIR system called the order (invoice id, party) — a hosted system applies the payment to it */
-  const receipt = { chit_id, at: payment.at, method: payment.method, ref: payment.ref, amount: payment.amount != null ? Number(payment.amount) : order.total, buyer: order.buyer, order: { their_ref: orderReceipt.their_ref || null, their_id: orderReceipt.their_id || null, their_party: orderReceipt.their_party || null } };
+  const receipt = { chit_id, at: payment.at, method: payment.method, ref: payment.ref, amount: receiptAmount(payment, order), buyer: order.buyer, order: { their_ref: orderReceipt.their_ref || null, their_id: orderReceipt.their_id || null, their_party: orderReceipt.their_party || null } };
   if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
   try { const result = await adapter.pushReceipt(receipt);
     if (result && result.ref === 'dry-run') { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
@@ -275,11 +276,15 @@ async function ensureBuyerParty(adapter, buyer, log) {
   if (!adapter.ensureParty) return;
   try { const partyResult = await adapter.ensureParty(buyer); if (partyResult && partyResult.created) log('party ledger created: ' + partyResult.created); } catch (e) { log('party ledger: ' + e.message); }
 }
+/** a repeat of an order already pushed (logged once) or decided once as not an order (the 5-minute catch-up must not re-record it): the duplicate answer, else null */
+function priorOrder(last, chit_id, log) {
+  if (last && last.outcome === 'ok') log('order ' + chit_id.slice(0, 8) + ' already pushed');
+  return last && (last.outcome === 'ok' || last.outcome === 'skipped') ? { chit_id, outcome: 'duplicate' } : null;
+}
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('order', chit_id);
-  if (last && last.outcome === 'ok') { log('order ' + chit_id.slice(0, 8) + ' already pushed'); return { chit_id, outcome: 'duplicate' }; }
-  if (last && last.outcome === 'skipped') return { chit_id, outcome: 'duplicate' };   /* decided once (not an order); the 5-minute catch-up must not re-record it */
+  const prior = priorOrder(last, chit_id, log); if (prior) return prior;
   const chit = await cb.chit(chit_id);
   const order = orderOf(chit);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }

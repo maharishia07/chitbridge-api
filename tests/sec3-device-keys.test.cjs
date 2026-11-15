@@ -180,7 +180,7 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
     ok('F2 … and no invoice was posted untaxed', invoices === 0);
     const core = require(path.join(API, 'tools', 'tally-connector', 'core.js'));
     const rec = []; const receipts = { last: () => null, add: (x) => rec.push(x) };
-    const cb = { policy: {}, chit: async () => ({ header: { chit_id: order.chit_id, current_status: 'completed', purpose: 'order' }, line_items: [] }),
+    const cb = { policy: {}, chit: async () => ({ header: { chit_id: order.chit_id, current_status: 'completed', purpose: 'order', summary_json: { money: { total: 100 } } }, line_items: [] }),
       invoice: async () => ({}), books: async () => ({}) };
     const ad2 = { name: 'zoho', pushOrder: async () => { const e = new Error('Zoho tax list could not be read (x) — the order waits'); e.code = 'ZOHO_TAX_LIST'; throw e; } };
     const out = await core.pushOrder({ cb, adapter: ad2, receipts, log: () => {}, chit_id: order.chit_id }).catch((e) => ({ outcome: 'threw', why: e.message }));

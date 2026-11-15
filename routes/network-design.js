@@ -290,6 +290,19 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
   }
 });
 
+/** a fresh claim code for one minted store, or null when the store is already claimed (R2-01c: the claim test rides in the write, so a first sign-in committing after the caller's SELECT still wins: zero rows) */
+async function reissueClaim(store, ownerId) {
+  if (store.last_active_at) return null;
+  const claim = newClaimCode();
+  const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
+  const written = await query(
+    `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
+      WHERE identity_id = $3 AND created_by = $4 AND last_active_at IS NULL RETURNING user_id, display_name`,
+    [claim, expires, store.identity_id, ownerId]
+  );
+  return written.rows.length ? { claim, expires, row: written.rows[0] } : null;
+}
+
 /**
  * POST /api/network-design/reissue   { user_id }
  *
@@ -323,23 +336,15 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     if (!r.rows.length) {
       return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) });
     }
-    if (r.rows[0].last_active_at) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
-    const claim = newClaimCode();
-    const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
-    /* R2-01c: the claim test rides in the write, so a first sign-in committing after the SELECT above still wins (zero rows). */
-    const w = await query(
-      `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
-        WHERE identity_id = $3 AND created_by = $4 AND last_active_at IS NULL RETURNING user_id, display_name`,
-      [claim, expires, r.rows[0].identity_id, me]
-    );
-    if (!w.rows.length) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
+    const reissued = await reissueClaim(r.rows[0], me);
+    if (!reissued) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
     res.json({
       ok: true,
-      user_id: w.rows[0].user_id,
-      display_name: w.rows[0].display_name,
-      claim_code: claim,
-      expires_at: expires,
-      ...(devOtp.mayExposeOtp() && { dev_otp: claim }),
+      user_id: reissued.row.user_id,
+      display_name: reissued.row.display_name,
+      claim_code: reissued.claim,
+      expires_at: reissued.expires,
+      ...(devOtp.mayExposeOtp() && { dev_otp: reissued.claim }),
       message: `New code for ${r.rows[0].user_id}. It expires in ${CLAIM_DAYS} days.`
     });
   } catch (err) {
