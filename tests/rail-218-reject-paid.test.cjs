@@ -15,7 +15,8 @@ const t = (name, ok, extra) => { if (ok) { pass++; console.log('  ok   ' + name)
 
 const BUYER = 'b0000000-0000-4000-8000-000000000001', SELLER = 'a0000000-0000-4000-8000-000000000002', CHIT = 'c0000000-0000-4000-8000-000000000003';
 const ME = { level: 'editor', holder: null };
-const dbOf = (header) => ({ query: async (text) => {
+const dbOf = (header, press) => ({ query: async (text) => {
+  if (press && /FROM books_payment p WHERE/.test(text)) return { rows: [{}], rowCount: 1 };
   if (header && /SELECT purpose, sender_entity_id, business_json FROM chit_header/.test(text)) return { rows: [header], rowCount: 1 };
   if (header && /SELECT business_json->'payment' AS payment FROM chit_header/.test(text)) return { rows: [{ payment: header.business_json.payment }], rowCount: 1 };
   return { rows: [], rowCount: 0 };
@@ -47,6 +48,8 @@ const gate = async (db, to, entity, from) => railStatus.statusGate(db, entity ||
   let allocs = [];
   store.billParties = async () => ['p1']; store.items = async () => []; engines.itemOf = (x) => x; engines.receivables = () => ({ fromItems: () => ({ allocations: allocs }) });
   const unmarked = dbOf({ purpose: 'invoice', sender_entity_id: SELLER, business_json: {} }); /* Mark-paid then DELETE /payment: the stamp is gone */
+  const pressed = dbOf({ purpose: 'invoice', sender_entity_id: SELLER, business_json: {} }, true); /* the books recorded the Mark-paid press (books_payment chitpay:<chit>), the stamp is cleared */
+  t('unmark then reject: the press the books recorded (no allocation row, as on the live stack) refuses', (await gate(pressed, 'rejected')).why === 'paid');
   allocs = [{ debit: 'bill', credit: CHIT, amount: 100 }];
   t('unmark then reject: my books still hold the payment against the bill: refused', (await gate(unmarked, 'rejected')).why === 'paid');
   allocs = [{ debit: CHIT, credit: 'pay', amount: 100 }];

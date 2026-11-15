@@ -44,7 +44,10 @@ const reject = (chit) => j('/api/chits/' + chit + '/status', { method: 'PUT', to
   });
 
   await kase('P-3', 'Mark paid, Mark unpaid, reject: the books still hold the payment, so 409 why paid', async () => {
+    H.ok(await j('/api/books/enable', { method: 'POST', token: R.token }), 'books on (buyer)');
+    H.ok(await j('/api/relationships/suppliers', { method: 'POST', token: R.token, body: { supplier_bridge_id: S.bridge, supply_kind: 'resale' } }), 'S on the buyer supplier list');
     const chit = await invoice('m');
+    H.ok(await j('/api/chits/' + chit + '/status', { method: 'PUT', token: R.token, body: { status: 'accepted' } }), 'accept');
     const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 1000 } });
     expect(pay.status === 200, 'Mark paid: HTTP ' + pay.status + ' ' + JSON.stringify(pay.b).slice(0, 300));
     const booked = (await asOwner(`SELECT count(*)::int AS n FROM books_payment WHERE entity_id = $1 AND client_ref LIKE $2`, [R.entity, 'chitpay:' + chit + '%']))[0].n;
