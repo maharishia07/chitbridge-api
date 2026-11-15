@@ -1537,6 +1537,59 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
     problem(req, res, refusalOf(err, req));
   }
 });
+/* ── l16 · THE STATEMENTS BOX (lib/bank-statement-file, b872): a bank statement kept against a bank account and a period; the page's own bank list names the accounts, the page's own reader reads the file (no parse here). ── */
+const BSF = require('../lib/bank-statement-file');
+/** a refusal of the box answers as it is (its own status, code and sentence); anything else is the books' general mapping */
+function statementFail(req, res, err) {
+  if (err && err.statementBox) return problem(req, res, { status: err.status, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field, existing_id: err.existing_id } });
+  return problem(req, res, refusalOf(err, req));
+}
+/** the writer's stamp from the SESSION and the live grant (never the body): { user, name, firm, grant_id } */
+const stampOfReq = (req) => Object.assign({ user: byOf(req), name: (req.identity && req.identity.display_name) || null, firm: null, grant_id: null }, actingOf(req) ? { firm: actingOf(req).firm, grant_id: actingOf(req).grant_id } : {});
+/** POST /bank/statement-files { account, label?, period_from, period_to, currency, sha256, name, text } → 201 { file, overlaps: [{ id, name, period_from, period_to }], words } — the owner, or an adviser under a live grant (X-Books-Role: adviser). csv/json/txt, at most 6 MB; the sha256 is of the UTF-8 text and is recomputed here (HASH_MISMATCH); the same file on the same account is ALREADY_IN_BOX 409; a crossing period is stored with overlaps: true and the answer says so; another currency than the account's is CURRENCY_MISMATCH 409. */
+// @does A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.
+router.post('/bank/statement-files', auth, noKey, editor, on, ...checked('POST /bank/statement-files'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      body = req.body || {};
+    if (!body.account) return statementFail(req, res, BSF.refuse('Which bank account is this statement for? Pick one before it is kept.', 'ACCOUNT_NEEDED', 400));
+    const account = await withEntity(e, (handle) => bankAccountOf(handle, e, body.account));
+    res.status(201).json(await BSF.add(withEntity, e, account, curOf(req), body, stampOfReq(req)));
+  } catch (err) {
+    statementFail(req, res, err);
+  }
+});
+/** GET /bank/statement-files?accounts=<codes>&months=6&to=YYYY-MM → { currency, months, accounts: [{ account_id, code, name, label }], cells: [{ account_id, month, missing, file_ids }], files: [{ id, account_id, label, period_from, period_to, name, size, source, overlaps, by_name, by_firm, for_client, added_at, read_at, reads }], older } — the page's own bank list names the accounts; a month with no file reads missing. Two reads. */
+// @does A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.
+router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/statement-files'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      months = BSF.windowOf(req.query, today(req)),
+      asked = String(req.query.accounts || '').split(',').map((item) => item.trim()).filter(Boolean).slice(0, 60);
+    const out = await withEntity(e, async (handle) => {
+      const chart = await S.accounts(handle, e);
+      const accounts = asked.map((key) => BANK_LOG.accountIn(chart, key)).filter((item, at, all) => item && all.indexOf(item) === at);
+      return BSF.list(handle, e, { accounts, chart, months });
+    });
+    res.json(Object.assign({ currency: curOf(req) }, out));
+  } catch (err) {
+    statementFail(req, res, err);
+  }
+});
+/** GET /bank/statement-files/:id/file?use=read|download → the kept file's bytes (nosniff, a download, never cached: a revoked grant stops at the next request). `use=read` is the Bank page loading it into its reader. The owner and the adviser write the event; an auditor's look is the grant's own log. */
+// @does A kept statement's id in -> we serve its bytes and record who opened it -> the file.
+router.get('/bank/statement-files/:id/file', auth, noKey, on, ...checked('GET /bank/statement-files/:id/file'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      id = String(req.params.id);
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such statement.');
+    const out = await BSF.open(withEntity, e, id, req.query.use === 'read' ? 'read' : 'download', stampOfReq(req));
+    if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such statement in this shop.');
+    require('../lib/attachment-send').sendBlob(res, out.file, { cache: 'private, no-store' });
+  } catch (err) {
+    statementFail(req, res, err);
+  }
+});
 /**
  * PATCH /payments/:id { advice_chit_id? | advice_shared_at?: true | ISO } (M30, SPEC §4.3) — a merge-patch of the NAMED fields only, after the chit was sent
  *   (advice_chit_id) or the words were shared off-rail (advice_shared_at). → { ok, payment_id, advice: { chit_id, state, shared_at } }

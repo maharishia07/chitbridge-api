@@ -25,7 +25,8 @@ const ROLE_HEADER = 'x-books-role';
 /** GET routes of routes/books.js an auditor may read: the books' figures and lists, no party contact data, nothing that stores into the member's books */
 const GRANT_READS = new Set([
   '/accounts', '/daybook', '/ledger/:account', '/evidence/:id', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
-  '/terms', '/fx-rates', '/health', '/cheques', '/returns'
+  '/terms', '/fx-rates', '/health', '/cheques', '/returns',
+  '/bank/statement-files', '/bank/statement-files/:id/file' /* l16 Statements box (b872): the kept bank statements, list and download only; adding is the owner's or the adviser's (ADVISER_DOORS) */
 ]);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */
 const GRANT_HELD_BACK = {
@@ -51,7 +52,9 @@ const GRANT_HELD_BACK = {
  * THE ADVISER'S DOORS (ACC-176b), keyed by METHOD and the full path: the books the adviser may read (the auditor's list), the server's own preview, and the maker-checker action doors (prepare, review, return, and the queue).
  * Nothing else: an adviser has NO direct write on the books, and accept is the owner's own door (no grant is involved in it; under adviser_posts the server accepts for the owner inside the prepare, stamped delegated). A new books POST is born refused for an adviser as it is for an auditor.
  */
-const ADVISER_DOORS = new Set(['POST /api/books/preview', 'GET /api/books-actions', 'GET /api/books-actions/:id', 'POST /api/books-actions', 'POST /api/books-actions/:id/review', 'POST /api/books-actions/:id/return']);
+const ADVISER_DOORS = new Set(['POST /api/books/preview', 'GET /api/books-actions', 'GET /api/books-actions/:id', 'POST /api/books-actions', 'POST /api/books-actions/:id/review', 'POST /api/books-actions/:id/return',
+  /* l16 Statements box: an adviser may KEEP a statement file for the client (a file filed against an account and period; it writes no book row, the grant stamps the row), under the live grant row and X-Books-Role: adviser, whatever the posting policy: filing is not posting */
+  'POST /api/books/bank/statement-files']);
 const ADVISER_TESTS = [...ADVISER_DOORS].map((door) => ({ door, test: new RegExp('^' + door.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
 /**
  * THE OWNER'S READS THE ADVISER ALSO MAKES (Athi: the adviser acts from the owner's perspective): the books screen's own reads that the auditor's list holds back. Still held back from the adviser, each for its reason: party statements, payment
@@ -67,7 +70,7 @@ const adviserReadsExtra = (path) => EXTRA_TESTS.some((item) => item.test.test(pa
  *           an event of the four kinds the bank page posts, a payment, each with a client_ref of 'bank:<fingerprint>' (bankWriteBody below). Run in ONE normal transaction stamped with the grant (runActingFor), the same writers the owner's request reaches.
  * The auditor never reaches any of these (GRANT_HELD_BACK and read_only stand), and the party doors stay the owner's (BOOKS_FOR_NOT_HERE).
  */
-const ADVISER_BANK_READS = new Set(['GET /api/books/bank/log', 'GET /api/books/bank/rail']);
+const ADVISER_BANK_READS = new Set(['GET /api/books/bank/log', 'GET /api/books/bank/rail', 'GET /api/books/bank/statement-files'/* the box's list; its file download (:id) is the auditor list's own GRANT_READS pattern, which the adviser reads too */]);
 const ADVISER_BANK_WRITES = new Set(['POST /api/books/bank/marks', 'POST /api/books/bank/statements', 'POST /api/books/events', 'POST /api/books/payments']);
 const BANK_EVENT_KINDS = ['expense', 'other_income', 'contra', 'tax_payment'];
 const noSlash = (path) => (path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path);
