@@ -20830,7 +20830,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 464,
+   "line": 470,
    "hash": "b97d02176fbfb866",
    "does": "",
    "errors": {
@@ -20934,7 +20934,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 427,
+   "line": 433,
    "hash": "25df31a097bacda5",
    "does": "",
    "errors": {
@@ -50827,7 +50827,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 303,
-   "hash": "97143eedfb758255",
+   "hash": "62b0989a419933b9",
    "does": "",
    "errors": {
     "count": 0,
@@ -50901,7 +50901,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1315 stage2 R2-01: handler diff read; a claimed store (last_active_at set) answers 403 NETWORK_STORE_CLAIMED (registered with its shopkeeper sentence in ERROR-CODES.md and error-codes.json, tested), 404 and 200 unchanged, no raw text; 13 columns true from the CI register",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1315 stage2 R2-01: handler diff read; a claimed store (last_active_at set) answers 403 NETWORK_STORE_CLAIMED (registered with its shopkeeper sentence in ERROR-CODES.md and error-codes.json, tested), 404 and 200 unchanged, no raw text; 13 columns true from the CI register; cb-api 2026-11-15 PR#1337 stage2 re-sign R2-01c: reissue folds the claim test (created_by, last_active_at IS NULL) into the UPDATE, zero rows answers the same 403 NETWORK_STORE_CLAIMED; no new code, no status or key change, input and output schemas unchanged, 13 columns true; handler diff read",
     "lifecycle": "stable"
    },
    "status": "meets standard",
