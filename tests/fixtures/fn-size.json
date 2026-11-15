@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 138,
+  "long_functions": 120,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -131,25 +131,6 @@
     ],
     "lib/tax-copy.js": [
       "partiesFor"
-    ],
-    "lib/tax-engine.browser.js": [
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "(anonymous)",
-      "determine_",
-      "moneyOf_",
-      "resolveBelow",
-      "tallyXml",
-      "vat201"
     ],
     "lib/visibility-cap.js": [
       "capOf"
