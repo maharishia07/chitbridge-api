@@ -9,7 +9,7 @@
 -- WHO MAY SEE / WRITE A ROW (key: app.current_entity, set by withEntity / set_config; the shape of b855 catalogue_source and product_container)
 --   read    everyone (USING true): every shop's standards resolve against these rows (lib/conformance, readiness, workpattern, profile, boilerplate, instruments read with no shop bound or any shop bound)
 --   write   only the owning source entity (owner_entity_id = current entity). The one writer is lib/source.js registerSource (platform role, POST /api/governance/source), which binds the source entity it just found or minted.
---   ⚠️ DELIBERATELY NO "claim an ownerless row" policy (b855 has one for catalogue_source / product_container): the ten platform-seeded standards (haccp, fssai, reach, tsca, sds, bis, phyto, eu-health ...) have owner_entity_id NULL
+--   ⚠️ DELIBERATELY NO "claim an ownerless row" policy (b855 has one for catalogue_source / product_container): 27 of the 32 seeded standards (haccp, fssai, reach, tsca, sds, bis, phyto, eu-health ...; counted in migrations/000_baseline_2026-10-21.sql) have owner_entity_id NULL
 --   and every shop resolves its compliance template from them. A claim policy would let any shop set itself owner of one and rewrite the template for all shops. With no policy a NULL-owner row can be changed only by the owner
 --   role (this editor, scripts run as postgres); registerSource on a seeded key therefore raises a row-level-security error instead of upserting (platform-only edge, no shop path reaches it).
 -- RLS: ENABLE + FORCE, literal statements (db-85 rule). Privileges unchanged (cb_app keeps SELECT, INSERT, UPDATE, DELETE; a grant change needs a code grep first, none made here).
