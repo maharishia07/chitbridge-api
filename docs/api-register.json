@@ -20988,7 +20988,7 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 63,
+   "line": 64,
    "hash": "370483463c62ac9c",
    "does": "An adopter and a list of record ids, or open=1 for the open items -> we read the latest mark of each record (or the open queries with their age and \"checked n of m\") in one read -> the marks, the words and what you may do.",
    "errors": {
@@ -21087,7 +21087,7 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 100,
+   "line": 101,
    "hash": "258063aa3778ba09",
    "does": "A thread id in -> we read the marked record's mark, its history and the replies with what you may do -> the conversation, or 404 for a thread that is not these books'.",
    "errors": {
@@ -51679,7 +51679,7 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 92,
+   "line": 93,
    "hash": "6d2cbbe0e4689c55",
    "does": "An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.",
    "errors": {
@@ -51780,7 +51780,7 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 103,
+   "line": 104,
    "hash": "0ccefb4d59aee1f9",
    "does": "A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.",
    "errors": {
@@ -51883,7 +51883,7 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 78,
+   "line": 79,
    "hash": "a2292bb3687db0ac",
    "does": "An adopter and more record ids than a query string carries in a body -> we read the latest mark of each (a read, not a write) -> the marks, the words and what you may do.",
    "errors": {
