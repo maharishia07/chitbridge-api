@@ -32,7 +32,7 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   eq('…Dr 220.00 · Dr 2210 GST paid 22.00 · Cr bank 242.00', linesOf(entryOf('ev:expense:x-inc')), HAND);
   const exc = await post('x-exc', bill(220, false, 10));
   eq('exclusive 220.00 + GST: the same three lines, bank 242.00', linesOf(entryOf('ev:expense:x-exc')), HAND);
-  const bank = await q('POST', '/events', { kind: 'expense', class: 'rent', date: D, amount: 220, paid_from: 'bank', input_tax_minor: 2200, client_ref: 'x-bank' });
+  const bank = await q('POST', '/events', { kind: 'expense', class: 'rent', date: D, amount: 220, paid_from: 'bank', input_tax_minor: 2200, tax_invoice: 'held', client_ref: 'x-bank' });
   ok('the bank sheet door posts', bank.status === 200 && bank.body.ok, JSON.stringify(bank.body));
   eq('…and its entry equals the bill door\'s, line for line', linesOf(entryOf('ev:expense:x-bank')), linesOf(entryOf('ev:expense:x-inc')));
   const free = await post('x-free', bill(100, false, 0));
