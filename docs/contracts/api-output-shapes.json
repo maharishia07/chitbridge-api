@@ -23675,7 +23675,7 @@
       }
     },
     "POST /api/marks": {
-      "status": "200",
+      "status": "201",
       "schema": {
         "type": "object",
         "required": [
@@ -23699,16 +23699,7 @@
               "label",
               "note",
               "at",
-              "by_name",
-              "by_firm",
-              "open",
-              "open_since",
-              "age_days",
-              "altered",
-              "altered_by",
-              "recheck_needed",
-              "message_count",
-              "actions"
+              "open"
             ],
             "properties": {
               "mark_id": {
@@ -23732,7 +23723,12 @@
               "label": {
                 "type": "string"
               },
-              "note": {},
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "at": {
                 "type": "string"
               },
@@ -23751,8 +23747,18 @@
               "open": {
                 "type": "boolean"
               },
-              "open_since": {},
-              "age_days": {},
+              "open_since": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "age_days": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
               "altered": {
                 "type": "boolean"
               },
@@ -23851,15 +23857,16 @@
         "additionalProperties": false,
         "x-closed-by": "recordings"
       },
-      "observed": 1,
+      "observed": 6,
       "open": [],
       "closed_by": "recordings",
       "example": {
         "url": "/api/marks",
         "body": {
           "adopter": "acc.audit",
-          "subject_id": "370fef57-9b8d-432d-bfa2-368675a09b3a",
-          "kind": "checked"
+          "subject_id": "79bf48e3-7376-47ff-ba88-eb1c915ad9f8",
+          "kind": "query",
+          "note": "Why was this posted to sales?"
         }
       }
     },
