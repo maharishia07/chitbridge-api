@@ -676,4 +676,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LEASE_REASON_INVALID | 400 | Reason not accepted | The reason must be void, unused or retired. | Pick one of the three and save again. | till | 2026-11-13 |
 | LEASE_TILL_UNKNOWN | 404 | Counter not found | That counter is not one of this shop's counters, so no block was given. | Ask from a counter this shop has connected. | till | 2026-11-13 |
 | LEASE_WANT_INVALID | 400 | Block size not accepted | Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50. | Change the number and ask again. | till | 2026-11-13 |
+| BOTH_ROLES_ONE_FIRM | varies | Both kinds of access | This business already holds the other kind of access to your books. It will both review your books and prepare entries in them. Make sure that is what you want. | Check who holds which access before you go on. | network | 2026-11-15 |
+| OUTSIDE_MONTH_BEING_WORKED | varies | Different month | This entry is dated outside the month you are working in. | Check the date, or go on if it is right. | network | 2026-11-15 |
 <!-- codes:end -->

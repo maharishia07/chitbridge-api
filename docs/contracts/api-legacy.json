@@ -69029,6 +69029,1856 @@
      }
     }
    ]
+  },
+  "GET /api/books-actions": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner and the adviser firm work on these actions.",
+      "message": "Only the owner and the adviser firm work on these actions.",
+      "type": "https://chitbridge.com/problems/action_not_for_you",
+      "title": "Not for you",
+      "status": 403,
+      "code": "ACTION_NOT_FOR_YOU",
+      "detail": "Only the owner and the adviser firm work on these actions.",
+      "hint": "Sign in as the owner or the firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner and the adviser firm work on these actions.",
+      "message": "Only the owner and the adviser firm work on these actions.",
+      "type": "https://chitbridge.com/problems/action_not_for_you",
+      "title": "Not for you",
+      "status": 403,
+      "code": "ACTION_NOT_FOR_YOU",
+      "detail": "Only the owner and the adviser firm work on these actions.",
+      "hint": "Sign in as the owner or the firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "queue-ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "This shop has not switched the ledger on.",
+      "message": "This shop has not switched the ledger on.",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This shop has not switched the ledger on.",
+      "message": "This shop has not switched the ledger on.",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "queue-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "queue-state-asked-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "state must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "state",
+      "errors": [
+       {
+        "field": "state",
+        "code": "WRONG_VALUE",
+        "detail": "state must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "state must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "state",
+      "errors": [
+       {
+        "field": "state",
+        "code": "WRONG_VALUE",
+        "detail": "state must be a string."
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "GET /api/books-actions/:id": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner and the adviser firm work on these actions.",
+      "message": "Only the owner and the adviser firm work on these actions.",
+      "type": "https://chitbridge.com/problems/action_not_for_you",
+      "title": "Not for you",
+      "status": 403,
+      "code": "ACTION_NOT_FOR_YOU",
+      "detail": "Only the owner and the adviser firm work on these actions.",
+      "hint": "Sign in as the owner or the firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner and the adviser firm work on these actions.",
+      "message": "Only the owner and the adviser firm work on these actions.",
+      "type": "https://chitbridge.com/problems/action_not_for_you",
+      "title": "Not for you",
+      "status": 403,
+      "code": "ACTION_NOT_FOR_YOU",
+      "detail": "Only the owner and the adviser firm work on these actions.",
+      "hint": "Sign in as the owner or the firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "action-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "action-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "action-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books-actions": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-by-the-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-other-store",
+     "status": 409,
+     "body_keys": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "This shop has not switched the ledger on.",
+      "message": "This shop has not switched the ledger on.",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This shop has not switched the ledger on.",
+      "message": "This shop has not switched the ledger on.",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-no-reference",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "client_ref is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "client_ref",
+      "errors": [
+       {
+        "field": "client_ref",
+        "code": "MISSING_FIELD",
+        "detail": "client_ref is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "client_ref is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "client_ref",
+      "errors": [
+       {
+        "field": "client_ref",
+        "code": "MISSING_FIELD",
+        "detail": "client_ref is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "prepare-unknown-kind",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "kind must be one of: journal, reverse, lock, unlock, year_close.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "kind",
+      "errors": [
+       {
+        "field": "kind",
+        "code": "WRONG_VALUE",
+        "detail": "kind must be one of: journal, reverse, lock, unlock, year_close."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "kind must be one of: journal, reverse, lock, unlock, year_close.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "kind",
+      "errors": [
+       {
+        "field": "kind",
+        "code": "WRONG_VALUE",
+        "detail": "kind must be one of: journal, reverse, lock, unlock, year_close."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "prepare-unknown-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "prepare-repeated-reference",
+     "status": 409,
+     "body_keys": {
+      "error": "An action with this reference or this content is already waiting. Open it from the queue.",
+      "message": "An action with this reference or this content is already waiting. Open it from the queue.",
+      "type": "https://chitbridge.com/problems/action_ref_open",
+      "title": "Already waiting",
+      "status": 409,
+      "code": "ACTION_REF_OPEN",
+      "detail": "An action with this reference or this content is already waiting. Open it from the queue.",
+      "hint": "Open the waiting action.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "An action with this reference or this content is already waiting. Open it from the queue.",
+      "message": "An action with this reference or this content is already waiting. Open it from the queue.",
+      "type": "https://chitbridge.com/problems/action_ref_open",
+      "title": "Already waiting",
+      "status": 409,
+      "code": "ACTION_REF_OPEN",
+      "detail": "An action with this reference or this content is already waiting. Open it from the queue.",
+      "hint": "Open the waiting action.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-refused-in-words",
+     "status": 422,
+     "body_keys": {
+      "error": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+      "message": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+      "type": "https://chitbridge.com/problems/action_kind_invalid",
+      "title": "Action not accepted",
+      "status": 422,
+      "code": "ACTION_KIND_INVALID",
+      "detail": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+      "hint": "Pick one of the five.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+      "message": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+      "type": "https://chitbridge.com/problems/action_kind_invalid",
+      "title": "Action not accepted",
+      "status": 422,
+      "code": "ACTION_KIND_INVALID",
+      "detail": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+      "hint": "Pick one of the five.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-unknown-entry",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "prepare-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books-actions/:id/accept": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner accepts an action.",
+      "message": "Only the owner accepts an action.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner accepts an action.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner accepts an action.",
+      "message": "Only the owner accepts an action.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner accepts an action.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-by-the-firm",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner accepts an action.",
+      "message": "Only the owner accepts an action.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner accepts an action.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner accepts an action.",
+      "message": "Only the owner accepts an action.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner accepts an action.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-other-store",
+     "status": 409,
+     "body_keys": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "This shop has not switched the ledger on.",
+      "message": "This shop has not switched the ledger on.",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This shop has not switched the ledger on.",
+      "message": "This shop has not switched the ledger on.",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-unknown-action",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-total-differs",
+     "status": 409,
+     "body_keys": {
+      "error": "The total changed since it was prepared. Nothing was posted.",
+      "message": "The total changed since it was prepared. Nothing was posted.",
+      "type": "https://chitbridge.com/problems/preview_total_differs",
+      "title": "The total changed",
+      "status": 409,
+      "code": "PREVIEW_TOTAL_DIFFERS",
+      "detail": "The total changed since it was prepared. Nothing was posted.",
+      "hint": "Open the action again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The total changed since it was prepared. Nothing was posted.",
+      "message": "The total changed since it was prepared. Nothing was posted.",
+      "type": "https://chitbridge.com/problems/preview_total_differs",
+      "title": "The total changed",
+      "status": 409,
+      "code": "PREVIEW_TOTAL_DIFFERS",
+      "detail": "The total changed since it was prepared. Nothing was posted.",
+      "hint": "Open the action again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-total-not-confirmed",
+     "status": 422,
+     "body_keys": {
+      "error": "Confirm the total and its currency as shown on the screen.",
+      "message": "Confirm the total and its currency as shown on the screen.",
+      "type": "https://chitbridge.com/problems/action_total_needed",
+      "title": "Total needed",
+      "status": 422,
+      "code": "ACTION_TOTAL_NEEDED",
+      "detail": "Confirm the total and its currency as shown on the screen.",
+      "hint": "Confirm the total shown.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Confirm the total and its currency as shown on the screen.",
+      "message": "Confirm the total and its currency as shown on the screen.",
+      "type": "https://chitbridge.com/problems/action_total_needed",
+      "title": "Total needed",
+      "status": 422,
+      "code": "ACTION_TOTAL_NEEDED",
+      "detail": "Confirm the total and its currency as shown on the screen.",
+      "hint": "Confirm the total shown.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-unknown-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "accept-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books-actions/:id/return": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner and the adviser firm work on these actions.",
+      "message": "Only the owner and the adviser firm work on these actions.",
+      "type": "https://chitbridge.com/problems/action_not_for_you",
+      "title": "Not for you",
+      "status": 403,
+      "code": "ACTION_NOT_FOR_YOU",
+      "detail": "Only the owner and the adviser firm work on these actions.",
+      "hint": "Sign in as the owner or the firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner and the adviser firm work on these actions.",
+      "message": "Only the owner and the adviser firm work on these actions.",
+      "type": "https://chitbridge.com/problems/action_not_for_you",
+      "title": "Not for you",
+      "status": 403,
+      "code": "ACTION_NOT_FOR_YOU",
+      "detail": "Only the owner and the adviser firm work on these actions.",
+      "hint": "Sign in as the owner or the firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "return-other-store",
+     "status": 409,
+     "body_keys": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "return-no-reason",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "reason is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "reason",
+      "errors": [
+       {
+        "field": "reason",
+        "code": "MISSING_FIELD",
+        "detail": "reason is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "reason is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "reason",
+      "errors": [
+       {
+        "field": "reason",
+        "code": "MISSING_FIELD",
+        "detail": "reason is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "return-unknown-action",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "return-already-closed",
+     "status": 409,
+     "body_keys": {
+      "error": "This action is already returned.",
+      "message": "This action is already returned.",
+      "type": "https://chitbridge.com/problems/action_closed",
+      "title": "Action already moved on",
+      "status": 409,
+      "code": "ACTION_CLOSED",
+      "detail": "This action is already returned.",
+      "hint": "Open the queue again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This action is already returned.",
+      "message": "This action is already returned.",
+      "type": "https://chitbridge.com/problems/action_closed",
+      "title": "Action already moved on",
+      "status": 409,
+      "code": "ACTION_CLOSED",
+      "detail": "This action is already returned.",
+      "hint": "Open the queue again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "return-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "return-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books-actions/:id/review": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to work on the books.",
+      "message": "Sign in to work on the books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to work on the books.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "review-by-the-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "message": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "type": "https://chitbridge.com/problems/action_firm_only",
+      "title": "Adviser firm only",
+      "status": 403,
+      "code": "ACTION_FIRM_ONLY",
+      "detail": "Only the adviser firm prepares and reviews. The owner accepts.",
+      "hint": "Sign in as the adviser firm.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "review-other-store",
+     "status": 409,
+     "body_keys": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "message": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "type": "https://chitbridge.com/problems/store_mismatch",
+      "title": "Another store is open",
+      "status": 409,
+      "code": "STORE_MISMATCH",
+      "detail": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+      "hint": "Open the store again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "review-unknown-action",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no such action.",
+      "message": "There is no such action.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no such action.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "review-already-closed",
+     "status": 409,
+     "body_keys": {
+      "error": "This action is already returned.",
+      "message": "This action is already returned.",
+      "type": "https://chitbridge.com/problems/action_closed",
+      "title": "Action already moved on",
+      "status": 409,
+      "code": "ACTION_CLOSED",
+      "detail": "This action is already returned.",
+      "hint": "Open the queue again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This action is already returned.",
+      "message": "This action is already returned.",
+      "type": "https://chitbridge.com/problems/action_closed",
+      "title": "Action already moved on",
+      "status": 409,
+      "code": "ACTION_CLOSED",
+      "detail": "This action is already returned.",
+      "hint": "Open the queue again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "review-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Adviser actions are not switched on yet.",
+      "message": "Adviser actions are not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_action_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+      "detail": "Adviser actions are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "review-no-hash",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "body_hash is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "body_hash",
+      "errors": [
+       {
+        "field": "body_hash",
+        "code": "MISSING_FIELD",
+        "detail": "body_hash is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "body_hash is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "body_hash",
+      "errors": [
+       {
+        "field": "body_hash",
+        "code": "MISSING_FIELD",
+        "detail": "body_hash is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "review-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
   }
  },
  "global": {

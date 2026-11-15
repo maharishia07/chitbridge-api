@@ -983,6 +983,15 @@
    "since": "2026-11-13"
   },
   {
+   "code": "BOTH_ROLES_ONE_FIRM",
+   "status": "varies",
+   "title": "Both kinds of access",
+   "shopkeeper": "This business already holds the other kind of access to your books. It will both review your books and prepare entries in them. Make sure that is what you want.",
+   "hint": "Check who holds which access before you go on.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
    "code": "BRIDGE_MISSING",
    "status": "409",
    "title": "The tax check figures are missing",
@@ -4203,6 +4212,15 @@
    "hint": "Check the code and type it again; the message says how many tries are left.",
    "owner_area": "otp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "OUTSIDE_MONTH_BEING_WORKED",
+   "status": "varies",
+   "title": "Different month",
+   "shopkeeper": "This entry is dated outside the month you are working in.",
+   "hint": "Check the date, or go on if it is right.",
+   "owner_area": "network",
+   "since": "2026-11-15"
   },
   {
    "code": "OVER_LIMIT",

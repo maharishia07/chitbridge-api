@@ -11,6 +11,7 @@ router.use(require('../middleware/books-grant'));
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const { problem } = require('../lib/problem');
+const { declaresStatuses } = require('../lib/contract-kit'); /* a gate that refuses nothing and says which status the store under the handler can answer (a table not yet made: 503) */
 const { refusalOf } = require('../lib/books-contract');
 const { isOwner } = require('../lib/owner');
 const ledger = require('../lib/books');
@@ -19,16 +20,15 @@ const actions = require('../lib/books-action');
 const contract = require('../lib/books-actions-contract');
 
 const storeOf = (req) => auth.entityOf(req);
-const refuse = (req, res, status, code, words) => problem(req, res, { status, code, detail: words, legacy: { error: words, message: words } });
 /** a refusal of the action store is a typed answer in words; the books' own refusals go through the ledger's mapper */
 function answer(req, res, err) {
-  if (err && err.words) return refuse(req, res, err.status, err.code, err.words);
+  if (err && err.words) return problem(req, res, { status: err.status, code: err.code, detail: err.words, legacy: { error: err.words, message: err.words } });
   return problem(req, res, refusalOf(err, req));
 }
 /** a key is not a person: nothing here is done by a device key */
 function noKey(req, res, next) {
   if (!req.api_key) return next();
-  return refuse(req, res, 403, 'SIGN_IN_FOR_LEDGER', 'Sign in to work on the books.');
+  return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: 'Sign in to work on the books.', legacy: { error: 'Sign in to work on the books.', message: 'Sign in to work on the books.' } });
 }
 /** the ledger must be on and its country setup in order: the books router's own gate (country-setup.gate), so a shop that cannot post for itself cannot accept an adviser action either; the setting is read once for the composer */
 async function ledgerOn(req, res, next) {
@@ -38,7 +38,7 @@ async function ledgerOn(req, res, next) {
       await countrySetup.gate(handle, store);
       return ledger.settingOf(handle, store);
     });
-    if (!setting || !setting.enabled) return refuse(req, res, 404, 'LEDGER_OFF', 'This shop has not switched the ledger on.');
+    if (!setting || !setting.enabled) return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: 'This shop has not switched the ledger on.', message: 'This shop has not switched the ledger on.' } });
     req.books = setting;
     return next();
   } catch (err) {
@@ -49,53 +49,61 @@ const actingAdviser = (req) => !!req.acting_for_grant && req.identity && req.ide
 /** the firm's team only (prepare, review): a person acting under a live ADVISER grant, never the owner and never an auditor */
 function firmOnly(req, res, next) {
   if (actingAdviser(req)) return next();
-  return refuse(req, res, 403, 'ACTION_FIRM_ONLY', 'Only the adviser firm prepares and reviews. The owner accepts.');
+  return problem(req, res, { status: 403, code: 'ACTION_FIRM_ONLY', detail: 'Only the adviser firm prepares and reviews. The owner accepts.', legacy: { error: 'Only the adviser firm prepares and reviews. The owner accepts.', message: 'Only the adviser firm prepares and reviews. The owner accepts.' } });
 }
 /** the firm's team or the owner of the books (the queue, one action, a return) */
 function firmOrOwner(req, res, next) {
   if (actingAdviser(req) || (!req.acting_for_grant && isOwner(req))) return next();
-  return refuse(req, res, 403, 'ACTION_NOT_FOR_YOU', 'Only the owner and the adviser firm work on these actions.');
+  return problem(req, res, { status: 403, code: 'ACTION_NOT_FOR_YOU', detail: 'Only the owner and the adviser firm work on these actions.', legacy: { error: 'Only the owner and the adviser firm work on these actions.', message: 'Only the owner and the adviser firm work on these actions.' } });
 }
 /** accept: the store's owner, signed in as himself */
 function ownerOnly(req, res, next) {
   if (!req.acting_for_grant && isOwner(req)) return next();
-  return refuse(req, res, 403, 'OWNER_ONLY', 'Only the owner accepts an action.');
+  return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: 'Only the owner accepts an action.', legacy: { error: 'Only the owner accepts an action.', message: 'Only the owner accepts an action.' } });
 }
 /** the open page's store must be the store the request is scoped to (the grant's, or the owner's own): a stale tab of another store is refused and nothing is stored */
 function rightStore(req, res, next) {
   const carried = String((req.body && req.body.store_id) || '').toLowerCase();
   if (carried === String(storeOf(req)).toLowerCase()) return next();
-  return refuse(req, res, 409, 'STORE_MISMATCH', 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.');
+  return problem(req, res, { status: 409, code: 'STORE_MISMATCH', detail: 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.', legacy: { error: 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.', message: 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.' } });
 }
 /** the firm's person: the real caller (never the store's synthetic identity), the firm and the grant from the live look; `named` = a person's own sign-in (an actor of the firm), not the firm's owner sign-in */
 const firmActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name, firm_name: req.acting_firm_name, grant_id: req.acting_for_grant, firm_entity: req.realIdentity ? req.realIdentity.parent_entity_id || req.realIdentity.identity_id : null, named: !!req.realIdentity && req.realIdentity.identity_type === 'actor' });
 /** the caller of a queue or a read: the firm's person (tied to its grant) or the owner */
 const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req));
 const ownerActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name });
-/** one handler: run `work`, answer its result, or the refusal in words */
-const door = (status, work) => async (req, res) => {
+/** one handler: run `work`, answer its result (200), or the refusal in words */
+const door = (work) => async (req, res) => {
   try {
-    res.status(status).json(await work(req));
+    res.json(await work(req));
+  } catch (err) {
+    answer(req, res, err);
+  }
+};
+/** the same for the one door that creates (201) */
+const made = (work) => async (req, res) => {
+  try {
+    res.status(201).json(await work(req));
   } catch (err) {
     answer(req, res, err);
   }
 };
 
 // @does A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.
-router.get('/', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('GET /'), door(200, (req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
+router.get('/', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /'), door((req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
 // @does An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).
-router.get('/:id', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('GET /:id'), door(200, (req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
+router.get('/:id', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /:id'), door((req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
 // @does A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.
-router.post('/', auth, noKey, firmOnly, ledgerOn, ...contract.checked('POST /'), rightStore, door(201, (req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
+router.post('/', auth, noKey, firmOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /'), rightStore, made((req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
 // @does An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.
-router.post('/:id/review', auth, noKey, firmOnly, ledgerOn, ...contract.checked('POST /:id/review'), rightStore, door(200, (req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
+router.post('/:id/review', auth, noKey, firmOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /:id/review'), rightStore, door((req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
 // @does An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.
-router.post('/:id/return', auth, noKey, firmOrOwner, ledgerOn, ...contract.checked('POST /:id/return'), rightStore, door(200, (req) => {
+router.post('/:id/return', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /:id/return'), rightStore, door((req) => {
   const byFirm = actingAdviser(req);
   return actions.returnAction(storeOf(req), byFirm ? firmActor(req) : ownerActor(req), req.params.id, req.body, !byFirm);
 }));
 // @does An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.
-router.post('/:id/accept', auth, noKey, ownerOnly, ledgerOn, ...contract.checked('POST /:id/accept'), rightStore, door(200, (req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
+router.post('/:id/accept', auth, noKey, ownerOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /:id/accept'), rightStore, door((req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
 
 router.openapi = { paths: contract.pathsOf() };
 module.exports = router;

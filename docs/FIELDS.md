@@ -1428,6 +1428,14 @@ The firm's team PREPARES, a colleague REVIEWS, the owner ACCEPTS; the existing w
 | action rows | `access_ended` | boolean · the grant it was prepared under is no longer live: it can be returned, not accepted. |
 | `GET /api/books-actions/:id` answer | `steps` | array · every step in order `{ step, role, identity_id, name, firm, reason, at }`. |
 | `POST /api/books-actions/:id/accept` answer | `action` · `entry` | the action as accepted, and `{ entry_id, entry_no }` of the entry the existing writer posted (created_by is the preparer, grant_id the adviser grant, source_ref `action:<action_id>`). |
+| `GET /api/books-actions` query | `delegated` · `since` | `true` keeps only the actions the firm posted by the owner's delegation (the weekly summary's filter) · a date `YYYY-MM-DD` (or a full timestamp) keeps the actions prepared on or after it; anything else is read as absent. |
+| action rows | `body` | object · the body the action was prepared with, as stored (the whitelisted fields of its kind): the web shows it before the owner accepts. |
+| action rows | `grant_id` | uuid · the adviser grant the action was prepared under: its live look decides `access_ended`. |
+| action rows | `entry_id` | uuid or null · the journal entry the accept posted; null while open and for a lock, unlock or year close. |
+| `POST /api/books-actions` answer | `warnings` | array of `{ code, words }` · advisory only, never a refusal: `OUTSIDE_MONTH_BEING_WORKED` when a journal is dated outside the `working_month` of the page. Empty when there is none. |
+| `POST /api/books-actions` answer | `entry` | `{ entry_id, entry_no }` · present only when the owner's delegation (`posting` = `adviser_posts`, within the limit) posted the action at once; absent when the owner has to accept. |
+| `POST /api/books-grants` · `PATCH /api/books-grants/:id` body · every grant answer | `posting` | text · `owner_approves` (the firm prepares, a colleague checks, the owner accepts) or `adviser_posts` (the firm posts for the owner, who is alerted); asked for on a new adviser grant, never set on an auditor grant. |
+| `POST /api/books-grants` · `PATCH /api/books-grants/:id` body · every grant answer | `posting_cap_minor` · `posting_cap_currency` | integer minor units or null · text or null · the largest single entry the firm may post by delegation, and its currency; given together or not at all (422 `BOOKS_GRANT_CAP_INVALID`); null is no limit, and an action above it or in another currency waits for the owner. |
 | `POST /api/books-grants` · `/:id/revoke` answers | `warnings` · `actions_withdrawn` | a new grant answers a `BOTH_ROLES_ONE_FIRM` warning when the firm already holds the other role; a revoke answers how many open actions it closed as "withdrawn: grant revoked". |
 
 ### Stored columns of the adviser access (ACC-176b, migrations b866 and b867)
