@@ -139,6 +139,16 @@ const POSTED = [
   check('a later accept naming JV-7 clears it, JV-8 stays named (newest wins)', accepted.exceptions.map((item) => item.entry_no).join() === 'JV-8', accepted.exceptions);
   check('exceptionsOf over no marks names every posted line', BRL.exceptionsOf(POSTED, []).length === 2);
 
+  /* l16-stmtcheck: the engine's NEW ref form (manual:bank:<24 hex fingerprint>-<place>) is read too, and the posted feed says who and when for each entry */
+  const FP = 'a1b2c3d4e5f6a1b2c3d4e5f6';
+  const NEWFORM = [{ entry_id: 'e-9', entry_no: 'JV-9', source_ref: 'manual:bank:' + FP + '-2', posting_date: '2026-10-05', total_minor: '7000', currency: 'INR', made_at: '2026-10-06 02:00:00+00', made_by: 'Sam' }];
+  const fresh = BRL.exceptionsOf(NEWFORM, []);
+  check('a fingerprint-form posted line is named as an exception (the old pattern dropped it)', fresh.length === 1 && fresh[0].fingerprint === FP && fresh[0].place === 2 && fresh[0].file_hash === null, fresh);
+  const fed = await BRL.read(standIn(POSTED.concat(NEWFORM, [{ entry_id: 'e-10', entry_no: 'JV-10', source_ref: 'manual:bank:' + FP, posting_date: '2026-10-05', total_minor: '1', currency: 'INR' }])), SHOP, ACCOUNT, null, null);
+  const feedRow = fed.posted.filter((row) => row.entry_no === 'JV-9')[0];
+  check('the read carries the posted feed: ref without manual:, entry, day, who, when', feedRow && feedRow.ref === 'bank:' + FP + '-2' && feedRow.posting_date === '2026-10-05' && feedRow.made_by === 'Sam' && feedRow.made_at === '2026-10-06 02:00:00+00', fed.posted);
+  check('the feed holds the old form too, and a ref that is no bank ref is left out', fed.posted.length === 3 && !fed.posted.some((row) => row.entry_no === 'JV-10'), fed.posted);
+
   /* the account key: code, role or id; a group is no account */
   const chart = [ACCOUNT, { account_id: '44444444-4444-4444-8444-444444444444', code: '1500', name: 'Cash and bank', role: null, is_group: true }];
   check('an account is found by code, role and id', [BRL.accountIn(chart, '1510'), BRL.accountIn(chart, 'bank'), BRL.accountIn(chart, BANK)].every((found) => found === ACCOUNT));
