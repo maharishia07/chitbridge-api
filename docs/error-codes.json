@@ -3395,6 +3395,15 @@
    "since": "2026-11-15"
   },
   {
+   "code": "MARK_NOTE_TOO_LONG",
+   "status": "422",
+   "title": "Note too long",
+   "shopkeeper": "Keep the note to 1000 characters or fewer.",
+   "hint": "Shorten the note.",
+   "owner_area": "accounting",
+   "since": "2026-11-15"
+  },
+  {
    "code": "MARK_NOT_ALLOWED",
    "status": "403",
    "title": "Not for you to mark",

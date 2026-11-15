@@ -2,6 +2,7 @@
 --
 -- ⚠️ NOT RUN on production · Athi runs it (Supabase SQL editor, AS postgres); SIT first through the box's migrate step. Safe to repeat (IF NOT EXISTS / DROP ... IF EXISTS first). Run b869 AFTER this file.
 --    It touches no existing row. The api is correct BEFORE and AFTER it runs: until it runs, every /api/marks route answers 503 MARK_NOT_SWITCHED_ON in words and the adopters lists leave the mark keys out.
+-- ⚠️ RE-RUN ORDER: running b868 AGAIN after b869 puts review_mark_via_ok back to its core form (self only), so a reviewer from another business is refused until b869 is run again. Re-run b868 only together with b869, in that order.
 -- NUMBER. b867 is the last file on sit-au; b868 this core, b869 its door. Rename before landing if another round took them.
 -- WHAT IT IS (docs master capability/MARK-AND-QUERY-CAPABILITY.md section 5.1).
 --    review_mark       one row per mark: who (the real person, their own entity, the policy that admitted them, via_kind/via_id = the door), what (kind = the adopter's word, class = one of five neutral classes), when (server clock),
@@ -72,10 +73,12 @@ COMMENT ON TABLE review_mark IS 'MARK & QUERY: one row per review mark on a reco
 
 -- the thread: a mark's replies are chit_messages rows with subject_type 'mark' (no chit)
 ALTER TABLE chit_messages DROP CONSTRAINT IF EXISTS chit_messages_subject_ck;
+-- NOT VALID then VALIDATE: adding it takes no full-table ACCESS EXCLUSIVE scan (new rows are checked at once; VALIDATE scans under a lock that lets reads and writes go on)
 ALTER TABLE chit_messages ADD CONSTRAINT chit_messages_subject_ck CHECK (
      (subject_type = 'chit'    AND chit_id IS NOT NULL AND subject_id IS NULL)
   OR (subject_type = 'product' AND chit_id IS NULL     AND subject_id IS NOT NULL)
-  OR (subject_type = 'mark'    AND chit_id IS NULL     AND subject_id IS NOT NULL));
+  OR (subject_type = 'mark'    AND chit_id IS NULL     AND subject_id IS NOT NULL)) NOT VALID;
+ALTER TABLE chit_messages VALIDATE CONSTRAINT chit_messages_subject_ck;
 CREATE INDEX IF NOT EXISTS chit_messages_mark_idx ON chit_messages (entity_id, subject_id, created_at) WHERE subject_type = 'mark';
 
 -- the door check: does the door vouch for this writer? CORE form: a person writes for their own entity only (via_kind 'self').

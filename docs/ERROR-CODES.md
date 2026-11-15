@@ -97,6 +97,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MARK_BULK_NOT_ALLOWED | 422 | One at a time | Mark one record at a time. | Mark the records one by one. | accounting | 2026-11-15 |
 | MARK_IDS_TOO_MANY | 422 | Too many records | Ask for 200 records at a time or fewer. | Ask for fewer records. | accounting | 2026-11-15 |
 | MARK_KIND_UNKNOWN | 422 | Mark not known | Choose one of the marks shown. | Choose Checked, Query or On hold. | accounting | 2026-11-15 |
+| MARK_NOTE_TOO_LONG | 422 | Note too long | Keep the note to 1000 characters or fewer. | Shorten the note. | accounting | 2026-11-15 |
 | MARK_NOT_ALLOWED | 403 | Not for you to mark | Only the auditor can mark an entry. You can read the marks and answer a query. | Ask your auditor to mark it. | accounting | 2026-11-15 |
 | MARK_NOT_SWITCHED_ON | 503 | Marks not switched on | Marking and queries are not switched on yet. | Try again later. | accounting | 2026-11-15 |
 | MARK_PERIOD_INVALID | 422 | Period not valid | Give the period as two dates, year-month-day. | Fix the two dates. | accounting | 2026-11-15 |

@@ -154,6 +154,8 @@ async function main() {
 
     /* 5 */
     const n5 = await marksOf(M1);
+    const longNote = await asAud('POST', '/api/marks', mk(E2.entry_id, 'query', 'x'.repeat(1001)));
+    ok('5a0 a note over 1000 characters: 422 MARK_NOTE_TOO_LONG (never a 500 from the CHECK) and no row', longNote.status === 422 && code(longNote) === 'MARK_NOTE_TOO_LONG' && (await marksOf(M1)) === n5, JSON.stringify(longNote).slice(0, 300));
     const noWords = await asAud('POST', '/api/marks', mk(E2.entry_id, 'query', '   '));
     ok('5a a Query without words: 422 MARK_WORDS_REQUIRED and no row', noWords.status === 422 && code(noWords) === 'MARK_WORDS_REQUIRED' && (await marksOf(M1)) === n5, JSON.stringify(noWords));
     const q = await asAud('POST', '/api/marks', mk(E2.entry_id, 'query', 'Why was this posted to sales?'));
