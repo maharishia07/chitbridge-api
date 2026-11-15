@@ -99,6 +99,9 @@ const SELF_SCOPED = [
  * route. These are matched WHOLE, so nothing else under the same parent is opened by accident.
  */
 const SELF_SCOPED_EXACT = [
+  /* MARK & QUERY: setting a mark and answering in its thread are for the people the ADOPTER names (an auditor is a commenter), not for the hat: routes/marks.js asks lib/mark-policies on every call. Exact doors, nothing else under /marks. */
+  [/^[/]marks[/]?$/, 'set a mark: the adopter policy decides who (the auditor); the hat cannot see the body'],
+  [/^[/]marks[/](query|[^/]+[/]messages)[/]?$/, 'a read with ids in a body, and a reply in a mark thread: the adopter policy decides who'],
   [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
   /* ⭐ the assistant's READ-SHAPED posts only — each answers a question and writes nothing (routes/assist.js,
      checked 2026-09-28). A new /assist route is gated until somebody adds it here on purpose. */

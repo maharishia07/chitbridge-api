@@ -1,7 +1,7 @@
 -- b868_review_mark.sql — MARK & QUERY (CAP-25, 15 Nov 2026), the CORE: one INSERT-ONLY table of review marks, the thread subject 'mark' on chit_messages, and the two DB functions that are the only way in.
 --
 -- ⚠️ NOT RUN on production · Athi runs it (Supabase SQL editor, AS postgres); SIT first through the box's migrate step. Safe to repeat (IF NOT EXISTS / DROP ... IF EXISTS first). Run b869 AFTER this file.
---    It touches no existing row. The api is correct BEFORE and AFTER it runs: until it runs, every /api/marks route answers 503 MARK_NOT_SWITCHED_ON in words and the books lists leave the mark keys out.
+--    It touches no existing row. The api is correct BEFORE and AFTER it runs: until it runs, every /api/marks route answers 503 MARK_NOT_SWITCHED_ON in words and the adopters lists leave the mark keys out.
 -- NUMBER. b867 is the last file on sit-au; b868 this core, b869 its door. Rename before landing if another round took them.
 -- WHAT IT IS (docs master capability/MARK-AND-QUERY-CAPABILITY.md section 5.1).
 --    review_mark       one row per mark: who (the real person, their own entity, the policy that admitted them, via_kind/via_id = the door), what (kind = the adopter's word, class = one of five neutral classes), when (server clock),
