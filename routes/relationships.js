@@ -36,6 +36,7 @@ const partyFields = require('../lib/party-fields');
 const { liveSql, hiddenSql, restoredAnswer } = require('../lib/party-live');
 const { restore } = require('../lib/party-restore');
 const SL_HIDDEN = hiddenSql('sl'); // the mirror: a removed supplier row (CRM-247)
+const SL_NOT_SYSTEM = require('../lib/party-live').notSystemSql('sl'); // the installation root is not one of the shop's suppliers (the same rule lib/crm.js assemble applies)
 const SL_LIVE = liveSql('sl'); // the live-row predicate on the supplier_list alias `sl`, spelled once like A_BUSINESS (a constant in the SQL, never an interpolated call) // CRM-247: a deleted party's one predicate, the way back, and the answer's words
 /** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
 function unknownKeyRefusal(body, allowed) {
@@ -320,7 +321,7 @@ function listSuppliers(db, owner) {
                    THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
-       WHERE sl.owner_entity_id = $1 AND ${customerGroups.NOT_SELF_SUPPLIER_SQL} AND ${SL_LIVE} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
+       WHERE sl.owner_entity_id = $1 AND ${customerGroups.NOT_SELF_SUPPLIER_SQL} AND ${SL_LIVE} AND ${SL_NOT_SYSTEM} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
        ORDER BY sl.preferred DESC, sl.created_at DESC`,
     [owner]
   );
