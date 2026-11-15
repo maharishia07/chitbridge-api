@@ -247,7 +247,7 @@ const get = (port, p) => new Promise((ok) => {
   F.chitsToday = null; F.plan = 'gold'; r = await g('plan');
   t('plan: a plan the constitution does not declare says so in words - never 0, never unlimited', r.json.lines.map((l) => l.text), ['Gold plan', 'Limits not declared for this plan']);
   /* HOME-MONDAY: the Bank card - the last signed statement as carried; no statement is a plain status, never a zero; no "lines to add" */
-  const BL = require(API + '/lib/bank-rec-log'), BS = require(API + '/lib/books-store'); const wasLatest = BL.latest, wasAcc = BS.accounts;
+  const BL = require(API + '/lib/bank-rec-log'), BS = require(API + '/lib/books-store'); const wasLatest = BL.latest, wasAcc = BS.accounts, wasUns = BL.unsigned; BL.unsigned = async () => null;
   BL.latest = async () => null; r = await g('bank');
   t('bank: no statement says so in words, state not_started, no figure', [r.json.lines, r.json.state, r.json.figures.statement], [[{ text: 'No statement loaded yet' }], 'not_started', null]);
   BS.accounts = async () => [{ account_id: 7, name: 'ANZ Business' }];
@@ -256,7 +256,9 @@ const get = (port, p) => new Promise((ok) => {
   t('bank: figures carry minor units and the currency; nothing about lines to add', JSON.stringify(r.json.figures), JSON.stringify({ statement: { date: '2026-10-31', account: 'ANZ Business', difference_minor: 12345, currency: 'AUD' } }));
   BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 0, currency: 'AUD' }); r = await g('bank');
   t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Matches the books', 'in_use']);
-  BL.latest = wasLatest; BS.accounts = wasAcc;
+  BL.latest = async () => null; BL.unsigned = async () => ({ at: new Date('2026-11-14T03:00:00Z') }); r = await g('bank');
+  t('bank: loaded and worked on but not signed says so with its day, in_use, never Not started', [r.json.lines, r.json.state], [[{ text: 'Worked on {when} · not signed off yet', at: '2026-11-14' }], 'in_use']);
+  BL.latest = wasLatest; BS.accounts = wasAcc; BL.unsigned = wasUns;
   F.plan = null; r = await g('plan');
   t('plan: no plan row says so', r.json.lines[0].text, 'No plan recorded');
   F.plan = undefined;
