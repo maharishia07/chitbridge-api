@@ -773,6 +773,7 @@ const GUARDS = [
   'party-contact-patch.test.cjs',
   'crm-45-changed-named.test.cjs',
   'crm-47-party-keys.test.cjs', // CRM-47: tax_ids that is not a list and two keys for one credit limit are refused by name
+  'crm-l16-root-not-a-party.test.cjs', // l16: the installation root (system supplier) is not a party: no list, count or chip
   'crm-46-party-exact.test.cjs', // CRM-46: a party field that cannot be stored exactly is refused in words
   /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
   'party-merge-target.test.cjs',
