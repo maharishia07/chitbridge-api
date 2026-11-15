@@ -1446,6 +1446,9 @@
   "POST /api/kyb/field": {
    "output_allowlist": true
   },
+  "POST /api/marks": {
+   "output_allowlist": true
+  },
   "POST /api/marks/:thread_id/messages": {
    "output_allowlist": true,
    "foreign_id_404": true

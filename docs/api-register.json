@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 654,
-    "failing": 1
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 205,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 161
+  "output_allowlist_from_recordings": 162
  },
  "machine_columns": [
   "schema_in",
@@ -51680,7 +51680,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 92,
-   "hash": "d31682c7de7c1e66",
+   "hash": "6d2cbbe0e4689c55",
    "does": "An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.",
    "errors": {
     "count": 1,
@@ -51714,7 +51714,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51740,6 +51740,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
