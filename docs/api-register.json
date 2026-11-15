@@ -5,8 +5,8 @@
   "routes": 654,
   "no_does": 0,
   "not_started": 0,
-  "partial": 67,
-  "meets": 587,
+  "partial": 68,
+  "meets": 586,
   "columns": {
    "strict_input": {
     "applies": 335,
@@ -5318,7 +5318,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1022,
-   "hash": "7c2da9eab40a0454",
+   "hash": "89b90f682c6fe97e",
    "does": "A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).",
    "errors": {
     "count": 3,
@@ -5395,10 +5395,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "89b90f682c6fe97e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-finance-cash.js"
    ],
@@ -51771,7 +51772,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 106,
-   "hash": "7a911a64e2fbd851",
+   "hash": "fc20e2b650536be8",
    "does": "A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.",
    "errors": {
     "count": 1,
