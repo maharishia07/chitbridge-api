@@ -33,7 +33,7 @@ t('cash under 30 days is Needs help; nothing known is "none", never Doing well',
   assert.strictEqual(H.statusOf({}).status, 'none');
 });
 t('the thresholds are one object and travel with the answer', () => { assert.ok(H.RULE.help.cash_days_below === 30 && H.RULE.source.includes('starting rule')); });
-const row = (o) => Object.assign({ name: 'x', health: { status: 'good' }, queries: { open: 0, on_us: 0, on_client: 0 }, bas: { due_in_days: null }, months_unlocked: 0, checked: { n: 0, of: 0 }, grant: { ends_in_days: 200 }, action_count: 0 }, o);
+const row = (o) => Object.assign({ name: 'x', bank: { state: 'none' }, health: { status: 'good' }, queries: { open: 0, on_us: 0, on_client: 0 }, bas: { due_in_days: null }, months_unlocked: 0, checked: { n: 0, of: 0 }, grant: { ends_in_days: 200 }, action_count: 0 }, o);
 t('the band counts equal the filters; the default order is Needs help first, then most action', () => {
   const rows = [row({ name: 'a', health: { status: 'good' }, action_count: 5 }), row({ name: 'b', health: { status: 'help' }, action_count: 1 }), row({ name: 'c', health: { status: 'help' }, action_count: 4, bas: { due_in_days: 10 } })];
   const band = H.bandOf(rows);
@@ -50,7 +50,7 @@ t('figures: the books own sums are read; a mixed-currency client carries none, n
   assert.deepStrictEqual([noCosts.sales_trend_pct, noCosts.gross_margin_pct, noCosts.profit_quarter_minor, noCosts.loss_months_running], [-30, null, null, null]);
 });
 t('the statement is one statement (no second ; outside a literal) with and without marks', () => {
-  [true, false].forEach((marks) => assert.ok(!/;\s*\S/.test(P.statement(marks, ['cash']).replace(/'(?:[^']|'')*'/g, ''))));
+  [true, false].forEach((marks) => [true, false].forEach((bank) => assert.ok(!/;s*S/.test(P.statement(marks, ['cash'], bank).replace(/'(?:[^']|'')*'/g, '')))));
 });
 t('an ended, expired or edge_off grant is not allowed by the look (verdictOf reused)', () => {
   const live = { revoked_at: null, unexpired: true, edge_live: true, preset: 'auditor' }, req = { method: 'GET', listed: true };
