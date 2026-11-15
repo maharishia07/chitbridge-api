@@ -79,6 +79,7 @@ async function governedNote(entityId) {
   return { rows: [], why: (await taxGov.jurisdictionFor(entityId, { query })) ? null : taxGov.NO_COUNTRY_SLABS_SAY };
 }
 
+// @does Optional filters in -> we list the shop's own rules (offers, tax slabs, terms) with their current version, plus the region's tax slabs -> the definitions.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -220,6 +221,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
 });
 
 /** GET /:id — one definition with its FULL version history. The history is the point, so it is not optional. */
+// @does A definition id in -> we read that rule with its whole version history -> the definition and its versions, or not-found.
 router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -314,6 +316,7 @@ const liveNeedsYes = (req, kind, wasStatus) => kind === 'offer' && req.body && r
 const bornLiveWithoutYes = (req, res, next) => (liveNeedsYes(req, String((req.body && req.body.kind) || '').trim(), 'draft') ? problem(req, res, { status: 428, ...words.liveUnconfirmed() }) : next());
 
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
+// @does A rule's kind, name and rules in -> we create the definition and its first version together, refusing a rule without its value -> the new definition.
 router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -392,6 +395,7 @@ async function logStatusChange(db, req, entity_id, wasStatus, status) {
  * stamped against version 2 can still be explained after the shelf has moved to version 5.
  */
 /* A governed slab is the jurisdiction's, not the entity's: a sentence (words.governed), not a uuid-cast error. */
+// @does A definition id, new rules or status and the version the caller saw -> we save an edit as a new version, never an overwrite, refusing a region's own slab -> the updated definition.
 router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
@@ -500,6 +504,7 @@ const editorTakesOver = async (req, db, slabId) => {
   const citers = await slabCites.cites(db, slabId);
   return citers.products + citers.categories > 0;
 };
+// @does A definition id in -> we retire it, never delete, and for a tax slab refuse while products cite it unless a takeover slab is named -> retired, and what moved.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
@@ -566,6 +571,7 @@ const FREEZE_MAX = 500;
 const freezeIds = (list) => (list || []).filter((entry) => entry !== null && entry !== undefined && entry !== '').map(String);
 /** CAT-333: a snapshot is for the few definitions one chit cites (10,000 ids reached the ::uuid[] cast: 500), each a uuid or a governed slab → the words of the refusal, or null */
 const freezeRefusal = (ids) => (ids.length > FREEZE_MAX ? words.tooManyIds(FREEZE_MAX) : ids.some((entry) => !UUID.test(entry) && !taxGov.isGovernedId(entry)) ? words.badIds() : null);
+// @does A list of definition ids a chit cites -> we take a snapshot of each as it stands now, including retired ones and regional slabs -> the frozen copies and any ids not found.
 router.post('/freeze', auth, ...checked('POST /freeze'), async (req, res) => {
   try {
     const entity_id = ctx(req);

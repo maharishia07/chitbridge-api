@@ -173,6 +173,7 @@ const onceOnly = require('../middleware/idempotency').requireKey();
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
+// @does Nothing in -> we read whether the shop's books are switched on and whether its country allows them -> the switch state, walk-in grain and country verdict (owner only).
 router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -184,6 +185,7 @@ router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) =
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does Optional walk-in grain in -> we check the country allows books, switch the shop's books on and lay the chart of accounts -> the opened setting (owner only).
 router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -197,6 +199,7 @@ router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res)
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).
 router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -223,6 +226,7 @@ router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req
  * Before b298 runs: terms_migrated false, the party's own days/limit still answered. POST /terms (owner) sets — { party_id?, side?, credit_days,
  * credit_limit_minor, interest: { on, rate_pct, grace_days }|null, early: { pct, within_days }|null } — one change event per changed key; 503 TERMS_NOT_MIGRATED before b298.
  */
+// @does Optional party and side in -> we read the credit limit, interest and early-pay terms of one customer or supplier, else the shop default -> those terms.
 router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -265,6 +269,7 @@ router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res)
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).
 router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -287,6 +292,7 @@ router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, re
  * — the web's probe (404 = off) and the to-do list: `waiting` is every post that failed or was parked, least-tried first,
  * each with the `reason` it could not post (lib/books-hooks waitingRow; POST /outbox/retry tries them again).
  */
+// @does Nothing in -> we read the health of the books: postings still waiting to reach the ledger, the to-do counts and the year's checks -> one health summary.
 router.get('/health', auth, on, ...checked('GET /health'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -318,6 +324,7 @@ router.get('/health', auth, on, ...checked('GET /health'), async (req, res) => {
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does Nothing in -> we run the books' self-check for this shop now -> what it found (owner only).
 router.post('/check', auth, owner, on, ...checked('POST /check'), async (req, res) => {
   try {
     res.json(await require('../lib/books-nightly').check(ctx(req)));
@@ -325,6 +332,7 @@ router.post('/check', auth, owner, on, ...checked('POST /check'), async (req, re
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does Nothing in -> we try again every posting that was waiting to reach the books -> how many were tried, posted and still waiting (owner only).
 router.post('/outbox/retry', auth, owner, on, ...checked('POST /outbox/retry'), async (req, res) => {
   try {
     const out = await require('../lib/books-hooks').retryOutbox(ctx(req), 100);
@@ -336,6 +344,7 @@ router.post('/outbox/retry', auth, owner, on, ...checked('POST /outbox/retry'), 
 
 /* ── the chart ──────────────────────────────────────────────────────────────────────────────────────────────── */
 /** GET /accounts → { accounts: [{ account_id, code, name, is_group, tally_group, nature, role, parent_code }] } */
+// @does Nothing in -> we read the shop's chart of accounts, leaving out parked rows of a corrected country -> the accounts with code, name, group and nature.
 router.get('/accounts', auth, on, ...checked('GET /accounts'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -365,6 +374,7 @@ router.get('/accounts', auth, on, ...checked('GET /accounts'), async (req, res) 
 });
 /** POST /accounts { name, parent_code | parent_id, source_code? } → { account: { code, account_id, name, source_code?, source_code_written? } } — the code is the system's (engines nextCode, role null); one typed here is refused (422).
  *  IM1: `source_code` = the code the ledger had in Xero / QuickBooks, kept beside ours (b302); one another ledger already holds is refused (422, a code clash). */
+// @does A name and a parent account in -> we add a new account to the chart and log it -> the new account (owner only).
 router.post('/accounts', auth, owner, on, ...checked('POST /accounts'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -545,6 +555,7 @@ const cursorOf = (next) => (next ? next.date + '|' + next.no : null);
 
 /** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
+// @does A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
 router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -618,6 +629,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
 
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
+// @does An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.
 router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -696,6 +708,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
  *  items once, so each payment's unapplied part is the engine's `outstanding` (the figure the preview and the outcome already use).
  *  M30: `advice` = { chit_id, state: none·sent·delivered·shared·disputed, shared_at } from the payments' b285 columns (one read) and my copy's chit status
  *  (one read) — 'none' for every line while b285 has not run (books-store adviceReady), never a 42703. */
+// @does A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.
 router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/statement'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -833,6 +846,7 @@ async function forReader(req, e, answer) {
  * ⭐ THE ONE DUE FIGURE (R73/R76): a party's open documents below are the NETTED bills (E.dues → books-engines.netOpen — net of its receipts on
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
  */
+// @does Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.
 router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
@@ -996,6 +1010,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
  * Owner only — the server decides (403 with the sentence); 404 while the ledger is off (`on`), like every books read. Reads only; one query per source.
  */
 const CASH_OWNER_ONLY = 'Only the owner may see the cash position.';
+// @does A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).
 router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req, res) => {
   try {
     if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: CASH_OWNER_ONLY, legacy: { error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY } });
@@ -1012,6 +1027,7 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
 });
 
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced } */
+// @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1038,6 +1054,7 @@ function flat(lines) {
   return out;
 }
 /** GET /pl?from&to → { currency, income: [{ code, name, amount_minor }], expense: [...], profit_minor } (inside one financial year) */
+// @does A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
 router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1092,6 +1109,7 @@ function sched3(balanceSheet, order) {
 }
 /** GET /bs?asOf → { currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
+// @does An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
 router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1200,6 +1218,7 @@ function alreadyPaid(res, err) {
  * The proposal is B.proposeFor (the one function /propose and the one-call record use); the warnings are the duplicate rule
  * (PAY D5: W1–W4, 24 h). The web paints them; it composes none of the words.
  */
+// @does A party, amount and mode in -> we work out how the payment would settle the open bills, posting nothing -> a preview with the proposed split and warnings.
 router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/preview'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1250,6 +1269,7 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
  * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
+// @does A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).
 router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /payments'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1350,6 +1370,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
  *   to grey it by — the same B.adviceMay the PATCH enforces. The web sends the chit (`body`, client_ref 'advice:pay:<id>' — /send dedupes) and then PATCHes
  *   advice_chit_id. Before b285 runs: state 'none', may.*.why 'not_available' with its words — never a 500.
  */
+// @does A payment id in -> we read whether a payment advice was sent to the other party and what may be done next -> the advice state.
 router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:id/advice'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1376,6 +1397,7 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
  *   (bank-recon railPayments · explain) does it on the device. `may.ask` is the rail ladder (lib/rail byLevel) — POST /api/chits/send decides again.
  *   Who may call: any login of the shop with the Ledger on (a viewer reads; its Ask is greyed with the sentence). A key (counter) may not (noKey).
  */
+// @does A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.
 router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1427,6 +1449,7 @@ async function bankAccountOf(handle, e, key) {
   return account;
 }
 /** POST /bank/marks { account, file_hash?, marks: [{ act: accept|undo|note|attach, key, how?, chits?, ledger?, text?, ref? }] } → { marks: [row], by, at } — editor; insert-only, one transaction. `by` and `at` are the server's. */
+// @does A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).
 router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1439,6 +1462,7 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
   }
 });
 /** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
+// @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
 router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1452,6 +1476,7 @@ router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/
   }
 });
 /** GET /bank/log?account&from&to → { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
+// @does A bank account and dates in -> we read its reconciliation marks, statements and exceptions -> the log.
 router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1474,6 +1499,7 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
  * ⭐ THE SAME RULE THE READ PAINTS (B.adviceMay): a viewer / commenter → 403 with the rail engine's sentence; reversed · a held cheque · not posted · off rail (send) /
  *   on rail (share) → 409 with the words. Before b285 runs → 503 BOOKS_NOT_MIGRATED "Advice not available yet…". Co-assist allowed (as record is).
  */
+// @does A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.
 router.patch('/payments/:id', auth, noKey, onceOnly, on, ...checked('PATCH /payments/:id'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1530,6 +1556,7 @@ router.patch('/payments/:id', auth, noKey, onceOnly, on, ...checked('PATCH /paym
   }
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
+// @does A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).
 router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /payments/:id/propose'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1597,6 +1624,7 @@ async function confirmSteps(req, e, id, pairs) {
  * ⭐ FIN-63 step 2: the SAME allocation pressed again (the payment's latest live batch, within books-replay.ALLOC_REPLAY_WINDOW_MS) answers
  * 200 { ok, duplicate: true, items, allocated_minor } from the stored rows and posts nothing; a first posting carries no `duplicate` key.
  */
+// @does A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).
 router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1642,6 +1670,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...check
  *   read from the shop's stored terms (lib/finance-terms pdcRemind: books_setting.terms.pdc_remind, set through POST /terms); absent = on, 7 days ahead, as
  *   before. `on` false → pdc_reminders is [] (the engine answers null). One more statement in the SAME transaction (shopTerms), only once b298 has run.
  */
+// @does Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.
 router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1745,6 +1774,7 @@ router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, 
  *   bounced   → { ok, status: 'bounced', items: 1 }  (a cheque that never cleared never counted: no entry)
  * Out of order (received → deposited → cleared | bounced) → 422 with the engine's sentence; not a cheque → 404.
  */
+// @does A cheque id and deposited, cleared or bounced in -> we move the cheque on in order and post it when it clears -> the new status (editors).
 router.post('/cheques/:id/status', auth, editor, on, ...checked('POST /cheques/:id/status'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1768,6 +1798,7 @@ const STATUS_WORDS = require('../lib/books-payables').STATUS_WORDS;
  * POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } → { ok, status: disputed|undisputed, words, against_ref }
  * — a disputed bill cannot take a payment (C4); Payables and cash-flow leave it out until it is released
  */
+// @does A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).
 router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/:id/dispute'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1795,6 +1826,7 @@ router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/
 /* ── the "＋ Entry" door: the grid, the preview, the everyday events ───────────────────────────────────────────── */
 const M = () => require('../lib/books-manual');
 /** GET /events → { events: [{ kind, words, icon, band, voucher, fields, ledger_group, preview, post | route }], picks, pending, golden } — the grid; the screen holds no rules */
+// @does Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.
 router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => {
   try {
     const grid = M().catalogue(req.books);
@@ -1807,6 +1839,7 @@ router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => 
  * POST /preview { event: { kind, …fields } } (or { event: 'kind', …fields }) → { ok, voucher: { series, type }, lines: [{ code, ledger, dr_minor, cr_minor, type, rule }], balanced, refusals, … }
  * Composed by lib/books.js composeEntry — the writer's own function. Writes nothing, takes no counter. A co-assist may preview; only the owner posts.
  */
+// @does A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.
 router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
     const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) });
@@ -1816,6 +1849,7 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
   }
 });
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
+// @does A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
 router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
@@ -1827,6 +1861,7 @@ router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async
 
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
+// @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
 router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -1854,6 +1889,7 @@ router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req
 /** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:
  *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
  *  M29: an entry already reversed answers 409 ALREADY_REVERSED naming the reversal (a second Reverse is not a replay — it would be a second correction). */
+// @does An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).
 router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -1867,6 +1903,7 @@ router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).
 router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -1900,6 +1937,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
  * ONE entry, period 0 (is_opening). A party row names its bill (bill_ref) so dues are bill-wise from day one; any
  * difference goes to Suspense 2900, which must be nil before the year can close (Tally, ERPNext opening entry).
  */
+// @does Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).
 router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -1950,6 +1988,7 @@ function moveInOrigin(body) {
   return { source_country: sized(body.source_country, 60), source_company: sized(body.source_company, 80) };
 }
 /** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row } — reads nothing of the shop; nothing is written */
+// @does A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).
 router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/preflight'), async (req, res) => {
   try {
     const { kind, source, parsed } = moveInBody(req);
@@ -1995,6 +2034,7 @@ async function moveInPlan(req, db) {
   return { m: moveInRequest, pl: plan, w: world };
 }
 /** POST /move-in/preview { kind, source, source_country, source_company?, csv | xlsx, decisions: [{ incoming, field }], side?, as_at? } → { kind, source, side, as_at, counts: { add, merge, skip, hold }, rows: [{ line, what, action, why, data, code? }], refusal, notes, country: { shop, source, how }, company_id, tax_codes? } — the DRY RUN; nothing is written. A country refusal: 422 { code: MOVE_IN_COUNTRY · _UNSTATED · _WORD · MOVE_IN_FOREIGN · MOVE_IN_COMPANY } */
+// @does The file and the owner's column choices in -> we plan the move-in without writing anything -> what would be added, merged, skipped or held (owner only).
 router.post('/move-in/preview', auth, owner, on, ...checked('POST /move-in/preview'), async (req, res) => {
   try {
     const { m, pl } = await withEntity(ctx(req), (h) => moveInPlan(req, h));
@@ -2005,6 +2045,7 @@ router.post('/move-in/preview', auth, owner, on, ...checked('POST /move-in/previ
 });
 /** POST /move-in/import { …as preview, confirm: true } → { kind, source, side, as_at, added, merged, skipped, held, rows: [the skipped and the held, with why (+ code)], notes, entry?,
  *  source_code_written?, proof, proof_stored, import_id } — ONE transaction; a refusal writes nothing (422 with the code and the sentence) */
+// @does The same file with confirm true in -> we add and merge the parties or items in one transaction and keep a match proof -> the counts and the proof (owner only).
 router.post('/move-in/import', auth, owner, on, ...checked('POST /move-in/import'), async (req, res) => {
   try {
     if ((req.body || {}).confirm !== true)
@@ -2023,6 +2064,7 @@ router.post('/move-in/import', auth, owner, on, ...checked('POST /move-in/import
 });
 /** GET /move-in/imports → { ready, why, imports: [{ import_id, source, company_id, source_country, country_how, kind, side, as_at, counts, proof, created_at }] } —
  *  the latest 20 imports with their MATCH PROOF (W1.10, b765), read back. Owner only. Before b765: ready false with the sentence. One transaction. */
+// @does Nothing in -> we read the latest 20 move-in imports with their match proof -> the list of imports (owner only).
 router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2072,6 +2114,7 @@ const notMigrated = () => {
   return x;
 };
 /** GET /compare → { currency, ready, why, may: { load: { may, why } }, snapshots: [{ snapshot_id, label, source, period_from, period_to, currency, parts, lines, created_at }] } — one transaction */
+// @does Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.
 router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2093,6 +2136,7 @@ router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), as
   }
 });
 /** POST /compare/preflight { part, source, csv | xlsx | xml, sheet?, header_row? } → { part, source, format: table | tally_xml, headers, fields, guess, missing, ready, rows_total, sample } — nothing is read of the shop, nothing written */
+// @does A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.
 router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /compare/preflight'), async (req, res) => {
   try {
     const b = req.body || {},
@@ -2110,6 +2154,7 @@ router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /c
 });
 /** POST /compare/snapshots { snapshot_id?, label, source, part, period_from?, period_to, file_name?, csv | xlsx | xml, decisions? } → { snapshot_id, part, label, source, period_from, period_to, rows, skipped }
  *  A new snapshot with its first part, or one more part on a snapshot (its label, source and period are kept). Insert-only: a part it already has → 409. One transaction. */
+// @does A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.
 router.post('/compare/snapshots', auth, noKey, on, comparer, ...checked('POST /compare/snapshots'), async (req, res) => {
   try {
     const b = req.body || {},
@@ -2243,6 +2288,7 @@ async function compareRead(req) {
 }
 /** GET /compare/:id → { currency, snapshot, parts: { tb|pl|bs|ret: { part, title, from, to, file_name, lines: [{ key, status, name, their_name, their_code, their_line, our_codes, theirs_minor,
  *  ours_minor, diff_minor, cause, why, entries: [{ entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }], entries_n, open }], counts, error } }, counts, effort } — differences first */
+// @does A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.
 router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:id'), async (req, res) => {
   try {
     res.json(await compareRead(req));
@@ -2251,6 +2297,7 @@ router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:
   }
 });
 /** GET /compare/:id/csv → the same compare as a .csv for the auditor's file */
+// @does A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.
 router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compare/:id/csv'), async (req, res) => {
   try {
     const r = await compareRead(req);
@@ -2262,6 +2309,7 @@ router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compa
   }
 });
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
+// @does A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).
 router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:fy/:p/:act'), async (req, res) => {
   try {
     const { fy, p, act } = req.params;
@@ -2275,6 +2323,7 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
   }
 });
 /** POST /year/:fy/close → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
+// @does A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2290,6 +2339,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
   }
 });
 /** GET /year/:fy/status → { fiscal_year, closed, can_close, refusals, months, next } — what a close would say, nothing written */
+// @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2307,6 +2357,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does Optionally a year in -> we read each month's lock state, figures, tax return state and change trail -> the periods.
 router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2343,6 +2394,7 @@ function manifestView(manifest) {
     controls: { counts: x.counts || null, totals: x.totals || null, checks: x.checks || null }
   });
 }
+// @does Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).
 router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2365,6 +2417,7 @@ router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res)
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).
 router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -2381,6 +2434,7 @@ router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, re
  *             the web saved this JSON as "the pack" and then acknowledged it)
  *   download  the same path, or null when has_file is false (kept for the first web build)
  */
+// @does A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).
 router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -2410,6 +2464,7 @@ router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (r
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).
 router.get('/packs/:id/file', auth, owner, on, ...checked('GET /packs/:id/file'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2440,6 +2495,7 @@ router.get('/packs/:id/file', auth, owner, on, ...checked('GET /packs/:id/file')
  */
 const PACK_NO_FILE_BUILT = 'This pack was built while storage was not connected — build it again to download it.';
 const PACK_NO_FILE = 'This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm.';
+// @does A pack id in -> we record that the owner downloaded and confirmed the pack, and log it -> the pack (owner only).
 router.post('/packs/:id/ack', auth, owner, on, ...checked('POST /packs/:id/ack'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2463,6 +2519,7 @@ router.post('/packs/:id/ack', auth, owner, on, ...checked('POST /packs/:id/ack')
 /* ── recurring entries (b281, DRAFT) and the To-do ─────────────────────────────────────────────────────────── */
 const RC = () => require('../lib/books-recurring');
 /** GET /recurring → { recurring: [{ recurring_id, name, event, frequency, next_on, end_on, auto, active, last_done_on, due }] } · 503 BOOKS_NOT_MIGRATED until b281 runs */
+// @does Nothing in -> we list the recurring entries with their next date and whether one is due -> the list (owner only).
 router.get('/recurring', auth, owner, on, ...checked('GET /recurring'), async (req, res) => {
   try {
     res.json({ recurring: await RC().list(ctx(req)) });
@@ -2471,6 +2528,7 @@ router.get('/recurring', auth, owner, on, ...checked('GET /recurring'), async (r
   }
 });
 /** POST /recurring { name, event: { kind, …fields as POST /events, no date }, frequency: monthly|quarterly|yearly, next_on, end_on?, auto? } */
+// @does A name, an event, a frequency and a next date in -> we save a recurring entry template -> the template (owner only).
 router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async (req, res) => {
   try {
     const template = await RC().create(ctx(req), req.books, req.body || {}, byOf(req));
@@ -2481,6 +2539,7 @@ router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async 
   }
 });
 /** PATCH /recurring/:id — a merge-patch: only the fields sent change */
+// @does A template id and the fields to change in -> we change only those fields -> the template (owner only).
 router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2491,6 +2550,7 @@ router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id
   }
 });
 /** DELETE /recurring/:id — stops it (active: false); nothing is deleted, and what it posted stays */
+// @does A template id in -> we stop it, deleting nothing that it posted -> the stopped template (owner only).
 router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:id'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2501,6 +2561,7 @@ router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:
   }
 });
 /** POST /recurring/:id/post — accept the proposal: posts the due day as an MJ entry (client_ref = template + date) and moves it on · POST /recurring/:id/skip — let it pass */
+// @does A template id in -> we post the due day as a journal entry once and move the template on -> what was posted (owner only).
 router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/:id/post'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2510,6 +2571,7 @@ router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/
     problem(req, res, refusalOf(err, req));
   }
 });
+// @does A template id in -> we skip the due day without posting and move the template on -> the skipped day (owner only).
 router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/:id/skip'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2520,6 +2582,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
   }
 });
 /** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · suppliers_to_add · bills_unrated (F5 A1: a bill with an unrated line, listed never changed) · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
+// @does Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
     res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books)));
@@ -2542,6 +2605,7 @@ const route = (method, p, fn, gates) =>
     }
   });
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
+// @does An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).
 router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, res) => {
   try {
     const assetBook = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
@@ -2551,8 +2615,10 @@ router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, re
   }
 });
 /** POST /assets { name, class, cost, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row */
+// @does An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).
 route('post', '/assets', (req, e, setting, body, by) => P().addAsset(e, setting, body, by));
 /** POST /assets/:id/dispose { date, proceeds?, into?, client_ref } */
+// @does An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).
 route('post', '/assets/:id/dispose', (req, e, setting, body, by) => {
   if (!UUID.test(String(req.params.id))) {
     const x = new Error('Not found');
@@ -2562,17 +2628,22 @@ route('post', '/assets/:id/dispose', (req, e, setting, body, by) => {
   return P().disposeAsset(e, setting, String(req.params.id), body, by);
 });
 /** POST /depreciation/run { fy } → one entry at the year end, from the register; says which entity basis it used */
+// @does A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).
 route('post', '/depreciation/run', (req, e, setting, body, by) => P().runDepreciation(e, setting, body, by));
 /** POST /closing-stock { date, value_minor?, nrv_minor?, method: 'manual' | 'automatic' (valued from the stock ledger — T1-INV) } */
+// @does A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).
 route('post', '/closing-stock', (req, e, setting, body, by) => P().closingStock(e, setting, body, by));
 /** POST /gst/close { fy, period } → { utilised, payable_minor, carried_minor, pay_total_minor, entry_no } · POST /gst/pay { fy, period, amounts, bank, challan_no } */
+// @does A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).
 route('post', '/gst/close', (req, e, setting, body, by) => P().gstClose(e, setting, body, by));
+// @does A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).
 route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, body, by), [onceOnly]); /* FIN-63: a tax payment is a money write — one key per attempt */
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner, or the shop's auditor (ACC-229: whole-entity + can_see_costs, 403 BOOKS_RETURN_READ_NOT_ALLOWED). Prepared, never lodged.
  *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
 /* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
+// @does A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.
 router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async (req, res) => {
   try {
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
@@ -2594,12 +2665,17 @@ router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async
   }
 });
 /** POST /loans { ref, lender, amount, into, rate?, kind? } · POST /loans/:ref/emi { principal, interest, from?, date, client_ref } */
+// @does A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).
 route('post', '/loans', (req, e, setting, body, by) => P().takeLoan(e, setting, body, by));
+// @does A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).
 route('post', '/loans/:ref/emi', (req, e, setting, body, by) => P().loanEmi(e, setting, String(req.params.ref).slice(0, 60), body, by));
 /** POST /accruals { ref, kind, class, amount, date } → reverses_on · POST /accruals/:ref/reverse (due from reverses_on) */
+// @does A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).
 route('post', '/accruals', (req, e, setting, body, by) => P().accrue(e, setting, body, by));
+// @does An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).
 route('post', '/accruals/:ref/reverse', (req, e, setting, body, by) => P().reverseAccrual(e, setting, String(req.params.ref).slice(0, 60), body, by));
 /** POST /contra { from, to, amount, date, client_ref } — cash ↔ bank ↔ UPI */
+// @does A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).
 route('post', '/contra', (req, e, setting, body, by) => P().contra(e, setting, body, by));
 
 /* ── FX1 · EXCHANGE RATES AND FOREIGN BALANCES (lib/fx-rates; b391 fx_rate, b392 journal_line txn_currency). A rate is evidence the OWNER types or imports —
@@ -2612,6 +2688,7 @@ function fxMay(req, ready) {
   return isOwner(req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
 }
 /** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
+// @does Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.
 router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -2632,6 +2709,7 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
   }
 });
 /** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */
+// @does A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).
 router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), async (req, res) => {
   try {
     const e = ctx(req);
@@ -2641,6 +2719,7 @@ router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), a
   }
 });
 /** POST /fx-rates/import { csv, file_name? } → { added, refused: [{ line, why }], rates } — owner; the good rows in ONE insert, source 'import'. One transaction. */
+// @does A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).
 router.post('/fx-rates/import', auth, noKey, on, owner, ...checked('POST /fx-rates/import'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -2659,6 +2738,7 @@ const fxPeriod = (source) => {
   return { fy: fiscalYear, p: period };
 };
 /** GET /fx-revalue?fiscal_year&period → { ready, why, may: { post }, date, reverses_on, functional, rows, missing, gain_minor, posted } — Month lock's foreign-balances line. Owner (it shows what parties owe). One transaction. */
+// @does A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).
 router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'), async (req, res) => {
   try {
     const e = ctx(req),
@@ -2686,6 +2766,7 @@ router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'),
   }
 });
 /** POST /fx-revalue { fiscal_year, period } → { ok, entry_no, reversal_no, gain_minor, date, reverses_on } — owner; the revaluation and its reversal in ONE transaction; idempotent */
+// @does A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).
 router.post('/fx-revalue', auth, noKey, on, owner, ...checked('POST /fx-revalue'), async (req, res) => {
   try {
     const e = ctx(req),

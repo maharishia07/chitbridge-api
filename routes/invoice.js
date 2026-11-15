@@ -71,6 +71,7 @@ const ratesEcho = (rated) =>
     scheme: item.tax_scheme
   }));
 
+// @does Lines in -> we price and tax them into an invoice without saving anything -> the built invoice (needs the invoice scope).
 router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /build'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -139,6 +140,7 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
   }
 });
 
+// @does A chit id in -> we read the invoice of that chit with the buyer's tax id and tax split -> the invoice (invoice or connector scope).
 router.get(
   '/:chit_id',
   auth,

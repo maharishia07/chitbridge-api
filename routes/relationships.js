@@ -189,6 +189,7 @@ async function listSupplier(db, owner, partyId, fields) {
  *
  * ⚠️ STILL UNILATERAL. Nobody is asked or notified, which is why the read tier stays at public storefront.
  */
+// @does A supplier's User ID, bridge id or a local name with kind and notes -> we add them to the shop's supplier list without asking them -> the new supplier.
 router.post(
   '/suppliers',
   [
@@ -335,6 +336,7 @@ function hideOwed(row) {
 }
 
 // List my suppliers — has_catalogue reflects an active default schema only
+// @does Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.
 router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -473,6 +475,7 @@ async function renameMinted(req, res, owner) {
 const SUPPLIER_PATCH_KEYS = PARTY_KEYS.concat(['category', 'notes', 'supply_kind', 'display_name', 'preferred']);
 // Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
+// @does A supplier id and the owner's own fields (nickname, category, notes, preferred) -> we save them on the shop's side only, never on the supplier -> the updated supplier.
 router.patch(
   '/suppliers/:id',
   [
@@ -515,6 +518,7 @@ router.patch(
  * unreferenced row and buys something useful: re-adding the same name finds the same id again (local-identity.mint
  * looks before it mints), so the history reconnects instead of starting over.
  */
+// @does A supplier id from the owner -> we hide that supplier from the lists, keeping chits and history -> a removed message; owner only.
 router.delete('/suppliers/:id', auth, ...checked('DELETE /suppliers/:id'), async (req, res) => {
   try {
     /* R8: owner only, refused with money open, and it HIDES (CRM's ownFields remove) — a staff login can no longer delete a supplier the shop owes */
@@ -561,6 +565,7 @@ router.delete('/suppliers/:id', auth, ...checked('DELETE /suppliers/:id'), async
  */
 const AVAIL_CONCURRENCY = 6; // enough to hide latency, low enough not to stampede our own DB
 const AVAIL_HITS_PER_SUPPLIER = 6;
+// @does A search word of two letters or more -> we look across the catalogues of the shop's own suppliers -> which suppliers stock it and the matching items.
 router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availability'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -691,6 +696,7 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
 
 // Fetch a supplier's catalogue (schema fields + products) to draft an order chit (D-059).
 // Mirrors the PHP supplierCompose flow: select supplier -> see their catalogue -> compose.
+// @does A supplier id from the shop's own list -> we read that supplier's catalogue columns and products for drafting an order -> the catalogue, or not-on-your-list.
 router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /suppliers/:supplier_entity_id/catalogue'), async (req, res) => {
   try {
     const sid = req.params.supplier_entity_id;
@@ -751,6 +757,7 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /su
 // ── CUSTOMERS (auto-added — D-065; segment computed on read — D-067) ──
 
 /** the seller's named groups — for the Customers pane's chips and the offer editor's "Only for" picker. Before the customers/:id routes. */
+// @does Nothing but the signed-in shop -> we read the customer group names it has made -> the group names.
 router.get('/customers/groups', auth, async (req, res) => {
   try {
     res.json(await customerGroups.namesOf({ seller_id: ctx(req), withEntity }));
@@ -758,6 +765,7 @@ router.get('/customers/groups', auth, async (req, res) => {
     problem(req, res, failed(err, req, 'Get groups failed'));
   }
 });
+// @does Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.
 router.get('/customers', auth, ...checked('GET /customers'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -820,6 +828,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
  * ⚠️ THE LIABILITY IS THE SHOPKEEPER'S NUMBER, and it is a real one — points outstanding are money the shop has
  * promised and not yet paid. A screen that showed only the count would be hiding a debt from the person carrying it.
  */
+// @does A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.
 router.get('/customers/:id/rewards', auth, ...checked('GET /customers/:id/rewards'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -914,6 +923,7 @@ async function addLocalCustomer(owner, body) {
  * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),
  * never yourself, 'manual', no transactions yet (segment reads "new" until the count says otherwise).
  */
+// @does A User ID or email for a ChitBridge business, or a name for a local customer -> we add them to the shop's customer list -> the new customer.
 router.post(
   '/customers',
   [
@@ -992,6 +1002,7 @@ router.post(
  * ⭐ PLACE A CUSTOMER IN NAMED GROUPS (decision 2, 2026-09-06). POST /customers/:id/groups { groups: ['dealers', 'wholesale'] } replaces the
  * customer's set. Names are cleaned (customer-groups.cleanGroups). Without the migration the answer is 409 and says which file to run.
  */
+// @does A customer id and a list of group names -> we replace that customer's groups with the cleaned names -> ok and the groups; not for API keys.
 router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/groups'), async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, ...words.keyFence() });
@@ -1012,6 +1023,7 @@ router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/group
 
 // Manual segment override (optional)
 const CUSTOMER_PATCH_KEYS = PARTY_KEYS.concat('segment_override');
+// @does A customer id and a segment override or party fields -> we save the change on the shop's side -> the updated customer.
 router.patch(
   '/customers/:id',
   [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])],
@@ -1082,6 +1094,7 @@ async function tradedWith(shop, counterparty_id, since, windowRows) {
   return (await select.rows(shop, { counterparty_id, limit: 1 })).length > 0;
 }
 
+// @does Optional since date -> we list every business the shop has traded with, from the chits, so none needs adding first -> counterparties to score.
 router.get('/scorecard', auth, queryDay('since'), ...checked('GET /scorecard'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -1094,6 +1107,7 @@ router.get('/scorecard', auth, queryDay('since'), ...checked('GET /scorecard'), 
   }
 });
 
+// @does A counterparty id and optional since date -> we score how they trade with us from the shared chit copies and the shop's overdue policy -> their scorecard, or not-found.
 router.get('/scorecard/:entity_id', auth, queryDay('since'), ...checked('GET /scorecard/:entity_id'), async (req, res) => {
   try {
     const me = auth.entityOf(req);

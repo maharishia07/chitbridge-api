@@ -76,6 +76,7 @@ async function mine(entity_id, chit_id, db) {
  * number when the parties happen to agree would have no place to put the second when they stop agreeing, and the
  * disagreement is the entire point of the feature.
  */
+// @does A chit id in -> we read its service clock, response and resolution targets and any pauses -> the service state, or 404.
 router.get('/:chit_id', auth, NOT_MIGRATED, ...contract.checked('GET /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -171,6 +172,7 @@ router.get('/:chit_id', auth, NOT_MIGRATED, ...contract.checked('GET /:chit_id')
  * priority would let every ticket be a P1 by assertion, which is exactly what the matrix exists to stop. An
  * explicit override is allowed but recorded as what it is.
  */
+// @does A chit id with impact, urgency or priority in -> we start or update its service clock with that priority's targets -> the saved service state, or a refusal for a bad priority.
 router.put(
   '/:chit_id',
   auth, NOT_MIGRATED, ...contract.checked('PUT /:chit_id'),
@@ -216,6 +218,7 @@ router.put(
 );
 
 /** POST /:chit_id/respond — someone picked it up. Idempotent: the FIRST response is the one that counts. */
+// @does A chit id in -> we record when we first responded, once only -> the response time.
 router.post('/:chit_id/respond', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/respond'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -237,6 +240,7 @@ router.post('/:chit_id/respond', auth, NOT_MIGRATED, ...contract.checked('POST /
 });
 
 /** POST /:chit_id/resolve — WHAT was done. Closure (did they accept it) is a separate act, deliberately. */
+// @does A chit id, a resolution code and a note in -> we record what was done to resolve the request -> the resolution time and code.
 router.post('/:chit_id/resolve', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/resolve'), [body('resolution_code').isString()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -266,6 +270,7 @@ router.post('/:chit_id/resolve', auth, NOT_MIGRATED, ...contract.checked('POST /
  * chit_line_deliver is. A pause only I can see is not a disputable fact — it is my private opinion about time,
  * which is what every other service desk already has.
  */
+// @does A chit id and a reason in -> we pause its service clock, one open pause at a time -> the new pause.
 router.post('/:chit_id/pause', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/pause'), [body('reason').isString()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -324,6 +329,7 @@ router.post('/:chit_id/pause', auth, NOT_MIGRATED, ...contract.checked('POST /:c
 });
 
 /** POST /:chit_id/pause/:pause_id/end — restart the clock. */
+// @does A pause id and an optional end time in -> we end the pause and restart the clock on every copy -> a confirmation, or 409 if it was already ended.
 router.post('/:chit_id/pause/:pause_id/end', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/pause/:pause_id/end'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -348,6 +354,7 @@ router.post('/:chit_id/pause/:pause_id/end', auth, NOT_MIGRATED, ...contract.che
  *
  * This is the disagreement, made into a fact. Everything else in this file is bookkeeping; this is the feature.
  */
+// @does A pause id and accepted yes or no in -> we record accepting or rejecting the other side's pause, never your own -> a confirmation with the copies updated.
 router.post('/:chit_id/pause/:pause_id/answer', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/pause/:pause_id/answer'), [body('accepted').isBoolean()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);

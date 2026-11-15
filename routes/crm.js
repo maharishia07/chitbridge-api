@@ -94,6 +94,7 @@ const idOf = (req) => {
 };
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
+// @does Optional view, consent flag and page in -> we list the shop's customers, suppliers and leads with their balances and alerts -> a page of parties.
 router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res) => {
   try {
     const listed = await crm.list(ctx(req), {
@@ -116,6 +117,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
 });
 
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
+// @does A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.
 router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -210,6 +212,7 @@ function ledgerEntry(ledgerRow, blind, roles) {
  */
 const TIMELINE_PAGE = 30,
   TIMELINE_MAX = 100;
+// @does A party id and an optional page cursor in -> we gather their chits, messages, disputes, notes and follow-ups into one history -> a newest-first timeline page.
 router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/timeline'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -368,6 +371,7 @@ function contactOf(b) {
 }
 
 /* ── Phase 4: log, follow up, remove, walk-in ───────────────────────────────────────────────────────────────────── */
+// @does A party id and a call, message, visit or note in -> we check the contact rules for outbound contact and log it against that party -> the saved interaction.
 router.post('/parties/:id/interactions', auth, noKey, ...checked('POST /parties/:id/interactions'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -390,6 +394,7 @@ router.post('/parties/:id/interactions', auth, noKey, ...checked('POST /parties/
 });
 
 /** ?scope=mine|all&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
+// @does Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.
 router.get('/followups', auth, noKey, ...checked('GET /followups'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -404,6 +409,7 @@ router.get('/followups', auth, noKey, ...checked('GET /followups'), async (req, 
     problem(req, res, crmFault(e, req));
   }
 });
+// @does A party and what to follow up in -> we check it is one of the shop's parties and save the follow-up -> the new follow-up.
 router.post('/followups', auth, noKey, ...checked('POST /followups'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -420,6 +426,7 @@ router.post('/followups', auth, noKey, ...checked('POST /followups'), async (req
     problem(req, res, crmFault(e, req));
   }
 });
+// @does A follow-up id and changes in -> we update the follow-up, refusing a done flag that is not true or false -> the saved follow-up.
 router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -432,6 +439,7 @@ router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), 
     problem(req, res, crmFault(e, req));
   }
 });
+// @does A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.
 router.delete('/followups/:id', auth, noKey, ...checked('DELETE /followups/:id'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -448,6 +456,7 @@ router.delete('/followups/:id', auth, noKey, ...checked('DELETE /followups/:id')
  * "Remove from my parties" (Q10, provisional): the owner only, and only with no open dues (the Ledger's stored net must be 0, or
  * the Ledger off). It HIDES the party — hidden_at on its list rows — and deletes nothing: statements, chits, notes all stay.
  */
+// @does A party id from the owner in -> we hide that party from the lists and delete nothing, so chits and notes stay -> ok with the party id; owner only.
 router.delete('/parties/:id', auth, noKey, ...checked('DELETE /parties/:id'), async (req, res) => {
   try {
     if (!isOwner(req)) throw bad(REMOVE_WHY, 403, 'OWNER_ONLY'); /* the same sentence GET /parties may.remove.why carried */
@@ -464,6 +473,7 @@ router.delete('/parties/:id', auth, noKey, ...checked('DELETE /parties/:id'), as
  * a lead: ONE local party (the one mint, kind 'cus') on the customer list as added_via 'lead', and its first stage — ONE transaction, no second contact list.
  * Body { name, phone?, stage? }. The stage is a memberships row (lib/memberships — the one writer); b297 not run → 503 LEADS_NOT_MIGRATED, nothing created.
  */
+// @does A lead's name, phone and optional stage in -> we add them as a local customer marked as a lead at that stage -> the new lead, or a refusal if they exist.
 router.post('/leads', auth, noKey, ...checked('POST /leads'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -499,6 +509,7 @@ router.post('/leads', auth, noKey, ...checked('POST /leads'), async (req, res) =
 });
 
 /* ── L2: the call desk — the table of outcomes is lib/crm-calls (server); the web only labels it ─────────────────── */
+// @does Optional scope and page in -> we build the call desk queue of who to ring and what outcomes can be logged -> a page of calls with late and today counts.
 router.get('/calls', auth, noKey, ...checked('GET /calls'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -514,6 +525,7 @@ router.get('/calls', auth, noKey, ...checked('GET /calls'), async (req, res) => 
   }
 });
 /** Body { outcome, after?: today|tomorrow|3days, due_at?: YYYY-MM-DD }. 201 { interaction, followup, stage, suggest } */
+// @does A party id and a call outcome in -> we log the call and set the next follow-up and stage it suggests -> the interaction, follow-up, stage and suggestion.
 router.post('/parties/:id/outcome', auth, noKey, ...checked('POST /parties/:id/outcome'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -533,6 +545,7 @@ router.post('/parties/:id/outcome', auth, noKey, ...checked('POST /parties/:id/o
  * Who may: the owner, or a login whose access level is editor (lib/access.canEdit — the server decides; a viewer or commenter gets 403 in words).
  * Before b297: 503 LEADS_NOT_MIGRATED, nothing created.
  */
+// @does Rows of leads from an editor, optionally a dry run -> we add new leads, merge ones we know and skip bad rows -> the counts and a per-row result; nothing saved on a dry run.
 router.post('/leads/import', auth, noKey, ...checked('POST /leads/import'), async (req, res) => {
   try {
     if (!require('../lib/access').canEdit(req.identity)) throw bad('Only an editor can import leads.', 403, 'VIEW_ONLY');
@@ -546,6 +559,7 @@ router.post('/leads/import', auth, noKey, ...checked('POST /leads/import'), asyn
 });
 
 /** "Move to…": the stage a lead is in now. Body { stage }. A new row — never an update; refused for a party that has traded (they are a customer). */
+// @does A lead's id and a stage in -> we record the new stage as a fresh entry, refusing anyone who has already traded -> ok with the lead's stage and date.
 router.post('/parties/:id/stage', auth, noKey, ...checked('POST /parties/:id/stage'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -572,6 +586,7 @@ router.post('/parties/:id/stage', auth, noKey, ...checked('POST /parties/:id/sta
  * walk-in → party: a phone that holds points becomes a LOCAL customer (lib/local-identity.mint, kind 'cus' — the one mint) and the points
  * move to them by the engine's own claim (rewards.claim: two entries, never an update). Body { phone, name? }.
  */
+// @does A walk-in's phone and optional name in -> we add them as a customer and move the points held on that phone to them in one go -> the new party and the points claimed.
 router.post('/walk-ins/add', auth, noKey, ...checked('POST /walk-ins/add'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -623,6 +638,7 @@ async function mine(h, owner, id, opt) {
   const on = await require('../lib/books-store').partyOn(h, owner, id);
   if (!on.customer && !on.supplier && !(opt && opt.removedOk && on.removed)) throw bad(NOT_YOUR_PARTY, 404, 'NOT_FOUND');
 }
+// @does A party id in -> we read their contact preferences and the consent law words for the shop's country -> the preferences and the law text.
 router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -646,6 +662,7 @@ router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:
  * those paths; a body that names either is refused in words, never relabelled silently.
  */
 const STAFF_SOURCE_WHY = 'A shop notes what a customer said as staff. The customer’s own answer comes from the customer, and a reply from the message.';
+// @does A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.
 router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -663,6 +680,7 @@ router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties
   }
 });
 /** who may: the owner or an editor (CRM-40, decided 12 Nov: the register names people and their complaints, so need-to-know); a viewer or commenter gets 403 VIEW_ONLY in words */
+// @does Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.
 router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests'), async (req, res) => {
   try {
     if (!isOwner(req) && !access.canEdit(req.identity)) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
@@ -674,6 +692,7 @@ router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests')
     problem(req, res, crmFault(e, req));
   }
 });
+// @does A privacy request, optionally about a party -> we log it in the register -> the saved request.
 router.post('/privacy-requests', auth, noKey, ...checked('POST /privacy-requests'), async (req, res) => {
   try {
     const owner = ctx(req),
@@ -688,6 +707,7 @@ router.post('/privacy-requests', auth, noKey, ...checked('POST /privacy-requests
     problem(req, res, crmFault(e, req));
   }
 });
+// @does A request id and the answer from the owner -> we record the shop's answer to the privacy request -> the updated request; owner only.
 router.post('/privacy-requests/:id/answer', auth, noKey, ...checked('POST /privacy-requests/:id/answer'), async (req, res) => {
   try {
     if (!isOwner(req)) throw bad(ANSWER_WHY, 403, 'OWNER_ONLY');
@@ -705,6 +725,7 @@ router.post('/privacy-requests/:id/answer', auth, noKey, ...checked('POST /priva
 const CG = require('../lib/crm-groups');
 const whoIs = (req) => ({ owner: isOwner(req), editor: access.canEdit(req.identity) });
 /** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
+// @does Nothing but the signed-in shop -> we read the customer segments, groups and what each action may do -> the segments, groups and counts.
 router.get('/segments', auth, noKey, ...checked('GET /segments'), async (req, res) => {
   try {
     const overview = await CG.overview(ctx(req), whoIs(req));
@@ -715,6 +736,7 @@ router.get('/segments', auth, noKey, ...checked('GET /segments'), async (req, re
   }
 });
 /** who may: the owner or an editor (hat-gate refuses a viewer first; this is the sentence) — { name, add[], remove[] }, ONE transaction */
+// @does A group name with members to add or remove, from the owner or an editor -> we change the group in one transaction -> the group name, who was added or removed, and its count.
 router.post('/groups', auth, noKey, ...checked('POST /groups'), async (req, res) => {
   try {
     if (!whoIs(req).editor) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
@@ -726,6 +748,7 @@ router.post('/groups', auth, noKey, ...checked('POST /groups'), async (req, res)
   }
 });
 /** who may: the owner only — the group leaves every customer; the offers that named it are the warning GET /segments carried */
+// @does A group name from the owner -> we delete the group from every customer -> the name and how many were removed; owner only.
 router.delete('/groups/:name', auth, noKey, ...checked('DELETE /groups/:name'), async (req, res) => {
   try {
     if (!isOwner(req)) throw bad('Only the owner deletes a group.', 403, 'OWNER_ONLY');
@@ -737,6 +760,7 @@ router.delete('/groups/:name', auth, noKey, ...checked('DELETE /groups/:name'), 
   }
 });
 /** who may: the owner or an editor — { channel?, purpose?, text, dry? }: dry = the count and who is refused (by code); real = the one sender per allowed member */
+// @does A segment key, a message and an optional dry flag from the owner or an editor -> we count who may be messaged, or send to each allowed member -> the counts, who was refused and why.
 router.post('/segments/:key/send', auth, noKey, ...checked('POST /segments/:key/send'), async (req, res) => {
   try {
     if (!whoIs(req).editor) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');

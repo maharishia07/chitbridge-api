@@ -407,6 +407,7 @@ async function catalogueShape(entity_id) {
 }
 
 // CREATE — add a product
+// @does A new product's details in -> we check them against the shop's declared columns and add it, refusing price or cost fields this person may not set -> the new product with any warnings.
 router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -472,6 +473,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
 const BULK_MAX = 200;
 
 /* ⚠️ up to BULK_MAX products a request, so it is a bulk door like the import ([TILL-112]) */
+// @does Up to 200 products at once -> we add them all through the same checks as a single add -> how many were added and the new items.
 router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -523,6 +525,7 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
  */
 const BULK_STATUS = ['available', 'unavailable'];
 
+// @does Up to 200 product ids and available or unavailable -> we set that status on each in one go -> how many were updated, which ids were missed and what the status reads as.
 router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -581,6 +584,7 @@ function categoryChangeOf(body) {
 }
 /** the count of results with this word */
 const countOf = (results, word) => results.filter((line) => line.result === word).length;
+// @does A category and the products to add or remove -> we change categories on those products only, refusing unknown categories -> how many changed, stayed and were refused, each with a result.
 router.post('/categories/bulk', auth, ...checked('POST /categories/bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -665,6 +669,7 @@ const editorChangesRate = (req, items, stored) => !rateDoor.setsRate(req) && ite
 const bulkWrittenKeys = (items, stored) => Array.from(new Set(items.flatMap((item) => Object.keys(item.item_data).concat(erasedKeys({ item_data: item.item_data }, stored && stored.get(item.id))))));
 /** one bulk-update entry is { id, item_data } with item_data a plain object */
 const isEditShape = (item) => !!item && typeof item.id === 'string' && !!item.item_data && typeof item.item_data === 'object' && !Array.isArray(item.item_data);
+// @does Up to 200 edits of product id and fields -> we merge each change into its product, refusing fields this person may not touch -> how many were updated and which ids were missed.
 router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -718,6 +723,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
 });
 
 // READ + SEARCH — list my products, optional ?q=
+// @does Optional search word and page -> we read the shop's active products, applying any parked changes that are now due -> a page of products and what is still parked.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1006,6 +1012,7 @@ async function catalogueRows(entity_id, canCost) {
  * feature of the format — it is also a part this writer does not produce, and claiming it in a comment while
  * shipping a plain sheet is how a header comes to describe a thing that is not there. Recorded as wanted.
  */
+// @does The signed-in shop asks for its catalogue -> we build an Excel workbook of every product in the shop's own columns, leaving out cost for those who may not see it -> an .xlsx download.
 router.get('/workbook.xlsx', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1077,6 +1084,7 @@ router.get('/workbook.xlsx', auth, async (req, res) => {
   }
 });
 
+// @does The signed-in shop asks for its catalogue -> we write every product out in the shop's own columns -> a CSV download.
 router.get('/export.csv', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1106,6 +1114,7 @@ router.get('/export.csv', auth, async (req, res) => {
  * Returns JSON rather than the file directly, because the guidance cannot live inside the CSV — a comment row would
  * be parsed as a product. The client writes `csv` to a file and shows `notes` beside it.
  */
+// @does The signed-in shop asks for an import template -> we build the header row and notes for its trade's columns -> the columns, the CSV text and the notes.
 router.get('/template', auth, async (req, res) => {
   try {
     const { template, orderInput: oi } = await catalogueShape(ctx(req));
@@ -1130,6 +1139,7 @@ router.get('/template', auth, async (req, res) => {
  * `ready:false` means a person still has to look. It is never a soft warning the client may skip past.
  */
 /* ⚠️ `csv` OR `xlsx` — optional individually, and the handler insists on one of them ([TILL-109]) */
+// @does A CSV or Excel file of products -> we check it against the shop's columns and existing products without saving anything -> a report of what would be added or changed and whether it is ready.
 router.post(
   '/import/preflight',
   auth,
@@ -1203,6 +1213,7 @@ const IMPORT_MAX_ROWS = 2000;
  *
  * It re-runs the preflight server-side. The client's report is a display artifact and is never trusted.
  */
+// @does A confirmed CSV or Excel file of products -> we re-check it on the server and add or update the products -> a summary of what was added or changed.
 router.post(
   '/import',
   auth,
@@ -1408,6 +1419,7 @@ router.post(
  * GET  → the list to pick from.  POST {vertical} → adopt it, adding whatever the schema does not already have.
  * Adoption is ADDITIVE: it never removes or retypes a column the entity already uses.
  */
+// @does Optionally a trade -> we read the standard column sets we offer for each trade -> the trades, or the starter columns for the one asked.
 router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
   try {
     const v = req.query.vertical;
@@ -1419,6 +1431,7 @@ router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (
   }
 });
 
+// @does A trade in -> we add that trade's standard columns to the shop's catalogue, keeping every column already in use -> a summary of the columns created.
 router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1578,6 +1591,7 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
 }
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
    one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
+// @does A product id and the fields to change -> we merge them into the product, never replacing other fields, refusing cost or price edits this person may not make -> the updated product.
 router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1637,6 +1651,7 @@ const noSuchItem = uuidParam((req) => (req.method === 'PUT' ? words.noSuchItem()
 const answersUnknownIdItself = (req) => (req.method === 'GET' && /[/]schedule$/.test(req.path)) || (req.method === 'DELETE' && /[/]schedule[/]/.test(req.path));
 router.param('id', (req, res, next, value, name) => (answersUnknownIdItself(req) ? next() : noSuchItem(req, res, next, value, name)));
 router.param('item_id', uuidParam(() => words.noSuchPicture())); // the public picture read: an unknown item is "no such picture"
+// @does A product id -> we read the changes parked to take effect later on that product, hiding cost from those who may not see it -> whether scheduling is on and the pending changes.
 router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1657,6 +1672,7 @@ async function writeRefusalOf(req, entity_id, item_data) {
 }
 /** the problem body for a parked change the catalogue's validator refused: its sentence at 400 (as PATCH answers), another status (a price in the wrong currency) as the library's own refusal */
 const changeRefusal = (req, verdict) => (verdict.status === 400 ? { status: 400, ...words.declined('Invalid change', { error: verdict.message }) } : faultOf(verdict, req, 'Invalid change'));
+// @does A product id, a change and when it should apply -> we check the change like an edit and park it to land later -> the scheduled change.
 router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1691,6 +1707,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
     problem(req, res, faultOf(e, req, 'Could not schedule the change'));
   }
 });
+// @does A product id and a parked change id -> we cancel that scheduled change before it lands -> whether it was cancelled.
 router.delete('/:id/schedule/:sid', auth, ...checked('DELETE /:id/schedule/:sid'), async (req, res) => {
   try {
     res.json({ cancelled: UUID.test(req.params.sid) ? await schedule.cancel(ctx(req), req.params.sid) : false }); // K-1: not a uuid names no parked change
@@ -1705,6 +1722,7 @@ router.delete('/:id/schedule/:sid', auth, ...checked('DELETE /:id/schedule/:sid'
  * Each figure goes through availability.stamp — a quantity is not an answer without a date — and lands on item_data.avail,
  * exactly where the single PUT above lands, so every reader (the Stock row, the storefront, the network) sees one shape.
  */
+// @does A feed of closing stock by product code or id -> we stamp each figure with its date and write it to the product -> how many were written, which were unknown or bad.
 router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1751,6 +1769,7 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
   }
 });
 
+// @does A product id and a stock quantity -> we check it and stamp it with a date on the product -> the updated availability, or a refusal naming what is unclear.
 router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1783,6 +1802,7 @@ router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async
  * ⚠️ MERGED, NOT REPLACED. `||` on jsonb keeps every other field — a status change must never be able to lose a
  * price or a synonym list, which is exactly what PATCH /:id would do if used for this.
  */
+// @does A product id and a status -> we stamp the status with who and when, keeping every other field -> the product's new status, or not-found.
 router.put('/:id/status', auth, ...checked('PUT /:id/status'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1813,6 +1833,7 @@ router.put('/:id/status', auth, ...checked('PUT /:id/status'), async (req, res) 
 });
 
 // DELETE — soft remove
+// @does A product id in -> we remove the product by marking it inactive, deleting nothing -> a removed message, or not-found.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1858,6 +1879,7 @@ function mediaUrl(req, item_id, mid) {
 }
 /* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
    item lists (the key is never taken from the URL). */
+// @does A product id and a picture id from anyone, no sign-in -> we serve that picture if the product is active and lists it -> the picture bytes.
 router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async (req, res) => {
   try {
     if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.storeOff() });
@@ -1898,6 +1920,7 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
     problem(req, res, failed(e, req, 'Failed'));
   }
 });
+// @does A product id with a picture or a video link -> we store the picture or link the video and attach it to the product -> the media added and its address.
 router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1963,6 +1986,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
     problem(req, res, faultOf(e, req, 'Could not add the media'));
   }
 });
+// @does A product id and a media id -> we take that picture or video off the product and delete the stored file -> what was removed, or not-found.
 router.delete('/:id/media/:mid', auth, ...checked('DELETE /:id/media/:mid'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1999,6 +2023,7 @@ router.delete('/:id/media/:mid', auth, ...checked('DELETE /:id/media/:mid'), asy
   }
 });
 
+// @does A product id and an optional date -> we read that product's earlier versions, or what was live at the date -> the version history; only for the shop's own products.
 router.get('/:id/versions', auth, ...checked('GET /:id/versions'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -2114,6 +2139,7 @@ router.get('/:id/versions', auth, ...checked('GET /:id/versions'), async (req, r
  * stays as it is. Two doors, two authorities, one library underneath — lib/catalogue-blueprint decides what
  * a list contains and lib/catalogue-write is still the only thing that writes a product.
  */
+// @does The signed-in shop asks for ready-made product lists -> we read the lists we offer and mark what the shop already sells -> the lists, how many it has and its currency.
 router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -2234,6 +2260,7 @@ async function dropForeignListPrices(items, req) {
     return items; /* the lists' figures ARE rupees: kept for a rupee shop only; no money stated → dropped */
   return items.map(withoutListPrice);
 }
+// @does A chosen list and ticked items -> we add those items to the shop's catalogue, skipping any it already has -> a summary of what was added and skipped.
 router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), async (req, res) => {
   try {
     const entity_id = ctx(req);

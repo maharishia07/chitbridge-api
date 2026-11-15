@@ -41,6 +41,7 @@ const KINDS = {
 };
 
 /* public: no sign-in, so the only refusal is a fault of ours */
+// @does Nothing in -> we list the kinds of price the pricing engine knows -> the kinds in order (public).
 router.get('/kinds', (req, res) => {
   try {
     res.json({ engine: KINDS.engine, version: KINDS.version, order: KINDS.order, kinds: KINDS.kinds });
@@ -65,6 +66,7 @@ function firstStructureRefusal(lines) {
   return null;
 }
 
+// @does Lines with items and quantities in -> we price them from the shelf and its offers, refusing bad quantities -> the priced lines (needs the pricing scope).
 router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /price'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);

@@ -69,6 +69,7 @@ async function viewFolder(e, id) {
   return f.kind === 'view' ? f : null;
 }
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
+// @does Nothing in -> we read your folder tree with how many live chits sit in each -> the flat list of folders with counts.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const e = ent(req);
@@ -130,6 +131,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
  * Athi, 2026-10-01: *"an inventory of folders tied with the ledger number, enabled or disabled using a checkbox."*
  * `can_change` tells the screen whether to offer the checkboxes (the owner only).
  */
+// @does Nothing in -> we read which system folders are on and their messaging levels -> the inventory rows and whether you may change them.
 router.get('/inventory', auth, async (req, res) => {
   try {
     const e = ent(req);
@@ -146,6 +148,7 @@ router.get('/inventory', auth, async (req, res) => {
  * ⚠️ THE LEVEL ONLY GOES DOWN (Athi, 2026-10-01): the inventory's level is the ceiling — a level above it is refused with 409
  * and a plain sentence, and the dispute's level cannot be changed at all.
  */
+// @does A folder code with on or off and a messaging level in -> we let the owner switch a system folder or lower its messaging level, refusing fixed ones -> the updated row, or the reason it is refused.
 router.put('/inventory/:code', auth, ...checked('PUT /inventory/:code'), async (req, res) => {
   try {
     if (!isOwner(req)) return problem(req, res, { status: 403, ...said('OWNER_ONLY', 'Only the owner may do this.', 'Only the owner may do this.') });
@@ -182,6 +185,7 @@ router.put('/inventory/:code', auth, ...checked('PUT /inventory/:code'), async (
   }
 });
 // POST /api/folders — create { name, parent_id? }
+// @does A name, optional parent, track and kind in -> we create a filed or view folder for your shop -> the new folder.
 router.post(
   '/',
   auth,
@@ -269,6 +273,7 @@ async function isInsideItself(db, entityId, folderId, parentId) {
   return above.rows.length > 0;
 }
 // PATCH /api/folders/:id — rename and/or re-parent (move a subtree)
+// @does A folder id with a new name or parent in -> we rename or move the folder with its sub-folders -> the updated folder.
 router.patch(
   '/:id',
   auth,
@@ -325,6 +330,7 @@ const UNFILE_SUBTREE_SQL = `WITH RECURSIVE subtree AS (
      SELECT child.folder_id FROM folder child JOIN subtree ON child.parent_id = subtree.folder_id WHERE child.entity_id = $1
    )
    UPDATE chit_status SET folder_id = NULL WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM subtree)`;
+// @does A folder id in -> we delete your folder and unfile the chits in it and its sub-folders -> the count deleted, or not-found if it is not yours.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const e = ent(req);
@@ -340,6 +346,7 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   }
 });
 // POST /api/folders/move — file / redirect a chit into a folder (folder_id=null => unfile). Sets MY copy only.
+// @does A chit and a folder id in -> we file your copy into that folder, or unfile it, never into a view folder -> how many were moved.
 router.post('/move', auth, ...checked('POST /move'), async (req, res) => {
   try {
     const e = ent(req);
@@ -463,6 +470,7 @@ async function filedChits(entityId, folderId, archived, pager, blind) {
 // mixed BEFORE b133 still holds both, and this list would show them side by side with the wrong actions. The
 // folder's declared scope filters the read too, so the screen is consistent even where the data is not yet.
 // Isolated from the core inbox query on purpose. Lightweight shape for the folder list.
+// @does A folder id and paging in -> we list the chits filed in that folder, or a view folder's rule matches, hiding costs from a blind reader -> a page of chits with counts.
 router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) => {
   try {
     const e = ent(req);
@@ -519,6 +527,7 @@ async function filedSet(shopId, folderId, archived) {
  * Read-only, no migration, WITH RLS: withEntity() sets the tenant and the WHERE names it again. A folder is
  * per-COPY — this counts YOUR copies, never a counterparty's.
  */
+// @does A folder id in -> we measure the chits in that folder, or a view folder's matches, by status, direction and overdue days -> the folder's counts and sums.
 router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res) => {
   try {
     const me = ent(req);
@@ -542,6 +551,7 @@ router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res
 });
 /* ── FOLDER RULES (b132) — condition -> file here. The UX Athi asked for lives INSIDE the folder. ────────────── */
 const rules = require('../lib/folder-rules');
+// @does A folder id in -> we read the filing rules for it, a system folder showing its fixed rule -> the rules, or not-found.
 router.get('/:id/rules', auth, ...checked('GET /:id/rules'), async (req, res) => {
   try {
     /* ⭐ a SYSTEM folder's rule is the inventory's, shown and fixed — the Task list leaves out the same documents, so an
@@ -562,6 +572,7 @@ router.get('/:id/rules', auth, ...checked('GET /:id/rules'), async (req, res) =>
     problem(req, res, faultOf(err, req, 'Rules list failed'));
   }
 });
+// @does A folder id and a rule in -> we save a filing rule that sends matching chits there, never on a system folder -> the new rule, or not-found.
 router.post('/:id/rules', auth, ...checked('POST /:id/rules'), async (req, res) => {
   try {
     if (INV.byId(req.params.id))
@@ -575,6 +586,7 @@ router.post('/:id/rules', auth, ...checked('POST /:id/rules'), async (req, res) 
     problem(req, res, faultOf(err, req, 'Rule create failed'));
   }
 });
+// @does A rule id and changes in -> we update that filing rule -> the saved rule.
 router.patch('/rules/:rule_id', auth, ...checked('PATCH /rules/:rule_id'), async (req, res) => {
   try {
     const saved = await rules.update(ent(req), req.params.rule_id, req.body || {});
@@ -585,6 +597,7 @@ router.patch('/rules/:rule_id', auth, ...checked('PATCH /rules/:rule_id'), async
     problem(req, res, faultOf(err, req, 'Rule update failed'));
   }
 });
+// @does A rule id in -> we delete that filing rule from your folders -> the count deleted, or not-found.
 router.delete('/rules/:rule_id', auth, ...checked('DELETE /rules/:rule_id'), async (req, res) => {
   try {
     const gone = await rules.remove(ent(req), req.params.rule_id);
@@ -597,6 +610,7 @@ router.delete('/rules/:rule_id', auth, ...checked('DELETE /rules/:rule_id'), asy
 /* ⚠️ PREVIEW BEFORE SAVE — the most useful route here. A rule is a promise about the future written by someone
    who cannot see it; running it against chits that already exist turns "I think this catches supplier invoices"
    into a list you can read first. Needs no rules table, so it works before b132 is run. */
+// @does A rule condition in -> we run it on your existing chits without saving anything -> how many were scanned and matched, with a sample.
 router.post('/rules/preview', auth, ...checked('POST /rules/preview'), async (req, res) => {
   try {
     const seen = await rules.preview(ent(req), (req.body || {}).when, req.body || {});
@@ -608,6 +622,7 @@ router.post('/rules/preview', auth, ...checked('POST /rules/preview'), async (re
   }
 });
 /* The condition vocabulary, served to the UI so the builder cannot offer a term the matcher does not know. */
+// @does Nothing in -> we read the conditions a filing rule may use -> the list of rule keys.
 router.get('/rules/vocabulary', auth, (req, res) => {
   try {
     res.json({ keys: require('../lib/match').KEYS });
@@ -628,6 +643,7 @@ router.get('/rules/vocabulary', auth, (req, res) => {
  * ⚠️ NO NEW LIST FUNCTION — rules.list() already treats a missing folder_id as "all", so this is the same query
  * with one argument dropped, not a second implementation that can drift from the first.
  */
+// @does Paging in -> we read every filing rule you have across all folders -> a page of rules.
 router.get('/rules', auth, ...checked('GET /rules'), async (req, res) => {
   try {
     const found = await rules.list(ent(req), null);

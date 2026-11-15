@@ -14,6 +14,7 @@ const kyb = require('../lib/kyb');
 const entityId = (req) => auth.entityOf(req);
 
 // Section 1 — Yourself (free)
+// @does Signed-in business -> we assemble what we know about it for its know-your-business section, free of charge -> the Yourself section.
 router.get('/yourself', auth, ...contract.checked('GET /yourself'), async (req, res) => {
   try {
     res.json(await kyb.yourself(entityId(req)));
@@ -22,6 +23,7 @@ router.get('/yourself', auth, ...contract.checked('GET /yourself'), async (req, 
   }
 });
 // open registry — add a credential CB doesn't know (village NOC etc.) → declared, rises to documented with an owned chit
+// @does A credential we do not list, with its details (signed-in) -> we add it to the business record as declared -> the saved credential, or a refusal naming the field.
 router.post('/credential', auth, ...contract.checked('POST /credential'), async (req, res) => {
   const refused = credentialInputFault(req.body); // CMP-23: a field that is not text, or a valid_until that is not a real day, is refused before the database
   if (refused) return problem(req, res, refused);
@@ -32,6 +34,7 @@ router.post('/credential', auth, ...contract.checked('POST /credential'), async 
   }
 });
 // Section 2 — Position (free) — where you can sell, directionally
+// @does Signed-in business with optional vertical and origin -> we work out where it can sell, in broad terms, free of charge -> the position.
 router.get('/position', auth, ...contract.checked('GET /position'), async (req, res) => {
   try {
     res.json(await kyb.position(entityId(req), { vertical: req.query.vertical, origin: req.query.origin }));
@@ -40,6 +43,7 @@ router.get('/position', auth, ...contract.checked('GET /position'), async (req, 
   }
 });
 // Section 3 — Risk (free)
+// @does Signed-in business -> we read its chits and work out its risk picture, free of charge -> the risk summary.
 router.get('/risk', auth, ...contract.checked('GET /risk'), async (req, res) => {
   try {
     res.json(await kyb.risk(entityId(req)));
@@ -48,6 +52,7 @@ router.get('/risk', auth, ...contract.checked('GET /risk'), async (req, res) => 
   }
 });
 // Section 4 — Field / direction (metered per search, 24h cache; walled-off, declared-only, source+as-of enforced)
+// @does Signed-in business -> we run the field and direction search, reusing the last 24 hours and charging usage only when it runs afresh -> the field section.
 router.post('/field', auth, ...contract.checked('POST /field'), async (req, res) => {
   try {
     res.json(await kyb.field(entityId(req)));

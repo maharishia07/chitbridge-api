@@ -69,6 +69,7 @@ async function softIdentity(req) {
 /** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */
 const sourceOf = (req) => (req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1');
 
+// @does A question of up to 500 characters and the screen (signed in or not) -> we answer from the help library and, when signed in, that business's own data, and meter the use -> the answer.
 router.post('/', ...contract.checked('POST /'), async (req, res) => {
   try {
     const q = req.body && typeof req.body.q === 'string' ? req.body.q.trim() : '';
@@ -125,6 +126,7 @@ router.post('/', ...contract.checked('POST /'), async (req, res) => {
 // not a model opinion. THEN, only if a model is configured, adds a rung-2 SUMMARISE narrative ("what's wrong + what
 // to do"). Self-healing: no key / SDK / model failure → the deterministic verdict still returns (narrative: null).
 // Returns the Crux-2 `acted_by` deputy stamp so a caller can carry it onto a chit on send (not persisted here yet).
+// @does A standard name and a document in -> we check the document against that standard with fixed rules, adding a narrative when the assistant is on -> the verdict (public: no sign-in needed; the narrative only for a signed-in caller).
 router.post('/conform', ...contract.checked('POST /conform'), async (req, res) => {
   try {
     const standard = req.body && typeof req.body.standard === 'string' ? req.body.standard.trim() : '';
@@ -180,6 +182,7 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
 });
 
 // GET /api/assist/standards — the conform-check standards available to check against (drives the UI picker).
+// @does Nothing in -> we list the compliance standards a document can be checked against -> the list that fills the standard picker.
 router.get('/standards', (req, res) => {
   try {
     res.json({ ok: true, data: compliance.listTemplates() });
@@ -189,6 +192,7 @@ router.get('/standards', (req, res) => {
 });
 
 // GET /api/assist/catalogue-sources — the catalogue sources the handler can structure (drives the UI picker).
+// @does Nothing in (public) -> we list the catalogue sources the assistant can structure -> the list that fills the source picker.
 router.get('/catalogue-sources', async (req, res) => {
   try {
     res.json({ ok: true, data: await catalogueBuild.listSources() });
@@ -201,6 +205,7 @@ router.get('/catalogue-sources', async (req, res) => {
 // DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
 // model-drafted designer INTRO when configured (best-effort; degrades to no intro). Returns the `acted_by` deputy
 // stamp. Does NOT persist to a catalogue yet — this is the draft the business confirms before publishing.
+// @does A catalogue source name in -> we propose a structured catalogue with coloured items and, if available, a drafted intro, saving nothing -> the draft to confirm.
 router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structure'), async (req, res) => {
   try {
     const source = sourceOf(req);
@@ -257,6 +262,7 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
 // human CONFIRM/publish of the catalogue-structure slot. Self-healing: if b75 isn't applied, returns 503 (not 500).
 /* ⭐ SEC-FIX2 M3: a WRITE runs the real sign-in (middleware/auth — removed/deactivated, revoked session, device binding, key scope and
    the View-only hat gate), not softIdentity, which checks only the signature. The entity is auth's (entityOf). */
+// @does A catalogue source and optional prices (signed-in) -> we adopt that source into the shop catalogue, keeping its own prices -> the saved catalogue.
 router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
@@ -336,6 +342,7 @@ router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt
 
 // GET /api/assist/catalogue-mine — the entity's PERSISTED catalogue(s): its adoption rows (WITH RLS) RESOLVED against
 // the shared source (design/colour by reference) + its commercials overlay. Self-healing (503 if b75 not applied).
+// @does Signed-in shop with an optional page -> we read the catalogues it has adopted, resolved against the shared source with its own prices -> a page of its saved catalogues.
 router.get('/catalogue-mine', auth, ...contract.checked('GET /catalogue-mine'), async (req, res) => {
   /* M3: the same real sign-in as the write it mirrors */
   try {
@@ -398,6 +405,7 @@ function sourceRefusal(row, owner) {
 const SOURCE_KEY_MAX = 200;
 /** the problem spec when the key is missing (422) or longer than a label should be (400, CAT-246: a 60k-character one was stored with 200), else null */
 const keyRefusal = (key) => (!key ? { status: 422, ...words.sourceKeyNeeded() } : key.length > SOURCE_KEY_MAX ? { status: 400, ...words.sourceKeyTooLong(SOURCE_KEY_MAX) } : null);
+// @does A source key and its content (owner only) -> we create or update that catalogue source and its product versions -> the saved source, or a refusal.
 router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the catalogue source.'), ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
@@ -460,6 +468,7 @@ router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the c
 
 // PUT /api/assist/container — CONTAINER MODEL (stone 5): author (v1) or ENHANCE (mint the next IMMUTABLE version + move
 // the pointer) a product container. Owner-only. An enhancement never mutates a version → past chits stay verifiable.
+// @does A container id and its content (signed-in shop) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.
 router.put('/container', auth, ...contract.checked('PUT /container'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
@@ -490,6 +499,7 @@ router.put('/container', auth, ...contract.checked('PUT /container'), async (req
 
 // GET /api/assist/container/:id — resolve the CURRENT version (the pointer, auto-latest) or ?version=N (the EXACT
 // immutable version a chit pinned — verification). Public read (the catalogue/experience is shared reference).
+// @does A product container id and an optional version (public) -> we find the current version, or the exact version a chit pinned -> that container version, or not found.
 router.get('/container/:id', ...contract.checked('GET /container/:id'), async (req, res) => {
   try {
     const r = await container.resolveContainer(req.params.id, req.query.version);
@@ -502,6 +512,7 @@ router.get('/container/:id', ...contract.checked('GET /container/:id'), async (r
 
 // GET /api/assist/erp-handoffs — 6b: the DISTRIBUTOR's ERP handoff receipts (refs + routing + hash — process-then-
 // forget; the ERP consumes these and does the routing/fulfillment). Per-entity, WITH RLS (b82). Self-healing (503).
+// @does Signed-in distributor with an optional page -> we read the receipts of what we handed to its ERP -> a page of handoff receipts with status and hash.
 router.get('/erp-handoffs', auth, ...contract.checked('GET /erp-handoffs'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
@@ -528,6 +539,7 @@ router.get('/erp-handoffs', auth, ...contract.checked('GET /erp-handoffs'), asyn
 // PUT /api/assist/region-override — 6a: the source authors a per-REGION override on its OWN container (owner-gated).
 // Hybrid: most of "per region" auto-cascades (currency/units/language); this is the genuinely-local delta (colour
 // names, compliance labels, regional combinations). Self-healing: 503 if b81 isn't applied.
+// @does A container id, region and local overrides (signed-in brand owner) -> we save the regional changes for that product -> a done answer, or not found.
 router.put('/region-override', auth, ...contract.checked('PUT /region-override'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
@@ -550,6 +562,7 @@ router.put('/region-override', auth, ...contract.checked('PUT /region-override')
 });
 
 // GET /api/assist/regions — the region layers (currency/units/language/jurisdiction) for the spin-the-globe switcher.
+// @does Nothing in (public) -> we read the regions with their currency, units, language and jurisdiction -> the list the region switcher shows.
 router.get('/regions', async (req, res) => {
   try {
     let rows = [];
@@ -568,6 +581,7 @@ router.get('/regions', async (req, res) => {
 
 // GET /api/assist/resolve?container=&version=&region= — SPIN THE GLOBE: the product's presentation + governance
 // RESOLVED for a region (global content + regional override + auto-cascaded basics), SEALED + cached. Public read.
+// @does A container, version and region in (public) -> we resolve the product for that region with its local overrides -> the regional view, or a refusal if no region or container.
 router.get('/resolve', ...contract.checked('GET /resolve'), async (req, res) => {
   try {
     const region = (req.query.region && String(req.query.region).trim()) || null;
@@ -584,6 +598,7 @@ router.get('/resolve', ...contract.checked('GET /resolve'), async (req, res) => 
 // GET /api/assist/penetration — STONE 4: the BRAND's aggregated penetration for the sources IT owns (heatmap data).
 // AGGREGATE-ONLY: order counts + distributor coverage by locality — NO per-customer PII (the ledger has no customer id).
 // Owner-gated (only your own sources). Self-healing: 503 if b79 isn't applied.
+// @does Signed-in brand owner -> we count orders and distributors by locality for the sources it owns, with no customer details -> the coverage rows.
 router.get('/penetration', auth, ...contract.checked('GET /penetration'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
@@ -617,6 +632,7 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
 
 // GET /api/assist/catalogue-source/:key — read a source (content + EXPERIENCE + formatting). `finishes` not `items`
 // so the client unwrap() doesn't strip the object.
+// @does A catalogue source key in the address (public) -> we build that source with its content, colours and layout -> the source and its finishes, or not found.
 router.get('/catalogue-source/:key', ...contract.checked('GET /catalogue-source/:key'), async (req, res) => {
   try {
     const built = await catalogueBuild.build(req.params.key);
@@ -631,6 +647,7 @@ router.get('/catalogue-source/:key', ...contract.checked('GET /catalogue-source/
 // GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
 // truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
 // entries whose context matches the screen OR '*'; no context -> all active. Shape: {ok:true, data:[{id,q,a,...}]}.
+// @does Optional screen name(s) in (public) -> we read the active help questions for that screen plus the universal ones -> the list of questions and answers.
 router.get('/questions', ...contract.checked('GET /questions'), async (req, res) => {
   try {
     // context may be a CHAIN (comma-list: fine → parent → nav) so a sub-page ADDS its specific Q&A without losing the
@@ -663,6 +680,7 @@ router.get('/questions', ...contract.checked('GET /questions'), async (req, res)
 
 // POST /api/assist/publish — the help desk publishes a resolved Q&A to ITS catalogue => the projection trigger
 // serves it live. Auth; the caller MUST be the Help entity itself (only it edits its own knowledge base).
+// @does A question, an answer and screens (signed-in help desk only) -> we publish that answer to the help desk catalogue so it serves live -> the published entry, or a refusal.
 router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -717,6 +735,7 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
 
 // GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
 // (generalises off the hardcoded 'GOV-01-Help' name). Never throws.
+// @does Signed-in caller -> we check whether this business is a help desk that may publish answers -> a yes or no, with the reason when it may not publish.
 router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);

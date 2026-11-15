@@ -40,6 +40,7 @@ const { declaresStatuses } = require('../lib/contract-kit'); // names the status
 /** a catch that cannot spell its statuses: they are the library's (400 a sentence, 503 the migration not run) and the sign-in's (403 no shop) */
 const mayRefuse = declaresStatuses([503]);
 
+// @does Nothing in (public) -> we state what we keep and what shoppers may ask for -> the privacy facts, cached for five minutes.
 router.get('/facts', ...contract.checked('GET /facts'), (req, res, next) => {
   try {
     res.set('Cache-Control', 'public, max-age=300');
@@ -61,6 +62,7 @@ function whoOf(req) {
   return { shop: c.shop_entity_id, me: c.identity_id, name: c.display_name || null };
 }
 
+// @does Signed-in shopper -> we read what this shop holds about them, their consent choices and their requests -> their own privacy record.
 router.get('/me', customerAuth, ...contract.checked('GET /me'), async (req, res) => {
   try {
     const w = whoOf(req);
@@ -69,6 +71,7 @@ router.get('/me', customerAuth, ...contract.checked('GET /me'), async (req, res)
     problem(req, res, faultOf(e, req)); // 503 migration not run · a refusal's fixed words (under 500) · else the generic 500; old keys kept
   }
 });
+// @does A channel, a purpose and allowed yes or no (signed-in shopper) -> we record their own choice about being contacted -> the saved choice and what they may do.
 router.post('/me/consent', customerAuth, ...contract.checked('POST /me/consent'), mayRefuse, async (req, res) => {
   try {
     const w = whoOf(req),
@@ -82,6 +85,7 @@ router.post('/me/consent', customerAuth, ...contract.checked('POST /me/consent')
     problem(req, res, faultOf(e, req)); // 503 migration not run · a refusal's fixed words (under 500) · else the generic 500; old keys kept
   }
 });
+// @does A request type such as see or erase my data (signed-in shopper) -> we log it for the shop to act on -> the request as recorded.
 router.post('/me/requests', customerAuth, ...contract.checked('POST /me/requests'), mayRefuse, async (req, res) => {
   try {
     const w = whoOf(req),

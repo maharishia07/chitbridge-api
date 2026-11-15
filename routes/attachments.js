@@ -76,6 +76,7 @@ function announcement(file, id, buffer) {
 // POST /api/attachments — { chit_id, message_id?, line_index?, name, mime, data_base64 }
 // PER-ENTITY copies (b66): replicate one row per participant so each owns its own. Audience = all chit participants
 // (from the caller's all_recipients), EXCEPT an internal-message attachment which stays single (author entity only).
+// @does A chit id, file name and base64 data in -> we store a copy for each participant of that chit -> the attachment record.
 router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -119,6 +120,7 @@ function contentDisposition(name) {
 }
 
 // GET /api/attachments/:id — stream the bytes (on demand). Participant-checked.
+// @does An attachment id in -> we stream the caller's own copy, rendering only images and PDFs inline -> the file bytes.
 router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

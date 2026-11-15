@@ -59,6 +59,7 @@ async function searchWholeNetwork(bridgeId, text) {
 }
 
 // GET /api/network-design — this entity's saved design (null if none yet).
+// @does Signed-in business -> we read its saved network design draft -> the draft and when it was saved, or none yet.
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
@@ -70,6 +71,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // PUT /api/network-design — upsert the whole design draft { draft: {...} }.
+// @does A design draft object (signed-in) -> we save it as the business's one design, replacing the old -> the saved draft and its time.
 router.put('/', auth, checked('PUT /'), async (req, res) => {
   try {
     const e = ent(req);
@@ -160,6 +162,7 @@ const { newClaimCode, CLAIM_DAYS } = run; // the claim code and its life — one
  * returns handle strings only. No new table, no migration.
  * Trips: sample → 0 · given draft + root_handle → 1 · saved design → 2 (design, taken) + 1 (own user_id when no root_handle).
  */
+// @does A draft design or the sample (signed-in) -> we check it against what exists and what is taken, changing nothing -> the findings.
 router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -198,6 +201,7 @@ router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
  * `dry_run` answers "what would this do" without doing it, and it is the same code path — a preview computed by
  * different code is a preview that can lie.
  */
+// @does A network design with root details (owner only, not an assistant) -> we create the businesses and links it describes -> the created entities with their claim codes.
 router.post('/build', auth, checked('POST /build'), async (req, res) => {
   try {
     // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
@@ -300,6 +304,7 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
  * `last_active_at` (lib/identity-auth.js verifyCredential; a minted store never has it). After that the head
  * holds no key to the store: its way in is the owner's consent grant (ACC-176), never a code in this answer.
  */
+// @does The design to reissue for (owner only, not an assistant) -> we issue fresh claim codes for its stores -> the new codes.
 router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
     if (req.identity.parent_entity_id) {
@@ -424,6 +429,7 @@ async function visibleStores(meRow) {
  * before it needs a catalogue, and the list must carry each store's identity so the existing supplier catalogue
  * reader can be pointed at it — the same reader, so the same speed, rather than a second one that drifts.
  */
+// @does Signed-in business -> we read the stores in its own network from where it sits -> the list of stores, or not found if the account cannot be read.
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -461,6 +467,7 @@ router.get('/stores', auth, async (req, res) => {
   }
 });
 
+// @does A search text of two letters or more (signed-in) -> we check which of the business's stores carry matching items -> the availability, or a refusal if too short.
 router.get('/availability', auth, checked('GET /availability'), async (req, res) => {
   try {
     const me = auth.entityOf(req);

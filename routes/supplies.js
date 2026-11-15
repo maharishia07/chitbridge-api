@@ -40,6 +40,7 @@ const onceOnly = require('../middleware/idempotency').requireKey();
 router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.notFound() })));
 
 /** the shop's own list of things it uses — never products, never priced */
+// @does Optional all flag from the signed-in shop -> we read the sundries it uses, hiding last cost from anyone who may not see costs -> the supplies list.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     const list = await supplies.list(ctx(req), withEntity, { all: req.query.all === '1' });
@@ -58,6 +59,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
  * ⚠️ keep_stock DEFAULTS TO FALSE. Most sundries are expensed on receipt because counting them costs more than
  * they are worth; a shop that wants a balance says so. That is materiality, and it is the shop's judgement.
  */
+// @does A supply name, unit and whether to keep stock in -> we add it to the shop's supplies list unless it is already there, not counting stock by default -> the supply.
 router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -82,6 +84,7 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
 });
 
 /** rename it, or change whether it is counted — a supply is a DESCRIPTION and may be edited */
+// @does A supply id and a new name or stock setting in -> we change that supply's description -> the saved supply, or not-found.
 router.patch('/:id', auth, ...contract.checked('PATCH /:id'), async (req, res) => {
   try {
     const row = await supplies.update(ctx(req), String(req.params.id), req.body || {}, withEntity);
@@ -122,6 +125,7 @@ function purchaseSays(out) {
  * ⚠️ EVERY LINE IS RECORDED AND COSTED. Only the ones the shop keeps stock of move a balance — the rest are
  * expensed on receipt. Nothing is ignored: money left the business, and there may be input credit to claim.
  */
+// @does A purchase of supplies, once only per bill -> we record and cost every line and move stock only for the ones the shop counts -> the purchase result with a plain summary.
 router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), dayNotAhead, async (req, res) => {
   try {
     const out = await supplies.purchase(ctx(req), req.body || {}, withEntity, { actor_id: req.identity && req.identity.identity_id });
@@ -135,6 +139,7 @@ router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), 
 });
 
 /** ⭐ used some — the movement that turns a purchase into a spend figure somebody can read */
+// @does A supply id and a quantity used -> we record that some was used so spend can be read -> the remaining balance.
 router.post('/:id/issue', auth, ...contract.checked('POST /:id/issue'), async (req, res) => {
   try {
     const r = await supplies.issue(ctx(req), String(req.params.id), (req.body || {}).qty, withEntity, {

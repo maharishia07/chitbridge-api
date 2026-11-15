@@ -54,6 +54,7 @@ mayAct.addsStatuses = [403]; /* tools/api-register.cjs reads the status a gate a
 /** the schema check of one door (its own operation in lib/chit-proposals-contract.js), as a list to spread after the gates */
 const checked = (route) => contract.checked(route);
 
+// @does A chit id in -> we read the change proposals made on it -> the proposals, or 404.
 router.get('/:chit_id/proposals', auth, mayAct, ...checked('GET /:chit_id/proposals'), async (req, res) => {
   try {
     const out = await proposals.list(auth.entityOf(req), req.params.chit_id);
@@ -64,6 +65,7 @@ router.get('/:chit_id/proposals', auth, mayAct, ...checked('GET /:chit_id/propos
   }
 });
 
+// @does A chit id and proposed changes in -> we send a proposal to the other party -> the proposal, or 409 if there is nobody to propose to.
 router.post('/:chit_id/proposals', auth, mayAct, ...checked('POST /:chit_id/proposals'), async (req, res) => {
   try {
     const out = await proposals.propose(auth.entityOf(req), req.params.chit_id, req.body || {}, whoOf(req));
@@ -84,9 +86,12 @@ function decisionDoor(decision) {
     }
   };
 }
+// @does A proposal id and an optional note in -> we accept the other side's proposal and apply it to the chit -> the decision recorded.
 router.post('/:chit_id/proposals/:proposal_id/accept', auth, mayAct, ...checked('POST /:chit_id/proposals/:proposal_id/accept'), decisionDoor('accept'));
+// @does A proposal id and an optional note in -> we reject the other side's proposal and record why -> the decision recorded.
 router.post('/:chit_id/proposals/:proposal_id/reject', auth, mayAct, ...checked('POST /:chit_id/proposals/:proposal_id/reject'), decisionDoor('reject'));
 
+// @does A proposal id and new terms in -> we answer it with a counter-proposal to the other party -> the new proposal, or 409 if there is nobody to ask.
 router.post('/:chit_id/proposals/:proposal_id/counter', auth, mayAct, ...checked('POST /:chit_id/proposals/:proposal_id/counter'), async (req, res) => {
   try {
     const out = await proposals.propose(auth.entityOf(req), req.params.chit_id, Object.assign({}, req.body || {}, { counter_of: req.params.proposal_id }), whoOf(req));

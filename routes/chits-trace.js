@@ -39,6 +39,7 @@ function recipientsOf(row, caller) {
 // contains :id. RLS-scoped — the caller sees only children they CO-HOLD, so a rival's downstream edge is invisible
 // by construction (the TR-6 privacy floor). Proves the forward link is a SET: a fan-out node returns all N children.
 // The cross-entity, multi-hop operator WALK (past parties you don't co-hold) is Fragment 2's participant-gated definer.
+// @does A chit id in -> we list the chits you hold that name it as their parent -> the parent id, a count and the children, or 404.
 router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -70,6 +71,7 @@ router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, r
 // whole subtree — and a rival sees nothing of another's chain (TR-6, the moat, by construction). forward =
 // exposure / recall set (BFS; the visited-set collapses diamonds + cycles); backward = provenance to source.
 // A hop the caller doesn't co-hold is an honest dead-end (the branch stops), never a silent skip to grandchildren.
+// @does A chit id, direction and optional network in -> we walk the chain forward for a recall or backward to the source over links you hold -> the nodes, edges and mass-balance flags.
 router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -292,6 +294,7 @@ async function traceBackward(g, id, MAX_DEPTH) {
 // ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
 // List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
 // RLS-scoped — the operator sees its network's batches, a party sees only its own; origins listed first.
+// @does Nothing in -> we list the traced batches you hold, origins first and capped at 200 -> the batches to click on the trace screen.
 router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -338,6 +341,7 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
 // even if the explicit links weren't followed. Finds the caller's chits carrying that batch, then rebuilds the
 // directed chain by PARTY-CHAINING: X → Y when the receiver of X is the sender of Y. No parent_chit_ids used.
 // RLS-scoped (you match only within what you hold). Same response shape as the walk, so the tree render is reused.
+// @does A batch value in -> we rebuild the chain of your chits carrying that lot from who sent to whom -> the chain with mass-balance flags and whether it matched on batch or product.
 router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -510,6 +514,7 @@ function batchChain(items) {
 // The networks the caller participates in (derived from the edges it co-holds — migration-free registry seed).
 // Supports "an entity can be in many networks" + "see where you are": lists each network id, whether the caller
 // is its operator, and how many edges it holds there. RLS-scoped, so you only see networks you're actually in.
+// @does Nothing in -> we list the networks you take part in, whether you run each and how many links you hold -> the networks.
 router.get('/trace/networks', auth, async (req, res) => {
   try {
     const me = entityId(req);

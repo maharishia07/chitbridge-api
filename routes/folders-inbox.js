@@ -36,6 +36,7 @@ const assign = require('../lib/assign');
  *
  * UNREAD or KEPT — see b156 on why those are two columns and not one flag.
  */
+// @does Optional all or count flag in -> we read the message threads on your chits, an actor only those about their own work -> a page of messages, or just the unread count.
 router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
@@ -186,6 +187,7 @@ function messageListSql(cond, actorCond) {
  * vanish from someone else's inbox. Exactly the "server trusts the client's claim about identity" pattern the
  * reviewer named in July, refused up front this time.
  */
+// @does A message id with read or kept flags in -> we mark that message on your own copy -> how many were updated, or 404 if it is not yours.
 router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:message_id/mark'), async (req, res) => {
   const id = String(req.params.message_id || '');
   if (!UUID.test(id)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'message_id must be a uuid') });
@@ -221,6 +223,7 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
  * router because it is a cross-chit QUERY over your own copies — the same family as /reconcile and /groupsum —
  * not because it has anything to do with folders.
  */
+// @does An optional day and person in -> we list the lines assigned to people, an actor only their own -> the worklist by person.
 router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
   try {
     const dueOn = String(req.query.due_on || '').trim();

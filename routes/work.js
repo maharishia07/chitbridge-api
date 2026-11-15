@@ -40,6 +40,7 @@ async function who(req, res) {
   return { entity, actor: req.identity && req.identity.identity_id, me: railActions.meOf(req), blind: await cost.isCostBlind(req, entity) };
 }
 
+// @does View, status, assignee, search words and paging in -> we list the tasks and orders you hold -> a page of work rows with counts.
 router.get('/list', auth, checked('GET /list'), async (req, res) => {
   const ctx = await who(req, res);
   if (!ctx) return;
@@ -53,6 +54,7 @@ router.get('/list', auth, checked('GET /list'), async (req, res) => {
 });
 
 /* before /:chit_id, which would call it a chit */
+// @does An optional unbilled flag in -> we total the open work lines and money figures you hold -> counts, lines and figures.
 router.get('/facts', auth, checked('GET /facts'), async (req, res) => {
   const ctx = await who(req, res);
   if (!ctx) return;
@@ -64,6 +66,7 @@ router.get('/facts', auth, checked('GET /facts'), async (req, res) => {
   }
 });
 
+// @does A chit id in -> we read one piece of work with its stage, party, lines, assignee and the actions open to you -> the work card, or 404.
 router.get('/:chit_id', auth, checked('GET /:chit_id'), async (req, res) => {
   const ctx = await who(req, res);
   if (!ctx) return;

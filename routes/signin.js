@@ -76,6 +76,7 @@ const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').rep
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
+// @does A signed-in token and device id in -> we give the session a fresh expiry, opening a listed session for an old token -> a new token and its expiry.
 router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schemaOptions), async (req, res) => {
   try {
     const shop = shopOf(req);
@@ -100,6 +101,7 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schem
   }
 });
 
+// @does Nothing in, a signed-in token -> we end this session (or block an old token until it expires) -> a confirmation.
 router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', schemaOptions), async (req, res) => {
   try {
     if (!req.session) {
@@ -114,6 +116,7 @@ router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', sch
   }
 });
 
+// @does Nothing in -> we list your own live sign-ins across devices, marking this one, and whether you may see all devices -> your sessions.
 router.get('/sessions', auth, personOnly, ...contract.checked('GET /sessions', schemaOptions), async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
@@ -141,6 +144,7 @@ router.get('/sessions', auth, personOnly, ...contract.checked('GET /sessions', s
   }
 });
 
+// @does Nothing in -> we list every device signed in to the shop with who used it and how many live sessions it holds -> the device list (owner only).
 router.get('/devices', auth, personOnly, ownerOnly, ...contract.checked('GET /devices', schemaOptions), async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
@@ -163,6 +167,7 @@ router.get('/devices', auth, personOnly, ownerOnly, ...contract.checked('GET /de
   }
 });
 
+// @does A session id or a device id in -> we end that sign-in, your own or anyone's if you are the owner, or a whole device (owner only) -> a confirmation.
 router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke', schemaOptions), async (req, res) => {
   try {
     const b = req.body || {},
@@ -1024,8 +1029,11 @@ const padded = (handler) => (req, res, next) => {
   return handler(req, res, next);
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
+// @does A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.
 router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
+// @does The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.
 router.post('/verify', door('signin'), declaresStatuses(VERIFY_REFUSALS), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);
+// @does A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.
 router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinChecks, validate, pin);
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 

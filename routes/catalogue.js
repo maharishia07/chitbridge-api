@@ -689,6 +689,7 @@ async function orderableOf(ids, network) {
   const shown = new Set((await publicItemsOfShops(shops.filter((shop) => stores.has(String(shop.identity_id))))).map((item) => String(item.item_id)));
   return found.filter((item) => shown.has(String(item.item_id)));
 }
+// @does A network id from anyone, no sign-in -> we read the products the network's visible shops show, filtered by search word or category -> the products, categories and count.
 router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId'), async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
@@ -818,6 +819,7 @@ const networkOrdersOn = () =>
 function shopperOf(req) {
   return customerAuth.soft(req);
 }
+// @does A signed-in shopper's cart for a network store -> we price each line from the stores' catalogues and place one order with the network, splitting it among the stores behind the scenes -> the order id and total.
 router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:networkId/order'), async (req, res) => {
   try {
     if (!networkOrdersOn()) return refuseAs(req, res, { status: 403, code: 'NETWORK_ORDERS_OFF', legacy: storefront.NETWORK_ORDERS_OFF });
@@ -949,6 +951,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
  */
 const MAX_DEPARTMENTS = 40;
 
+// @does A network's bridge id from anyone, no sign-in -> we gather the shops and departments under it on the network tree -> the network's public storefront.
 router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (req, res) => {
   try {
     const root = await resolveEntity(req.params.bridge_id);
@@ -1103,6 +1106,7 @@ function publicResponseFor(view, asOwner) {
  */
 const ENQUIRY_PAGE = 20,
   ENQUIRY_MAX = 100;
+// @does Optional side and page from the signed-in shop -> we list the product enquiry threads it asked or received with the last message of each -> a page of enquiries.
 router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => {
   const { page, limit, offset } = PL.pageArgs(
     { page: req.query.page, limit: req.query.limit != null ? req.query.limit : ENQUIRY_PAGE },
@@ -1148,6 +1152,7 @@ router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => 
   }
 });
 
+// @does A shop's bridge id from anyone (the owner may preview) -> we read its public catalogue as the shop allows it to be seen -> the storefront, or not-found.
 router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1169,6 +1174,7 @@ router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
 // GET /api/catalogue/:bridge_id/capture-fields — what the storefront must ASK the customer for (increment 3): the
 // chit-scope required items from THIS shop's assimilated standards. The order form renders these; order/confirm captures
 // them → conformance passes. Public (the customer isn't logged in).
+// @does A shop's bridge id from anyone, no sign-in -> we read what that shop needs to ask a buyer for on an order -> the shop name and the fields to ask.
 router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fields'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1181,6 +1187,7 @@ router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fiel
 });
 
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
+// @does A shopper's phone or email for one shop, once only -> we find or create them as that shop's customer and send a sign-in code -> a code-sent message.
 router.post(
   '/:bridge_id/order/start',
   doorCheck('POST /:bridge_id/order/start'), // strict input; identifier (phone|email) validated in-handler via resolveContact
@@ -1244,6 +1251,7 @@ router.post(
  * ⭐ AND THE SHOP'S OWN ROUTING ANSWERS IT, because lib/raiseticket resolves under the RECIPIENT's id: the
  * buyer knows nothing about the shop's folders, people or teams, and needs to know nothing.
  */
+// @does A shop's bridge id from anyone, no sign-in -> we say who a support request would go to and whether the shop is open, without naming staff -> the recipient and a closed-shop note.
 router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/preview'), async (req, res) => {
   /**
    * ⚠⚠ DELIBERATELY LESS THAN THE SIGNED-IN PREVIEW. That one names the folder and the person who will answer;
@@ -1282,6 +1290,7 @@ router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/pre
  * same fifteen minutes, the same attempt counter. Only the closed-shop check differs, because only that
  * differs. [[feedback-no-duplicate-functions]]
  */
+// @does A shopper's phone or email and name for one shop -> we send a code to prove who is asking for support -> a code-sent message.
 router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1321,6 +1330,7 @@ router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/sta
   }
 });
 
+// @does A shopper's contact, the code and what went wrong -> we check the code and raise a support ticket to the shop under its own routing -> sent, the ticket reference and who it was routed to.
 router.post(
   '/:bridge_id/support',
   doorCheck('POST /:bridge_id/support', [['otp'], ['observed', 'Say what went wrong']]),
@@ -1400,6 +1410,7 @@ async function recordSourcePenetration(entity, line_items, custLocality) {
 }
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
+// @does A shopper's code and cart, once only -> we check the code, re-price every line from the shop's catalogue and place the order as a chit, adding the buyer as a customer -> the chit id, summary and a token.
 router.post(
   '/:bridge_id/order/confirm',
   doorCheck('POST /:bridge_id/order/confirm', [['otp'], ['line_items', 'Order is empty']]),
@@ -1891,6 +1902,7 @@ async function codeHolds(row, typed, names) {
   if (!verdict.ok && !verdict.counted) await decoyAttempt(query); /* SEC-139: an unknown contact, a locked row and an expired code spend the round trip a wrong code does, and write no row */
   return verdict.ok;
 }
+// @does A shopper's contact and the code we sent -> we check the code for that shop -> a sign-in token and name, or a refusal.
 router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1941,6 +1953,7 @@ const myRows = (rows) => rows.map(({ _total, ...r }) => r);
 // T2.4 · THE CUSTOMER'S OWN SURFACE. This route existed but was mounted on `auth`, which fails closed on
 // identity_type 'customer' — so its only intended caller could never reach it. It now uses customerAuth.
 // Also: `purpose = 'order'` would have hidden every OFFER since T2.1 renamed those; both are listed.
+// @does A signed-in shopper's page request -> we read their own copies of orders and offers placed, with the shop's status -> a page of their orders.
 router.get('/:bridge_id/my-orders', customerAuth, ...routeCheck('GET /:bridge_id/my-orders'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
@@ -1967,6 +1980,7 @@ router.get('/:bridge_id/my-orders', customerAuth, ...routeCheck('GET /:bridge_id
 });
 
 // T2.4 · the documents the customer themselves submitted — their OWN per-copy rows, nobody else's.
+// @does A signed-in shopper's page request -> we list the documents they themselves attached to orders -> a page of their documents.
 router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge_id/my-documents'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
@@ -1988,6 +2002,7 @@ router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge
 // T2.4 · and the right to PURGE their own copy. Per-copy independence means each party can delete what it holds
 // without touching the other's — that is the whole point of replicating rather than sharing, and until now the
 // customer's side of it was a claim the code could not honour. The shop's copy is untouched.
+// @does A signed-in shopper and a document id -> we delete their own copy of that document, leaving the shop's copy alone -> ok and the deleted id, or not-found.
 router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELETE /:bridge_id/my-documents/:id'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
@@ -2010,6 +2025,7 @@ router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELET
  * ⚠️ PROPOSES, NEVER COMMITS. gate:'confirm' — the owner edits and accepts every row. An AI-read price that
  * committed itself would be a fabricated number wearing the appearance of evidence.
  */
+// @does Photos of a price list or shelf from the signed-in shop -> we ask the AI to read item names and prices off them, proposing and never saving -> the suggested items to confirm.
 router.post('/photo-extract', auth, ...routeCheck('POST /photo-extract'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2087,6 +2103,7 @@ async function decoyEnquiryReads(viewer) {
 /** SEC-129: does this storefront view show this item (the shop is open to the viewer AND the item is one it lists)? */
 const viewListsItem = (view, item_id) => !!view && view.available !== false && (view.items || []).some((item) => String(item.item_id) === String(item_id));
 
+// @does A product id from the signed-in shop -> we read the enquiry messages on that product that it is part of -> a page of messages, empty if none.
 router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), async (req, res) => {
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
@@ -2112,6 +2129,7 @@ router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), as
   }
 });
 
+// @does A product id and a question from the signed-in shop -> we deliver it to the product's owner as an enquiry message and ring their bell -> the message id and time, or not-found.
 router.post(
   '/enquiry/:item_id',
   auth,

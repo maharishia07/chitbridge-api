@@ -22,11 +22,13 @@ const { isScreenKey } = require('../lib/holder');
 const rootGate = Object.assign((req, res, next) => (require('../lib/platformroot').refuseUnlessRoot(req, res) ? next() : undefined), { addsStatuses: [403, 404] });
 
 /* SNAP-SCREEN: a screen key's ticket is marked, so its stream carries only 'the shop changed' (lib/events ticketFor) */
+// @does Nothing in -> we mint a short ticket for the live stream -> the ticket (signed in).
 router.post('/ticket', auth, ...contract.checked('POST /ticket'), (req, res) => {
   const e = ctx(req);
   if (!e) return problem(req, res, { status: 401, ...words.signInRequired() });
   res.json(events.ticketFor(e, { screen: isScreenKey(req.till && req.till.key) }));
 });
+// @does A ticket in the query in -> we open a live stream that tells the page the shop changed -> a stream of events.
 router.get('/stream', ...contract.checked('GET /stream'), (req, res) => {
   /**
    * ⚠️⚠️ BOTH SPELLINGS. The app has always sent ?t=, and the counter and the shop screen have always sent ?ticket= —
@@ -39,6 +41,7 @@ router.get('/stream', ...contract.checked('GET /stream'), (req, res) => {
   if (!v) return problem(req, res, { status: 401, ...words.ticketRefused() });
   events.subscribe(v.entity_id, req, res, { screen: v.screen });
 });
+// @does Nothing in -> we read the live stream counts -> the stats (platform operators only).
 router.get('/stats', auth, rootGate, ...contract.checked('GET /stats'), (req, res) => {
   try {
     res.json(events.stats());

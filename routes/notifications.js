@@ -56,6 +56,7 @@ const FEED_FROM = `FROM state_log sl
           AND sl.created_at > now() - interval '${FEED_DAYS} days'
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
 
+// @does Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -183,6 +184,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
  * clear somebody else's badge. A small thing, but a badge you can silently clear for another person is a badge
  * nobody can trust.
  */
+// @does Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.
 router.post('/seen', auth, ...contract.checked('POST /seen'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -234,6 +236,7 @@ function dismissRows(session, entity_id, all, ids) {
  *
  * Body: { log_ids: [uuid, …] }  ·  { all: true } clears everything currently visible.
  */
+// @does A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.
 router.post('/dismiss', auth, ...contract.checked('POST /dismiss'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

@@ -127,6 +127,7 @@ const REVOKE_OPERATION = {
 /* an outward route keeps its old refusal (400 and its frozen body) until its next major (S2, S13): the schema answers it, never a silent 422 */
 const MINT_REFUSAL = { status: 400, code: 'INVALID_KEY_REQUEST', legacy: (failures) => ({ error: 'validation', message: failures[0].detail }) };
 
+// @does Nothing in -> we list this shop's API keys and the kinds this login may make -> the keys and whether revoking is allowed (signed-in session only, not a key).
 router.get('/', auth, sessionOnly, ...LIST_FILTER, async (req, res) => {
   /* ⭐ SET-WALK1 · W15: `scopes` = the kinds THIS login may mint — 'testing' (a build posts test results to the board) is the platform role's
      only (lib/platformroot.isPlatform); a shop owner never sees it. The web offers exactly this list (cap-settings.js keyKinds); mint() refuses the rest. */
@@ -154,6 +155,7 @@ function platformScopeRefusal(req, askedScopes) {
   };
 }
 /* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
+// @does A key name, scopes and days in -> we make an API key and show it once -> the key (owner only, signed-in session).
 router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), schemaValidate(MINT_OPERATION, MINT_REFUSAL), ...MINT_FILTER, async (req, res) => {
   try {
     const b = req.body || {};
@@ -170,6 +172,7 @@ router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'),
 
 /* ⚠️ FOR UPDATE, same reason as mint() and setEnrol() — a revoke racing a mint on the same list must not have
    whichever save() lands second resurrect the key the other request just removed, or drop the one it just added. */
+// @does A key id in -> we revoke that key -> confirmation (owner only, signed-in session).
 router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), schemaValidate(REVOKE_OPERATION), ...REVOKE_FILTER, async (req, res) => {
   /* L1: the owner gate, see GET / above */
   try {

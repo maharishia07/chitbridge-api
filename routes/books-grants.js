@@ -29,8 +29,10 @@ function answer(req, res, err) {
   return problem(req, res, { status: 500, code: 'INTERNAL', detail: 'Something went wrong on our side. Nothing was changed.', legacy: { error: 'Failed', message: 'Something went wrong on our side. Nothing was changed.' } });
 }
 
+// @does Whether costs are shared in the query -> we give the words the owner reads (any signed-in shop session) before sharing the books -> the consent wording.
 router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false')));
 
+// @does Nothing in -> we list who the shop has given read access to its books, such as an auditor -> the grants (owner only, not keys).
 router.get('/', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
   try {
     res.json(await grants.list(entityOf(req)));
@@ -39,6 +41,7 @@ router.get('/', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.ch
   }
 });
 
+// @does An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).
 router.post('/', auth, noKey, memberOnly, declaresStatuses([409, 503]), ...contract.checked('POST /'), async (req, res) => {
   try {
     const body = req.body || {};
@@ -49,6 +52,7 @@ router.post('/', auth, noKey, memberOnly, declaresStatuses([409, 503]), ...contr
   }
 });
 
+// @does A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).
 router.patch('/:id', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('PATCH /:id'), async (req, res) => {
   try {
     res.json(await grants.change(entityOf(req), byOf(req), req.params.id, req.body || {}));
@@ -57,6 +61,7 @@ router.patch('/:id', auth, noKey, memberOnly, declaresStatuses([503]), ...contra
   }
 });
 
+// @does A grant id in -> we take that access away -> the revoked grant (owner only).
 router.post('/:id/revoke', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('POST /:id/revoke'), async (req, res) => {
   try {
     res.json(await grants.revoke(entityOf(req), byOf(req), req.params.id));
@@ -65,6 +70,7 @@ router.post('/:id/revoke', auth, noKey, memberOnly, declaresStatuses([503]), ...
   }
 });
 
+// @does Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).
 router.get('/log', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('GET /log'), async (req, res) => {
   try {
     res.json({ looks: await grants.looks(entityOf(req), req.query || {}) });

@@ -360,7 +360,9 @@ const prefSetRoute = (fixedKind) =>
     }
   };
 
+// @does A new business's details (public, rate limited) -> we start its registration and send a code to confirm -> an asked answer, or a refusal saying what to fix.
 router.post('/register', signin.door('register'), signin.askAddressCap, ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+// @does The code from the registration e-mail (public, rate limited) -> we verify it and finish creating the business -> the new account's sign-in, or a refusal.
 router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
@@ -371,6 +373,7 @@ router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REF
 // STD2: `?tz=<the device's IANA zone>` (optional) → each country row carries `offer { timezone, from, source }` — the zone the server WILL store
 // and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
 // Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
+// @does Nothing in (public, before sign-in) -> we read the business types and countries a new registrant may choose -> the choices with what each applies.
 router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) => {
   try {
     const CS = require('../lib/country-setup');
@@ -403,6 +406,7 @@ router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) 
  * Reply { results:[{bridge_id, display_name, user_id, kind, hits, address, installation_key, domain, where}], count, answers:[{installation_key, ok, why}] }.
  * Who may call: any signed-in business. Round trips: Here 2 (+ up to 26 for kind=product); each installation asked is one signed call.
  */
+// @does A search text of two letters or more and a kind (signed-in) -> we search businesses or products across the network and asked places -> the matches, or a refusal if too short.
 router.get('/search', auth, ...checked('GET /search'), async (req, res) => {
   try {
     const q = sanitise(req.query.q || '');
@@ -420,6 +424,7 @@ router.get('/search', auth, ...checked('GET /search'), async (req, res) => {
 });
 
 // GET /entities/search/places — the installations the Where picker offers: remote and ACTIVE only (a suspended one drops out), each by name and domain
+// @does Nothing in (signed-in) -> we list the other installations that can be searched, active ones only -> the places for the Where picker.
 router.get('/search/places', auth, async (req, res) => {
   try {
     res.json({ places: await require('../lib/network-search').places() });
@@ -453,6 +458,7 @@ function policyMay(req) {
   return out;
 }
 
+// @does Signed-in business -> we read its policy switches with the wording for its country and who may change each -> the flags, the schema and what the caller may do.
 router.get('/policy', auth, async (req, res) => {
   /* AU-WORDS: the schema is worded by the shop's COUNTRY PACK (policy.schemaFor — the registration kinds it offers, the tax's name, the records
      floor); the country comes in the same read as the flags (policy.read), still 1 trip. No country → neutral words, never India's. */
@@ -464,6 +470,7 @@ router.get('/policy', auth, async (req, res) => {
   }
 });
 
+// @does Policy switches to change (signed-in, owner only for the owner-held ones) -> we merge them into the business policy -> the flags now in force, or a refusal.
 router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
   /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key.
      The code is the one owner code (OWNER_ONLY) — the same the GET's may[flag] carries, so a screen branches on one word. */
@@ -482,6 +489,7 @@ router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
  * from the shop's row, profile, gathered licences and identity-document verdicts, sent as one readBatch (one trip). Bands, penalty words
  * and which licences are core come from lib/licence-rules.js (data), never from the page. The entity's own header: an actor reads its employer's.
  */
+// @does Signed-in business -> we read the facts and licences for its header, using its employer when an assistant calls -> the business, licences and trade-ready state.
 router.get('/header', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -498,6 +506,7 @@ router.get('/header', auth, async (req, res) => {
  * what leans on it. Built by lib/sides.js (reads) from the stamp, the adoptions, the connectors, the lists, the header's trade proof and the
  * register's edges. A source with no data yet comes back as a row in state 'later' ("not yet") — never a made-up number.
  */
+// @does Signed-in business -> we read the three sides of its usage and impact, showing not yet where a source has no data -> the lean, use and impact sides.
 router.get('/sides', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -509,6 +518,7 @@ router.get('/sides', auth, async (req, res) => {
   }
 });
 
+// @does Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.
 router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   try {
     /* ⚠️⚠️ THE PROBE BELONGS IN THIS FUNCTION. I first put it above the /search query — a different route —
@@ -833,12 +843,14 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   }
 });
 
+// @does A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.
 router.patch('/me/prefs/:kind', auth, ...checked('PATCH /me/prefs/:kind'), prefSetRoute(null));
 
 /**
  * PATCH /entities/me/exposure — the business's DEFAULT "Shown to customers" switches (lib/exposure.js KEYS), merged into
  * policy_flags.storefront_exposure; an item's own switches override them. Only known keys, only booleans.
  */
+// @does Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.
 router.patch('/me/exposure', auth, ...checked('PATCH /me/exposure'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -866,6 +878,7 @@ router.patch('/me/exposure', auth, ...checked('PATCH /me/exposure'), async (req,
  * a second door to the same permission. This route only READS what the caller's own identity already has,
  * for Offer Lab's client-side UI to agree with the server without re-deriving the rule.
  */
+// @does Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.
 router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -959,6 +972,7 @@ async function sendsOtherTaxId(req) {
   return taxIdDoor.taxIdDiffers(stored.rows[0] && stored.rows[0].gstn, req.body.gstn);
 }
 
+// @does Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.
 router.patch(
   '/profile',
   auth,
@@ -1261,6 +1275,7 @@ router.patch(
 
 // PATCH /entities/:id/erase — mark an identity erased (tombstone). The platform role only (lib/platformroot.refuseUnlessPlatform, W1-SET).
 // Full PII-redaction sweep is a separate ops routine; this just flips the markers.
+// @does A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.
 router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), async (req, res) => {
   try {
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
@@ -1291,6 +1306,7 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
  * away by making the numbers agree. `counts: { billed: n }` is named that way so no screen can accidentally
  * print it as "chits sent".
  */
+// @does Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.
 router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
     const me = req.identity.identity_id;
@@ -1468,6 +1484,7 @@ const ROUTABLE = [
  * ⚠️ ALWAYS 200. ‘This will not work, and here is why’ is the answer, not an error: a 500 on a preview puts
  * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
  */
+// @does Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.
 router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -1484,6 +1501,7 @@ router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (
   }
 });
 
+// @does Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.
 router.get('/routing', auth, async (req, res) => {
   const me = auth.entityOf(req);
   try {
@@ -1594,6 +1612,7 @@ function forgetRouting(shop) {
   }
 }
 
+// @does A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.
 router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   const me = auth.entityOf(req);
   const b = req.body || {};
@@ -1620,6 +1639,7 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   }
 });
 
+// @does Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.
 router.get('/populations', auth, rootGate, async (req, res) => {
   try {
     /* ⭐ the DESK comes back with the row (b252). A screen that has to fetch it separately is a screen where
@@ -1675,6 +1695,7 @@ router.get('/populations', auth, rootGate, async (req, res) => {
  * ⚠️ ROOT ONLY. Which desk answers a whole population is the operator's decision, not a tenant's.
  * ⚠️ AND '' CLEARS IT, deliberately: an operator must be able to take a desk back out without a deploy.
  */
+// @does A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.
 router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populations/:code/desk'), async (req, res) => {
   const code = populationCode(req);
   const v = (req.body || {}).desk_entity_id;
@@ -1708,6 +1729,7 @@ router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populatio
   }
 });
 
+// @does A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.
 router.post('/populations', auth, rootGate, ...checked('POST /populations'), async (req, res) => {
   const code = String((req.body || {}).code || '')
     .trim()
@@ -1734,6 +1756,7 @@ router.post('/populations', auth, rootGate, ...checked('POST /populations'), asy
   }
 });
 
+// @does Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.
 router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -2419,6 +2442,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   }
 });
 
+// @does Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.
 router.get('/entitlements', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
