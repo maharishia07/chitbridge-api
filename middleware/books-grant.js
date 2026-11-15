@@ -24,7 +24,7 @@ const ROLE_HEADER = 'x-books-role';
 
 /** GET routes of routes/books.js an auditor may read: the books' figures and lists, no party contact data, nothing that stores into the member's books */
 const GRANT_READS = new Set([
-  '/accounts', '/daybook', '/ledger/:account', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
+  '/accounts', '/daybook', '/ledger/:account', '/evidence/:id', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
   '/terms', '/fx-rates', '/health', '/cheques', '/returns'
 ]);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */

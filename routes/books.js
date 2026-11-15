@@ -39,6 +39,7 @@ const B = require('../lib/books');
 const E = require('../lib/books-engines');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
+const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
 const { marksIn } = require('../lib/mark-embed'); /* MARK & QUERY: the marks of the entries a list serves, in the list's own transaction */
 const ctx = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gates: a route that takes no input has none */
@@ -610,6 +611,9 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
           rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate)
         }); /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
       }
+      const rawOf = new Map();
+      for (const l of lines) (rawOf.get(l.entry_id) || rawOf.set(l.entry_id, []).get(l.entry_id)).push(l);
+      await Evidence.attach(h, entries.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref, entry: x, lines: rawOf.get(x.entry_id) })), { pack: B.packOf(req.books), cur: curOf(req), flag: true }); /* ASA 500: each entry vouches to its source; ONE read of the page's files */
       const answered = await LiveBill.markReverseAnswers(h, e, entries);
       markSide = await marksIn(h, req, 'acc.audit', entries.map((item) => item.entry_id));
       if (markSide) for (const item of entries) item.mark = markSide.byId[String(item.entry_id)] || null;
@@ -688,6 +692,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
         lines,
         closing_minor: t ? open + t.dr - t.cr : run
       };
+      await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
       markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
       if (markSide) for (const item of lines) item.mark = markSide.byId[String(item.entry_id)] || null;
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
@@ -705,6 +710,25 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
     /* every root key named (the page keys are undefined on an unpaged read and leave the JSON): the output allow-list reads them here */
     res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }, { account: out.chart_account }));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+
+/**
+ * GET /evidence/:id → the file's bytes: a DOCUMENT file on a chit that is the source of an entry of THIS shop's books. The owner reads his own; a firm reads a member's through a live grant (X-Books-For, read only; the middleware logs the look and
+ * refuses a revoked, expired or stranger caller with 403). Images and PDFs render inline, everything else downloads; never cached (a revoked grant must stop at once). A file that is not evidence answers 404 exactly as a file that is not there.
+ */
+// @does A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.
+router.get('/evidence/:id', auth, on, ...checked('GET /evidence/:id'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      id = String(req.params.id);
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    const held = await withEntity(e, (h) => Evidence.isEvidence(h, e, id));
+    const file = held ? await require('../lib/storage').getBlob(id, e, { documentsOnly: true }) : null;
+    if (!file) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such file behind these books.');
+    require('../lib/attachment-send').sendBlob(res, file, { cache: 'private, no-store' });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
