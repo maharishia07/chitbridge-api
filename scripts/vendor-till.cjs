@@ -200,6 +200,8 @@ const COPIES = () => [
    */
   [path.join(API, 'lib', 'their-bill.js'), path.join(WEB, 'app', 'their-bill.js'), 'copy'],
   [path.join(API, 'lib', 'their-bill.js'), path.join(API, 'tools', 'tally-connector', 'their-bill.js'), 'copy'],
+  /* CON-98: the kit reads a bill's total through the ONE pick, lib/counter-bill.js (no requires), carried beside core.js; the master is the lib file */
+  [path.join(API, 'lib', 'counter-bill.js'), path.join(API, 'tools', 'tally-connector', 'counter-bill.js'), 'copy'],
   /* offers: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/offers.js, engine/offers.js and lib/offers-engine.js are
      written only by chitbridge-engines/tools/adopt.cjs; the hand cp to the server and this copy are both retired. */
   /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written

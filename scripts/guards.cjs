@@ -246,6 +246,7 @@ const GUARDS = [
   'key-scopes.test.js', // what every API key may reach — the authorisation matrix
   'column-home.test.cjs', // where a column actually lives
   'connector-kit.test.js',
+  'con-98-connector-bill-total.test.cjs', // CON-98: the connector books a bill at the ONE pick (counter-bill.pickOf, a byte copy in the kit); no total = refused in words
   'tax-vendor.test.js',
   'tax.test.js', // GST determination: same-state split, inclusive pricing, INV-01 shape, paisa rounding, reverse charge — was red on main unguarded (K3)
   /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only

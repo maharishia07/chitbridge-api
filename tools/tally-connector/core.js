@@ -28,6 +28,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 /* one unit, three names — the same table the API and the app hold (lib/units.js / app/units.js); a unit we cannot map is kept as spelt */
+/**
+ * the ONE pick of a bill's total (lib/counter-bill.js, a byte copy the kit ships beside this file), never read off the chit here. Loaded at the CALL, not at start:
+ * an older till.js stages this core without fetching the new file, and a missing file must never stop the counter. Absent = no total = the voucher is refused with words.
+ */
+function billPick(header) {
+  let reader = null;
+  try { reader = require('./counter-bill'); } catch (_) { return { total: null, source: 'missing' }; }
+  return reader.pickOf(header);
+}
 const UNITS = (() => { try { return require('../../lib/units'); } catch (_) { return null; } })();
 function unitOf(u) { const k = UNITS && UNITS.unitOf(u); return k || String(u || 'unit').trim().toLowerCase(); }
 /**
@@ -184,11 +193,23 @@ function orderOf(chit) {
     name: l.name || l.particulars || '', code: (l.ref && (l.ref.code || l.ref.sku)) || l.code || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
     qty: Number(l.quantity != null ? l.quantity : l.qty) || 0, unit: l.unit || '', price: Number(l.price) || 0, list_price: l.list_price != null ? Number(l.list_price) : null,
     offer: l.offer ? { label: l.offer.label, off: Number(l.offer.off) || 0 } : null, total: Number(l.total) || 0, gst_rate: l.gst_rate != null ? Number(l.gst_rate) : null, hsn: l.hsn || null }));
+  const billTotal = billPick(header);
   /* a counter bill (Record a sale) names its customer on the chit — the voucher's party is that person, never the shop itself */
   const cust = (header.business_json && header.business_json.customer) || null;
   return { chit_id: header.chit_id, at: header.created_at || header.at || null, purpose: header.purpose || null, status: header.current_status || header.status || null,
            subject: header.manual_subject || header.auto_subject || '', buyer: (cust && cust.name) || header.sender_entity_display_name || (header.sender && header.sender.display_name) || 'Customer', customer: cust, currency: detail.currency_code || 'INR',
-           total: (header.summary_json && header.summary_json.total_value) || lines.reduce((ticket, l) => ticket + l.total, 0), lines };
+           total: billTotal.total, total_why: billTotal.total === null ? noTotalWhy(billTotal) : null, lines };
+}
+/** the words for a bill with no total: named, so the voucher is refused out loud and never booked at a guessed sum */
+const noTotalWhy = (picked) => (picked.source === 'missing' ? 'connector update incomplete; restart to finish updating' : picked.source === 'withheld' ? 'the bill total is withheld from this reader (cost view)' : 'the chit carries no bill total (no invoice total, no money total)');
+/** a voucher with no bill total is refused with its reason: one receipt, one line, one write-back; a repeat of the same refusal is quiet */
+async function refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind, last }) {
+  const why = 'refused: ' + order.total_why;
+  if (last && last.outcome === 'failed' && last.why === why) return { chit_id, outcome: 'failed', why, repeat: true };
+  receipts.add({ kind, ref: chit_id, hash: hashOf(order), outcome: 'failed', why });
+  await tellBooks(cb, kind, chit_id, { system: adapter.name, outcome: 'failed', why });
+  log(kind + ' ' + chit_id.slice(0, 8) + ' ' + why);
+  return { chit_id, outcome: 'failed', why };
 }
 /** the payment the seller recorded on their copy (business_json.payment) — level 1 by hand, level 2 by a gateway */
 function paymentOf(chit) { const header = chit.header || chit.chit || chit; const business = (header && header.business_json) || chit.business_json || {}; return business.payment || null; }
@@ -198,6 +219,7 @@ async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   const chit = await cb.chit(chit_id); const payment = paymentOf(chit); const order = orderOf(chit);
   if (!payment) return { chit_id, outcome: 'unpaid' };
+  if (payment.amount == null && order.total === null) return refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind: 'receipt', last });
   const orderReceipt = receipts.last('order', chit_id) || {};   /* what THEIR system called the order (invoice id, party) — a hosted system applies the payment to it */
   const receipt = { chit_id, at: payment.at, method: payment.method, ref: payment.ref, amount: payment.amount != null ? Number(payment.amount) : order.total, buyer: order.buyer, order: { their_ref: orderReceipt.their_ref || null, their_id: orderReceipt.their_id || null, their_party: orderReceipt.their_party || null } };
   if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(receipt), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
@@ -267,6 +289,7 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
     if (!cb._waited || !cb._waited[chit_id]) { cb._waited = cb._waited || {}; cb._waited[chit_id] = true; log('order ' + chit_id.slice(0, 8) + ' ' + gate.why); }
     return { chit_id, outcome: 'waiting', why: gate.why };
   }
+  if (order.total === null) return refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind: 'order', last });
   /**
    * ⭐ B2B (Athi, 2026-09-05: "if we try ordering from another shop instead of the storefront? their GSTIN and so on").
    * When the buyer is a registered business the seller's books want a party ledger with the buyer's GSTIN, the place of
