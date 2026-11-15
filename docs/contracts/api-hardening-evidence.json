@@ -1682,6 +1682,18 @@
    "strict_input": true,
    "foreign_id_404": true
   },
+  "POST /api/books-actions": {
+   "strict_input": true
+  },
+  "POST /api/books-actions/:id/review": {
+   "strict_input": true
+  },
+  "POST /api/books-actions/:id/return": {
+   "strict_input": true
+  },
+  "POST /api/books-actions/:id/accept": {
+   "strict_input": true
+  },
   "GET /api/facts/rail/chits": {
    "output_allowlist": true
   },

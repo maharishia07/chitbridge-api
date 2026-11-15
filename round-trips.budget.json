@@ -373,6 +373,24 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "GET /api/books-actions/:id": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
     "GET /api/books/accounts": {
       "file": "books.js",
       "trips": 4,
@@ -2610,6 +2628,42 @@
       "wire": 4,
       "fired": true,
       "status": 404,
+      "extra": true
+    },
+    "POST /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/review": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/return": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/accept": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
       "extra": true
     },
     "POST /api/books/accounts": {

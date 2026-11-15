@@ -20,6 +20,186 @@
    "since": "2026-10-31"
   },
   {
+   "code": "ACTION_ACCESS_ENDED",
+   "status": "409",
+   "title": "Access ended",
+   "shopkeeper": "The access this was prepared under has ended. You can return it.",
+   "hint": "Return it.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_ALERT_NOT_RECORDED",
+   "status": "503",
+   "title": "Could not tell the owner",
+   "shopkeeper": "We could not record this for the owner, so nothing was posted.",
+   "hint": "Try again.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
+   "code": "ACTION_BODY_CHANGED",
+   "status": "409",
+   "title": "Not the entry you were shown",
+   "shopkeeper": "This is not the entry you were shown. Open it again.",
+   "hint": "Open the action again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_BODY_INVALID",
+   "status": "422",
+   "title": "Action incomplete",
+   "shopkeeper": "The action is missing something it needs.",
+   "hint": "Fill in what the message names.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_CLOSED",
+   "status": "409",
+   "title": "Action already moved on",
+   "shopkeeper": "This action has already moved on. Open the queue again.",
+   "hint": "Open the queue again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_DUPLICATE",
+   "status": "409",
+   "title": "Already posted",
+   "shopkeeper": "This was already posted. Nothing was posted again.",
+   "hint": "Check the day book.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_FIRM_ONLY",
+   "status": "403",
+   "title": "Adviser firm only",
+   "shopkeeper": "Only the adviser firm prepares and reviews. The owner accepts.",
+   "hint": "Sign in as the adviser firm.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_KIND_INVALID",
+   "status": "422",
+   "title": "Action not accepted",
+   "shopkeeper": "Say what is to be done: a journal, a reversal, a lock, an unlock or a year close.",
+   "hint": "Pick one of the five.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_NOT_ALLOWED",
+   "status": "403",
+   "title": "Access ended",
+   "shopkeeper": "This access has ended, so nothing was recorded.",
+   "hint": "Ask the owner of the books.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_NOT_FOR_YOU",
+   "status": "403",
+   "title": "Not for you",
+   "shopkeeper": "Only the owner and the adviser firm work on these actions.",
+   "hint": "Sign in as the owner or the firm.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_NOT_REVIEWED",
+   "status": "409",
+   "title": "Not reviewed yet",
+   "shopkeeper": "A colleague has to review this before you accept it.",
+   "hint": "Wait for the review.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_PARTY_NOT_IN_V1",
+   "status": "422",
+   "title": "Not for an adviser",
+   "shopkeeper": "An adviser journal cannot name a customer, a supplier or a bill. The owner enters those.",
+   "hint": "Ask the owner to enter it.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REASON_NEEDED",
+   "status": "422",
+   "title": "Reason needed",
+   "shopkeeper": "Say why in 3 to 300 characters.",
+   "hint": "Write the reason.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REF_NEEDED",
+   "status": "422",
+   "title": "Reference needed",
+   "shopkeeper": "Give the action a reference, so that pressing Prepare twice cannot make two.",
+   "hint": "Add a reference.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REF_OPEN",
+   "status": "409",
+   "title": "Already waiting",
+   "shopkeeper": "An action with this reference is already waiting. Open it from the queue.",
+   "hint": "Open the waiting action.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REF_POSTED",
+   "status": "409",
+   "title": "Already posted",
+   "shopkeeper": "This reference already holds an entry. It is not prepared again.",
+   "hint": "Check the day book.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REVERSE_MANUAL_ONLY",
+   "status": "422",
+   "title": "Not for an adviser",
+   "shopkeeper": "An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner.",
+   "hint": "Ask the owner to reverse it.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_REVIEWER_NOT_NAMED",
+   "status": "403",
+   "title": "A named person must review",
+   "shopkeeper": "A review needs a named person of the firm, not the firm's own sign-in.",
+   "hint": "Sign in as yourself.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_SELF_REVIEW",
+   "status": "403",
+   "title": "A colleague must review",
+   "shopkeeper": "You prepared this, so a colleague has to review it.",
+   "hint": "Ask a colleague to review it.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "ACTION_TOTAL_NEEDED",
+   "status": "422",
+   "title": "Total needed",
+   "shopkeeper": "Confirm the total and its currency as shown on the screen.",
+   "hint": "Confirm the total shown.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "ACTOR_KEY_TAKEN",
    "status": "400/409",
    "title": "Login key taken",
@@ -578,6 +758,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "BOOKS_ACTION_NOT_SWITCHED_ON",
+   "status": "503",
+   "title": "Not switched on yet",
+   "shopkeeper": "Adviser actions are not switched on yet.",
+   "hint": "Try again later.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "BOOKS_BAD_REQUEST",
    "status": "400",
    "title": "Ledger needs an answer",
@@ -603,6 +792,24 @@
    "hint": "Try again later. If it stays, tell us.",
    "owner_area": "books",
    "since": "2026-10-23"
+  },
+  {
+   "code": "BOOKS_FOR_NOT_HERE",
+   "status": "403",
+   "title": "Not a books request",
+   "shopkeeper": "This request names a client's books, which only the books screens use. Nothing was done.",
+   "hint": "Open the client's books from the books screens.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
+   "code": "BOOKS_GRANT_CAP_INVALID",
+   "status": "422",
+   "title": "Limit not accepted",
+   "shopkeeper": "Give the limit and its currency together, as a positive amount.",
+   "hint": "Fill in both, or leave both empty.",
+   "owner_area": "network",
+   "since": "2026-11-15"
   },
   {
    "code": "BOOKS_GRANT_CONSENT_NEEDED",
@@ -704,6 +911,33 @@
    "since": "2026-11-14"
   },
   {
+   "code": "BOOKS_GRANT_POSTING_INVALID",
+   "status": "422",
+   "title": "Posting choice not accepted",
+   "shopkeeper": "Pick: your adviser posts for you, or you approve each post.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
+   "code": "BOOKS_GRANT_POSTING_NEEDED",
+   "status": "422",
+   "title": "Say who posts",
+   "shopkeeper": "Say who posts: your adviser posts for you, or you approve each post.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
+   "code": "BOOKS_GRANT_PRESET_INVALID",
+   "status": "422",
+   "title": "Access kind not accepted",
+   "shopkeeper": "Pick auditor or adviser.",
+   "hint": "Choose auditor or adviser.",
+   "owner_area": "network",
+   "since": "2026-11-14"
+  },
+  {
    "code": "BOOKS_GRANT_PURPOSE_INVALID",
    "status": "422",
    "title": "Purpose too short or long",
@@ -756,6 +990,15 @@
    "hint": "Ask the owner.",
    "owner_area": "books",
    "since": "2026-11-13"
+  },
+  {
+   "code": "BOTH_ROLES_ONE_FIRM",
+   "status": "varies",
+   "title": "Both kinds of access",
+   "shopkeeper": "This business already holds the other kind of access to your books. It will both review your books and prepare entries in them. Make sure that is what you want.",
+   "hint": "Check who holds which access before you go on.",
+   "owner_area": "network",
+   "since": "2026-11-15"
   },
   {
    "code": "BRIDGE_MISSING",
@@ -3980,6 +4223,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "OUTSIDE_MONTH_BEING_WORKED",
+   "status": "varies",
+   "title": "Different month",
+   "shopkeeper": "This entry is dated outside the month you are working in.",
+   "hint": "Check the date, or go on if it is right.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
    "code": "OVER_LIMIT",
    "status": "409",
    "title": "Over the credit limit",
@@ -4184,6 +4436,15 @@
    "shopkeeper": "This bank line is in the books but nobody has accepted it against the statement yet.",
    "hint": "Accept it on the bank reconciliation page, or leave it to carry over.",
    "owner_area": "books",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "PREVIEW_TOTAL_DIFFERS",
+   "status": "409",
+   "title": "The total changed",
+   "shopkeeper": "The total changed since it was prepared. Nothing was posted. Open it again.",
+   "hint": "Open the action again.",
+   "owner_area": "network",
    "since": "2026-11-14"
   },
   {
@@ -5049,6 +5310,15 @@
    "hint": "Ask your administrator to finish the update.",
    "owner_area": "capture",
    "since": "2026-11-07"
+  },
+  {
+   "code": "STORE_MISMATCH",
+   "status": "409",
+   "title": "Another store is open",
+   "shopkeeper": "This page is open on another store than the one you are working in. Nothing was saved. Open the store again.",
+   "hint": "Open the store again.",
+   "owner_area": "network",
+   "since": "2026-11-14"
   },
   {
    "code": "STREAM_OWNER_UNKNOWN",

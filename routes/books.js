@@ -124,7 +124,7 @@ function noKey(req, res, next) {
   next();
 }
 function owner(req, res, next) {
-  if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } });
+  if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser')) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
@@ -1009,11 +1009,11 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
  * cheques written · GST by the 20th of next month) day by day, and the FIRST day below zero in shopkeeper words. Finance suggests; nothing posts.
  * Owner only — the server decides (403 with the sentence); 404 while the ledger is off (`on`), like every books read. Reads only; one query per source.
  */
-const CASH_OWNER_ONLY = 'Only the owner may see the cash position.';
+const CASH_OWNER_ONLY = 'Only the owner may see the cash position.'; /* a firm acting under a live grant (auditor or adviser) reads it too: the same read-only look as every books read */
 // @does A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).
 router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req, res) => {
   try {
-    if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: CASH_OWNER_ONLY, legacy: { error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY } });
+    if (!isOwner(req) && !req.acting_for_grant) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: CASH_OWNER_ONLY, legacy: { error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY } });
     const e = ctx(req),
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
