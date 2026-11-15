@@ -1,6 +1,6 @@
 -- b870_mark_notices.sql — MARK & QUERY (CAP-25, 15 Nov 2026): the bell hears the marks. ONE read function, no table, no row touched.
 --
--- ⚠️ NOT RUN on production · Athi runs it, SIT first, AFTER b868 (review_mark). Safe to repeat (CREATE OR REPLACE). Until it runs the bell answers exactly as before (the api treats a missing function as "no mark news").
+-- ⚠️ NOT RUN on production · Athi runs it, SIT first, AFTER b868 (review_mark). Safe to repeat (DROP IF EXISTS, CREATE, GRANT re-issued). Until it runs the bell answers exactly as before (the api treats a missing function as "no mark news").
 -- WHAT IT DOES. mark_notices(days, max) returns the mark news for the CALLER'S OWN business (the trusted session scope, never a parameter):
 --    · the books' owner: each QUERY an outside reviewer raised on their records, and each reply a reviewer wrote in a thread on their records
 --    · the reviewer's firm: each reply the owner wrote in a thread the firm's own mark opened, while the grant the firm marked under (its preset) is live (a revoked or expired grant stops the news)
@@ -35,8 +35,8 @@ BEGIN
         JOIN LATERAL (SELECT r.entity_id, r.subject_id, r.by_entity_id FROM review_mark r WHERE r.thread_id = c.subject_id::uuid ORDER BY r.mark_id DESC LIMIT 1) t ON true
        WHERE c.subject_type = 'mark' AND c.sender_entity_id <> v_caller
          AND (t.entity_id = v_caller
-              OR EXISTS (SELECT 1 FROM review_mark o JOIN books_access_grant g ON g.grantor_entity = t.entity_id AND g.grantee_entity = v_caller AND g.preset = NULLIF(split_part(COALESCE(o.by_policy, ''), ':', 2), '') AND g.revoked_at IS NULL AND g.expires_at > now()
-                          WHERE o.thread_id = c.subject_id::uuid AND o.by_entity_id = v_caller))
+              OR (c.sender_entity_id = t.entity_id AND EXISTS (SELECT 1 FROM review_mark o JOIN books_access_grant g ON g.grantor_entity = t.entity_id AND g.grantee_entity = v_caller AND g.preset = NULLIF(split_part(COALESCE(o.by_policy, ''), ':', 2), '') AND g.revoked_at IS NULL AND g.expires_at > now()
+                          WHERE o.thread_id = c.subject_id::uuid AND o.by_entity_id = v_caller)))
          AND c.created_at > now() - make_interval(days => GREATEST(p_days, 1))
     ) x
     LEFT JOIN journal_entry je ON je.entity_id = x.rec_entity AND je.entry_id::text = x.subject_id
