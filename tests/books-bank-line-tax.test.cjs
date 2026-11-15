@@ -10,7 +10,9 @@
  * Run: node tests/books-bank-line-tax.test.cjs   (BOOKS_ENGINES_SRC=<chitbridge-engines/src>)
  * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  * UNIT      lib/books-bank-tax.js
- * MIN unit-per-rule · refusal-path · fail-closed
+ * MIN unit-per-rule
+ * MIN refusal-path
+ * MIN fail-closed
  */
 'use strict';
 const { rig, counter, SUPP, SHOP } = require('./support/books-manual-rig.cjs');
