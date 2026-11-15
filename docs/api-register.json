@@ -5,8 +5,8 @@
   "routes": 643,
   "no_does": 0,
   "not_started": 0,
-  "partial": 1,
-  "meets": 642,
+  "partial": 0,
+  "meets": 643,
   "columns": {
    "strict_input": {
     "applies": 328,
@@ -4852,11 +4852,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "598eff2b76ca4cf2"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 api #1350: adds posted[] (ref, entry_no, posting_date, made_at, made_by) from lib/bank-rec-log postedOf, entity-scoped, additive; output shape closed from recordings; 13 columns read yes; re-signed by Athi on the reviewer verdict",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-store.js"
    ],
