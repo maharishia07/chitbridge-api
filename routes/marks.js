@@ -46,8 +46,9 @@ const adopterOfReq = (key) => {
   return adopter;
 };
 const idsOf = (value) => String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
-const monthStart = () => new Date().toISOString().slice(0, 8) + '01';
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const CLOCK = require('../lib/shop-clock'); /* the one day reader (T2-NATDEF): no shop setting here, so UTC, never India */
+const todayIso = () => CLOCK.today(null);
+const monthStart = () => todayIso().slice(0, 8) + '01';
 
 /** the list answer: the marks by id, the ones that no longer read, the words and what this person may do */
 async function listAnswer(req, adopterKey, ids) {
