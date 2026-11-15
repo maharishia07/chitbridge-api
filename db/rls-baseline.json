@@ -847,7 +847,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "shared",
-   "why": "owner writes, subscribers read; K-CATALOGUE"
+   "why": "owner writes, subscribers read; K-CATALOGUE",
+   "fix": "b865_rls_standard_source_db103.sql"
   },
   "state_log": {
    "rls": true,
