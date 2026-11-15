@@ -760,6 +760,7 @@ const GUARDS = [
   'pay-fix-void.test.cjs',
   'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (also in NEEDS_ENGINES: runs over the books harness)
   'rail-paid-reject.test.cjs', // RAIL-216 follow-up: a paid invoice is refused for rejected as for cancelled (the rail's own WITHDRAWN list)
+  'rail-218-reject-paid.test.cjs', // RAIL-218: a buyer cannot reject a received invoice it has marked paid (statusGate paidRefusal, the one writer; the way out is a credit note); real-Postgres: rail-218-reject-paid-truth.realstack.cjs
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
