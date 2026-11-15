@@ -200,7 +200,7 @@ function ledgerEntry(ledgerRow, blind, roles) {
     source: ledgerRow.kind || null,
     amount_minor: Number(ledgerRow.amount_minor),
     currency: ledgerRow.currency,
-    doc_date: ledgerRow.doc_date ? require('./books-engines').ymd(ledgerRow.doc_date) : null /* a DATE column reads as a JS Date: String(Date).slice(0,10) is "Thu Oct 08" (the web showed 2001) */
+    doc_date: ledgerRow.doc_date ? require('../lib/books-engines').ymd(ledgerRow.doc_date) : null /* a DATE column reads as a JS Date: String(Date).slice(0,10) is "Thu Oct 08" (the web showed 2001) */
   };
   return blind ? require('../lib/dues-view').blindLedgerEntry(entry, roles) : entry;
 }
