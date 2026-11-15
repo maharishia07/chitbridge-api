@@ -956,7 +956,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 6 (wire null; share cap-bank-store.js 6/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): bank_rec_log, books_setting, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank-store.js · actions: -
+- reads (derived): bank_rec_log, books_payment, books_setting, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank-store.js · actions: -
 
 **GET /api/books/bank/rail** · books · cb-accounting · meets standard
 - does: A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.
