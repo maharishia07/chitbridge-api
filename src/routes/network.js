@@ -67,7 +67,7 @@ router.get(
     return c ? { found: true, entity: c } : { found: false };
   })
 );
-// @does A network business id in the address (signed-in) -> we link that listed business to the caller -> the claimed entity.
+// @does A network business id in the address (signed-in) -> we mark that listed, still unclaimed business as claimed, only when the caller is the business whose bridge id it carries -> the claimed entity, or the one not-found answer.
 router.post(
   '/entities/:id/claim',
   auth,

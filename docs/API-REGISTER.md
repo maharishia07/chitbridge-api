@@ -883,7 +883,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): catalogue_source, entity_wallet, identities · writes (derived): usage_ledger · callers: app.html · actions: -
 
 **POST /api/assist/conform** · assist · cb-ai · meets standard
-- does: A standard name and a document in -> we check the document against that standard with fixed rules, adding a narrative when the assistant is on -> the verdict.
+- does: A standard name and a document in -> we check the document against that standard with fixed rules, adding a narrative when the assistant is on -> the verdict (public: no sign-in needed; the narrative only for a signed-in caller).
 - errors: 0 code(s) [-] · statuses 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 0 (wire 0; share app.html 0/108) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_wallet · writes (derived): usage_ledger · callers: app.html · actions: -
@@ -901,7 +901,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): catalogue_source, product_version · writes (derived): catalogue_source, product_container, product_version · callers: - · actions: -
 
 **PUT /api/assist/container** · assist · cb-ai · meets standard
-- does: A container id and its content (signed-in owner) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.
+- does: A container id and its content (signed-in shop) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 5 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
@@ -1417,37 +1417,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 ### books-grants (cb-accounting, 6 of 6 with a description)
 
 **GET /api/books-grants** · books-grants · cb-accounting · meets standard
-- does: Nothing in -> we list who the shop has given read access to its books, such as an auditor -> the grants (shop members only, not keys).
+- does: Nothing in -> we list who the shop has given read access to its books, such as an auditor -> the grants (owner only, not keys).
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-api.js 1/14, books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_access_grant · writes (derived): - · callers: books-grant-api.js, books-grant-member.js · actions: -
 
 **GET /api/books-grants/consent** · books-grants · cb-accounting · meets standard
-- does: Whether costs are shared in the query -> we give the words the owner reads before sharing the books -> the consent wording.
+- does: Whether costs are shared in the query -> we give the words the owner reads (any signed-in shop session) before sharing the books -> the consent wording.
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share books-grant-member.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-grant-member.js · actions: -
 
 **GET /api/books-grants/log** · books-grants · cb-accounting · meets standard
-- does: Optional filters in -> we read when auditors looked at the books -> the list of looks (shop members only).
+- does: Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-grant-member.js · actions: -
 
 **PATCH /api/books-grants/:id** · books-grants · cb-accounting · meets standard
-- does: A grant id and the changes in -> we change what that auditor can see -> the updated grant (shop members only).
+- does: A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
 **POST /api/books-grants** · books-grants · cb-accounting · meets standard
-- does: An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (shop members only).
+- does: An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share books-grant-member.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_access_grant · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
 **POST /api/books-grants/:id/revoke** · books-grants · cb-accounting · meets standard
-- does: A grant id in -> we take that access away -> the revoked grant (shop members only).
+- does: A grant id in -> we take that access away -> the revoked grant (owner only).
 - errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
@@ -1921,7 +1921,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): chit_header · writes (derived): chit_header · callers: app.html, cap-admin.js · actions: -
 
 **POST /api/chits/:chit_id/costs** · chits · cb-rail · meets standard
-- does: A chit id and cost rows in -> we record the costs against the chit or a line, anyone on the chit may enter -> the cost rows.
+- does: A chit id and cost rows in -> we record the costs against the chit or a line, any shop holding a copy of the chit may enter -> the cost rows.
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: - · actions: -
@@ -2161,61 +2161,61 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 ### connectors (cb-connect, 14 of 14 with a description)
 
 **DELETE /api/connectors/:actorId** · connectors · cb-connect · meets standard
-- does: A connector id in the address (signed-in owner) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.
+- does: A connector id in the address (signed-in shop with the connector capability on) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
 - effect: offline queueable · round trips 1 (wire 1; share cap-connector.js 1/11, core.js 1/57) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): identities · callers: cap-connector.js, core.js · actions: -
 
 **GET /api/connectors** · connectors · cb-connect · meets standard
-- does: Signed-in owner -> we read its connector devices and systems with site, health and how many connections each has -> the connector list.
+- does: Signed-in shop with the connector capability on -> we read its connector devices and systems with site, health and how many connections each has -> the connector list.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/19) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): - · callers: cap-workforce.js · actions: -
 
 **GET /api/connectors/:actorId/connections** · connectors · cb-connect · meets standard
-- does: A connector id in the address (signed-in owner) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.
+- does: A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-connector.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): - · callers: cap-connector.js · actions: -
 
 **GET /api/connectors/:actorId/provisioning** · connectors · cb-connect · meets standard
-- does: A connector id in the address (signed-in owner) -> we read its connections and the settings to put on the device or ERP -> the setup details.
+- does: A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and the settings to put on the device or ERP -> the setup details.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-connector.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): - · callers: cap-connector.js · actions: -
 
 **GET /api/connectors/:actorId/receipts** · connectors · cb-connect · meets standard
-- does: An ERP connector id in the address (signed-in owner) -> we read its receipt ledger, hash and outcome only, never the raw document -> the receipts.
+- does: An ERP connector id in the address (signed-in shop with the connector capability on) -> we read its receipt ledger, hash and outcome only, never the raw document -> the receipts.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-connector.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_receipt, identities · writes (derived): - · callers: cap-connector.js · actions: -
 
 **PATCH /api/connectors/:actorId/connections/:connId** · connectors · cb-connect · meets standard
-- does: A connector id, a connection id and enabled true or false (signed-in owner) -> we switch that one connection on or off -> the updated connection.
+- does: A connector id, a connection id and enabled true or false (signed-in shop with the connector capability on) -> we switch that one connection on or off -> the updated connection.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline queueable · round trips 1 (wire 1; share cap-connector.js 1/11, core.js 1/57) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): connector_connection · callers: cap-connector.js, core.js · actions: -
 
 **POST /api/connectors** · connectors · cb-connect · meets standard
-- does: A name and type iot or erp (signed-in owner) -> we create a connector and issue its key once -> the new connector with its one-time key.
+- does: A name and type iot or erp (signed-in shop with the connector capability on) -> we create a connector and issue its key once -> the new connector with its one-time key.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/19) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-workforce.js · actions: -
 
 **POST /api/connectors/:actorId/connections** · connectors · cb-connect · meets standard
-- does: A connector id and a device or endpoint with its settings (signed-in owner) -> we add that connection to the connector -> the new connection.
+- does: A connector id and a device or endpoint with its settings (signed-in shop with the connector capability on) -> we add that connection to the connector -> the new connection.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-connector.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): connector_connection · callers: cap-connector.js · actions: -
 
 **POST /api/connectors/:actorId/erp-test** · connectors · cb-connect · meets standard
-- does: An ERP connector id (signed-in owner) -> we send a fresh sample document through the real intake loop -> the receipt and the chit it produced.
+- does: An ERP connector id (signed-in shop with the connector capability on) -> we send a fresh sample document through the real intake loop -> the receipt and the chit it produced.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-connector.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-connector.js · actions: -
 
 **POST /api/connectors/:actorId/ping** · connectors · cb-connect · meets standard
-- does: A connector id and an optional bridge id (signed-in owner) -> we mark the connector, and that bridge, as seen just now -> a done answer.
+- does: A connector id and an optional bridge id (signed-in shop with the connector capability on) -> we mark the connector, and that bridge, as seen just now -> a done answer.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-connector.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): connector_connection, identities · callers: cap-connector.js · actions: -
@@ -2445,13 +2445,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): installation, population · writes (derived): - · callers: - · actions: -
 
 **POST /api/ctp/deliver** · ctp · cb-rail · meets standard
-- does: A CTP envelope from another installation in -> we check it and deliver the chit to our local party -> acceptance or a named refusal (public door, rate limited).
+- does: A CTP envelope from another installation in -> we check it and deliver the chit to our local party -> acceptance or a named refusal (open door for a signed peer installation we are paired with, rate limited; a stranger installation gets nothing).
 - errors: 8 code(s) [CTP_CROSSING_REFUSED, CTP_CROSSING_UNCHECKABLE, CTP_NO_INSTALLATION, CTP_NO_RECIPIENT, CTP_PEER_HOSTED_HERE, CTP_PEER_REFUSED, CTP_RECIPIENT_NOT_HERE, CTP_STORE_FAILED] · statuses 400, 403, 404, 409, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 16 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, identities, installation, population · writes (derived): - · callers: - · actions: -
 
 **POST /api/ctp/query** · ctp · cb-rail · meets standard
-- does: A CTP question naming the asking installation in -> we answer from the chits and registry we hold -> the answer or a named refusal (public door, rate limited).
+- does: A CTP question naming the asking installation in -> we answer a resolve, catalogue, search, attachment or network question from what we hold, the catalogue only as an anonymous visitor would see it -> the answer or a named refusal (open door for a signed peer installation we are paired with, rate limited; a stranger installation gets nothing).
 - errors: 6 code(s) [CTP_NO_INSTALLATION, CTP_PEER_HOSTED_HERE, CTP_PEER_REFUSED, CTP_QUERY_FAILED, CTP_QUERY_REFUSED, CTP_UNKNOWN_QUESTION] · statuses 400, 403, 409, 500 · money n (derived)
 - effect: offline online-only · round trips 44 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_messages, identities, installation, membership_certificate, population, registry_change, registry_entry · writes (derived): - · callers: - · actions: -
@@ -3321,7 +3321,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/network/entities/:id/claim** · network · cb-network · meets standard
-- does: A network business id in the address (signed-in) -> we link that listed business to the caller -> the claimed entity.
+- does: A network business id in the address (signed-in) -> we mark that listed, still unclaimed business as claimed, only when the caller is the business whose bridge id it carries -> the claimed entity, or the one not-found answer.
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
@@ -3373,13 +3373,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 ### network-offers (cb-network, 8 of 8 with a description)
 
 **GET /api/network-offers** · network-offers · cb-network · meets standard
-- does: Signed-in owner session -> we read the offers the brand made, the ones its stores received and what was released -> both halves of the offers screen.
+- does: Signed-in session (not a key) -> we read the offers the brand made, the ones its stores received and what was released -> both halves of the offers screen.
 - errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, network-app.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, network-app.js · actions: -
 
 **POST /api/network-offers/:id/choice** · network-offers · cb-network · meets standard
-- does: An offer id and in or out (signed-in owner session) -> we record whether this store takes that brand offer -> the store's choice.
+- does: An offer id and in or out (signed-in session, not a key) -> we record whether this store takes that brand offer -> the store's choice.
 - errors: 3 code(s) [NOT_FOUND, OFFER_UNKNOWN, SESSION_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire 14; share cap-admin.js 4/118, network-app.js 4/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, network-app.js · actions: -
@@ -4019,7 +4019,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **POST /api/signin/ask** · signin · cb-security · meets standard
-- does: A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code or register it -> a plain answer that never reveals who exists.
+- does: A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.
 - errors: 0 code(s) [-] · statuses 400, 500 · money n (derived)
 - effect: offline online-only · round trips 9 (wire 9; share signin-ui.js 9/18) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: signin-ui.js · actions: -
@@ -4141,13 +4141,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 ### testing (cb-qa, 33 of 33 with a description)
 
 **GET /api/testing/cases** · testing · cb-qa · meets standard
-- does: Filters and a page in -> we read the product's shared test cases with their steps and current version, for any signed-in tester -> a page of test cases.
+- does: Filters and a page in -> we read the product's shared test cases with their steps and current version, for board readers only (board writers and the platform) -> a page of test cases.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: - · actions: -
 
 **GET /api/testing/cases/gherkin** · testing · cb-qa · meets standard
-- does: Optional module in -> we write the shared test cases out as feature-file text, for any signed-in tester -> the .feature text to download.
+- does: Optional module in -> we write the shared test cases out as feature-file text, for board readers only (board writers and the platform) -> the .feature text to download.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: - · actions: -
@@ -4159,7 +4159,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: - · actions: -
 
 **GET /api/testing/cmdb** · testing · cb-qa · meets standard
-- does: A page in -> we read every configuration record the shared test board holds, for any signed-in tester -> a page of records.
+- does: A page in -> we read every configuration record the shared test board holds, for board readers only (board writers and the platform) -> a page of records.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share record.html 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition · writes (derived): definition, definition_version, test_result · callers: record.html · actions: -
@@ -4347,13 +4347,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/catalogue/blueprints** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.
+- does: Nothing in, a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/counters** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we list the shop's counters and say which one is this caller -> the counters and me.
+- does: Nothing in, a counter key or a shop sign-in -> we list the shop's counters and say which one is this caller -> the counters and me.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
@@ -4365,7 +4365,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/invoice-lease/report** · till · cb-counter · meets standard
-- does: Optional counter and page in, a counter key -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.
+- does: Optional counter and page in, a counter key or a shop sign-in -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 7; share till.html 2/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): till_invoice_lease · writes (derived): - · callers: till.html · actions: -
@@ -4377,37 +4377,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): chit_detail, chit_header, identities · writes (derived): - · callers: cap-match.js, till.html · actions: -
 
 **GET /api/till/quick-keys/groups** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we list the quick-key groups and their items for the shop -> the groups.
+- does: Nothing in, a counter key or a shop sign-in -> we list the quick-key groups and their items for the shop -> the groups.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 4; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, quick_key_group, quick_key_group_item · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/quick-keys/hidden** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we list the products this counter has marked sold out, none for a shop login -> the hidden products.
+- does: Nothing in, a counter key or a shop sign-in -> we list the products this counter has marked sold out, none for a shop login -> the hidden products.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): counter_hidden_item · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/quick-keys/screen-config** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we read this counter's saved screen layout for its quick keys -> the config and when it changed.
+- does: Nothing in, a counter key or a shop sign-in -> we read this counter's saved screen layout for its quick keys -> the config and when it changed.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): device_screen_config · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/quick-keys/state** · till · cb-counter · meets standard
-- does: A business date in, a counter key -> we read which quick-key groups are on for this counter that day -> the active groups.
+- does: A business date in, a counter key or a shop sign-in -> we read which quick-key groups are on for this counter that day -> the active groups.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share till.html 4/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): counter_quick_key_state · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/reward** · till · cb-counter · meets standard
-- does: A customer by identity or phone in, a counter key -> we add up that customer's reward points and recent entries -> the programme, points and entries.
+- does: A customer by identity or phone in, a counter key or a shop sign-in -> we add up that customer's reward points and recent entries -> the programme, points and entries.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire null; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/screens** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we list the shop screens (televisions) paired to the shop, never their keys -> the screens, their count and the limit.
+- does: Nothing in, a counter key or a shop sign-in -> we list the shop screens (televisions) paired to the shop, never their keys -> the screens, their count and the limit.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
@@ -4419,7 +4419,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): catalogue_adoption, catalogue_items, customer_list, entity_profile, entity_schemas, identities, party_item, schema_fields, stock_movement, supplier_list · writes (derived): identities · callers: promo.html, till.html · actions: -
 
 **GET /api/till/stock** · till · cb-counter · meets standard
-- does: Optional detail flag in, a counter key -> we read the stock on hand per product, with batches and expiry on request -> the balances.
+- does: Optional detail flag in, a counter key or a shop sign-in -> we read the stock on hand per product, with batches and expiry on request -> the balances.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): stock_balance · writes (derived): - · callers: till.html · actions: -
@@ -4437,13 +4437,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/verify** · till · cb-counter · meets standard
-- does: Nothing in, a counter key -> we count the products the shop can sell and sample a spread of them so the counter can check its own copy -> the total and sample.
+- does: Nothing in, a counter key or a shop sign-in -> we count the products the shop can sell and sample a spread of them so the counter can check its own copy -> the total and sample.
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 9; share till.html 3/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption, catalogue_items, identities · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/worth-an-offer** · till · cb-counter · meets standard
-- does: Optional days and quiet window in, a counter key -> we find products near expiry or quiet that are worth putting on offer -> the suggestions.
+- does: Optional days and quiet window in, a counter key or a shop sign-in -> we find products near expiry or quiet that are worth putting on offer -> the suggestions.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 5; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
@@ -4455,7 +4455,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): catalogue_items · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/catalogue** · till · cb-counter · meets standard
-- does: A starter catalogue or an uploaded list in, a counter key -> we write the products through the shared catalogue writer, refusing a shop already started -> the products created.
+- does: A starter catalogue or an uploaded list in, a counter key or a shop sign-in -> we write the products through the shared catalogue writer, refusing a shop already started -> the products created.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 7 (wire 19; share till.html 7/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): - · callers: till.html · actions: -
@@ -4467,7 +4467,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/diagnostic** · till · cb-counter · meets standard
-- does: A counter's health code in, a paired counter key -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.
+- does: A counter's health code in, a paired counter key or a shop sign-in -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 6 (wire null; share till.html 6/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
@@ -4479,19 +4479,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/flags** · till · cb-counter · meets standard
-- does: A product and a screen pick or offer opt-out in, a counter key -> we put the product on the shop screen or off it, or opt it out of an offer -> the product's flags.
+- does: A product and a screen pick or offer opt-out in, a counter key or a shop sign-in -> we put the product on the shop screen or off it, or opt it out of an offer -> the product's flags.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null; share till.html 3/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/invoice-lease** · till · cb-counter · meets standard
-- does: How many invoice numbers it wants and how many it has left, from a counter key -> we reserve a block of numbers for this counter to print from, offline too -> the leased block.
+- does: How many invoice numbers it wants and how many it has left, from a counter key or a shop sign-in -> we reserve a block of numbers for this counter to print from, offline too -> the leased block.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, till_invoice_lease · writes (derived): till_invoice_lease · callers: till.html · actions: -
 
 **POST /api/till/invoice-lease/close** · till · cb-counter · meets standard
-- does: A block id and unused numbers in, a counter key -> we close the block and say what became of every number -> the closed block.
+- does: A block id and unused numbers in, a counter key or a shop sign-in -> we close the block and say what became of every number -> the closed block.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): till_invoice_lease · writes (derived): till_invoice_lease · callers: till.html · actions: -
@@ -4503,7 +4503,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/offer-item** · till · cb-counter · meets standard
-- does: An offer and a product in, a counter key -> we move that product into or out of the offer, refusing a clash -> the updated offer.
+- does: An offer and a product in, a counter key or a shop sign-in -> we move that product into or out of the offer, refusing a clash -> the updated offer.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version · writes (derived): definition, definition_version · callers: till.html · actions: -
@@ -4521,31 +4521,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): identities · writes (derived): identities · callers: promo.html, till.html · actions: -
 
 **POST /api/till/price** · till · cb-counter · meets standard
-- does: A product and a new price in, a counter key -> we change the shelf price in the shop's currency if the person may, and tell open counters -> the old and new price.
+- does: A product and a new price in, a counter key or a shop sign-in -> we change the shelf price in the shop's currency if the person may, and tell open counters -> the old and new price.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, identities · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/hide** · till · cb-counter · meets standard
-- does: A product and optional other counters in, a counter key -> we mark it sold out on this counter and the ones chosen -> the hidden entry.
+- does: A product and optional other counters in, a counter key or a shop sign-in -> we mark it sold out on this counter and the ones chosen -> the hidden entry.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 6 (wire null; share till.html 6/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): counter_hidden_item · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/screen-config** · till · cb-counter · meets standard
-- does: A screen layout in, a counter key -> we save it as this counter's quick-key layout -> the saved config.
+- does: A screen layout in, a counter key or a shop sign-in -> we save it as this counter's quick-key layout -> the saved config.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share till.html 4/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): device_screen_config · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/state** · till · cb-counter · meets standard
-- does: A business date and the groups to switch on in, a counter key -> we save which quick-key groups are active for this counter that day -> the saved state.
+- does: A business date and the groups to switch on in, a counter key or a shop sign-in -> we save which quick-key groups are active for this counter that day -> the saved state.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share till.html 4/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): counter_quick_key_state · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/unhide** · till · cb-counter · meets standard
-- does: A product in, a counter key -> we put it back on this counter and any others chosen -> what was restored.
+- does: A product in, a counter key or a shop sign-in -> we put it back on this counter and any others chosen -> what was restored.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share till.html 4/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): counter_hidden_item · writes (derived): counter_hidden_item · callers: till.html · actions: -
@@ -4557,61 +4557,61 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): catalogue_items, definition, definition_version, identities · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/recheck** · till · cb-counter · meets standard
-- does: Product ids from the cart in, a counter key, up to 200 -> we read the catalogue's current row for each, saying not found for a deleted one -> the current rows, never any money worked out.
+- does: Product ids from the cart in, a counter key or a shop sign-in, up to 200 -> we read the catalogue's current row for each, saying not found for a deleted one -> the current rows, never any money worked out.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version, identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/reconcile** · till · cb-counter · meets standard
-- does: A counter's list of bills in, a counter key -> we check which the server already holds and which the counter must resend, changing nothing -> a verdict per bill.
+- does: A counter's list of bills in, a counter key or a shop sign-in -> we check which the server already holds and which the counter must resend, changing nothing -> a verdict per bill.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/reward** · till · cb-counter · meets standard
-- does: A bill number, customer and spend in, a counter key -> we add the points earned and spend any redeemed once per bill, or note no customer -> the points now.
+- does: A bill number, customer and spend in, a counter key or a shop sign-in -> we add the points earned and spend any redeemed once per bill, or note no customer -> the points now.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money y (derived)
 - effect: offline idempotent · round trips 0 (wire 0; share till.html 0/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, chit_header, definition, definition_version · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/reward/claim** · till · cb-counter · meets standard
-- does: Two customers (from, to) in, a counter key -> we move the points from one identity to the other so they are not lost -> how many points moved.
+- does: Two customers (from, to) in, a counter key or a shop sign-in -> we move the points from one identity to the other so they are not lost -> how many points moved.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money y (derived)
 - effect: offline idempotent · round trips 4 (wire null; share till.html 4/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/screens/rename** · till · cb-counter · meets standard
-- does: A screen id and name in, a counter key -> we rename that shop screen, an empty name restoring its default -> the screen's new name.
+- does: A screen id and name in, a counter key or a shop sign-in -> we rename that shop screen, an empty name restoring its default -> the screen's new name.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null; share till.html 3/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: till.html · actions: -
 
 **POST /api/till/screens/revoke** · till · cb-counter · meets standard
-- does: A screen id in, a counter key -> we switch that shop screen off, refusing a counter's own key -> a confirmation.
+- does: A screen id in, a counter key or a shop sign-in -> we switch that shop screen off, refusing a counter's own key -> a confirmation.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null; share till.html 3/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: till.html · actions: -
 
 **POST /api/till/shop** · till · cb-counter · meets standard
-- does: Shop name, address, phone, e-mail or tax number in, a counter key -> we save only those listed fields and say what changed, refusing others with the reason -> the shop's details.
+- does: Shop name, address, phone, e-mail or tax number in, a counter key or a shop sign-in -> we save only those listed fields and say what changed, refusing others with the reason -> the shop's details.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 5; share till.html 2/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_header, identities · writes (derived): identities · callers: till.html · actions: -
 
 **POST /api/till/state** · till · cb-counter · meets standard
-- does: Break or billing in, a paired counter key -> we note what this counter is doing, if it holds the counter -> whether it was recorded.
+- does: Break or billing in, a paired counter key or a shop sign-in -> we note what this counter is doing, if it holds the counter -> whether it was recorded.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share till.html 1/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/stock** · till · cb-counter · meets standard
-- does: A product and available or unavailable in, a counter key -> we mark the product's counter status, never retired -> the product's new status.
+- does: A product and available or unavailable in, a counter key or a shop sign-in -> we mark the product's counter status, never retired -> the product's new status.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null; share till.html 3/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/stock/bulk** · till · cb-counter · meets standard
-- does: Up to 500 product ids and a status in, a counter key -> we mark them all available or unavailable in one go -> how many changed.
+- does: Up to 500 product ids and a status in, a counter key or a shop sign-in -> we mark them all available or unavailable in one go -> how many changed.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null; share till.html 3/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: till.html · actions: -

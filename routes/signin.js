@@ -1029,7 +1029,7 @@ const padded = (handler) => (req, res, next) => {
   return handler(req, res, next);
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
-// @does A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code or register it -> a plain answer that never reveals who exists.
+// @does A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.
 router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
 // @does The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.
 router.post('/verify', door('signin'), declaresStatuses(VERIFY_REFUSALS), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);

@@ -126,7 +126,7 @@ router.post('/', ...contract.checked('POST /'), async (req, res) => {
 // not a model opinion. THEN, only if a model is configured, adds a rung-2 SUMMARISE narrative ("what's wrong + what
 // to do"). Self-healing: no key / SDK / model failure → the deterministic verdict still returns (narrative: null).
 // Returns the Crux-2 `acted_by` deputy stamp so a caller can carry it onto a chit on send (not persisted here yet).
-// @does A standard name and a document in -> we check the document against that standard with fixed rules, adding a narrative when the assistant is on -> the verdict.
+// @does A standard name and a document in -> we check the document against that standard with fixed rules, adding a narrative when the assistant is on -> the verdict (public: no sign-in needed; the narrative only for a signed-in caller).
 router.post('/conform', ...contract.checked('POST /conform'), async (req, res) => {
   try {
     const standard = req.body && typeof req.body.standard === 'string' ? req.body.standard.trim() : '';
@@ -468,7 +468,7 @@ router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the c
 
 // PUT /api/assist/container — CONTAINER MODEL (stone 5): author (v1) or ENHANCE (mint the next IMMUTABLE version + move
 // the pointer) a product container. Owner-only. An enhancement never mutates a version → past chits stay verifiable.
-// @does A container id and its content (signed-in owner) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.
+// @does A container id and its content (signed-in shop) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.
 router.put('/container', auth, ...contract.checked('PUT /container'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);

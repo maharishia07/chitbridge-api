@@ -434,7 +434,7 @@ function testerOf(req) {
  * ⚠️ ONE QUERY, not one per case: the version join is done in SQL. A board that opens 110 cases would otherwise
  * make 110 round trips, and at 1.4–2.4 s per Railway↔Supabase call that is not a screen, it is an afternoon.
  */
-// @does Filters and a page in -> we read the product's shared test cases with their steps and current version, for any signed-in tester -> a page of test cases.
+// @does Filters and a page in -> we read the product's shared test cases with their steps and current version, for board readers only (board writers and the platform) -> a page of test cases.
 router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -1095,7 +1095,7 @@ function cmdbListRow(row) {
   };
 }
 /** GET /api/testing/cmdb — every record, PAGED (W1-SET: readPage → top-level total · page · limit, ?page= ?limit=; `records` stays) */
-// @does A page in -> we read every configuration record the shared test board holds, for any signed-in tester -> a page of records.
+// @does A page in -> we read every configuration record the shared test board holds, for board readers only (board writers and the platform) -> a page of records.
 router.get('/cmdb', auth, boardReadGate, ...checked('GET /cmdb'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
@@ -1709,7 +1709,7 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
  */
 
 /** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
-// @does Optional module in -> we write the shared test cases out as feature-file text, for any signed-in tester -> the .feature text to download.
+// @does Optional module in -> we write the shared test cases out as feature-file text, for board readers only (board writers and the platform) -> the .feature text to download.
 router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));

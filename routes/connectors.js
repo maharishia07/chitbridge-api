@@ -235,7 +235,7 @@ async function ownedConnector(actor_id, entity_id) {
 }
 
 // POST /api/connectors — create a connector actor (a Pi, or an ERP system). IoT push → we ISSUE an ActorKey (once).
-// @does A name and type iot or erp (signed-in owner) -> we create a connector and issue its key once -> the new connector with its one-time key.
+// @does A name and type iot or erp (signed-in shop with the connector capability on) -> we create a connector and issue its key once -> the new connector with its one-time key.
 router.post(
   '/',
   auth,
@@ -752,7 +752,7 @@ router.post(
 );
 
 // GET /api/connectors/:actorId/receipts — the ERP receipt ledger (hash + outcome, NEVER the raw payload). Entity-scoped.
-// @does An ERP connector id in the address (signed-in owner) -> we read its receipt ledger, hash and outcome only, never the raw document -> the receipts.
+// @does An ERP connector id in the address (signed-in shop with the connector capability on) -> we read its receipt ledger, hash and outcome only, never the raw document -> the receipts.
 router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/receipts'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -778,7 +778,7 @@ router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUI
 // ActorKey, which the UI never holds — we store only its hash). So the owner (JWT) triggers the SAME process-then-forget
 // core with a generated sample document. A fresh nonce keeps every run unique so it is never swallowed by idempotency —
 // each press produces a real receipt + a real co-held chit, letting a human see the whole ERP loop from the cockpit.
-// @does An ERP connector id (signed-in owner) -> we send a fresh sample document through the real intake loop -> the receipt and the chit it produced.
+// @does An ERP connector id (signed-in shop with the connector capability on) -> we send a fresh sample document through the real intake loop -> the receipt and the chit it produced.
 router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/erp-test'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -814,7 +814,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
 });
 
 // GET /api/connectors — list connector actors (site, config, health) so the UI can group by site
-// @does Signed-in owner -> we read its connector devices and systems with site, health and how many connections each has -> the connector list.
+// @does Signed-in shop with the connector capability on -> we read its connector devices and systems with site, health and how many connections each has -> the connector list.
 router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -839,7 +839,7 @@ router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) =>
 });
 
 // GET /api/connectors/:actorId/provisioning — the connection string to put on the Pi (IoT) / the ERP system config
-// @does A connector id in the address (signed-in owner) -> we read its connections and the settings to put on the device or ERP -> the setup details.
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and the settings to put on the device or ERP -> the setup details.
 router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/provisioning'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -947,7 +947,7 @@ router.post(
 
 // POST /api/connectors/:actorId/ping — heartbeat seam: marks the connector (and optionally one bridge) live.
 // Used by the app "Test connection" button today; the real device/gateway will call the ingest path (next milestone).
-// @does A connector id and an optional bridge id (signed-in owner) -> we mark the connector, and that bridge, as seen just now -> a done answer.
+// @does A connector id and an optional bridge id (signed-in shop with the connector capability on) -> we mark the connector, and that bridge, as seen just now -> a done answer.
 router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/ping'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -963,7 +963,7 @@ router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()
 });
 
 // POST /api/connectors/:actorId/connections — add a device/endpoint (its own bridge_id + type-specific config)
-// @does A connector id and a device or endpoint with its settings (signed-in owner) -> we add that connection to the connector -> the new connection.
+// @does A connector id and a device or endpoint with its settings (signed-in shop with the connector capability on) -> we add that connection to the connector -> the new connection.
 router.post(
   '/:actorId/connections',
   auth,
@@ -1004,7 +1004,7 @@ router.post(
 );
 
 // GET /api/connectors/:actorId/connections — list; signal CASCADES from the actor's health
-// @does A connector id in the address (signed-in owner) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.
 router.get('/:actorId/connections', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/connections'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -1026,7 +1026,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
 });
 
 // PATCH /api/connectors/:actorId/connections/:connId — enable/disable a connection (per-endpoint kill switch)
-// @does A connector id, a connection id and enabled true or false (signed-in owner) -> we switch that one connection on or off -> the updated connection.
+// @does A connector id, a connection id and enabled true or false (signed-in shop with the connector capability on) -> we switch that one connection on or off -> the updated connection.
 router.patch(
   '/:actorId/connections/:connId',
   auth,
@@ -1057,7 +1057,7 @@ router.patch(
 // DELETE /api/connectors/:actorId — retire a connector. RULE (Athi): hard-delete ONLY if it has NO devices attached
 // (a bare connector is cheap to recreate); if any connection exists, REFUSE (protect the attached devices — detach
 // first). Also refuses if the connector has raised records that reference it (FK) — that's a "problem", so keep it.
-// @does A connector id in the address (signed-in owner) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.
 router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('DELETE /:actorId'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);

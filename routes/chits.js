@@ -4479,7 +4479,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
 // POST body: { rows: [{ line_id?, kind, amount | (minutes + rate_per_hour), currency?, note }] }
 // ⚠️ line_id omitted = a whole-chit cost (one auto fare for one trip). Splitting that across lines would invent
 //    an allocation nobody agreed to.
-// @does A chit id and cost rows in -> we record the costs against the chit or a line, anyone on the chit may enter -> the cost rows.
+// @does A chit id and cost rows in -> we record the costs against the chit or a line, any shop holding a copy of the chit may enter -> the cost rows.
 router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);

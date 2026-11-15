@@ -239,7 +239,7 @@ const reads = { storeSide: readStoreSide };
 router.reads = reads;
 
 /** GET / — the three trips of the note above readOwn (readOwn · readPeople · readReleased), then the brand's and the store's halves of the screen */
-// @does Signed-in owner session -> we read the offers the brand made, the ones its stores received and what was released -> both halves of the offers screen.
+// @does Signed-in session (not a key) -> we read the offers the brand made, the ones its stores received and what was released -> both halves of the offers screen.
 router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -443,7 +443,7 @@ async function choiceAllowed(shopId, offerId, choice) {
   return Boolean(open) || (choice === null && holdsRecord);
 }
 
-// @does An offer id and in or out (signed-in owner session) -> we record whether this store takes that brand offer -> the store's choice.
+// @does An offer id and in or out (signed-in session, not a key) -> we record whether this store takes that brand offer -> the store's choice.
 router.post('/:id/choice', auth, sessionOnly, ...contract.checked('POST /:id/choice'), async (req, res) => {
   try {
     const me = auth.entityOf(req);

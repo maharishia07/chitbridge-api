@@ -318,7 +318,7 @@ async function deliverOnce(opened, copy, installationKey, recipientId) {
 }
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
-// @does A CTP envelope from another installation in -> we check it and deliver the chit to our local party -> acceptance or a named refusal (public door, rate limited).
+// @does A CTP envelope from another installation in -> we check it and deliver the chit to our local party -> acceptance or a named refusal (open door for a signed peer installation we are paired with, rate limited; a stranger installation gets nothing).
 router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), namesItsAnswer(DELIVER_OPERATION, 'POST /api/ctp/deliver'), readsVersion('accepted'), async (req, res) => {
   const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
   const refuse = refusalTo(req, res, 'accepted');
@@ -558,7 +558,7 @@ const repeatMarks = (once) => (once.repeat ? { repeat: true, duplicate: true } :
  * /shop.html?s=<store> would. `resolve` answers only for a BUSINESS (entity or network store): an employee, a
  * customer or a minted party is refused by name, because none of them is a thing another installation may address.
  */
-// @does A CTP question naming the asking installation in -> we answer from the chits and registry we hold -> the answer or a named refusal (public door, rate limited).
+// @does A CTP question naming the asking installation in -> we answer a resolve, catalogue, search, attachment or network question from what we hold, the catalogue only as an anonymous visitor would see it -> the answer or a named refusal (open door for a signed peer installation we are paired with, rate limited; a stranger installation gets nothing).
 router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), namesItsAnswer(QUERY_OPERATION, 'POST /api/ctp/query'), readsVersion('ok'), async (req, res) => {
   const refuse = refusalTo(req, res, 'ok');
   try {
