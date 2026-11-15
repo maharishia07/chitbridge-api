@@ -67,7 +67,7 @@
     "scripts/guards.cjs": 1177,
     "scripts/seed-local.cjs": 704,
     "server.js": 590,
-    "tests/api-problem-books.test.cjs": 770,
+    "tests/api-problem-books.test.cjs": 771,
     "tests/api-problem-chits.test.cjs": 1171,
     "tests/api-problem-finance.test.cjs": 849,
     "tests/api-problem-governance.test.cjs": 534,
