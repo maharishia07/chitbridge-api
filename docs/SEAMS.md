@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 173 | `list` | `amend.js` |  |
 | 146 | `rows` | `crm.js` | still in them: |
-| 134 | `read` | `bank-rec-log.js` | The period (from · to, either may be absent) narrows the statements that overlap it and the posted refs; the m |
+| 135 | `read` | `bank-rec-log.js` | The period (from · to, either may be absent) narrows the statements that overlap it and the posted refs; the m |
 | 134 | `words` | `variant.browser.js` |  |
 | 129 | `withEntity` | `books-hooks.js` |  |
 | 122 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -33,8 +33,8 @@ of file each thing is; this says what already does the job.
 | 70 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 69 | `failed` | `service.js` | what every catch answers: |
 | 68 | `items` | `books-store.js` | PERF1: |
+| 66 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 65 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
-| 65 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 64 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |

@@ -2292,7 +2292,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 522,
+   "line": 523,
    "hash": "683aa6ccd46c28b5",
    "does": "A supplier id from the owner -> we hide that supplier from the lists, keeping chits and history -> a removed message; owner only.",
    "errors": {
@@ -23838,7 +23838,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 769,
+   "line": 770,
    "hash": "f9b271f3317c5484",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
@@ -23942,7 +23942,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 833,
+   "line": 834,
    "hash": "7c3134ca129680fe",
    "does": "A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.",
    "errors": {
@@ -24044,7 +24044,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 761,
+   "line": 762,
    "hash": "e85807898c5889e2",
    "does": "Nothing but the signed-in shop -> we read the customer group names it has made -> the group names.",
    "errors": {
@@ -24141,7 +24141,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1099,
+   "line": 1100,
    "hash": "afebf4d8f77fd1b3",
    "does": "Optional since date -> we list every business the shop has traded with, from the chits, so none needs adding first -> counterparties to score.",
    "errors": {
@@ -24234,7 +24234,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1112,
+   "line": 1113,
    "hash": "00f435ab5f1dde1d",
    "does": "A counterparty id and optional since date -> we score how they trade with us from the shared chit copies and the shop's overdue policy -> their scorecard, or not-found.",
    "errors": {
@@ -24328,7 +24328,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 340,
+   "line": 341,
    "hash": "a0891d21f5e92c94",
    "does": "Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.",
    "errors": {
@@ -24437,7 +24437,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 700,
+   "line": 701,
    "hash": "34ea3d3a80a87da1",
    "does": "A supplier id from the shop's own list -> we read that supplier's catalogue columns and products for drafting an order -> the catalogue, or not-on-your-list.",
    "errors": {
@@ -24541,7 +24541,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 569,
+   "line": 570,
    "hash": "838efddd220e91de",
    "does": "A search word of two letters or more -> we look across the catalogues of the shop's own suppliers -> which suppliers stock it and the matching items.",
    "errors": {
@@ -31603,7 +31603,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1028,
+   "line": 1029,
    "hash": "dd576f3429fe253d",
    "does": "A customer id and a segment override or party fields -> we save the change on the shop's side -> the updated customer.",
    "errors": {
@@ -31706,7 +31706,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 479,
+   "line": 480,
    "hash": "8376a88466eb5d16",
    "does": "A supplier id and the owner's own fields (nickname, category, notes, preferred) -> we save them on the shop's side only, never on the supplier -> the updated supplier.",
    "errors": {
@@ -55943,7 +55943,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 928,
+   "line": 929,
    "hash": "1d7cfce76d101948",
    "does": "A User ID or email for a ChitBridge business, or a name for a local customer -> we add them to the shop's customer list -> the new customer.",
    "errors": {
@@ -56056,7 +56056,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1007,
+   "line": 1008,
    "hash": "035dcc95b8adf401",
    "does": "A customer id and a list of group names -> we replace that customer's groups with the cleaned names -> ok and the groups; not for API keys.",
    "errors": {
@@ -56158,7 +56158,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 193,
+   "line": 194,
    "hash": "0ad0db0b90a8cbf3",
    "does": "A supplier's User ID, bridge id or a local name with kind and notes -> we add them to the shop's supplier list without asking them -> the new supplier.",
    "errors": {
