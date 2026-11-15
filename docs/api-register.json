@@ -35237,7 +35237,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1819,
-   "hash": "7d637baaefe37588",
+   "hash": "50c71ab12164a893",
    "does": "",
    "errors": {
     "count": 3,
@@ -35314,7 +35314,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959; cb-api 2026-11-15 PR#1341 stage2 re-sign FIN-116: a bank-line expense may carry the bank-supplied input_tax_minor (new optional key beside tax_invoice, strict body, refused beside a bill/supplier/blocked-credit); B5-03 tax_invoice held enforced per the pack taxInvoice(gross), law GST Act s.29-70 (AU, tax invoice for a credit above the threshold); refusals ride the existing 422 BOOKS_REFUSED (no new code, none in ERROR-CODES); helper-only change, routes/books.js untouched; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37626,7 +37626,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1810,
-   "hash": "36eb5b5b5a062279",
+   "hash": "81379a2e562beb22",
    "does": "",
    "errors": {
     "count": 2,
@@ -37702,7 +37702,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959; cb-api 2026-11-15 PR#1341 stage2 re-sign FIN-116: a bank-line expense may carry the bank-supplied input_tax_minor (new optional key beside tax_invoice, strict body, refused beside a bill/supplier/blocked-credit); B5-03 tax_invoice held enforced per the pack taxInvoice(gross), law GST Act s.29-70 (AU, tax invoice for a credit above the threshold); refusals ride the existing 422 BOOKS_REFUSED (no new code, none in ERROR-CODES); helper-only change, routes/books.js untouched; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",

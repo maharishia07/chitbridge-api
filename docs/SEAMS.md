@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 130 | `words` | `variant.browser.js` |  |
 | 124 | `withEntity` | `books-hooks.js` |  |
 | 119 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 109 | `answer` | `availability.js` | from March; then nearest. |
+| 110 | `answer` | `availability.js` | from March; then nearest. |
 | 99 | `money` | `bill-privacy.js` |  |
 | 88 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 82 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
