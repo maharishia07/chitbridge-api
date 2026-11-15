@@ -110,7 +110,8 @@ BEGIN
   RETURN v_row;
 END; $$;
 
--- the one writer of a reply in a mark's thread
+-- the one writer of a reply in a mark's thread (RETURNS TABLE: dropped first so a re-run can change its columns; the GRANT below is re-issued)
+DROP FUNCTION IF EXISTS public.review_mark_post(uuid, uuid, text, text, text, text, text, text, uuid);
 CREATE OR REPLACE FUNCTION public.review_mark_post(
   p_thread uuid, p_sender_entity uuid, p_sender_name text, p_text text, p_msg_type text, p_via_kind text, p_via_id text, p_by_policy text, p_message_id uuid)
 RETURNS TABLE (message_id uuid, created_at timestamptz) LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
