@@ -9,6 +9,7 @@
  *
  *   P-1  paid copy: reject → 409 CHIT_CONFLICT, why "paid", a sentence naming the credit note; R's copy stays pending
  *   P-3  the real doors: R presses Mark paid (POST /payment), then Mark unpaid (DELETE /payment clears only the stamp, the books keep the payment, drift D1), then rejects → still 409 why paid
+ *   P-4  after a real books reversal of that payment (POST /api/books/entries/:id/reverse) the money is gone from the books: reject answers 200
  *   P-2  control: an unpaid invoice rejects → 200 and R's copy reads rejected
  * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs.
  */
@@ -58,6 +59,24 @@ const reject = (chit) => j('/api/chits/' + chit + '/status', { method: 'PUT', to
     const r = await reject(chit);
     expect(r.status === 409 && r.b.why === 'paid', 'expected 409 paid, got HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
     expect(await statusOf(R, chit) !== 'rejected', 'the copy moved to rejected');
+  });
+
+  await kase('P-4', 'Mark paid, Mark unpaid, the books reverse the payment entry, reject: 200', async () => {
+    H.ok(await j('/api/relationships/suppliers', { method: 'POST', token: R.token, body: { supplier_bridge_id: S.bridge, supply_kind: 'resale' } }), 'S on the buyer supplier list');
+    const chit = await invoice('v');
+    H.ok(await j('/api/chits/' + chit + '/status', { method: 'PUT', token: R.token, body: { status: 'accepted' } }), 'accept');
+    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 1000 } });
+    expect(pay.status === 200, 'Mark paid: HTTP ' + pay.status + ' ' + JSON.stringify(pay.b).slice(0, 300));
+    expect((await j('/api/chits/' + chit + '/payment', { method: 'DELETE', token: R.token })).status === 200, 'Mark unpaid');
+    const first = await reject(chit);
+    expect(first.status === 409 && first.b.why === 'paid', 'before the reversal: expected 409 paid, got HTTP ' + first.status);
+    const entry = (await asOwner(`SELECT o.entry_id::text AS id FROM journal_entry o JOIN books_payment p ON p.entity_id = o.entity_id AND o.source_ref = 'pay:' || p.payment_id::text WHERE p.entity_id = $1 AND p.client_ref LIKE $2`, [R.entity, 'chitpay:' + chit + '%']))[0];
+    expect(entry && entry.id, 'the payment has no journal entry to reverse');
+    const rev = await j('/api/books/entries/' + entry.id + '/reverse', { method: 'POST', token: R.token, body: { reason: 'RAIL-218 P-4' } });
+    expect(rev.status === 200 || rev.status === 201, 'reverse: HTTP ' + rev.status + ' ' + JSON.stringify(rev.b).slice(0, 300));
+    const r = await reject(chit);
+    expect(r.status === 200, 'after the reversal: expected 200, got HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
+    expect(await statusOf(R, chit) === 'rejected', 'status ' + await statusOf(R, chit));
   });
 
   await kase('P-2', 'control: an unpaid invoice rejects', async () => {
