@@ -283,7 +283,11 @@ app.use(
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
     '/api/till/pair/claim',
-    '/api/catalogue/:bridge_id/login/verify'
+    '/api/catalogue/:bridge_id/login/verify',
+    /* R2-09: the three platform doors guess one key (x-cb-admin-key), so they share the sign-in budget */
+    '/api/channels/:id/approve',
+    '/api/channels/:id/template-approve',
+    '/api/channels/:id/revoke'
   ],
   authLimiter
 );

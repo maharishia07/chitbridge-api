@@ -20,7 +20,7 @@ const express = require('express');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
-process.env.CB_ADMIN_KEY = 'k1-admin-key'; /* the platform doors judge the id after their key gate */
+process.env.CB_ADMIN_KEY = 'k1-admin-key-of-at-least-32-characters'; /* the platform doors judge the id after their key gate */
 
 const ROOT = path.join(__dirname, '..');
 const ME = '11111111-1111-4111-8111-111111111111';

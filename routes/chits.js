@@ -4924,7 +4924,7 @@ async function deliverUse(req, entity_id, chit_id) {
   if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
     useSaid = await require('../lib/bill-use')
       .set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines }, { name: req.identity && req.identity.display_name })
-      .catch((e) => ({ ok: false, message: String(e && e.message) }));
+      .catch((e) => ({ ok: false, message: softFault(req, e) + ' (request ' + (req.id || 'unknown') + ')' })); // R2-07: the cause is logged, the caller gets the safe sentence and the request id
   }
   return useSaid;
 }

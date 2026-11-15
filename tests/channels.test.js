@@ -97,12 +97,12 @@ t('★★ approval is NOT an entity action — it cannot be reached with a norma
 t('★★ a missing CB_ADMIN_KEY DISABLES approval — it never means "no check"', () => {
   const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'channels.js'), 'utf8');
   const gate = route.slice(route.indexOf('function admin('), route.indexOf("router.post('/:id/approve'"));
-  assert.match(gate, /if \(!key\) return problem\(req, res, \{ status: 503, \.\.\.adminOff\(\) \}\)/, 'no key must fail CLOSED, not open');
-  assert.match(gate, /if \(!ok\) return problem\(req, res, \{ status: 403, \.\.\.adminWrongKey\(\) \}\)/, 'a wrong key is refused');
+  assert.match(gate, /if \(!key \|\| key\.length < ADMIN_KEY_MIN\) return problem\(req, res, \{ status: 503, \.\.\.adminOff\(\) \}\)/, 'no key, or a short one, must fail CLOSED, not open');
+  assert.match(gate, /if \(!sameSecret\(req\.headers\['x-cb-admin-key'\], key\)\) return problem\(req, res, \{ status: 403, \.\.\.adminWrongKey\(\) \}\)/, 'a wrong key is refused');
   const words = require('../lib/channels-contract');
   assert.ok(words.OPERATIONS['POST /api/channels/:id/approve'].responses['503'] && words.OPERATIONS['POST /api/channels/:id/approve'].responses['403'], 'the contract declares both refusals of the gate');
   assert.deepStrictEqual(words.adminOff().legacy, { error: 'Admin disabled', message: 'CB_ADMIN_KEY is not set on this server.' }, 'the 503 words are the ones it always had');
-  assert.match(gate, /timingSafeEqual/, 'compare the key in constant time');
+  assert.match(route.slice(0, route.indexOf('function admin(')), /timingSafeEqual/, 'compare the key in constant time (hashed first)');
 });
 
 console.log('\nchannels · ⚠️ the webhook must get the RAW body');

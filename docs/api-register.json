@@ -44,7 +44,7 @@
    },
    "rate_limited": {
     "applies": 643,
-    "failing": 481
+    "failing": 478
    }
   },
   "tolerant_outward": 26,
@@ -396,7 +396,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 140,
+   "line": 147,
    "hash": "ef4450ed8ae9908d",
    "does": "A channel id of yours -> we remove that binding -> a confirmation that it is gone.",
    "errors": {
@@ -9378,7 +9378,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 29,
+   "line": 31,
    "hash": "ffc420af5b223424",
    "does": "Nothing in -> we read your channels, whether each provider is set up and your bound numbers in one go -> the list for the Channels panel.",
    "errors": {
@@ -9475,7 +9475,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 39,
+   "line": 41,
    "hash": "e377fc98fa7cbaea",
    "does": "Optional purpose and page in -> we read the messages we tried to send for you and what became of each -> a page of sent-message receipts.",
    "errors": {
@@ -40213,7 +40213,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 84,
+   "line": 86,
    "hash": "2ea6d02c596ca56c",
    "does": "A channel, an address and a label -> we bind that address to your shop, waiting for platform approval -> the new binding.",
    "errors": {
@@ -40312,8 +40312,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 113,
-   "hash": "a40a192f78a1157d",
+   "line": 120,
+   "hash": "7a43105e0cdd253e",
    "does": "A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -40374,7 +40374,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false
+    "rate_limited": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -40385,7 +40385,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key (403 before any lookup, 503 when the key is unset); the only error words that can reach an answer are the fixed sentences lib/channels.js throws (traced in docs/critique/API-4-channels.md), a database error answers the generic sentence; api-problem-channels 926 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key (403 before any lookup, 503 when the key is unset); the only error words that can reach an answer are the fixed sentences lib/channels.js throws (traced in docs/critique/API-4-channels.md), a database error answers the generic sentence; api-problem-channels 926 checks green; 13 columns pass; cb-api 2026-11-15 PR#1339 stage2 re-sign R2-09: admin key must be at least 32 characters, compared as sha256 digests with timingSafeEqual, authLimiter in front; error codes unchanged (ADMIN_DISABLED frozen), no status or key change; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40410,7 +40410,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 62,
+   "line": 64,
    "hash": "ddea300d3efd73c4",
    "does": "On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.",
    "errors": {
@@ -40513,7 +40513,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 49,
+   "line": 51,
    "hash": "6a4c4d961a9bdcf5",
    "does": "The provider's line id for one of your channels -> we save it so sends can be addressed -> the updated channel.",
    "errors": {
@@ -40612,8 +40612,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 131,
-   "hash": "7e5b78d45c35e897",
+   "line": 138,
+   "hash": "a26be890f5c59998",
    "does": "A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -40674,7 +40674,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false
+    "rate_limited": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -40685,7 +40685,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; same fixed-sentence trace as approve; api-problem-channels 926 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; same fixed-sentence trace as approve; api-problem-channels 926 checks green; 13 columns pass; cb-api 2026-11-15 PR#1339 stage2 re-sign R2-09: admin key must be at least 32 characters, compared as sha256 digests with timingSafeEqual, authLimiter in front; error codes unchanged (ADMIN_DISABLED frozen), no status or key change; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40710,7 +40710,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 73,
+   "line": 75,
    "hash": "bb6f9ec83871b2e4",
    "does": "A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.",
    "errors": {
@@ -40813,8 +40813,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 122,
-   "hash": "39fcfb6a0e4ffe9b",
+   "line": 129,
+   "hash": "82d753914e2cbfe1",
    "does": "A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -40877,7 +40877,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false
+    "rate_limited": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -40888,7 +40888,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; relay only below 500 and only lib/channels.js fixed sentences; api-problem-channels 926 checks green; 13 columns pass",
+    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; relay only below 500 and only lib/channels.js fixed sentences; api-problem-channels 926 checks green; 13 columns pass; cb-api 2026-11-15 PR#1339 stage2 re-sign R2-09: admin key must be at least 32 characters, compared as sha256 digests with timingSafeEqual, authLimiter in front; error codes unchanged (ADMIN_DISABLED frozen), no status or key change; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
