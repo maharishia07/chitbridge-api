@@ -63,7 +63,36 @@ const adviserReadsExtra = (path) => EXTRA_TESTS.some((item) => item.test.test(pa
 /** the adviser door a request is, or null */
 const adviserDoor = (method, fullPath) => (ADVISER_TESTS.find((item) => item.test.test(method + ' ' + fullPath)) || {}).door || null;
 /** is this request one the role may make: an auditor reads the listed GETs; an adviser reads them too and passes through the adviser doors, and only those */
-const listedFor = (role, req) => (role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path))) : listedPattern(req.path) !== null);
+const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path))) : listedPattern(req.path) !== null);
+
+/**
+ * THE MARKS ROUTER'S DOORS (MARK & QUERY, routes/marks.js, mounted at /api/marks): the same front, a third family. An allow-list again, keyed by METHOD and the full path:
+ *   reads   GET /api/marks (the list, the open items) · GET /api/marks/:thread_id/messages · POST /api/marks/query (a READ with the ids in the body): the auditor and the adviser read under the grant, READ ONLY as always.
+ *   writes  EXACTLY TWO: POST /api/marks (set a mark) and POST /api/marks/:thread_id/messages (a reply). They run in ONE normal transaction opened by lib/mark-door (the grant look, the insert and the log row commit or roll back together),
+ *           never inside runReadOnly. Which role may set and which may reply is the adopter's policy (lib/mark-adopters), not this file.
+ * ⚠️ tests/mark-write-door-classification.test.cjs fails any other non-GET on the marks router, as unclassifiedGets does for GETs.
+ */
+const MARK_BASE = '/api/marks';
+const MARK_READ_DOORS = new Set(['GET /api/marks', 'GET /api/marks/:thread_id/messages', 'POST /api/marks/query']);
+const MARK_WRITE_DOORS = new Set(['POST /api/marks', 'POST /api/marks/:thread_id/messages']);
+const markTest = (door) => new RegExp('^' + door.replace(/:[^/]+/g, '[^/]+') + '/?$');
+const MARK_READ_TESTS = [...MARK_READ_DOORS].map((door) => ({ door, test: markTest(door) }));
+const MARK_WRITE_TESTS = [...MARK_WRITE_DOORS].map((door) => ({ door, test: markTest(door) }));
+const fullPathOf = (req) => (req.baseUrl || '') + (req.path === '/' ? '' : req.path);
+const isMarks = (req) => fullPathOf(req) === MARK_BASE || fullPathOf(req).startsWith(MARK_BASE + '/');
+const markWriteDoor = (req) => (MARK_WRITE_TESTS.find((item) => item.test.test(req.method + ' ' + fullPathOf(req))) || {}).door || null;
+const markReadDoor = (req) => (MARK_READ_TESTS.find((item) => item.test.test(req.method + ' ' + fullPathOf(req))) || {}).door || null;
+/** unclassifiedWrites(router) → the non-GET routes of the marks router in neither door list ('POST /api/marks/query' as the router's path makes it); empty = honest */
+function unclassifiedWrites(router) {
+  const found = [];
+  for (const layer of router.stack.filter((item) => item.route)) {
+    for (const method of Object.keys(layer.route.methods).filter((name) => name !== 'get' && layer.route.methods[name])) {
+      const door = method.toUpperCase() + ' ' + (layer.route.path === '/' ? MARK_BASE : MARK_BASE + layer.route.path);
+      if (!MARK_WRITE_DOORS.has(door) && !MARK_READ_DOORS.has(door)) found.push(door);
+    }
+  }
+  return found;
+}
 
 /** each listed pattern as a path test: ':name' is any one segment */
 const LISTED = [...GRANT_READS].map((pattern) => ({ pattern, test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
@@ -128,8 +157,19 @@ async function decide(req) {
   const member = String(req.headers[HEADER] || '').trim();
   if (!grants.UUID.test(member)) return { bad: true };
   const role = grants.roleOf(roleNamed(req));
-  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, role: roleNamed(req), pattern: routeForLog(req.method, req.path), method: req.method, listed: listedFor(role, req), query_shape: shapeOf(req) };
+  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req) };
   return grants.look(entityOfReal(req.identity), member.toLowerCase(), request);
+}
+
+/**
+ * the marks WRITE variant of actOn: the caller is checked (mayUseGrant, above) and the member is named, nothing more here. NO look, NO log row and NO runReadOnly: the grant look, the insert and the log row are ONE transaction opened by
+ * lib/mark-door (so a log row that cannot be written rolls the mark back), and req.identity stays the real caller (the door builds the member's context from the grant row it reads inside that transaction).
+ */
+function markWrite(req, res, next) {
+  const member = String(req.headers[HEADER] || '').trim().toLowerCase();
+  if (!grants.UUID.test(member)) return refuse(req, res, 403, 'BOOKS_GRANT_NONE', 'No access has been given for these books.');
+  req.mark_door = { member, role: grants.roleOf(roleNamed(req)), real_entity: entityOfReal(req.identity), door: markWriteDoor(req) };
+  return next();
 }
 
 /** the failure of a look is a refusal in words: never the caller's own books, never an open answer */
@@ -142,6 +182,8 @@ function answerFailure(req, res, failure) {
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
   if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', "Only an owner, or a person with the auditor role, can open another business's books.");
+  if (isMarks(req) && markWriteDoor(req)) return markWrite(req, res, next);
+  if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
   if (verdict.bad) return refuse(req, res, 403, 'BOOKS_GRANT_NONE', 'No access has been given for these books.');
   if (!verdict.allowed) return refuse(req, res, verdict.status, verdict.code, verdict.words);
@@ -150,7 +192,7 @@ async function actOn(req, res, next) {
   req.acting_for_grant = verdict.grant.grant_id;
   req.acting_firm_name = verdict.firm_name || null;
   /* an adviser's GET is read only like an auditor's; the action doors (POST) run in one normal transaction stamped with the grant: they write ONLY the action's own step, never the books */
-  if (verdict.grant.preset === grants.ADVISER && req.method !== 'GET') return reqctx.runActingFor(verdict.grant.grant_id, () => next());
+  if (verdict.grant.preset === grants.ADVISER && req.method !== 'GET' && !(isMarks(req) && markReadDoor(req))) return reqctx.runActingFor(verdict.grant.grant_id, () => next());
   return reqctx.runReadOnly(() => next());
 }
 
@@ -169,11 +211,11 @@ function frontOf(auth) {
 }
 
 /** a request that names a client's books (X-Books-For) is for the books screens only: anywhere else the header would be ignored and the firm would act as ITSELF under a client banner, so it is refused, nothing done (ACC-176b) */
-const BOOKS_HOME = /^\/api\/books(-actions|-grants)?(\/|$)/;
+const BOOKS_HOME = /^\/api\/(books(-actions|-grants)?|marks)(\/|$)/;
 const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the books screens use. Nothing was done.";
 function refuseElsewhere(req, res, next) {
   if (req.headers[HEADER] === undefined || BOOKS_HOME.test(req.path)) return next();
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });

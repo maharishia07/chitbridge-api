@@ -18,7 +18,8 @@ const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engi
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const { moveStatus, stampCancelRequested, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
-const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
+const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing');
+const { postMessage } = require('../lib/message-post'); // the one message writer (chit thread and mark thread) // how a chit write reaches the other copies (lifted with moveStatus)
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
@@ -5700,47 +5701,6 @@ router.put(
 // ─── POST /chits/:chit_id/messages ───────────────────────────
 // thread_type: 'external' (all parties see) | 'internal' (sender entity only)
 
-/** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
- *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
- *  per-participant loop when b50 isn't applied. RAIL-136 (d): one tx with the copies, so a failed timeline write leaves no
- *  message behind and a retry posts it once. */
-async function logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster }) {
-  if (roster) {
-    // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-    await crossingIn(
-      db,
-      `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-      [chit_id, roster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
-      async (db) => {
-        for (const pid of roster) {
-          await db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
-      }
-    );
-  } else {
-    await crossingIn(
-      db,
-      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-      [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
-      async (db) => {
-        // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-        const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
-        for (const p of participants.rows) {
-          await db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
-      }
-    );
-  }
-}
-
 /**
  * RAIL-106: a message just posted, told to the parties on another installation → what was queued (ctpReturn.answerOf says it on the answer).
  * A dispute message goes to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide); any other message by RAIL-106 x RAIL-136 (sit/run6):
@@ -5840,22 +5800,20 @@ router.post(
       /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
          posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
       const result = await withEntity(entity_id, async (db) => {
-        const posted = await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: senderName,
-            thread_type,
-            message_text,
-            msg_type: req.body.msg_type,
-            is_dispute: isDispute,
-            dispute_id: disputeId,
-            line_id: req.body.line_id || null
-          },
-          db
-        );
-        if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
-        return posted;
+        /* the ONE message writer (lib/message-post): the copies, then (external) the timeline line, on this transaction */
+        return postMessage(db, {
+          subject_type: 'chit',
+          chit_id,
+          sender_entity_id: entity_id,
+          sender_display_name: senderName,
+          thread_type,
+          message_text,
+          msg_type: req.body.msg_type,
+          is_dispute: isDispute,
+          dispute_id: disputeId,
+          line_id: req.body.line_id || null,
+          timeline: { display_name, roster: disputeRoster }
+        });
       });
       result.ctp = await tellMessageElsewhere(entity_id, chit_id, result, { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type: req.body.msg_type, line_id: req.body.line_id });
 

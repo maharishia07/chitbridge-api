@@ -93,6 +93,21 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_TOTAL_NEEDED | 422 | Total needed | Confirm the total and its currency as shown on the screen. | Confirm the total shown. | network | 2026-11-14 |
 | ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
 | ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
+| MARK_ADOPTER_UNKNOWN | 422 | Unknown review | We do not know that kind of review. | Open the screen again. | accounting | 2026-11-15 |
+| MARK_BULK_NOT_ALLOWED | 422 | One at a time | Mark one record at a time. | Mark the records one by one. | accounting | 2026-11-15 |
+| MARK_IDS_TOO_MANY | 422 | Too many records | Ask for 200 records at a time or fewer. | Ask for fewer records. | accounting | 2026-11-15 |
+| MARK_KIND_UNKNOWN | 422 | Mark not known | Choose one of the marks shown. | Choose Checked, Query or On hold. | accounting | 2026-11-15 |
+| MARK_NOT_ALLOWED | 403 | Not for you to mark | Only the auditor can mark an entry. You can read the marks and answer a query. | Ask your auditor to mark it. | accounting | 2026-11-15 |
+| MARK_NOT_SWITCHED_ON | 503 | Marks not switched on | Marking and queries are not switched on yet. | Try again later. | accounting | 2026-11-15 |
+| MARK_PERIOD_INVALID | 422 | Period not valid | Give the period as two dates, year-month-day. | Fix the two dates. | accounting | 2026-11-15 |
+| MARK_REPLY_NOT_ALLOWED | 403 | Not for you to answer | Only the owner, the adviser and the auditor take part in a query. | Ask the owner to answer. | accounting | 2026-11-15 |
+| MARK_SUBJECT_NOT_FOUND | 404 | Entry not found | We could not find that entry in these books. | Open the entry again. | accounting | 2026-11-15 |
+| MARK_THREAD_CLOSED | 409 | Query closed | This query is closed. The auditor can open it again by marking the entry. | Ask the auditor to open it again. | accounting | 2026-11-15 |
+| MARK_THREAD_NOT_FOUND | 404 | Query not found | We could not find that question. | Open the list of queries again. | accounting | 2026-11-15 |
+| MARK_WORDS_REQUIRED | 422 | Say what you ask | Write the question first. The owner will read it. | Write the question and send it. | accounting | 2026-11-15 |
+| MARK_WRITE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use the marks the screen offers. | accounting | 2026-11-15 |
+| MESSAGE_SUBJECT_UNKNOWN | 500 | Message subject unknown | We could not post that message. | Try again, or tell support. | rail | 2026-11-15 |
+| SIGN_IN_FOR_MARKS | 403 | Sign in as a person | Sign in as a person to work on marks. | A counter or device key cannot mark. | accounting | 2026-11-15 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
 | PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
