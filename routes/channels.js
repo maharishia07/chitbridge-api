@@ -4,7 +4,7 @@
  * FLOW      bind → platform approve (admin key) → verified line
  *           session routes: auth → checked(route) → handler → res.json | problem(req, res, faultOf(err, req, label, relay)); platform doors: admin gate → checked(route) → handler
  *           the words and the contract (each route's operation, the relay mode of each catch) are lib/channels-contract.js
- * CARD      11-crm-and-marketing/channels
+ * CARD      22-channels-capture-and-messaging/channel-binding
  */
 // routes/channels.js — Settings → Channels. Which inbound number / address belongs to this entity, and whether the
 // provider behind it is actually configured. This is the map the capture webhooks have been waiting for (b104 →

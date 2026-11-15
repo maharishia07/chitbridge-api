@@ -2,7 +2,7 @@
  * OWNS      /api/facts: what each Home card says (lines, figures, state) and the chits behind the rail's In · Out · Stuck.
  * CALLED BY server.js (mounted at /api/facts), the shell's Home cards (public/app/shell.js) and the rail.
  * FLOW      auth → a key is refused → schema check (lib/facts-contract.js) → lib/home-facts → the answer; a refusal → problem(req, res, { status, ...said(...) }), its old body frozen in docs/contracts/api-legacy.json
- * CARD      28-platform-and-operations/facts-route
+ * CARD      26-reporting-mis-and-bi/home-facts
  * /api/facts — WHAT EACH HOME CARD SAYS (N18, 2026-10-08).
  *
  *   GET /api/facts/:card   card ∈ till · counters · account · reports · accounts · orders · operations · disputes · assist · people · finance · product-lab · combo-lab · offer-lab · tax-lab · country-lab · marketing (MKT-SRV1 G3: who agreed to offers) · crm · trend · storefront · compare (WALK2 W3) → { lines: [{ text, value?, tone? }], figures?, state }

@@ -9,7 +9,7 @@
  * MIN       the minimum this guard must show: the 404 and 400 answers are problem+json with a registered code, the stand-in db is never asked for a refused request, a valid call is still ok.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/quick-keys.js and lib/quick-keys.js over a stand-in db that speaks Postgres's own words.
  * FLOW      stub db + auth → real router on an express app → request over http → status · code · content type · no leak · queries asked
- * CARD      28-platform-and-operations/quick-keys-routes
+ * CARD      09-counter/quick-keys-and-screen-layout
  * TRACE     CTR-172 · BH-17 (PM/BUG-HUNT-2026-10-31.md)
  */
 'use strict';

@@ -5,7 +5,7 @@
  * OWNS      the real-database proof of lib/erp-receipt.js claimReceipt: the re-claim is one UPDATE with one winner, and a second concurrent claimer is told in_progress (not claimed twice).
  * CALLED BY by hand on a SIT box (not in scripts/guards.cjs: it needs Postgres with migration b852 run).
  * RUN       CB_RACE_DB=postgres://user:pass@host:5432/dbname node tests/erp-receipt-race.realstack.cjs        (SIT only; it writes then deletes its own two rows, under a made-up entity and actor id)
- * CARD      28-platform-and-operations/connectors-routes
+ * CARD      23-connectors-and-integrations/connector-actors
  * Cases     R1 a failed receipt, 8 concurrent claimers → exactly 1 claimed, 7 in_progress · R2 a pending receipt older than the stale limit, 8 concurrent claimers → exactly 1 claimed
  *           R3 a fresh pending receipt → nobody claims it (all in_progress) · R4 a done receipt → all duplicate · R5 the same header key with another body → all conflict
  * NEEDS    a SIT-ONLY superuser (or table-owner) role in CB_RACE_DB: RLS is FORCED on connector_receipt, so the app role cannot seed rows directly. Never point it at production.

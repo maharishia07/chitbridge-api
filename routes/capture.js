@@ -5,7 +5,7 @@
  *           the nine signed-in routes: auth → checked(route) → handler → res.json | problem(req, res, faultOf(...) | storesFault(...) | failed(...)); the words and the contract are lib/capture-contract.js.
  *           the three webhooks (an outside contract: Meta, the e-mail provider): the provider's own SUCCESS replies are untouched (the verify echo as plain text, always 200 once signed);
  *           a refusal (403 handshake, 401 signature, 400 a body the schema refuses) is a Problem, and the signed POSTs run signature, parse, schema, handler (webhookGate, inboundBody).
- * CARD      11-crm-and-marketing/capture
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
  */
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
 // (send via /api/chits/send) → mark converted. See SPEC-capture-connector.md. Migration b104.

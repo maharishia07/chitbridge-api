@@ -13,7 +13,7 @@
  *           the scenes in tests/lib/channels-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, staff, a failing db, an empty db, a bad id) + the named scenes → real route → body →
  *           Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest; then the foreign-id world → evidence
- * CARD      11-crm-and-marketing/channels
+ * CARD      22-channels-capture-and-messaging/channel-binding
  *
  *   node tests/api-problem-channels.test.cjs                    check
  *   node tests/api-problem-channels.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

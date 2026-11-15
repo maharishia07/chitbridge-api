@@ -9,7 +9,7 @@
  * MIN       the minimum this guard must show: one signal for a live save, none for a refusal.
  * CALLED BY scripts/guards.cjs / CI. No database, no network: the real routes/definitions.js over a stand-in db and auth.
  * FLOW      stub db + auth + shopchanged -> real router on an express app -> PUT -> status + signals heard
- * CARD      07-catalogue-and-pricing/definitions
+ * CARD      06-catalogue-pim/definitions-shelf
  * TRACE     CTR-157 - R45 (PM/WALK-TRIAGE-2026-10-24.md)
  */
 'use strict';

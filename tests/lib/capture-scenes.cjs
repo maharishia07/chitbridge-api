@@ -6,7 +6,7 @@
  *           the signed bodies the two provider webhooks are sent, and the extras: one scenario per answer of the 12 routes of routes/capture.js (/api/capture).
  * CALLED BY tests/api-problem-capture.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who }, body, url, raw, env, patch, after }] → the harness runs each one against the real route
- * CARD      11-crm-and-marketing/capture
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
  * The webhooks are an OUTSIDE CONTRACT (Meta, the e-mail provider): a scenario with `raw` sends the bytes the provider signed (not JSON), and `env` sets the secrets for that scenario (null removes one).
  * `calls` records what the stood-in side effects were asked (auto-raise, the STOP confirmation), for the test to read after the run.
  */

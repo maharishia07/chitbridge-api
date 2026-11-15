@@ -12,7 +12,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file and the real stores over a stand-in db and sign-in (tests/lib/problem-world.cjs, scenes in tests/lib/supplies-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, staff, a bad id, a failing db, an empty db) + the named extras (tests/lib/supplies-scenes.cjs) → real route →
  *           body → Problem fields present · frozen legacy keys equal · no leak · statuses tested → manifest; then the foreign-id world
- * CARD      16-finance/supplies-routes
+ * CARD      12-suppliers-and-procurement/supplies-things-i-buy-to-use
  *
  *   node tests/api-problem-supplies.test.cjs                    check
  *   node tests/api-problem-supplies.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

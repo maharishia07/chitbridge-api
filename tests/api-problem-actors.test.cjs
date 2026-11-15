@@ -11,7 +11,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs).
  * FLOW      route list (read from the router) x world (signed out, staff, a stranger, a bad id, a failing db, an empty db) + the named extras (tests/lib/actors-scenes.cjs) → real route →
  *           body → Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest; then the foreign-id world
- * CARD      17-people-employees-hr-and-payroll/functions
+ * CARD      17-people-employees-hr-and-payroll/add-edit-switch-off-a-person
  *
  *   node tests/api-problem-actors.test.cjs                    check
  *   node tests/api-problem-actors.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

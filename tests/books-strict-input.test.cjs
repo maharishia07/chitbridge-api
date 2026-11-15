@@ -10,7 +10,7 @@
  * FLOW      lib/books-contract.js ROUTES (closed rows) → the handler in routes/books.js (router.<m>('<p>' or route('<m>', '<p>')
  *           → the body variable (b / body / req.body) → the keys read: v.k · { k } = v · 'k' in v · amountOf(v,'k') (k and k_minor) · dateOf(v[,'k']) · refOf(v) (client_ref)
  *           → every function the body is handed to, in routes/books.js or lib/*.js, two levels deep, at the argument's own position → read ⊆ declared
- * CARD      16-finance/books-routes
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  * What it cannot see (each stays a review question): a key read through a computed name (v[name]); a body copied to another name and read there; nested keys.
  *
  *   node tests/books-strict-input.test.cjs

@@ -4,7 +4,7 @@
  * OWNS      the old chains of POST / and POST /freeze, a body that satisfies each, and the differences between chain and schema that were looked at and kept (none today).
  * CALLED BY tests/api-problem-definitions.test.cjs. Not a test itself.
  * FLOW      compare(route, schemaCheck) → tests/lib/chain-compare.cjs over these chains
- * CARD      07-catalogue-and-pricing/definitions
+ * CARD      06-catalogue-pim/definitions-shelf
  */
 'use strict';
 const { body } = require('express-validator');

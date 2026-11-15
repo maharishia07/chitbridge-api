@@ -2,7 +2,7 @@
  * OWNS      the test board (the 33 routes of /api/testing): cases and their import, results and runs, JUnit and Gherkin, the CMDB, requirements, incidents, changes and releases; each route's contract and the words of its refusals are lib/testing-contract.js.
  * CALLED BY server.js (mounted at /api/testing) · web Testing screens · CI key · tools/api-register.cjs (router.openapi) · tests/api-problem-testing.test.cjs.
  * FLOW      query filter read (a NUL byte matches nothing) → auth → board gate → schema check (lib/testing-contract.js) → entity scope → record (an id that is no uuid is an unknown one) → res | problem(faultOf: a NUL byte in text is a 400, any other fault a 500 that says nothing of its cause)
- * CARD      28-platform-and-operations/testing
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
  */
 /**
  * /api/testing — THE TEST BOARD: cases you can append to, results you can record, and who recorded them.

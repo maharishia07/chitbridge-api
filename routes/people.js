@@ -10,7 +10,7 @@
  * refuse on their own — this is never the check, only the early word.
  * R112: each person also carries code_given (who gave their last first code, and when), one join on the code_issued trail row.
  * FLOW   auth → schema check (lib/people-contract.js) → readBatch (one trip, the shop's scope) → lib/people.view → JSON
- * CARD 17-people-employees-hr-and-payroll/people-list
+ * CARD 17-people-employees-hr-and-payroll/people-list-with-may-why
  * CALLED BY server.js (mounted at /api/people)
  */
 const express = require('express');

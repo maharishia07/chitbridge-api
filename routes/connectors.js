@@ -1,4 +1,4 @@
-// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1).   CARD 28-platform-and-operations/connectors-routes
+// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1).   CARD 23-connectors-and-integrations/connector-actors
 // OWNS the 14 connector routes (/api/connectors): make one · its connections · its key · health · and the two doors a device and an ERP agent call with their own key. CALLED BY server.js (app.use('/api/connectors')).
 // FLOW  owner routes: auth → requireConnector (the shop's switch) → chains + validateAsProblem → checked(route) → handler → res.json | problem(req, res, { status, ...words.x() } | failed(err, req, label)).
 //       device doors (/ingest, /erp-ingest): chains → checked(route) → deviceKey (the ActorKey + the switch) → handler. The words and the contract are lib/connectors-contract.js.

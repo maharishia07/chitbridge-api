@@ -8,7 +8,7 @@
  *           own priced line still builds past that gate; (3) the engine copy is untouched (the fix is the reader's, lib/services.bandsOf).
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route files over the stand-in sign-in (tests/lib/problem-world.cjs); the shelf read is stood in at lib/services.
  * FLOW      scenario (a line + the shelf's product) → real route → status + body → the band prices / the refusal code and sentence
- * CARD      28-platform-and-operations/pricing-service
+ * CARD      07-offers-pricing-and-combos/pricing-structure-price-lists
  * Run: node tests/cat-258-unpriced-bands.test.cjs
  */
 'use strict';

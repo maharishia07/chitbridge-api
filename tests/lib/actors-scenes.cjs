@@ -5,7 +5,7 @@
  *           each with the stand-in rows it needs (answered by the shape of the statement, so the same facts meet old and new code), and the "universal" row of the foreign-id world.
  * CALLED BY tests/api-problem-actors.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db }, patch, body, url, after }] → the harness runs each one against the real route
- * CARD      17-people-employees-hr-and-payroll/functions
+ * CARD      17-people-employees-hr-and-payroll/add-edit-switch-off-a-person
  * Sign-in (GET /check-login, POST /set-pin, POST /login) is here only to be RECORDED: the test replays what they answered before the sweep byte for byte and never judges their refusals (they are routes/signin.js's).
  */
 'use strict';

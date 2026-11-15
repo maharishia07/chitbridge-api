@@ -13,7 +13,7 @@
  * Not here: the sentences of the migration not run (the local database has b306/b307), and a token with no shop (a shopper token always carries its shop).
  * A `gap:` FAIL is a RECORDED finding, never fixed here. LOCAL ONLY; the database is only ever SELECTed.
  * Run: node tests/privacy-truth.realstack.cjs   (one realstack file at a time on :3100; picked up by the S41 job in CI, not run on a laptop without Docker)
- * CARD 11-crm-and-marketing/privacy-consent
+ * CARD 21-compliance-attestation-and-trade/privacy
  */
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
