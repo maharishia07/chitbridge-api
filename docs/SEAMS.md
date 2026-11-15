@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 170 | `list` | `amend.js` |  |
-| 143 | `rows` | `crm.js` | still in them: |
+| 144 | `rows` | `crm.js` | still in them: |
 | 132 | `read` | `bank-rec-log.js` | The period (from · to, either may be absent) narrows the statements that overlap it and the posted refs; the m |
 | 132 | `words` | `variant.browser.js` |  |
 | 128 | `withEntity` | `books-hooks.js` |  |
@@ -32,7 +32,7 @@ of file each thing is; this says what already does the job.
 | 70 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 69 | `failed` | `service.js` | what every catch answers: |
 | 67 | `record` | `access-events.js` |  |
-| 66 | `items` | `books-store.js` | PERF1: |
+| 67 | `items` | `books-store.js` | PERF1: |
 | 65 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 64 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
@@ -47,15 +47,15 @@ of file each thing is; this says what already does the job.
 | 55 | `toast` | `accounts-shell.js` |  |
 | 55 | `rows` | `cap-settings.js` |  |
 | 55 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 55 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 54 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
-| 54 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 54 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 52 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 51 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
-| 51 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 50 | `read` | `cap-print.js` |  |
+| 50 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 49 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 49 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 49 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 48 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 48 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 47 | `facts` | `bill-steps.js` | MY state_log — |
@@ -72,20 +72,20 @@ of file each thing is; this says what already does the job.
 | 40 | `page` | `cap-catalogue.js` |  |
 | 40 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 40 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
+| 40 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 39 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 39 | `shell` | `pick.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `rate` | `convert.js` | A rate, with its evidence. |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
-| 39 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 38 | `closeModal` | `app.html` |  |
 | 38 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 38 | `changes` | `books-store.js` |  |
 | 37 | `note` | `dbwatch.js` |  |
 | 37 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 36 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
+| 36 | `account` | `home-facts.js` | OMITTED: |
 | 35 | `lines` | `cart.js` |  |
-| 35 | `account` | `home-facts.js` | OMITTED: |
 | 35 | `hold` | `orders.js` |  |
 | 35 | `owner` | `books.js` |  |
 | 34 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
@@ -116,14 +116,14 @@ of file each thing is; this says what already does the job.
 | 29 | `group` | `identity.js` | again in a different costume. |
 | 28 | `opts` | `cap-stock.js` | the options the stock list is mounted with |
 | 28 | `names` | `shortcuts.js` |  |
+| 28 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 27 | `call` | `cap-assist.js` |  |
-| 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 27 | `customer` | `mintuserid.js` | silently becomes a second identity. |
+| 26 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 26 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 25 | `shown` | `country-compare.js` | one side's value for the line: |
 | 25 | `entries` | `books-store.js` |  |
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
-| 25 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 25 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 24 | `form` | `accounts-shell.js` |  |
 | 24 | `says` | `adopt.js` |  |
@@ -178,7 +178,6 @@ of file each thing is; this says what already does the job.
 | 18 | `label` | `screen-id.js` |  |
 | 18 | `post` | `books-manual.js` | POST /events — |
 | 18 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
-| 18 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 17 | `done` | `attach-ui.js` |  |
 | 17 | `message` | `cap-print.js` | the one message: |
@@ -189,6 +188,7 @@ of file each thing is; this says what already does the job.
 | 17 | `series` | `gst-returns.js` | `paid_on`: |
 | 17 | `orders` | `home-facts.js` | the till said 2 — |
 | 17 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
+| 17 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 17 | `heads` | `tax-lines.js` | The heads, summed. |
