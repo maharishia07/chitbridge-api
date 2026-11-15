@@ -23,4 +23,6 @@ const o = run('/api/chits', { 'x-books-for': 'S' });
 assert.ok(JSON.stringify(o.body).includes('BOOKS_FOR_NOT_HERE'), 'literal code in the body: ' + JSON.stringify(o.body));
 const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 assert.ok(server.indexOf('refuseElsewhere') > 0 && server.indexOf('refuseElsewhere') < server.indexOf("app.use('/api/entities'"), 'mounted before the routers');
+/* the mount must be CODE, not text after a // on the same line (it was, once: the guard passed and nothing was refused) */
+assert.ok(server.split(String.fromCharCode(10)).some((line) => line.split('//')[0].includes("app.use(require('./middleware/books-grant').refuseElsewhere)")), 'the mount is on a code part of a line');
 console.log('acc-176b-books-for-elsewhere: ok');

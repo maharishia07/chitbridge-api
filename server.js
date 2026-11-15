@@ -210,7 +210,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-Id', req.id);
   next();
 });
-app.use(require('./lib/problem').wwwAuthenticate); // SEC-82 · every 401 carries the challenge app.use(require('./middleware/books-grant').refuseElsewhere); // ACC-176b · X-Books-For is read only by the books screens: anywhere else it is refused, nothing done
+app.use(require('./lib/problem').wwwAuthenticate); app.use(require('./middleware/books-grant').refuseElsewhere); // SEC-82 · every 401 carries the challenge · ACC-176b · X-Books-For is read only by the books screens: anywhere else it is refused, nothing done
 
 // Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
 app.use((req, res, next) => {
