@@ -77,9 +77,22 @@ function create() {
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
     async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':'))); },
     async entryBySource(db, e, ref) { const h = T.entries.find((x) => x.entity_id === e && x.source_ref === ref); return h ? clone(h) : null; },
-    async taxEntryLines(db, e, from, to, types) {
-      return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
+    async taxEntryLines(db, e, from, to, types, shape) {
+      /* the real query's two doors: the event word, or the SHAPE (every line on a tax or money role, one on a tax role; never an opening) */
+      const day = (x) => String(x.posting_date).slice(0, 10), roleOf = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      const tax = (shape && shape.tax) || [], money = (shape && shape.money) || [];
+      const shaped = (h) => { const ls = T.lines.filter((l) => l.entry_id === h.entry_id); return !h.is_opening && ls.some((l) => tax.indexOf(roleOf(l)) >= 0) && ls.every((l) => tax.concat(money).indexOf(roleOf(l)) >= 0); };
+      return T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && ((types || []).indexOf(x.event_type) >= 0 || shaped(x)))
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
+    },
+    async taxedIncomeLines(db, e, from, to, outputRole, skipRoles) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (!ls.some((l) => acct(l).role === outputRole)) return;
+        ls.filter((l) => !l.party_id && acct(l).nature === 'income' && (skipRoles || []).indexOf(acct(l).role) < 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
     },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {
