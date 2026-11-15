@@ -74,6 +74,21 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   await refused('the key on another kind (other_income) is refused, not ignored', { kind: 'other_income', class: 'interest_received', into: 'bank', date: D, amount: 20, client_ref: 'bt-inc', input_tax_minor: 200 }, [422]);
   await refused('an unknown key (currency) is still refused: the web sends none', fee({ client_ref: 'bt-cur', currency: 'AUD', input_tax_minor: 200 }), [400, 422]);
 
+  /* ── B5-03: from A$82.50 the credit needs the person's word that the tax invoice is held (the pack's own taxInvoice answer, not a number in this door) ── */
+  const big = (extra) => fee(Object.assign({ amount: undefined, amount_minor: 8000, input_tax_minor: 800 }, extra)); /* 80.00 + 8.00 GST = 88.00, over the line */
+  const noPaper = await refused('88.00 with no word on the tax invoice is refused', big({ client_ref: 'bt-b503-a' }), [422]);
+  ok('…in words: the credit needs the tax invoice', /needs the supplier's tax invoice/.test(JSON.stringify(noPaper.body)), JSON.stringify(noPaper.body));
+  await refused("tax_invoice 'none' beside a tax figure is refused (no invoice, no credit)", big({ client_ref: 'bt-b503-b', tax_invoice: 'none' }), [422]);
+  await refused('tax_invoice with another word is asked', big({ client_ref: 'bt-b503-c', tax_invoice: 'yes' }), [400, 422]);
+  await refused('tax_invoice on its own (no tax figure) is refused, not ignored', fee({ client_ref: 'bt-b503-d', tax_invoice: 'held' }), [422]);
+  const held = await q('POST', '/events', big({ client_ref: 'bt-b503-e', tax_invoice: 'held' }));
+  ok("88.00 with tax_invoice 'held' posts (200)", held.status === 200 && held.body.ok, JSON.stringify(held.body));
+  eq('…Dr 6090 80.00 · Dr 2210 8.00 · Cr 1500 88.00', linesOf(entryOf('ev:expense:bt-b503-e')), [['6090', 8000, 0], ['2210', 800, 0], ['1500', 0, 8800]]);
+  const edge = (gross, ref, extra) => q('POST', '/events', fee(Object.assign({ client_ref: ref, amount: undefined, amount_minor: gross - 750, input_tax_minor: 750 }, extra)));
+  ok('the line is the pack line: gross 82.50 needs the word (422)', (await edge(8250, 'bt-b503-f')).status === 422);
+  ok('…gross 82.49 does not (200)', (await edge(8249, 'bt-b503-g')).status === 200);
+  await refused("'held' on another kind (other_income) is refused", { kind: 'other_income', class: 'interest_received', into: 'bank', date: D, amount: 20, client_ref: 'bt-b503-h', tax_invoice: 'held' }, [422]);
+
   /* ── registration: unknown is unknown ── */
   asShop(Object.assign({}, REGISTERED, { gstn: null, policy_flags: {} }));
   const unknown = await refused('a shop that never said it is registered is refused', fee({ client_ref: 'bt-unk', input_tax_minor: 200 }), [422]);
