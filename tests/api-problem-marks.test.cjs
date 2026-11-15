@@ -18,6 +18,7 @@
 const path = require('path');
 const fs = require('fs');
 const { harness, OWNER, STAFF, SHOP, sameValue, answering, SECRET_SQL } = require('./lib/problem-world.cjs');
+const allowlistWorld = require('./lib/allowlist-world.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
 
 const HERE = path.join(__dirname, '..');
@@ -177,6 +178,8 @@ function checkCodesRegistered(recording) {
   checkCodesRegistered(recording);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('a key is refused with 403 SIGN_IN_FOR_MARKS on every route', Object.keys(recording).filter((key) => key.endsWith('|a-key-asks')).every((key) => recording[key].status === 403 && recording[key].body && recording[key].body.code === 'SIGN_IN_FOR_MARKS'));
+  /* S34: the success answers hold only the keys their closed schema lists */
+  const proved = allowlistWorld.checkAllowList(recording, contract.OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -184,9 +187,11 @@ function checkCodesRegistered(recording) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+    allowlistWorld.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign);
   } else {
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign), { held: Object.keys(foreign) });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held here', sameValue(allowlistWorld.evidenceOf(EVIDENCE_FILE, lab.mine), proved), { proved: Object.keys(proved) });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/marks.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
