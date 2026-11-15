@@ -18,6 +18,7 @@
 --    ALTER TABLE books_access_log DROP CONSTRAINT IF EXISTS books_access_log_preset_check;
 --    ALTER TABLE journal_entry DROP COLUMN IF EXISTS grant_id; ALTER TABLE books_change_log DROP COLUMN IF EXISTS grant_id;
 --    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_check, DROP CONSTRAINT IF EXISTS books_access_grant_cap_pair, DROP CONSTRAINT IF EXISTS books_access_grant_posting_adviser_only; ALTER TABLE books_access_grant DROP COLUMN IF EXISTS posting, DROP COLUMN IF EXISTS posting_cap_minor, DROP COLUMN IF EXISTS posting_cap_currency;   (the choice of who posts is lost)
+--    ALTER TABLE access_events DROP CONSTRAINT IF EXISTS access_events_action_check; then re-add it as b863 has it (without the three books_delegated_* values; delete those rows first).
 --    ALTER TABLE books_access_log DROP COLUMN IF EXISTS preset, DROP COLUMN IF EXISTS actor_name, DROP COLUMN IF EXISTS actor_entity_name;
 -- CHECK (read-only, all-true multi-row block; every row must read ok = true):
 --    SELECT 'preset allows adviser' AS what, pg_get_constraintdef(oid) LIKE '%adviser%' AS ok FROM pg_constraint WHERE conname = 'books_access_grant_preset_check'
@@ -54,6 +55,10 @@ CREATE POLICY log_insert ON books_access_log FOR INSERT
     AND EXISTS (SELECT 1 FROM books_access_grant g WHERE g.grantor_entity = books_access_log.grantor_entity AND g.grantee_entity = books_access_log.grantee_entity AND g.revoked_at IS NULL
                 AND g.preset = COALESCE(books_access_log.preset, 'auditor')));
 
+-- the owner's alert of a delegated post is one access_events row (the owner's audit): the action list gains three values, every value allowed before stays allowed
+ALTER TABLE access_events DROP CONSTRAINT IF EXISTS access_events_action_check;
+ALTER TABLE access_events ADD CONSTRAINT access_events_action_check
+  CHECK (action IN ('created', 'hat_changed', 'costs_changed', 'break_changed', 'removed', 'reactivated', 'reach_changed', 'code_issued', 'books_grant_given', 'books_grant_changed', 'books_grant_revoked', 'books_delegated_first', 'books_delegated_unlock', 'books_delegated_year_close'));
 -- DELEGATED POSTING (ACC-176b, Athi 15 Nov): who posts is the OWNER'S choice, made at grant time; NULL = the owner has not chosen = read as owner_approves (the safe side); never a default, no backfill.
 -- posting_cap_*: an optional ceiling per entry; above it (or in another currency) the action waits for the owner's accept even under adviser_posts. Money carries its currency: both columns or none.
 ALTER TABLE books_access_grant ADD COLUMN IF NOT EXISTS posting text;
