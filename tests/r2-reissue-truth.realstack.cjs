@@ -36,6 +36,8 @@ async function build(head) {
   return made;
 }
 const signIn = (store, code) => j('/api/entities/verify', { method: 'POST', body: { user_id: store.handle, otp: code } });
+/** when the store's code runs out: a fresh code is a later expiry, whatever its digits (a fixed DEV_OTP code is the same digits every time) */
+const expiryOf = async (store) => (await pg.query(`SELECT otp_expires_at FROM identities WHERE LOWER(user_id) = LOWER($1)`, [store.handle])).rows[0].otp_expires_at;
 const rowOf = async (store) => (await pg.query(`SELECT identity_id, otp_code IS NOT NULL AS has_code, last_active_at FROM identities WHERE LOWER(user_id) = LOWER($1)`, [store.handle])).rows[0];
 /** true once a statement of the door ('UPDATE identities SET otp_code') is waiting on a row lock held by another session */
 async function updateIsQueued() {
@@ -53,8 +55,10 @@ async function updateIsQueued() {
     const [alpha, bravo] = await build(head);
 
     await kase('R2-01a', 'control: the head reissues for an unclaimed store and the new code signs in as the store', async () => {
+      const expiryBefore = await expiryOf(alpha);
       const again = ok(await j('/api/network-design/reissue', { method: 'POST', token: head.token, body: { user_id: alpha.handle } }), 'reissue').b;
-      expect(!!again.claim_code && again.claim_code !== alpha.claim_code, 'no fresh code: ' + JSON.stringify(again));
+      const expiryAfter = await expiryOf(alpha);
+      expect(!!again.claim_code && !!expiryAfter && (!expiryBefore || expiryAfter > expiryBefore), 'no fresh code (the door wrote no later expiry): ' + JSON.stringify(again));
       const entered = await signIn(alpha, again.claim_code);
       expect(entered.status === 200 && !!entered.b.token, 'the fresh code did not sign in: ' + entered.status + ' ' + JSON.stringify(entered.b).slice(0, 200));
       expect((await rowOf(alpha)).last_active_at, 'the first sign-in did not stamp last_active_at: the claim marker is missing');
