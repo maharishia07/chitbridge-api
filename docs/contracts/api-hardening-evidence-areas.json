@@ -558,6 +558,9 @@
   "GET /api/marketing/came-back": {
    "output_allowlist": true
   },
+  "GET /api/marks/:thread_id/messages": {
+   "foreign_id_404": true
+  },
   "GET /api/network-design": {
    "output_allowlist": true
   },
@@ -1438,6 +1441,9 @@
   },
   "POST /api/kyb/field": {
    "output_allowlist": true
+  },
+  "POST /api/marks/:thread_id/messages": {
+   "foreign_id_404": true
   },
   "POST /api/network-design/build": {
    "output_allowlist_basis": "recordings",

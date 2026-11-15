@@ -18,7 +18,7 @@
    },
    "foreign_id_404": {
     "applies": 205,
-    "failing": 2
+    "failing": 0
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -20988,8 +20988,8 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 66,
-   "hash": "8a32756c39e7951d",
+   "line": 63,
+   "hash": "e585ddd496025170",
    "does": "An adopter and a list of record ids, or open=1 for the open items -> we read the latest mark of each record (or the open queries with their age and \"checked n of m\") in one read -> the marks, the words and what you may do.",
    "errors": {
     "count": 1,
@@ -21019,7 +21019,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -21044,7 +21044,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
@@ -21086,8 +21087,8 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 103,
-   "hash": "0e9967206d0f4587",
+   "line": 100,
+   "hash": "007309f5ac4a282f",
    "does": "A thread id in -> we read the marked record's mark, its history and the replies with what you may do -> the conversation, or 404 for a thread that is not these books'.",
    "errors": {
     "count": 1,
@@ -21118,11 +21119,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -21144,7 +21145,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -51676,8 +51678,8 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 95,
-   "hash": "165b7ae5af5426f8",
+   "line": 92,
+   "hash": "d31682c7de7c1e66",
    "does": "An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.",
    "errors": {
     "count": 1,
@@ -51708,7 +51710,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
@@ -51734,7 +51736,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -51775,8 +51778,8 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 106,
-   "hash": "297bb3a3ad0431e0",
+   "line": 103,
+   "hash": "7931139a8daac960",
    "does": "A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.",
    "errors": {
     "count": 1,
@@ -51808,11 +51811,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -51835,7 +51838,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -51876,8 +51880,8 @@
    "owner_area": "marks",
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
-   "line": 81,
-   "hash": "c59e54d0dd1bd0ef",
+   "line": 78,
+   "hash": "25319eaadde80087",
    "does": "An adopter and more record ids than a query string carries in a body -> we read the latest mark of each (a read, not a write) -> the marks, the words and what you may do.",
    "errors": {
     "count": 1,
@@ -51907,7 +51911,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -51932,7 +51936,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "output_allowlist_basis": "recordings",
    "reported": {

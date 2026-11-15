@@ -1099,6 +1099,21 @@
   422,
   500
  ],
+ "GET /api/marks": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "GET /api/marks/:thread_id/messages": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -2998,6 +3013,30 @@
   401,
   422,
   500
+ ],
+ "POST /api/marks": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/marks/:thread_id/messages": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/marks/query": [
+  401,
+  403,
+  422,
+  500,
+  503
  ],
  "POST /api/network-design/build": [
   400,
