@@ -50,7 +50,7 @@ server.listen(0, '127.0.0.1', async () => {
     assert.deepStrictEqual(q.body.recipients, [{ entity_id: 'ENT-5', role: 'to' }]); assert.strictEqual(q.body.manual_subject, 'Signal: humidity = 61%'); assert.strictEqual(q.body.purpose, 'general');
     const bj = q.body.business_json; assert.deepStrictEqual([bj.kind, bj.device_id, bj.signal, bj.value, bj.unit], ['device_signal', 'gw-2', 'humidity', '61', '%']);
   });
-  await t('an api refusal ends the run: exit 1, [FAIL] with the status and words', async () => {
+  await t('an api refusal ends the run: exit 1, the refusal line with the status and words', async () => {
     status = 401; const r = await run({ BRIDGE_KEY: 'BAD' });
     assert.strictEqual(r.code, 1); assert.ok(/\[FAIL\] HTTP 401 .* KEY_REFUSED/.test(r.out), r.out);
   });

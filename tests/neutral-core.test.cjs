@@ -42,7 +42,7 @@ const fs = require('fs');
   const policy = require(path.join(API, 'lib/policy'));
   ok('N2: the policy card says "GST registration" for India (unchanged) and "Tax registration" with no country', policy.schemaFor('IN').gst_registration.ui.label === 'GST registration' && policy.schemaFor(null).gst_registration.ui.label === 'Tax registration');
   const packed = fs.readFileSync(path.join(API, 'lib/catalogue-view.js'), 'utf8');
-  ok('N2: catalogue-view strips the UPI id unless the pack carries UPI (no country, no pack -> none)', /if \(!\(pk && pk\.chart && pk\.chart\.paymentModes && pk\.chart\.paymentModes\.upi\)\)\s*upi_id = null;/.test(packed));
+  ok('N2: catalogue-view strips the UPI id unless the pack carries UPI (no country, no pack -> none)', /if \(!\(countryPack && countryPack\.chart && countryPack\.chart\.paymentModes && countryPack\.chart\.paymentModes\.upi\)\)\s*upi_id = null;/.test(packed));
   const profileSrc = fs.readFileSync(path.join(API, 'lib/profile.js'), 'utf8');
   ok('N2: profile.invoiceParty: no pack does not split by state, and a state is asked only where the pack splits', /function splitsByStateOf\(pack\) \{\s*return !!\(pack && pack\.tax && pack\.tax\.supply === 'state'\);\s*\}/.test(profileSrc) && profileSrc.includes('if (!party.state && splitsByState)'));
   const readySrc = fs.readFileSync(path.join(API, 'lib/readiness.js'), 'utf8');
