@@ -100,13 +100,17 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
  * ⚠️ AND IT IS OFF UNLESS CB_ADMIN_KEY IS SET. An unset key does not mean "no check" — it means the route does not
  * work at all. A missing secret must never widen access; that is the same rule the webhooks follow.
  */
+const ADMIN_KEY_MIN = 32;
+/* R2-09: both sides hashed first, so the compare is of two equal-length digests and a wrong key leaks neither its content nor the real key's length */
+const sameSecret = (given, key) => {
+  if (typeof given !== 'string') return false;
+  const digest = (v) => require('crypto').createHash('sha256').update(v).digest();
+  return require('crypto').timingSafeEqual(digest(given), digest(key));
+};
 function admin(req, res, next) {
   const key = process.env.CB_ADMIN_KEY;
-  if (!key) return problem(req, res, { status: 503, ...adminOff() });
-  const given = req.headers['x-cb-admin-key'];
-  // Constant-time-ish: compare length first, then a crypto compare, so a wrong key leaks nothing by timing.
-  const ok = typeof given === 'string' && given.length === key.length && require('crypto').timingSafeEqual(Buffer.from(given), Buffer.from(key));
-  if (!ok) return problem(req, res, { status: 403, ...adminWrongKey() });
+  if (!key || key.length < ADMIN_KEY_MIN) return problem(req, res, { status: 503, ...adminOff() }); // R2-09: a short key is no key, the door stays shut
+  if (!sameSecret(req.headers['x-cb-admin-key'], key)) return problem(req, res, { status: 403, ...adminWrongKey() });
   knownBinding(req, res, next, req.params.id);
 }
 // @does A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).
