@@ -325,6 +325,7 @@ const GUARDS = [
   'govresolve-ctp.test.cjs',
   'govresolve-bounded.test.cjs', // NET-25: an installation declares only inside what the constitution allows (currency, timezone, region, country)
   'relationships-availability.test.cjs', // OPS-55 has/miss/nocat/err states, OPS-57 bounded concurrency of 6
+  'relationships-not-self.test.cjs', // a shop is never its own customer or supplier: both relationships lists leave the reader out (l16)
   /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
      refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
   'ctp-query.test.cjs',

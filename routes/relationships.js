@@ -320,7 +320,7 @@ function listSuppliers(db, owner) {
                    THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
-       WHERE sl.owner_entity_id = $1 AND ${SL_LIVE} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
+       WHERE sl.owner_entity_id = $1 AND ${customerGroups.NOT_SELF_SUPPLIER_SQL} AND ${SL_LIVE} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
        ORDER BY sl.preferred DESC, sl.created_at DESC`,
     [owner]
   );
@@ -788,6 +788,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
+         AND ${customerGroups.NOT_SELF_CUSTOMER_SQL}
          AND ${customerGroups.NOT_A_SUPPLIER_SQL}
        ORDER BY cl.last_txn_at DESC NULLS LAST`,
           [owner]
