@@ -2,10 +2,10 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 654,
+  "routes": 655,
   "no_does": 0,
   "not_started": 0,
-  "partial": 71,
+  "partial": 72,
   "meets": 583,
   "columns": {
    "strict_input": {
@@ -13,8 +13,8 @@
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 654,
-    "failing": 0
+    "applies": 655,
+    "failing": 1
    },
    "foreign_id_404": {
     "applies": 205,
@@ -29,8 +29,8 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 654,
-    "failing": 0
+    "applies": 655,
+    "failing": 1
    }
   },
   "reported": {
@@ -43,8 +43,8 @@
     "failing": 37
    },
    "rate_limited": {
-    "applies": 654,
-    "failing": 489
+    "applies": 655,
+    "failing": 490
    }
   },
   "tolerant_outward": 26,
@@ -4663,7 +4663,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 85,
+   "line": 101,
    "hash": "8ec4029f35864373",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
@@ -4751,6 +4751,102 @@
     "screens": [
      "books-grant-member.js 1/5"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books-grants/practice",
+   "method": "GET",
+   "path": "/api/books-grants/practice",
+   "owner_area": "books-grants",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books-grants.js",
+   "line": 63,
+   "hash": "e690f04cf20013d1",
+   "does": "Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).",
+   "errors": {
+    "count": 2,
+    "statuses": [
+     401,
+     403,
+     500,
+     503
+    ],
+    "codes": [
+     "BOOKS_GRANT_NOT_FOR_YOU",
+     "SIGN_IN_FOR_BOOKS_GRANT"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": false,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 3,
+    "wire": 10,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -29795,7 +29891,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 67,
+   "line": 83,
    "hash": "968b93945cedab0f",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
@@ -34099,7 +34195,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 56,
+   "line": 72,
    "hash": "596d5532b66a5324",
    "does": "An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).",
    "errors": {
@@ -34209,7 +34305,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 76,
+   "line": 92,
    "hash": "82728be98341efc7",
    "does": "A grant id in -> we take that access away -> the revoked grant (owner only).",
    "errors": {
