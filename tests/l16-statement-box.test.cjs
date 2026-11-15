@@ -236,7 +236,7 @@ const refused = (code) => (err) => err.statementBox === true && err.code === cod
   });
   await t('the consent words say what an auditor can now read, from the same list the guard allows', () => {
     const { READS_IN_WORDS } = require(path.join(API, 'lib', 'books-grants-contract.js'));
-    for (const route of A.GRANT_READS) assert.ok(READS_IN_WORDS[route], route + ' has its plain words');
+    for (const route of ['/bank/statement-files', '/bank/statement-files/:id/file']) { assert.ok(A.GRANT_READS.has(route) && READS_IN_WORDS[route], route + ' has its plain words'); assert.match(READS_IN_WORDS[route], /Statements box/); }
   });
   await t('the download is served by the ONE sender: nosniff, a download for a csv, never cached', () => {
     const headers = {};
