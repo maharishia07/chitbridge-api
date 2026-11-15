@@ -292,6 +292,20 @@
   404,
   500
  ],
+ "GET /api/books/bank/statement-files": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/books/bank/statement-files/:id/file": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "GET /api/books/bs": [
   400,
   401,
@@ -1899,6 +1913,13 @@
   422,
   500,
   503
+ ],
+ "POST /api/books/bank/statement-files": [
+  401,
+  403,
+  404,
+  422,
+  500
  ],
  "POST /api/books/bank/statements": [
   400,

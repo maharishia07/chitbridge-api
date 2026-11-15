@@ -5362,6 +5362,42 @@
         "since": "2026-11-14"
       }
     },
+    "POST /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, the duplicate and overlap read, the byte store insert with its table probe, ONE row plus its event insert in one transaction); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, then the files and the read events in ONE transaction, two statements however many accounts); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files/:id/file": {
+      "file": "books.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the row read, the byte store read with its probes, the read event insert; an auditor writes no event); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
     "GET /api/marks": {
       "file": "marks.js",
       "trips": 1,
