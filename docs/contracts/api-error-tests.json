@@ -227,6 +227,22 @@
   404,
   500
  ],
+ "GET /api/books-actions": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books-actions/:id": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "GET /api/books-grants": [
   401,
   403,
@@ -1770,6 +1786,42 @@
   403,
   413,
   500
+ ],
+ "POST /api/books-actions": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/return": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/review": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
  ],
  "POST /api/books-grants": [
   401,

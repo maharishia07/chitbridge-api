@@ -1854,6 +1854,272 @@
         "url": "/api/assist/whoami"
       }
     },
+    "GET /api/books-actions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "actions",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "action_id",
+                "store",
+                "kind",
+                "state",
+                "client_ref",
+                "body_hash",
+                "total_minor",
+                "currency",
+                "body",
+                "prepared",
+                "reviewed",
+                "closed",
+                "grant_id",
+                "entry_id",
+                "access_ended"
+              ],
+              "properties": {
+                "action_id": {
+                  "type": "string"
+                },
+                "store": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "client_ref": {
+                  "type": "string"
+                },
+                "body_hash": {
+                  "type": "string"
+                },
+                "total_minor": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": "object",
+                  "description": "the body the action was prepared with: the keys of its kind (journal, reverse, lock, unlock, year_close), whitelisted by lib/books-action bodyOf; each kind differs, so the node is not closed"
+                },
+                "prepared": {
+                  "type": "object",
+                  "required": [
+                    "identity_id",
+                    "name",
+                    "firm",
+                    "role",
+                    "at",
+                    "reason"
+                  ],
+                  "properties": {
+                    "identity_id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "firm": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "reason": {}
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "reviewed": {},
+                "closed": {},
+                "grant_id": {
+                  "type": "string"
+                },
+                "entry_id": {},
+                "access_ended": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-actions?state=open&mine=true&delegated=true&since=2026-11-01"
+      }
+    },
+    "GET /api/books-actions/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "action_id",
+          "store",
+          "kind",
+          "state",
+          "client_ref",
+          "body_hash",
+          "total_minor",
+          "currency",
+          "body",
+          "prepared",
+          "reviewed",
+          "closed",
+          "grant_id",
+          "entry_id",
+          "access_ended",
+          "steps"
+        ],
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "client_ref": {
+            "type": "string"
+          },
+          "body_hash": {
+            "type": "string"
+          },
+          "total_minor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "description": "the body the action was prepared with: the keys of its kind (journal, reverse, lock, unlock, year_close), whitelisted by lib/books-action bodyOf; each kind differs, so the node is not closed"
+          },
+          "prepared": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "name",
+              "firm",
+              "role",
+              "at",
+              "reason"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "firm": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "reviewed": {},
+          "closed": {},
+          "grant_id": {
+            "type": "string"
+          },
+          "entry_id": {},
+          "access_ended": {
+            "type": "boolean"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "step",
+                "role",
+                "identity_id",
+                "name",
+                "firm",
+                "reason",
+                "at"
+              ],
+              "properties": {
+                "step": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "identity_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "firm": {
+                  "type": "string"
+                },
+                "reason": {},
+                "at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-actions/66666666-6666-4666-8666-666666666666"
+      }
+    },
     "GET /api/books-grants": {
       "status": "200",
       "schema": {
@@ -7973,7 +8239,10 @@
             "type": "string"
           },
           "revoked_at": {},
-          "revoked_by": {}
+          "revoked_by": {},
+          "posting": {},
+          "posting_cap_minor": {},
+          "posting_cap_currency": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -8137,6 +8406,508 @@
       },
       "basis": "hand: the handler literal is { ok, kind, prefs, [set.column] } with the column locale_prefs or ui_prefs (routes/entities.js PREF_SETS), and { ok:false, pending:true } before the column exists; the recorded values are user data, left open"
     },
+    "POST /api/books-actions": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "action_id",
+          "store",
+          "kind",
+          "state",
+          "client_ref",
+          "body_hash",
+          "total_minor",
+          "currency",
+          "body",
+          "prepared",
+          "reviewed",
+          "closed",
+          "grant_id",
+          "entry_id",
+          "access_ended",
+          "warnings"
+        ],
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "client_ref": {
+            "type": "string"
+          },
+          "body_hash": {
+            "type": "string"
+          },
+          "total_minor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "description": "the body the action was prepared with: the keys of its kind (journal, reverse, lock, unlock, year_close), whitelisted by lib/books-action bodyOf; each kind differs, so the node is not closed"
+          },
+          "prepared": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "name",
+              "firm",
+              "role",
+              "at",
+              "reason"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "firm": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "reviewed": {},
+          "closed": {},
+          "grant_id": {
+            "type": "string"
+          },
+          "entry_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "access_ended": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "words"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "entry": {
+            "type": "object",
+            "required": [
+              "entry_id",
+              "entry_no"
+            ],
+            "properties": {
+              "entry_id": {
+                "type": "string"
+              },
+              "entry_no": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-actions",
+        "body": {
+          "store_id": "11111111-1111-4111-8111-111111111111",
+          "kind": "journal",
+          "body": {
+            "narration": "rent",
+            "date": "2026-11-15",
+            "lines": []
+          },
+          "client_ref": "ref-1"
+        }
+      }
+    },
+    "POST /api/books-actions/:id/accept": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "action",
+          "entry"
+        ],
+        "properties": {
+          "action": {
+            "type": "object",
+            "required": [
+              "action_id",
+              "store",
+              "kind",
+              "state",
+              "client_ref",
+              "body_hash",
+              "total_minor",
+              "currency",
+              "body",
+              "prepared",
+              "reviewed",
+              "closed",
+              "grant_id",
+              "entry_id",
+              "access_ended"
+            ],
+            "properties": {
+              "action_id": {
+                "type": "string"
+              },
+              "store": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "client_ref": {
+                "type": "string"
+              },
+              "body_hash": {
+                "type": "string"
+              },
+              "total_minor": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "body": {
+                "type": "object",
+                "description": "the body the action was prepared with: the keys of its kind (journal, reverse, lock, unlock, year_close), whitelisted by lib/books-action bodyOf; each kind differs, so the node is not closed"
+              },
+              "prepared": {
+                "type": "object",
+                "required": [
+                  "identity_id",
+                  "name",
+                  "firm",
+                  "role",
+                  "at",
+                  "reason"
+                ],
+                "properties": {
+                  "identity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "firm": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "reason": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "reviewed": {},
+              "closed": {},
+              "grant_id": {
+                "type": "string"
+              },
+              "entry_id": {
+                "type": "string"
+              },
+              "access_ended": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "entry": {
+            "type": "object",
+            "required": [
+              "entry_id",
+              "entry_no"
+            ],
+            "properties": {
+              "entry_id": {
+                "type": "string"
+              },
+              "entry_no": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-actions/66666666-6666-4666-8666-666666666666/accept",
+        "body": {
+          "total_minor": 1000,
+          "currency": "INR",
+          "store_id": "11111111-1111-4111-8111-111111111111",
+          "body_hash": "abc123hash"
+        }
+      }
+    },
+    "POST /api/books-actions/:id/return": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "action_id",
+          "store",
+          "kind",
+          "state",
+          "client_ref",
+          "body_hash",
+          "total_minor",
+          "currency",
+          "body",
+          "prepared",
+          "reviewed",
+          "closed",
+          "grant_id",
+          "entry_id",
+          "access_ended"
+        ],
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "client_ref": {
+            "type": "string"
+          },
+          "body_hash": {
+            "type": "string"
+          },
+          "total_minor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "description": "the body the action was prepared with: the keys of its kind (journal, reverse, lock, unlock, year_close), whitelisted by lib/books-action bodyOf; each kind differs, so the node is not closed"
+          },
+          "prepared": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "name",
+              "firm",
+              "role",
+              "at",
+              "reason"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "firm": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "reviewed": {},
+          "closed": {},
+          "grant_id": {
+            "type": "string"
+          },
+          "entry_id": {},
+          "access_ended": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-actions/66666666-6666-4666-8666-666666666666/return",
+        "body": {
+          "reason": "wrong month",
+          "store_id": "11111111-1111-4111-8111-111111111111",
+          "body_hash": "abc123hash"
+        }
+      }
+    },
+    "POST /api/books-actions/:id/review": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "action_id",
+          "store",
+          "kind",
+          "state",
+          "client_ref",
+          "body_hash",
+          "total_minor",
+          "currency",
+          "body",
+          "prepared",
+          "reviewed",
+          "closed",
+          "grant_id",
+          "entry_id",
+          "access_ended"
+        ],
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "client_ref": {
+            "type": "string"
+          },
+          "body_hash": {
+            "type": "string"
+          },
+          "total_minor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "description": "the body the action was prepared with: the keys of its kind (journal, reverse, lock, unlock, year_close), whitelisted by lib/books-action bodyOf; each kind differs, so the node is not closed"
+          },
+          "prepared": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "name",
+              "firm",
+              "role",
+              "at",
+              "reason"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "firm": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "reviewed": {},
+          "closed": {},
+          "grant_id": {
+            "type": "string"
+          },
+          "entry_id": {},
+          "access_ended": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-actions/66666666-6666-4666-8666-666666666666/review",
+        "body": {
+          "store_id": "11111111-1111-4111-8111-111111111111",
+          "body_hash": "abc123hash"
+        }
+      }
+    },
     "POST /api/books-grants": {
       "status": "201",
       "schema": {
@@ -8183,7 +8954,13 @@
             "type": "string"
           },
           "revoked_at": {},
-          "revoked_by": {}
+          "revoked_by": {},
+          "warnings": {
+            "type": "array"
+          },
+          "posting": {},
+          "posting_cap_minor": {},
+          "posting_cap_currency": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -8252,7 +9029,13 @@
           },
           "revoked_by": {
             "type": "string"
-          }
+          },
+          "actions_withdrawn": {
+            "type": "integer"
+          },
+          "posting": {},
+          "posting_cap_minor": {},
+          "posting_cap_currency": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
