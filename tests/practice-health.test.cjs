@@ -40,11 +40,14 @@ t('the band counts equal the filters; the default order is Needs help first, the
   assert.deepStrictEqual([band.health.good, band.health.help, band.bas_due_30], [1, 2, 1]);
   assert.deepStrictEqual(rows.sort(H.byUrgency).map((r) => r.name), ['c', 'b', 'a']);
 });
-t('figures: last completed month against the three before; a mixed-currency client carries no figure', () => {
-  const months = [['2026-07-01', 100], ['2026-08-01', 100], ['2026-09-01', 100], ['2026-10-01', 70], ['2026-11-01', 10]].map(([start, s]) => ({ start, sales: s * 100, income: s * 100, expense: 50 * 100, cogs: 0 }));
-  const f = P.figuresOf({ months, quarter_start: '2026-10-01', currencies: 1, cash_minor: 5 }, '2026-11-15', true);
-  assert.strictEqual(f.sales_trend_pct, -30); assert.strictEqual(P.figuresOf({ months, currencies: 2 }, '2026-11-15', true).sales_trend_pct, null);
-  assert.strictEqual(P.figuresOf({ months, quarter_start: '2026-10-01', currencies: 1 }, '2026-11-15', false).profit_quarter_minor, null); /* costs not consented */
+t('figures: the books own sums are read; a mixed-currency client carries none, no consent to costs hides margin and profit', () => {
+  const row = { sales_trend_pct: -30, last_month_sales_minor: 7000000, gross_margin_pct: 40, profit_quarter_minor: 1300000, loss_months_running: 0, cash_minor: '5', currencies: 1 };
+  const f = P.figuresOf(row, '2026-11-15', true);
+  assert.deepStrictEqual([f.sales_trend_pct, f.gross_margin_pct, f.profit_quarter_minor, f.loss_months_running, f.cash_minor], [-30, 40, 1300000, 0, 5]);
+  const mixed = P.figuresOf(Object.assign({}, row, { currencies: 2 }), '2026-11-15', true);
+  assert.deepStrictEqual([mixed.sales_trend_pct, mixed.profit_quarter_minor, mixed.cash_minor], [null, null, null]);
+  const noCosts = P.figuresOf(row, '2026-11-15', false);
+  assert.deepStrictEqual([noCosts.sales_trend_pct, noCosts.gross_margin_pct, noCosts.profit_quarter_minor, noCosts.loss_months_running], [-30, null, null, null]);
 });
 t('the statement is one statement (no second ; outside a literal) with and without marks', () => {
   [true, false].forEach((marks) => assert.ok(!/;\s*\S/.test(P.statement(marks, ['cash']).replace(/'(?:[^']|'')*'/g, ''))));
