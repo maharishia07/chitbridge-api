@@ -19220,7 +19220,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 368,
+   "line": 369,
    "hash": "4f975cefee8013c8",
    "does": "Optionally signed in, with the shop country -> we list the connectors available for that country with download links -> the connector catalogue.",
    "errors": {
@@ -19317,7 +19317,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 280,
+   "line": 281,
    "hash": "4c1714a8b02753ad",
    "does": "A connector id in the address (public) -> we read its instruction document -> the document as markdown, or not found.",
    "errors": {
@@ -19410,7 +19410,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 387,
+   "line": 388,
    "hash": "af7c9d3016789066",
    "does": "A connector id in the address, optionally signed in -> we pack that connector, with the shop key when signed in -> the connector kit file, or a refusal if not allowed here.",
    "errors": {
@@ -19513,7 +19513,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 252,
+   "line": 253,
    "hash": "833e8fa6a4263243",
    "does": "Signed-in caller -> we read the connector kit manifest -> the kit version, time and file list.",
    "errors": {
@@ -19603,7 +19603,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 262,
+   "line": 263,
    "hash": "348b9c92a4977ecb",
    "does": "A kit file name in the address (signed-in) -> we serve it only when it is on the kit list -> that kit file, or not found.",
    "errors": {
@@ -19699,7 +19699,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1023,
+   "line": 1024,
    "hash": "621e2f2f391396f3",
    "does": "Signed-in shop -> we read its profile and show what we look for, where each piece can come from and how far it is trusted -> the profile map.",
    "errors": {
@@ -19795,7 +19795,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 870,
+   "line": 871,
    "hash": "457ba6a1ba37fd28",
    "does": "Signed-in shop with an optional number of days -> we check each order for an answer from the books system -> one row per order with its state and the counts.",
    "errors": {
@@ -19893,7 +19893,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 741,
+   "line": 742,
    "hash": "70de3a5a5b1f6993",
    "does": "Signed-in shop with an optional page -> we read its connectors and when each was last seen -> a page of connector status.",
    "errors": {
@@ -19991,7 +19991,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1000,
+   "line": 1001,
    "hash": "af4a542c64bc4085",
    "does": "A shop handle in the address (public) -> we read the stock figures that shop shows publicly, if it is not private -> the available quantities, or not found.",
    "errors": {
@@ -20087,7 +20087,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 775,
+   "line": 776,
    "hash": "f97d3783abe3f0d1",
    "does": "Signed-in shop -> we read which data streams exist, which system owns each, and its connectors -> the streams, their owners and connectors.",
    "errors": {
@@ -20872,7 +20872,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 471,
+   "line": 477,
    "hash": "b97d02176fbfb866",
    "does": "A search text of two letters or more (signed-in) -> we check which of the business's stores carry matching items -> the availability, or a refusal if too short.",
    "errors": {
@@ -20976,7 +20976,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 433,
+   "line": 439,
    "hash": "25df31a097bacda5",
    "does": "Signed-in business -> we read the stores in its own network from where it sits -> the list of stores, or not found if the account cannot be read.",
    "errors": {
@@ -35311,7 +35311,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1853,
-   "hash": "7d637baaefe37588",
+   "hash": "50c71ab12164a893",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
     "count": 3,
@@ -35388,7 +35388,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959; cb-api 2026-11-15 PR#1341 stage2 re-sign FIN-116: a bank-line expense may carry the bank-supplied input_tax_minor (new optional key beside tax_invoice, strict body, refused beside a bill/supplier/blocked-credit); B5-03 tax_invoice held enforced per the pack taxInvoice(gross), law GST Act s.29-70 (AU, tax invoice for a credit above the threshold); refusals ride the existing 422 BOOKS_REFUSED (no new code, none in ERROR-CODES); helper-only change, routes/books.js untouched; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37702,7 +37702,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1843,
-   "hash": "36eb5b5b5a062279",
+   "hash": "81379a2e562beb22",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -37778,7 +37778,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959; cb-api 2026-11-15 PR#1341 stage2 re-sign FIN-116: a bank-line expense may carry the bank-supplied input_tax_minor (new optional key beside tax_invoice, strict body, refused beside a bill/supplier/blocked-credit); B5-03 tax_invoice held enforced per the pack taxInvoice(gross), law GST Act s.29-70 (AU, tax invoice for a credit above the threshold); refusals ride the existing 422 BOOKS_REFUSED (no new code, none in ERROR-CODES); helper-only change, routes/books.js untouched; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -49769,7 +49769,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 648,
+   "line": 649,
    "hash": "273953344be0a763",
    "does": "A connector id in the address (signed-in owner, never a key) -> we approve its enrolment so it may connect -> the enrolment now approved.",
    "errors": {
@@ -49882,7 +49882,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 978,
+   "line": 979,
    "hash": "aa16ade8f3f0dd21",
    "does": "A shop handle and optional codes (public) -> we ask any listening connector of that shop to re-read stock -> whether anyone is listening and an ask id.",
    "errors": {
@@ -49977,7 +49977,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 694,
+   "line": 695,
    "hash": "0672ad19cc37824b",
    "does": "A chit id with kind, system, reference and outcome from a connector key -> we note on our copy of the chit what the books system did with it -> the saved record.",
    "errors": {
@@ -50077,7 +50077,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 837,
+   "line": 838,
    "hash": "d86df23c95c37d1d",
    "does": "A chit id and on or off (signed-in person, never a key) -> we mark that order as not meant for the books, or lift it, with who and when -> a skipped true or false.",
    "errors": {
@@ -50182,7 +50182,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 466,
+   "line": 467,
    "hash": "f354f8f23256a292",
    "does": "A connector's name, host and state sent with its key -> we record that this connector is alive -> the saved status.",
    "errors": {
@@ -50283,7 +50283,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1060,
+   "line": 1061,
    "hash": "6627938ea0d3c11c",
    "does": "Shop profile fields read from their system, sent with a connector key -> we keep them with their source, refusing a different tax number -> the profile now held.",
    "errors": {
@@ -50919,7 +50919,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 308,
-   "hash": "97143eedfb758255",
+   "hash": "62b0989a419933b9",
    "does": "The design to reissue for (owner only, not an assistant) -> we issue fresh claim codes for its stores -> the new codes.",
    "errors": {
     "count": 0,
@@ -50993,7 +50993,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1315 stage2 R2-01: handler diff read; a claimed store (last_active_at set) answers 403 NETWORK_STORE_CLAIMED (registered with its shopkeeper sentence in ERROR-CODES.md and error-codes.json, tested), 404 and 200 unchanged, no raw text; 13 columns true from the CI register",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1315 stage2 R2-01: handler diff read; a claimed store (last_active_at set) answers 403 NETWORK_STORE_CLAIMED (registered with its shopkeeper sentence in ERROR-CODES.md and error-codes.json, tested), 404 and 200 unchanged, no raw text; 13 columns true from the CI register; cb-api 2026-11-15 PR#1337 stage2 re-sign R2-01c: reissue folds the claim test (created_by, last_active_at IS NULL) into the UPDATE, zero rows answers the same 403 NETWORK_STORE_CLAIMED; no new code, no status or key change, input and output schemas unchanged, 13 columns true; handler diff read",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64282,8 +64282,11 @@
     "codes": []
    },
    "reads": [
+    "books_payment",
     "chit_header",
-    "chit_status"
+    "chit_status",
+    "journal_entry",
+    "state_log"
    ],
    "writes": [
     "chit_status",
@@ -65350,7 +65353,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 801,
+   "line": 802,
    "hash": "2a1be8be966e3ef7",
    "does": "Which system owns each data stream (signed-in person, never a key) -> we save those owners for the shop -> the streams as saved.",
    "errors": {
