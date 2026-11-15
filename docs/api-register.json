@@ -5,8 +5,8 @@
   "routes": 649,
   "no_does": 0,
   "not_started": 0,
-  "partial": 56,
-  "meets": 593,
+  "partial": 57,
+  "meets": 592,
   "columns": {
    "strict_input": {
     "applies": 332,
@@ -5317,7 +5317,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1014,
-   "hash": "7c2da9eab40a0454",
+   "hash": "89b90f682c6fe97e",
    "does": "A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).",
    "errors": {
     "count": 3,
@@ -5394,10 +5394,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "89b90f682c6fe97e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-finance-cash.js"
    ],
