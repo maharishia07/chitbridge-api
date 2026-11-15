@@ -595,6 +595,7 @@ const ENGINE_OTHER = [
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
+  'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
   'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
