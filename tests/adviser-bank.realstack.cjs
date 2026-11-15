@@ -138,7 +138,7 @@ async function main() {
     const looks = await grants.looks(M1.id, { limit: 200 });
     const lp = looks.filter((x) => x.preset === 'adviser' && /POST \/events/.test(x.route_pattern));
     ok('4 the owner\'s looks show POST /events by A, firm P', lp.length >= 1 && lp[0].actor_name === A.display_name && lp[0].actor_entity_name === P.name, JSON.stringify(lp.slice(0, 1)));
-    const firstAlerts = await withEntity(M1.id, (h) => h.query("SELECT count(*)::int AS n FROM access_events WHERE entity_id = $1 AND action = 'books_delegated_first' AND after ->> 'grant_id' = $2", [M1.id, g1.body.grant_id]));
+    const firstAlerts = await withEntity(M1.id, (h) => h.query("SELECT count(*)::int AS n FROM access_events WHERE entity_id = $1 AND action = 'books_delegated_first' AND after_value ->> 'grant_id' = $2", [M1.id, g1.body.grant_id]));
     ok('4 ONE books_delegated_first record for the grant, however many writes', firstAlerts.rows[0].n === 1, JSON.stringify(firstAlerts.rows));
 
     /* 5 the auditor */
