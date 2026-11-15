@@ -365,6 +365,15 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/books-grants/practice": {
+      "file": "books-grants.js",
+      "trips": 3,
+      "wire": 10,
+      "fired": false,
+      "status": 200,
+      "extra": true,
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Measure on SIT with 150 clients."
+    },
     "GET /api/books-grants/log": {
       "file": "books-grants.js",
       "trips": 1,

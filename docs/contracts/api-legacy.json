@@ -67842,1194 +67842,6 @@
     }
    ]
   },
-  "GET /api/books-grants": {
-   "answers": [
-    {
-     "scenario": "a-key-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "list-not-switched-on",
-     "status": 503,
-     "body_keys": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     }
-    }
-   ]
-  },
-  "GET /api/books-grants/consent": {
-   "answers": [
-    {
-     "scenario": "a-key-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "consent-asked-twice",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "can_see_costs must be a string.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "can_see_costs",
-      "errors": [
-       {
-        "field": "can_see_costs",
-        "code": "WRONG_VALUE",
-        "detail": "can_see_costs must be a string."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "can_see_costs must be a string.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "can_see_costs",
-      "errors": [
-       {
-        "field": "can_see_costs",
-        "code": "WRONG_VALUE",
-        "detail": "can_see_costs must be a string."
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "GET /api/books-grants/log": {
-   "answers": [
-    {
-     "scenario": "a-key-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "log-limit-asked-twice",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "limit must be a string.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "limit",
-      "errors": [
-       {
-        "field": "limit",
-        "code": "WRONG_VALUE",
-        "detail": "limit must be a string."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "limit must be a string.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "limit",
-      "errors": [
-       {
-        "field": "limit",
-        "code": "WRONG_VALUE",
-        "detail": "limit must be a string."
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "log-not-switched-on",
-     "status": 503,
-     "body_keys": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     }
-    }
-   ]
-  },
-  "PATCH /api/books-grants/:id": {
-   "answers": [
-    {
-     "scenario": "a-key-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "bad-id",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "id",
-      "errors": [
-       {
-        "field": "id",
-        "code": "WRONG_VALUE",
-        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "id",
-      "errors": [
-       {
-        "field": "id",
-        "code": "WRONG_VALUE",
-        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 404,
-     "body_keys": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "change-unknown-grant",
-     "status": 404,
-     "body_keys": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "change-past-end-date",
-     "status": 422,
-     "body_keys": {
-      "error": "Pick an end date in the future.",
-      "message": "Pick an end date in the future.",
-      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
-      "title": "End date not allowed",
-      "status": 422,
-      "code": "BOOKS_GRANT_EXPIRY_INVALID",
-      "detail": "Pick an end date in the future.",
-      "hint": "Choose a date between tomorrow and 36 months from today.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Pick an end date in the future.",
-      "message": "Pick an end date in the future.",
-      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
-      "title": "End date not allowed",
-      "status": 422,
-      "code": "BOOKS_GRANT_EXPIRY_INVALID",
-      "detail": "Pick an end date in the future.",
-      "hint": "Choose a date between tomorrow and 36 months from today.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "change-not-switched-on",
-     "status": 503,
-     "body_keys": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "change-db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    }
-   ]
-  },
-  "POST /api/books-grants": {
-   "answers": [
-    {
-     "scenario": "a-key-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "grantee",
-      "errors": [
-       {
-        "field": "grantee",
-        "code": "MISSING_FIELD",
-        "detail": "grantee is needed."
-       },
-       {
-        "field": "consent",
-        "code": "MISSING_FIELD",
-        "detail": "consent is needed."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "grantee",
-      "errors": [
-       {
-        "field": "grantee",
-        "code": "MISSING_FIELD",
-        "detail": "grantee is needed."
-       },
-       {
-        "field": "consent",
-        "code": "MISSING_FIELD",
-        "detail": "consent is needed."
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "grantee",
-      "errors": [
-       {
-        "field": "grantee",
-        "code": "MISSING_FIELD",
-        "detail": "grantee is needed."
-       },
-       {
-        "field": "consent",
-        "code": "MISSING_FIELD",
-        "detail": "consent is needed."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "grantee",
-      "errors": [
-       {
-        "field": "grantee",
-        "code": "MISSING_FIELD",
-        "detail": "grantee is needed."
-       },
-       {
-        "field": "consent",
-        "code": "MISSING_FIELD",
-        "detail": "consent is needed."
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "give-no-consent",
-     "status": 422,
-     "body_keys": {
-      "error": "Read what your auditor can see, then say yes.",
-      "message": "Read what your auditor can see, then say yes.",
-      "type": "https://chitbridge.com/problems/books_grant_consent_needed",
-      "title": "Say yes to the consent",
-      "status": 422,
-      "code": "BOOKS_GRANT_CONSENT_NEEDED",
-      "detail": "Read what your auditor can see, then say yes.",
-      "hint": "Tick the yes under the plain words and send again.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Read what your auditor can see, then say yes.",
-      "message": "Read what your auditor can see, then say yes.",
-      "type": "https://chitbridge.com/problems/books_grant_consent_needed",
-      "title": "Say yes to the consent",
-      "status": 422,
-      "code": "BOOKS_GRANT_CONSENT_NEEDED",
-      "detail": "Read what your auditor can see, then say yes.",
-      "hint": "Tick the yes under the plain words and send again.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "give-past-end-date",
-     "status": 422,
-     "body_keys": {
-      "error": "Pick an end date in the future.",
-      "message": "Pick an end date in the future.",
-      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
-      "title": "End date not allowed",
-      "status": 422,
-      "code": "BOOKS_GRANT_EXPIRY_INVALID",
-      "detail": "Pick an end date in the future.",
-      "hint": "Choose a date between tomorrow and 36 months from today.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Pick an end date in the future.",
-      "message": "Pick an end date in the future.",
-      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
-      "title": "End date not allowed",
-      "status": 422,
-      "code": "BOOKS_GRANT_EXPIRY_INVALID",
-      "detail": "Pick an end date in the future.",
-      "hint": "Choose a date between tomorrow and 36 months from today.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "give-too-short-a-purpose",
-     "status": 422,
-     "body_keys": {
-      "error": "Say why in 3 to 300 characters.",
-      "message": "Say why in 3 to 300 characters.",
-      "type": "https://chitbridge.com/problems/books_grant_purpose_invalid",
-      "title": "Purpose too short or long",
-      "status": 422,
-      "code": "BOOKS_GRANT_PURPOSE_INVALID",
-      "detail": "Say why in 3 to 300 characters.",
-      "hint": "Write the reason in a few words.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Say why in 3 to 300 characters.",
-      "message": "Say why in 3 to 300 characters.",
-      "type": "https://chitbridge.com/problems/books_grant_purpose_invalid",
-      "title": "Purpose too short or long",
-      "status": 422,
-      "code": "BOOKS_GRANT_PURPOSE_INVALID",
-      "detail": "Say why in 3 to 300 characters.",
-      "hint": "Write the reason in a few words.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "give-not-the-parent",
-     "status": 422,
-     "body_keys": {
-      "error": "That business is not your network parent, so it cannot be given your books.",
-      "message": "That business is not your network parent, so it cannot be given your books.",
-      "type": "https://chitbridge.com/problems/books_grant_no_parent",
-      "title": "Not your network parent",
-      "status": 422,
-      "code": "BOOKS_GRANT_NO_PARENT",
-      "detail": "That business is not your network parent, so it cannot be given your books.",
-      "hint": "Choose the business that sits above you in your network.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "That business is not your network parent, so it cannot be given your books.",
-      "message": "That business is not your network parent, so it cannot be given your books.",
-      "type": "https://chitbridge.com/problems/books_grant_no_parent",
-      "title": "Not your network parent",
-      "status": 422,
-      "code": "BOOKS_GRANT_NO_PARENT",
-      "detail": "That business is not your network parent, so it cannot be given your books.",
-      "hint": "Choose the business that sits above you in your network.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "give-already-open",
-     "status": 409,
-     "body_keys": {
-      "error": "This business can already read your books. Change the end date instead.",
-      "message": "This business can already read your books. Change the end date instead.",
-      "type": "https://chitbridge.com/problems/books_grant_exists",
-      "title": "Access already given",
-      "status": 409,
-      "code": "BOOKS_GRANT_EXISTS",
-      "detail": "This business can already read your books. Change the end date instead.",
-      "hint": "Open the access and edit its end date.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "This business can already read your books. Change the end date instead.",
-      "message": "This business can already read your books. Change the end date instead.",
-      "type": "https://chitbridge.com/problems/books_grant_exists",
-      "title": "Access already given",
-      "status": 409,
-      "code": "BOOKS_GRANT_EXISTS",
-      "detail": "This business can already read your books. Change the end date instead.",
-      "hint": "Open the access and edit its end date.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "give-not-switched-on",
-     "status": 503,
-     "body_keys": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "give-db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    }
-   ]
-  },
-  "POST /api/books-grants/:id/revoke": {
-   "answers": [
-    {
-     "scenario": "a-key-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Sign in as the owner to change who can read your books.",
-      "message": "Sign in as the owner to change who can read your books.",
-      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
-      "title": "Sign in as the owner",
-      "status": 403,
-      "code": "SIGN_IN_FOR_BOOKS_GRANT",
-      "detail": "Sign in as the owner to change who can read your books.",
-      "hint": "A counter or device key cannot give or end access.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 403,
-     "body_keys": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Forbidden",
-      "code": "OWNER_ONLY",
-      "may": false,
-      "why": "Only the owner can change who reads these books.",
-      "message": "Only the owner can change who reads these books.",
-      "type": "https://chitbridge.com/problems/owner_only",
-      "title": "Owner only",
-      "status": 403,
-      "detail": "Only the owner can change who reads these books.",
-      "hint": "Ask the owner of the shop to do it.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "bad-id",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "id",
-      "errors": [
-       {
-        "field": "id",
-        "code": "WRONG_VALUE",
-        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "id",
-      "errors": [
-       {
-        "field": "id",
-        "code": "WRONG_VALUE",
-        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 404,
-     "body_keys": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "revoke-unknown-grant",
-     "status": 404,
-     "body_keys": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "There is no open access with that number.",
-      "message": "There is no open access with that number.",
-      "type": "https://chitbridge.com/problems/not_found",
-      "title": "Not found",
-      "status": 404,
-      "code": "NOT_FOUND",
-      "detail": "There is no open access with that number.",
-      "hint": "Check the address or the name and try again.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "revoke-not-switched-on",
-     "status": 503,
-     "body_keys": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Access for your auditor is not switched on yet.",
-      "message": "Access for your auditor is not switched on yet.",
-      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
-      "title": "Not switched on yet",
-      "status": 503,
-      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
-      "detail": "Access for your auditor is not switched on yet.",
-      "hint": "Try again later.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "revoke-db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong on our side. Nothing was changed.",
-      "type": "https://chitbridge.com/problems/internal",
-      "title": "Something went wrong",
-      "status": 500,
-      "code": "INTERNAL",
-      "detail": "Something went wrong on our side. Nothing was changed.",
-      "hint": "If it keeps happening, tell us the request id.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "revoke-with-a-body-it-does-not-read",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "surprise is not accepted here.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "surprise",
-      "errors": [
-       {
-        "field": "surprise",
-        "code": "UNKNOWN_FIELD",
-        "detail": "surprise is not accepted here."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "surprise is not accepted here.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "surprise",
-      "errors": [
-       {
-        "field": "surprise",
-        "code": "UNKNOWN_FIELD",
-        "detail": "surprise is not accepted here."
-       }
-      ]
-     }
-    }
-   ]
-  },
   "GET /api/books-actions": {
    "answers": [
     {
@@ -72288,6 +71100,1276 @@
       "detail": "Something went wrong on our side.",
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books-grants": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books-grants/consent": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "consent-asked-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "can_see_costs must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "can_see_costs",
+      "errors": [
+       {
+        "field": "can_see_costs",
+        "code": "WRONG_VALUE",
+        "detail": "can_see_costs must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "can_see_costs must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "can_see_costs",
+      "errors": [
+       {
+        "field": "can_see_costs",
+        "code": "WRONG_VALUE",
+        "detail": "can_see_costs must be a string."
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "GET /api/books-grants/log": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "log-limit-asked-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "limit must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "limit must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be a string."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "log-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books-grants/practice": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only a firm's owner, adviser or auditor can read the practice.",
+      "message": "Only a firm's owner, adviser or auditor can read the practice.",
+      "type": "https://chitbridge.com/problems/books_grant_not_for_you",
+      "title": "Not for this login",
+      "status": 403,
+      "code": "BOOKS_GRANT_NOT_FOR_YOU",
+      "detail": "Only a firm's owner, adviser or auditor can read the practice.",
+      "hint": "Sign in as the owner or as an auditor.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only a firm's owner, adviser or auditor can read the practice.",
+      "message": "Only a firm's owner, adviser or auditor can read the practice.",
+      "type": "https://chitbridge.com/problems/books_grant_not_for_you",
+      "title": "Not for this login",
+      "status": 403,
+      "code": "BOOKS_GRANT_NOT_FOR_YOU",
+      "detail": "Only a firm's owner, adviser or auditor can read the practice.",
+      "hint": "Sign in as the owner or as an auditor.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "PATCH /api/books-grants/:id": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "id",
+      "errors": [
+       {
+        "field": "id",
+        "code": "WRONG_VALUE",
+        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "id",
+      "errors": [
+       {
+        "field": "id",
+        "code": "WRONG_VALUE",
+        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "change-unknown-grant",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "change-past-end-date",
+     "status": 422,
+     "body_keys": {
+      "error": "Pick an end date in the future.",
+      "message": "Pick an end date in the future.",
+      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
+      "title": "End date not allowed",
+      "status": 422,
+      "code": "BOOKS_GRANT_EXPIRY_INVALID",
+      "detail": "Pick an end date in the future.",
+      "hint": "Choose a date between tomorrow and 36 months from today.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Pick an end date in the future.",
+      "message": "Pick an end date in the future.",
+      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
+      "title": "End date not allowed",
+      "status": 422,
+      "code": "BOOKS_GRANT_EXPIRY_INVALID",
+      "detail": "Pick an end date in the future.",
+      "hint": "Choose a date between tomorrow and 36 months from today.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "change-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "change-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books-grants": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "grantee",
+      "errors": [
+       {
+        "field": "grantee",
+        "code": "MISSING_FIELD",
+        "detail": "grantee is needed."
+       },
+       {
+        "field": "consent",
+        "code": "MISSING_FIELD",
+        "detail": "consent is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "grantee",
+      "errors": [
+       {
+        "field": "grantee",
+        "code": "MISSING_FIELD",
+        "detail": "grantee is needed."
+       },
+       {
+        "field": "consent",
+        "code": "MISSING_FIELD",
+        "detail": "consent is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "grantee",
+      "errors": [
+       {
+        "field": "grantee",
+        "code": "MISSING_FIELD",
+        "detail": "grantee is needed."
+       },
+       {
+        "field": "consent",
+        "code": "MISSING_FIELD",
+        "detail": "consent is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "grantee",
+      "errors": [
+       {
+        "field": "grantee",
+        "code": "MISSING_FIELD",
+        "detail": "grantee is needed."
+       },
+       {
+        "field": "consent",
+        "code": "MISSING_FIELD",
+        "detail": "consent is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "give-no-consent",
+     "status": 422,
+     "body_keys": {
+      "error": "Read what your auditor can see, then say yes.",
+      "message": "Read what your auditor can see, then say yes.",
+      "type": "https://chitbridge.com/problems/books_grant_consent_needed",
+      "title": "Say yes to the consent",
+      "status": 422,
+      "code": "BOOKS_GRANT_CONSENT_NEEDED",
+      "detail": "Read what your auditor can see, then say yes.",
+      "hint": "Tick the yes under the plain words and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Read what your auditor can see, then say yes.",
+      "message": "Read what your auditor can see, then say yes.",
+      "type": "https://chitbridge.com/problems/books_grant_consent_needed",
+      "title": "Say yes to the consent",
+      "status": 422,
+      "code": "BOOKS_GRANT_CONSENT_NEEDED",
+      "detail": "Read what your auditor can see, then say yes.",
+      "hint": "Tick the yes under the plain words and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "give-past-end-date",
+     "status": 422,
+     "body_keys": {
+      "error": "Pick an end date in the future.",
+      "message": "Pick an end date in the future.",
+      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
+      "title": "End date not allowed",
+      "status": 422,
+      "code": "BOOKS_GRANT_EXPIRY_INVALID",
+      "detail": "Pick an end date in the future.",
+      "hint": "Choose a date between tomorrow and 36 months from today.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Pick an end date in the future.",
+      "message": "Pick an end date in the future.",
+      "type": "https://chitbridge.com/problems/books_grant_expiry_invalid",
+      "title": "End date not allowed",
+      "status": 422,
+      "code": "BOOKS_GRANT_EXPIRY_INVALID",
+      "detail": "Pick an end date in the future.",
+      "hint": "Choose a date between tomorrow and 36 months from today.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "give-too-short-a-purpose",
+     "status": 422,
+     "body_keys": {
+      "error": "Say why in 3 to 300 characters.",
+      "message": "Say why in 3 to 300 characters.",
+      "type": "https://chitbridge.com/problems/books_grant_purpose_invalid",
+      "title": "Purpose too short or long",
+      "status": 422,
+      "code": "BOOKS_GRANT_PURPOSE_INVALID",
+      "detail": "Say why in 3 to 300 characters.",
+      "hint": "Write the reason in a few words.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Say why in 3 to 300 characters.",
+      "message": "Say why in 3 to 300 characters.",
+      "type": "https://chitbridge.com/problems/books_grant_purpose_invalid",
+      "title": "Purpose too short or long",
+      "status": 422,
+      "code": "BOOKS_GRANT_PURPOSE_INVALID",
+      "detail": "Say why in 3 to 300 characters.",
+      "hint": "Write the reason in a few words.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "give-not-the-parent",
+     "status": 422,
+     "body_keys": {
+      "error": "That business is not your network parent, so it cannot be given your books.",
+      "message": "That business is not your network parent, so it cannot be given your books.",
+      "type": "https://chitbridge.com/problems/books_grant_no_parent",
+      "title": "Not your network parent",
+      "status": 422,
+      "code": "BOOKS_GRANT_NO_PARENT",
+      "detail": "That business is not your network parent, so it cannot be given your books.",
+      "hint": "Choose the business that sits above you in your network.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "That business is not your network parent, so it cannot be given your books.",
+      "message": "That business is not your network parent, so it cannot be given your books.",
+      "type": "https://chitbridge.com/problems/books_grant_no_parent",
+      "title": "Not your network parent",
+      "status": 422,
+      "code": "BOOKS_GRANT_NO_PARENT",
+      "detail": "That business is not your network parent, so it cannot be given your books.",
+      "hint": "Choose the business that sits above you in your network.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "give-already-open",
+     "status": 409,
+     "body_keys": {
+      "error": "This business can already read your books. Change the end date instead.",
+      "message": "This business can already read your books. Change the end date instead.",
+      "type": "https://chitbridge.com/problems/books_grant_exists",
+      "title": "Access already given",
+      "status": 409,
+      "code": "BOOKS_GRANT_EXISTS",
+      "detail": "This business can already read your books. Change the end date instead.",
+      "hint": "Open the access and edit its end date.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This business can already read your books. Change the end date instead.",
+      "message": "This business can already read your books. Change the end date instead.",
+      "type": "https://chitbridge.com/problems/books_grant_exists",
+      "title": "Access already given",
+      "status": 409,
+      "code": "BOOKS_GRANT_EXISTS",
+      "detail": "This business can already read your books. Change the end date instead.",
+      "hint": "Open the access and edit its end date.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "give-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "give-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books-grants/:id/revoke": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in as the owner to change who can read your books.",
+      "message": "Sign in as the owner to change who can read your books.",
+      "type": "https://chitbridge.com/problems/sign_in_for_books_grant",
+      "title": "Sign in as the owner",
+      "status": 403,
+      "code": "SIGN_IN_FOR_BOOKS_GRANT",
+      "detail": "Sign in as the owner to change who can read your books.",
+      "hint": "A counter or device key cannot give or end access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change who reads these books.",
+      "message": "Only the owner can change who reads these books.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change who reads these books.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "id",
+      "errors": [
+       {
+        "field": "id",
+        "code": "WRONG_VALUE",
+        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "id",
+      "errors": [
+       {
+        "field": "id",
+        "code": "WRONG_VALUE",
+        "detail": "id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "revoke-unknown-grant",
+     "status": 404,
+     "body_keys": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "There is no open access with that number.",
+      "message": "There is no open access with that number.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "There is no open access with that number.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "revoke-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "revoke-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "revoke-with-a-body-it-does-not-read",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
      }
     }
    ]

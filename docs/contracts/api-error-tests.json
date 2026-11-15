@@ -261,6 +261,11 @@
   500,
   503
  ],
+ "GET /api/books-grants/practice": [
+  401,
+  403,
+  500
+ ],
  "GET /api/books/accounts": [
   401,
   404,
