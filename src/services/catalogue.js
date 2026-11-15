@@ -36,35 +36,46 @@ async function listItems({ entityId, tier = null }) {
   const { rows } = await pool.query(`select * from cb_catalogue_item where ${where} order by sort_by, name`, params);
   return rows;
 }
-async function createItem(b) {
-  needMoney(b.entityId, b.currencyCode);
+/** the sixteen insert values of one item, in the column order of createItem's insert (defaults as they were) */
+function itemValues(input) {
+  return [
+    input.entityId,
+    input.name || '',
+    input.price || 0,
+    input.currencyCode,
+    input.priceType || 'Business',
+    input.availableStock || '',
+    input.section || '',
+    input.category || ''
+  ].concat(itemOfferValues(input));
+}
+/** the last eight insert values of one item: stock flag, offer and discount, sort order, and the three json columns */
+function itemOfferValues(input) {
+  return [
+    !!input.outOfStock,
+    input.offer || null,
+    input.discountedPrice || 0,
+    input.discountPercentage || 0,
+    input.sortBy || 0,
+    input.fieldJsonData || null,
+    input.taxJsonData || null,
+    input.imageJsonData || null
+  ];
+}
+/** add one item for a shop: its money must be stated (needMoney), then one insert; returns the new row */
+async function createItem(input) {
+  needMoney(input.entityId, input.currencyCode);
   const { rows } = await pool.query(
     `insert into cb_catalogue_item
        (entity_id,name,price,currency_code,price_type,available_stock,section,category,
         out_of_stock,offer,discounted_price,discount_percentage,sort_by,
         field_json_data,tax_json_data,image_json_data)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning *`,
-    [
-      b.entityId,
-      b.name || '',
-      b.price || 0,
-      b.currencyCode,
-      b.priceType || 'Business',
-      b.availableStock || '',
-      b.section || '',
-      b.category || '',
-      !!b.outOfStock,
-      b.offer || null,
-      b.discountedPrice || 0,
-      b.discountPercentage || 0,
-      b.sortBy || 0,
-      b.fieldJsonData || null,
-      b.taxJsonData || null,
-      b.imageJsonData || null
-    ]
+    itemValues(input)
   );
   return rows[0];
 }
+/** change the named columns of one item (only the allowed ones); 400 when nothing is named, 404 when the item is gone */
 async function updateItem(itemId, patch) {
   const allowed = [
     'name',
