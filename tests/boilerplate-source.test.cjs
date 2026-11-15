@@ -57,9 +57,9 @@ const t = async (name, fn) => { script = []; calls = []; try { await fn(); conso
     await assert.rejects(SRC.registerSource({ title: 'x' }), (e) => e.status === 400 && /source_key required/.test(e.message)); assert.strictEqual(calls.length, 0);
   });
   await t('registerSource: a new key mints the sealed entity from the deterministic .local email, then writes the standard', async () => {
-    script = [{ rows: [] }, { rows: [{ identity_id: 'I1', bridge_id: 'B1', display_name: 'GST rates' }] }, { rows: [] }];
+    script = [{ rows: [] }, { rows: [{ identity_id: 'I1', bridge_id: 'B1', display_name: 'GST rates' }] }, { rows: [] }, { rows: [] }];
     const r = await SRC.registerSource({ source_key: 'gst', title: 'GST rates', facet: 'tax' });
-    assert.deepStrictEqual(calls[0].p, ['src.gst@chitbridge.local']); assert.ok(/INSERT INTO identities/.test(calls[1].sql)); assert.ok(/INSERT INTO standard_source/.test(calls[2].sql));
+    assert.deepStrictEqual(calls[0].p, ['src.gst@chitbridge.local']); assert.ok(/INSERT INTO identities/.test(calls[1].sql)); assert.ok(calls[2].sql.includes('set_config') && calls[2].p[0] === 'I1'); /* DB-103: the source entity is bound for the one write */ assert.ok(/INSERT INTO standard_source/.test(calls[3].sql));
     assert.deepStrictEqual(r, { source_key: 'gst', kind: 'standard', facet: 'tax', entity: { identity_id: 'I1', bridge_id: 'B1', display_name: 'GST rates' } });
   });
   await t('registerSource again with a new title is a RENAME of one field, never a second entity', async () => {

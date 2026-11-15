@@ -9,6 +9,8 @@
  * a shop whose registration is unknown or unregistered or composition, a country with several tax heads) · an unknown key is still refused (the web sends kind, never type, and no ref/currency).
  * Run: node tests/books-bank-line-tax.test.cjs   (BOOKS_ENGINES_SRC=<chitbridge-engines/src>)
  * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
+ * UNIT      lib/books-bank-tax.js
+ * MIN unit-per-rule · refusal-path · fail-closed
  */
 'use strict';
 const { rig, counter, SUPP, SHOP } = require('./support/books-manual-rig.cjs');
