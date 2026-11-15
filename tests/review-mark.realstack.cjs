@@ -175,6 +175,16 @@ async function main() {
     const thAud = await asAud('GET', '/api/marks/' + thread + '/messages');
     ok('6c the auditor reads the same thread under the grant (READ ONLY)', thAud.status === 200 && thAud.body.messages.length === 3 && thAud.body.messages[2].mine === true, JSON.stringify(thAud));
     /* 7 */
+    /* 6b (l16-marks-2) THE BELL HEARS THE MARKS: mark_notices as cb_app under RLS, each side's own scope */
+    const noticesFor = async (who) => (await withEntity(who, (h) => h.query('SELECT * FROM mark_notices(90, 50)'))).rows;
+    const ownN = await noticesFor(M1.id), firmN = await noticesFor(P.id), strN = await noticesFor(M3.id);
+    ok('6b1 the owner gets a notice for the auditor Query, naming the entry (number, date, amount)', ownN.some((n) => n.notice_kind === 'query' && n.subject_id === E2.entry_id && !!n.entry_no && String(n.total_minor) === '10000' && n.currency === 'INR' && !!n.posting_date), JSON.stringify(ownN));
+    ok('6b2 the owner gets the reviewer replies (two) and not his own', ownN.filter((n) => n.notice_kind === 'reply').length === 2 && ownN.every((n) => n.note !== 'It was a cash sale for the day.'), JSON.stringify(ownN.map((n) => n.notice_kind + ':' + n.note)));
+    ok('6b3 the auditor firm gets one notice, for the owner reply, naming the entry; its own words ring nothing', firmN.length === 1 && firmN[0].notice_kind === 'reply' && firmN[0].note === 'It was a cash sale for the day.' && !!firmN[0].entry_no, JSON.stringify(firmN));
+    ok('6b4 a stranger store sees no notice at all', strN.length === 0, JSON.stringify(strN));
+    /* 6b5 the notices are read by the route's own helper too (feed rows) */
+    const helper = await require(path.join(API, 'lib', 'mark-notices')).noticesOf(M1.id, 50);
+    ok('6b5 the feed helper turns them into bell rows (mark_query / mark_reply with mark_entry)', helper.some((r) => r.action === 'mark_query' && r.mark_entry && !!r.mark_entry.entry_no) && helper.filter((r) => r.action === 'mark_reply').length === 2, JSON.stringify(helper));
     const rows7 = await withEntity(M1.id, (h) => h.query(`SELECT chit_id, subject_type, entity_id, thread_type, sender_entity_id FROM chit_messages WHERE subject_type = 'mark' AND subject_id = $1`, [thread]));
     ok('7 three reply rows, one copy each, no chit, M1 scope, external, the sender is the real person\'s own entity', rows7.rows.length === 3 && rows7.rows.every((r) => r.chit_id === null && r.entity_id === M1.id && r.thread_type === 'external') && rows7.rows.some((r) => r.sender_entity_id === P.id), JSON.stringify(rows7.rows));
 
@@ -253,6 +263,8 @@ async function main() {
     let revokedFn = null;
     try { await calls(fnSql, [M1.id, E2.entry_id, U.identity_id, P.id, liveGrant], P.id); } catch (e) { revokedFn = e; }
     ok('13e the DATABASE FUNCTION refuses the revoked grant too, not only the route (42501)', !!revokedFn && revokedFn.code === '42501' && (await marksOf(M1)) === n13, revokedFn && revokedFn.message);
+    const firmAfter = await noticesFor(P.id), ownAfter = await noticesFor(M1.id);
+    ok('13g a REVOKED grant stops the firm notices (none), while the owner keeps his own', firmAfter.length === 0 && ownAfter.some((n) => n.notice_kind === 'query'), JSON.stringify({ firmAfter, own: ownAfter.length }));
     const readAfter = await asAud('GET', '/api/marks?adopter=acc.audit&ids=' + E2.entry_id);
     ok('13f and the auditor can no longer read either (the same look)', readAfter.status === 403, JSON.stringify(readAfter));
   } finally {
