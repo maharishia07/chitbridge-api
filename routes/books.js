@@ -49,6 +49,8 @@ function checked(route) {
 }
 const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
+/** an adviser firm's person acting under a grant: { grant_id, name, firm } for the record's stamp (b871); null for the owner's own request */
+const actingOf = (req) => (req.acting_for_grant && req.identity && req.identity.acting_preset === 'adviser' ? { grant_id: req.acting_for_grant, name: req.identity.display_name, firm: req.acting_firm_name || null } : null);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** API-25: an id in the query or body that is no uuid names no row: the same 404 NOT_FOUND the router guard (lib/id-guard) gives an address id */
@@ -126,7 +128,7 @@ function noKey(req, res, next) {
   next();
 }
 function owner(req, res, next) {
-  if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser')) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
+  if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
@@ -555,6 +557,14 @@ function pageQ(query) {
 }
 const cursorOf = (next) => (next ? next.date + '|' + next.no : null);
 
+/** l16 adviser-bank: each entry an ADVISER's person posted (journal_entry.grant_id) gets `posted_by` { name, firm } — kept at the write (b871), so the owner reads it with no read into the firm's identities; null for every other entry. One read, only when b871 has run and an entry carries a grant. */
+async function postedByIn(h, e, entries) {
+  for (const item of entries) item.posted_by = null;
+  if (!entries.length || !(await require('../lib/schema').hasColumn('journal_entry', 'by_firm'))) return;
+  const rows = (await h.query('SELECT entry_id, by_name, by_firm FROM journal_entry WHERE entity_id = $1 AND entry_id = ANY($2::uuid[]) AND grant_id IS NOT NULL', [e, entries.map((item) => item.entry_id)])).rows;
+  const byId = new Map(rows.map((row) => [String(row.entry_id), { name: row.by_name || null, firm: row.by_firm || null }]));
+  for (const item of entries) item.posted_by = byId.get(String(item.entry_id)) || null;
+}
 /** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 // @does A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
@@ -617,6 +627,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
       const answered = await LiveBill.markReverseAnswers(h, e, entries);
       markSide = await marksIn(h, req, 'acc.audit', entries.map((item) => item.entry_id));
       if (markSide) for (const item of entries) item.mark = markSide.byId[String(item.entry_id)] || null;
+      await postedByIn(h, e, entries); /* b871: an entry an adviser firm's person posted says by whom and for whom */
       return answered;
     });
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
@@ -1460,7 +1471,7 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
         status: item.status || null,
         created_at: item.created_at ? new Date(item.created_at).toISOString() : null,
         party: { id: item.party_id || null, name: item.party_name || null },
-        business_json: { kind: bj.kind, currency: bj.currency || null, payment_advice: bj.payment_advice || undefined, bank_query: bj.bank_query || undefined },
+        business_json: { kind: bj.kind, currency: bj.currency || null, payment_advice: req.acting_for_grant ? undefined : bj.payment_advice || undefined, /* a payee's bank details are the owner's (C6): an adviser reads the bank lines, not them */ bank_query: bj.bank_query || undefined },
         line_items: (Array.isArray(item.line_items) ? item.line_items : []).filter((x) => x && x.ref_chit_id).map(li)
       };
     });
@@ -1488,7 +1499,7 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
   try {
     const e = ctx(req),
       body = req.body || {};
-    const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account), body, byOf(req)));
+    const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account), body, byOf(req), actingOf(req)));
     res.status(201).json({ marks });
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
@@ -1501,7 +1512,7 @@ router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/
   try {
     const e = ctx(req),
       body = req.body || {};
-    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req)));
+    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req), actingOf(req)));
     res.status(201).json({ statement });
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
