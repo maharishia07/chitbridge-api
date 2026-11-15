@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// CARD      docs/19-onboarding-and-shop-setup/functions/your-shop.md
 'use strict';
 /**
  * tests/profile-write-gate.test.cjs — SEC-71 (2026-10-18): the shop's profile is changed only by the owner or an editor.

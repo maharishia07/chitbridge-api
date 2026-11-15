@@ -1028,6 +1028,11 @@ const GUARDS = [
   'read-batch-rls-guard-mutation.test.cjs', // OPS-27: exemption removed, or too wide, and the test above goes red
   'pm-18-log-taxonomy.test.cjs', // PM-18 (proof 2026-11-14): the five log levels, the LOG_LEVEL floor, stdout/stderr routing, fellBack = warn, the written rule
   'rail-141b-seal-v11.test.cjs', // RAIL-141b (#475): the versioned CTP seal 1.1 refuses alg none, a smuggled key and an old seal; the 1.0 seal still verifies
+  'starter-fields.test.cjs', // COV2: the standard column set a trade starts from: base + own in one display_order, a relabel replaces not duplicates, unknown trade = base
+  'boilerplate-source.test.cjs', // COV2: resolveBoilerplate (newest active, sources folded to brand + standards, locale over region_layer, null when absent) + registerSource idempotent rename
+  'workroute-cascade.test.cjs', // COV2: routeFor rung order kind > network above (destination only) > entity default, why sentences, memo, failed read not cached
+  'profile-map-ladder.test.cjs', // COV2: GSTIN check digit, PAN/state/PIN reads, assess fills + rungs, merge never lowers a rung
+  'gateway-sim-run.test.cjs', // COV2: the gateway simulator sends the device-key ingest or the token chits/send, refusal exits 1
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

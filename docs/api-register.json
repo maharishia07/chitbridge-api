@@ -6008,13 +6008,10 @@
    },
    "reads": [
     "books_setting",
-    "fx_rate",
-    "identities",
-    "journal_entry",
-    "journal_line"
+    "identities"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -6119,15 +6116,10 @@
    },
    "reads": [
     "books_setting",
-    "customer_list",
-    "identities",
-    "journal_entry",
-    "journal_line",
-    "ledger_account",
-    "supplier_list"
+    "identities"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -35654,15 +35646,10 @@
    },
    "reads": [
     "books_setting",
-    "customer_list",
-    "identities",
-    "journal_entry",
-    "journal_line",
-    "ledger_account",
-    "supplier_list"
+    "identities"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",

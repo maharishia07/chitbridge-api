@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/03-disputes-service-and-register/functions/raida-register-and-report.md
  * tests/raida.test.cjs — the register (b182 phase 0, b185 the capability).
  *
  * ⭐⭐ TWO PROPERTIES CARRY EVERYTHING ELSE:

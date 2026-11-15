@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/01-rail-core-the-chit/functions/housekeeping-star-priority-archive-trash-restore.md
  * tests/housekeeping-guards.test.cjs — ⭐⭐ W2-RAIL R2: THE HOUSEKEEPING GUARDS FAIL CLOSED, AND THE STATUS WORDS HAVE ONE TABLE.
  *
  *   A  lib/rail-actions canHousekeep, unit: delete/purge of a sent or received copy → co_held_record; an open dispute → dispute_open;
