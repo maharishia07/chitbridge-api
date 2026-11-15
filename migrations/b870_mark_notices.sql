@@ -13,6 +13,8 @@
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 
+-- RETURNS TABLE: dropped first so a re-run can change its columns; the GRANT below is re-issued
+DROP FUNCTION IF EXISTS public.mark_notices(integer, integer);
 CREATE OR REPLACE FUNCTION public.mark_notices(p_days integer, p_max integer)
 RETURNS TABLE (notice_id text, notice_kind text, at timestamptz, by_name text, note text, subject_id text, entry_no text, posting_date date, currency text, total_minor bigint)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
