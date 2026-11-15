@@ -1,7 +1,7 @@
 /**
  * tests/rail-218-reject-paid.test.cjs — RAIL-218: a buyer cannot REJECT a bill it has already marked paid (the way out is a credit note).
  * The refusal lives in lib/rail-status statusGate (paidRefusal, the ONE status writer), reached by every door; the buyer's mark is read by
- * lib/chit-paid paidOnBillIReceived on the caller's own handle. Real statusGate + real rail + real folder-inventory docOf; only the db rows are a stand-in
+ * lib/chit-paid paidFactsOf(side received) on the caller's own handle: the stamp OR a payment in the buyer's books (the stamp alone was the critic's CHANGE: unmark then reject). Real statusGate + real rail + real folder-inventory docOf; only the db rows are a stand-in
  * (unknown queries answer EMPTY, never a chit row). Mutation: RAIL218_RAIL_STATUS=<a copy without the buyer branch> must turn this red.
  * Run: node tests/rail-218-reject-paid.test.cjs
  */
@@ -41,7 +41,18 @@ const gate = async (db, to, entity, from) => railStatus.statusGate(db, entity ||
   const tender = await gate(dbOf({ purpose: 'invoice', sender_entity_id: SELLER, business_json: { payment: { parts: [{ mode: 'credit', amount: 100 }] } } }), 'rejected');
   t('a credit-only tender is a promise, not money: not refused as paid', tender.why !== 'paid');
   const mine = await gate(dbOf({ purpose: 'invoice', sender_entity_id: BUYER, business_json: { payment: mark } }), 'rejected', BUYER);
-  t('an invoice I sent is the seller side (paidFactsOf), not asked here', (await chitPaid.paidOnBillIReceived(dbOf({ purpose: 'invoice', sender_entity_id: BUYER, business_json: { payment: mark } }), BUYER, CHIT)) === false);
+  t('an invoice I sent is the seller side (paidFactsOf), not asked here', (await chitPaid.paidFactsOf(dbOf({ purpose: 'invoice', sender_entity_id: BUYER, business_json: { payment: mark } }), BUYER, CHIT, 'received')) === false);
+  console.log('\n== RAIL-218b: unmarked, books-only ==');
+  const store = require(path.join(API, 'lib', 'books-store')), engines = require(path.join(API, 'lib', 'books-engines'));
+  let allocs = [];
+  store.billParties = async () => ['p1']; store.items = async () => []; engines.itemOf = (x) => x; engines.receivables = () => ({ fromItems: () => ({ allocations: allocs }) });
+  const unmarked = dbOf({ purpose: 'invoice', sender_entity_id: SELLER, business_json: {} }); /* Mark-paid then DELETE /payment: the stamp is gone */
+  allocs = [{ debit: 'bill', credit: CHIT, amount: 100 }];
+  t('unmark then reject: my books still hold the payment against the bill: refused', (await gate(unmarked, 'rejected')).why === 'paid');
+  allocs = [{ debit: CHIT, credit: 'pay', amount: 100 }];
+  t('the bill as the debit side is read too', (await gate(unmarked, 'rejected')).why === 'paid');
+  allocs = [];
+  t('no stamp and no payment in the books: reject goes through', (await gate(unmarked, 'rejected')).ok === true);
   const dead = { query: async () => { throw new Error('database down'); } };
   let closed = false; try { await gate(dead, 'rejected'); } catch (e) { closed = /database down/.test(e.message); }
   t('fail-closed: a failed read throws, never reads "unpaid"', closed);

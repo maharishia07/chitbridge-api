@@ -8,6 +8,7 @@
  * CARD     01-rail-core-the-chit/status-the-one-status-writer
  *
  *   P-1  paid copy: reject → 409 CHIT_CONFLICT, why "paid", a sentence naming the credit note; R's copy stays pending
+ *   P-3  the real doors: R presses Mark paid (POST /payment), then Mark unpaid (DELETE /payment clears only the stamp, the books keep the payment, drift D1), then rejects → still 409 why paid
  *   P-2  control: an unpaid invoice rejects → 200 and R's copy reads rejected
  * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs.
  */
@@ -40,6 +41,20 @@ const reject = (chit) => j('/api/chits/' + chit + '/status', { method: 'PUT', to
     expect(r.status === 409 && r.b.code === 'CHIT_CONFLICT' && r.b.why === 'paid', 'expected 409 CHIT_CONFLICT paid, got HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
     expect(/credit note/.test(String(r.b.message || r.b.detail)), 'the sentence names no credit note: ' + JSON.stringify(r.b).slice(0, 300));
     expect(await statusOf(R, chit) === before, 'the copy moved: ' + await statusOf(R, chit));
+  });
+
+  await kase('P-3', 'Mark paid, Mark unpaid, reject: the books still hold the payment, so 409 why paid', async () => {
+    const chit = await invoice('m');
+    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 1000 } });
+    expect(pay.status === 200, 'Mark paid: HTTP ' + pay.status + ' ' + JSON.stringify(pay.b).slice(0, 300));
+    const booked = (await asOwner(`SELECT count(*)::int AS n FROM books_payment WHERE entity_id = $1 AND client_ref LIKE $2`, [R.entity, 'chitpay:' + chit + '%']))[0].n;
+    expect(booked >= 1, 'the buyer books hold no payment for the press (books ' + JSON.stringify(pay.b.books).slice(0, 200) + '): the case cannot arm');
+    const unpay = await j('/api/chits/' + chit + '/payment', { method: 'DELETE', token: R.token });
+    expect(unpay.status === 200, 'Mark unpaid: HTTP ' + unpay.status);
+    expect((await asOwner(`SELECT business_json->'payment' AS p FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit, R.entity]))[0].p === null, 'the stamp was not cleared');
+    const r = await reject(chit);
+    expect(r.status === 409 && r.b.why === 'paid', 'expected 409 paid, got HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
+    expect(await statusOf(R, chit) !== 'rejected', 'the copy moved to rejected');
   });
 
   await kase('P-2', 'control: an unpaid invoice rejects', async () => {
