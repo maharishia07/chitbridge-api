@@ -34,7 +34,7 @@ of file each thing is; this says what already does the job.
 | 69 | `failed` | `service.js` | what every catch answers: |
 | 68 | `items` | `books-store.js` | PERF1: |
 | 65 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
-| 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
+| 65 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 64 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
