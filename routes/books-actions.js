@@ -18,6 +18,8 @@ const ledger = require('../lib/books');
 const countrySetup = require('../lib/country-setup');
 const actions = require('../lib/books-action');
 const contract = require('../lib/books-actions-contract');
+/* S36: the accept POSTS to the ledger, so it is a money write: one Idempotency-Key per attempt, a replay answers the FIRST answer (never a 409 on a post that succeeded) */
+const onceOnly = require('../middleware/idempotency').requireKey();
 
 const storeOf = (req) => auth.entityOf(req);
 /** a refusal of the action store is a typed answer in words; the books' own refusals go through the ledger's mapper */
@@ -103,7 +105,7 @@ router.post('/:id/return', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses(
   return actions.returnAction(storeOf(req), byFirm ? firmActor(req) : ownerActor(req), req.params.id, req.body, !byFirm);
 }));
 // @does An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.
-router.post('/:id/accept', auth, noKey, ownerOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /:id/accept'), rightStore, door((req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
+router.post('/:id/accept', auth, noKey, ownerOnly, onceOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /:id/accept'), rightStore, door((req) => actions.acceptAction(storeOf(req), ownerActor(req), req.params.id, req.body)));
 
 router.openapi = { paths: contract.pathsOf() };
 module.exports = router;

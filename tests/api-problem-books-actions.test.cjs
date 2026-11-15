@@ -59,13 +59,15 @@ const lab = harness({
   notFrozen: (one, scenario) => one.status === 401 && scenario === 'signed-out'
 });
 const { check } = lab;
+/* S36: the accept requires an Idempotency-Key, so every generic world sends one (a world that sent none would only see the 422 that asks for it) */
+const KEYED = { 'idempotency-key': 'world-attempt' };
 const WORLDS = [
-  { id: 'signed-out', setup: { realAuth: true } },
-  { id: 'a-key-asks', setup: { asKey: true } },
-  { id: 'staff-asks', setup: { who: STAFF } },
-  { id: 'bad-id', setup: {}, badId: true },
-  { id: 'db-fails', setup: { db: 'fail' } },
-  { id: 'nothing-found', setup: {} }
+  { id: 'signed-out', setup: { realAuth: true }, headers: KEYED },
+  { id: 'a-key-asks', setup: { asKey: true }, headers: KEYED },
+  { id: 'staff-asks', setup: { who: STAFF }, headers: KEYED },
+  { id: 'bad-id', setup: {}, badId: true, headers: KEYED },
+  { id: 'db-fails', setup: { db: 'fail' }, headers: KEYED },
+  { id: 'nothing-found', setup: {}, headers: KEYED }
 ];
 const refusal = (code, status, words) => Object.assign(new Error(words), { code, status, words });
 const stub = (value) => async () => value;
@@ -78,7 +80,9 @@ const ON = { country: { gate: stub(undefined) }, ledger: { settingOf: stub({ ena
 const OFF = { country: ON.country, ledger: { settingOf: stub({ enabled: false }) } };
 const WITH = (actions) => Object.assign({}, ON, { actions });
 const ADV = (patch, more) => Object.assign({ setup: { who: ADVISER }, headers: AS_FIRM, patch }, more);
-const OWN = (patch, more) => Object.assign({ setup: {}, patch }, more);
+let attempts = 0;
+/** S36: every call of the owner is its own attempt (a fresh Idempotency-Key: the accept requires one); a scene may pass headers: {} to leave it off */
+const OWN = (patch, more) => Object.assign({ setup: {}, patch, headers: { 'idempotency-key': 'attempt-' + ++attempts } }, more);
 const X = (id, route, status, extra) => Object.assign({ id, route, expect: status }, extra);
 const URL_OF = (tail) => MOUNT + '/' + ACTION_ID + (tail || '');
 const PREPARE = { store_id: SHOP, kind: 'journal', body: { narration: 'rent', date: '2026-11-15', lines: [] }, client_ref: 'ref-1' };
@@ -141,6 +145,7 @@ const EXTRAS = [
   X('accept-total-differs', R('/:id/accept'), 409, OWN(WITH({ acceptAction: stubFails('PREVIEW_TOTAL_DIFFERS', 409, 'The total changed since it was prepared. Nothing was posted.') }), { url: URL_OF('/accept'), body: SEEN })),
   X('accept-total-not-confirmed', R('/:id/accept'), 422, OWN(WITH({ acceptAction: stubFails('ACTION_TOTAL_NEEDED', 422, 'Confirm the total and its currency as shown on the screen.') }), { url: URL_OF('/accept'), body: SEEN })),
   X('accept-not-switched-on', R('/:id/accept'), 503, OWN(WITH({ acceptAction: NOT_ON }), { url: URL_OF('/accept'), body: SEEN })),
+  X('accept-key-required', R('/:id/accept'), 422, OWN(ON, { url: URL_OF('/accept'), body: SEEN, headers: {} })),
   X('accept-unknown-key', R('/:id/accept'), 422, OWN(ON, { url: URL_OF('/accept'), body: Object.assign({ surprise: 1 }, SEEN) }))
 ];
 
@@ -163,7 +168,7 @@ const playFor = (port, item, modules) => async (who, planted) => {
   const identity = who === 'owner' ? OWNER : STRANGER;
   Object.assign(lab.world, { realAuth: false, who: item.firm ? Object.assign({}, identity, { acting_preset: 'adviser' }) : identity, asKey: false, db: 'ok', sqlRows: rowsOf(planted), jsonThrows: false, noCustomer: false });
   const undo = Object.keys(ON).map((name) => Object.keys(ON[name]).map((fn) => { const held = [modules()[name], fn, modules()[name][fn]]; modules()[name][fn] = ON[name][fn]; return held; })).flat();
-  const answer = await lab.send(port, item.method, item.url, item.body && Object.assign({ store_id: store }, item.body), undefined, item.firm ? AS_FIRM : undefined);
+  const answer = await lab.send(port, item.method, item.url, item.body && Object.assign({ store_id: store }, item.body), undefined, item.firm ? AS_FIRM : item.route.endsWith('/accept') ? { 'idempotency-key': 'foreign-' + ++attempts } : undefined);
   undo.forEach(([owner, fn, original]) => (owner[fn] = original));
   return answer;
 };

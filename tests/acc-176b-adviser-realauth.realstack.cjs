@@ -56,6 +56,7 @@ async function call(token, method, route, opts) {
   if (token) headers.authorization = 'Bearer ' + token;
   if (o.member) headers['x-books-for'] = o.member;
   if (o.role) headers['x-books-role'] = o.role;
+  if (/\/accept$/.test(route)) headers['idempotency-key'] = 'acc176b-' + Math.random().toString(36).slice(2) + Date.now(); /* S36: each accept is its own attempt */
   const res = await fetch(base + route, { method, headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) });
   let body = null;
   try { body = await res.json(); } catch (_) { body = null; }

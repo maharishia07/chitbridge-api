@@ -21,8 +21,8 @@
     "failing": 0
    },
    "idempotent_money_write": {
-    "applies": 10,
-    "failing": 0
+    "applies": 11,
+    "failing": 1
    },
    "inbound_validated": {
     "applies": 6,
@@ -4246,7 +4246,7 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 93,
+   "line": 95,
    "hash": "34babbd8baf53839",
    "does": "A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.",
    "errors": {
@@ -4349,7 +4349,7 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 95,
+   "line": 97,
    "hash": "b28d95fd3434f0b4",
    "does": "An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).",
    "errors": {
@@ -33465,7 +33465,7 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 97,
+   "line": 99,
    "hash": "5e0ee615a7af015a",
    "does": "A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.",
    "errors": {
@@ -33571,7 +33571,7 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 106,
+   "line": 108,
    "hash": "6de8ed14ad8d4b05",
    "does": "An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.",
    "errors": {
@@ -33594,7 +33594,7 @@
    },
    "reads": [],
    "writes": [],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -33612,7 +33612,7 @@
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": true,
+    "idempotent_money_write": false,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -33620,7 +33620,7 @@
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": false,
     "trips_budgeted": true
    },
@@ -33677,7 +33677,7 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 101,
+   "line": 103,
    "hash": "a73d432e769c87eb",
    "does": "An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.",
    "errors": {
@@ -33783,7 +33783,7 @@
    "owner_area": "books-actions",
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
-   "line": 99,
+   "line": 101,
    "hash": "16150ea11b6d4d93",
    "does": "An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.",
    "errors": {

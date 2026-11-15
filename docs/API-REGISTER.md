@@ -59,8 +59,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/assist/standards | assist | routes/assist.js:186 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/assist/whoami | assist | routes/assist.js:739 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/attachments/:id | attachments | routes/attachments.js:124 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/books-actions | books-actions | routes/books-actions.js:93 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| GET | /api/books-actions/:id | books-actions | routes/books-actions.js:95 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/books-actions | books-actions | routes/books-actions.js:95 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/books-actions/:id | books-actions | routes/books-actions.js:97 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books-grants | books-grants | routes/books-grants.js:46 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books-grants/consent | books-grants | routes/books-grants.js:34 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books-grants/log | books-grants | routes/books-grants.js:85 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -348,10 +348,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/assist/conform | assist | routes/assist.js:130 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/assist/publish | assist | routes/assist.js:684 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/attachments | attachments | routes/attachments.js:80 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/books-actions | books-actions | routes/books-actions.js:97 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/books-actions/:id/accept | books-actions | routes/books-actions.js:106 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/books-actions/:id/return | books-actions | routes/books-actions.js:101 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/books-actions/:id/review | books-actions | routes/books-actions.js:99 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/books-actions | books-actions | routes/books-actions.js:99 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/books-actions/:id/accept | books-actions | routes/books-actions.js:108 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
+| POST | /api/books-actions/:id/return | books-actions | routes/books-actions.js:103 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/books-actions/:id/review | books-actions | routes/books-actions.js:101 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/books-grants | books-grants | routes/books-grants.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/books-grants/:id/revoke | books-grants | routes/books-grants.js:76 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/books/accounts | books | routes/books.js:378 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
@@ -1442,7 +1442,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books-actions/:id/accept** · books-actions · unassigned · partial
 - does: An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.
-- errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER, STORE_MISMATCH] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER, STORE_MISMATCH] · statuses 401, 403, 404, 409, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
