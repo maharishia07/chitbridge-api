@@ -187,6 +187,8 @@ async function main() {
     /* 6b5 the notices are read by the route's own helper too (feed rows) */
     const helper = await require(path.join(API, 'lib', 'mark-notices')).noticesOf(M1.id, 50);
     ok('6b5 the feed helper turns them into bell rows (mark_query / mark_reply with mark_entry)', helper.some((r) => r.action === 'mark_query' && r.mark_entry && !!r.mark_entry.entry_no) && helper.filter((r) => r.action === 'mark_reply').length === 2, JSON.stringify(helper));
+    const rows7 = await withEntity(M1.id, (h) => h.query(`SELECT chit_id, subject_type, entity_id, thread_type, sender_entity_id FROM chit_messages WHERE subject_type = 'mark' AND subject_id = $1`, [thread]));
+    ok('7 three reply rows, one copy each, no chit, M1 scope, external, the sender is the real person\'s own entity', rows7.rows.length === 3 && rows7.rows.every((r) => r.chit_id === null && r.entity_id === M1.id && r.thread_type === 'external') && rows7.rows.some((r) => r.sender_entity_id === P.id), JSON.stringify(rows7.rows));
     /* 6c TWO FIRMS, ONE ENTRY (d88296a26): the thread is shared per entry; firm Q marks E2 too and replies; firm P must not hear Q (nor Q hear P) */
     const asQ = (method, route, body) => call(V, method, route, { member: M1.id, role: 'auditor', body });
     const qMark = await asQ('POST', '/api/marks', mk(E2.entry_id, 'query', 'Firm Q asks about this too'));
@@ -196,8 +198,6 @@ async function main() {
     ok('6c1 firm P does NOT hear the reply firm Q posted in the shared thread', !pAfterQ.some((n) => n.note === 'REPLY FROM FIRM Q' || n.note === 'Firm Q asks about this too'), JSON.stringify(pAfterQ.map((n) => n.note)));
     ok('6c2 firm Q does not hear firm P words either (only the owner replies)', qNow.every((n) => n.notice_kind === 'reply' && n.note === 'It was a cash sale for the day.'), JSON.stringify(qNow.map((n) => n.note)));
     ok('6c3 the owner hears firm Q', ownQ.some((n) => n.note === 'REPLY FROM FIRM Q') && ownQ.some((n) => n.note === 'Firm Q asks about this too'), JSON.stringify(ownQ.map((n) => n.note)));
-    const rows7 = await withEntity(M1.id, (h) => h.query(`SELECT chit_id, subject_type, entity_id, thread_type, sender_entity_id FROM chit_messages WHERE subject_type = 'mark' AND subject_id = $1`, [thread]));
-    ok('7 three reply rows, one copy each, no chit, M1 scope, external, the sender is the real person\'s own entity', rows7.rows.length === 3 && rows7.rows.every((r) => r.chit_id === null && r.entity_id === M1.id && r.thread_type === 'external') && rows7.rows.some((r) => r.sender_entity_id === P.id), JSON.stringify(rows7.rows));
 
     /* 8 */
     const hold = await asAud('POST', '/api/marks', mk(E3.entry_id, 'on_hold', 'waiting for the bank letter'));
