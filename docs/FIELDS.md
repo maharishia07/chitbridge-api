@@ -1393,13 +1393,55 @@ The member (the owner of the books) gives its network parent read-only access, e
 | `GET /api/books-grants` rows | `edge_live` | boolean · the network edge between the two businesses is still connected right now. |
 | `GET /api/books-grants` rows | `state` | text · `live`, `edge_off` (edge disconnected or suspended), `expired` or `revoked`, worked out per read, never stored. |
 | grant rows (all four writes and reads) | `grant_id` · `grantor_entity` · `grantee_entity` | uuids · the access, the business that owns the books, the business that reads them. |
-| grant rows | `preset` | text · the kind of access; `auditor` is the only one today. |
+| `POST /api/books-grants` body · `GET /api/books-grants/consent` query · grant rows | `preset` | text · `auditor` (reads, never writes: the default) or `adviser` (ACC-176b: the firm's team acts for the owner, migration b866). A store holds each as its own grant with its own end date and revoke. |
+| a books request (header, not a body key) | `X-Books-Role` | `auditor` (default) or `adviser` · picks WHICH of the member's grants the request works under; what the grant allows comes from the grant row, never from this header. |
 | grant rows | `can_see_costs` | boolean · whether costs and margins are readable. |
 | grant rows | `purpose` | text · the member's words for why. |
 | grant rows | `granted_at` · `expires_at` · `revoked_at` | timestamps · when given, when it ends by itself, when it was ended (`null` while open). |
 | `POST` · `PATCH` · `/:id/revoke` answers | `granted_by` · `revoked_by` | uuid identities · who gave it, and who ended it (`null` while open). Not in the list answer. |
 | `GET /api/books-grants/log` answer | `looks` | array · who looked at these books, newest first; the route and the shape of the question, never the figures. |
 | `looks[]` | `at` · `grant_id` · `grantee_entity` · `actor_identity_id` | when, under which access, which business, and which person looked. |
+| `looks[]` | `preset` · `actor_name` · `actor_entity_name` | the role the request ran under, the person's name and the firm's name, kept at the look (null before b866). |
 | `looks[]` | `route_pattern` · `query_shape` | the books route asked for, and the names (never the values) of its query. |
 | `looks[]` | `status` · `outcome` | the status answered, and `allowed` or the reason it was refused (`no_grant`, `revoked`, `expired`, `edge_off`, `not_listed`, `read_only`). |
 | `POST /api/chits/:chit_id/proposals/:proposal_id/accept` answer (200) | `status`, `words` | `status` is `accepted` · `rejected` · `awaiting_seller` (the proposer is on another installation: nothing changes on this copy until it confirms; `words` says so) · `withdrawn` (a reject on an acceptance that waited more than 24 hours: the acceptance is taken back and the round is open again). Stored on the decider's own `chit_proposal` row: `decided_at` set while `status = 'proposed'` is the waiting mark (R3-02); it is cleared by the confirmation, a refusal, or the withdrawal. |
+
+## /api/books-actions · maker-checker for an adviser firm in a store's books (ACC-176b, 2026-11-14)
+
+The firm's team PREPARES, a colleague REVIEWS, the owner ACCEPTS; the existing writers post. Stored in `books_action_step` (migration b867, insert-only); written by routes/books-actions.js through lib/books-action.js. The firm works through these routes with `X-Books-For` (the store) and `X-Books-Role: adviser`; the owner works with no header.
+
+| Where | Key | Meaning |
+|---|---|---|
+| every `POST /api/books-actions` body | `store_id` | uuid · the store the open page is on; it must be the store the request is scoped to (the grant's, or the owner's own), else 409 `STORE_MISMATCH` and nothing is stored. |
+| `POST /api/books-actions` body | `kind` | text · `journal`, `reverse`, `lock`, `unlock` or `year_close`. |
+| `POST /api/books-actions` body | `body` | object · exactly what the owner's own door takes for that kind: a journal `{ narration, date, lines[{ code, dr_minor, cr_minor }], ref, currency? }`, a reverse `{ entry_id, reason }`, a lock or unlock `{ fy, period, reason }`, a year close `{ fy }`. No party and no bill (`ACTION_PARTY_NOT_IN_V1`). |
+| `POST /api/books-actions` body | `client_ref` | text · one open action per reference per store; a reference that already holds an entry is refused (`ACTION_REF_OPEN`, `ACTION_REF_POSTED`). |
+| `POST /api/books-actions` body | `working_month` | `YYYY-MM` · the month the page is working in: a journal dated outside it answers a `warnings[]` row (advisory, never a refusal). |
+| `POST /:id/review` · `/return` · `/accept` body | `body_hash` | text · the hash of the body the person was shown (`body_hash` of the action); another hash is 409 `ACTION_BODY_CHANGED`. |
+| `POST /:id/return` body | `reason` | text, 3 to 300 characters · why the round ends; kept on the `returned` step. |
+| `POST /:id/accept` body | `total_minor` · `currency` | integer minor units · text · the total and currency the owner's confirm popup showed; they must equal the total prepared and the total the writer posted, else 409 `PREVIEW_TOTAL_DIFFERS` and nothing is posted. |
+| `GET /api/books-actions` query | `state` · `mine` · `page` · `limit` | `waiting_review`, `waiting_accept`, `open` (default), `returned`, `accepted`, `withdrawn`, `all` · `true` keeps what the caller prepared · page from 1 · 1 to 100 rows, 25 when absent. |
+| `GET /api/books-actions` answer | `actions` · `total` · `page` · `limit` | the page of actions, the count of all that match, and the paging echoed. |
+| action rows | `action_id` · `store` · `kind` · `state` · `client_ref` · `body_hash` | the action; `state` is its latest step: `waiting_review`, `waiting_accept`, `returned`, `accepted`, `withdrawn`. |
+| action rows | `total_minor` · `currency` | the total (integer minor units) and the currency the preparer's preview showed; null for a lock, unlock or year close. |
+| action rows | `prepared` · `reviewed` · `closed` | `{ identity_id, name, firm, role, at, reason }` of each step: the real person, the firm, `maker` / `checker` / `owner`, the time; `closed` is the returned, accepted or withdrawn step (null while open). |
+| action rows | `access_ended` | boolean · the grant it was prepared under is no longer live: it can be returned, not accepted. |
+| `GET /api/books-actions/:id` answer | `steps` | array · every step in order `{ step, role, identity_id, name, firm, reason, at }`. |
+| `POST /api/books-actions/:id/accept` answer | `action` · `entry` | the action as accepted, and `{ entry_id, entry_no }` of the entry the existing writer posted (created_by is the preparer, grant_id the adviser grant, source_ref `action:<action_id>`). |
+| `POST /api/books-grants` · `/:id/revoke` answers | `warnings` · `actions_withdrawn` | a new grant answers a `BOTH_ROLES_ONE_FIRM` warning when the firm already holds the other role; a revoke answers how many open actions it closed as "withdrawn: grant revoked". |
+
+### Stored columns of the adviser access (ACC-176b, migrations b866 and b867)
+
+| Where | Key | Meaning |
+|---|---|---|
+| `books_access_log` | `preset` | text · `auditor` or `adviser`: the role the look ran under, from the live grant row (null on a look made before b866, read as auditor). |
+| `books_access_log` | `actor_name` · `actor_entity_name` | text · the person's name and the firm's name, kept AT the look so the owner reads them without a read into another business's identities. |
+| `journal_entry` | `grant_id` | uuid · the adviser grant an entry was posted under (null for the owner's own entries); `created_by` is the real person who PREPARED it, `source_ref` is `action:<action_id>`. |
+| `books_change_log` | `grant_id` | uuid · the adviser grant a change (a lock, an unlock, a pack acknowledgement) was made under; `by` is the real person. |
+| `books_action_step` | `action_id` · `store` · `step` · `kind` | uuid · uuid · `prepared`, `reviewed`, `returned`, `accepted` or `withdrawn` · `journal`, `reverse`, `lock`, `unlock` or `year_close`. One row per step, never updated; the latest step is the status. |
+| `books_action_step` | `body` · `body_hash` | jsonb · text · the body is kept on the `prepared` step only; every step carries the hash of the body it saw, so a changed body is a new action. |
+| `books_action_step` | `total_minor` · `currency` | bigint minor units · ISO 4217 · the pair the preview showed (a journal) or the entry a reversal undoes; both set or both null (a lock, an unlock, a year close). |
+| `books_action_step` | `action_ref` | text · the preparer's reference (the API key is `client_ref`): one open action per reference and per body in a store. |
+| `books_action_step` | `actor_identity_id` · `actor_name` · `firm_name` · `role` | the real person, their name, the firm's name, and `maker`, `checker` or `owner`. |
+| `books_action_step` | `reason` · `grant_id` · `entry_id` · `at` | why a return or a withdrawal happened · the adviser grant the action works under · the entry the accept posted · when. |
+| `GET /api/books-grants` answer, for a person of a firm | `given` · `received` | a team member who may use a grant (an editor with whole-entity reach, or an auditor-preset person) reads the same list, but `given` is empty and `received` holds only the grants of HIS OWN firm; another firm's grants are invisible (row security). |

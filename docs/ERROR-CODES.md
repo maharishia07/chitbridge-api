@@ -67,6 +67,29 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_GRANT_PURPOSE_INVALID | 422 | Purpose too short or long | Say why in 3 to 300 characters. | Write the reason in a few words. | network | 2026-11-14 |
 | BOOKS_GRANT_RATE | 429 | Too many requests | Too many requests for these books. Wait a minute. | Wait a minute, then try again. | network | 2026-11-14 |
 | BOOKS_NOT_FOUND | 404 | Bank account not found | That bank account was not found in this shop's ledger. | Pick the bank account from the list and try again. | books | 2026-11-14 |
+| BOOKS_ACTION_NOT_SWITCHED_ON | 503 | Not switched on yet | Adviser actions are not switched on yet. | Try again later. | network | 2026-11-14 |
+| BOOKS_GRANT_PRESET_INVALID | 422 | Access kind not accepted | Pick auditor or adviser. | Choose auditor or adviser. | network | 2026-11-14 |
+| ACTION_KIND_INVALID | 422 | Action not accepted | Say what is to be done: a journal, a reversal, a lock, an unlock or a year close. | Pick one of the five. | network | 2026-11-14 |
+| ACTION_BODY_INVALID | 422 | Action incomplete | The action is missing something it needs. | Fill in what the message names. | network | 2026-11-14 |
+| ACTION_PARTY_NOT_IN_V1 | 422 | Not for an adviser | An adviser journal cannot name a customer, a supplier or a bill. The owner enters those. | Ask the owner to enter it. | network | 2026-11-14 |
+| ACTION_REF_OPEN | 409 | Already waiting | An action with this reference is already waiting. Open it from the queue. | Open the waiting action. | network | 2026-11-14 |
+| ACTION_REF_POSTED | 409 | Already posted | This reference already holds an entry. It is not prepared again. | Check the day book. | network | 2026-11-14 |
+| ACTION_CLOSED | 409 | Action already moved on | This action has already moved on. Open the queue again. | Open the queue again. | network | 2026-11-14 |
+| ACTION_NOT_ALLOWED | 403 | Access ended | This access has ended, so nothing was recorded. | Ask the owner of the books. | network | 2026-11-14 |
+| ACTION_SELF_REVIEW | 403 | A colleague must review | You prepared this, so a colleague has to review it. | Ask a colleague to review it. | network | 2026-11-14 |
+| ACTION_BODY_CHANGED | 409 | Not the entry you were shown | This is not the entry you were shown. Open it again. | Open the action again. | network | 2026-11-14 |
+| ACTION_REASON_NEEDED | 422 | Reason needed | Say why in 3 to 300 characters. | Write the reason. | network | 2026-11-14 |
+| ACTION_NOT_REVIEWED | 409 | Not reviewed yet | A colleague has to review this before you accept it. | Wait for the review. | network | 2026-11-14 |
+| ACTION_ACCESS_ENDED | 409 | Access ended | The access this was prepared under has ended. You can return it. | Return it. | network | 2026-11-14 |
+| ACTION_DUPLICATE | 409 | Already posted | This was already posted. Nothing was posted again. | Check the day book. | network | 2026-11-14 |
+| ACTION_FIRM_ONLY | 403 | Adviser firm only | Only the adviser firm prepares and reviews. The owner accepts. | Sign in as the adviser firm. | network | 2026-11-14 |
+| ACTION_NOT_FOR_YOU | 403 | Not for you | Only the owner and the adviser firm work on these actions. | Sign in as the owner or the firm. | network | 2026-11-14 |
+| ACTION_REF_NEEDED | 422 | Reference needed | Give the action a reference, so that pressing Prepare twice cannot make two. | Add a reference. | network | 2026-11-14 |
+| ACTION_TOTAL_NEEDED | 422 | Total needed | Confirm the total and its currency as shown on the screen. | Confirm the total shown. | network | 2026-11-14 |
+| ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
+| ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
+| STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
+| PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |

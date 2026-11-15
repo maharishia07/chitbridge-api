@@ -254,6 +254,8 @@ const INFRA_LIBS = [
   'output-allowlist.js',
   'books-contract.js',
   'books-grant.js', 'books-grants-contract.js',
+  /* ACC-176b: the adviser's maker-checker steps (a store-side record of who prepared, reviewed and accepted) and its contract: infra around the one posting writer, no rule of the platform */
+  'books-action.js', 'books-actions-contract.js',
   'tax-contract.js',
   /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'marketing-contract.js',

@@ -436,6 +436,32 @@
    "grows": false,
    "exercised": true
   },
+  "GET /api/books-actions": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 3
+   },
+   "100": {
+    "trips": 3
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books-actions/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
   "GET /api/books/accounts": {
    "0": {
     "trips": 2
