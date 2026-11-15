@@ -80,8 +80,10 @@ function bankWriteBody(req) {
   if (door === '/api/books/bank/marks' || door === '/api/books/bank/statements') return true;
   const body = req.body || {};
   if (!/^bank:[0-9a-z:_-]{1,75}$/i.test(String(body.client_ref || ''))) return false;
-  if (door === '/api/books/payments') return !!body.party_id && !body.party && !body.cheque; /* a payment names an EXISTING party (never one to make) and no cheque */
-  if (body.party || body.party_id) return false; /* an event of these kinds names no party */
+  /* the writer resolves the kind and the ref from inner `event`/`type` too (lib/books-manual eventOf): a body that carries any of these keys is not the bank page's body and is refused whole */
+  const FOREIGN_EVENT = ['event', 'type', 'lines', 'voucher_type', 'supplier', 'party', 'party_id', 'bill', 'against_ref', 'customer'];
+  if (door === '/api/books/payments') return !!body.party_id && !body.party && !body.cheque && String(body.mode || '') !== 'cheque' && !Object.keys(body).some((key) => /^cheque/.test(key)) && !body.against_ref; /* an EXISTING party (never one to make), no cheque */
+  if (FOREIGN_EVENT.some((key) => body[key] !== undefined)) return false;
   return BANK_EVENT_KINDS.includes(String(body.kind || ''));
 }
 /** the adviser door a request is, or null */
