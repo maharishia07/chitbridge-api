@@ -15,6 +15,8 @@
 'use strict';
 const path = require('path');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-auth-guards';
+/* the bridge window is cutover + replay window against the real clock (middleware/idempotency.js:279 reads Date.now), so the cutover is pinned to this run's start: a fixed date aged out on 14 Nov and turned the in-window cases red */
+process.env.IDEMPOTENCY_ACTOR_SCOPE_AT = new Date().toISOString();
 let pass = 0,
   fail = 0;
 const t = (label, got, want) => {
