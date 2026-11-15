@@ -8,7 +8,7 @@
 -- WHAT IT IS.
 --    books_action_step  one row per step of an action: action_id, store (the books' owner), step, kind (journal, reverse, lock, unlock, year_close), body (first step only: exactly what the owner's own door would take),
 --                       body_hash (every later step carries the hash of the body it saw: a changed body is a new action), total_minor + currency (the pair the preview showed), action_ref, who (identity, name), the firm's name,
---                       role (maker, checker, owner), reason (a return and a withdrawal say why), grant_id, entry_id (set on `accepted`: the entry the existing writer posted).
+--                       role (maker, checker, owner, delegated: the server's own review and accept when the owner gave the grant posting = adviser_posts), reason (a return and a withdrawal say why), grant_id, entry_id (set on `accepted`: the entry the existing writer posted).
 --                       Each step happens at most once per action (unique index), and an action has AT MOST ONE closing step (returned, accepted or withdrawn: a partial unique index), so a revoke racing an accept leaves one outcome.
 --                       The posted entry is linked back through journal_entry.source_ref = 'action:<action_id>' (no new column there).
 --    CHECKS: an amount never travels without its currency and the reverse ((total_minor IS NULL) = (currency IS NULL), CUR-1); a prepared or reviewed step names its grant; a return and a withdrawal carry their reason; roles are maker, checker, owner.
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS books_action_step (
   actor_identity_id uuid        NOT NULL,
   actor_name        text,
   firm_name         text,
-  role              text        NOT NULL CHECK (role IN ('maker', 'checker', 'owner', 'system')),
+  role              text        NOT NULL CHECK (role IN ('maker', 'checker', 'owner', 'delegated')),
   reason            text,
   grant_id          uuid,
   entry_id          uuid,

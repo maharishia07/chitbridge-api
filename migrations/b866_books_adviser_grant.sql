@@ -17,6 +17,7 @@
 --    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_preset_check; ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_preset_check CHECK (preset = 'auditor');   (only with no adviser grant left)
 --    ALTER TABLE books_access_log DROP CONSTRAINT IF EXISTS books_access_log_preset_check;
 --    ALTER TABLE journal_entry DROP COLUMN IF EXISTS grant_id; ALTER TABLE books_change_log DROP COLUMN IF EXISTS grant_id;
+--    ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_check, DROP CONSTRAINT IF EXISTS books_access_grant_cap_pair, DROP CONSTRAINT IF EXISTS books_access_grant_posting_adviser_only; ALTER TABLE books_access_grant DROP COLUMN IF EXISTS posting, DROP COLUMN IF EXISTS posting_cap_minor, DROP COLUMN IF EXISTS posting_cap_currency;   (the choice of who posts is lost)
 --    ALTER TABLE books_access_log DROP COLUMN IF EXISTS preset, DROP COLUMN IF EXISTS actor_name, DROP COLUMN IF EXISTS actor_entity_name;
 -- CHECK (read-only, all-true multi-row block; every row must read ok = true):
 --    SELECT 'preset allows adviser' AS what, pg_get_constraintdef(oid) LIKE '%adviser%' AS ok FROM pg_constraint WHERE conname = 'books_access_grant_preset_check'
@@ -25,9 +26,11 @@
 --    UNION ALL SELECT 'grant_id on the two books tables', (SELECT count(*) FROM information_schema.columns WHERE table_name IN ('journal_entry', 'books_change_log') AND column_name = 'grant_id') = 2
 --    UNION ALL SELECT 'log_insert asks the preset', (SELECT with_check FROM pg_policies WHERE tablename = 'books_access_log' AND policyname = 'log_insert') LIKE '%preset%'
 --    UNION ALL SELECT 'log preset CHECK', EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'books_access_log_preset_check')
+--    UNION ALL SELECT 'grant: posting + limit columns and their CHECKs', (SELECT count(*) FROM information_schema.columns WHERE table_name = 'books_access_grant' AND column_name IN ('posting', 'posting_cap_minor', 'posting_cap_currency')) = 3 AND (SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.books_access_grant'::regclass AND conname IN ('books_access_grant_posting_check', 'books_access_grant_cap_pair', 'books_access_grant_posting_adviser_only')) = 3
+--    UNION ALL SELECT 'grant: UPDATE on posting + limit for cb_app', has_column_privilege('cb_app', 'public.books_access_grant', 'posting', 'UPDATE') AND has_column_privilege('cb_app', 'public.books_access_grant', 'posting_cap_minor', 'UPDATE') AND has_column_privilege('cb_app', 'public.books_access_grant', 'posting_cap_currency', 'UPDATE')
 --    UNION ALL SELECT 'log still insert-only', NOT has_table_privilege('cb_app', 'public.books_access_log', 'UPDATE');
 -- RLS: no table is new, but ONE POLICY CHANGES: books_access_log.log_insert now also asks that the grant it names has the SAME preset as the row (critic 2: with two presets, a look logged as adviser must not pass on an open auditor grant). The five tables keep their ENABLE + FORCE row security and their policies (a new column is covered by the row policy of its table); cb_app keeps its table privileges (INSERT on both books tables,
---    SELECT/INSERT on the log; grants are still UPDATE on expires_at, revoked_at, revoked_by only, so the preset of a grant can never be changed after it is given).
+--    SELECT/INSERT on the log; grants are UPDATE on expires_at, revoked_at, revoked_by AND on posting, posting_cap_minor, posting_cap_currency only (the owner switches who posts, or the limit, later), so the preset of a grant can never be changed after it is given).
 
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -60,6 +63,8 @@ ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_post
 ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_posting_check CHECK (posting IS NULL OR posting IN ('owner_approves', 'adviser_posts'));
 ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_cap_pair;
 ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_cap_pair CHECK ((posting_cap_minor IS NULL) = (posting_cap_currency IS NULL) AND (posting_cap_minor IS NULL OR (posting_cap_minor > 0 AND posting_cap_currency ~ '^[A-Z]{3}$')));
+ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_adviser_only;
+ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_posting_adviser_only CHECK (preset = 'adviser' OR (posting IS NULL AND posting_cap_minor IS NULL));
 -- money-group: posting_cap_currency covers posting_cap_minor
 -- the owner switches it back (or sets the cap) later, effective on the next request: UPDATE on these three columns only (the preset, grantee and purpose still never change)
 GRANT UPDATE (posting, posting_cap_minor, posting_cap_currency) ON books_access_grant TO cb_app;
