@@ -29,6 +29,15 @@
    "since": "2026-11-14"
   },
   {
+   "code": "ACTION_ALERT_NOT_RECORDED",
+   "status": "503",
+   "title": "Could not tell the owner",
+   "shopkeeper": "We could not record this for the owner, so nothing was posted.",
+   "hint": "Try again.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
    "code": "ACTION_BODY_CHANGED",
    "status": "409",
    "title": "Not the entry you were shown",
@@ -785,6 +794,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BOOKS_GRANT_CAP_INVALID",
+   "status": "422",
+   "title": "Limit not accepted",
+   "shopkeeper": "Give the limit and its currency together, as a positive amount.",
+   "hint": "Fill in both, or leave both empty.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
    "code": "BOOKS_GRANT_CONSENT_NEEDED",
    "status": "422",
    "title": "Say yes to the consent",
@@ -882,6 +900,24 @@
    "hint": "Choose the business that sits above you in your network.",
    "owner_area": "network",
    "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_POSTING_INVALID",
+   "status": "422",
+   "title": "Posting choice not accepted",
+   "shopkeeper": "Pick: your adviser posts for you, or you approve each post.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network",
+   "since": "2026-11-15"
+  },
+  {
+   "code": "BOOKS_GRANT_POSTING_NEEDED",
+   "status": "422",
+   "title": "Say who posts",
+   "shopkeeper": "Say who posts: your adviser posts for you, or you approve each post.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network",
+   "since": "2026-11-15"
   },
   {
    "code": "BOOKS_GRANT_PRESET_INVALID",

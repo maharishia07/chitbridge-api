@@ -1480,13 +1480,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **PATCH /api/books-grants/:id** · books-grants · cb-accounting · partial
 - does: A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 409, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
+- reads (derived): books_access_grant · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
 **POST /api/books-grants** · books-grants · cb-accounting · partial
 - does: An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 409, 422, 500, 503 · money n (derived)
+- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 409, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 0 (wire 0; share books-grant-member.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_access_grant · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 

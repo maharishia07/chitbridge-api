@@ -61,7 +61,7 @@ CREATE INDEX IF NOT EXISTS books_action_step_ref_idx ON books_action_step (store
 
 -- the CHECKs and the closing-step index (idempotent: a first draft without them is edited in place)
 ALTER TABLE books_action_step DROP CONSTRAINT IF EXISTS books_action_step_role_check;
-ALTER TABLE books_action_step ADD CONSTRAINT books_action_step_role_check CHECK (role IN ('maker', 'checker', 'owner'));
+ALTER TABLE books_action_step ADD CONSTRAINT books_action_step_role_check CHECK (role IN ('maker', 'checker', 'owner', 'delegated'));
 ALTER TABLE books_action_step DROP CONSTRAINT IF EXISTS books_action_step_money_pair;
 ALTER TABLE books_action_step ADD CONSTRAINT books_action_step_money_pair CHECK ((total_minor IS NULL) = (currency IS NULL));
 ALTER TABLE books_action_step DROP CONSTRAINT IF EXISTS books_action_step_grant_on_firm_steps;
@@ -82,6 +82,13 @@ CREATE POLICY action_insert_firm ON books_action_step FOR INSERT
     AND step IN ('prepared', 'reviewed', 'returned') AND role IN ('maker', 'checker')
     AND EXISTS (SELECT 1 FROM books_access_grant g WHERE g.grant_id = books_action_step.grant_id AND g.grantor_entity = books_action_step.store
                 AND g.preset = 'adviser' AND g.revoked_at IS NULL AND g.expires_at > now()));
+-- the delegated steps (ACC-176b): the review and the accept that the SERVER writes in the preparer's own transaction when the owner gave this live adviser grant posting = 'adviser_posts'; never any other grant
+DROP POLICY IF EXISTS action_insert_delegated ON books_action_step;
+CREATE POLICY action_insert_delegated ON books_action_step FOR INSERT
+  WITH CHECK (store = NULLIF(current_setting('app.current_entity', true), '')::uuid
+    AND step IN ('reviewed', 'accepted') AND role = 'delegated'
+    AND EXISTS (SELECT 1 FROM books_access_grant g WHERE g.grant_id = books_action_step.grant_id AND g.grantor_entity = books_action_step.store
+                AND g.preset = 'adviser' AND g.posting = 'adviser_posts' AND g.revoked_at IS NULL AND g.expires_at > now()));
 -- the owner's steps: its own store, never naming a firm role
 DROP POLICY IF EXISTS action_insert_owner ON books_action_step;
 CREATE POLICY action_insert_owner ON books_action_step FOR INSERT

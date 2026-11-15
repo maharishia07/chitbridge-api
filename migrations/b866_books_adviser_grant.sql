@@ -51,6 +51,18 @@ CREATE POLICY log_insert ON books_access_log FOR INSERT
     AND EXISTS (SELECT 1 FROM books_access_grant g WHERE g.grantor_entity = books_access_log.grantor_entity AND g.grantee_entity = books_access_log.grantee_entity AND g.revoked_at IS NULL
                 AND g.preset = COALESCE(books_access_log.preset, 'auditor')));
 
+-- DELEGATED POSTING (ACC-176b, Athi 15 Nov): who posts is the OWNER'S choice, made at grant time; NULL = the owner has not chosen = read as owner_approves (the safe side); never a default, no backfill.
+-- posting_cap_*: an optional ceiling per entry; above it (or in another currency) the action waits for the owner's accept even under adviser_posts. Money carries its currency: both columns or none.
+ALTER TABLE books_access_grant ADD COLUMN IF NOT EXISTS posting text;
+ALTER TABLE books_access_grant ADD COLUMN IF NOT EXISTS posting_cap_minor bigint;
+ALTER TABLE books_access_grant ADD COLUMN IF NOT EXISTS posting_cap_currency text;
+ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_posting_check;
+ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_posting_check CHECK (posting IS NULL OR posting IN ('owner_approves', 'adviser_posts'));
+ALTER TABLE books_access_grant DROP CONSTRAINT IF EXISTS books_access_grant_cap_pair;
+ALTER TABLE books_access_grant ADD CONSTRAINT books_access_grant_cap_pair CHECK ((posting_cap_minor IS NULL) = (posting_cap_currency IS NULL) AND (posting_cap_minor IS NULL OR (posting_cap_minor > 0 AND posting_cap_currency ~ '^[A-Z]{3}$')));
+-- money-group: posting_cap_currency covers posting_cap_minor
+-- the owner switches it back (or sets the cap) later, effective on the next request: UPDATE on these three columns only (the preset, grantee and purpose still never change)
+GRANT UPDATE (posting, posting_cap_minor, posting_cap_currency) ON books_access_grant TO cb_app;
 ALTER TABLE journal_entry ADD COLUMN IF NOT EXISTS grant_id uuid;
 ALTER TABLE books_change_log ADD COLUMN IF NOT EXISTS grant_id uuid;
 COMMENT ON COLUMN journal_entry.grant_id IS 'ACC-176b: the adviser grant an entry was posted under (created_by is the real person); null for the owner''s own entries';

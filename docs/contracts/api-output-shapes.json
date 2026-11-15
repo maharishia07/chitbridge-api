@@ -7973,7 +7973,10 @@
             "type": "string"
           },
           "revoked_at": {},
-          "revoked_by": {}
+          "revoked_by": {},
+          "posting": {},
+          "posting_cap_minor": {},
+          "posting_cap_currency": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -8186,7 +8189,10 @@
           "revoked_by": {},
           "warnings": {
             "type": "array"
-          }
+          },
+          "posting": {},
+          "posting_cap_minor": {},
+          "posting_cap_currency": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -8258,7 +8264,10 @@
           },
           "actions_withdrawn": {
             "type": "integer"
-          }
+          },
+          "posting": {},
+          "posting_cap_minor": {},
+          "posting_cap_currency": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"

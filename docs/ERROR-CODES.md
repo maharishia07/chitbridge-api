@@ -68,6 +68,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_GRANT_RATE | 429 | Too many requests | Too many requests for these books. Wait a minute. | Wait a minute, then try again. | network | 2026-11-14 |
 | BOOKS_NOT_FOUND | 404 | Bank account not found | That bank account was not found in this shop's ledger. | Pick the bank account from the list and try again. | books | 2026-11-14 |
 | BOOKS_ACTION_NOT_SWITCHED_ON | 503 | Not switched on yet | Adviser actions are not switched on yet. | Try again later. | network | 2026-11-14 |
+| BOOKS_GRANT_POSTING_NEEDED | 422 | Say who posts | Say who posts: your adviser posts for you, or you approve each post. | Pick one of the two. | network | 2026-11-15 |
+| BOOKS_GRANT_POSTING_INVALID | 422 | Posting choice not accepted | Pick: your adviser posts for you, or you approve each post. | Pick one of the two. | network | 2026-11-15 |
+| BOOKS_GRANT_CAP_INVALID | 422 | Limit not accepted | Give the limit and its currency together, as a positive amount. | Fill in both, or leave both empty. | network | 2026-11-15 |
+| ACTION_ALERT_NOT_RECORDED | 503 | Could not tell the owner | We could not record this for the owner, so nothing was posted. | Try again. | network | 2026-11-15 |
 | BOOKS_GRANT_PRESET_INVALID | 422 | Access kind not accepted | Pick auditor or adviser. | Choose auditor or adviser. | network | 2026-11-14 |
 | ACTION_KIND_INVALID | 422 | Action not accepted | Say what is to be done: a journal, a reversal, a lock, an unlock or a year close. | Pick one of the five. | network | 2026-11-14 |
 | ACTION_BODY_INVALID | 422 | Action incomplete | The action is missing something it needs. | Fill in what the message names. | network | 2026-11-14 |

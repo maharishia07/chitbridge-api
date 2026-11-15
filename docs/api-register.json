@@ -4247,7 +4247,7 @@
    "owner_agent": "unassigned",
    "file": "routes/books-actions.js",
    "line": 85,
-   "hash": "2005d42e7dfb3e95",
+   "hash": "6838c4ea85a3a23e",
    "does": "A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.",
    "errors": {
     "count": 0,
@@ -29571,7 +29571,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 67,
-   "hash": "7e0846099761c3d9",
+   "hash": "f58ea48fddcbdba6",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
     "count": 1,
@@ -29588,11 +29588,13 @@
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
-   "reads": [],
+   "reads": [
+    "books_access_grant"
+   ],
    "writes": [
     "books_access_grant"
    ],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -29652,7 +29654,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7e0846099761c3d9"
+    "stale_since": "f58ea48fddcbdba6"
    },
    "status": "partial",
    "callers": [
@@ -33847,7 +33849,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 56,
-   "hash": "b5a9eefc2b527965",
+   "hash": "596d5532b66a5324",
    "does": "An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).",
    "errors": {
     "count": 1,
@@ -33869,7 +33871,7 @@
    "writes": [
     "books_access_grant"
    ],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -33928,7 +33930,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b5a9eefc2b527965"
+    "stale_since": "596d5532b66a5324"
    },
    "status": "partial",
    "callers": [
@@ -33957,7 +33959,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 76,
-   "hash": "b1a17a71334d9ef4",
+   "hash": "82728be98341efc7",
    "does": "A grant id in -> we take that access away -> the revoked grant (owner only).",
    "errors": {
     "count": 1,
@@ -34036,7 +34038,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b1a17a71334d9ef4"
+    "stale_since": "82728be98341efc7"
    },
    "status": "partial",
    "callers": [

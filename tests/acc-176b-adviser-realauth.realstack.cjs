@@ -77,7 +77,7 @@ async function main() {
     const owner = ownerToken(M1);
     await withEntity(M1.id, (h) => require(path.join(API, 'lib', 'country-setup.js')).save(h, M1.id, { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' }, source: { tax: 'typed' } }, M1.id));
     const enabled = await call(owner, 'POST', '/api/books/enable', { body: {} });
-    const given = await call(owner, 'POST', '/api/books-grants', { body: { grantee: P.id, preset: 'adviser', purpose: 'adviser of the books', consent: true } });
+    const given = await call(owner, 'POST', '/api/books-grants', { body: { grantee: P.id, preset: 'adviser', posting: 'owner_approves', purpose: 'adviser of the books', consent: true } });
     ok('1 the owner (a real token) switches the ledger on and gives the firm an ADVISER grant', enabled.status === 200 && given.status === 201 && given.body.preset === 'adviser', JSON.stringify([enabled.status, given]));
     const accounts = (await call(owner, 'GET', '/api/books/accounts')).body;
     const list = accounts.accounts || accounts.rows || accounts || [];
