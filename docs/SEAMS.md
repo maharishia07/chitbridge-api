@@ -118,8 +118,8 @@ of file each thing is; this says what already does the job.
 | 28 | `names` | `shortcuts.js` |  |
 | 28 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 27 | `call` | `cap-assist.js` |  |
+| 27 | `entries` | `books-store.js` |  |
 | 27 | `customer` | `mintuserid.js` | silently becomes a second identity. |
-| 26 | `entries` | `books-store.js` |  |
 | 26 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 26 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 26 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
