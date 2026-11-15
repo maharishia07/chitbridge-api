@@ -10,11 +10,11 @@
   "columns": {
    "strict_input": {
     "applies": 335,
-    "failing": 3
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 654,
-    "failing": 5
+    "failing": 3
    },
    "foreign_id_404": {
     "applies": 205,
@@ -22,7 +22,7 @@
    },
    "idempotent_money_write": {
     "applies": 11,
-    "failing": 1
+    "failing": 0
    },
    "inbound_validated": {
     "applies": 6,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 157
+  "output_allowlist_from_recordings": 159
  },
  "machine_columns": [
   "schema_in",
@@ -20989,12 +20989,13 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 66,
-   "hash": "888d1e90b0bbb72d",
+   "hash": "8a32756c39e7951d",
    "does": "An adopter and a list of record ids, or open=1 for the open items -> we read the latest mark of each record (or the open queries with their age and \"checked n of m\") in one read -> the marks, the words and what you may do.",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      422,
      500,
      503
@@ -21015,13 +21016,13 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21037,6 +21038,7 @@
    },
    "declared": [
     401,
+    403,
     422,
     500,
     503
@@ -21044,6 +21046,7 @@
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -21084,12 +21087,13 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 103,
-   "hash": "57cbac4d76ea35c2",
+   "hash": "0e9967206d0f4587",
    "does": "A thread id in -> we read the marked record's mark, its history and the replies with what you may do -> the conversation, or 404 for a thread that is not these books'.",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      404,
      422,
      500,
@@ -21111,11 +21115,11 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -21133,6 +21137,7 @@
    },
    "declared": [
     401,
+    403,
     404,
     422,
     500,
@@ -33810,7 +33815,7 @@
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -33855,7 +33860,7 @@
    },
    "status": "partial",
    "callers": [],
-   "offline": "online-only",
+   "offline": "idempotent",
    "round_trips": {
     "trips": 1,
     "wire": 6,
@@ -51672,7 +51677,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 95,
-   "hash": "4980a963637d1470",
+   "hash": "165b7ae5af5426f8",
    "does": "An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.",
    "errors": {
     "count": 1,
@@ -51700,12 +51705,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -51771,7 +51776,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 106,
-   "hash": "7a911a64e2fbd851",
+   "hash": "297bb3a3ad0431e0",
    "does": "A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.",
    "errors": {
     "count": 1,
@@ -51800,12 +51805,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -51872,12 +51877,13 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 81,
-   "hash": "64e05a545daa171d",
+   "hash": "c59e54d0dd1bd0ef",
    "does": "An adopter and more record ids than a query string carries in a body -> we read the latest mark of each (a read, not a write) -> the marks, the words and what you may do.",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      422,
      500,
      503
@@ -51898,13 +51904,13 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51920,6 +51926,7 @@
    },
    "declared": [
     401,
+    403,
     422,
     500,
     503
@@ -51927,6 +51934,7 @@
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,

@@ -1186,6 +1186,22 @@
     422
    ]
   },
+  "GET /api/marks": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/marks/:thread_id/messages": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/network-design/availability": {
    "cases": 2,
    "failed": 0,
@@ -3268,6 +3284,30 @@
   },
   "POST /api/kyb/field": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/marks": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/marks/:thread_id/messages": {
+   "cases": 7,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/marks/query": {
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

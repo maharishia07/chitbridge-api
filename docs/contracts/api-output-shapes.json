@@ -6859,6 +6859,586 @@
         "url": "/api/invoice/22222222-2222-4222-8222-222222222222"
       }
     },
+    "GET /api/marks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "adopter",
+          "vocabulary",
+          "actions"
+        ],
+        "properties": {
+          "adopter": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "object"
+          },
+          "not_found": {},
+          "vocabulary": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "label",
+                "class",
+                "note"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "class": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "actions": {
+            "type": "object",
+            "required": [
+              "set",
+              "reply"
+            ],
+            "properties": {
+              "set": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "reply": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "open": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "mark_id",
+                "adopter",
+                "subject_id",
+                "thread_id",
+                "kind",
+                "class",
+                "label",
+                "note",
+                "at",
+                "by_name",
+                "by_firm",
+                "open",
+                "open_since",
+                "age_days",
+                "altered",
+                "altered_by",
+                "recheck_needed",
+                "message_count",
+                "actions",
+                "subject_label",
+                "posting_date"
+              ],
+              "properties": {
+                "mark_id": {
+                  "type": "string"
+                },
+                "adopter": {
+                  "type": "string"
+                },
+                "subject_id": {
+                  "type": "string"
+                },
+                "thread_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "class": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by_name": {
+                  "type": "string"
+                },
+                "by_firm": {
+                  "type": "string"
+                },
+                "open": {
+                  "type": "boolean"
+                },
+                "open_since": {
+                  "type": "string"
+                },
+                "age_days": {
+                  "type": "number"
+                },
+                "altered": {
+                  "type": "boolean"
+                },
+                "altered_by": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "entry_id",
+                    "entry_no",
+                    "at",
+                    "by_name"
+                  ],
+                  "properties": {
+                    "entry_id": {
+                      "type": "string"
+                    },
+                    "entry_no": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "by_name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "recheck_needed": {
+                  "type": "boolean"
+                },
+                "message_count": {
+                  "type": "number"
+                },
+                "actions": {
+                  "type": "object",
+                  "required": [
+                    "set",
+                    "reply"
+                  ],
+                  "properties": {
+                    "set": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "reply": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {}
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "subject_label": {
+                  "type": "string"
+                },
+                "posting_date": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total_open": {
+            "type": "number"
+          },
+          "oldest_age_days": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "checked": {
+            "type": "number"
+          },
+          "of": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 10,
+      "open": [
+        {
+          "path": "marks",
+          "reason": "a map keyed by data (3 keys)"
+        }
+      ],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/marks?adopter=acc.audit&open=1&from=2026-11-15&to=2026-11-15"
+      }
+    },
+    "GET /api/marks/:thread_id/messages": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "thread_id",
+          "adopter",
+          "subject_id",
+          "subject_label",
+          "mark",
+          "history",
+          "messages",
+          "actions"
+        ],
+        "properties": {
+          "thread_id": {
+            "type": "string"
+          },
+          "adopter": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "subject_label": {
+            "type": "string"
+          },
+          "mark": {
+            "type": "object",
+            "required": [
+              "mark_id",
+              "adopter",
+              "subject_id",
+              "thread_id",
+              "kind",
+              "class",
+              "label",
+              "note",
+              "at",
+              "by_name",
+              "by_firm",
+              "open",
+              "open_since",
+              "age_days",
+              "altered",
+              "altered_by",
+              "recheck_needed",
+              "message_count",
+              "actions"
+            ],
+            "properties": {
+              "mark_id": {
+                "type": "string"
+              },
+              "adopter": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "thread_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "class": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": "string"
+              },
+              "by_firm": {
+                "type": "string"
+              },
+              "open": {
+                "type": "boolean"
+              },
+              "open_since": {
+                "type": "string"
+              },
+              "age_days": {
+                "type": "number"
+              },
+              "altered": {
+                "type": "boolean"
+              },
+              "altered_by": {},
+              "recheck_needed": {
+                "type": "boolean"
+              },
+              "message_count": {
+                "type": "number"
+              },
+              "actions": {
+                "type": "object",
+                "required": [
+                  "set",
+                  "reply"
+                ],
+                "properties": {
+                  "set": {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "why"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "reply": {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "why"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {}
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "mark_id",
+                "kind",
+                "class",
+                "label",
+                "note",
+                "at",
+                "by_name",
+                "by_firm",
+                "seal_changed_before"
+              ],
+              "properties": {
+                "mark_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "class": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by_name": {
+                  "type": "string"
+                },
+                "by_firm": {
+                  "type": "string"
+                },
+                "seal_changed_before": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "message_id",
+                "sender_display_name",
+                "message_text",
+                "msg_type",
+                "created_at",
+                "mine"
+              ],
+              "properties": {
+                "message_id": {
+                  "type": "string"
+                },
+                "sender_display_name": {
+                  "type": "string"
+                },
+                "message_text": {
+                  "type": "string"
+                },
+                "msg_type": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "mine": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "actions": {
+            "type": "object",
+            "required": [
+              "set",
+              "reply"
+            ],
+            "properties": {
+              "set": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "reply": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/marks/999deacd-d6db-456d-bb0d-2fa1c971c697/messages"
+      }
+    },
     "GET /api/network-offers": {
       "status": "200",
       "schema": {
@@ -23021,6 +23601,598 @@
           "name": "Tally connector",
           "scopes": [
             "connector"
+          ]
+        }
+      }
+    },
+    "POST /api/marks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "mark",
+          "unchanged",
+          "vocabulary"
+        ],
+        "properties": {
+          "mark": {
+            "type": "object",
+            "required": [
+              "mark_id",
+              "adopter",
+              "subject_id",
+              "thread_id",
+              "kind",
+              "class",
+              "label",
+              "note",
+              "at",
+              "by_name",
+              "by_firm",
+              "open",
+              "open_since",
+              "age_days",
+              "altered",
+              "altered_by",
+              "recheck_needed",
+              "message_count",
+              "actions"
+            ],
+            "properties": {
+              "mark_id": {
+                "type": "string"
+              },
+              "adopter": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "thread_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "class": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {},
+              "at": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": "string"
+              },
+              "by_firm": {
+                "type": "string"
+              },
+              "open": {
+                "type": "boolean"
+              },
+              "open_since": {},
+              "age_days": {},
+              "altered": {
+                "type": "boolean"
+              },
+              "altered_by": {},
+              "recheck_needed": {
+                "type": "boolean"
+              },
+              "message_count": {
+                "type": "number"
+              },
+              "actions": {
+                "type": "object",
+                "required": [
+                  "set",
+                  "reply"
+                ],
+                "properties": {
+                  "set": {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "why"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {}
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "reply": {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "why"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "unchanged": {
+            "type": "boolean"
+          },
+          "vocabulary": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "label",
+                "class",
+                "note"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "class": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/marks",
+        "body": {
+          "adopter": "acc.audit",
+          "subject_id": "370fef57-9b8d-432d-bfa2-368675a09b3a",
+          "kind": "checked"
+        }
+      }
+    },
+    "POST /api/marks/:thread_id/messages": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "mark"
+        ],
+        "properties": {
+          "message": {
+            "type": "object",
+            "required": [
+              "message_id",
+              "sender_display_name",
+              "message_text",
+              "msg_type",
+              "created_at",
+              "mine"
+            ],
+            "properties": {
+              "message_id": {
+                "type": "string"
+              },
+              "sender_display_name": {
+                "type": "string"
+              },
+              "message_text": {
+                "type": "string"
+              },
+              "msg_type": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "mine": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "mark": {
+            "type": "object",
+            "required": [
+              "mark_id",
+              "adopter",
+              "subject_id",
+              "thread_id",
+              "kind",
+              "class",
+              "label",
+              "note",
+              "at",
+              "by_name",
+              "by_firm",
+              "open",
+              "open_since",
+              "age_days",
+              "altered",
+              "altered_by",
+              "recheck_needed",
+              "message_count",
+              "actions"
+            ],
+            "properties": {
+              "mark_id": {
+                "type": "string"
+              },
+              "adopter": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "thread_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "class": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": "string"
+              },
+              "by_firm": {
+                "type": "string"
+              },
+              "open": {
+                "type": "boolean"
+              },
+              "open_since": {
+                "type": "string"
+              },
+              "age_days": {
+                "type": "number"
+              },
+              "altered": {
+                "type": "boolean"
+              },
+              "altered_by": {},
+              "recheck_needed": {
+                "type": "boolean"
+              },
+              "message_count": {
+                "type": "number"
+              },
+              "actions": {
+                "type": "object",
+                "required": [
+                  "set",
+                  "reply"
+                ],
+                "properties": {
+                  "set": {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "why"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "reply": {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "why"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {}
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/marks/999deacd-d6db-456d-bb0d-2fa1c971c697/messages",
+        "body": {
+          "message_text": "It was a cash sale for the day."
+        }
+      }
+    },
+    "POST /api/marks/query": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "adopter",
+          "marks",
+          "not_found",
+          "vocabulary",
+          "actions"
+        ],
+        "properties": {
+          "adopter": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "object",
+            "required": [
+              "370fef57-9b8d-432d-bfa2-368675a09b3a",
+              "edb580a7-a3d5-46d6-b8ad-0594088c25e7"
+            ],
+            "properties": {
+              "370fef57-9b8d-432d-bfa2-368675a09b3a": {
+                "type": "object",
+                "required": [
+                  "mark_id",
+                  "adopter",
+                  "subject_id",
+                  "thread_id",
+                  "kind",
+                  "class",
+                  "label",
+                  "note",
+                  "at",
+                  "by_name",
+                  "by_firm",
+                  "open",
+                  "open_since",
+                  "age_days",
+                  "altered",
+                  "altered_by",
+                  "recheck_needed",
+                  "message_count",
+                  "actions"
+                ],
+                "properties": {
+                  "mark_id": {
+                    "type": "string"
+                  },
+                  "adopter": {
+                    "type": "string"
+                  },
+                  "subject_id": {
+                    "type": "string"
+                  },
+                  "thread_id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "class": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "note": {},
+                  "at": {
+                    "type": "string"
+                  },
+                  "by_name": {
+                    "type": "string"
+                  },
+                  "by_firm": {
+                    "type": "string"
+                  },
+                  "open": {
+                    "type": "boolean"
+                  },
+                  "open_since": {},
+                  "age_days": {},
+                  "altered": {
+                    "type": "boolean"
+                  },
+                  "altered_by": {},
+                  "recheck_needed": {
+                    "type": "boolean"
+                  },
+                  "message_count": {
+                    "type": "number"
+                  },
+                  "actions": {
+                    "type": "object",
+                    "required": [
+                      "set",
+                      "reply"
+                    ],
+                    "properties": {
+                      "set": {
+                        "type": "object",
+                        "required": [
+                          "ok",
+                          "why"
+                        ],
+                        "properties": {
+                          "ok": {
+                            "type": "boolean"
+                          },
+                          "why": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "x-closed-by": "recordings"
+                      },
+                      "reply": {
+                        "type": "object",
+                        "required": [
+                          "ok",
+                          "why"
+                        ],
+                        "properties": {
+                          "ok": {
+                            "type": "boolean"
+                          },
+                          "why": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "x-closed-by": "recordings"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "edb580a7-a3d5-46d6-b8ad-0594088c25e7": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "not_found": {},
+          "vocabulary": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "label",
+                "class",
+                "note"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "class": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "actions": {
+            "type": "object",
+            "required": [
+              "set",
+              "reply"
+            ],
+            "properties": {
+              "set": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "reply": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/marks/query",
+        "body": {
+          "adopter": "acc.audit",
+          "ids": [
+            "370fef57-9b8d-432d-bfa2-368675a09b3a",
+            "edb580a7-a3d5-46d6-b8ad-0594088c25e7"
           ]
         }
       }
@@ -47621,6 +48793,7 @@
     "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/kyb/risk": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/kyb/yourself": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/marks": "open at marks — a map keyed by data (3 keys)",
     "GET /api/network-design": "open at draft - the saved drawing, stored verbatim from the owner body (PUT /: any object up to 2 MB, the design tool owns its keys); a closed shape would cut a key it does not list",
     "GET /api/notifications": "open at notifications[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
