@@ -1,3 +1,9 @@
+/*
+ * OWNS      the live-rail proof that a line can be assigned and reassigned with history, and that the counterparty never sees it
+ * CALLED BY by hand (node scripts/prove-assign-live.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      02-tasks-orders-and-workflow/assign-and-deliver-lines
+ */
 'use strict';
 /** @covers FR-M3 — the PUSH leg and its per-copy consequence; pool-pull and hat-gating are not asserted here */
 // prove-assign-live.js — b143 on the live rail. Division of labour, and the privacy that makes it safe.

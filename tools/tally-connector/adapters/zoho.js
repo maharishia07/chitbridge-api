@@ -1,3 +1,9 @@
+/*
+ * OWNS      the Zoho Books adapter over its REST api with fetch
+ * CALLED BY tools/tally-connector/index.js and setup.js (adapter by name), tests/connector-kit.test.js, tests/con-55-zoho-refresh.test.cjs
+ * FLOW      index.js or setup.js builds it from the config, readProducts() reads items, pushOrder() creates an invoice, pushReceipt() records the payment, tokens are renewed through _configFile
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * ADAPTER: Zoho Books (REST) — the shape a hosted system attaches through: fetch() instead of a local port.
  *   readProducts(): GET /books/v3/items?organization_id=…            → { items:[{ item_id, name, sku, unit, rate, hsn_or_sac, status }] }

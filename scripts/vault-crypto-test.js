@@ -1,3 +1,9 @@
+/*
+ * OWNS      the local unit proof of vault at-rest encryption with no database and no network
+ * CALLED BY by hand (node scripts/vault-crypto-test.js); nothing in the repo requires it
+ * FLOW      requires lib/vaultcrypto, encrypts and decrypts with VAULT_ENC_KEY, prints PASS/FAIL
+ * CARD      18-identity-sign-in-and-access/identity-documents-and-the-vault
+ */
 // vault-crypto-test.js — LOCAL unit proof of vault at-rest encryption (F1). No DB, no network.
 // Run: node scripts/vault-crypto-test.js
 const crypto = require('crypto');

@@ -1,3 +1,9 @@
+/*
+ * OWNS      the generator of a shop at scale: thousands of items with a spread of tax slabs, offers and words
+ * CALLED BY by hand (node tools/seed/generate.cjs); nothing in the repo requires it
+ * FLOW      draws the items from a fixed seed, writes the catalogue JSON itself (count as the first argument)
+ * CARD      06-catalogue-pim/README
+ */
 /**
  * generate.cjs — A SHOP AT SCALE, NOT A PILE OF ROWS (2026-09-08).
  *

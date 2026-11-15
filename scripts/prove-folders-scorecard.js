@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the live proof of folder metrics, the counterparty scorecard and the rule preview
+ * CALLED BY by hand (node scripts/prove-folders-scorecard.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, creates and deletes one folder, reads the read-only surfaces, prints PASS/FAIL
+ * CARD      01-rail-core-the-chit/user-folders-and-auto-file-rules
+ */
 'use strict';
 /**
  * prove-folders-scorecard.js — folder metrics, the counterparty scorecard and rule preview, against the LIVE API.

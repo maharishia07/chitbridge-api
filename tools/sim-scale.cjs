@@ -1,3 +1,9 @@
+/*
+ * OWNS      PERF1: growing one shop to 10k, 50k or 100k journal lines and timing every hot read
+ * CALLED BY tools/sim-load.cjs (--scale)
+ * FLOW      run() is called by sim-load after its plan is loaded; it grows the shop, times each read 20 times with fetch and prints the table
+ * CARD      28-platform-and-operations/load-simulation
+ */
 /**
  * tools/sim-scale.cjs — PERF1 · `sim-load --scale 10k|50k|100k`: ONE shop grown to that many journal lines, then every hot read TIMED.
  *

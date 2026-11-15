@@ -1,3 +1,9 @@
+/*
+ * OWNS      the proof of the closed numeral class against phrases lifted from real messages
+ * CALLED BY by hand (node scripts/prove-numerals.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 // prove-numerals.js — the closed class, proved against Athi's OWN corpus.
 //

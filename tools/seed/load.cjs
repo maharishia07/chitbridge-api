@@ -1,3 +1,9 @@
+/*
+ * OWNS      pushing a generated catalogue into a shop through a connector key, insert only
+ * CALLED BY by hand (node tools/seed/load.cjs); nothing in the repo requires it
+ * FLOW      reads connector.json, posts the rows to /api/products/bulk in batches of 200, four at a time, prints the progress
+ * CARD      06-catalogue-pim/README
+ */
 /**
  * load.cjs — push a generated catalogue into a shop through a CONNECTOR key.
  *

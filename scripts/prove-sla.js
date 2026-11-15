@@ -1,3 +1,9 @@
+/*
+ * OWNS      the proof of the service clock and the disputed pause that gives two defensible answers
+ * CALLED BY by hand (node scripts/prove-sla.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 'use strict';
 /**
  * prove-sla.js — the service clock, and the argument it exists to settle.

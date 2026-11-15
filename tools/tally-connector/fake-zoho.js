@@ -1,3 +1,9 @@
+/*
+ * OWNS      a stand-in for the Zoho Books REST api, for the proof
+ * CALLED BY by hand (node fake-zoho.js [port]), routes/integrations.js (kit file list)
+ * FLOW      listens on the given port, answers the items and invoice calls, remembers the invoices
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /** fake-zoho.js — a stand-in for Zoho Books' REST API, for the proof. node fake-zoho.js [port] · GET /_invoices · GET /_reset */
 'use strict';
 const http = require('http');

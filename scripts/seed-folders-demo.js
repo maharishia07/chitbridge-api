@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      filing existing chits into folders so the folder metrics show different readings
+ * CALLED BY by hand (node scripts/seed-folders-demo.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, files real chits by age and state into folders, prints the metrics
+ * CARD      01-rail-core-the-chit/user-folders-and-auto-file-rules
+ */
 'use strict';
 /**
  * seed-folders-demo.js — fill folders with REAL chits so the metrics show genuinely different readings.

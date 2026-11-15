@@ -1,3 +1,9 @@
+/*
+ * OWNS      the live proof that an item version is cut by the database trigger only when a tracked field changes
+ * CALLED BY by hand (node scripts/prove-itemversion.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      06-catalogue-pim/README
+ */
 'use strict';
 /**
  * prove-itemversion.js — b146, against a LIVE environment.

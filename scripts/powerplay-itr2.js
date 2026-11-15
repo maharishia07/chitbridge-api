@@ -1,3 +1,9 @@
+/*
+ * OWNS      the capability probe: can the catalogue carry an ITR2 form workflow from a Form 16 input
+ * CALLED BY by hand (node scripts/powerplay-itr2.js); nothing in the repo requires it
+ * FLOW      builds the form through lib/form-handshake and lib/order-input, prints what auto-populates and what does not
+ * CARD      21-compliance-attestation-and-trade/authority-forms
+ */
 'use strict';
 /**
  * powerplay-itr2.js — CAPABILITY PROBE: can the catalogue, as deployed today, carry a real form workflow?

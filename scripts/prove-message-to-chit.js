@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that a WhatsApp message becomes a chit with the right lines and a linked capture
+ * CALLED BY by hand (node scripts/prove-message-to-chit.js); nothing in the repo requires it
+ * FLOW      signs a webhook payload with WHATSAPP_APP_SECRET, posts it, reads the chit back through scripts/_proof.js, asserts the lines, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 /**
  * prove-message-to-chit.js — THE ONE THAT MATTERS: a WhatsApp message becomes a CHIT, with the right lines on it.

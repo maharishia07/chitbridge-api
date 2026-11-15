@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      deterministic test images, written byte by byte from a fixed palette instead of downloaded
+ * CALLED BY by hand (node scripts/make-test-media.js); nothing in the repo requires it
+ * FLOW      builds each image with zlib, writes the files into the ignored media folder, exits non-zero on a write failure
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 /**
  * make-test-media.js — deterministic test images, generated rather than downloaded.
  *

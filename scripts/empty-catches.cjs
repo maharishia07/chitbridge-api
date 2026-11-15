@@ -1,3 +1,9 @@
+/*
+ * OWNS      the count of catch blocks that swallow a failure silently over lib/ and routes/ (the honest-failures ratchet number)
+ * CALLED BY tests/honest-failures.test.cjs (count, silentCatches), by hand (node scripts/empty-catches.cjs)
+ * FLOW      walks the source files, finds empty or literal-returning catches, prints the count (--list the places)
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 /**
  * empty-catches.cjs — HOW MANY CATCHES STILL SWALLOW A FAILURE IN SILENCE (round T2-HONEST, 14 Oct; the MAINT-1 count for the api).
  *

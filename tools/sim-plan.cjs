@@ -1,3 +1,9 @@
+/*
+ * OWNS      the one plan of a simulated shop days: bills per day, rates, payment mix, purchase and payout days
+ * CALLED BY tools/simulate-years.cjs, tools/sim-load.cjs, tests/sim-load.test.cjs
+ * FLOW      a pure function from the seed to the plan; both simulators read the same plan
+ * CARD      28-platform-and-operations/load-simulation
+ */
 /**
  * tools/sim-plan.cjs — THE ONE PLAN OF A SIMULATED SHOP'S DAYS (round Y1b).
  *

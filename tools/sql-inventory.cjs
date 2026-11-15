@@ -1,3 +1,9 @@
+/*
+ * OWNS      the list of which .sql files are required going forward and which are history
+ * CALLED BY by hand (node tools/sql-inventory.cjs); nothing in the repo requires it
+ * FLOW      reads the migration folder and the references, prints the required and the historical files
+ * CARD      28-platform-and-operations/migrations-and-schema
+ */
 /**
  * tools/sql-inventory.cjs — which .sql files are REQUIRED going forward, and which are history.
  *

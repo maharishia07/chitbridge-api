@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that a signed webhook delivery alone turns a message into a chit with nobody pressing a button
+ * CALLED BY by hand (node scripts/prove-autoraise.js); nothing in the repo requires it
+ * FLOW      signs a WhatsApp payload with WHATSAPP_APP_SECRET, posts it, then only watches and asserts that a chit appears, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 /**
  * prove-autoraise.js — a message becomes a chit with NOBODY PRESENT (b131).

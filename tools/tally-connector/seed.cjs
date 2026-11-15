@@ -1,3 +1,9 @@
+/*
+ * OWNS      loading the Tally test catalogue into the connected shop, a dev seed
+ * CALLED BY by hand (node tools/tally-connector/seed.cjs); nothing in the repo requires it
+ * FLOW      reads connector.json and the catalogue JSON, posts the rows with fetch
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 const c = require('./connector.json');
 const all = require('../seed/tallytest-catalogue.json');
 (async () => {

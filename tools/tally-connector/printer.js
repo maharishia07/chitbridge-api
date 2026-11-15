@@ -1,3 +1,9 @@
+/*
+ * OWNS      printing the slip on paper: finding the thermal printer and sending it ESC/POS bytes
+ * CALLED BY tools/tally-connector/till.js, tests/printer.test.js
+ * FLOW      till.js hands it the slip, it builds the bytes and sends them to the chosen printer
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 'use strict';
 /**
  * printer.js — THE SLIP, ON PAPER (2026-09-08). Athi: *"can you detect the printer, I have now connected through USB, thermal

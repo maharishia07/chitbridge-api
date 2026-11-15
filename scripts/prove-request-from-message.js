@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that a WhatsApp message becomes a request addressed to the entity
+ * CALLED BY by hand (node scripts/prove-request-from-message.js); nothing in the repo requires it
+ * FLOW      signs a webhook payload with WHATSAPP_APP_SECRET, posts it, reads the request back through scripts/_proof.js, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 /**
  * prove-request-from-message.js — a WhatsApp message becomes a REQUEST addressed to the entity.

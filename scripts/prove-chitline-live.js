@@ -1,3 +1,9 @@
+/*
+ * OWNS      the live-rail proof that a line is a row: per-line rows on every copy, shared line_id, row-level isolation, stated order
+ * CALLED BY by hand (node scripts/prove-chitline-live.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      01-rail-core-the-chit/line-model
+ */
 'use strict';
 // prove-chitline-live.js — b142 on the live rail. A line is a row now.
 //

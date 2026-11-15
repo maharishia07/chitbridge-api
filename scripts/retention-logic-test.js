@@ -1,3 +1,9 @@
+/*
+ * OWNS      the local proof of the retire_at FLOOR rule, including that a late dispute does not restart the clock
+ * CALLED BY by hand (node scripts/retention-logic-test.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      27-data-lifecycle-retention-storage-archive/retention-rules-and-floor
+ */
 // retention-logic-test.js — LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the
 // "late dispute must NOT restart the clock" case as the one a naive impl gets catastrophically wrong. node scripts/retention-logic-test.js
 const { computeRetireAt, boundedExtension, MAX_EXTEND_DAYS } = require('../lib/retention');

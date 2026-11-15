@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that the policy flags persist across a fresh sign-in and change what the product does
+ * CALLED BY by hand (node scripts/prove-policy-flags.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, writes and re-reads each flag, asserts the pricing effect, prints PASS/FAIL
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 'use strict';
 /**
  * prove-policy-flags.js — the policy flags are REAL (b130), and trade_side actually governs pricing.
