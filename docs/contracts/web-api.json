@@ -485,6 +485,27 @@
       "name": "Kumar Traders"
      }
     ],
+    "books": {
+     "parties": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "name": "Ravi",
+       "kind": "customer"
+      }
+     ],
+     "open_items": [
+      {
+       "bill_no": null,
+       "ref": "c0000000-0000-4000-8000-00000000000a",
+       "party": "22222222-2222-4222-8222-222222222222",
+       "side": "customer",
+       "open_minor": 118000,
+       "due_date": "2026-09-15",
+       "date": "2026-09-05",
+       "currency": "INR"
+      }
+     ]
+    },
     "may": {
      "ask": {
       "ok": true,

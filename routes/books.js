@@ -1392,7 +1392,7 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
  * GET /bank/rail?from&to (BR1) — THE RAIL LEG of the bank reconciliation the device runs (DECISIONS: the statement never leaves the device; the
  *   page asks only for what the other party already TOLD us): → { currency, from, to, me, rail_chits: [{ chit_id, direction, status, created_at,
  *   party: { id, name }, business_json: { kind, currency, payment_advice | bank_query }, line_items: [{ ref_chit_id, bill_no, applied_minor }] }],
- *   parties: [{ party_id, name }] (on the rail — who may be ASKED), may: { ask: { ok } | { ok: false, why, say } } }
+ *   parties: [{ party_id, name }] (on the rail — who may be ASKED), books: { parties: [{ id, name, kind }] (EVERY customer and supplier — who a line may name), open_items: [{ ref, bill_no, party, side, open_minor, currency, due_date }] (the open invoices and bills — lib/bank-open, M4) }, may: { ask: { ok } | { ok: false, why, say } } }
  *   ONE read of my advice + bank-question copies (S.bankRailChits, bounded) and the party list (one read). No money is computed here: the engine
  *   (bank-recon railPayments · explain) does it on the device. `may.ask` is the rail ladder (lib/rail byLevel) — POST /api/chits/send decides again.
  *   Who may call: any login of the shop with the Ledger on (a viewer reads; its Ask is greyed with the sentence). A key (counter) may not (noKey).
@@ -1409,7 +1409,9 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
     const out = await withEntity(e, async (h) => {
       const rows = await S.bankRailChits(h, e, from, to, 500);
       const names = await partyNames(h, e);
-      return { rows, names, me: await meName(req, h, e) };
+      const withCosts = !(await require('../lib/cost').isCostBlind(req, e)); /* a supplier's bills are cost money (RAIL-146i) */
+      const books = await require('../lib/bank-open').openDocuments(h, e, { names, currency: curOf(req), withCosts });
+      return { rows, names, books, me: await meName(req, h, e) };
     });
     const R = require('../lib/rail'),
       lvl = R.byLevel(levelOf(req), 'ask');
@@ -1434,7 +1436,7 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
       .filter((item) => item.on_rail)
       .map((item) => ({ party_id: item.party_id, name: item.nickname || item.name || null }));
     /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
-    res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
+    res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, books: out.books, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
