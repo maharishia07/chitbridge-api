@@ -1,4 +1,5 @@
 'use strict';
+// CARD      docs/06-catalogue-pim/functions/reference-lists-and-adopt-a-list.md
 /**
  * cat124-reference-store-lists.test.cjs — CAT-124 C1+C2: the Product Lab's six cards come from the six reference stores.
  * R1 every list's store is named in STORES (six, distinct, 'cbrefhotels' for hotel) and the script uses the same table

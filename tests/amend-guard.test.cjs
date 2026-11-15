@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/01-rail-core-the-chit/functions/amend-reprice-costs.md
  * tests/amend-guard.test.cjs — the receipt lock and its three narrower rules (lib/amend.js guard), offline, on a fake database. The guard read what went out in one statement and checked each edit
  * inline; it is now three steps (deliveredAgainst · refuseDisturbingDelivered · lineLocked), and this pins that every refusal still carries its status, its registered code and a sentence that
  * names the line, and that nothing delivered means nothing refused. Run: node tests/amend-guard.test.cjs

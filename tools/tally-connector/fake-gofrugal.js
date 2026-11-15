@@ -1,3 +1,7 @@
+// OWNS      a stand-in for the GoFrugal WebReporter API, for the connector proof
+// CALLED BY tools/tally-connector/adapters/gofrugal.js proof runs
+// FLOW      request ──▶ fake order store ──▶ JSON reply (GET /_orders lists, GET /_reset clears)
+// CARD      28-platform-and-operations/connectors-routes
 /** fake-gofrugal.js — a stand-in for GoFrugal's WebReporter API (from the published knowledge base), for the proof.
  *   node fake-gofrugal.js [port] · GET /_orders lists the sales orders received · GET /_reset clears */
 'use strict';

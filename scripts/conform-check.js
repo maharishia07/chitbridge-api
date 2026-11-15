@@ -26,11 +26,11 @@ async function api(m, p, { token, body } = {}) {
   const h = { 'Content-Type': 'application/json' };
   if (token) h.Authorization = 'Bearer ' + token;
   const reply = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
-  let j = null;
   try {
-    j = await reply.json();
-  } catch (_) {}
-  return { status: reply.status, json: j };
+    return { status: reply.status, json: await reply.json() };
+  } catch (_) {
+    return { status: reply.status, json: null }; // the body was not JSON
+  }
 }
 async function tokenFor(name) {
   const email = name + '@test.com';
@@ -65,8 +65,8 @@ async function tokenFor(name) {
   check('gap: haccp_checked violated', gapKeys.indexOf('haccp_checked') >= 0);
 
   // 3) Unknown standard → 404 with the available list.
-  const unk = await api('POST', '/api/assist/conform', { token, body: { standard: 'nope@v9', payload: {} } });
-  check('unknown standard → 404', unk.status === 404 && unk.json && Array.isArray(unk.json.available));
+  const unknownStandard = await api('POST', '/api/assist/conform', { token, body: { standard: 'nope@v9', payload: {} } });
+  check('unknown standard → 404', unknownStandard.status === 404 && unknownStandard.json && Array.isArray(unknownStandard.json.available));
 
   // 4) Narrative — asserted ONLY when the model key is configured (self-healing otherwise).
   if (good.json && good.json.narrative) {
