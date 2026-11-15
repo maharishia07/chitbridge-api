@@ -151,7 +151,7 @@ async function checkSharedTables(client) {
         return /row-level security/i.test(e.message);
       }
     });
-  const cx = u(), srcA = 'probe-' + u(), srcN = 'probe-' + u(), conA = 'probe-' + u(), mediaA = A + '/probe-' + u();
+  const cx = u(), srcA = 'probe-' + u(), srcN = 'probe-' + u(), conA = 'probe-' + u(), stdA = 'probe-' + u(), stdN = 'probe-' + u(), mediaA = A + '/probe-' + u();
   await client.query('BEGIN');
   await client.query("SET LOCAL session_replication_role = 'replica'");
   await client.query(
@@ -160,6 +160,7 @@ async function checkSharedTables(client) {
   );
   await client.query('INSERT INTO catalogue_source (source_key, owner_entity_id) VALUES ($1,$2), ($3,NULL)', [srcA, A, srcN]);
   await client.query('INSERT INTO product_container (container_id, owner_entity_id) VALUES ($1,$2)', [conA, A]);
+  await client.query('INSERT INTO standard_source (standard_key, owner_entity_id) VALUES ($1,$2), ($3,NULL)', [stdA, A, stdN]);
   await client.query("INSERT INTO media_blobs (key, entity_id, bytes) VALUES ($1,$2,'\\x00')", [mediaA, A]);
   await client.query('COMMIT');
   try {
@@ -179,6 +180,7 @@ async function checkSharedTables(client) {
     const shared = [
       ['catalogue_source', 'source_key', 'owner_entity_id', srcA, 'INSERT INTO catalogue_source (source_key, owner_entity_id) VALUES ($1,$2)', () => ['probe-' + u(), A]],
       ['product_container', 'container_id', 'owner_entity_id', conA, 'INSERT INTO product_container (container_id, owner_entity_id) VALUES ($1,$2)', () => ['probe-' + u(), A]],
+      ['standard_source', 'standard_key', 'owner_entity_id', stdA, 'INSERT INTO standard_source (standard_key, owner_entity_id) VALUES ($1,$2)', () => ['probe-' + u(), A]],
       ['media_blobs', 'key', 'entity_id', mediaA, "INSERT INTO media_blobs (key, entity_id, bytes) VALUES ($1,$2,'\\x00')", () => [A + '/probe-' + u(), A]]
     ];
     for (const [table, keyCol, ownerCol, key, insertSql, insertArgs] of shared) {
@@ -191,12 +193,15 @@ async function checkSharedTables(client) {
       check(table + ': no shop context cannot write', await refuses(null, insertSql, insertArgs()));
       check(table + ': the owner can update and delete its own row', (await rewrite(A)) === 1 && (await run(A, 'DELETE FROM ' + table + ' WHERE ' + keyCol + ' = $1', [key])) === 1);
     }
+    const seeded = (entity) => run(entity, 'UPDATE standard_source SET owner_entity_id = $2 WHERE standard_key = $1', [stdN, entity]);
+    check('standard_source: no shop may claim or rewrite a platform-seeded (ownerless) standard, nor delete it', (await seeded(B)) === 0 && (await run(B, 'DELETE FROM standard_source WHERE standard_key = $1', [stdN])) === 0);
     const claim = 'UPDATE catalogue_source SET owner_entity_id = $2 WHERE source_key = $1';
     check('catalogue_source: a shop may claim an ownerless row, and only for itself', (await run(B, claim, [srcN, B])) === 1 && (await refuses(B, claim, [srcN, A])));
   } finally {
     await client.query('DELETE FROM connections WHERE connection_id = $1', [cx]);
     await client.query('DELETE FROM catalogue_source WHERE source_key = ANY($1::text[])', [[srcA, srcN]]);
     await client.query('DELETE FROM product_container WHERE container_id = $1', [conA]);
+    await client.query('DELETE FROM standard_source WHERE standard_key = ANY($1::text[])', [[stdA, stdN]]);
     await client.query('DELETE FROM media_blobs WHERE key = $1', [mediaA]);
   }
 }

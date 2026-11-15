@@ -32,7 +32,8 @@ const NEEDS = {
   dispute_participants: ['rls_entity'],
   catalogue_source: ['read_all', 'rls_entity', 'catalogue_source_claim_unowned'],
   product_container: ['product_container_read_all', 'rls_entity', 'product_container_claim_unowned'],
-  media_blobs: ['media_blobs_read_all', 'rls_entity']
+  media_blobs: ['media_blobs_read_all', 'rls_entity'],
+  standard_source: ['standard_source_read_all', 'rls_entity'] /* b865 (DB-103) */
 };
 
 /** audit(sql) → the problems found in a copy of the migration text */
@@ -56,8 +57,8 @@ function audit(sql) {
   return bad;
 }
 
-const sql = fs.readFileSync(path.join(ROOT, 'migrations', 'b855_rls_shared_tables_sec75_db103.sql'), 'utf8');
-check('b855 ENABLEs, FORCEs and carries every policy for the six tables', audit(sql).length === 0, audit(sql).join(' · '));
+const sql = ['b855_rls_shared_tables_sec75_db103.sql', 'b865_rls_standard_source_db103.sql'].map((f) => fs.readFileSync(path.join(ROOT, 'migrations', f), 'utf8')).join('\n');
+check('b855 + b865 ENABLE, FORCE and carry every policy for the seven tables', audit(sql).length === 0, audit(sql).join(' · '));
 
 /* break test: take each policy out of the text, and each FORCE, and the audit must go red */
 let survived = [];
@@ -69,18 +70,18 @@ Object.keys(NEEDS).forEach((table) => {
   const unforced = sql.replace('ALTER TABLE ' + table + ' FORCE ROW LEVEL SECURITY;', '');
   if (audit(unforced).length === 0) survived.push(table + '/FORCE');
 });
-check('break test: removing any one policy or FORCE from b855 turns the audit red', survived.length === 0, survived.join(', '));
+check('break test: removing any one policy or FORCE from b855 or b865 turns the audit red', survived.length === 0, survived.join(', '));
 check(
   'break test: a rls_entity with no WITH CHECK turns the audit red',
   audit(sql.replace(/(CREATE POLICY rls_entity ON media_blobs\s+USING[^;]*?)\s+WITH CHECK[^;]*;/, '$1;')).length > 0
 );
 
 /* the one source rule: a statement on these tables is bound to a shop */
-const WRITE_ONLY = ['catalogue_source', 'product_container', 'media_blobs']; /* read-wide: only a write needs the binding */
+const WRITE_ONLY = ['catalogue_source', 'product_container', 'media_blobs', 'standard_source']; /* read-wide: only a write needs the binding */
 const ANY = ['connections', 'connector_connection', 'dispute_participants']; /* either-side / own: a read needs it too */
 const SQL_ANY = new RegExp('(?:FROM|JOIN|INTO|UPDATE)\\s+(?:' + ANY.join('|') + ')\\b');
 const SQL_WRITE = new RegExp('(?:INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+(?:' + WRITE_ONLY.join('|') + ')\\b');
-const BOUND = /withEntity\(|\bqueryAsShop\(|withKeyOwner\(|async function \w+\(client/;
+const BOUND = /withEntity\(|set_config\('app\.current_entity'|\bqueryAsShop\(|withKeyOwner\(|async function \w+\(client/;
 /** files whose statements reach the database through readBatch(entity, …), which binds the shop itself */
 const BINDS_ITSELF = ['lib/sides.js'];
 
@@ -107,7 +108,7 @@ const files = [];
   walk(dir);
 });
 const bad = files.flatMap((f) => unbound(f, fs.readFileSync(path.join(ROOT, f), 'utf8')));
-check('every statement on the six tables runs bound to a shop (' + files.length + ' files scanned)', bad.length === 0, bad.join(', '));
+check('every statement on the seven tables runs bound to a shop (' + files.length + ' files scanned)', bad.length === 0, bad.join(', '));
 
 /* red specimens: the checker itself catches a bare statement */
 check('the checker flags a bare write to catalogue_source', unbound('x.js', 'await query(`UPDATE catalogue_source SET items = $1`, [a]);').length === 1);
