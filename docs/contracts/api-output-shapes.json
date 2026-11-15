@@ -6897,7 +6897,10 @@
                   "type": "string"
                 },
                 "note": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -6922,7 +6925,10 @@
                     "type": "boolean"
                   },
                   "why": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "additionalProperties": false,
@@ -7003,25 +7009,40 @@
                   "type": "string"
                 },
                 "note": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "at": {
                   "type": "string"
                 },
                 "by_name": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "by_firm": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "open": {
                   "type": "boolean"
                 },
                 "open_since": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "age_days": {
-                  "type": "number"
+                  "type": [
+                    "number",
+                    "null"
+                  ]
                 },
                 "altered": {
                   "type": "boolean"
@@ -7048,7 +7069,10 @@
                       "type": "string"
                     },
                     "by_name": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "additionalProperties": false,
@@ -7078,7 +7102,10 @@
                           "type": "boolean"
                         },
                         "why": {
-                          "type": "string"
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         }
                       },
                       "additionalProperties": false,
@@ -7104,10 +7131,16 @@
                   "x-closed-by": "recordings"
                 },
                 "subject_label": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "posting_date": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -7124,10 +7157,16 @@
             ]
           },
           "checked": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "of": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           }
         },
         "additionalProperties": false,
@@ -7170,10 +7209,16 @@
             "type": "string"
           },
           "subject_label": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "mark": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "required": [
               "mark_id",
               "adopter",
@@ -7218,25 +7263,40 @@
                 "type": "string"
               },
               "note": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "at": {
                 "type": "string"
               },
               "by_name": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "by_firm": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "open": {
                 "type": "boolean"
               },
               "open_since": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "age_days": {
-                "type": "number"
+                "type": [
+                  "number",
+                  "null"
+                ]
               },
               "altered": {
                 "type": "boolean"
@@ -7327,16 +7387,25 @@
                   "type": "string"
                 },
                 "note": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "at": {
                   "type": "string"
                 },
                 "by_name": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "by_firm": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "seal_changed_before": {
                   "type": "boolean"
@@ -23616,7 +23685,10 @@
         ],
         "properties": {
           "mark": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "required": [
               "mark_id",
               "adopter",
@@ -23665,10 +23737,16 @@
                 "type": "string"
               },
               "by_name": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "by_firm": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "open": {
                 "type": "boolean"
@@ -23718,7 +23796,10 @@
                         "type": "boolean"
                       },
                       "why": {
-                        "type": "string"
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "additionalProperties": false,
@@ -23756,7 +23837,10 @@
                   "type": "string"
                 },
                 "note": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -23822,7 +23906,10 @@
             "x-closed-by": "recordings"
           },
           "mark": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "required": [
               "mark_id",
               "adopter",
@@ -23867,25 +23954,40 @@
                 "type": "string"
               },
               "note": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "at": {
                 "type": "string"
               },
               "by_name": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "by_firm": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "open": {
                 "type": "boolean"
               },
               "open_since": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "age_days": {
-                "type": "number"
+                "type": [
+                  "number",
+                  "null"
+                ]
               },
               "altered": {
                 "type": "boolean"
@@ -24001,7 +24103,10 @@
                   "type": "string"
                 },
                 "note": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -24026,7 +24131,10 @@
                     "type": "boolean"
                   },
                   "why": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "additionalProperties": false,
