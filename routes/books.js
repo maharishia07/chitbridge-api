@@ -2375,7 +2375,14 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
     const { rows, figures, setting, taxStates, trail } = await withEntity(e, async (h) => {
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
-      return { rows: all, figures: await S.periodFigures(h, e, fy), setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy) };
+      const figures = await S.periodFigures(h, e, fy);
+      /* ONE-FIGURE: a month's "sales" is the profit and loss's figure for that month (the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
+      const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
+      for (const item of figures.filter((x) => x.sales_minor > 0)) {
+        const month = byMonth.get(item.fiscal_year + '|' + item.period);
+        if (month && Number(month.period) >= 1) item.sales_minor = Number((await B.profitAndLoss(h, e, E.ymd(month.start_date), E.ymd(month.end_date))).sales_minor || 0);
+      }
+      return { rows: all, figures, setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy) };
     });
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));
