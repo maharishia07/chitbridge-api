@@ -72,6 +72,29 @@ function world(chit, payment) {
     assert.ok(/'counter-bill\.js'/.test(fs.readFileSync(path.join(__dirname, '..', 'routes', 'integrations.js'), 'utf8')), 'KIT_NAMES lacks counter-bill.js');
     assert.ok(/live: \[[^\]]*'counter-bill\.js'/.test(fs.readFileSync(path.join(kit, 'till.js'), 'utf8')), 'the kit update does not refresh counter-bill.js');
   });
+  await check('OLD TILL: a staged core.js with no counter-bill.js beside it starts, and refuses export with the update reason (never sums lines)', async () => {
+    const os = require('os');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'con98-oldkit-'));
+    try {
+      fs.copyFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'core.js'), path.join(dir, 'core.js'));
+      const oldCore = require(path.join(dir, 'core.js'));
+      assert.strictEqual(oldCore.orderOf(stamped).total, null);
+      assert.ok(/update incomplete; restart to finish updating/.test(oldCore.orderOf(stamped).total_why));
+      const w = world(stamped);
+      const out = await oldCore.pushOrder({ cb: w.cb, adapter: w.adapter, receipts: w.receipts, log: w.log, chit_id: 'aaaaaaaa-1111' });
+      assert.strictEqual(out.outcome, 'failed'); assert.ok(/update incomplete/.test(out.why));
+      assert.strictEqual(w.pushed.length, 0);
+      assert.ok(w.logs.some((text) => /update incomplete/.test(text)), 'no log line');
+      fs.copyFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'counter-bill.js'), path.join(dir, 'counter-bill.js'));
+      assert.strictEqual(oldCore.orderOf(stamped).total, 118, 'once the file lands, no restart is needed');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+  await check('the adapters keep no lines-sum fallback for a total (a total of 0 is a real total)', async () => {
+    for (const name of ['tally.js', 'gofrugal.js']) {
+      const code = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'adapters', name), 'utf8');
+      assert.ok(!/order\.total \|\|/.test(code), name + ' falls back past order.total');
+    }
+  });
   await check('MUTANT: core.js has no raw total_value fallback (a source scan; the fallback turns this red)', async () => {
     const code = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'core.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
     assert.ok(!/summary_json\.total_value/.test(code), 'core.js reads summary_json.total_value again');

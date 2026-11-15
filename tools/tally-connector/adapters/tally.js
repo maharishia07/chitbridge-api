@@ -89,7 +89,7 @@ function voucherXML(order, opt) {
   const party = b2b ? partyLedgerName(b2b.buyer) : (opt.partyLedger || 'Cash'), sales = opt.salesLedger || 'Sales', vtype = opt.voucherType || 'Sales';
   const taxes = b2b ? b2b.taxes : { cgst: 0, sgst: 0, igst: 0, cess: 0 };
   const taxTotal = Math.round(((taxes.cgst || 0) + (taxes.sgst || 0) + (taxes.igst || 0) + (taxes.cess || 0)) * 100) / 100;
-  const goods = Math.round((order.total || order.lines.reduce((t, l) => t + l.total, 0)) * 100) / 100;
+  const goods = Math.round(order.total * 100) / 100;
   /* the party owes goods + tax; a walk-in order has no tax lines and the two figures coincide */
   const total = b2b && b2b.total ? Math.round(b2b.total * 100) / 100 : Math.round((goods + taxTotal) * 100) / 100;
   const inv = order.lines.map((l) => {

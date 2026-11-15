@@ -28,8 +28,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 /* one unit, three names — the same table the API and the app hold (lib/units.js / app/units.js); a unit we cannot map is kept as spelt */
-/* the ONE pick of a bill's total (lib/counter-bill.js, a byte copy the kit ships beside this file: it has no requires), never read off the chit here */
-const COUNTER_BILL = require('./counter-bill');
+/**
+ * the ONE pick of a bill's total (lib/counter-bill.js, a byte copy the kit ships beside this file), never read off the chit here. Loaded at the CALL, not at start:
+ * an older till.js stages this core without fetching the new file, and a missing file must never stop the counter. Absent = no total = the voucher is refused with words.
+ */
+function billPick(header) {
+  let reader = null;
+  try { reader = require('./counter-bill'); } catch (_) { return { total: null, source: 'missing' }; }
+  return reader.pickOf(header);
+}
 const UNITS = (() => { try { return require('../../lib/units'); } catch (_) { return null; } })();
 function unitOf(u) { const k = UNITS && UNITS.unitOf(u); return k || String(u || 'unit').trim().toLowerCase(); }
 /**
@@ -186,7 +193,7 @@ function orderOf(chit) {
     name: l.name || l.particulars || '', code: (l.ref && (l.ref.code || l.ref.sku)) || l.code || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
     qty: Number(l.quantity != null ? l.quantity : l.qty) || 0, unit: l.unit || '', price: Number(l.price) || 0, list_price: l.list_price != null ? Number(l.list_price) : null,
     offer: l.offer ? { label: l.offer.label, off: Number(l.offer.off) || 0 } : null, total: Number(l.total) || 0, gst_rate: l.gst_rate != null ? Number(l.gst_rate) : null, hsn: l.hsn || null }));
-  const billTotal = COUNTER_BILL.pickOf(header);
+  const billTotal = billPick(header);
   /* a counter bill (Record a sale) names its customer on the chit — the voucher's party is that person, never the shop itself */
   const cust = (header.business_json && header.business_json.customer) || null;
   return { chit_id: header.chit_id, at: header.created_at || header.at || null, purpose: header.purpose || null, status: header.current_status || header.status || null,
@@ -194,7 +201,7 @@ function orderOf(chit) {
            total: billTotal.total, total_why: billTotal.total === null ? noTotalWhy(billTotal) : null, lines };
 }
 /** the words for a bill with no total: named, so the voucher is refused out loud and never booked at a guessed sum */
-const noTotalWhy = (picked) => (picked.source === 'withheld' ? 'the bill total is withheld from this reader (cost view)' : 'the chit carries no bill total (no invoice total, no money total)');
+const noTotalWhy = (picked) => (picked.source === 'missing' ? 'connector update incomplete; restart to finish updating' : picked.source === 'withheld' ? 'the bill total is withheld from this reader (cost view)' : 'the chit carries no bill total (no invoice total, no money total)');
 /** a voucher with no bill total is refused with its reason: one receipt, one line, one write-back; a repeat of the same refusal is quiet */
 async function refuseNoTotal({ cb, adapter, receipts, log, chit_id, order, kind, last }) {
   const why = 'refused: ' + order.total_why;
