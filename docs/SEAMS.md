@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 146 | `rows` | `crm.js` | still in them: |
 | 135 | `read` | `bank-rec-log.js` | The period (from · to, either may be absent) narrows the statements that overlap it and the posted refs; the m |
 | 134 | `words` | `variant.browser.js` |  |
-| 129 | `withEntity` | `books-hooks.js` |  |
+| 130 | `withEntity` | `books-hooks.js` |  |
 | 122 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 116 | `answer` | `availability.js` | from March; then nearest. |
 | 101 | `money` | `bill-privacy.js` |  |
