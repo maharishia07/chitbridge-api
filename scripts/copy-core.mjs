@@ -1,3 +1,9 @@
+/*
+ * OWNS      the shared half of the copy lint: the default config, the file walk and the multi-parser string extractor
+ * CALLED BY scripts/lint-copy.mjs (import)
+ * FLOW      loadConfig() merges DEFAULTS with the repo config, walk() lists the files, extract() pulls the user-visible strings out of each, lint-copy.mjs judges them
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/strings-and-translations
+ */
 // Shared: config, file walk, and the multi-parser string extractor.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, extname, basename } from 'node:path';

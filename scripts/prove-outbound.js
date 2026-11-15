@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof of the notify-back decision logic, whether to send, against the live api and database
+ * CALLED BY by hand (node scripts/prove-outbound.js); nothing in the repo requires it
+ * FLOW      signs a webhook payload with WHATSAPP_APP_SECRET, posts it, reads the decision back through scripts/_proof.js, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/outbound-whatsapp
+ */
 'use strict';
 /**
  * prove-outbound.js — PROVE the notify-back DECISION LOGIC against the live API and the real database (b126).

@@ -1,3 +1,9 @@
+/*
+ * OWNS      the offline proof that AI skills are data rows, resolved by lib/ai with no code change
+ * CALLED BY by hand (node scripts/prove-f5.js); nothing in the repo requires it
+ * FLOW      stubs the ai_skill table, calls the resolver for a new, an orphaned and a missing-table case, prints PASS/FAIL
+ * CARD      25-ai-cb-assist-and-support-desks/README
+ */
 // prove-f5.js — OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js
 // Stubs the DB to control the ai_skill table, then shows invokeSkill's resolver (getSkill/loadSkills):
 //   (1) resolves a NEW skill that exists ONLY as a table row — added by DATA, ZERO code change (the F5 test);

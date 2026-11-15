@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the connector command line: sync-products, evaluate, once, watch and install
+ * CALLED BY tools/tally-connector/start.cmd, tests/ord-25-connector-task.test.cjs (child process), by hand
+ * FLOW      reads --config, builds the adapter named in it, runs the command against ChitBridge through core.js
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * ChitBridge connector — CLI.
  *   node index.js sync-products  --config connector.json [--adapter tally|csv] [--dry]

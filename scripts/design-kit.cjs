@@ -1,3 +1,9 @@
+/*
+ * OWNS      building the counter design-system files, parsed out of till.html at build time and never retyped
+ * CALLED BY by hand (node scripts/design-kit.cjs); nothing in the repo requires it
+ * FLOW      reads the colours, radii and type sizes from the till page, writes one marked card file each into DS_OUT or a temp folder
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/themes-contrast-accessibility
+ */
 /**
  * build-dskit.cjs — the COUNTER's design system, extracted from the counter itself.
  *

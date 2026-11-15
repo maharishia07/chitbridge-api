@@ -1,3 +1,9 @@
+/*
+ * OWNS      the proof that batch and expiry live on the instance, not on the catalogue item
+ * CALLED BY by hand (node scripts/prove-lot.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      06-catalogue-pim/README
+ */
 'use strict';
 /**
  * prove-lot.js — the INSTANCE, kept off the product.

@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that every fact a sender gives lands somewhere on the chit line, as a field or a comment
+ * CALLED BY by hand (node scripts/prove-nothing-dropped.js); nothing in the repo requires it
+ * FLOW      signs a webhook payload with WHATSAPP_APP_SECRET, posts it, reads the chit back, asserts each fact is present, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 /**
  * prove-nothing-dropped.js — every fact the sender gives ends up SOMEWHERE on the chit.

@@ -1,3 +1,9 @@
+/*
+ * OWNS      retiring duplicate catalogue rows of one entity through the product own door, not a migration
+ * CALLED BY by hand (node scripts/dedupe-catalogue.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, finds the duplicate rows, retires all but one through the api, prints each retirement
+ * CARD      06-catalogue-pim/README
+ */
 /**
  * scripts/dedupe-catalogue.js — RETIRE DUPLICATE CATALOGUE ROWS, THROUGH THE PRODUCT'S OWN DOOR.
  *

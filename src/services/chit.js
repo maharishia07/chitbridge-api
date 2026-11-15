@@ -1,3 +1,9 @@
+/*
+ * OWNS      the dormant cb_chit table service behind the network in-flight check
+ * CALLED BY src/services/network.js
+ * FLOW      takes a pooled connection from ../db, runs the in-flight query or the transaction, throws an error with status and code on a refusal
+ * CARD      04-network/connections-and-invitations
+ */
 /* CALLED BY src/services/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
 const { pool, withTx } = require('../db');
 const err = (s, m, c) => Object.assign(new Error(m), { status: s, code: c });

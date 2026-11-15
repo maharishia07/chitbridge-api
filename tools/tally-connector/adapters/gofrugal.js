@@ -1,3 +1,9 @@
+/*
+ * OWNS      the GoFrugal RetailEasy / HQ adapter over its WebReporter api on the retailer server
+ * CALLED BY tools/tally-connector/index.js (adapter by name), routes/integrations.js (kit file list)
+ * FLOW      index.js builds it from the config, readProducts() and readStock() call the items api, pushOrder() posts the sales order
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * ADAPTER: GoFrugal RetailEasy / HQ — its "WebReporter" API on the retailer's own server (grocery and pharmacy POS).
  *   readProducts(): GET  /WebReporter/api/v1/items          → { items:[{ itemId, itemName, locationId, stock:[{ stock, salePrice, mrp, itemReferenceCode, taxPercentage }] }] }

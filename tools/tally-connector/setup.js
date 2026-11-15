@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the only screen the connector has: a console conversation that asks for the key, tests both ends and writes connector.json
+ * CALLED BY tools/tally-connector/start.cmd, by hand (node setup.js)
+ * FLOW      asks for the key, the system and the company, tests the adapter and the heartbeat, writes the config
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * setup.js — THE ONLY SCREEN THE CONNECTOR HAS: a short conversation in the console (Athi, 2026-09-05: "how will they
  * upload the key, where is it supposed to be — within Tally? does our connector open any screen?").

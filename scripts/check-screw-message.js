@@ -1,3 +1,9 @@
+/*
+ * OWNS      the one-message check that a line losing three facts (size, type, comment) now keeps them
+ * CALLED BY by hand (node scripts/check-screw-message.js); nothing in the repo requires it
+ * FLOW      signs a WhatsApp webhook payload with WHATSAPP_APP_SECRET, posts it to the api through scripts/_proof.js, reads the structured line back, prints what survived
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 // check-screw-message.js — did b136 fix the line that lost three facts?
 //

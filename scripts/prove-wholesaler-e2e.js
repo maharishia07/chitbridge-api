@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the end-to-end proof of wholesaler consolidation W-1 to W-11 against the live api
+ * CALLED BY by hand (node scripts/prove-wholesaler-e2e.js); nothing in the repo requires it
+ * FLOW      signs webhook payloads with WHATSAPP_APP_SECRET, posts several messy requests, reads the consolidated requirement, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 /**
  * prove-wholesaler-e2e.js — W-1 … W-11 END TO END, against the live API.

@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      tidying the test chits and folders the proof scripts leave behind, leaving the named alpha and beta test accounts alone
+ * CALLED BY by hand (node scripts/cleanup-test-data.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, finds the leftover proof rows, removes them, prints what it removed
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 'use strict';
 /**
  * cleanup-test-data.js — tidy up after the proof scripts.

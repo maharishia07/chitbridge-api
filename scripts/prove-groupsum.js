@@ -1,3 +1,9 @@
+/*
+ * OWNS      the no-database proof of the group-sum money path: the per-party roster carrying a cost and the rules that stop it lying
+ * CALLED BY by hand (node scripts/prove-groupsum.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 // prove-groupsum.js — 🧮 the group-sum money path, proved without a database.
 //

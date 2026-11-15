@@ -1,3 +1,9 @@
+/*
+ * OWNS      the count of products sitting exactly on their category price ceiling in the connected shop, a dev probe
+ * CALLED BY by hand (node tools/tally-connector/pricecheck.cjs); nothing in the repo requires it
+ * FLOW      reads connector.json, pages /api/products 500 at a time, groups the prices by category, prints the maximum and how many products sit on it
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 const c = require('./connector.json');
 (async () => {
   let all = [], off = 0;

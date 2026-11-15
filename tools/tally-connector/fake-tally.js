@@ -1,3 +1,9 @@
+/*
+ * OWNS      a stand-in for the Tally XML port so the proof runs on a machine without Tally
+ * CALLED BY tools/tally-connector/prove.js (spawned), routes/integrations.js (kit file list)
+ * FLOW      listens on the given port, answers the stock-item export, remembers the imported vouchers
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * fake-tally.js — a stand-in for Tally's XML port, for the proof on a machine without Tally.
  * Answers the Export (Collection) request with a few stock items and accepts Import Data vouchers, remembering them.

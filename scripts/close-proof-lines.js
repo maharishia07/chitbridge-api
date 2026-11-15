@@ -1,3 +1,9 @@
+/*
+ * OWNS      closing the lines the proof runs left open, on the three subjects prove-usecases creates and nothing else
+ * CALLED BY by hand (node scripts/close-proof-lines.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, matches the exact proof subjects, closes those lines, prints each one
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 /**
  * scripts/close-proof-lines.js — CLOSE THE LINES MY PROOF RUNS LEFT OPEN.
  *
