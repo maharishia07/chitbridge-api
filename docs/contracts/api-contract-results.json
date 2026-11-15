@@ -282,6 +282,22 @@
     422
    ]
   },
+  "GET /api/books-actions": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books-actions/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books-grants/consent": {
    "cases": 2,
    "failed": 0,
@@ -1595,7 +1611,7 @@
    ]
   },
   "PATCH /api/books-grants/:id": {
-   "cases": 5,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1890,8 +1906,40 @@
     422
    ]
   },
+  "POST /api/books-actions": {
+   "cases": 11,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-actions/:id/accept": {
+   "cases": 10,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-actions/:id/return": {
+   "cases": 10,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-actions/:id/review": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books-grants": {
-   "cases": 9,
+   "cases": 13,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

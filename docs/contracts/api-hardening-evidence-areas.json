@@ -119,8 +119,14 @@
   "GET /api/attachments/:id": {
    "foreign_id_404": true
   },
+  "GET /api/books-actions": {
+   "output_allowlist": true
+  },
+  "GET /api/books-actions/:id": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/books-grants": {
-   "bfla_role_check": true,
    "output_allowlist": true
   },
   "GET /api/books-grants/consent": {
@@ -878,6 +884,21 @@
   },
   "POST /api/attachments": {
    "output_allowlist": true
+  },
+  "POST /api/books-actions": {
+   "output_allowlist": true
+  },
+  "POST /api/books-actions/:id/accept": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/books-actions/:id/return": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/books-actions/:id/review": {
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/books-grants": {
    "bfla_role_check": true,

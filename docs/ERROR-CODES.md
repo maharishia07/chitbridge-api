@@ -53,6 +53,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
+| BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
 | BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
 | BOOKS_GRANT_ENDED | 403 | Access has ended | This access was ended, or has run out. Ask the owner of the books to renew it. | The owner gives a new access from its grant screen. | network | 2026-11-14 |
 | BOOKS_GRANT_EXISTS | 409 | Access already given | This business can already read your books. Change the end date instead. | Open the access and edit its end date. | network | 2026-11-14 |
@@ -67,6 +68,33 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_GRANT_PURPOSE_INVALID | 422 | Purpose too short or long | Say why in 3 to 300 characters. | Write the reason in a few words. | network | 2026-11-14 |
 | BOOKS_GRANT_RATE | 429 | Too many requests | Too many requests for these books. Wait a minute. | Wait a minute, then try again. | network | 2026-11-14 |
 | BOOKS_NOT_FOUND | 404 | Bank account not found | That bank account was not found in this shop's ledger. | Pick the bank account from the list and try again. | books | 2026-11-14 |
+| BOOKS_ACTION_NOT_SWITCHED_ON | 503 | Not switched on yet | Adviser actions are not switched on yet. | Try again later. | network | 2026-11-14 |
+| BOOKS_GRANT_POSTING_NEEDED | 422 | Say who posts | Say who posts: your adviser posts for you, or you approve each post. | Pick one of the two. | network | 2026-11-15 |
+| BOOKS_GRANT_POSTING_INVALID | 422 | Posting choice not accepted | Pick: your adviser posts for you, or you approve each post. | Pick one of the two. | network | 2026-11-15 |
+| BOOKS_GRANT_CAP_INVALID | 422 | Limit not accepted | Give the limit and its currency together, as a positive amount. | Fill in both, or leave both empty. | network | 2026-11-15 |
+| ACTION_ALERT_NOT_RECORDED | 503 | Could not tell the owner | We could not record this for the owner, so nothing was posted. | Try again. | network | 2026-11-15 |
+| BOOKS_GRANT_PRESET_INVALID | 422 | Access kind not accepted | Pick auditor or adviser. | Choose auditor or adviser. | network | 2026-11-14 |
+| ACTION_KIND_INVALID | 422 | Action not accepted | Say what is to be done: a journal, a reversal, a lock, an unlock or a year close. | Pick one of the five. | network | 2026-11-14 |
+| ACTION_BODY_INVALID | 422 | Action incomplete | The action is missing something it needs. | Fill in what the message names. | network | 2026-11-14 |
+| ACTION_PARTY_NOT_IN_V1 | 422 | Not for an adviser | An adviser journal cannot name a customer, a supplier or a bill. The owner enters those. | Ask the owner to enter it. | network | 2026-11-14 |
+| ACTION_REF_OPEN | 409 | Already waiting | An action with this reference is already waiting. Open it from the queue. | Open the waiting action. | network | 2026-11-14 |
+| ACTION_REF_POSTED | 409 | Already posted | This reference already holds an entry. It is not prepared again. | Check the day book. | network | 2026-11-14 |
+| ACTION_CLOSED | 409 | Action already moved on | This action has already moved on. Open the queue again. | Open the queue again. | network | 2026-11-14 |
+| ACTION_NOT_ALLOWED | 403 | Access ended | This access has ended, so nothing was recorded. | Ask the owner of the books. | network | 2026-11-14 |
+| ACTION_SELF_REVIEW | 403 | A colleague must review | You prepared this, so a colleague has to review it. | Ask a colleague to review it. | network | 2026-11-14 |
+| ACTION_BODY_CHANGED | 409 | Not the entry you were shown | This is not the entry you were shown. Open it again. | Open the action again. | network | 2026-11-14 |
+| ACTION_REASON_NEEDED | 422 | Reason needed | Say why in 3 to 300 characters. | Write the reason. | network | 2026-11-14 |
+| ACTION_NOT_REVIEWED | 409 | Not reviewed yet | A colleague has to review this before you accept it. | Wait for the review. | network | 2026-11-14 |
+| ACTION_ACCESS_ENDED | 409 | Access ended | The access this was prepared under has ended. You can return it. | Return it. | network | 2026-11-14 |
+| ACTION_DUPLICATE | 409 | Already posted | This was already posted. Nothing was posted again. | Check the day book. | network | 2026-11-14 |
+| ACTION_FIRM_ONLY | 403 | Adviser firm only | Only the adviser firm prepares and reviews. The owner accepts. | Sign in as the adviser firm. | network | 2026-11-14 |
+| ACTION_NOT_FOR_YOU | 403 | Not for you | Only the owner and the adviser firm work on these actions. | Sign in as the owner or the firm. | network | 2026-11-14 |
+| ACTION_REF_NEEDED | 422 | Reference needed | Give the action a reference, so that pressing Prepare twice cannot make two. | Add a reference. | network | 2026-11-14 |
+| ACTION_TOTAL_NEEDED | 422 | Total needed | Confirm the total and its currency as shown on the screen. | Confirm the total shown. | network | 2026-11-14 |
+| ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
+| ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
+| STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
+| PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
@@ -649,4 +677,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LEASE_REASON_INVALID | 400 | Reason not accepted | The reason must be void, unused or retired. | Pick one of the three and save again. | till | 2026-11-13 |
 | LEASE_TILL_UNKNOWN | 404 | Counter not found | That counter is not one of this shop's counters, so no block was given. | Ask from a counter this shop has connected. | till | 2026-11-13 |
 | LEASE_WANT_INVALID | 400 | Block size not accepted | Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50. | Change the number and ask again. | till | 2026-11-13 |
+| BOTH_ROLES_ONE_FIRM | varies | Both kinds of access | This business already holds the other kind of access to your books. It will both review your books and prepare entries in them. Make sure that is what you want. | Check who holds which access before you go on. | network | 2026-11-15 |
+| OUTSIDE_MONTH_BEING_WORKED | varies | Different month | This entry is dated outside the month you are working in. | Check the date, or go on if it is right. | network | 2026-11-15 |
 <!-- codes:end -->
