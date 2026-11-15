@@ -8,7 +8,7 @@
 -- WHAT IT DOES.
 --    bank_statement_file        one row per file kept: entity_id, account_id (a CHART ledger account of the shop, as GET /accounts returns it), label (the owner's own "..1234", typed once), period_from/period_to (NOT NULL, read from the file),
 --                               currency (the account's), sha256 (NOT NULL: sha256 of the UTF-8 text the reader sees, the ONE hash, bkbHash), attachment_id (the adapter's opaque id of the bytes), name, size, mime,
---                               kind ('bank_statement' now; a bill later), source ('owner' | 'adviser' | 'feed'), overlaps (the period crossed another file of the same account at the write), by_user, by_name, by_firm, grant_id, created_at.
+--                               kind ('bank_statement' now; a bill later), source ('owner' | 'adviser' | 'feed'), overlap_flag (the period crossed another file of the same account at the write), by_user, by_name, by_firm, grant_id, created_at.
 --                               UNIQUE (entity_id, account_id, sha256): the same file on the same account is stored once.
 --    bank_statement_file_event  insert-only: added · read · downloaded, who (by_user, by_name, by_firm, grant_id) and when, stamped by the server.
 -- OWNER: lib/bank-statement-file.js (the writers and the list), routes/books.js (the doors).
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS bank_statement_file (
   mime           text        NOT NULL,
   kind           text        NOT NULL DEFAULT 'bank_statement' CHECK (kind IN ('bank_statement')),
   source         text        NOT NULL CHECK (source IN ('owner', 'adviser', 'feed')),
-  overlaps       boolean     NOT NULL DEFAULT false,
+  overlap_flag   boolean     NOT NULL DEFAULT false, -- "overlaps" is a reserved word; the api reads it back as overlaps
   by_user        uuid,
   by_name        text        CHECK (by_name IS NULL OR char_length(by_name) <= 200),
   by_firm        text        CHECK (by_firm IS NULL OR char_length(by_firm) <= 200),
