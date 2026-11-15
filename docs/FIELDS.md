@@ -1384,6 +1384,7 @@ The member (the owner of the books) gives its network parent read-only access, e
 | `POST /api/books-grants` body | `grantee` | uuid · the business that may read: it must be the network parent of the caller now. |
 | `POST /api/books-grants` body | `purpose` | text, 3 to 300 characters · why, in the member's words; empty means "audit of the books". Fixed once given. |
 | `POST /api/books-grants` · `PATCH /api/books-grants/:id` body | `expires_at` | date text · when access ends by itself: in the future and at most 36 months away; empty on a new grant means 12 months from today. |
+| `GET /api/books-grants` answer · `received[]` and `given[]` rows | `grantor_name` | text · the name of the shop that gave the grant (the firm's client list reads it from the grants it holds, never from catalogue visibility); null when the shop's row is not visible to the caller. |
 | `POST /api/books-grants` body · `GET /api/books-grants/consent` query | `can_see_costs` | boolean · `false` keeps costs and margins from the reader; anything else, or absent, lets it see them. |
 | `POST /api/books-grants` body | `consent` | boolean · must be `true`: the member's yes to the plain words of the consent screen. Any other value is refused (422 `BOOKS_GRANT_CONSENT_NEEDED`). |
 | `GET /api/books-grants/log` query | `limit` | integer · how many looks to answer, 1 to 200, 50 when absent. |
