@@ -319,7 +319,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('C cannot post into it: 403 "Not a party to this dispute", no message written', pc.status === 403 && /Not a party/.test(pc.body.message || '') && MSGS.filter((m) => m.sender_entity_id === C).length === 0, JSON.stringify(pc));
     const nMsgs = MSGS.length;
     const nid = await as(A, 'POST', U + '/messages', { message_text: 'flagged but no dispute', thread_type: 'external', is_dispute: true });
-    ok('RAIL-136 (b) / H16: is_dispute with no dispute_id is refused 422, nothing posted', nid.status === 422 && MSGS.length === nMsgs, JSON.stringify(nid));
+    ok('RAIL-136 (b) / H16: is_dispute with no dispute_id is refused 400, nothing posted', nid.status === 400 && MSGS.length === nMsgs, JSON.stringify(nid));
     const plainNoFlag = await as(A, 'POST', U + '/messages', { message_text: 'plain, not a dispute', thread_type: 'external' });
     ok('…a plain message with no dispute flag still posts', plainNoFlag.status === 200 || plainNoFlag.status === 201, JSON.stringify(plainNoFlag));
 
