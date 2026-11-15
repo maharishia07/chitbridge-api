@@ -1119,7 +1119,6 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
 });
 
 /* ── payments: record → propose → confirm ─────────────────────────────────────────────────────────────────── */
-const MODES = ['cash', 'bank', 'upi', 'card', 'cheque'];
 
 /**
  * POST /payments { party_id, direction: in|out, amount_minor, currency, mode, reference?, cheque?: { number, bank, date },
@@ -1129,9 +1128,10 @@ const MODES = ['cash', 'bank', 'upi', 'card', 'cheque'];
  * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
-/** the body's payment mode when it is one of MODES (lower-cased), else null */
-function knownMode(body) {
-  return MODES.indexOf(String(body.mode || '').toLowerCase()) >= 0 ? String(body.mode).toLowerCase() : null;
+/** the body's payment mode when it is one the shop's country pack takes (lower-cased), a cheque included — a payment records one — else null (ACC-300: P().modesOf, the one list) */
+function knownMode(body, shop) {
+  const given = String(body.mode || '').toLowerCase();
+  return P().modesOf(shop, { cheque: true }).indexOf(given) >= 0 ? given : null;
 }
 /** how the body wants the money spread: 'none' · 'oldest_first', else null (the books decide) */
 function allocateOf(body) {
@@ -1152,8 +1152,8 @@ function paymentQuestion(req, needMode) {
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
   const direction = directionOf(body);
   if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
-  const mode = knownMode(body);
-  if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — cash, bank, UPI, card or cheque?' } };
+  const mode = knownMode(body, req.books);
+  if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — ' + P().modeList(P().modesOf(req.books, { cheque: true })) + '?' } };
   const allocate = allocateOf(body);
   const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
   return { party, direction, amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
