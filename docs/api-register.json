@@ -5,8 +5,8 @@
   "routes": 643,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
-  "meets": 643,
+  "partial": 1,
+  "meets": 642,
   "columns": {
    "strict_input": {
     "applies": 328,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 150
+  "output_allowlist_from_recordings": 151
  },
  "machine_columns": [
   "schema_in",
@@ -4767,8 +4767,8 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1480,
-   "hash": "c42e07ddf94a6f47",
-   "does": "A bank account and dates in -> we read its reconciliation marks, statements and exceptions -> the log.",
+   "hash": "598eff2b76ca4cf2",
+   "does": "A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.",
    "errors": {
     "count": 2,
     "statuses": [
@@ -4837,6 +4837,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -4851,10 +4852,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 FIN-70 (PR#1310, batch G): new insert-only door, nothing existing changed; read the route and lib/bank-rec-log; all 13 machine columns read yes; refusals in words (404 account, 409 currency, 503 not set up, 400 date); trips are hand counts, SIT measure pending",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "598eff2b76ca4cf2"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-store.js"
    ],

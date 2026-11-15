@@ -46447,6 +46447,271 @@
           }
         }
       }
+    },
+    "GET /api/books/bank/log": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "account",
+          "marks",
+          "statements",
+          "posted",
+          "exceptions"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "account": {
+            "type": "object",
+            "required": [
+              "account_id",
+              "code",
+              "name"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "seq",
+                "account_id",
+                "kind",
+                "line_key",
+                "act",
+                "how",
+                "entry_ids",
+                "chit_ids",
+                "note",
+                "attach_ref",
+                "file_hash",
+                "by",
+                "at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "seq": {
+                  "type": "number"
+                },
+                "account_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "line_key": {
+                  "type": "string"
+                },
+                "act": {
+                  "type": "string"
+                },
+                "how": {
+                  "type": "string"
+                },
+                "entry_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "chit_ids": {},
+                "note": {},
+                "attach_ref": {},
+                "file_hash": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "statements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "seq",
+                "account_id",
+                "kind",
+                "file_hash",
+                "period_from",
+                "period_to",
+                "opening_minor",
+                "closing_bank_minor",
+                "closing_books_minor",
+                "difference_minor",
+                "currency",
+                "tied",
+                "by",
+                "at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "seq": {
+                  "type": "number"
+                },
+                "account_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "file_hash": {
+                  "type": "string"
+                },
+                "period_from": {
+                  "type": "string"
+                },
+                "period_to": {
+                  "type": "string"
+                },
+                "opening_minor": {
+                  "type": "number"
+                },
+                "closing_bank_minor": {
+                  "type": "number"
+                },
+                "closing_books_minor": {
+                  "type": "number"
+                },
+                "difference_minor": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "tied": {
+                  "type": "boolean"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "posted": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "ref",
+                "entry_no",
+                "posting_date",
+                "made_at",
+                "made_by"
+              ],
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "entry_no": {
+                  "type": "string"
+                },
+                "posting_date": {
+                  "type": "string"
+                },
+                "made_at": {
+                  "type": "string"
+                },
+                "made_by": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "entry_id",
+                "entry_no",
+                "posting_date",
+                "amount_minor",
+                "currency",
+                "file_hash",
+                "line_no",
+                "why"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "entry_id": {
+                  "type": "string"
+                },
+                "entry_no": {
+                  "type": "string"
+                },
+                "posting_date": {
+                  "type": "string"
+                },
+                "amount_minor": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "file_hash": {
+                  "type": "string"
+                },
+                "line_no": {
+                  "type": "number"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/bank/log?account=1510"
+      }
     }
   },
   "listed": {
