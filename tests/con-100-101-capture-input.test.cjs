@@ -7,7 +7,7 @@
  *           a text of 7 to 15 digits (400 VALIDATION_FAILED), that none of these reaches the database or leaks its words, that a database fault answers 500 without its text, and that a valid call still answers 200.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/capture.js over a stand-in sign-in and a db that throws Postgres's own words.
  * FLOW      stub db + auth → real router on an express app → request over http → status · code · content type · no leak · db never asked
- * CARD      11-crm-and-marketing/capture
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
  * MIN       the 4xx answer shape (status, code, problem+json, no driver text, db never asked) and the 200 of a valid call are asserted below.
  */
 'use strict';

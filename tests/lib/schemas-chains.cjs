@@ -4,7 +4,7 @@
  * OWNS      the old chains of PATCH /fields/order, PATCH /fields/:field_key and PATCH /visibility, a body that satisfies each, and the differences between chain and schema that were looked at and kept.
  * CALLED BY tests/api-problem-schemas.test.cjs. Not a test itself.
  * FLOW      compare(route, schemaCheck) → tests/lib/chain-compare.cjs over these chains
- * CARD      07-catalogue-and-pricing/catalogue-setup
+ * CARD      06-catalogue-pim/categories-and-fields
  * The kept differences are three kinds of body no screen and no script sends, each now refused by the schema where the chain let it through: a LIST given as a field's value (express-validator checks
  * a list element by element, so ['public'] passed isIn and then failed in the database as a 500), a body that is not an object, and a key the handler never read (the Q18 closing).
  */

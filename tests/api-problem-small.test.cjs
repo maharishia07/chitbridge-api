@@ -10,7 +10,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route files over a stand-in db and auth (tests/lib/problem-world.cjs).
  * FLOW      route list (read from each router) x world (signed out, staff, a bad id, a failing db, nothing found) + the named extras → real route → body →
  *           Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest
- * CARD      03-catalogue/adopt
+ * CARD      06-catalogue-pim/adopt-a-supplier-s-delivery-into-my-catalogue
  *
  *   node tests/api-problem-small.test.cjs                    check
  *   node tests/api-problem-small.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json

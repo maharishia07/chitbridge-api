@@ -7,7 +7,7 @@
  *           (zeros, example.test), never a real-looking one.
  * CALLED BY tests/api-problem-privacy.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db, realAuth }, headers, patch, env, body, url, synthetic }] → the harness runs each one against the real route
- * CARD      11-crm-and-marketing/privacy-consent
+ * CARD      21-compliance-attestation-and-trade/privacy
  * A scenario with `synthetic: true` makes the library throw an error that carries a status no real library raises under these routes: it is replayed in a capture and a compare
  * (the pass-through is frozen), and checked on its own in a check run, where the contract declares no such status.
  * The stand-in sign-in of the harness gives a shopper with no shop; the line below gives it the shop it belongs to, as the real sign-in reads it from the token.

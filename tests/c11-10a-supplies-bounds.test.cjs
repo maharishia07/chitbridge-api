@@ -8,7 +8,7 @@
  *           tests/api-problem-supplies.test.cjs. A unit the shop types ("tray") and a numeric text the store always read ("2") stay taken.
  * CALLED BY scripts/guards.cjs · CI. No database, no network.
  * FLOW      OPERATIONS[key] → schemaValidate → the answer a stand-in response sees; the pure functions of lib/supply-store.js
- * CARD      16-finance/supplies-routes
+ * CARD      12-suppliers-and-procurement/supplies-things-i-buy-to-use
  * MIN unit — each refusal case is 422 with its field named; each accepted case calls next.
  * TRACE     lib/supplies-contract.js BODIES ← this test · lib/supply-store.js numbersOf · lib/supplies-contract.js atTooLate, issueRefOf ← this test
  */

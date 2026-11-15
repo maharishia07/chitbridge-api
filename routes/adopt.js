@@ -2,7 +2,7 @@
  * OWNS      taking a supplier's delivery into the buyer's own catalogue.
  * CALLED BY web Catalogue › Adopt.
  * FLOW      consider → name + sku → mintProduct on the shop's default schema
- * CARD      03-catalogue/adopt
+ * CARD      06-catalogue-pim/adopt-a-supplier-s-delivery-into-my-catalogue
  */
 /**
  * ── routes/adopt.js · TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE ─────────────────────────────────────

@@ -12,7 +12,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file and the real libraries over the stand-in db and sign-in (tests/lib/problem-world.cjs, scenes in tests/lib/schemas-scenes.cjs).
  * FLOW      the six routes x world (signed out, a failing db, an empty db, a bad id) + the named extras → real route → body → Problem fields present · frozen legacy keys equal · no leak
  *           on any status · statuses tested → manifest; then the chains, the frozen 5xx, the leak register, the foreign-column world → evidence
- * CARD      07-catalogue-and-pricing/catalogue-setup
+ * CARD      06-catalogue-pim/categories-and-fields
  *
  *   node tests/api-problem-schemas.test.cjs                    check
  *   node tests/api-problem-schemas.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

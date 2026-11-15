@@ -3,7 +3,7 @@
  * OWNS      protected entity, constitution, readiness passport and clearances.
  * CALLED BY web Standards · Trade readiness.
  * FLOW      auth → entity scope → readiness → answer without another shop's registry values
- * CARD      21-compliance-attestation-and-trade/governance
+ * CARD      20-settings-governance-and-plan/governance-7-layers-govcontext
  */
 const versionref = require('../lib/versionref');
 const log = require('../lib/logger');

@@ -11,7 +11,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/quick-keys.js and the real lib/quick-keys.js over the tables in memory (tests/lib/quick-keys-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, a key, a failing db, an empty db, a bad id) + the named scenes → real route → body → Problem fields present ·
  *           frozen legacy keys equal · no leak · statuses tested → manifest; then the foreign-id world → evidence
- * CARD      28-platform-and-operations/quick-keys-routes
+ * CARD      09-counter/quick-keys-and-screen-layout
  *
  *   node tests/api-problem-quick-keys.test.cjs                    check
  *   node tests/api-problem-quick-keys.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

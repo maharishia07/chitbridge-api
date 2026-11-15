@@ -17,7 +17,7 @@
  * FLOW  POST /purchase → lib/supply-store.purchase → says (expensed — not in your books yet)
  *       every route: sign-in → schema check (lib/supplies-contract.js) → the handler → lib/supply-store.js. A refusal or a fault → problem(req, res, ...), the old { error, message }
  *       kept beside the Problem fields (docs/contracts/api-legacy.json). The shop is the caller's own (auth.entityOf); a supply is found under it, so another shop's id is an unknown one.
- * // CARD 16-finance/supplies-routes
+ * // CARD 12-suppliers-and-procurement/supplies-things-i-buy-to-use
  */
 'use strict';
 const { waiting } = require('../lib/not-migrated');

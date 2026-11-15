@@ -5,7 +5,7 @@
  *           knows, and the extras: one scenario per answer of the 14 routes of routes/connectors.js (/api/connectors).
  * CALLED BY tests/api-problem-connectors.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who }, body, url, patch, after }] → the harness runs each one against the real route
- * CARD      28-platform-and-operations/connectors-routes
+ * CARD      23-connectors-and-integrations/connector-actors
  * A device (POST /ingest, POST /erp-ingest) has no session: its key rides in the body (`key`), which deviceActor reads when there is no X-Bridge-Key header.
  */
 'use strict';

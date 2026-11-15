@@ -12,7 +12,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs), the rows of tests/lib/connectors-scenes.cjs.
  * FLOW      route list (read from the router) x world (signed out, capability off, a bad id, an unknown id, a failing db, a found connector) + the named scenes → real route → body →
  *           Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest; then the frozen 5xx replay and the foreign-id world
- * CARD      28-platform-and-operations/connectors-routes
+ * CARD      23-connectors-and-integrations/connector-actors
  *
  *   node tests/api-problem-connectors.test.cjs                    check
  *   node tests/api-problem-connectors.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

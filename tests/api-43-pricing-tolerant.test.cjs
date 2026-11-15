@@ -6,7 +6,7 @@
  * OWNS      the tolerance: an unknown key leaves the answer unchanged (it answered 422 from API-8 9d0114f8 until this PR); a body of the wrong kind is still refused in the problem shape.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route over the stand-in world (tests/lib/problem-world.cjs).
  * FLOW      lines (+ one zz_unknown_field) → real route → status + body, compared with the same call without the key
- * CARD      28-platform-and-operations/pricing-service
+ * CARD      07-offers-pricing-and-combos/pricing-structure-price-lists
  */
 'use strict';
 const path = require('path');

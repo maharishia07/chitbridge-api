@@ -10,7 +10,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db, auth, token and model (tests/lib/problem-world.cjs).
  * FLOW      route list (read from the router) x world (signed out, staff, a stranger, a bad id, a failing db, an empty db) + the named extras (tests/lib/assist-scenes.cjs) → real route →
  *           body → Problem fields present · frozen legacy keys equal · frozen 5xx replayed · no leak → manifest; then the foreign-id world
- * CARD      28-platform-and-operations/assist
+ * CARD      25-ai-cb-assist-and-support-desks/cb-assist-knowledge-base
  *
  *   node tests/api-problem-assist.test.cjs                    check
  *   node tests/api-problem-assist.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

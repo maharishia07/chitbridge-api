@@ -4,7 +4,7 @@
  * OWNS      the extras: one scenario per refusal and per success of the six routes, each with the stand-in rows it needs; the one-shop-at-a-time rows of the "another shop" world.
  * CALLED BY tests/api-problem-definitions.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db }, body, url, after }] → the harness runs each one against the real route
- * CARD      07-catalogue-and-pricing/definitions
+ * CARD      06-catalogue-pim/definitions-shelf
  */
 'use strict';
 

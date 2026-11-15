@@ -2,7 +2,7 @@
  * OWNS      the assistant proxy and the brand's catalogue-source authoring.
  * CALLED BY web assistant · Network brand screens.
  * FLOW      auth → ask / author source (owner or root only) → answer
- * CARD      28-platform-and-operations/assist
+ * CARD      25-ai-cb-assist-and-support-desks/cb-assist-knowledge-base
  */
 // routes/assist.js — POST /api/assist — tier-1 assistant LLM proxy (STUB).
 // The web client (app.html `askLLM`) calls THIS so the model API key NEVER lives in the browser.

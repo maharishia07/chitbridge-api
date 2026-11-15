@@ -11,7 +11,7 @@
  *   SUP-06  gap: a malformed id (not a uuid) is the database's own 22P02 and answers 500 where an unknown uuid answers 404 (listed for API-4c; the stand-in cannot show it)
  * CALLED BY the S41 job (it picks up every *-truth.realstack.cjs) · by hand on the local stack. NOT run on the laptop that wrote it (no Docker there): written, runs in S41.
  * Shares tests/lib/truth-harness.cjs. LOCAL ONLY. Run: node tests/supplies-truth.realstack.cjs   (one realstack file at a time on :3100)
- * CARD 16-finance/supplies-routes
+ * CARD 12-suppliers-and-procurement/supplies-things-i-buy-to-use
  */
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');

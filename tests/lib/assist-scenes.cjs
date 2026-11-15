@@ -5,7 +5,7 @@
  *           the help desk's publish), each with the stand-in rows, the stand-in model and the stand-in token it needs (answered by the shape of the statement, so the same facts meet old and new code).
  * CALLED BY tests/api-problem-assist.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db }, patch, env, headers, body, url, throws }] → the harness runs each one against the real route
- * CARD      28-platform-and-operations/assist
+ * CARD      25-ai-cb-assist-and-support-desks/cb-assist-knowledge-base
  * `throws: true` marks a scene whose stand-in raises the database's own words: the test scans EVERY answer of it, a 200 included, for those words (round-1 rule 8).
  */
 'use strict';
