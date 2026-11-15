@@ -383,6 +383,9 @@
   "GET /api/integrations/profile-map": {
    "output_allowlist": true
   },
+  "POST /api/integrations/profile": {
+   "output_allowlist": true
+  },
   "GET /api/till/snapshot": {
    "output_allowlist": true
   },
@@ -1669,8 +1672,7 @@
    "output_allowlist": true
   },
   "POST /api/marks/query": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "POST /api/marks": {
    "strict_input": true

@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 654,
-    "failing": 3
+    "failing": 1
    },
    "foreign_id_404": {
     "applies": 205,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 159
+  "output_allowlist_from_recordings": 161
  },
  "machine_columns": [
   "schema_in",
@@ -20989,7 +20989,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 63,
-   "hash": "e585ddd496025170",
+   "hash": "370483463c62ac9c",
    "does": "An adopter and a list of record ids, or open=1 for the open items -> we read the latest mark of each record (or the open queries with their age and \"checked n of m\") in one read -> the marks, the words and what you may do.",
    "errors": {
     "count": 1,
@@ -21088,7 +21088,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 100,
-   "hash": "007309f5ac4a282f",
+   "hash": "258063aa3778ba09",
    "does": "A thread id in -> we read the marked record's mark, its history and the replies with what you may do -> the conversation, or 404 for a thread that is not these books'.",
    "errors": {
     "count": 1,
@@ -21122,7 +21122,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21148,6 +21148,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -51779,7 +51780,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 103,
-   "hash": "7931139a8daac960",
+   "hash": "0ccefb4d59aee1f9",
    "does": "A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.",
    "errors": {
     "count": 1,
@@ -51814,7 +51815,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51841,6 +51842,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -51881,7 +51883,7 @@
    "owner_agent": "unassigned",
    "file": "routes/marks.js",
    "line": 78,
-   "hash": "25319eaadde80087",
+   "hash": "a2292bb3687db0ac",
    "does": "An adopter and more record ids than a query string carries in a body -> we read the latest mark of each (a read, not a write) -> the marks, the words and what you may do.",
    "errors": {
     "count": 1,

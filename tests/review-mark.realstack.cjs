@@ -135,6 +135,7 @@ async function main() {
     const byBody = await call(owner, 'POST', '/api/marks/query', { body: { adopter: 'acc.audit', ids: [E1.entry_id, E2.entry_id] } });
     ok('1e POST /query (ids in a body, a READ) answers as the list does; a stranger\'s ids read null', byBody.status === 200 && byBody.body.marks[E1.entry_id].class === 'clear' && byBody.body.marks[E2.entry_id] === null && Array.isArray(byBody.body.not_found), JSON.stringify(byBody));
     const again = await asAud('POST', '/api/marks', mk(E1.entry_id, 'checked'));
+    delete RECORDED[Object.keys(RECORDED).pop()]; /* the 200 of a repeat is not the route's success shape (its 201 is): the derived shape reads the 201s */
     ok('2 an identical press is 200 unchanged and writes no row', again.status === 200 && again.body.unchanged === true && (await marksOf(M1)) === before + 1, JSON.stringify(again));
 
     /* 3 critic a */
