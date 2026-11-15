@@ -1,6 +1,3 @@
-// OWNS      the one comparison of a supplier's bill total with what was counted (taxable plus tax), giving agrees, round_off, apart, no_total or no_engine and the sentence both hosts show
-// CALLED BY lib/books-hooks.js (receiptBill), routes/till.js, and the till page as window.CBTheirBill (a byte copy vendored into web public/app)
-// FLOW      check({ total, taxable, tax, currency, no, say }) ──▶ compare to the minor unit ──▶ { code, theirs, ours, gap, sentence }; a host branches on the code
 // @stage tested
 // @stage-note The ONE comparison of a supplier's bill total with what was counted (FX-F10W2): the counter's Receive form, its slip and the books' Waiting row.
 /* their-bill.js — DOES THEIR BILL AGREE WITH WHAT WAS COUNTED? One rule, every host (FX-F10W2, QA-W1 F10).
