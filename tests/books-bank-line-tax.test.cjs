@@ -118,6 +118,15 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   const noCredit = await refused('a pack with no input-credit ledger (US) is refused', fee({ client_ref: 'bt-us', input_tax_minor: 200 }), [422]);
   ok('…naming the cost, nothing posted', /part of the cost/.test(JSON.stringify(noCredit.body)), JSON.stringify(noCredit.body));
 
+  /* ── the unit's own rules (lib/books-bank-tax.js), no shop and no ledger: the keys belong to an expense and to each other, and a refusal is a refusal in words, never an ignored key ── */
+  const { refuseBankKeysBeside } = require('../lib/books-bank-tax');
+  const refusal = (body, kind) => { try { refuseBankKeysBeside(body, kind); return null; } catch (e) { return e; } };
+  ok('unit: a body with neither bank key passes on any kind', refusal({}, 'capital') === null);
+  ok('unit: the tax key on another kind is refused, in words', (refusal({ input_tax_minor: 200 }, 'capital') || {}).refused === true);
+  ok('unit: tax_invoice without a tax figure is refused', (refusal({ tax_invoice: 'held' }, 'expense') || {}).refused === true);
+  ok('unit: a supplier beside the tax figure is refused', (refusal({ input_tax_minor: 200, supplier: 'x' }, 'expense') || {}).refused === true);
+  ok('unit: a tax figure on a plain expense passes this gate (the amount checks come later)', refusal({ input_tax_minor: 200 }, 'expense') === null);
+
   R.close();
   done();
 })();
