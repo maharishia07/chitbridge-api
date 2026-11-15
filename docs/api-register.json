@@ -4787,6 +4787,7 @@
    },
    "reads": [
     "bank_rec_log",
+    "books_payment",
     "books_setting",
     "identities",
     "journal_entry",

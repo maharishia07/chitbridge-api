@@ -246,6 +246,17 @@ const get = (port, p) => new Promise((ok) => {
   t('plan: at the limit the line is marked dn', [r.json.lines[1].tone, r.json.state], ['dn', 'needs_you']);
   F.chitsToday = null; F.plan = 'gold'; r = await g('plan');
   t('plan: a plan the constitution does not declare says so in words - never 0, never unlimited', r.json.lines.map((l) => l.text), ['Gold plan', 'Limits not declared for this plan']);
+  /* HOME-MONDAY: the Bank card - the last signed statement as carried; no statement is a plain status, never a zero; no "lines to add" */
+  const BL = require(API + '/lib/bank-rec-log'), BS = require(API + '/lib/books-store'); const wasLatest = BL.latest, wasAcc = BS.accounts;
+  BL.latest = async () => null; r = await g('bank');
+  t('bank: no statement says so in words, state not_started, no figure', [r.json.lines, r.json.state, r.json.figures.statement], [[{ text: 'No statement loaded yet' }], 'not_started', null]);
+  BS.accounts = async () => [{ account_id: 7, name: 'ANZ Business' }];
+  BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 12345, currency: 'AUD' }); r = await g('bank');
+  t('bank: last statement + the carried difference, in its own currency', [r.json.lines[0].text, r.json.lines[1].money, r.json.state], ['Last statement {when} · ANZ Business', { amount: 123.45, currency: 'AUD' }, 'needs_you']);
+  t('bank: figures carry minor units and the currency; nothing about lines to add', JSON.stringify(r.json.figures), JSON.stringify({ statement: { date: '2026-10-31', account: 'ANZ Business', difference_minor: 12345, currency: 'AUD' } }));
+  BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 0, currency: 'AUD' }); r = await g('bank');
+  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Matches the books', 'in_use']);
+  BL.latest = wasLatest; BS.accounts = wasAcc;
   F.plan = null; r = await g('plan');
   t('plan: no plan row says so', r.json.lines[0].text, 'No plan recorded');
   F.plan = undefined;
