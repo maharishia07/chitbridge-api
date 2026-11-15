@@ -1014,15 +1014,15 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books/fx-rates** · books · cb-accounting · meets standard
 - does: Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
+- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 3; share cap-fx.js 3/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, fx_rate, identities, journal_entry, journal_line · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).
-- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
+- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/health** · books · cb-accounting · meets standard
 - does: Nothing in -> we read the health of the books: postings still waiting to reach the ledger, the to-do counts and the year's checks -> one health summary.
@@ -1260,9 +1260,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).
-- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
+- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/gst/close** · books · cb-accounting · meets standard
 - does: A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).
@@ -3353,7 +3353,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): cb_edge, cb_entity, identities, network_design · writes (derived): cb_edge, cb_entity, entity_schemas, identities, network_design · callers: cap-network.js, screens.js · actions: -
 
 **POST /api/network-design/reissue** · network-design · cb-network · meets standard
-- does: The design to reissue for (owner only, not an assistant) -> we issue fresh claim codes for its stores -> the new codes.
+- does: The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-network.js 0/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-network.js · actions: -

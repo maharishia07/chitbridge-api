@@ -168,7 +168,7 @@ function extras(tools) {
     X('reissue-no-store-named', 'POST ' + DES + '/reissue', 400, { body: {} }),
     X('reissue-not-yours', 'POST ' + DES + '/reissue', 404, { body: { user_id: 'shop-a.c' } }),
     X('reissue-unknown-key-refused', 'POST ' + DES + '/reissue', 400, { body: { colour: 'red', user_id: 'Shop-A.C' }, setup: { sqlRows: answering(/FROM identities\s+WHERE LOWER\(user_id\) = LOWER\(\$1\)/, [{ identity_id: C, display_name: 'Shop C', user_id: 'shop-a.c' }]) }, patch: { otp: { generateOTP: () => '123456' } } }),
-    X('reissue-made', 'POST ' + DES + '/reissue', 200, { body: { user_id: 'Shop-A.C' }, setup: { sqlRows: answering(/FROM identities\s+WHERE LOWER\(user_id\) = LOWER\(\$1\)/, [{ identity_id: C, display_name: 'Shop C', user_id: 'shop-a.c' }]) }, patch: { otp: { generateOTP: () => '123456' } } }),
+    X('reissue-made', 'POST ' + DES + '/reissue', 200, { body: { user_id: 'Shop-A.C' }, setup: { sqlRows: firstOf(answering(/FROM identities\s+WHERE LOWER\(user_id\) = LOWER\(\$1\)/, [{ identity_id: C, display_name: 'Shop C', user_id: 'shop-a.c' }]), answering(/UPDATE identities SET otp_code/, [{ user_id: 'shop-a.c', display_name: 'Shop C' }])) }, patch: { otp: { generateOTP: () => '123456' } } }),
     X('reissue-db-fails', 'POST ' + DES + '/reissue', 500, { body: { user_id: 'shop-a.c' }, setup: failing }),
     N('reissue-body-a-list', 'POST ' + DES + '/reissue', 400, { body: [] }),
     X('availability-too-short', 'GET ' + DES + '/availability', 400, { url: DES + '/availability?q=a' }),

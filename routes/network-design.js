@@ -317,7 +317,7 @@ async function reissueClaim(store, ownerId) {
  * `last_active_at` (lib/identity-auth.js verifyCredential; a minted store never has it). After that the head
  * holds no key to the store: its way in is the owner's consent grant (ACC-176), never a code in this answer.
  */
-// @does The design to reissue for (owner only, not an assistant) -> we issue fresh claim codes for its stores -> the new codes.
+// @does The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.
 router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
     if (req.identity.parent_entity_id) {

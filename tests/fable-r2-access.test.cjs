@@ -33,6 +33,8 @@ const world = { who: null, store: null, businessStatus: 'active', actor: null, w
 const rowsFor = (sql, params) => {
   world.writes.push(String(sql).trim().split(/\s+/).slice(0, 2).join(' '));
   if (/FROM identities\s+WHERE LOWER\(user_id\)/.test(sql)) return { rows: world.store ? [world.store] : [], rowCount: world.store ? 1 : 0 };
+  /* R2-01c: the claim test rides in the write, so the reissue UPDATE answers the row it changed (an unclaimed store) */
+  if (/UPDATE identities SET otp_code/.test(sql)) return { rows: world.store && !world.store.last_active_at ? [{ user_id: world.store.user_id, display_name: world.store.display_name }] : [], rowCount: 1 };
   if (/SELECT status FROM identities/.test(sql)) return { rows: [{ status: world.businessStatus }], rowCount: 1 };
   if (/SELECT identity_id, site, connector_config FROM identities/.test(sql)) return { rows: world.actor ? [world.actor] : [], rowCount: world.actor ? 1 : 0 };
   return { rows: [], rowCount: 1 };

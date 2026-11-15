@@ -50907,7 +50907,7 @@
    "file": "routes/network-design.js",
    "line": 321,
    "hash": "36ca54f8b7aa1044",
-   "does": "The design to reissue for (owner only, not an assistant) -> we issue fresh claim codes for its stores -> the new codes.",
+   "does": "The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.",
    "errors": {
     "count": 0,
     "statuses": [
