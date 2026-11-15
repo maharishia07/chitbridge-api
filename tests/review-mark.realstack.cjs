@@ -66,8 +66,11 @@ async function person(biz, tag, level) {
   return { identity_id: row.identity_id, identity_type: 'actor', parent_entity_id: biz.id, bridge_id: biz.bridgeId, display_name: row.display_name };
 }
 
+const RECORDED = {}; /* MARK_CAPTURE_OUT: every answer, keyed 'METHOD /pattern|n', for tools/api-allowlist.cjs (the derived output shapes) */
+const patternOf = (route) => route.split('?')[0].replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':thread_id');
 let base = '';
 async function call(who, method, route, opts) {
+  const route0 = route;
   const o = opts || {};
   const headers = { 'content-type': 'application/json', 'x-test-as': JSON.stringify(who) };
   if (o.member) headers['x-books-for'] = o.member;
@@ -75,6 +78,8 @@ async function call(who, method, route, opts) {
   const res = await fetch(base + route, { method, headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) });
   let body = null;
   try { body = await res.json(); } catch (_) { body = null; }
+  const key = method + ' ' + patternOf(route0);
+  RECORDED[key + '|' + Object.keys(RECORDED).length] = { route: key, status: res.status, request: { url: route0, body: o.body }, body };
   return { status: res.status, body };
 }
 const count = (M, sql, params) => withEntity(M.id, (h) => h.query(sql, params)).then((r) => Number(r.rows[0].n));
@@ -243,6 +248,7 @@ async function main() {
     ok('13f and the auditor can no longer read either (the same look)', readAfter.status === 403, JSON.stringify(readAfter));
   } finally {
     server.close();
+    if (process.env.MARK_CAPTURE_OUT) require('fs').writeFileSync(process.env.MARK_CAPTURE_OUT, JSON.stringify(RECORDED));
   }
   console.log('\n' + pass + ' ok, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
