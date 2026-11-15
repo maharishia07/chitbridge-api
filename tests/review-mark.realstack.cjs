@@ -20,6 +20,7 @@ const ALLOWED_HOSTS = /^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(url);
 if (!parts || parts[1] !== 'cb_app' || !ALLOWED_HOSTS.test(parts[2])) { console.error('REFUSED: needs DATABASE_URL as cb_app on localhost, the compose db or a SIT host'); process.exit(3); }
 process.env.NODE_ENV = 'test';
+process.env.CB_TRIPS = '1'; /* the round trips of each marks route are measured here (X-DB-Trips) for round-trips.budget.json */
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'review_mark_test_secret_at_least_32_chars_padding';
 const path = require('path');
 const crypto = require('crypto');
@@ -66,8 +67,12 @@ async function person(biz, tag, level) {
   return { identity_id: row.identity_id, identity_type: 'actor', parent_entity_id: biz.id, bridge_id: biz.bridgeId, display_name: row.display_name };
 }
 
+const TRIPS = {}; /* the dearest successful call of each route: X-DB-Trips */
+const RECORDED = {}; /* MARK_CAPTURE_OUT: every answer, keyed 'METHOD /pattern|n', for tools/api-allowlist.cjs (the derived output shapes) */
+const patternOf = (route) => route.split('?')[0].replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':thread_id');
 let base = '';
 async function call(who, method, route, opts) {
+  const route0 = route;
   const o = opts || {};
   const headers = { 'content-type': 'application/json', 'x-test-as': JSON.stringify(who) };
   if (o.member) headers['x-books-for'] = o.member;
@@ -75,6 +80,9 @@ async function call(who, method, route, opts) {
   const res = await fetch(base + route, { method, headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) });
   let body = null;
   try { body = await res.json(); } catch (_) { body = null; }
+  const key = method + ' ' + patternOf(route0);
+  if (res.status < 300 && res.headers.get('x-db-trips')) TRIPS[key] = Math.max(TRIPS[key] || 0, Number(res.headers.get('x-db-trips')));
+  RECORDED[key + '|' + Object.keys(RECORDED).length] = { route: key, status: res.status, request: { url: route0, body: o.body }, body };
   return { status: res.status, body };
 }
 const count = (M, sql, params) => withEntity(M.id, (h) => h.query(sql, params)).then((r) => Number(r.rows[0].n));
@@ -86,6 +94,7 @@ async function main() {
   await join(P, M1); await join(P, M3);
   const U = await person(P, 'u', 'commenter'); const A = await person(P, 'a', 'editor');
   const app = express();
+  app.use(require(path.join(API, 'lib', 'trips')).middleware());
   app.use(express.json());
   app.use('/api/books', require(path.join(API, 'routes', 'books.js')));
   app.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
@@ -123,7 +132,10 @@ async function main() {
     const day1 = await call(owner, 'GET', '/api/books/daybook?from=' + day + '&to=' + day);
     const e1row = (day1.body.entries || []).find((e) => e.entry_id === E1.entry_id), e2row = (day1.body.entries || []).find((e) => e.entry_id === E2.entry_id);
     ok('1d the day book embeds the mark on E1 and null on E2, with the actions and the words', e1row && e1row.mark && e1row.mark.class === 'clear' && e2row && e2row.mark === null && day1.body.mark_actions && Array.isArray(day1.body.mark_vocabulary), JSON.stringify(day1.body).slice(0, 400));
+    const byBody = await call(owner, 'POST', '/api/marks/query', { body: { adopter: 'acc.audit', ids: [E1.entry_id, E2.entry_id] } });
+    ok('1e POST /query (ids in a body, a READ) answers as the list does; a stranger\'s ids read null', byBody.status === 200 && byBody.body.marks[E1.entry_id].class === 'clear' && byBody.body.marks[E2.entry_id] === null && Array.isArray(byBody.body.not_found), JSON.stringify(byBody));
     const again = await asAud('POST', '/api/marks', mk(E1.entry_id, 'checked'));
+    delete RECORDED[Object.keys(RECORDED).pop()]; /* the 200 of a repeat is not the route's success shape (its 201 is): the derived shape reads the 201s */
     ok('2 an identical press is 200 unchanged and writes no row', again.status === 200 && again.body.unchanged === true && (await marksOf(M1)) === before + 1, JSON.stringify(again));
 
     /* 3 critic a */
@@ -142,6 +154,8 @@ async function main() {
 
     /* 5 */
     const n5 = await marksOf(M1);
+    const longNote = await asAud('POST', '/api/marks', mk(E2.entry_id, 'query', 'x'.repeat(1001)));
+    ok('5a0 a note over 1000 characters: 422 MARK_NOTE_TOO_LONG (never a 500 from the CHECK) and no row', longNote.status === 422 && code(longNote) === 'MARK_NOTE_TOO_LONG' && (await marksOf(M1)) === n5, JSON.stringify(longNote).slice(0, 300));
     const noWords = await asAud('POST', '/api/marks', mk(E2.entry_id, 'query', '   '));
     ok('5a a Query without words: 422 MARK_WORDS_REQUIRED and no row', noWords.status === 422 && code(noWords) === 'MARK_WORDS_REQUIRED' && (await marksOf(M1)) === n5, JSON.stringify(noWords));
     const q = await asAud('POST', '/api/marks', mk(E2.entry_id, 'query', 'Why was this posted to sales?'));
@@ -243,6 +257,8 @@ async function main() {
     ok('13f and the auditor can no longer read either (the same look)', readAfter.status === 403, JSON.stringify(readAfter));
   } finally {
     server.close();
+    console.log('TRIPS ' + JSON.stringify(TRIPS));
+    if (process.env.MARK_CAPTURE_OUT) require('fs').writeFileSync(process.env.MARK_CAPTURE_OUT, JSON.stringify(RECORDED));
   }
   console.log('\n' + pass + ' ok, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

@@ -1455,3 +1455,14 @@ The firm's team PREPARES, a colleague REVIEWS, the owner ACCEPTS; the existing w
 | `books_action_step` | `reason` · `grant_id` · `entry_id` · `at` | why a return or a withdrawal happened · the adviser grant the action works under · the entry the accept posted · when. |
 | `GET /api/books-grants` answer, for a person of a firm | `given` · `received` | a team member who may use a grant (an editor with whole-entity reach, or an auditor-preset person) reads the same list, but `given` is empty and `received` holds only the grants of HIS OWN firm; another firm's grants are invisible (row security). |
 | `GET /api/books-grants` answer | `parents` | array of { entity_id, name } · the businesses this member can give access to: its network parents by a governance edge (built under them) or a commercial edge (joined), read from the same edges the grant checks; the grant screen offers these, not the catalogue list. |
+
+## Marks and queries · `mark` · `mark_actions` · `mark_vocabulary` · `review_mark.seal` (MARK & QUERY, CAP-25, 2026-11-15)
+
+Written by: lib/review-mark.js set (the one writer, through the DB function review_mark_set, migration b868). Read by: the day book and the ledger (lib/mark-embed), /api/marks (routes/marks.js), the web marker chip and query sheet. Contract: docs/marks-contract.md.
+
+| Route | Key | Meaning |
+|---|---|---|
+| `GET /api/books/daybook` (each `entries[]`) · `GET /api/books/ledger/:account` (each `lines[]`) | `mark` | the Mark object of that entry (kind, class, label, note, by_name, by_firm, open, age_days, altered, altered_by, recheck_needed, message_count, actions) or `null` when it has none or the reviewer took it off · the key is ABSENT while marking is not switched on (b868 not run) · DERIVED per read from the latest review_mark row; nothing about the entry is stored |
+| `GET /api/books/daybook` · `GET /api/books/ledger/:account` (top level) | `mark_actions` | `{ set: { ok, why }, reply: { ok, why } }` · what this person may do on a mark, with the sentence when not · the server's verdict, the page never decides · absent while marking is off |
+| `GET /api/books/daybook` · `GET /api/books/ledger/:account` (top level) | `mark_vocabulary` | array of `{ kind, label, class, note }` · the adopter's words (Checked, Query, On hold) each mapped to a neutral class; note says none, optional or required · absent while marking is off |
+| `review_mark.seal` (stored, jsonb) | `seal` | `{ v, fields, hash }` exactly as lib/canon seal returns it · the record as the reviewer saw it; compared with the seal read now (mismatch, never recompute) to say 'changed after review' · written once with the mark row, never updated |

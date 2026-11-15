@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 router.use(require('../middleware/books-grant'));
 const auth = require('../middleware/auth');
-const { problem } = require('../lib/problem');
+const { problem, fromError } = require('../lib/problem');
 const { declaresStatuses } = require('../lib/contract-kit');
 const contract = require('../lib/marks-contract');
 const core = require('../lib/review-mark');
@@ -22,25 +22,22 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** a key is not a person: nothing here is done by a device key */
 function noKey(req, res, next) {
   if (!req.api_key) return next();
-  return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_MARKS', detail: 'Sign in to work on marks.', legacy: { error: 'Sign in to work on marks.', message: 'Sign in to work on marks.' } });
+  return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_MARKS', detail: 'Sign in to work on marks.' });
 }
 /** a refusal in words (the core's typed refusal, or a grant look's) as a Problem with the old keys beside it */
 function answerRefusal(req, res, err) {
-  if (err && err.words) return problem(req, res, { status: err.status || 500, code: err.code, detail: err.words, legacy: { error: err.words, message: err.words } });
+  if (err && err.words) return problem(req, res, { status: err.status || 500, code: err.code, detail: err.words });
   throw err;
 }
-const refuse = (req, res, status, code, words) => problem(req, res, { status, code, detail: words, legacy: { error: words, message: words } });
+const refuse = (req, res, status, code, words) => problem(req, res, { status, code, detail: words });
 /** run a handler body and answer; a typed refusal is answered in words, anything else is the server's own handler (a 500 that says nothing of its cause) */
-const handler = (work, okStatus) => async (req, res, next) => {
+const handler = (work, okStatus) => async (req, res) => {
   try {
     const out = await work(req, res);
     if (out !== undefined) res.status(typeof okStatus === 'function' ? okStatus(out) : okStatus || 200).json(out);
   } catch (err) {
-    try {
-      answerRefusal(req, res, err);
-    } catch (unknown) {
-      next(unknown);
-    }
+    if (err && err.words) return answerRefusal(req, res, err);
+    return fromError(req, res, err); /* a fault of ours says nothing of its cause; the real error is logged with the request id */
   }
 };
 const adopterOfReq = (key) => {
@@ -49,8 +46,9 @@ const adopterOfReq = (key) => {
   return adopter;
 };
 const idsOf = (value) => String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
-const monthStart = () => new Date().toISOString().slice(0, 8) + '01';
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const CLOCK = require('../lib/shop-clock'); /* the one day reader (T2-NATDEF): no shop setting here, so UTC, never India */
+const todayIso = () => CLOCK.today(null);
+const monthStart = () => todayIso().slice(0, 8) + '01';
 
 /** the list answer: the marks by id, the ones that no longer read, the words and what this person may do */
 async function listAnswer(req, adopterKey, ids) {
@@ -92,7 +90,7 @@ async function write(req, res, work) {
 }
 
 // @does An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.
-router.post('/', auth, noKey, declaresStatuses([503]), ...contract.checked('POST /'), handler(async (req, res) => {
+router.post('/', auth, noKey, declaresStatuses([404, 503]), ...contract.checked('POST /'), handler(async (req, res) => {
   const adopter = adopterOfReq(req.body.adopter);
   const result = await write(req, res, async (db, ctx) => core.set(db, ctx, req.body));
   if (result === undefined) return undefined;
@@ -103,7 +101,7 @@ router.post('/', auth, noKey, declaresStatuses([503]), ...contract.checked('POST
 router.get('/:thread_id/messages', auth, noKey, declaresStatuses([503]), ...contract.checked('GET /:thread_id/messages'), handler((req) => door.run(req, (db, ctx) => core.threadOf(db, ctx, req.params.thread_id))));
 
 // @does A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.
-router.post('/:thread_id/messages', auth, noKey, declaresStatuses([503]), ...contract.checked('POST /:thread_id/messages'), handler(async (req, res) => write(req, res, (db, ctx) => core.reply(db, ctx, req.params.thread_id, req.body)), 201));
+router.post('/:thread_id/messages', auth, noKey, declaresStatuses([409, 503]), ...contract.checked('POST /:thread_id/messages'), handler(async (req, res) => write(req, res, (db, ctx) => core.reply(db, ctx, req.params.thread_id, req.body)), 201));
 
 router.openapi = { paths: contract.pathsOf() };
 module.exports = router;

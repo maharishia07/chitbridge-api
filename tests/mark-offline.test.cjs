@@ -134,6 +134,13 @@ const t = async (name, fn) => {
     assert.strictEqual(state.written, 1);
     assert.strictEqual(out.unchanged, false);
   });
+  await t('6h a note of 1000 characters is taken, 1001 is 422 MARK_NOTE_TOO_LONG (one number with the web textarea)', async () => {
+    const state = {};
+    await core.set(stubDb(state), ctxOf('auditor'), { adopter: 'acc.audit', subject_id: 's1', kind: 'query', note: 'x'.repeat(1000) });
+    assert.strictEqual(state.written, 1);
+    await refusedWith(() => core.set(stubDb({}), ctxOf('auditor'), { adopter: 'acc.audit', subject_id: 's1', kind: 'query', note: 'x'.repeat(1001) }), 'MARK_NOTE_TOO_LONG');
+    assert.strictEqual(core.fromDb({ code: '23514' }).code, 'MARK_NOTE_TOO_LONG');
+  });
   await t('6e an identical press writes nothing (the same kind and words as the latest row)', async () => {
     const state = { latest: { mark_id: 7, entity_id: 'e1', adopter: 'acc.audit', subject_id: 's1', thread_id: 'th', kind: 'query', class: 'open', note: 'why', seal: sealNow, at: new Date(), by_name: 'A', by_entity_id: 'f1', by_entity_name: 'Firm', open_since: new Date(), message_count: 0 } };
     const out = await core.set(stubDb(state), ctxOf('auditor'), { adopter: 'acc.audit', subject_id: 's1', kind: 'query', note: 'why' });

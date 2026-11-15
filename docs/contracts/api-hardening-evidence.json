@@ -383,6 +383,9 @@
   "GET /api/integrations/profile-map": {
    "output_allowlist": true
   },
+  "POST /api/integrations/profile": {
+   "output_allowlist": true
+  },
   "GET /api/till/snapshot": {
    "output_allowlist": true
   },
@@ -1665,10 +1668,19 @@
   "POST /api/books/money-check/resolve": {
    "strict_input": true
   },
-  "GET /api/books-grants/consent": {
+  "GET /api/marks": {
    "output_allowlist": true
   },
-  "GET /api/books-grants": {
+  "POST /api/marks/query": {
+   "strict_input": true
+  },
+  "POST /api/marks": {
+   "strict_input": true
+  },
+  "POST /api/marks/:thread_id/messages": {
+   "strict_input": true
+  },
+  "GET /api/books-grants/consent": {
    "output_allowlist": true
   },
   "POST /api/books-grants": {
@@ -1692,7 +1704,8 @@
    "strict_input": true
   },
   "POST /api/books-actions/:id/accept": {
-   "strict_input": true
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "GET /api/facts/rail/chits": {
    "output_allowlist": true

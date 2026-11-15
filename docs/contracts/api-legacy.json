@@ -70905,6 +70905,1392 @@
      }
     }
    ]
+  },
+  "GET /api/marks": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-unknown-adopter",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-too-many",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_ids_too_many",
+      "title": "Too many records",
+      "status": 422,
+      "code": "MARK_IDS_TOO_MANY",
+      "detail": "Ask for 200 records at a time or fewer.",
+      "hint": "Ask for fewer records.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_ids_too_many",
+      "title": "Too many records",
+      "status": 422,
+      "code": "MARK_IDS_TOO_MANY",
+      "detail": "Ask for 200 records at a time or fewer.",
+      "hint": "Ask for fewer records.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-bad-period",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_period_invalid",
+      "title": "Period not valid",
+      "status": 422,
+      "code": "MARK_PERIOD_INVALID",
+      "detail": "Give the period as two dates, year-month-day.",
+      "hint": "Fix the two dates.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_period_invalid",
+      "title": "Period not valid",
+      "status": 422,
+      "code": "MARK_PERIOD_INVALID",
+      "detail": "Give the period as two dates, year-month-day.",
+      "hint": "Fix the two dates.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-db-fails",
+     "status": 500,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/marks/:thread_id/messages": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "thread_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "thread_id",
+      "errors": [
+       {
+        "field": "thread_id",
+        "code": "WRONG_VALUE",
+        "detail": "thread_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "thread_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "thread_id",
+      "errors": [
+       {
+        "field": "thread_id",
+        "code": "WRONG_VALUE",
+        "detail": "thread_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "thread-unknown",
+     "status": 404,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "thread-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "thread-db-fails",
+     "status": 500,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/marks": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "kind",
+        "code": "MISSING_FIELD",
+        "detail": "kind is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "kind",
+        "code": "MISSING_FIELD",
+        "detail": "kind is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "kind",
+        "code": "MISSING_FIELD",
+        "detail": "kind is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "kind",
+        "code": "MISSING_FIELD",
+        "detail": "kind is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "kind",
+        "code": "MISSING_FIELD",
+        "detail": "kind is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "kind",
+        "code": "MISSING_FIELD",
+        "detail": "kind is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "set-by-the-owner",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_not_allowed",
+      "title": "Not for you to mark",
+      "status": 403,
+      "code": "MARK_NOT_ALLOWED",
+      "detail": "Only the auditor can mark an entry. You can read the marks and answer a query.",
+      "hint": "Ask your auditor to mark it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_not_allowed",
+      "title": "Not for you to mark",
+      "status": 403,
+      "code": "MARK_NOT_ALLOWED",
+      "detail": "Only the auditor can mark an entry. You can read the marks and answer a query.",
+      "hint": "Ask your auditor to mark it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "set-unknown-entry",
+     "status": 404,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_subject_not_found",
+      "title": "Entry not found",
+      "status": 404,
+      "code": "MARK_SUBJECT_NOT_FOUND",
+      "detail": "We could not find that entry in these books.",
+      "hint": "Open the entry again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_subject_not_found",
+      "title": "Entry not found",
+      "status": 404,
+      "code": "MARK_SUBJECT_NOT_FOUND",
+      "detail": "We could not find that entry in these books.",
+      "hint": "Open the entry again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "set-no-words",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_words_required",
+      "title": "Say what you ask",
+      "status": 422,
+      "code": "MARK_WORDS_REQUIRED",
+      "detail": "Write the question first. The owner will read it.",
+      "hint": "Write the question and send it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_words_required",
+      "title": "Say what you ask",
+      "status": 422,
+      "code": "MARK_WORDS_REQUIRED",
+      "detail": "Write the question first. The owner will read it.",
+      "hint": "Write the question and send it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "set-unknown-adopter",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "set-unknown-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "set-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "set-db-fails",
+     "status": 500,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/marks/:thread_id/messages": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "thread_id",
+      "errors": [
+       {
+        "field": "thread_id",
+        "code": "WRONG_VALUE",
+        "detail": "thread_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "thread_id",
+      "errors": [
+       {
+        "field": "thread_id",
+        "code": "WRONG_VALUE",
+        "detail": "thread_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "reply-not-allowed",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_reply_not_allowed",
+      "title": "Not for you to answer",
+      "status": 403,
+      "code": "MARK_REPLY_NOT_ALLOWED",
+      "detail": "Only the owner, the adviser and the auditor take part in a query.",
+      "hint": "Ask the owner to answer.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_reply_not_allowed",
+      "title": "Not for you to answer",
+      "status": 403,
+      "code": "MARK_REPLY_NOT_ALLOWED",
+      "detail": "Only the owner, the adviser and the auditor take part in a query.",
+      "hint": "Ask the owner to answer.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reply-unknown-thread",
+     "status": 404,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_thread_not_found",
+      "title": "Query not found",
+      "status": 404,
+      "code": "MARK_THREAD_NOT_FOUND",
+      "detail": "We could not find that question.",
+      "hint": "Open the list of queries again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reply-closed",
+     "status": 409,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_thread_closed",
+      "title": "Query closed",
+      "status": 409,
+      "code": "MARK_THREAD_CLOSED",
+      "detail": "This query is closed.",
+      "hint": "Ask the auditor to open it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_thread_closed",
+      "title": "Query closed",
+      "status": 409,
+      "code": "MARK_THREAD_CLOSED",
+      "detail": "This query is closed.",
+      "hint": "Ask the auditor to open it again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reply-no-words",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "message_text is needed.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "message_text",
+      "errors": [
+       {
+        "field": "message_text",
+        "code": "MISSING_FIELD",
+        "detail": "message_text is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "reply-unknown-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "reply-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reply-db-fails",
+     "status": 500,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/marks/query": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/sign_in_for_marks",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_MARKS",
+      "detail": "Sign in to work on marks.",
+      "hint": "A counter or device key cannot mark.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "ids",
+        "code": "MISSING_FIELD",
+        "detail": "ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "ids",
+        "code": "MISSING_FIELD",
+        "detail": "ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "ids",
+        "code": "MISSING_FIELD",
+        "detail": "ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "ids",
+        "code": "MISSING_FIELD",
+        "detail": "ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "ids",
+        "code": "MISSING_FIELD",
+        "detail": "ids is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "adopter",
+      "errors": [
+       {
+        "field": "adopter",
+        "code": "MISSING_FIELD",
+        "detail": "adopter is needed."
+       },
+       {
+        "field": "ids",
+        "code": "MISSING_FIELD",
+        "detail": "ids is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "query-unknown-adopter",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_adopter_unknown",
+      "title": "Unknown review",
+      "status": 422,
+      "code": "MARK_ADOPTER_UNKNOWN",
+      "detail": "We do not know that kind of review.",
+      "hint": "Open the screen again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "query-unknown-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "query-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/mark_not_switched_on",
+      "title": "Marks not switched on",
+      "status": 503,
+      "code": "MARK_NOT_SWITCHED_ON",
+      "detail": "Marking and queries are not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "query-db-fails",
+     "status": 500,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
   }
  },
  "global": {
