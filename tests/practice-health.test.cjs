@@ -18,11 +18,28 @@ const t = (name, fn) => { try { fn(); pass++; console.log('  ok   ' + name); } c
 console.log('\nl16 firm-dash · practice rule (offline)');
 t('sales down 28% is Needs help, with its reason in words', () => {
   const v = H.statusOf({ sales_trend_pct: -28, profit_quarter_minor: 5 });
-  assert.strictEqual(v.status, 'help'); assert.ok(v.reasons.includes('sales -28%'));
+  assert.strictEqual(v.status, 'help'); assert.ok(v.reasons.includes('sales down 28% on the 3 months before'));
 });
 t('sales down 12% is Watch; flat sales and a profit are Doing well', () => {
   assert.strictEqual(H.statusOf({ sales_trend_pct: -12, profit_quarter_minor: 5 }).status, 'watch');
   assert.strictEqual(H.statusOf({ sales_trend_pct: 3, profit_quarter_minor: 5, loss_months_running: 0 }).status, 'good');
+});
+t('sales down 27% on the 2 months available is Needs help, and the reason names the base', () => {
+  const v = H.statusOf({ sales_trend_pct: -27, sales_trend_months: 2, profit_quarter_minor: 5 });
+  assert.strictEqual(v.status, 'help'); assert.deepStrictEqual(v.reasons, ['sales down 27% on the 2 months before']);
+});
+t('late debtors: 25% is Watch, 50% and over is Needs help, under 25% is not a reason', () => {
+  const f = (p) => H.statusOf({ receivables_over60_share_pct: p, sales_trend_pct: 1, profit_quarter_minor: 5 });
+  assert.strictEqual(f(24.9).status, 'good'); assert.strictEqual(f(25).status, 'watch'); assert.strictEqual(f(49.9).status, 'watch');
+  assert.strictEqual(f(50).status, 'help'); assert.deepStrictEqual(f(64).reasons, ['late debtors 64%']);
+  assert.strictEqual(H.RULE.help.receivables_over60_share_pct, 50); assert.strictEqual(H.RULE.watch.receivables_over60_share_pct, 25);
+});
+t('under 2 months of history: the trend is unknown, the reason says so, and the class stays what the other facts say', () => {
+  const good = H.statusOf({ sales_trend_pct: null, sales_trend_months: 1, profit_quarter_minor: 5, loss_months_running: 0 });
+  assert.deepStrictEqual([good.status, good.reasons], ['good', ['sales trend: under 2 months of history']]);
+  const help = H.statusOf({ sales_trend_pct: null, sales_trend_months: 0, cash_days: 3 });
+  assert.strictEqual(help.status, 'help'); assert.ok(help.reasons.includes('sales trend: under 2 months of history'));
+  assert.strictEqual(H.statusOf({ sales_trend_pct: null, sales_trend_months: 0 }).status, 'none');
 });
 t('a loss two months running is Needs help; a loss this quarter alone is Watch', () => {
   assert.strictEqual(H.statusOf({ loss_months_running: 2, profit_quarter_minor: -1 }).status, 'help');
@@ -41,7 +58,7 @@ t('the band counts equal the filters; the default order is Needs help first, the
   assert.deepStrictEqual(rows.sort(H.byUrgency).map((r) => r.name), ['c', 'b', 'a']);
 });
 t('figures: the books own sums are read; a mixed-currency client carries none, no consent to costs hides margin and profit', () => {
-  const row = { sales_trend_pct: -30, last_month_sales_minor: 7000000, gross_margin_pct: 40, profit_quarter_minor: 1300000, loss_months_running: 0, cash_minor: '5', currencies: 1 };
+  const row = { sales_trend_pct: -30, sales_trend_months: 2, last_month_sales_minor: 7000000, gross_margin_pct: 40, profit_quarter_minor: 1300000, loss_months_running: 0, cash_minor: '5', currencies: 1 };
   const f = P.figuresOf(row, '2026-11-15', true);
   assert.deepStrictEqual([f.sales_trend_pct, f.gross_margin_pct, f.profit_quarter_minor, f.loss_months_running, f.cash_minor], [-30, 40, 1300000, 0, 5]);
   const mixed = P.figuresOf(Object.assign({}, row, { currencies: 2 }), '2026-11-15', true);
