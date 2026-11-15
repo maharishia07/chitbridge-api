@@ -1026,6 +1026,10 @@ const GUARDS = [
   'workroute-cascade.test.cjs', // COV2: routeFor rung order kind > network above (destination only) > entity default, why sentences, memo, failed read not cached
   'profile-map-ladder.test.cjs', // COV2: GSTIN check digit, PAN/state/PIN reads, assess fills + rungs, merge never lowers a rung
   'gateway-sim-run.test.cjs', // COV2: the gateway simulator sends the device-key ingest or the token chits/send, refusal exits 1
+  'net-9-joined-store-reads-network-only.test.cjs', // NET-9 (proof 2026-11-15): a joined store reads a brand network-only catalogue as public, a stranger and the anonymous storefront as private, one membership read
+  'ops-56-availability-public-tier.test.cjs', // OPS-56 (proof 2026-11-15): the supplier availability search builds each answer from buildPublicView with the shop's own bridge id as viewer, no tier switch
+  'cat-face-save-and-read-back.test.cjs', // CAT face (proof 2026-11-15): PUT saves the whole face, GET reads it back, an unenforceable declaration is refused 422 and writes nothing
+  'net-trace-networks-listed.test.cjs' // NET trace (proof 2026-11-15): GET /trace/networks lists id, operator-ness for the caller, edge counts; buildEdge carries { id, operator }
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
