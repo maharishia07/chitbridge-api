@@ -80,11 +80,11 @@ async function main() {
 
     const given = await grants.give(A.id, A.id, { grantee: F.id, purpose: 'adviser view', consent: true }).catch((e) => e);
     ok('6 A can give its books to the firm over an agency edge', given && given.grant_id, given && (given.words || given.message));
-    const look = await grants.look(F.id, A.id, { method: 'GET', route: '/trial-balance' }).catch((e) => e);
+    const look = await grants.look(F.id, A.id, { actor: { identity_id: F.id }, pattern: 'GET /trial-balance', method: 'GET', listed: true }).catch((e) => e);
     ok('7 the firm\'s look at A\'s books is allowed', look && look.allowed === true, JSON.stringify(look).slice(0, 200));
     ok('8 a network sibling is not an agent: Y cannot be given X\'s books', await grants.give(X.id, X.id, { grantee: Y.id, consent: true }).then(() => false, (e) => e.code === 'BOOKS_GRANT_NO_PARENT'));
     await net.suspend(agencyA, F.node);
-    const after = await grants.look(F.id, A.id, { method: 'GET', route: '/trial-balance' }).catch((e) => e);
+    const after = await grants.look(F.id, A.id, { actor: { identity_id: F.id }, pattern: 'GET /trial-balance', method: 'GET', listed: true }).catch((e) => e);
     ok('9 a suspended agency edge ends the firm\'s look on the next request', after && after.allowed === false, JSON.stringify(after).slice(0, 200));
     void sorted;
   } finally { server.close(); }
@@ -94,6 +94,7 @@ async function cleanup() {
   const nodes = (await query(`SELECT e.id FROM cb_entity e JOIN identities i ON upper(i.bridge_id) = upper(e.bridge_id) WHERE i.identity_id = ANY($1::uuid[])`, [made])).rows.map((x) => x.id);
   await query(`DELETE FROM cb_edge WHERE parent_id = ANY($1::uuid[]) OR child_id = ANY($1::uuid[])`, [nodes]);
   await query(`DELETE FROM cb_entity WHERE id = ANY($1::uuid[])`, [nodes]);
+  await query(`DELETE FROM access_events WHERE entity_id = ANY($1::uuid[]) OR subject_identity_id = ANY($1::uuid[])`, [made]).catch(() => {});
   await query(`DELETE FROM identities WHERE identity_id = ANY($1::uuid[])`, [made]);
 }
 (async () => {
