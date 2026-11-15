@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 router.use(require('../middleware/books-grant'));
 const auth = require('../middleware/auth');
-const { problem } = require('../lib/problem');
+const { problem, fromError } = require('../lib/problem');
 const { declaresStatuses } = require('../lib/contract-kit');
 const contract = require('../lib/marks-contract');
 const core = require('../lib/review-mark');
@@ -31,16 +31,13 @@ function answerRefusal(req, res, err) {
 }
 const refuse = (req, res, status, code, words) => problem(req, res, { status, code, detail: words });
 /** run a handler body and answer; a typed refusal is answered in words, anything else is the server's own handler (a 500 that says nothing of its cause) */
-const handler = (work, okStatus) => async (req, res, next) => {
+const handler = (work, okStatus) => async (req, res) => {
   try {
     const out = await work(req, res);
     if (out !== undefined) res.status(typeof okStatus === 'function' ? okStatus(out) : okStatus || 200).json(out);
   } catch (err) {
-    try {
-      answerRefusal(req, res, err);
-    } catch (unknown) {
-      next(unknown);
-    }
+    if (err && err.words) return answerRefusal(req, res, err);
+    return fromError(req, res, err); /* a fault of ours says nothing of its cause; the real error is logged with the request id */
   }
 };
 const adopterOfReq = (key) => {

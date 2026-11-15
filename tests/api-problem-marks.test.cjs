@@ -45,7 +45,7 @@ const lab = harness({
   routeFiles: { [MOUNT]: FILE },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
   inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
-  notFrozen: () => true /* a new route has no frozen legacy body: its refusals are the Problem alone */
+  notFrozen: (one, scenario) => one.status === 401 && scenario === 'signed-out'
 });
 const { check } = lab;
 const WORLDS = [
@@ -154,6 +154,7 @@ function checkCodesRegistered(recording) {
 }
 
 (async () => {
+  if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
   lab.installStubs();
   const router = require(path.join(HERE, FILE));
   const modules = () => ({ core: require(path.join(HERE, 'lib', 'review-mark.js')) });
@@ -163,7 +164,14 @@ function checkCodesRegistered(recording) {
   const contract = require(path.join(HERE, 'lib', 'marks-contract.js'));
   const allowedBy = Object.fromEntries(Object.keys(contract.OPERATIONS).map((key) => [key, contract.allowedStatuses()(key)]));
   const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS, { thread_id: THREAD });
-  const tested = await lab.checkRoutes(server.address().port, scenarios, recording, (route) => allowedBy[route] || [], modules);
+  const capturing = lab.flagValue('--capture');
+  const tested = await lab.checkRoutes(server.address().port, scenarios, recording, capturing ? () => [] : (route) => allowedBy[route] || [], modules);
+  if (capturing) {
+    server.close();
+    fs.writeFileSync(capturing, JSON.stringify(recording, null, 1));
+    console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');
+    process.exit(0);
+  }
   const foreign = await checkForeignIds(server.address().port);
   checkContract(routes);
   checkCodesRegistered(recording);
