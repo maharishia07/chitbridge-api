@@ -361,6 +361,7 @@ const GUARDS = [
   'acc-224-period-of-record.test.cjs', // ACC-224: a late bill of a locked month is in the return of the month the books hold it in, named a prior-period item; each month's return = the books
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
+  'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
@@ -1073,6 +1074,7 @@ const NEEDS_ENGINES = [
   'fx-dates-tz.test.cjs',
   'books-period.test.cjs',
   'books-preview.test.cjs',
+  'books-manual-modes.test.cjs',
   'books-rcm.test.cjs',
   'books-year.test.cjs',
   'books-year-country.test.cjs',
