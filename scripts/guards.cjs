@@ -337,6 +337,7 @@ const GUARDS = [
   'books-store-sql.test.cjs', // every books statement: binds = placeholders, the shop is $1
   'books-post.test.cjs', // ⭐⭐ the one writer: balances both grains, gap-free JV, locks, reversal, cheques, carryforward
   'books-hooks.test.cjs', // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
+  'r101-buyer-input-credit.test.cjs', // ⭐ R1-01 (DEC-267): a buyer who may not claim the tax: no credit (flag / gross expense), unknown waits only with tax, a return follows the original
   'books-country.test.cjs', // ⭐ CX2: the books speak the shop's country — IN · AU · AE (core ≥ v1.42, money, zone, year label, depreciation basis)
   'books-routes.test.cjs', // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-minor-exponent.test.cjs', // ACC-179: write-off · payment · opening · entries in the currency's own decimals (INR 2 · JPY 0 · KWD 3), INR unchanged
@@ -1038,7 +1039,6 @@ function countChecks(out) {
   if (okFailed) return Number(okFailed[okFailed.length - 1].match(/\d+/)[0]);
   return (out.match(/^\s*(?:ok|✓)\s/gm) || []).length;
 }
-
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
   ? fs

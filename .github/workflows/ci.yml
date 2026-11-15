@@ -327,6 +327,12 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/cat-316-money-doors.realstack.cjs
+      - name: R1 slices B+A (DEC-267) · a credit note debits the box of its sale (4020/4030, G3/G4), a buyer who may not claim posts the gross, an unasked registration waits (real Postgres, api role cb_app, RLS on)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/r1ba-credit-kind-buyer-credit.realstack.cjs
       - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on) — a traded store is refused for a product, a chit and a books entry
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
