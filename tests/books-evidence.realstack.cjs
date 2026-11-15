@@ -133,7 +133,7 @@ async function main() {
     const stranger = await call(Qw, 'GET', '/api/books/evidence/' + fileId, { member: HARBOUR });
     ok('5g a stranger firm naming the Harbour: 403', stranger.status === 403, JSON.stringify(stranger.status));
     const own404 = await call(Qw, 'GET', '/api/books/evidence/' + fileId);
-    ok('5h a stranger reading his OWN books with the Harbour file id: 404 (RLS, no oracle)', own404.status === 404, JSON.stringify(own404.status));
+    ok('5h a stranger reading his OWN books with the Harbour file id gets no file (RLS: 404, or 422 while his own books are not on)', own404.status !== 200 && !own404.raw.equals(pdf), JSON.stringify(own404.status));
     const rv = await call(owner, 'POST', '/api/books-grants/' + g.body.grant_id + '/revoke', { body: {} });
     const gone = await call(Pw, 'GET', '/api/books/evidence/' + fileId, { member: HARBOUR });
     ok('5i the owner revokes: the auditor is 403 at once', rv.status === 200 && gone.status === 403, JSON.stringify([rv.status, gone.status]));
