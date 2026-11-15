@@ -5782,6 +5782,11 @@ router.post(
          per-copy message already has (chit_message_deliver: targeted → roster). A chit_wide dispute is deliberately the whole
          chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
       let disputeRoster = null;
+      /* RAIL-136 (b) / H16: a message tagged as a dispute names WHICH dispute (a chit-wide one has an id too); without it the
+         message would post to the whole chit under a dispute flag no party holds, so it is refused, nothing posted */
+      if (isDispute && !disputeId) {
+        return problem(req, res, { status: 422, ...said({ error: 'Which dispute?', message: 'A dispute message needs the dispute it belongs to (dispute_id).' }, 'CHIT_BAD_REQUEST') });
+      }
       if (isDispute && disputeId) {
         const audience = await disputeAudience.audienceOf(entity_id, chit_id, disputeId); /* RAIL-187: the one reading of the audience, shared with the file route */
         if (!audience) {

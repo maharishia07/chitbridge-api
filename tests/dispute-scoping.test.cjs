@@ -317,6 +317,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('C cannot resolve it: 404 (it does not exist for C), nothing changed', rc.status === 404 && DISPUTES.filter((d) => d.dispute_id === D1).every((d) => d.status === 'open'), JSON.stringify(rc));
     const pc = await as(C, 'POST', U + '/messages', { message_text: 'Let me weigh in on this dispute', thread_type: 'external', is_dispute: true, dispute_id: D1 });
     ok('C cannot post into it: 403 "Not a party to this dispute", no message written', pc.status === 403 && /Not a party/.test(pc.body.message || '') && MSGS.filter((m) => m.sender_entity_id === C).length === 0, JSON.stringify(pc));
+    const nMsgs = MSGS.length;
+    const nid = await as(A, 'POST', U + '/messages', { message_text: 'flagged but no dispute', thread_type: 'external', is_dispute: true });
+    ok('RAIL-136 (b) / H16: is_dispute with no dispute_id is refused 422, nothing posted', nid.status === 422 && MSGS.length === nMsgs, JSON.stringify(nid));
+    const plainNoFlag = await as(A, 'POST', U + '/messages', { message_text: 'plain, not a dispute', thread_type: 'external' });
+    ok('…a plain message with no dispute flag still posts', plainNoFlag.status === 200 || plainNoFlag.status === 201, JSON.stringify(plainNoFlag));
 
     console.log('\n══ 3 · PER-PARTY RESOLVE — clearing one party never closes it for another ══\n');
     reset();
