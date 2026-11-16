@@ -37,7 +37,7 @@ const CALLS = {
   nextNo: [E, 'JV', '2026-27'], giveBackNo: [E, 'invoice', '-', 1], entryBySource: [E, 'chit:x'], entryDebitsByRole: [E, U], taxColumnsReady: [], taxPaymentsNaming: [E, 'gstr:1', ['output_cgst']], taxPaymentsWithoutPeriod: [E, '2026-10-01'], taxCloseOf: [E, 'gstclose:x', true], chitPosted: [E, 'x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment'], { tax: ['gst_collected', 'gst_paid'], money: ['bank'] }], taxedIncomeLines: [E, '2026-04-01', '2026-04-30', 'gst_collected', ['sales']],
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
-  openItems: [E, U, '2026-10-31'], openingDays: [E], namesOf: [[U]],
+  openItems: [E, U, '2026-10-31'], openingDays: [E], namesOf: [E, [U]],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
   /* l16-scale (b873): a year's carry kept under its key, and the sums that key is made from */
   yearStamps: [E], carryRead: [E, '2026-27', 'a'.repeat(64)], carryWrite: [E, '2026-27', 'a'.repeat(64), { rows: [], retained_minor: 0, profit_minor: 0 }],
