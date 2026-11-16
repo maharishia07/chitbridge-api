@@ -84,6 +84,23 @@ t('the multi-row look insert has one row per client in both shapes', () => {
   grants.writeLogRows(tx, true, rows, 'f', { actor: 'a', actor_name: 'N', pattern: 'GET /practice' }, { status: 200, outcome: 'allowed' });
   assert.strictEqual((seen[0].text.match(/\(\$/g) || []).length, 2); assert.strictEqual(seen[0].params.length, 16);
   assert.strictEqual(seen[1].params.length, 20);
+/* REP-66b: the nine hand-computed rows (AU year from 1 July, today 2026-11-16, minor units) through the one yoyOf */
+const TODAY = '2026-11-16';
+const DATES = P.yoyDates(TODAY, 7);
+const yoy = (now, before, through, first, cur) => P.yoyOf({ sales_ytd_minor: now, sales_prev_ytd_minor: before, sales_through: through || '2026-11-15', sales_first: first || '2025-07-02' }, { currencies: cur || 1 }, DATES, TODAY);
+t('REP-66b dates: 1 Jul to today against the same days a year back; 29 Feb maps to 28 Feb', () => {
+  assert.deepStrictEqual(DATES, ['2026-07-01', '2026-11-16', '2025-07-01', '2025-11-16']);
+  assert.deepStrictEqual(P.yoyDates('2028-02-29', 7), ['2027-07-01', '2028-02-29', '2026-07-01', '2027-02-28']);
+});
+t('REP-66b A: 120,000.00 against 150,000.00 is -20.0%, ok', () => { const r = yoy(12000000, 15000000); assert.strictEqual(r.sales_yoy_pct, -20); assert.strictEqual(r.sales_yoy_state, 'ok'); assert.strictEqual(r.sales_yoy_from, '2026-07-01'); assert.strictEqual(r.sales_prev_to, '2025-11-16'); });
+t('REP-66b B and C: +10.0% and +11.1%', () => { assert.strictEqual(yoy(5500000, 5000000).sales_yoy_pct, 10); assert.strictEqual(yoy(3333300, 3000000).sales_yoy_pct, 11.1); });
+t('REP-66b D: last year zero is no change and state no_last_year, never 0%', () => { const r = yoy(4200000, 0); assert.strictEqual(r.sales_yoy_pct, null); assert.strictEqual(r.sales_yoy_state, 'no_last_year'); });
+t('REP-66b E: +900.0% carried true (the page caps the bar, not the figure)', () => assert.strictEqual(yoy(100000, 10000).sales_yoy_pct, 900));
+t('REP-66b F: 29,985.00 against 30,000.00 is zero on the wire, not minus 0', () => { const r = yoy(2998500, 3000000); assert.strictEqual(JSON.stringify(r.sales_yoy_pct), '0'); assert.strictEqual(r.sales_yoy_state, 'ok'); });
+t('REP-66b G: last sale 30 Sep (47 days) is stale, the true -33.3% still carried, with sales_through', () => { const r = yoy(6000000, 9000000, '2026-09-30'); assert.strictEqual(r.sales_yoy_state, 'stale'); assert.strictEqual(r.sales_yoy_pct, -33.3); assert.strictEqual(r.sales_through, '2026-09-30'); });
+t('REP-66b H: first sale last year 1 Oct (92 days after 1 Jul) is short_last_year, no change', () => { const r = yoy(8000000, 2000000, null, '2025-10-01'); assert.strictEqual(r.sales_yoy_state, 'short_last_year'); assert.strictEqual(r.sales_yoy_pct, null); });
+t('REP-66b I: two currencies are all null, state mixed', () => { const r = yoy(1, 1, null, null, 2); assert.strictEqual(r.sales_yoy_state, 'mixed'); assert.strictEqual(r.sales_ytd_minor, null); assert.strictEqual(r.sales_yoy_pct, null); });
+t('REP-66b the statement also reads sales_through and sales_first from the same two bounded ranges', () => assert.ok(P.YOY_STATEMENT.includes('AS sales_through') && P.YOY_STATEMENT.includes('AS sales_first') && H.RULE.yoy_stale_days === 31));
 });
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
