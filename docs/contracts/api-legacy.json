@@ -5419,12 +5419,12 @@
      "scenario": "nothing-found",
      "status": 400,
      "body_keys": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
+      "error": "What happened? expense, other_income, tax_payment, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, tax_payment, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      },
      "fixture": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
+      "error": "What happened? expense, other_income, tax_payment, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, tax_payment, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      }
     }
    ]
@@ -67297,23 +67297,23 @@
      "status": 403,
      "body_keys": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      }
@@ -67323,23 +67323,23 @@
      "status": 403,
      "body_keys": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      }
@@ -72589,23 +72589,23 @@
      "status": 403,
      "body_keys": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      }
@@ -72615,23 +72615,23 @@
      "status": 403,
      "body_keys": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      }
@@ -72811,23 +72811,23 @@
      "status": 403,
      "body_keys": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      }
@@ -72837,23 +72837,23 @@
      "status": 403,
      "body_keys": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Not permitted",
-      "message": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "message": "Your access does not include costs, so the bank statements are hidden.",
       "type": "https://chitbridge.com/problems/cost_blind",
       "title": "Cost blind",
       "status": 403,
       "code": "COST_BLIND",
-      "detail": "Your access does not include cost. You can add the item without it; the account owner can grant \"Sees costs\" in Co-assists to send: .",
+      "detail": "Your access does not include costs, so the bank statements are hidden.",
       "hint": "Ask the owner to give you Sees costs, or change availability only.",
       "request_id": "req-test"
      }
