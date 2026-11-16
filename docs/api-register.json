@@ -5,8 +5,8 @@
   "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 8,
-  "meets": 657,
+  "partial": 13,
+  "meets": 652,
   "columns": {
    "strict_input": {
     "applies": 338,
@@ -40,7 +40,7 @@
    },
    "parameterised_query": {
     "applies": 287,
-    "failing": 37
+    "failing": 38
    },
    "rate_limited": {
     "applies": 665,
@@ -4475,12 +4475,10 @@
    },
    "reads": [
     "books_access_grant",
-    "cb_edge",
-    "cb_entity",
     "identities"
    ],
    "writes": [],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -5635,7 +5633,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1268,
-   "hash": "0abecdf536aa0aab",
+   "hash": "33a6a055d36e76fb",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
     "count": 1,
@@ -5713,10 +5711,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (ACC-357 8f4f8652 read in full: ?kind/?step query, as_at, net_assets_minor/net_assets_ok, compare.month/year, per-ledger prior_month_minor/prior_year_minor/group are additive keys, the old keys and asOf unchanged; a failed earlier-day read answers null not a guess; _bp joins _minor in the cost-blind rule so cost-blind readers get no percentages; the e220a454 bsTagged/bsGroupsOf split and the 9f3cf182 catch log are behaviour-neutral; 13 columns true in the row; FIELDS.md has no rows for the report keys, same as profit_minor and total_assets_minor, they are held by api-output-shapes and web-api: cb-docs follow-up)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "33a6a055d36e76fb"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -6397,7 +6396,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 899,
-   "hash": "f84c44cb16211be1",
+   "hash": "1399a89f162a7504",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
     "count": 3,
@@ -6483,10 +6482,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-accounting under the coordinator instruction (NOT cb-api: cb-api to confirm) 2026-11-16 l16/integ2c-grantfix-api over 0575a493: diff 0575a493..HEAD read (handler, validation chain, called lib). ADDITIVE contract change kept: party rows keep `buckets` (web main reads it), plus the one ageing follow_up and needs; asOf now ages by DOCUMENT date (DECISIONS 16 Nov). 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1399a89f162a7504"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -8217,7 +8217,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1169,
-   "hash": "307e701f6faf54ba",
+   "hash": "67b257d2d9f4b1c3",
    "does": "A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.",
    "errors": {
     "count": 1,
@@ -8287,10 +8287,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (ACC-357 8f4f8652 read in full: ?preset/?step/?compare query values checked by the route contract, from/to unchanged and still default to the financial year; additive profit_share_bp, period, presets, compare and per-line prior_minor/change_bp/share_bp; a prior range outside the books reads as no comparison, said; cost-blind nulls the _bp keys with the figures; the 9f3cf182 catch now logs, same answer; 13 columns true in the row; report keys have no FIELDS rows, cb-docs follow-up)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "67b257d2d9f4b1c3"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -15136,7 +15137,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2457,
+   "line": 2472,
    "hash": "30f43a715550a15a",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -15327,7 +15328,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 522,
-   "hash": "5f757b785fd77a76",
+   "hash": "a3a7b709177a647a",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
     "count": 0,
@@ -15401,7 +15402,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5f757b785fd77a76"
+    "stale_since": "a3a7b709177a647a"
    },
    "status": "partial",
    "callers": [
@@ -15447,7 +15448,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 893,
+   "line": 908,
    "hash": "f12cd611fc9dc327",
    "does": "Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.",
    "errors": {
@@ -15545,7 +15546,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1771,
+   "line": 1786,
    "hash": "ca8c0be09551b5a0",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
@@ -15752,7 +15753,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1654,
+   "line": 1669,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -15853,7 +15854,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1516,
+   "line": 1531,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -15952,7 +15953,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1499,
+   "line": 1514,
    "hash": "daf7f3e6e7033f84",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -16337,7 +16338,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1321,
+   "line": 1336,
    "hash": "c8f3bac19aea5610",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
@@ -22786,8 +22787,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 61,
-   "hash": "31b6bfcdde92821d",
+   "line": 60,
+   "hash": "2fe3dd81f9d46851",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
@@ -22844,7 +22845,7 @@
    "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": false
    },
    "reported_applies": {
@@ -22856,10 +22857,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE row kind: the marks news (a Query, a reply) joins the feed, count and total; old rows unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2fe3dd81f9d46851"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -31337,7 +31339,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1290,
+   "line": 1305,
    "hash": "4ba9104804d71d4e",
    "does": "A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.",
    "errors": {
@@ -31439,7 +31441,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 865,
+   "line": 880,
    "hash": "efa0652b1d0f4de7",
    "does": "Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.",
    "errors": {
@@ -31539,7 +31541,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 858,
+   "line": 873,
    "hash": "667cb4fea86280f3",
    "does": "A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.",
    "errors": {
@@ -31749,7 +31751,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 987,
+   "line": 1002,
    "hash": "36d96019f03985c5",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
@@ -39063,7 +39065,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1476,
-   "hash": "807e801ffa98eb8c",
+   "hash": "38540ffdd4512513",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
     "count": 2,
@@ -39150,10 +39152,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body key if_locked (next_open moves a payment to the next open month with a note); default strict_date unchanged; money write keeps onceOnly; one error shape. Owner area accounting. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "38540ffdd4512513"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-post.js",
     "cap-books.js"
@@ -49161,7 +49164,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1744,
+   "line": 1759,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -54766,7 +54769,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 245,
+   "line": 251,
    "hash": "e8e590e17a17c1da",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -54872,7 +54875,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 193,
+   "line": 199,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {
@@ -66815,7 +66818,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1710,
+   "line": 1725,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -66921,7 +66924,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1627,
+   "line": 1642,
    "hash": "b0e5f4d41975080d",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {
