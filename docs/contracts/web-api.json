@@ -2483,6 +2483,7 @@
    "example": {
     "fiscal_year": "2026-27",
     "closed": false,
+    "returns_lodged": false,
     "can_close": false,
     "can_close_if_lodged": false,
     "refusals": [
@@ -5763,10 +5764,14 @@
      "profit_minor": 2200000,
      "balanced": true
     },
-    "duplicate": true
+    "duplicate": true,
+    "declared": false,
+    "returns_lodged": false
    },
    "optional": [
     "duplicate",
+    "declared",
+    "returns_lodged",
     "locked",
     "opening"
    ]

@@ -2604,7 +2604,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req), { returnsLodged: (req.body || {}).returns_lodged === true });
-    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
+    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, declared: r.declared, returns_lodged: r.returns_lodged, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
     const message = r.refusals.map((x) => x.why).join(' '),
       legacy = { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals };
     /* ACC-204: a tax period of the year not closed yet names the answer (the screen opens Tax close on the code); every other refusal stays YEAR_CLOSE_REFUSED */
@@ -2623,7 +2623,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
     const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy));
     res.json({
       fiscal_year: st.fiscal_year,
-      closed: st.closed,
+      closed: st.closed, returns_lodged: st.returns_lodged === true,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
       months: st.months,
