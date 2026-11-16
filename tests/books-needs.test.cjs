@@ -1,6 +1,6 @@
 /**
  * books-needs.test.cjs — W15-114/115/116: who needs you, and why, counted on the server by ONE list of reasons (lib/books-needs).
- *   · reasonsOf: a bill's reasons in the order they matter (a hold with no tax-invoice reason says "held"; with the flag it is ONE chip)
+ *   · reasonsOf: a bill's reasons in the order they matter (a hold keeps its reason beside the tax-invoice flag; the web shows one chip + n)
  *   · partyNeeds: the flag (the Day book's rule asked of THESE entries) and the open marks, by bill and by party
  *   · GET /dues carries `needs` per party and by side; GET /party/:id/bills?tab=needs|open|all carries the same counts, a why and ONE action per bill (the same number, three screens)
  * Pure and offline (the in-memory books). Run: node tests/books-needs.test.cjs
@@ -33,7 +33,9 @@ const bill = (X, party, day, no, amount) => X.B.postEntry(X.db, SHOP, { type: 's
   ok('reasons: a clean bill has none', same(Needs.reasonsOf(base), []));
   ok('reasons: a paid bill has none whatever it carries', same(Needs.reasonsOf(Object.assign({}, base, { owed_minor: 0, days_overdue: 30, disputed: true })), []));
   ok('reasons: late, no terms, flag, query, dispute, in the order they matter', same(Needs.reasonsOf(Object.assign({}, base, { days_overdue: 9, no_terms: true, evidence_flag: 'no_tax_invoice', disputed: true, mark: { class: 'open' } })), ['disputed', 'query', 'no_tax_invoice', 'no_terms', 'overdue']));
-  ok('reasons: a hold WITH the flag is one reason (no_tax_invoice, the hold said once)', same(Needs.reasonsOf(Object.assign({}, base, { evidence_flag: 'no_tax_invoice', mark: { class: 'hold' } })), ['no_tax_invoice']));
+  ok('reasons: a hold WITH the flag keeps both, held first so Release is offered', same(Needs.reasonsOf(Object.assign({}, base, { evidence_flag: 'no_tax_invoice', mark: { class: 'hold' } })), ['held', 'no_tax_invoice']) && Needs.ACTION[Needs.reasonsOf(Object.assign({}, base, { evidence_flag: 'no_tax_invoice', mark: { class: 'hold' } }))[0]] === 'release');
+  ok('reasons: hostile bill, a hold + the flag + a dispute + late all kept in order', same(Needs.reasonsOf(Object.assign({}, base, { days_overdue: 4, disputed: true, evidence_flag: 'no_tax_invoice', mark: { kind: 'on_hold' } })), ['disputed', 'held', 'no_tax_invoice', 'overdue']));
+  ok('reasons: a query + the flag keeps both', same(Needs.reasonsOf(Object.assign({}, base, { evidence_flag: 'no_tax_invoice', mark: { class: 'open' } })), ['query', 'no_tax_invoice']));
   ok('reasons: a hold with no flag is "held" (Release)', same(Needs.reasonsOf(Object.assign({}, base, { mark: { class: 'hold' } })), ['held']) && Needs.ACTION.held === 'release');
   ok('reasons: due today is not late', same(Needs.reasonsOf(Object.assign({}, base, { days_overdue: 0 })), []));
   ok('actions: attach, release, answer, terms, pay', Needs.ACTION.no_tax_invoice === 'attach' && Needs.ACTION.query === 'answer' && Needs.ACTION.disputed === 'answer' && Needs.ACTION.no_terms === 'terms' && Needs.ACTION.overdue === 'pay');
@@ -52,7 +54,7 @@ const bill = (X, party, day, no, amount) => X.B.postEntry(X.db, SHOP, { type: 's
   ];
   const got = await Needs.partyNeeds(fakeH, 'shop', {}, { pack: {}, cur: 'AUD', supplier: true }, bills);
   ok('partyNeeds: the flag is asked of THESE entries only, once', asked.length === 1 && same(asked[0], ['e1', 'e2', 'e3', 'e4']), JSON.stringify(asked));
-  ok('partyNeeds: B1 flag + late, B2 flag (the hold is said once), B3 query + late, B4 nothing, B5 no terms', same(got.reasons.get('B1'), ['no_tax_invoice', 'overdue']) && same(got.reasons.get('B2'), ['no_tax_invoice']) && same(got.reasons.get('B3'), ['query', 'overdue']) && same(got.reasons.get('B4'), []) && same(got.reasons.get('B5'), ['no_terms']), JSON.stringify([...got.reasons]));
+  ok('partyNeeds: B1 flag + late, B2 flag + hold (both kept, held first), B3 query + late, B4 nothing, B5 no terms', same(got.reasons.get('B1'), ['no_tax_invoice', 'overdue']) && same(got.reasons.get('B2'), ['held', 'no_tax_invoice']) && same(got.reasons.get('B3'), ['query', 'overdue']) && same(got.reasons.get('B4'), []) && same(got.reasons.get('B5'), ['no_terms']), JSON.stringify([...got.reasons]));
   const p1 = got.by_party.get('P1');
   ok('partyNeeds: P1 = 3 bills need it: 2 tax invoices, 1 query, 2 late worth 40.00', p1.bills === 3 && p1.no_tax_invoice === 2 && p1.query === 1 && p1.overdue === 2 && p1.overdue_minor === 4000, JSON.stringify(p1));
   ok('partyNeeds: P2 = only the bill with no terms; B4 (clean) leaves no row of its own', got.by_party.get('P2').bills === 1 && got.by_party.get('P2').no_terms === 1 && !got.by_party.get('P2').overdue);
