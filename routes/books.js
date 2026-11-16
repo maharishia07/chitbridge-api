@@ -1180,6 +1180,29 @@ function sched3(balanceSheet, order) {
     diff = assets.total_minor - equity.total_minor;
   return { equity_and_liabilities: equity, assets: assets, balanced: diff === 0, difference_minor: diff };
 }
+/** GET /bs: each ledger of one side with its figure at each earlier day, by code (a ledger new since then reads 0, an earlier day that could not be read says null), and its heading */
+function bsTagged(list, earlier, headOf) {
+  return list.map((item) => {
+    const was = (key) => {
+      const side = earlier[key];
+      if (!side) return null;
+      const hit = [].concat(side.assets, side.liabilities, side.equity).find((x) => (x.code || x.role) === (item.code || item.role));
+      return hit ? hit.amount_minor : 0;
+    };
+    return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null });
+  });
+}
+/** GET /bs: a head's subtotal per figure, summed here from the very ledgers it lists (the page never adds) */
+function bsGroupsOf(list) {
+  const heads = new Map();
+  list.forEach((item) => {
+    const key = item.group ? item.group.code : '_';
+    const head = heads.get(key) || heads.set(key, { code: item.group ? item.group.code : null, name: item.group ? item.group.name : null, amount_minor: 0, prior_month_minor: 0, prior_year_minor: 0 }).get(key);
+    head.amount_minor += item.amount_minor;
+    ['prior_month_minor', 'prior_year_minor'].forEach((k) => (head[k] = head[k] == null || item[k] == null ? null : head[k] + item[k]));
+  });
+  return [...heads.values()];
+}
 /** GET /bs?asOf | ?kind&step → { as_at, net_assets_minor, net_assets_ok, compare: { month, year }, each ledger: prior_month_minor · prior_year_minor · group; currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 // @does An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
@@ -1213,32 +1236,10 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
       const now = await at(asOf);
       const earlier = {};
       for (const [key, day1] of [['month', R.monthsBefore(asOf, 1)], ['year', R.yearBefore(asOf)]]) earlier[key] = await at(day1).then((x) => Object.assign(x, { as_at: day1 })).catch(() => null);
-      /* a ledger's figure at each earlier day, by code (a ledger new since then reads 0), and its heading */
-      const tag = (list) =>
-        list.map((item) => {
-          const was = (key) => {
-            const side = earlier[key];
-            if (!side) return null;
-            const hit = [].concat(side.assets, side.liabilities, side.equity).find((x) => (x.code || x.role) === (item.code || item.role));
-            return hit ? hit.amount_minor : 0;
-          };
-          return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null });
-        });
-      const liabilities = tag(now.liabilities),
-        equity = tag(now.equity),
-        assets = tag(now.assets);
-      /* a head's subtotal per figure, summed here from the very ledgers it lists (the page never adds); groups_ok compares each side's heads with the side's own carried total */
-      const groupsOf = (list) => {
-        const heads = new Map();
-        list.forEach((item) => {
-          const key = item.group ? item.group.code : '_';
-          const head = heads.get(key) || heads.set(key, { code: item.group ? item.group.code : null, name: item.group ? item.group.name : null, amount_minor: 0, prior_month_minor: 0, prior_year_minor: 0 }).get(key);
-          head.amount_minor += item.amount_minor;
-          ['prior_month_minor', 'prior_year_minor'].forEach((k) => (head[k] = head[k] == null || item[k] == null ? null : head[k] + item[k]));
-        });
-        return [...heads.values()];
-      };
-      const groups = { assets: groupsOf(assets), liabilities: groupsOf(liabilities), equity: groupsOf(equity) };
+      const liabilities = bsTagged(now.liabilities, earlier, headOf),
+        equity = bsTagged(now.equity, earlier, headOf),
+        assets = bsTagged(now.assets, earlier, headOf);
+      const groups = { assets: bsGroupsOf(assets), liabilities: bsGroupsOf(liabilities), equity: bsGroupsOf(equity) };
       const sumOf = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
       const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
       const net_assets_minor = now.bs.total_assets_minor - now.total_liabilities_minor;
