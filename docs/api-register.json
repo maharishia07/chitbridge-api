@@ -5418,7 +5418,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1736,
-   "hash": "d7a3568699b7dd1f",
+   "hash": "c214844744278b32",
    "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
    "errors": {
     "count": 2,
