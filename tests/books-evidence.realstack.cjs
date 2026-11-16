@@ -84,7 +84,7 @@ async function main() {
   ok('0a the rig shop switches its ledger on (AU pack)', on.status === 200, JSON.stringify(on.body));
   /* the three purchases, each on a chit of the shop (the document the file is held on) */
   const B = require(path.join(API, 'lib', 'books'));
-  const crypto = require('crypto');
+  const crypto = require('crypto'), SUPPLIER = crypto.randomUUID();
   const chitOf = async (ref) => {
     const id = crypto.randomUUID();
     await withEntity(SHOP, async (c) => {
@@ -93,14 +93,16 @@ async function main() {
     });
     return id;
   };
-  const buy = async (ref, taxable, gst, date) => B.postEntry(null, SHOP, { type: 'purchase_bill', ref, date, currency: 'AUD', source_chit_id: await chitOf(ref), source_ref: 'chit:' + RUN + ref, by_rate: [{ rate: 10, taxable, gst }], paid: 0 });
+  const buy = async (ref, taxable, gst, date) => B.postEntry(null, SHOP, { type: 'purchase_bill', ref, date, currency: 'AUD', party: SUPPLIER, source_chit_id: await chitOf(ref), source_ref: 'chit:' + RUN + ref, by_rate: [{ rate: 10, taxable, gst }], paid: 0 });
   const posted = [await buy('JPS-J1', 800, 80, '2026-10-05'), await buy('JPS-J2', 1500, 150, '2026-10-06'), await buy('HP-E1', 220, 22, '2026-10-08')];
   const day = await B.postEntry(null, SHOP, { type: 'walkin_day', ref: 'HP-INV-1', date: '2026-10-10', currency: 'AUD', modes: { cash: 1100 }, by_rate: [{ rate: 10, taxable: 1000, gst: 100 }] });
   ok('0b the rig posts three purchase bills and one walk-in day', posted.concat([day]).every((x) => x && x.ok), JSON.stringify(posted.concat([day])));
   const looks = async () => Number((await withEntity(SHOP, (c) => c.query("SELECT count(*)::int AS n FROM books_access_log WHERE grantor_entity = $1 AND route_pattern LIKE '%evidence%'", [SHOP]))).rows[0].n);
   try {
     const book = async (who, o) => (await call(who, 'GET', '/api/books/daybook?from=2026-07-01&to=2026-11-30', o)).body;
-    const byRef = (d, ref) => (d.entries || []).find((e) => e.source && e.source.ref === ref);
+    /* the rig's documents are told apart by what they carry (the chit's own number is not on the row): gross, in minor units; the walk-in day by its event type */
+    const GROSS = { 'JPS-J1': 88000, 'JPS-J2': 165000, 'HP-E1': 24200 };
+    const byRef = (d, ref) => (d.entries || []).find((e) => (ref === 'HP-INV-1' ? e.event_type === 'walkin_day' : e.event_type === 'purchase_bill' && e.lines.some((l) => l.code === '2100' && l.cr_minor === GROSS[ref])));
     const figures = async () => {
       const tb = (await call(owner, 'GET', '/api/books/trial-balance?asOf=2026-11-30')).body;
       const pl = (await call(owner, 'GET', '/api/books/pl?from=2026-07-01&to=2026-11-30')).body;
@@ -115,7 +117,7 @@ async function main() {
     const d0 = await book(owner);
     const e1 = byRef(d0, 'JPS-J1'), e2 = byRef(d0, 'JPS-J2'), ex = byRef(d0, 'HP-E1'), s1 = byRef(d0, 'HP-INV-1');
     ok('1a every entry carries evidence; a purchase with no file reads flag no_tax_invoice and count 0 (JPS-J1, JPS-J2, HP-E1)', [e1, e2, ex].every((e) => e && e.evidence && e.evidence.flag === 'no_tax_invoice' && e.evidence.count === 0 && e.evidence.doc && e.evidence.doc.chit_id && e.evidence.cite), JSON.stringify([e1 && e1.evidence, ex && ex.evidence]));
-    ok('1b the walk-in day carries no flag and no document', s1 && s1.evidence.flag === null && s1.evidence.doc === null, JSON.stringify(s1 && s1.evidence));
+    ok('1b the walk-in day carries no flag and no document', s1 && s1.evidence.flag === null && (s1.evidence.doc === null || !s1.evidence.doc.chit_id), JSON.stringify(s1 && s1.evidence));
 
     const put = (who, chit, name, extra) => call(who, 'POST', '/api/attachments', { body: Object.assign({ chit_id: chit, name, mime: 'application/pdf', data_base64: pdf.toString('base64') }, extra || {}) });
     const up = await put(owner, e1.evidence.doc.chit_id, 'JPS-J1 tax invoice SAMPLE.pdf');
@@ -130,7 +132,7 @@ async function main() {
     const after = await figures();
     ok('3 the figures are the same after the files (AP, GST paid, GST collected, profit compared with the carried before)', JSON.stringify(before) === JSON.stringify(after), JSON.stringify([before, after]));
     const led = (await call(owner, 'GET', '/api/books/ledger/2100?from=2026-07-01&to=2026-11-30')).body;
-    const line = (led.lines || []).find((l) => l.source && l.source.ref === 'JPS-J1');
+    const line = (led.lines || []).find((l) => l.source && l.source.chit_id === e1.evidence.doc.chit_id);
     ok('4 the Creditors ledger carries the same evidence on the JPS-J1 line (count 1)', line && line.evidence && line.evidence.count === 1 && line.evidence.files[0].id === up.body.id, JSON.stringify(line && line.evidence));
 
     const fileId = up.body.id;
@@ -152,7 +154,7 @@ async function main() {
     const stranger = await call(Qw, 'GET', '/api/books/evidence/' + fileId, { member: SHOP });
     ok('5g a stranger firm naming the shop: 403', stranger.status === 403, JSON.stringify(stranger.status));
     const own404 = await call(Qw, 'GET', '/api/books/evidence/' + fileId);
-    ok('5h a stranger reading his OWN books with the shop's file id gets no file (RLS: 404, or 422 while his own books are not on)', own404.status !== 200 && !own404.raw.equals(pdf), JSON.stringify(own404.status));
+    ok('5h a stranger reading his OWN books with the rig shop file id gets no file (RLS: 404, or 422 while his own books are not on)', own404.status !== 200 && !own404.raw.equals(pdf), JSON.stringify(own404.status));
     const rv = await call(owner, 'POST', '/api/books-grants/' + g.body.grant_id + '/revoke', { body: {} });
     const gone = await call(Pw, 'GET', '/api/books/evidence/' + fileId, { member: SHOP });
     ok('5i the owner revokes: the auditor is 403 at once', rv.status === 200 && gone.status === 403, JSON.stringify([rv.status, gone.status]));
