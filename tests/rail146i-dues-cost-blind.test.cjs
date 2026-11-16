@@ -43,20 +43,20 @@ function partOne() {
   t('hideParty | a party without a dues key gains none', DV.hideParty({ party_id: 'p' }), { party_id: 'p' });
   t('hideParties | options without blind (or none) leave the rows as they are; blind hides each', [DV.hideParties([{ dues: { side: 'supplier', balance_minor: 1 } }], undefined)[0].dues.balance_minor, DV.hideParties([{ dues: { side: 'supplier', balance_minor: 1 } }], { blind: false })[0].dues.balance_minor, DV.hideParties([{ dues: { side: 'supplier', balance_minor: 1 } }], { blind: true })[0].dues], [1, 1, { side: 'supplier', balance_minor: null, cost_hidden: true }]);
   const page = { currency: 'INR', asOf: '2026-10-30', parties: [
-    { party_id: 'b', name: 'Zed Both', side: 'both', balance_minor: SECRET.both_sup, disputed_minor: 0, buckets: { not_due: SECRET.both_sup }, oldest_due: '2026-10-01' },
-    { party_id: 'c', name: 'Ravi', side: 'customer', balance_minor: 118000, disputed_minor: 0, buckets: { not_due: 118000 }, oldest_due: '2026-09-15' },
-    { party_id: 's', name: 'Anand Mills', side: 'supplier', balance_minor: SECRET.sup_balance, disputed_minor: SECRET.sup_disputed, buckets: { not_due: 0, lt_6m: SECRET.sup_balance }, oldest_due: '2026-09-01', foreign: [{ currency: 'USD', balance_minor: -100000, carried_minor: -8325000 }] }
+    { party_id: 'b', name: 'Zed Both', side: 'both', balance_minor: SECRET.both_sup, disputed_minor: 0, oldest_due: '2026-10-01' },
+    { party_id: 'c', name: 'Ravi', side: 'customer', balance_minor: 118000, disputed_minor: 0, oldest_due: '2026-09-15' },
+    { party_id: 's', name: 'Anand Mills', side: 'supplier', balance_minor: SECRET.sup_balance, disputed_minor: SECRET.sup_disputed, oldest_due: '2026-09-01', foreign: [{ currency: 'USD', balance_minor: -100000, carried_minor: -8325000 }] }
   ], total_minor: 118000 + SECRET.sup_balance + SECRET.both_sup };
   const blind = DV.blindDuesAnswer(page);
   t('/dues | priced rows first in the route\'s order, hidden rows after by name; total null + cost_hidden', [blind.parties.map((r) => r.party_id), blind.total_minor, blind.cost_hidden], [['c', 's', 'b'], null, true]);
   t('/dues | the customer row is untouched (same reference)', blind.parties[0] === page.parties[1], true);
-  t('/dues | a hidden row keeps its shape: buckets keys with null values, foreign nulls, the date', blind.parties[1], { party_id: 's', name: 'Anand Mills', side: 'supplier', balance_minor: null, disputed_minor: null, buckets: { not_due: null, lt_6m: null }, oldest_due: '2026-09-01', foreign: [{ currency: 'USD', balance_minor: null, carried_minor: null }], cost_hidden: true });
+  t('/dues | a hidden row keeps its shape: money null, foreign nulls, the date', blind.parties[1], { party_id: 's', name: 'Anand Mills', side: 'supplier', balance_minor: null, disputed_minor: null, oldest_due: '2026-09-01', foreign: [{ currency: 'USD', balance_minor: null, carried_minor: null }], cost_hidden: true });
   noLeak('/dues | every row but the customer one, and the total', { parties: blind.parties.slice(1), total_minor: blind.total_minor });
   const custOnly = { currency: 'INR', asOf: '2026-10-30', parties: [page.parties[1]], total_minor: 118000 };
   t('/dues | a page with no purchase side comes back as it was (same reference)', DV.blindDuesAnswer(custOnly) === custOnly, true);
   /* FIN-72: a both-sides party's follow-up split goes with its balance, the page's follow_up_total with total_minor (full cases: tests/finance-followup.test.cjs part 4) */
   const fup = { d31_60: 5000, worst: 'd31_60' };
-  const fpage = DV.blindDuesAnswer({ parties: [{ party_id: 'b', side: 'both', balance_minor: 1, buckets: {}, follow_up: fup }, { party_id: 'c', side: 'customer', balance_minor: 5000, buckets: {}, follow_up: fup }], total_minor: 5001, follow_up_total: fup });
+  const fpage = DV.blindDuesAnswer({ parties: [{ party_id: 'b', side: 'both', balance_minor: 1, follow_up: fup }, { party_id: 'c', side: 'customer', balance_minor: 5000, follow_up: fup }], total_minor: 5001, follow_up_total: fup });
   t('/dues FIN-72 | a both-sides row follow_up is null, the customer row keeps its own, follow_up_total is null with total_minor', [fpage.parties.find((r) => r.party_id === 'b').follow_up, fpage.parties.find((r) => r.party_id === 'c').follow_up === fup, fpage.follow_up_total, fpage.total_minor], [null, true, null, null]);
   t('/dues | the owner\'s page object was not mutated', page.parties[2].balance_minor === SECRET.sup_balance && page.total_minor !== null, true);
 }
@@ -158,7 +158,7 @@ async function partBooks() {
     const blind = await q('/dues'), blindSup = await q('/dues?side=supplier'), blindCus = await q('/dues?side=customer');
     t('blind actor | 200; can_see_costs read ONCE per request', [blind.status, blindSup.status, blindCus.status, flagReads], [200, 200, 200, 3]);
     t('blind actor | Ravi stays priced and first; Anand hides; total null + cost_hidden', [blind.body.parties.map((p) => p.party_id), rowOf(blind, RAVI).balance_minor, rowOf(blind, ANAND).balance_minor, rowOf(blind, ANAND).cost_hidden, blind.body.total_minor, blind.body.cost_hidden], [[RAVI, ANAND], 118000, null, true, null, true]);
-    t('blind actor | the hidden row keeps side, name, number and date; buckets have keys and no figures', [rowOf(blind, ANAND).side, rowOf(blind, ANAND).name, rowOf(blind, ANAND).party_no, typeof rowOf(blind, ANAND).oldest_due, Object.values(rowOf(blind, ANAND).buckets).every((v) => v === null)], ['supplier', 'Anand Mills', 'P-00003', 'string', true]);
+    t('blind actor | the hidden row keeps side, name, number and date; no figures', [rowOf(blind, ANAND).side, rowOf(blind, ANAND).name, rowOf(blind, ANAND).party_no, typeof rowOf(blind, ANAND).oldest_due, rowOf(blind, ANAND).follow_up === null], ['supplier', 'Anand Mills', 'P-00003', 'string', true]);
     noLeak('blind actor | every row but Ravi, and the total', { parties: blind.body.parties.filter((p) => p.party_id !== RAVI), total_minor: blind.body.total_minor });
     noLeak('blind actor | ?side=supplier whole answer', blindSup.body);
     t('blind actor | ?side=customer is untouched (no purchase side on the page): byte-identical to the owner\'s', [JSON.stringify(blindCus.body) === JSON.stringify(ownerCus.body), ownerCus.body.total_minor], [true, 118000]);

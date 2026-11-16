@@ -79,6 +79,26 @@ bills.forEach((bill, n) => {
   ok('the statement is bound to the shop in every read of party_item', (sql.match(/FROM party_item/g) || []).length === 3 && (sql.match(/entity_id = \$1::uuid/g) || []).length === 3);
   ok('the statement keeps a pair together: a link is followed both ways, to the end', /RECURSIVE/.test(sql) && /both_ways/.test(sql) && /UNION ALL SELECT b, a FROM link/.test(sql));
 
+  /* l16-opendocs: ONE definition — store.openItems is rowsSql with an account and a day. The old one-level copy read half of a chain: P pays B1 60 + B2 40, Q pays B2 60 + B3 40 (B2 nets to nothing, B1 and B3 stay open). */
+  const hand = [];
+  const put = (ref, against, kind, amount, date) => hand.push({ item_id: hand.length + 1, party_id: 'p1', account_id: 'acc', side: 'receivable', ref, against_ref: against, ref_kind: kind, kind: 'sale', amount_minor: amount, pending_minor: 0, currency: 'INR', due_date: date, doc_date: date, status: null, reverses: null, reverses_kind: null, entry_id: null, payment_id: null, created_at: date });
+  ['B1', 'B2', 'B3'].forEach((b) => put(b, b, 'bill', 10000, '2026-10-01'));
+  [['P', 'B1', 6000, 'B2', 4000], ['Q', 'B2', 6000, 'B3', 4000]].forEach(([p, x, ax, y, ay]) => { put(p, p, 'on_account', -10000, '2026-10-05'); put(p, x, 'allocation', -ax, '2026-10-05'); put(p, p, 'allocation', ax, '2026-10-05'); put(p, y, 'allocation', -ay, '2026-10-05'); put(p, p, 'allocation', ay, '2026-10-05'); });
+  const oneLevel = (set) => { const sum = {}; set.forEach((r) => { sum[r.against_ref] = (sum[r.against_ref] || 0) + r.amount_minor; }); const opened = new Set(Object.keys(sum).filter((k) => sum[k] !== 0)), pairs = new Set(set.filter((r) => r.ref !== r.against_ref && opened.has(r.against_ref)).map((r) => r.ref)); return set.filter((r) => opened.has(r.against_ref) || pairs.has(r.ref)); };
+  const handAll = answer(hand);
+  ok('hand case: B1 owes 4,000 and B3 6,000 = 10,000 owed (carried by the engine on every row)', handAll.outstanding === 10000, JSON.stringify(handAll).slice(0, 120));
+  ok('hand case: the ONE definition (closed over links to the end) gives the full-set answer', JSON.stringify(answer(openRows(hand))) === JSON.stringify(handAll));
+  let old = null;
+  try { old = JSON.stringify(answer(oneLevel(hand))); } catch (refused) { old = 'refused: ' + refused.message; }
+  ok('hand case: the old one-level copy read B2 by its allocations only (no bill row), so it did NOT give the full-set answer: the second definition was wrong here', old !== JSON.stringify(handAll), String(old).slice(0, 100));
+  /* scope: one account as at a day narrows the rows before the net, the links and the answer */
+  const scoped = (set, account, day) => openRows(set.filter((r) => r.account_id === account && (!r.doc_date || r.doc_date <= day)));
+  ok('scoped to an account and a day the rule is the same rule (on 4 Oct no payment is there yet: B1, B2 and B3 are all open; another account has none)', scoped(hand, 'acc', '2026-10-04').length === 3 && scoped(hand, 'other', '2026-12-31').length === 0);
+  const scopedSql = OPEN.rowsSql('$1::uuid', { account: '$2::uuid', asOf: '$3::date' });
+  ok('the scoped statement keeps the account and the day on every read of party_item (net, links, answer) and the same status seeds and recursion', (scopedSql.match(/x\.account_id = \$2::uuid/g) || []).length === 3 && (scopedSql.match(/x\.doc_date <= \$3::date/g) || []).length === 3 && /bool_or\(x\.ref_kind = 'status'\)/.test(scopedSql) && /RECURSIVE/.test(scopedSql));
+  const storeSrc = require('fs').readFileSync(path.join(__dirname, '..', 'lib', 'books-store.js'), 'utf8');
+  ok('store.openItems has no SQL of its own: it calls rowsSql (one definition)', /async function openItems[\s\S]{0,400}books-open-items'\)\.rowsSql/.test(storeSrc) && !/open_docs/.test(storeSrc));
+
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })().catch((error) => { console.error(error); process.exit(1); });
