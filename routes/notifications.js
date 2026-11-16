@@ -16,6 +16,7 @@ const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
+const markNotices = require('../lib/mark-notices'); // the marks' news (a Query, a reply) beside the chit events
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
 const FEED_PAGE = 30,
@@ -88,7 +89,9 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
         )
       );
       const r = c.rows[0] || { count: 0, total: 0, seen_at: null };
-      return res.json({ count: r.count, total: r.total, seen_at: r.seen_at });
+      const news = await markNotices.noticesOf(entity_id, limit); /* the marks' news counts since the same watermark */
+      const freshNews = news.filter((n) => !r.seen_at || new Date(n.created_at) > new Date(r.seen_at)).length;
+      return res.json({ count: r.count + freshNews, total: r.total + news.length, seen_at: r.seen_at });
     }
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
@@ -169,8 +172,10 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      * drive the number.
      */
     const countable = (r) => r.action !== 'message_sent';
-    const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length;
-    res.json({ notifications: await costView.feedRows(result.rows, entity_id, blind), count: fresh, total: result.rows.length, page: 1, limit, seen_at: seen });
+    const news = await markNotices.noticesOf(entity_id, limit); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
+    const feed = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
+    const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length + news.filter((n) => !seen || new Date(n.created_at) > new Date(seen)).length;
+    res.json({ notifications: feed, count: fresh, total: result.rows.length + news.length, page: 1, limit, seen_at: seen });
   } catch (err) {
     console.error('Notifications error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to get notifications'));

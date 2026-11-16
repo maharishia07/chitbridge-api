@@ -122,7 +122,7 @@ const ITEMS = [
 
     const dues = await q('GET', '/dues?finance=1&side=customer');
     const v = ((dues.body || {}).parties || []).find((p) => p.party_id === VENKAT);
-    ok('Collections: Venkat ₹490 · oldest due 24 Oct · the age bucket is ₹490 not_due (it held ₹4,490)', dues.status === 200 && v && v.balance_minor === 49000 && v.oldest_due === '2026-10-24' && v.buckets.not_due === 49000 && Object.keys(v.buckets).every((k) => k === 'not_due' || v.buckets[k] === 0), JSON.stringify(v));
+    ok('Collections: Venkat ₹490 · oldest due 24 Oct · the one ageing holds ₹490 (due that day = d0_30; it held ₹4,490)', dues.status === 200 && v && v.balance_minor === 49000 && v.oldest_due === '2026-10-24' && v.follow_up.d0_30 === 49000 && v.follow_up.not_due === 0, JSON.stringify(v));
     ok('R76: the early-pay offer on the row — the bill of 9 Oct is past its 7 days, so none is offered (null), never a stale figure', v && v.early === null, JSON.stringify(v && v.early));
     const prev = await q('POST', '/payments/preview', { party_id: VENKAT, direction: 'in', amount_minor: 1, currency: 'INR', allocate: 'oldest_first' });
     const bill = (prev.body.proposal || [])[0];

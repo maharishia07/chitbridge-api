@@ -59,6 +59,9 @@ const WRITE_ALLOW = {
   /* behind auth AND a path hat-gate lets a viewer through — each is the caller\'s own, or refuses inside */
   'PUT /api/actors/break': 'the caller\'s own break; naming someone else is owner-only (ownerWhenOther)',
   'POST /api/chits/:chit_id/messages': 'internal messaging for a commenter; the handler refuses an EXTERNAL thread for a read-only login',
+  'POST /api/marks': 'MARK & QUERY: an auditor is a commenter; the adopter policy (lib/mark-policies, set: grant:auditor) decides who sets a mark, and the grant write door checks the live grant in one transaction (tests/review-mark.realstack.cjs)',
+  'POST /api/marks/query': 'MARK & QUERY: a READ with the ids in a body (the middleware lists it as a read door and it runs READ ONLY); it writes nothing',
+  'POST /api/marks/:thread_id/messages': 'MARK & QUERY: the reply door; the adopter policy (owner, adviser, auditor of this thread) decides, a closed thread refuses 409',
   'PATCH /api/entities/me/prefs/:kind': 'the caller\'s own appearance/locale preference, not a record',
   'PUT /api/identity/documents/:scheme': 'the caller\'s own identity document (the subject is always req.identity)',
   'POST /api/identity/documents/:scheme/code': 'the caller\'s own identity document code',

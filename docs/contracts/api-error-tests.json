@@ -227,6 +227,22 @@
   404,
   500
  ],
+ "GET /api/books-actions": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books-actions/:id": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "GET /api/books-grants": [
   401,
   403,
@@ -245,12 +261,24 @@
   500,
   503
  ],
+ "GET /api/books-grants/practice": [
+  401,
+  403,
+  500,
+  503
+ ],
  "GET /api/books/accounts": [
   401,
   404,
   500
  ],
  "GET /api/books/assets": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/attention": [
   401,
   403,
   404,
@@ -269,7 +297,24 @@
   401,
   403,
   404,
+  422,
   500
+ ],
+ "GET /api/books/bank/statement-files": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books/bank/statement-files/:id/file": [
+  401,
+  403,
+  404,
+  500,
+  503
  ],
  "GET /api/books/bs": [
   400,
@@ -327,6 +372,11 @@
   404,
   500
  ],
+ "GET /api/books/evidence/:id": [
+  401,
+  404,
+  500
+ ],
  "GET /api/books/fx-rates": [
   401,
   403,
@@ -357,6 +407,19 @@
   404,
   500
  ],
+ "GET /api/books/opening": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/opening/years": [
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/books/packs": [
   401,
   403,
@@ -374,6 +437,12 @@
   403,
   404,
   409,
+  500
+ ],
+ "GET /api/books/party/:id/bills": [
+  401,
+  403,
+  404,
   500
  ],
  "GET /api/books/party/:id/statement": [
@@ -1083,6 +1152,21 @@
   422,
   500
  ],
+ "GET /api/marks": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "GET /api/marks/:thread_id/messages": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -1771,6 +1855,42 @@
   413,
   500
  ],
+ "POST /api/books-actions": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/return": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/review": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
  "POST /api/books-grants": [
   401,
   403,
@@ -1824,6 +1944,18 @@
   401,
   403,
   404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books/bank/statement-files": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  413,
+  415,
   422,
   500,
   503
@@ -2001,6 +2133,24 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/books/opening/preview": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/books/opening/replace": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
   500
  ],
  "POST /api/books/outbox/retry": [
@@ -2946,6 +3096,30 @@
   401,
   422,
   500
+ ],
+ "POST /api/marks": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/marks/:thread_id/messages": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/marks/query": [
+  401,
+  403,
+  422,
+  500,
+  503
  ],
  "POST /api/network-design/build": [
   400,

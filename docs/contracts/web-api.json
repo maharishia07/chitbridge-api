@@ -485,6 +485,27 @@
       "name": "Kumar Traders"
      }
     ],
+    "books": {
+     "parties": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "name": "Ravi",
+       "kind": "customer"
+      }
+     ],
+     "open_items": [
+      {
+       "bill_no": null,
+       "ref": "c0000000-0000-4000-8000-00000000000a",
+       "party": "22222222-2222-4222-8222-222222222222",
+       "side": "customer",
+       "open_minor": 118000,
+       "due_date": "2026-09-15",
+       "date": "2026-09-05",
+       "currency": "INR"
+      }
+     ]
+    },
     "may": {
      "ask": {
       "ok": true,
@@ -505,12 +526,20 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "fy_from": "2026-04-01",
     "assets": [
      {
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "amount_minor": 118000,
-      "line": "Trade receivables"
+      "line": "Trade receivables",
+      "role": "debtors",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      }
      }
     ],
     "liabilities": [
@@ -518,7 +547,18 @@
       "code": "2100",
       "name": "Suppliers (Sundry Creditors)",
       "amount_minor": 59000,
-      "line": "Trade payables"
+      "line": "Trade payables",
+      "role": "creditors",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      },
+      "net_of": [
+       { "code": "2200", "name": "Output CGST" },
+       { "code": "2210", "name": "Input CGST" }
+      ]
      }
     ],
     "equity": [
@@ -526,12 +566,69 @@
       "code": null,
       "name": "Profit for the year to date",
       "amount_minor": -70000,
-      "line": "Reserves and surplus"
+      "line": "Reserves and surplus",
+      "role": "profit_to_date",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      }
      }
     ],
+    "total_liabilities_minor": 188000,
+    "total_equity_minor": -70000,
     "total_assets_minor": 118000,
     "total_liab_equity_minor": 118000,
     "profit_to_date_minor": -70000,
+    "net_assets_minor": -70000,
+    "net_assets_ok": true,
+    "groups_ok": true,
+    "groups": {
+     "assets": [
+      {
+       "code": "1000",
+       "name": "Current Assets",
+       "amount_minor": 118000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "liabilities": [
+      {
+       "code": "2000",
+       "name": "Current Liabilities",
+       "amount_minor": 59000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "equity": [
+      {
+       "code": null,
+       "name": null,
+       "amount_minor": -70000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ]
+    },
+    "as_at": {
+     "kind": "today",
+     "step": 0,
+     "as_at": "2027-03-31",
+     "can_next": false
+    },
+    "compare": {
+     "month": {
+      "as_at": "2027-02-28",
+      "total_assets_minor": 0,
+      "total_liabilities_minor": 0,
+      "total_equity_minor": 0,
+      "net_assets_minor": 0
+     },
+     "year": null
+    },
     "balanced": true,
     "by_line": {
      "assets": [
@@ -608,6 +705,7 @@
     }
    },
    "optional": [
+    "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -763,7 +861,12 @@
      "counted": false,
      "why": null,
      "form": "GSTR-3B",
-     "short": "GST"
+     "short": "GST",
+     "earlier": {
+      "payable_minor": 0,
+      "before": "2027-04-01",
+      "counted": false
+     }
     },
     "series": [
      {
@@ -788,7 +891,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "gst.earlier",
+    "gst.earlier.before",
+    "gst.earlier.counted",
+    "gst.earlier.payable_minor"
+   ]
   },
   "GET /api/books/cheques": {
    "status": 200,
@@ -1113,6 +1221,16 @@
        "doc_at": null,
        "recorded_at": "2026-09-29T10:00:03.000Z"
       },
+      "evidence": {
+       "doc": null,
+       "files": [],
+       "count": 0,
+       "flag": "no_tax_invoice",
+       "flag_why": "No tax invoice on file",
+       "cite": "ato.gov.au",
+       "cite_status": "checked"
+      },
+      "posted_by": null,
       "lines": [
        {
         "code": "1300",
@@ -1130,6 +1248,9 @@
     "count": 5
    },
    "optional": [
+    "entries[].evidence.cite",
+    "entries[].evidence.cite_status",
+    "entries[].evidence.flag_why",
     "entries[].source_chit_id"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -1211,6 +1332,7 @@
       "credit_limit_from": null,
       "over_limit": false,
       "last_remind": null,
+      "needs": { "parties": 0, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
       "payable": {
        "total_minor": 59000,
        "buckets": {
@@ -1332,6 +1454,10 @@
      }
     ],
     "total_minor": 59000,
+    "needs": {
+     "customer": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
+     "supplier": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 59000 }
+    },
     "payables": {
      "total_minor": 59000
     },
@@ -1639,7 +1765,21 @@
        "doc_at": null,
        "recorded_at": "2026-09-29T10:00:03.000Z"
       },
+      "evidence": {
+       "doc": null,
+       "files": [],
+       "count": 0,
+       "flag": "no_tax_invoice",
+       "flag_why": "No tax invoice on file",
+       "cite": "ato.gov.au",
+       "cite_status": "checked"
+      },
       "party_id": "22222222-2222-4222-8222-222222222222",
+      "party_name": "Metro Trade Supplies",
+      "other": {
+       "code": "4000",
+       "name": "Sales"
+      },
       "dr_minor": 118000,
       "cr_minor": 0,
       "running_minor": 118000
@@ -1648,6 +1788,9 @@
     "closing_minor": 118000
    },
    "optional": [
+    "lines[].evidence.cite",
+    "lines[].evidence.cite_status",
+    "lines[].evidence.flag_why",
     "lines[].source_chit_id"
    ]
   },
@@ -1804,21 +1947,38 @@
       "sales_minor": 0,
       "lock": {
        "may": true,
-       "why": "Lock the earlier months first."
+       "why": "Lock the earlier months first.",
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
       "reopen": {
        "may": false,
-       "why": null
+       "why": null,
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
+      "open_below_locked": true,
       "lock_trail": []
      }
     ]
    },
    "optional": [
-    "periods[].return"
+    "periods[].return",
+    "periods[].lock.first",
+    "periods[].reopen.first",
+    "periods[].open_below_locked"
    ],
    "also_optional": [
-    "periods[].return"
+    "periods[].return",
+    "periods[].lock.first",
+    "periods[].reopen.first",
+    "periods[].open_below_locked"
    ]
   },
   "GET /api/books/pl": {
@@ -1832,7 +1992,8 @@
       "code": "4000",
       "name": "Sales",
       "amount_minor": 100000,
-      "line": "Revenue from operations"
+      "line": "Revenue from operations",
+      "role": "sales"
      }
     ],
     "expense": [
@@ -1840,12 +2001,40 @@
       "code": "5000",
       "name": "Purchases",
       "amount_minor": 50000,
-      "line": "Purchases of stock-in-trade"
+      "line": "Purchases of stock-in-trade",
+      "role": "purchases"
      }
     ],
     "total_income_minor": 100000,
     "total_expense_minor": 170000,
     "profit_minor": -70000,
+    "profit_share_bp": -7000,
+    "total_income_share_bp": 10000,
+    "total_expense_share_bp": 17000,
+    "period": {
+     "preset": "ytd",
+     "step": 0,
+     "can_next": false,
+     "from": "2026-04-01",
+     "to": "2027-03-31"
+    },
+    "presets": [
+     {
+      "id": "ytd",
+      "label": "This year to date"
+     }
+    ],
+    "compare": {
+     "how": "year",
+     "from": "2025-04-01",
+     "to": "2026-03-31",
+     "total_income_minor": 0,
+     "total_expense_minor": 0,
+     "profit_minor": 0,
+     "income_change_bp": null,
+     "expense_change_bp": null,
+     "profit_change_bp": null
+    },
     "by_line": {
      "income": [
       {
@@ -1853,12 +2042,19 @@
        "label": "Revenue from operations",
        "side": "income",
        "amount_minor": 100000,
+       "prior_minor": 0,
+       "change_bp": null,
+       "share_bp": 10000,
        "accounts": [
         {
          "code": "4000",
          "role": "sales",
          "name": "Sales",
-         "amount_minor": 100000
+         "amount_minor": 100000,
+         "prior_minor": 0,
+         "change_bp": null,
+         "share_bp": 10000,
+         "prior_share_bp": null
         }
        ]
       }
@@ -1869,12 +2065,19 @@
        "label": "Purchases of stock-in-trade",
        "side": "expense",
        "amount_minor": 50000,
+       "prior_minor": 0,
+       "change_bp": null,
+       "share_bp": 10000,
        "accounts": [
         {
          "code": "5000",
          "role": "purchases",
          "name": "Purchases",
-         "amount_minor": 50000
+         "amount_minor": 50000,
+         "prior_minor": 0,
+         "change_bp": null,
+         "share_bp": 10000,
+         "prior_share_bp": null
         }
        ]
       }
@@ -2028,9 +2231,14 @@
       "accounts": [
        {
         "code": "4000",
-        "name": "Sales"
+        "name": "Sales",
+        "amount_minor": 11000,
+        "tax_minor": 1000
        }
       ],
+      "accounts_n": 1,
+      "accounts_more_n": 0,
+      "split_ok": true,
       "note": "GST-exclusive (the ledgers hold all GST paid in one account)"
      }
     ],
@@ -2043,6 +2251,7 @@
     "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)",
     "needs": "stagger",
     "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
+    "unsupported_input": null,
     "emirates": [
      "Abu Dhabi"
     ],
@@ -2078,6 +2287,7 @@
     "periods[].due_rule",
     "periods[].stagger",
     "staggers",
+    "unsupported_input",
     "why"
    ]
   },
@@ -2190,6 +2400,7 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "fy_from": "2026-04-01",
     "rows": [
      {
       "code": "1300",

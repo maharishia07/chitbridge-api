@@ -9,7 +9,8 @@ const R = require('../lib/regulation'), AE = require('../lib/reg-ae'), P = requi
 let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
 
-const XX = Object.assign({}, AE, { id: 'XX', country: 'XX', name: 'Testland · GST', version: '1.0.0',
+/* engines v1.90.0 gave the AE pack export.taxScheme 'TRN'; taxIdWordOf reads that before the registry, so a pack copied from AE must not carry it — a new country states its own taxId only */
+const XX = Object.assign({}, AE, { id: 'XX', country: 'XX', name: 'Testland · GST', version: '1.0.0', export: Object.assign({}, AE.export, { taxScheme: undefined }),
   taxId: { name: 'UEN', hint: '201912345K', check: (v) => (/^\d{9}[A-Z]$/.test(v) ? { ok: true, value: v } : { ok: false, why: 'A UEN looks like 201912345K.' }) } });
 R.register(XX);
 

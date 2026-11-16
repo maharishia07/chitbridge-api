@@ -1545,6 +1545,9 @@
   "POST /api/books/bank/statements": {
    "strict_input": true
   },
+  "POST /api/books/bank/statement-files": {
+   "strict_input": true
+  },
   "PATCH /api/books/payments/:id": {
    "strict_input": true,
    "idempotent_money_write": true
@@ -1662,13 +1665,31 @@
   "POST /api/books/fx-revalue": {
    "strict_input": true
   },
+  "POST /api/books/opening/preview": {
+   "strict_input": true
+  },
+  "POST /api/books/opening/replace": {
+   "strict_input": true
+  },
   "POST /api/books/money-check/resolve": {
+   "strict_input": true
+  },
+  "GET /api/marks": {
+   "output_allowlist": true
+  },
+  "POST /api/marks/query": {
+   "strict_input": true
+  },
+  "POST /api/marks": {
+   "strict_input": true
+  },
+  "POST /api/marks/:thread_id/messages": {
    "strict_input": true
   },
   "GET /api/books-grants/consent": {
    "output_allowlist": true
   },
-  "GET /api/books-grants": {
+  "GET /api/books-grants/practice": {
    "output_allowlist": true
   },
   "POST /api/books-grants": {
@@ -1681,6 +1702,19 @@
   "POST /api/books-grants/:id/revoke": {
    "strict_input": true,
    "foreign_id_404": true
+  },
+  "POST /api/books-actions": {
+   "strict_input": true
+  },
+  "POST /api/books-actions/:id/review": {
+   "strict_input": true
+  },
+  "POST /api/books-actions/:id/return": {
+   "strict_input": true
+  },
+  "POST /api/books-actions/:id/accept": {
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "GET /api/facts/rail/chits": {
    "output_allowlist": true

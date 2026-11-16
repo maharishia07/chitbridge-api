@@ -31,6 +31,7 @@ const router = express.Router();
 const { withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const storage = require('../lib/storage');
+const { sendBlob } = require('../lib/attachment-send'); // the one writer of a stored file's headers (images and PDFs inline, the rest a download)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, faultOf, MAX_BYTES } = require('../lib/attachments-contract'); // the contract (each route's operation), the words of a refusal and the 6 MB limit (one source)
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187: a file on a dispute message goes to the parties that message goes to: the one reading, not a copy of it
@@ -108,17 +109,6 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
   }
 });
 
-/**
- * contentDisposition(name) → the filename part of a Content-Disposition value (RFC 6266 / 5987): an ASCII fallback in quotes, plus filename*=UTF-8'' percent-encoded when the name holds anything else.
- * ⚠️ A header value outside Latin-1 makes Node throw (ERR_INVALID_CHAR). The other Content-Disposition writers build from server-made names and stay as they are.
- */
-function contentDisposition(name) {
-  if (/^[ -~]*$/.test(name)) return 'filename="' + name + '"';
-  const fallback = name.replace(/[^ -~]/g, '_').replace(/%/g, '_');
-  const encoded = encodeURIComponent(name).replace(/['()*]/g, (mark) => '%' + mark.charCodeAt(0).toString(16).toUpperCase());
-  return 'filename="' + fallback + '"; filename*=UTF-8' + "''" + encoded;
-}
-
 // GET /api/attachments/:id — stream the bytes (on demand). Participant-checked.
 // @does An attachment id in -> we stream the caller's own copy, rendering only images and PDFs inline -> the file bytes.
 router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
@@ -127,21 +117,7 @@ router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
     // PER-ENTITY: getBlob is entity-scoped (RLS) — it returns ONLY the caller's own copy, else nothing. No shared read.
     const a = await storage.getBlob(req.params.id, entity_id);
     if (!a) return problem(req, res, { status: 404, ...words.notHeld() });
-    // S2 (reviewer 2026-07-13) — stored-XSS defence. The MIME is uploader-supplied, so we do NOT let the browser render
-    // arbitrary types on our origin. Only image/* and application/pdf may render INLINE; everything else is forced to
-    // DOWNLOAD (attachment). nosniff stops the browser second-guessing the declared type. A text/html payload can no
-    // longer execute a script on the API origin.
-    const rawMime = String(a.mime || 'application/octet-stream').toLowerCase();
-    // NOTE: SVG is deliberately EXCLUDED — image/svg+xml can carry inline <script>, so it is forced to download.
-    const renderable = /^image\/(png|jpe?g|gif|webp|bmp)$/.test(rawMime) || rawMime === 'application/pdf';
-    const safeMime = renderable ? rawMime : 'application/octet-stream';
-    const safeName = (a.name || 'file').replace(/[\r\n"\\]/g, '');
-    const dispositionName = contentDisposition(safeName); /* RAIL-189: a name outside Latin-1 in a header made Node throw (500) */
-    res.setHeader('Content-Type', safeMime);
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Disposition', `${renderable ? 'inline' : 'attachment'}; ${dispositionName}`);
-    res.setHeader('Cache-Control', 'private, max-age=86400');
-    res.send(a.data);
+    sendBlob(res, a); /* S2: lib/attachment-send, the one writer of a stored file's headers */
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Fetch failed')); /* the cause is logged with the request id; the caller gets the one generic sentence */
   }
@@ -149,5 +125,5 @@ router.get('/:id', auth, ...contract.checked('GET /:id'), async (req, res) => {
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
-router.contentDisposition = contentDisposition; /* RAIL-189: pinned by tests/c11-10b-rail-shape.test.cjs */
+router.contentDisposition = require('../lib/attachment-send').contentDisposition; /* RAIL-189: pinned by tests/c11-10b-rail-shape.test.cjs */
 module.exports = router;

@@ -1,6 +1,5 @@
 /**
  * guards.cjs — RUN THE CHECKS THAT NEED NOTHING, AND SAY ONE NUMBER.
- *
  * `npm test` needs a server running; these do not. They are what must pass before anything is pushed — no database, no network,
  * a few seconds — and until now the way to run them was to remember nine filenames.
  *
@@ -326,6 +325,7 @@ const GUARDS = [
   'govresolve-ctp.test.cjs',
   'govresolve-bounded.test.cjs', // NET-25: an installation declares only inside what the constitution allows (currency, timezone, region, country)
   'relationships-availability.test.cjs', // OPS-55 has/miss/nocat/err states, OPS-57 bounded concurrency of 6
+  'relationships-not-self.test.cjs', // a shop is never its own customer or supplier: both relationships lists leave the reader out (l16)
   /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
      refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
   'ctp-query.test.cjs',
@@ -366,6 +366,9 @@ const GUARDS = [
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
+  'acc-new-4-year-gate.test.cjs', // ⭐ l16-accfix API-new-1 / CTY-new-1: the year-close refusal carries period_codes beside the labels (the code POST /gst/close takes); AE's gate fires without a stagger (every month covered by a closed tax period)
+  'acc-new-1-box9.test.cjs', // ⭐ l16-accfix ACC-new-1: VAT201 box 9 counts only entries that carried recoverable VAT (hand 750.00 vs 1,062.50), a reversal nets away; AU G11 unchanged
+  'acc-new-2-supply-kind.test.cjs', // ⭐ l16-accfix ACC-new-2: a supply kind the pack does not define is 422 SUPPLY_KIND_UNKNOWN listing the pack's kinds (AU, AE, IN)
   'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
   'acc-331-currency-cells.test.cjs', // ⭐ CUR-1 (ACC-331/332): a bill's payment parts and lines and a journal's lines name the document's currency or none; 409 CURRENCY_MISMATCH naming the field
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
@@ -418,6 +421,7 @@ const GUARDS = [
   'neutral-core.test.cjs', // ⭐ N0-N4 (NEUTRAL-CORE, 17 Oct): no country or money → no document (NO_COUNTRY/NO_MONEY); the readers say null + a reason, never INR / Asia/Kolkata; ratchet on new India literals; an India shop unchanged
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
+  'books-opening-page.test.cjs', // l16: the opening balances page's server side — preview (the engine's own Difference), require_balanced, replace in one transaction, the saved view, the year strip; AU and IN shops, hand-computed
   'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
   'testing-strict-input.test.cjs', // S33: the test board's closed write bodies refuse an unknown key by name and still take every key a handler reads or a caller sends (k13)
   'till-strict-input.test.cjs', // S33: the counter's 13 live-only doors refuse an unknown key by name and still take every key the handler reads or the till sends; the 7 queueable doors stay open (S33-T moved quick-keys hide/unhide: shipped counters queued them, e5fe6136 till.html:3037,3075)
@@ -484,6 +488,7 @@ const GUARDS = [
   'cat-308-price-decimals-route.test.cjs', // CAT-308 M9b: INR 10.999 is 400 PRICE_DECIMALS at the product door, an unchanged legacy price passes, JPY 10.5 refused
   'cat-m9b-definition-doors.test.cjs', // M9b (CAT-272/273/333): reward numbers bounded, parallel definition saves lock + stale version 409, freeze list capped at 500 uuids
   'api-problem-books-grants.test.cjs', // API-4 sweep, ACC-176 member grant routes: every refusal of routes/books-grants.js is a Problem with its keys frozen; success answers hold only their closed keys
+  'api-problem-books-actions.test.cjs', // API-4 sweep, ACC-176b adviser maker-checker routes: every refusal of routes/books-actions.js is a Problem with its keys frozen; success answers hold only their closed keys
   'api-problem-books.test.cjs', // API-4 sweep, accounts and finance: every refusal of routes/books.js, routes/tax.js and routes/invoice.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-network-offers.test.cjs', // API-4 sweep, the network-offers doors (Lane B2, 4 Nov): every refusal of the 8 routes of routes/network-offers.js is a Problem with its old keys frozen; a key is refused 403; no 5xx says its cause; a failed member read keeps its 503
   'api-problem-marketing.test.cjs', // API-4 sweep, marketing: every refusal of routes/marketing.js, offers.js and combo-templates.js is a Problem with its old keys frozen; no 5xx says its cause
@@ -772,6 +777,7 @@ const GUARDS = [
   'party-contact-patch.test.cjs',
   'crm-45-changed-named.test.cjs',
   'crm-47-party-keys.test.cjs', // CRM-47: tax_ids that is not a list and two keys for one credit limit are refused by name
+  'crm-l16-root-not-a-party.test.cjs', // l16: the installation root (system supplier) is not a party: no list, count or chip
   'crm-46-party-exact.test.cjs', // CRM-46: a party field that cannot be stored exactly is refused in words
   /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
   'party-merge-target.test.cjs',
@@ -1013,7 +1019,13 @@ const GUARDS = [
   'itemmatch-corpus-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): the corpus mutation set (was named only in NEEDS_ENGINES)
   'query-shape.test.js', // QA-172 (14 Nov): the per-file query budget (a query inside a loop) and the trigram check; was red and unenrolled
   'acc-176-grants-contract.test.cjs', // ACC-176: the member's grant routes against their contract; the pure rules (end date, purpose, no database = typed 503 in words); the consent words equal the allow-list
-  'acc-176-grant-classification.test.cjs', // ACC-176: every books GET is classified for an auditor grant (a new GET is born refused); the synthetic auditor is not an owner, a commenter, read-only; the look failing answers 503
+  'mark-offline.test.cjs', // MARK & QUERY (CAP-25): the adopter CI check (no detector, an unmapped word, an empty set, an unknown table or column fail), the core grep fixture (no adopter word in the core), the marks write-door classification (exactly two POST doors), the seal hygiene, the policy forms, the core's refusals with a recording stub
+  'message-post.test.cjs', // MARK & QUERY PR1: the one message writer; a mark post is the mark definer only (no chit_message_deliver, no timeline, no CTP)
+  'acc-176-grant-classification.test.cjs', // ACC-176: every books GET is classified for an auditor grant (a new GET is born refused); the synthetic auditor is not an owner, a commenter, read-only; the look failing answers 503 //
+  'l16-statement-box.test.cjs', // l16 Statements box (b872): the ONE hash, refusals in words, duplicate and overlap by dates, the account by month grid, the grant doors (owner, adviser, auditor read-only, ended grant)
+  'b3-bank-statements-cost-blind.test.cjs', // B3: a cost-blind reader gets 403 COST_BLIND on the bank statement files list, the file download and /bank/log (the one lib/cost.isCostBlind),
+  'l16-audbank.test.cjs', // l16 audbank (W15-71, W15-97): the auditor reads the bank log, every books write route refuses the auditor seat, a month opens newest first
+  'acc-176b-adviser-doors.test.cjs', // ACC-176b: every books-actions route is an adviser door or the owner's accept (a new one is born refused); no direct adviser write; the synthetic adviser is an editor, never an owner; who may use which grant
   'every-test-is-enrolled.test.cjs', // U1 (8 Nov, the guard): U1 (8 Nov): every tests/*.test.(js|cjs) is run by a CI job or is on a named, ratcheted known list; the api half of the map measure tests_not_in_ci
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it
@@ -1162,7 +1174,6 @@ if (JUNIT) {
   fs.writeFileSync(JUNIT, require('../lib/junitresults').write('guards', report));
   console.log('  JUnit → ' + path.relative(process.cwd(), JUNIT) + ' (' + report.length + ' files)');
 }
-
 console.log('  ' + '─'.repeat(40));
 console.log(
   '  ' +

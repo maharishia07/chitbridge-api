@@ -67,6 +67,9 @@ const WROTE = (row) => firstOf(answering(/UPDATE books_access_grant SET/, [row])
 const LISTED = answering(/FROM books_access_grant g/, [{ grant_id: GRANT_ID, grantor_entity: SHOP, grantee_entity: PARENT, preset: 'auditor', can_see_costs: true, purpose: 'audit of the books', granted_at: '2026-11-01T10:00:00.000Z', expires_at: '2099-11-01T10:00:00.000Z', revoked_at: null, edge_live: true }]);
 const LOOKS = answering(/FROM books_access_log/, [{ at: '2026-11-03T10:00:00.000Z', grant_id: GRANT_ID, grantee_entity: PARENT, actor_identity_id: PARENT, route_pattern: '/ledger/:account', query_shape: 'none', status: 200, outcome: 'allowed' }]);
 const GIVE_BODY = { grantee: PARENT, consent: true };
+/** a firm's adviser-level person: an editor of the whole entity (middleware/books-grant mayUseGrant 'adviser') — passes the list gate, is not the owner */
+const FIRM_ADVISER = Object.assign({}, STAFF, { whole_entity: true });
+const FIRM_AUDITOR = Object.assign({}, STAFF, { access_level: 'commenter', whole_entity: true, can_see_costs: true });
 const EXTRAS = [
   X('consent-asked-twice', 'GET /api/books-grants/consent', 422, { url: MOUNT + '/consent?can_see_costs=true&can_see_costs=false' }),
   X('consent-read-by-staff', 'GET /api/books-grants/consent', 200, { setup: { who: STAFF } }),
@@ -74,6 +77,9 @@ const EXTRAS = [
   X('consent-without-costs', 'GET /api/books-grants/consent', 200, { url: MOUNT + '/consent?can_see_costs=false' }),
   X('list-not-switched-on', 'GET /api/books-grants', 503, { setup: { sqlRows: NOT_RUN } }),
   X('list-read', 'GET /api/books-grants', 200, { setup: { sqlRows: LISTED } }),
+  X('practice-not-switched-on', 'GET /api/books-grants/practice', 503, { setup: { sqlRows: NOT_RUN } }),
+  X('list-read-by-firm-adviser', 'GET /api/books-grants', 200, { setup: { who: FIRM_ADVISER, sqlRows: LISTED } }),
+  X('list-read-by-firm-auditor', 'GET /api/books-grants', 200, { setup: { who: FIRM_AUDITOR, sqlRows: LISTED } }),
   X('give-no-consent', 'POST /api/books-grants', 422, { body: { grantee: PARENT, consent: false } }),
   X('give-past-end-date', 'POST /api/books-grants', 422, { body: { grantee: PARENT, consent: true, expires_at: '2020-01-01T00:00:00.000Z' } }),
   X('give-too-short-a-purpose', 'POST /api/books-grants', 422, { body: { grantee: PARENT, consent: true, purpose: 'ab' } }),
@@ -140,6 +146,9 @@ function checkCodesRegistered(recording) {
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('a key is refused with 403 SIGN_IN_FOR_BOOKS_GRANT on every route but the consent words', Object.keys(recording).filter((key) => key.endsWith('|a-key-asks') && !key.includes('/consent')).every((key) => recording[key].status === 403 && recording[key].body && recording[key].body.code === 'SIGN_IN_FOR_BOOKS_GRANT'));
   check('a co-assist is refused with 403 on every route but the consent words (only the owner changes who reads the books)', Object.keys(recording).filter((key) => key.endsWith('|staff-asks') && !key.includes('/consent')).every((key) => recording[key].status === 403));
+  const listAs = (id) => recording['GET /api/books-grants|' + id];
+  check('the owner reading the list sees the grant the shop GAVE (given has 1) and the received side', listAs('list-read') && listAs('list-read').body && listAs('list-read').body.given.length === 1, listAs('list-read') && listAs('list-read').body);
+  check('a firm person at adviser level reads the list (200) and sees NO given grants — received side only', ['list-read-by-firm-adviser', 'list-read-by-firm-auditor'].every((id) => listAs(id) && listAs(id).status === 200 && Array.isArray(listAs(id).body.given) && listAs(id).body.given.length === 0 && Array.isArray(listAs(id).body.received)), [listAs('list-read-by-firm-adviser'), listAs('list-read-by-firm-auditor')]);
   /* S34: the success answers hold only the keys their closed schema lists */
   const proved = allowlistWorld.checkAllowList(recording, contract.OPERATIONS, check);
   const coverage = lab.coverageOf(tested);

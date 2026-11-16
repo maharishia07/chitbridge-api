@@ -77,9 +77,31 @@ function create() {
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
     async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':'))); },
     async entryBySource(db, e, ref) { const h = T.entries.find((x) => x.entity_id === e && x.source_ref === ref); return h ? clone(h) : null; },
-    async taxEntryLines(db, e, from, to, types) {
-      return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
+    async taxEntryLines(db, e, from, to, types, shape) {
+      /* the real query's two doors: the event word, or the SHAPE (every line on a tax or money role, one on a tax role; never an opening) */
+      const day = (x) => String(x.posting_date).slice(0, 10), roleOf = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      const tax = (shape && shape.tax) || [], money = (shape && shape.money) || [];
+      const shaped = (h) => { const ls = T.lines.filter((l) => l.entry_id === h.entry_id); return !h.is_opening && ls.some((l) => tax.indexOf(roleOf(l)) >= 0) && ls.every((l) => tax.concat(money).indexOf(roleOf(l)) >= 0); };
+      return T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && ((types || []).indexOf(x.event_type) >= 0 || shaped(x)))
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
+    },
+    async taxedIncomeLines(db, e, from, to, outputRole, skipRoles) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (!ls.some((l) => acct(l).role === outputRole)) return;
+        ls.filter((l) => !l.party_id && acct(l).nature === 'income' && (skipRoles || []).indexOf(acct(l).role) < 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
+    },
+    async taxedOnlyLines(db, e, from, to, taxRole, roles) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (!ls.some((l) => acct(l).role === taxRole)) return;
+        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
     },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {
@@ -147,6 +169,19 @@ function create() {
                  dr_minor: l.dr_minor, cr_minor: l.cr_minor, currency: l.currency, reversed_by: rv ? rv.entry_no : null, reversed_narration: rv ? rv.narration : null };
       }).filter((l) => l.posting_date >= from && l.posting_date <= to);
     },
+    /* l16-scale: what each year's month rows add up to (the carry key's stamp); dr and cr as text, as Postgres sums a bigint */
+    async yearStamps(db, e) {
+      const by = new Map();
+      T.balances.forEach((b) => {
+        if (b.entity_id !== e) return;
+        const y = by.get(b.fiscal_year) || { fiscal_year: b.fiscal_year, n: 0, dr: 0, cr: 0, lines: 0 };
+        y.n += 1; y.dr += b.dr_minor; y.cr += b.cr_minor; y.lines += b.line_count; by.set(b.fiscal_year, y);
+      });
+      return [...by.values()].sort((a, b) => String(a.fiscal_year).localeCompare(String(b.fiscal_year))).map((y) => Object.assign(y, { dr: String(y.dr), cr: String(y.cr), lines: String(y.lines) }));
+    },
+    /* b873 year_carry is a cache the memory store does not keep: nothing kept, nothing written, the books recompute (the real table is proved in the l16-scale realstack) */
+    async carryRead() { return null; },
+    async carryWrite() { return false; },
     async years(db, e) { return Array.from(new Set(Array.from(T.balances.values()).filter((b) => b.entity_id === e).map((b) => b.fiscal_year))).sort(); },
     /* ── the four writes ── */
     async insertEntry(db, e, h) {
@@ -239,6 +274,15 @@ function create() {
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
+    /* the same rule as lib/books-store openItems (= lib/books-open-items.rowsSql, scoped): the rows of a document that does not net to nothing or has a status row, closed over the allocation links both ways */
+    async openItems(db, e, account, asOf) {
+      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || String(i.doc_date).slice(0, 10) <= asOf)), sum = {}, status = new Set(), links = new Map();
+      const link = (a, b) => { if (!links.has(a)) links.set(a, new Set()); links.get(a).add(b); };
+      rows.forEach((i) => { sum[i.against_ref] = (sum[i.against_ref] || 0) + i.amount_minor; if (i.ref_kind === 'status') status.add(i.against_ref); if (i.ref !== i.against_ref) { link(i.ref, i.against_ref); link(i.against_ref, i.ref); } });
+      const live = new Set(Object.keys(sum).filter((k) => sum[k] !== 0 || status.has(k))), queue = [...live];
+      while (queue.length) for (const next of links.get(queue.pop()) || []) if (!live.has(next)) { live.add(next); queue.push(next); }
+      return clone(rows.filter((i) => live.has(i.against_ref)));
+    },
     async billParties(db, e, ref) { return [...new Set(T.items.filter((i) => i.entity_id === e && i.ref === i.against_ref && i.ref === String(ref)).map((i) => i.party_id))]; },
     async itemOwners(db, e, account, refs) { const seen = new Set(), out = []; T.items.filter((i) => i.entity_id === e && i.account_id === account && i.ref === i.against_ref && (refs || []).indexOf(i.ref) >= 0)
       .forEach((i) => { const k = i.ref + '|' + i.party_id; if (!seen.has(k)) { seen.add(k); out.push({ ref: i.ref, party_id: i.party_id }); } }); return out; },
@@ -384,6 +428,8 @@ function create() {
         file_name: p.file_name || null, rows: clone(p.rows || []), created_by: p.by || null, created_at: now() };
       T.compare.push(r); return r.part_id;
     },
+    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); },
+    async namesOf(db, ids) { return new Map((ids || []).map((id) => { const i = T.identities.find((x) => String(x.identity_id) === String(id)); return i ? [String(id), i.display_name || null] : null; }).filter(Boolean)); },
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
     async taxRegistration(db, e) { const i = T.identities.find((x) => x.identity_id === e) || {}; const flags = i.policy_flags || {};

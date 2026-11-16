@@ -34,10 +34,12 @@ const CALLS = {
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
   parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
   relabelPeriods: [E, '2026-27', [{ period: 1, fiscal_year: '2026', start_date: '2026-01-01', end_date: '2026-01-31' }]],
-  nextNo: [E, 'JV', '2026-27'], giveBackNo: [E, 'invoice', '-', 1], entryBySource: [E, 'chit:x'], entryDebitsByRole: [E, U], taxColumnsReady: [], taxPaymentsNaming: [E, 'gstr:1', ['output_cgst']], taxPaymentsWithoutPeriod: [E, '2026-10-01'], taxCloseOf: [E, 'gstclose:x', true], chitPosted: [E, 'x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment']],
+  nextNo: [E, 'JV', '2026-27'], giveBackNo: [E, 'invoice', '-', 1], entryBySource: [E, 'chit:x'], entryDebitsByRole: [E, U], taxColumnsReady: [], taxPaymentsNaming: [E, 'gstr:1', ['output_cgst']], taxPaymentsWithoutPeriod: [E, '2026-10-01'], taxCloseOf: [E, 'gstclose:x', true], chitPosted: [E, 'x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment'], { tax: ['gst_collected', 'gst_paid'], money: ['bank'] }], taxedIncomeLines: [E, '2026-04-01', '2026-04-30', 'gst_collected', ['sales']],
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
+  /* l16-scale (b873): a year's carry kept under its key, and the sums that key is made from */
+  yearStamps: [E], carryRead: [E, '2026-27', 'a'.repeat(64)], carryWrite: [E, '2026-27', 'a'.repeat(64), { rows: [], retained_minor: 0, profit_minor: 0 }],
   insertEntry: [E, { entry_no: 'JV/2026-27/000001', posting_date: '2026-04-01', fiscal_year: '2026-27', period: 1, event_type: 'manual', currency: 'INR', total_minor: 1 }],
   insertLines: [E, U, [{ line_no: 1, account_id: U, dr_minor: 1, cr_minor: 0, currency: 'INR' }, { line_no: 2, account_id: U, dr_minor: 0, cr_minor: 1, currency: 'INR' }]],
   addBalances: [E, [{ account_id: U, currency: 'INR', fiscal_year: '2026-27', period: 1, dr_minor: 1, cr_minor: 0, line_count: 1 }]],
@@ -55,6 +57,8 @@ const CALLS = {
   adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E], bankRailChits: [E, '2026-10-01', '2026-10-31', 500],
   /* F5 A1 · the books to-do's bills_unrated: the shop's registration facts, and the sale bills in the books with an unrated line */
   taxRegistration: [E], unratedSaleBills: [E, '2025-04-01', '2026-10-24', 50],
+  /* l16-accfix ACC-new-1: the lines of entries that carried the tax role (VAT201 box 9) */
+  taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
   /* ACC-206 B · the sales let through unbalanced, unresolved */
   moneyOverrides: [E, 50], moneyOverrideState: [E, U],
 };

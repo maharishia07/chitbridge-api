@@ -52,6 +52,8 @@ require.cache[require.resolve(API + '/db')] = { exports: {
     }
     return { rows: [] };
   },
+  /* the books switch rides readBatch (ONE trip): lib/books.ledgerOnBatch */
+  readBatch: async (e, a, stmts) => { queries.push('BATCH ' + stmts.map((x) => String(x.text).replace(/\s+/g, ' ').trim()).join(' ; ')); return stmts.map(() => ({ rows: [{ entity_id: e, enabled: true }] })); },
   withEntity: async (id, fn) => fn({ query: async (s, a) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: [] }; } }),
   withTransaction: async (fn) => fn({ query: async () => ({ rows: [] }) }),
 } };
@@ -117,6 +119,8 @@ const srv = app.listen(PORT, async () => {
    */
   t('`identities` is read ONCE for the caller\'s own row', idRead.length === 1,
     idRead.length + ' read(s)');
+
+  t('ledger_on is in the answer from that one batched read', ((r.body.entity || r.body).ledger_on === true) && dbHits.filter((q) => /^BATCH .*FROM books_setting/.test(q)).length === 1);
 
   console.log('\n── and the values still arrive ──');
   const e = r.body.entity || r.body;

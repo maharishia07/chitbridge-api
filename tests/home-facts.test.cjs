@@ -103,6 +103,7 @@ function answer(text, params) {
   if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
   if (/FROM supplier_list sl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('s1'), party('s2'), party('s3', { merged_into: 's1' }), party('b1')] }; }
   /* REP-52: the rows books-store.entryLines answers — one row per LINE with its account role (the card sums lines by role; the `tenders` jsonb is the Day book column's) */
+  if (/COUNT\(DISTINCT h\.entry_id\) AS n FROM journal_line/.test(sql)) return { rows: [{ n: F.bankPosted || 0 }] };
   if (/FROM journal_line l JOIN journal_entry h/.test(sql)) return { rows: F.booksDay ? [
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'cash', dr_minor: 40000, cr_minor: 0, line_no: 1 },   /* a day, closed once (reversed below) */
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 40000, line_no: 2 },
@@ -246,6 +247,22 @@ const get = (port, p) => new Promise((ok) => {
   t('plan: at the limit the line is marked dn', [r.json.lines[1].tone, r.json.state], ['dn', 'needs_you']);
   F.chitsToday = null; F.plan = 'gold'; r = await g('plan');
   t('plan: a plan the constitution does not declare says so in words - never 0, never unlimited', r.json.lines.map((l) => l.text), ['Gold plan', 'Limits not declared for this plan']);
+  /* HOME-MONDAY: the Bank card - the last signed statement as carried; no statement is a plain status, never a zero; no "lines to add" */
+  const BL = require(API + '/lib/bank-rec-log'), BS = require(API + '/lib/books-store'); const wasLatest = BL.latest, wasAcc = BS.accounts, wasUns = BL.unsigned; BL.unsigned = async () => null;
+  BL.latest = async () => null; r = await g('bank');
+  t('bank: no statement says so in words, state not_started, no figure', [r.json.lines, r.json.state, r.json.figures.statement], [[{ text: 'No statement loaded yet' }], 'not_started', null]);
+  BS.accounts = async () => [{ account_id: 7, name: 'ANZ Business' }];
+  BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 12345, currency: 'AUD' }); r = await g('bank');
+  t('bank: last statement + the carried difference, in its own currency', [r.json.lines[0].text, r.json.lines[1].money, r.json.state], ['Last statement {when} · ANZ Business', { amount: 123.45, currency: 'AUD' }, 'needs_you']);
+  t('bank: figures carry minor units and the currency; nothing about lines to add', JSON.stringify(r.json.figures), JSON.stringify({ statement: { date: '2026-10-31', account: 'ANZ Business', difference_minor: 12345, currency: 'AUD' } }));
+  BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 0, currency: 'AUD' }); r = await g('bank');
+  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Matches the books', 'in_use']);
+  BL.latest = async () => null; BL.unsigned = async () => ({ at: new Date('2026-11-14T03:00:00Z') }); r = await g('bank');
+  t('bank: loaded and worked on but not signed says so with its day, in_use, never Not started', [r.json.lines, r.json.state], [[{ text: 'Worked on {when} · not signed off yet', at: '2026-11-14' }], 'in_use']);
+  BL.latest = async () => null; BL.unsigned = async () => null; F.bankPosted = 6; r = await g('bank');
+  t('bank: entries posted to the bank account but no statement yet -> said with the count, in_use, never Not started (l16 home-fix)', [r.json.lines, r.json.state, r.json.figures.posted], [[{ text: '6 bank entries in your books · no statement loaded yet', value: 6 }], 'in_use', 6]);
+  F.bankPosted = 0;
+  BL.latest = wasLatest; BS.accounts = wasAcc; BL.unsigned = wasUns;
   F.plan = null; r = await g('plan');
   t('plan: no plan row says so', r.json.lines[0].text, 'No plan recorded');
   F.plan = undefined;
@@ -277,6 +294,10 @@ const get = (port, p) => new Promise((ok) => {
   t('finance: the figures count what the card says (to_deposit · late · in hand = received + deposited, IN only)', [r.json.figures.to_deposit, r.json.figures.late, r.json.figures.in_hand, r.json.figures.remind_on], [1, 1, 3, true]);
   t('finance: the cheques read is books-store\'s own (mode = cheque, the held ones), one transaction', [/p\.mode = 'cheque'/.test(F.chqSql || ''), r.trips <= 2], [true, true]);
   t('finance: as_of is the shop\'s day', /^\d{4}-\d{2}-\d{2}$/.test(String(r.json.figures.as_of)), true);
+  { const wasAccounts = BS.accounts, wasNet = BS.accountNet; BS.accounts = async () => [{ account_id: 'd1', role: 'debtors' }]; BS.accountNet = async () => 357500;
+    F.cheques = 'none'; r = await g('finance');
+    t('finance: what customers owe is a line, in the unit of the pack, and the card is in_use (it said Not started over A$3,575 to collect)', [r.json.lines[0].text, r.json.lines[0].money.amount, r.json.state, r.json.figures.to_collect_minor], ['To collect {money}', 3575, 'in_use', 357500]);
+    BS.accounts = wasAccounts; BS.accountNet = wasNet; }
   F.cheques = 'none'; r = await g('finance');
   t('finance: no cheque at all -> said in words, value 0, never a blank', r.json.lines, [{ text: 'No cheque waiting', value: 0 }]);
   F.cheques = null; F.booksOn = false; r = await g('finance');

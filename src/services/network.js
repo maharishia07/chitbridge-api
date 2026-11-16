@@ -25,10 +25,13 @@ const err = (status, message, code) => Object.assign(new Error(message), { statu
  *
  * ⭐ TWO KINDS OF EDGE. `governance` is the tree: one live parent, and approving it moves the child's subtree under the
  * parent (and disconnecting it moves the subtree back to its own root): the one consented door through the root-immutable trigger, NET-93 reRootGuard.
+ * `agency` is a firm over its clients (an accountant, an adviser): like commercial it never moves the tree, and it is NOT membership — a client never sees the firm's other clients through it;
+ *   it only lets the firm be given the client's books (lib/network-membership isGrantParentSql).
  * `commercial` is a brand's network of stores: a store may hold many (one per brand — b261), and it never moves
  * the tree. Membership reads both (lib/network-membership.js).
  */
 const TREE = 'governance';
+const AGENCY = 'agency'; /* a firm acting for its clients: never a network, never the tree, never listed among a client's network members (treeOf walks the path only) */
 
 async function register({ name, mode, businessType, ownerScope = 'entity', claimed = true, appRef = null }) {
   if (!name) throw err(400, 'name required', 'NAME_REQUIRED');
@@ -214,7 +217,7 @@ async function refuseCycle(client, parent, child) {
  */
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
-  if ([TREE, 'commercial'].indexOf(type) < 0) throw err(400, 'type must be governance or commercial', 'BAD_TYPE');
+  if ([TREE, 'commercial', AGENCY].indexOf(type) < 0) throw err(400, 'type must be governance, commercial or agency', 'BAD_TYPE');
   const parent = await _askedParent({ parentId, parentHandle }, actor);
   if (!parent) throw err(404, 'network not found', 'PARENT_NOT_FOUND');
   const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor);

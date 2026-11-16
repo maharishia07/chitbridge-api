@@ -138,7 +138,7 @@ function harness(options) {
       const method = route.split(' ')[0];
       worlds.forEach((one) => {
         if (one.badId && !routes[route].includes(':')) return;
-        generic.push({ id: one.id, route, url: urlOf(routes[route], one.badId, values), body: BODY_METHODS.includes(method) ? {} : undefined, setup: one.setup });
+        generic.push({ id: one.id, route, url: urlOf(routes[route], one.badId, values), body: BODY_METHODS.includes(method) ? {} : undefined, setup: one.setup, headers: one.headers });
       });
     });
     const named = extras.map((one) => Object.assign({}, one, { url: one.url || urlOf(routes[one.route] || '', false, values), extra: true }));

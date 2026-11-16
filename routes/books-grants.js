@@ -8,8 +8,9 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem');
-const { ownerOnly } = require('../lib/owner');
+const { ownerOnly, isOwner } = require('../lib/owner');
 const grants = require('../lib/books-grant');
+const frontMiddleware = require('../middleware/books-grant');
 const contract = require('../lib/books-grants-contract');
 const { declaresStatuses } = require('../lib/contract-kit'); /* a gate that refuses nothing and says which statuses the store under the handler can answer (a table not yet made: 503; a second open grant: 409) */
 
@@ -30,12 +31,39 @@ function answer(req, res, err) {
 }
 
 // @does Whether costs are shared in the query -> we give the words the owner reads (any signed-in shop session) before sharing the books -> the consent wording.
-router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false')));
+router.get('/consent', auth, noKey, ...contract.checked('GET /consent'), (req, res) => res.json(contract.consentWords(req.query.can_see_costs !== 'false', req.query.preset)));
 
-// @does Nothing in -> we list who the shop has given read access to its books, such as an auditor -> the grants (owner only, not keys).
-router.get('/', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
+/**
+ * who may read the list: the owner of the books (the grants he gave and the ones he holds) and, for the `received` side only, any person who may use a grant (a firm's team member or auditor): he learns which stores his own
+ * firm works for. A person of the firm sees the firm's grants and no other firm's (row security: a grantee sees its own rows); a person who may use no grant is refused as before.
+ */
+function ownerOrGrantUser(req, res, next) {
+  const grantUser = !req.api_key && ['adviser', 'auditor'].some((role) => frontMiddleware.mayUseGrant(req, role));
+  if (grantUser) return next();
+  return memberOnly(req, res, next);
+}
+// @does Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).
+router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
   try {
-    res.json(await grants.list(entityOf(req)));
+    const listed = await grants.list(entityOf(req));
+    /* ONE rule: only the owner of the books sees the grants the shop GAVE; a firm's person (adviser or auditor level) gets the received side only, whatever the grant row says */
+    res.json(isOwner(req) ? listed : { given: [], received: listed.received });
+  } catch (err) {
+    answer(req, res, err);
+  }
+});
+
+/** who may read the practice: a firm's person who may use a grant (owner, adviser-level or auditor-level person); the roles they may use pick which of a client's grants is read */
+function grantUserOnly(req, res, next) {
+  req.practice_roles = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.mayUseGrant(req, role));
+  if (req.practice_roles.length) return next();
+  const words = "Only a firm's owner, adviser or auditor can read the practice.";
+  return problem(req, res, { status: 403, code: 'BOOKS_GRANT_NOT_FOR_YOU', detail: words, legacy: { error: words, message: words } });
+}
+// @does Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).
+router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('GET /practice'), async (req, res) => {
+  try {
+    res.json(await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name }));
   } catch (err) {
     answer(req, res, err);
   }

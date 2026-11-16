@@ -18,7 +18,8 @@ const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engi
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const { moveStatus, stampCancelRequested, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
-const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
+const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing');
+const { postMessage } = require('../lib/message-post'); // the one message writer (chit thread and mark thread) // how a chit write reaches the other copies (lifted with moveStatus)
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
@@ -91,6 +92,7 @@ const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
+const supplyKind = require('../lib/supply-kind'); /* ACC-new-2: a supply kind the shop pack does not define is refused SUPPLY_KIND_UNKNOWN (422), never posted to plain sales */
 const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
@@ -568,6 +570,7 @@ const SEND_STEPS = [
   sendIssued,
   sendPaper,
   sendCashStep,
+  sendSupplyKind,
   sendBridge,
   sendCopyPolicy,
   sendPromote,
@@ -1902,6 +1905,23 @@ async function sendCashStep(sendState, req, res) {
   return problem(req, res, {
     status: 400,
     ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
+}
+
+/**
+ * ⭐ ACC-new-2 (l16-accfix) — a supply kind the shop's pack does not define is refused by name: 422 SUPPLY_KIND_UNKNOWN with the kinds the pack does define
+ * (lib/supply-kind). Before this an AE shop's `gst_free` (the AU word) fell to the plain sales ledger with no VAT and VAT201 box 1 carried it. Its own step,
+ * outside any try, because a refusal must reach the counter. A draft or a chit with no invoice: nothing.
+ */
+async function sendSupplyKind(sendState, req, res) {
+  const { sender_id, business_json, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.invoice) return;
+  const refusal = supplyKind.refusalOf({ country: await countryOfEntity(sender_id), business_json });
+  if (!refusal) return;
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 422,
+    ...said({ error: 'Supply kind not known', code: refusal.code, field: refusal.field, message: refusal.why, line: refusal.line, kind: refusal.kind, kinds: refusal.kinds }, 'CHIT_BAD_REQUEST')
   });
 }
 
@@ -5700,47 +5720,6 @@ router.put(
 // ─── POST /chits/:chit_id/messages ───────────────────────────
 // thread_type: 'external' (all parties see) | 'internal' (sender entity only)
 
-/** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
- *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
- *  per-participant loop when b50 isn't applied. RAIL-136 (d): one tx with the copies, so a failed timeline write leaves no
- *  message behind and a retry posts it once. */
-async function logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster }) {
-  if (roster) {
-    // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-    await crossingIn(
-      db,
-      `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-      [chit_id, roster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
-      async (db) => {
-        for (const pid of roster) {
-          await db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
-      }
-    );
-  } else {
-    await crossingIn(
-      db,
-      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-      [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
-      async (db) => {
-        // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-        const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
-        for (const p of participants.rows) {
-          await db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
-      }
-    );
-  }
-}
-
 /**
  * RAIL-106: a message just posted, told to the parties on another installation → what was queued (ctpReturn.answerOf says it on the answer).
  * A dispute message goes to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide); any other message by RAIL-106 x RAIL-136 (sit/run6):
@@ -5840,22 +5819,20 @@ router.post(
       /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
          posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
       const result = await withEntity(entity_id, async (db) => {
-        const posted = await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: senderName,
-            thread_type,
-            message_text,
-            msg_type: req.body.msg_type,
-            is_dispute: isDispute,
-            dispute_id: disputeId,
-            line_id: req.body.line_id || null
-          },
-          db
-        );
-        if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
-        return posted;
+        /* the ONE message writer (lib/message-post): the copies, then (external) the timeline line, on this transaction */
+        return postMessage(db, {
+          subject_type: 'chit',
+          chit_id,
+          sender_entity_id: entity_id,
+          sender_display_name: senderName,
+          thread_type,
+          message_text,
+          msg_type: req.body.msg_type,
+          is_dispute: isDispute,
+          dispute_id: disputeId,
+          line_id: req.body.line_id || null,
+          timeline: { display_name, roster: disputeRoster }
+        });
       });
       result.ctp = await tellMessageElsewhere(entity_id, chit_id, result, { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type: req.body.msg_type, line_id: req.body.line_id });
 
@@ -7225,6 +7202,7 @@ module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-d
 module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.cjs runs the credit gate with a mismatch and an owner override */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
+module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */

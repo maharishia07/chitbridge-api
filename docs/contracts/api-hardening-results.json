@@ -4061,6 +4061,16 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
+  "GET /api/books/evidence/:id": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": {
     "pass": false,
@@ -4072,6 +4082,22 @@
    }
   },
   "GET /api/books/dues": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/party/:id/bills": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "GET /api/books/attention": {
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
@@ -4160,6 +4186,31 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/bank/statement-files": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/bank/statement-files": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "PATCH /api/books/payments/:id": {
@@ -4685,6 +4736,36 @@
     "why": "not reached: answered 404"
    }
   },
+  "POST /api/books/opening/preview": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/opening/replace": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/opening": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/opening/years": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "POST /api/books/money-check/resolve": {
    "strict_input": {
     "pass": true
@@ -4694,12 +4775,64 @@
     "why": "not reached: answered 404"
    }
   },
+  "GET /api/marks": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
+  "POST /api/marks/query": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 500"
+   }
+  },
+  "POST /api/marks": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 403"
+   }
+  },
+  "GET /api/marks/:thread_id/messages": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/marks/:thread_id/messages": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
   "GET /api/books-grants/consent": {
    "output_allowlist": {
     "pass": true
    }
   },
   "GET /api/books-grants": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
+   }
+  },
+  "GET /api/books-grants/practice": {
    "output_allowlist": {
     "pass": true
    }
@@ -4741,6 +4874,73 @@
    "output_allowlist": {
     "pass": false,
     "why": "the answer holds leak_canary, a column the answer schema does not list"
+   }
+  },
+  "GET /api/books-actions": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books-actions/:id": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/books-actions": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 403"
+   }
+  },
+  "POST /api/books-actions/:id/review": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 403"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "an unknown id answered 403, not 404"
+   }
+  },
+  "POST /api/books-actions/:id/return": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/books-actions/:id/accept": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   },
+   "idempotent_money_write": {
+    "pass": true
    }
   },
   "GET /api/facts/rail/chits": {

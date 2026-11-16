@@ -365,12 +365,39 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/books-grants/practice": {
+      "file": "books-grants.js",
+      "trips": 3,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed."
+    },
     "GET /api/books-grants/log": {
       "file": "books-grants.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 200,
+      "extra": true
+    },
+    "GET /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "GET /api/books-actions/:id": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
       "extra": true
     },
     "GET /api/books/accounts": {
@@ -516,6 +543,22 @@
       "basis": "live from sit-in 2026-11-06",
       "extra": true
     },
+    "GET /api/books/opening": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "GET /api/books/opening/years": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
     "GET /api/books/packs": {
       "file": "books.js",
       "trips": 2,
@@ -602,11 +645,11 @@
     },
     "GET /api/books/todo": {
       "file": "books.js",
-      "trips": 7,
+      "trips": 9,
       "wire": 3,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-grund 2026-11-16 (8 cold with the evidence_gaps line; was 7)"
     },
     "GET /api/books/trial-balance": {
       "file": "books.js",
@@ -2612,6 +2655,42 @@
       "status": 404,
       "extra": true
     },
+    "POST /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/review": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/return": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/accept": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
     "POST /api/books/accounts": {
       "file": "books.js",
       "trips": 1,
@@ -2834,6 +2913,22 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/opening/preview": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "POST /api/books/opening/replace": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
     },
     "POST /api/books/outbox/retry": {
       "file": "books.js",
@@ -5298,6 +5393,111 @@
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"
       }
+    },
+    "POST /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, the duplicate and overlap read, the byte store insert with its table probe, ONE row plus its event insert in one transaction); the offline stub reaches a 422 floor; live measure on sit-au pending; W15-100 adds the PAGED answer (only with ?limit=): the held-accounts group, the window rows, the count, the older count, the page and its read events = 6 statements in the same transaction, never the whole box (not fired by the stub, which sends no limit)",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, then the files and the read events in ONE transaction, two statements however many accounts); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files/:id/file": {
+      "file": "books.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the row read, the byte store read with its probes, the read event insert; an auditor writes no event); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/marks": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/query": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/books/attention": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api, 8-year rig 2026-11-16 (two reads: the flag candidates, the counts; the list kinds add none)"
+    },
+    "GET /api/books/party/:id/bills": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api 2026-11-16 (3 cold: chart + items + terms; 2 warm; the marks and evidence read ride the list transaction)"
+    },
+    "GET /api/books/evidence/:id": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 harden hand count by reading the code path (no run: the books setting and country gate, the evidence test in one transaction, the document read in one transaction, the byte store read; a look under a grant adds none here); the offline stub reaches a 422 floor; live measure pending"
     }
   }
 }

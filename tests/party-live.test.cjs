@@ -49,6 +49,16 @@ const dbSays = (row) => ({ query: async () => ({ rows: row ? [row] : [] }) });
     const rows = leads.plan([{ row: 1, name: 'Newcomer', digits: '9876543210' }], [Object.assign({}, known, { removed: true }), live]);
     assert.deepStrictEqual([rows[0].outcome, rows[0].party_id], ['merge', 'k2']);
   });
+  await t('the installation root (added_via system) is no party: ONE rule in JS and SQL, read by assemble and by GET /relationships/suppliers', async () => {
+    const pl = require('../lib/party-live');
+    assert.strictEqual(pl.isSystemRow({ added_via: 'system' }), true);
+    assert.strictEqual(pl.isSystemRow({ added_via: 'manual' }), false);
+    assert.strictEqual(pl.isSystemRow(null), false);
+    assert.strictEqual(pl.notSystemSql('sl'), "sl.added_via IS DISTINCT FROM 'system'");
+    const rel = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'relationships.js'), 'utf8');
+    assert.ok(rel.includes("notSystemSql('sl')") && rel.includes('AND ${SL_NOT_SYSTEM}'), 'the suppliers list applies the shared predicate');
+    assert.ok(!/added_via === 'system'/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'crm.js'), 'utf8')), 'crm.js holds no private copy');
+  });
   console.log(pass + ' passed');
   process.exit(process.exitCode || 0);
 })();
