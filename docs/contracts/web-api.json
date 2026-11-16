@@ -1875,21 +1875,38 @@
       "sales_minor": 0,
       "lock": {
        "may": true,
-       "why": "Lock the earlier months first."
+       "why": "Lock the earlier months first.",
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
       "reopen": {
        "may": false,
-       "why": null
+       "why": null,
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
+      "open_below_locked": true,
       "lock_trail": []
      }
     ]
    },
    "optional": [
-    "periods[].return"
+    "periods[].return",
+    "periods[].lock.first",
+    "periods[].reopen.first",
+    "periods[].open_below_locked"
    ],
    "also_optional": [
-    "periods[].return"
+    "periods[].return",
+    "periods[].lock.first",
+    "periods[].reopen.first",
+    "periods[].open_below_locked"
    ]
   },
   "GET /api/books/pl": {
