@@ -22,6 +22,7 @@ const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — 
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
 const { VERIFY_REFUSALS } = require('../lib/signin-contract');
 const taxIdDoor = require('../lib/tax-id-door'); // CTR-182: only the owner changes the shop's tax number
+const { CHART_PREF_KEYS, checkChartPrefs } = require('../lib/chart-prefs'); // the person's chart choices: flat ui_prefs keys, one kind list
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -269,8 +270,9 @@ const PREF_SETS = {
       'edition',
       'font',
       'weight',
-      'kural'
-    ] /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
+      'kural',
+      ...CHART_PREF_KEYS
+    ] /* chart_theme · chart_read · chart_fav_<kind>: the person's chart choices (lib/chart-prefs.js is the ONE list) */ /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
     check(prefs) {
       if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font'; /* avatar.js FONTS */
       if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
@@ -278,7 +280,7 @@ const PREF_SETS = {
       if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
       if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
       if (prefs.edition && !/^[a-z][a-z0-9-]{0,23}$/.test(prefs.edition)) return 'Unknown edition';
-      return null;
+      return checkChartPrefs(prefs);
     }
   }
 };
