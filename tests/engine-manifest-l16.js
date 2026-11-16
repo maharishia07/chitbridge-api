@@ -39,7 +39,8 @@ const INFRA = [
   'review-mark.js',
   'message-post.js',
   'practice-health.js',
-  'supply-kind.js'
+  'supply-kind.js',
+  'books-money-ops.js'
 ];
 const PENDING = [
   'books-opening.js',
