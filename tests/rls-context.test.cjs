@@ -47,7 +47,8 @@ quick_key_group_item register_acceptance register_attachable register_entry regi
 register_subject register_template register_template_standard retention_config reward_ledger signup_context
 state_log stock_balance stock_movement supplier_readiness_acceptance supply_item test_result
 wholesaler_store
-cb_device cb_external_reference cb_entity_supplier cb_contact cb_entity_employee cb_consumer_traction cb_catalogue_category cb_catalogue_item cb_chit cb_chit_item cb_chit_log cb_task cb_transaction_history`.split(/\s+/).filter(Boolean);
+cb_device cb_external_reference cb_entity_supplier cb_contact cb_entity_employee cb_consumer_traction cb_catalogue_category cb_catalogue_item cb_chit cb_chit_item cb_chit_log cb_task cb_transaction_history
+ai_usage bank_rec_log bank_statement_file bank_statement_file_event books_access_grant books_access_log books_action_step books_compare_part catalogue_source chit_currency_review chit_currency_violation chit_proposal connections connector_connection ctp_event_in ctp_event_out definition_status_log dispute_participants entity_actor_settings entity_profile entity_wallet fx_rate media_blobs membership_certificate memberships move_in_import network_revoked party_contact party_contact_pref privacy_request product_container registry_change registry_cursor registry_entry repeat_supply schema_migrations signin_events source_penetration standard_source test_result_month usage_ledger`.split(/\s+/).filter(Boolean);
 
 const ROOT = path.join(__dirname, '..');
 const DIRS = ['lib', 'routes'];
@@ -121,6 +122,28 @@ const EXPECTED = {
   /* SEC-75: supplier_list is FORCE since b270 (29 Sep) and joined this list when the stale baseline was corrected. The ONE bare-pool read is the operator
      list's FALLBACK count, used only when ops.f_entity_counts (b241) is missing; supplier-list-scope.test.cjs names it too. */
   'routes/entities.js:supplier_list': 'operator list fallback count, only when ops.f_entity_counts is absent; reads across shops on purpose',
+  /* ── l16: tables the baseline refresh (15 Nov, SIT census) now shows FORCE. All READ-WIDE by policy, each checked against its migration; a read here is the design ── */
+  'lib/catalogue-build.js:catalogue_source': 'read-wide by policy (read_all, b855): the build reads source catalogues for any shop; only the owning brand writes',
+  'lib/network-catalogue.js:catalogue_source': 'read-wide by policy (read_all, b855): the network catalogue shows every source to members',
+  'lib/network-offers.js:catalogue_source': 'read-wide by policy (read_all, b855): an offer names its source catalogue',
+  'routes/assist.js:catalogue_source': 'read-wide by policy (read_all, b855): the assistant lists sources',
+  'lib/boilerplate.js:standard_source': 'read-wide by policy (standard_source_read_all, b865): 27 of 32 seeded standards have no owner and every shop resolves its templates from them',
+  'lib/conformance.js:standard_source': 'read-wide by policy (standard_source_read_all, b865)',
+  'lib/instruments.js:standard_source': 'read-wide by policy (standard_source_read_all, b865)',
+  'lib/profile.js:standard_source': 'read-wide by policy (standard_source_read_all, b865)',
+  'lib/readiness.js:standard_source': 'read-wide by policy (standard_source_read_all, b865)',
+  'lib/source.js:standard_source': 'read-wide by policy (standard_source_read_all, b865)',
+  'lib/workpattern.js:standard_source': 'read-wide by policy (standard_source_read_all, b865)',
+  'lib/container.js:product_container': 'read-wide by policy (b855): subscribers read the container; only the owner writes',
+  'routes/products.js:media_blobs': 'read-wide by policy (b855): public image link, the key is the secret and the route then checks the owning shop',
+  'lib/netmember.js:network_revoked': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netmember.js:membership_certificate': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netmember.js:registry_change': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netmember.js:registry_entry': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netsync.js:membership_certificate': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netsync.js:network_revoked': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netsync.js:registry_cursor': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
+  'lib/netsync.js:registry_entry': 'platform fact, no entity column; cb_app policy USING (true) (b790)',
   'routes/signin.js:signup_context': 'append-only audit row, written before the entity exists — b265 makes the table insert-only by design, not by context',
 };
 
