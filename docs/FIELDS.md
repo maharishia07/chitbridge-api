@@ -1470,3 +1470,9 @@ Written by: lib/review-mark.js set (the one writer, through the DB function revi
 | `GET /api/books/daybook` · `GET /api/books/ledger/:account` (top level) | `mark_actions` | `{ set: { ok, why }, reply: { ok, why } }` · what this person may do on a mark, with the sentence when not · the server's verdict, the page never decides · absent while marking is off |
 | `GET /api/books/daybook` · `GET /api/books/ledger/:account` (top level) | `mark_vocabulary` | array of `{ kind, label, class, note }` · the adopter's words (Checked, Query, On hold) each mapped to a neutral class; note says none, optional or required · absent while marking is off |
 | `review_mark.seal` (stored, jsonb) | `seal` | `{ v, fields, hash }` exactly as lib/canon seal returns it · the record as the reviewer saw it; compared with the seal read now (mismatch, never recompute) to say 'changed after review' · written once with the mark row, never updated |
+
+## GET /api/entities/me · `entity.ledger_on` (l16-polish1, 2026-11-16)
+
+| Key | Meaning | Source and readers |
+|---|---|---|
+| `entity.ledger_on` | boolean. `true` only when the shop (an actor: its employer) has the Ledger switched on; `false` when off, not yet set up, or unreadable. | Source: `lib/books.settingOf` (the same read the books gate makes, routes/books.js `on`). Read by web app.html (boot: show the Ledger door), crm.html (Dues column) and accounts.html (off card), which no longer ask `GET /books/health` just to learn this: that route answers 404 LEDGER_OFF by design and the console showed a failed request on the first screen. Never defaults to on. |
