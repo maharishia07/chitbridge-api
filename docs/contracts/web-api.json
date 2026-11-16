@@ -2255,7 +2255,9 @@
      "due": "2026-10-28",
      "ended": true,
      "stagger": 1,
-     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+     "state": "open",
+     "closed": false
     },
     "boxes": [
      {
@@ -2320,8 +2322,10 @@
     "asked.stagger",
     "emirates",
     "needs",
+    "period.closed",
     "period.due_rule",
     "period.stagger",
+    "period.state",
     "periods[].closed",
     "periods[].due_rule",
     "periods[].stagger",
