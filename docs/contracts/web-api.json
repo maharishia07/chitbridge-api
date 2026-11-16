@@ -2101,9 +2101,14 @@
       "accounts": [
        {
         "code": "4000",
-        "name": "Sales"
+        "name": "Sales",
+        "amount_minor": 11000,
+        "tax_minor": 1000
        }
       ],
+      "accounts_n": 1,
+      "accounts_more_n": 0,
+      "split_ok": true,
       "note": "GST-exclusive (the ledgers hold all GST paid in one account)"
      }
     ],
