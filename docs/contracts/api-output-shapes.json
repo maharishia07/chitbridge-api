@@ -3283,6 +3283,77 @@
           },
           "today": {
             "type": "string"
+          },
+          "signed_as_at": {
+            "type": "object",
+            "required": [
+              "asOf",
+              "accounts"
+            ],
+            "properties": {
+              "asOf": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "accounts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "account_id",
+                    "currency",
+                    "period_to",
+                    "statement_minor",
+                    "books_signed_minor",
+                    "unexplained_minor",
+                    "tied",
+                    "made_at"
+                  ],
+                  "properties": {
+                    "account_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "currency": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "period_to": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "statement_minor": {
+                      "type": "integer"
+                    },
+                    "books_signed_minor": {
+                      "type": "integer"
+                    },
+                    "unexplained_minor": {
+                      "type": "integer"
+                    },
+                    "tied": {
+                      "type": "boolean"
+                    },
+                    "made_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false,
