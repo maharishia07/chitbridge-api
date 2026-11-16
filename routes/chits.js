@@ -67,6 +67,7 @@ const disputeAlert = require('../lib/dispute-alert'); // RAIL-79: the sentence u
 const lineShape = require('../lib/line-shape'); // RAIL-177 · RAIL-81: a bad line_id is refused, a figure key the engine does not read is named
 const { PRIORITIES, RETENTION_MAX_DAYS, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
+const { areaDoor } = require('../middleware/books-area-gate'); // W15-66: the money answers are a person's only when the owner opened the area (lib/books-areas.DOORS)
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const amend = require('../lib/amend');
@@ -3591,7 +3592,7 @@ function rollupGroups(rows) {
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
 // @does Group by counterparty or state, direction and assignment in -> we count and total your live chits -> the grouped summary.
-router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
+router.get('/rollup', auth, areaDoor('reports'), ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const groupBy = req.query.group_by === 'state' ? 'state' : 'counterparty';

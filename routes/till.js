@@ -43,6 +43,7 @@ const taxSlab = require('../lib/tax-slab'); /* ⭐ F5 A1: categoryIdsOf for the 
 const taxPacks = require('../lib/tax-packs'); /* the shop's tax pack (collect_without_tax_id) for tax-shelf.chargesTax */
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { areaDoor } = require('../middleware/books-area-gate'); // W15-66: the money answers are a person's only when the owner opened the area (lib/books-areas.DOORS)
 const { query, withEntity } = require('../db');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ CAT-W1: the one product writer (patchItems) */
 const catalogueView = require('../lib/catalogue-view');
@@ -2484,7 +2485,7 @@ router.post('/invoice-lease', auth, auth.requireScope('till'), ...checked('POST 
   }
 });
 // @does Optional counter and page in, a counter key or a shop sign-in -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.
-router.get('/invoice-lease/report', auth, auth.requireScope('till'), ...checked('GET /invoice-lease/report'), async (req, res) => {
+router.get('/invoice-lease/report', auth, areaDoor('accounts'), auth.requireScope('till'), ...checked('GET /invoice-lease/report'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const badPaging = ['limit', 'page'].find((key) => req.query[key] != null && !/^[1-9][0-9]{0,5}$/.test(String(req.query[key])));

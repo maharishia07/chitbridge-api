@@ -14,6 +14,7 @@ const { queryDay } = require('../middleware/validate');
 const { said, failed, routeChecks: checked } = require('../lib/folders-contract');
 const { UUID } = require('../lib/namedentity');
 const auth = require('../middleware/auth');
+const { areaDoor } = require('../middleware/books-area-gate'); // W15-66: the money answers are a person's only when the owner opened the area (lib/books-areas.DOORS)
 const folderInventory = require('../lib/folder-inventory');
 const select = require('../lib/select');
 const cost = require('../lib/cost');
@@ -39,7 +40,7 @@ const groupsum = require('../lib/groupsum');
  * lib/itemmatch.js, the value is lib/measure.js. This route chooses the rows and nothing else.
  */
 // @does Track, optional folder and ticked chits in -> we add up the lines and money across those chits you hold -> one combined sum, cost-blind for readers who may not see costs.
-router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
+router.get('/groupsum', auth, areaDoor('reports'), ...checked('GET /groupsum'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);
     const flags = await policy.get(shopId);
@@ -90,7 +91,7 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
  * under it). Both are given, because collapsing them loses the ability to check either.
  */
 // @does Task or Order track in -> we count every chit on the track once and check total equals unfiled plus each folder -> the counts per folder and whether they reconcile.
-router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) => {
+router.get('/reconcile', auth, areaDoor('reports'), ...checked('GET /reconcile'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);
     const scope = req.query.scope === 'order' ? 'order' : 'task';
@@ -192,7 +193,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
  * than averaged from two halves, which is the classic way a "combined" figure becomes quietly wrong.
  */
 // @does An optional since-date in -> we measure the chits you received and sent from that date, overdue by the rail's one rule -> the MIS figures for both sides.
-router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, res) => {
+router.get('/mis', auth, areaDoor('reports'), queryDay('since'), ...checked('GET /mis'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);
     const flags = await policy.get(shopId);

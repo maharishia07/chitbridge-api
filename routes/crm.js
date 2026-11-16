@@ -48,6 +48,7 @@ const express = require('express');
 const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { mayCrmMoney } = require('../middleware/books-area-gate'); // W15-66: party money (dues, late dues, unbilled) is for the owner and the two money areas
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { contract, schemaOptions, crmFault, keyFence, notYourParty, noSuchFollowup } = require('../lib/crm-contract'); // the contract (each route's operation) and the words of a refusal
@@ -109,6 +110,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
       limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP)
     });
     /* S34: every key crm.list can carry is named (consent_migrated only with ?with=consent, leads_migrated only on the leads view: undefined, so JSON leaves it out), then may */
+    if (!mayCrmMoney(req)) require('../lib/dues-view').shutMoney(listed);
     // prettier-ignore
     res.json({ parties: listed.parties, walk_ins: listed.walk_ins, count: listed.count, total: listed.total, page: listed.page, limit: listed.limit, truncated: listed.truncated, alerts: listed.alerts, consent_migrated: listed.consent_migrated, leads_migrated: listed.leads_migrated, may: crmMay(req) });
   } catch (e) {
@@ -165,6 +167,7 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
     await crm.withUnbilled([rec], owner, byOf(req), blind); /* CRM-D7: the SAME figure the list row carries (the one sum, work-rows.sumUnbilled); absent when the shop is truncated, hidden whole for a blind reader */
     rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     /* S34: the party's keys (lib/crm.js assemble, in its order: a supplier-only party has no customer or lead), then what this record adds */
+    if (!mayCrmMoney(req)) require('../lib/dues-view').shutMoney(rec);
     // prettier-ignore
     res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, unbilled: rec.unbilled, migrated: rec.migrated, followups: rec.followups, may: rec.may });
   } catch (e) {

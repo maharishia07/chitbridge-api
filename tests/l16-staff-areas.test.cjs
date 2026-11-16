@@ -256,9 +256,9 @@ const refusedWith = (out, code) => !out.nexted && out.status === 403 && out.body
     for (const key of Object.keys(access.PRESET_AREAS)) assert.ok(keys.includes(key), key);
     assert.deepStrictEqual(access.presetAreas('editor', false, false), {}, 'counter staff');
     assert.deepStrictEqual(access.presetAreas('viewer', false, false), {}, 'view-only');
-    assert.deepStrictEqual(access.presetAreas('commenter', true, true), { accounts: 'see' });
-    assert.deepStrictEqual(access.presetAreas('commenter', true, false), { accounts: 'see' });
-    assert.deepStrictEqual(access.presetAreas('editor', true, true), { accounts: 'work' });
+    assert.deepStrictEqual(access.presetAreas('commenter', true, true), { accounts: 'see', reports: 'see', finance: 'see' });
+    assert.deepStrictEqual(access.presetAreas('commenter', true, false), { accounts: 'see', reports: 'see', finance: 'see' });
+    assert.deepStrictEqual(access.presetAreas('editor', true, true), { accounts: 'work', reports: 'see', finance: 'see' });
   });
 
   const reqOf = (id, body, identity) => ({ params: { id }, body, identity: identity || OWNER, headers: {}, method: 'PATCH', originalUrl: '/api/actors/' + id + '/areas', id: 'r1' });
@@ -275,7 +275,7 @@ const refusedWith = (out, code) => !out.nexted && out.status === 403 && out.body
   };
   await t('pass test 12: an area that is not enforced is refused 400 in words, nothing written', async () => {
     sqlSeen.length = 0;
-    for (const area of ['stock', 'finance', 'crm', 'employees', 'nonsense']) {
+    for (const area of ['stock', 'products', 'crm', 'employees', 'nonsense']) {
       const res = resOf();
       await setArea(reqOf(SAM, { area, level: 'see' }), res);
       assert.strictEqual(res.code, 400, area);

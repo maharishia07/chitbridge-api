@@ -14,11 +14,11 @@ const auth = require('./auth');
 const { problem } = require('../lib/problem');
 const { isOwner, OWNER_ONLY, OWNER_ONLY_WORDS } = require('../lib/owner');
 const areas = require('../lib/areas');
-const { classOf, needs, OWNER } = require('../lib/books-areas');
+const { classOf, needs, OWNER, ENFORCED_AREAS, CRM_MONEY_AREAS } = require('../lib/books-areas');
 
 /** the one area this gate enforces (v1); lib/areas.GRANTABLE must equal ENFORCED (tests/l16-staff-areas.test.cjs): a grantable area that nothing enforces is a lie on a screen */
 const AREA = 'accounts';
-const ENFORCED = Object.freeze([AREA]);
+const ENFORCED = ENFORCED_AREAS;
 const CLOSED = 'BOOKS_AREA_CLOSED';
 /** what a closed door says (the screen shows it as is; the code is the word a screen branches on) */
 const CLOSED_WORDS = 'Your access does not include the books. Ask the owner.';
@@ -67,4 +67,25 @@ function bankWriter(editor) {
   return gate;
 }
 
-module.exports = Object.assign(gateOf(auth), { gateOf, bankWriter, decide, verdictFor, ENFORCED, CLOSED, CLOSED_WORDS, NO_WORK_WORDS, KEY_WORDS });
+/** what a closed door of each area says (the screen shows it as is) */
+const AREA_WORDS = Object.freeze({ accounts: CLOSED_WORDS, reports: 'Your access does not include the reports. Ask the owner.', finance: 'Your access does not include the finance figures. Ask the owner.' });
+const wordsOf = (area) => AREA_WORDS[area] || CLOSED_WORDS;
+
+/** may this request read the area: the owner · a till device or an API key (they have their own scope gates and were never asked here) · a person who holds it */
+const mayRead = (req, area) => isOwner(req) || !!req.api_key || !!req.till || areas.holds(req.identity, area, 'see');
+
+/** areaDoor(area) → the ROUTE-level gate of a money answer outside /api/books, placed right after the route's own `auth` (lib/books-areas.DOORS names each). A closed door is the same 403 in words. */
+function areaDoor(area) {
+  const gate = (req, res, next) => (mayRead(req, area) ? next() : refuse(req, res, CLOSED, wordsOf(area)));
+  gate.areaDoor = area;
+  return gate;
+}
+
+/** the Home card of a closed area: asked of lib/home-facts through the route (a card is never a 403: Home draws every card, so a closed one answers as a card with nothing on it and says why) */
+const cardClosed = (req, area) => !!area && !mayRead(req, area);
+const closedCard = (area) => ({ lines: [], state: 'not_started', closed: true, why: wordsOf(area) });
+
+/** may this person see the shop's party money (dues, late-dues count, unbilled) on the CRM screens: the owner, or one of the two money areas */
+const mayCrmMoney = (req) => isOwner(req) || !!req.api_key || CRM_MONEY_AREAS.some((area) => areas.holds(req.identity, area, 'see'));
+
+module.exports = Object.assign(gateOf(auth), { gateOf, bankWriter, areaDoor, cardClosed, closedCard, mayCrmMoney, AREA_WORDS, decide, verdictFor, ENFORCED, CLOSED, CLOSED_WORDS, NO_WORK_WORDS, KEY_WORDS });

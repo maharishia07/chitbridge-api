@@ -24,6 +24,8 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the request
 const { SAFE_SENTENCE } = require('../lib/respond');
 const { said, keyRefused, operationFor, pathsOf } = require('../lib/facts-contract'); // the contract (each route's operation) and the words of a refusal
 const home = require('../lib/home-facts');
+const { areaDoor, cardClosed, closedCard } = require('../middleware/books-area-gate'); // W15-66: a closed area is a closed door, and a closed Home card says so
+const { CARD_AREA } = require('../lib/books-areas');
 /** the schema check of one route (its own operation in lib/facts-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = operationFor(route);
@@ -48,6 +50,8 @@ router.get('/:card', auth, ...checked('GET /:card'), async (req, res) => {
   const build = Object.prototype.hasOwnProperty.call(home.BUILD, req.params.card) ? home.BUILD[req.params.card] : null;
   if (!build) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'There is no Home card called "' + String(req.params.card).slice(0, 40) + '".') });
   if (req.api_key) return problem(req, res, { status: 403, ...keyRefused() });
+  const area = Object.prototype.hasOwnProperty.call(CARD_AREA, req.params.card) ? CARD_AREA[req.params.card] : null;
+  if (cardClosed(req, area)) return res.json(closedCard(area)); /* W15-66: a closed card is a card with no lines and the word why, never a 403 (Home draws every card) */
   try {
     const entity = auth.entityOf(req);
     res.json(await build({ entity, actor: req.identity && req.identity.identity_id, req }));
