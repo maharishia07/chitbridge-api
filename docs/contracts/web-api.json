@@ -556,8 +556,14 @@
        "name": "Current Assets"
       },
       "net_of": [
-       { "code": "2200", "name": "Output CGST" },
-       { "code": "2210", "name": "Input CGST" }
+       {
+        "code": "2200",
+        "name": "Output CGST"
+       },
+       {
+        "code": "2210",
+        "name": "Input CGST"
+       }
       ]
      }
     ],
@@ -1332,7 +1338,17 @@
       "credit_limit_from": null,
       "over_limit": false,
       "last_remind": null,
-      "needs": { "parties": 0, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
+      "needs": {
+       "parties": 0,
+       "bills": 1,
+       "disputed": 0,
+       "query": 0,
+       "held": 0,
+       "no_tax_invoice": 0,
+       "no_terms": 0,
+       "overdue": 1,
+       "overdue_minor": 118000
+      },
       "payable": {
        "total_minor": 59000,
        "buckets": {
@@ -1455,8 +1471,28 @@
     ],
     "total_minor": 59000,
     "needs": {
-     "customer": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
-     "supplier": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 59000 }
+     "customer": {
+      "parties": 1,
+      "bills": 1,
+      "disputed": 0,
+      "query": 0,
+      "held": 0,
+      "no_tax_invoice": 0,
+      "no_terms": 0,
+      "overdue": 1,
+      "overdue_minor": 118000
+     },
+     "supplier": {
+      "parties": 1,
+      "bills": 1,
+      "disputed": 0,
+      "query": 0,
+      "held": 0,
+      "no_tax_invoice": 0,
+      "no_terms": 0,
+      "overdue": 1,
+      "overdue_minor": 59000
+     }
     },
     "payables": {
      "total_minor": 59000
@@ -2205,7 +2241,9 @@
       "due": "2025-10-28",
       "ended": true,
       "stagger": 1,
-      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+      "state": "open",
+      "closed": false
      }
     ],
     "period": {
@@ -2217,7 +2255,9 @@
      "due": "2026-10-28",
      "ended": true,
      "stagger": 1,
-     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+     "state": "open",
+     "closed": false
     },
     "boxes": [
      {
@@ -2282,10 +2322,14 @@
     "asked.stagger",
     "emirates",
     "needs",
+    "period.closed",
     "period.due_rule",
     "period.stagger",
+    "period.state",
+    "periods[].closed",
     "periods[].due_rule",
     "periods[].stagger",
+    "periods[].state",
     "staggers",
     "unsupported_input",
     "why"
@@ -2440,6 +2484,7 @@
     "fiscal_year": "2026-27",
     "closed": false,
     "can_close": false,
+    "can_close_if_lodged": false,
     "refusals": [
      {
       "name": "months_open",
@@ -2903,7 +2948,11 @@
     "unbilled": {
      "n": 0,
      "minor": 0,
-     "currency": null
+     "currency": null,
+     "by_currency": [],
+     "no_currency": 0,
+     "unpriced": 0,
+     "cost_hidden": false
     },
     "contact_prefs": {
      "migrated": false,
@@ -3007,15 +3056,6 @@
       "code": null,
       "why": null
      }
-    },
-    "unbilled": {
-     "n": 0,
-     "minor": 0,
-     "currency": null,
-     "by_currency": [],
-     "no_currency": 0,
-     "unpriced": 0,
-     "cost_hidden": false
     }
    },
    "optional": [

@@ -143,7 +143,7 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
   });
   await t('the extra reads of the adviser are the owner reads the auditor list holds back; the auditor list is unchanged and nothing with party or bank details, files or stores is added', () => {
     for (const route of A.ADVISER_EXTRA_READS) { assert.ok(route in A.GRANT_HELD_BACK, route + ' is held back from the auditor'); assert.ok(!A.GRANT_READS.has(route), route + ' is not on the auditor list'); }
-    for (const held of ['/bank/rail', '/party/:id/statement', '/payments/:id/advice', '/compare', '/compare/:id', '/compare/:id/csv', '/packs/:id/file', '/move-in/imports', '/fx-revalue']) assert.ok(!A.ADVISER_EXTRA_READS.has(held), held + ' stays held back from the adviser');
+    for (const held of ['/bank/rail', '/party/:id/bills', '/payments/:id/advice', '/compare', '/compare/:id', '/compare/:id/csv', '/packs/:id/file', '/move-in/imports', '/fx-revalue']) assert.ok(!A.ADVISER_EXTRA_READS.has(held), held + ' stays held back from the adviser');
     assert.ok(A.ADVISER_EXTRA_READS.has('/events') && A.ADVISER_EXTRA_READS.has('/status'));
     /* l16 fable2 R2-3: the accountant seat's Day book reads the evidence counts (no 403); the auditor's list does not carry it; the FX preview stays closed to both (the page does not ask) */
     const door = (role, p) => A.listedFor(role, { method: 'GET', baseUrl: '/api/books', path: p });

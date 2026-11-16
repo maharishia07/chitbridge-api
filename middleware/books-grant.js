@@ -26,6 +26,7 @@ const ROLE_HEADER = 'x-books-role';
 const GRANT_READS = new Set([
   '/accounts', '/daybook', '/ledger/:account', '/evidence/:id', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
   '/terms', '/fx-rates', '/health', '/cheques', '/returns',
+  '/party/:id/statement' /* PAST-YEARS (Athi 16 Nov): a customer's or supplier's ledger, READ ONLY, for the auditor's debtor and creditor confirmations; the same lines and the same cost-blind cut (forBooksDoor) as GET /ledger/:account?party=, no contact or bank data in it */,
   '/bank/log' /* l16 audbank (W15-71, cb-finance agrees): the reconciliation record - marks (who matched), signed months, the lines posted - open to the auditor READ ONLY (FIN-70 built it for the auditor to read); the rail stays held back */,
   '/bank/statement-files', '/bank/statement-files/:id/file' /* l16 Statements box (b872): the kept bank statements, list and download only; adding is the owner's or the adviser's (ADVISER_DOORS) */
 ]);
@@ -33,7 +34,6 @@ const GRANT_READS = new Set([
 const GRANT_HELD_BACK = {
   '/bank/rail': 'returns payment_advice and the party list (held until cb-country agrees)',
   '/status': 'owner only today; an auditor reads the ledger switch only after its gate is widened (the register line moves with it)',
-  '/party/:id/statement': 'party names, phones, bank details (C6: only after cb-country confirms per country)',
   '/payments/:id/advice': 'bank details of a payee (C6)',
   '/compare': 'stores into the member books',
   '/compare/:id': 'stores into the member books',
