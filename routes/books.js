@@ -555,7 +555,8 @@ function pageQ(query) {
   if (ids.length) return { entries: ids.slice(0, S.PAGE_MAX) };
   if (query.limit == null && query.after == null && query.page == null) return null;
   const match = /^(\d{4}-\d{2}-\d{2})\|(.{1,60})$/.exec(String(query.after || ''));
-  return { limit: pageLimit.limitOf(query.limit, S.PAGE_DEFAULT, S.PAGE_MAX), after: match ? { date: match[1], no: match[2] } : null, page: pageLimit.pageOf(query.page) };
+  /* l16-scale: ?order=desc reads the pages NEWEST first (the Day book, and a Ledger asked for its newest lines: those carry no running balance); the default stays oldest first (the Ledgers page keeps it: its running balance runs from the opening) */
+  return { limit: pageLimit.limitOf(query.limit, S.PAGE_DEFAULT, S.PAGE_MAX), after: match ? { date: match[1], no: match[2] } : null, page: pageLimit.pageOf(query.page), desc: String(query.order || '').toLowerCase() === 'desc' };
 }
 const cursorOf = (next) => (next ? next.date + '|' + next.no : null);
 
@@ -696,7 +697,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
           other: OtherSide.otherOf(item.entry_lines, item, taxRoles) /* W15-89b: the entry's other side: { code, name } · { code: null, name: 'Split', count } · null */,
           dr_minor: Number(item.dr_minor),
           cr_minor: Number(item.cr_minor),
-          running_minor: run
+          running_minor: pg && pg.desc ? null : run /* l16-scale: a newest-first page carries no running balance (it runs oldest first from the opening); the range closing_minor stays */
         };
       });
       const base = {
@@ -714,7 +715,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {
-            page_opening_minor: first,
+            page_opening_minor: pg.desc ? undefined : first,
             total: t.entries,
             page: pg.page,
             limit: p.limit,
