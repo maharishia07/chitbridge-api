@@ -588,6 +588,17 @@ const INFRA_LIBS = [
   'whatsapp-out.js',       // provider send
   'optout.js',             // CON-2: a WhatsApp STOP reply -> privacy.notePref rows + the opt-out line; SQL and the one sender, no money or tax
   'whatsapp-templates.js', // provider template shapes
+  /* l16 guards (2026-11-16): the l16 modules, classified at the guard fix. Plumbing: SQL, shaping, doors, files; none holds a rule of the engines. */
+  'attachment-send.js',    // Content-Disposition value (RFC 6266/5987) for a file download
+  'bank-open.js',          // the open bills and invoices of every party, as the Bank page lists them (a read)
+  'bank-statement-file.js', 'bank-statement-page.js', // the Bank page's statements box: file, event and page (storage + SQL)
+  'bill-checks.js',        // what stands behind each open bill: its amount, day, mark and evidence state (a read)
+  'books-evidence.js',     // the evidence behind a books row and the door that serves its file
+  'books-lock-note.js', 'books-needs.js', 'books-open-items.js', 'books-other-side.js', 'books-party-bills.js', 'books-practice.js', // Books read/shape modules (reads over the shop's own books)
+  'mark-adopters.js', 'mark-detect.js', 'mark-door.js', 'mark-embed.js', 'mark-notices.js', 'mark-policies.js', 'marks-contract.js', 'review-mark.js', // MARK & QUERY: the reviewer's mark, its door, its notices and contract
+  'message-post.js',       // one message row for a chit or a mark
+  'practice-health.js',    // the practice (adviser) health read
+  'supply-kind.js',        // a supply kind the shop's pack does not define is refused: the pack decides, this only asks
 ];
 const ENGINE_OTHER = [
   /* ⭐⭐⭐ [BOOKS v2] books.js — postEntry, THE ONE WRITER of the journal (where and when: which ledger a code is, which
@@ -957,6 +968,9 @@ const PENDING_LIBS = [
   /* CTR-181 (2026-11-13): a summary closed again under a held reference is a retry or the next version. It compares two CARRIED totals (no engine run, no money computed);
      whether that verdict is a counter adoption rule or a rail rule needs cb-capability's call. */
   'summary-reclose.js',
+  /* l16 guards (2026-11-16): these four add up or split money for a Books page (sums over rows, basis points, a return's per-ledger split, opening balances).
+     Whether that arithmetic is engine (books) or stays here needs cb-capability's call — the money-no-arithmetic guard lists the same lines for cb-finance/cb-accounting. */
+  'books-opening.js', 'books-report-period.js', 'books-return-split.js', 'books-statement-notes.js',
 ];
 
 /**
