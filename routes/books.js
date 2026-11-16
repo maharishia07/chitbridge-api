@@ -965,13 +965,19 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
                 .map((x) => x.due_date || x.date)
                 .filter(Boolean)
                 .sort()[0] || null;
+            /* ADDITIVE keep: web main still reads p.buckets (cap-books.js); the SAME ageing as before, filled from d.ageing; its removal is a later change made with its web twin */
+            const buckets = {};
+            Object.keys(ag.undisputed || {}).forEach((item) => {
+              buckets[item] = sign * ((ag.undisputed[item] || 0) + ((ag.disputed || {})[item] || 0));
+            });
             const disputed = Object.keys(ag.disputed || {}).reduce((total, item) => total + (ag.disputed[item] || 0), 0);
             const row = {
               party_id: pid,
               side: role === 'creditors' ? 'supplier' : 'customer',
               balance_minor: sign * open,
               oldest_due: oldest,
-              disputed_minor: sign * disputed
+              disputed_minor: sign * disputed,
+              buckets
             };
             row.follow_up = E.followRow(d.follow, pid); /* W15-94: the ONE ageing — days past due, both sides, every read */
             row.needs = Object.assign(Needs.empty(), needs.by_party.get(String(pid)) || {});
@@ -1004,6 +1010,9 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           x.side = 'both';
           if (r.side === 'customer') x.follow_up = r.follow_up; /* a both-sides row ages what the customer half owes (as before) */
           x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
+          Object.keys(r.buckets).forEach((item) => {
+            x.buckets[item] = (x.buckets[item] || 0) + r.buckets[item];
+          });
           if (fin) {
             if (r.interest_minor != null) {
               x.interest_minor = (x.interest_minor || 0) + r.interest_minor;

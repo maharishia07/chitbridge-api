@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem');
-const { ownerOnly } = require('../lib/owner');
+const { ownerOnly, isOwner } = require('../lib/owner');
 const grants = require('../lib/books-grant');
 const frontMiddleware = require('../middleware/books-grant');
 const contract = require('../lib/books-grants-contract');
@@ -46,7 +46,8 @@ function ownerOrGrantUser(req, res, next) {
 router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
   try {
     const listed = await grants.list(entityOf(req));
-    res.json(req.identity.parent_entity_id ? { given: [], received: listed.received } : listed);
+    /* ONE rule: only the owner of the books sees the grants the shop GAVE; a firm's person (adviser or auditor level) gets the received side only, whatever the grant row says */
+    res.json(isOwner(req) ? listed : { given: [], received: listed.received });
   } catch (err) {
     answer(req, res, err);
   }

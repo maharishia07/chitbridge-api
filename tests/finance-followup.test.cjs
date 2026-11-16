@@ -194,9 +194,9 @@ async function partRoute(country) {
     t('row · DISP stays in its bucket AND in disputed_minor', [rowOf(got, 'DISP').follow_up.d31_60, rowOf(got, 'DISP').disputed_minor], [TEN, TEN]);
     t('row · OVER: nothing aged, balance −50000 (the unapplied rest), keys sum 0 = balance − unapplied', [rowOf(got, 'OVER').balance_minor, rowOf(got, 'OVER').follow_up.d0_30], [-50000, 0]);
     if (AU) {
-      t('W15-107 · AU /dues ages ONE way, in days past due: bills 10, 40, 75 and 120 days late → d0_30 · d31_60 · d61_90 · d90_plus, one each; no second `buckets` key', [rowOf(got, 'FOUR').follow_up.d0_30, rowOf(got, 'FOUR').follow_up.d31_60, rowOf(got, 'FOUR').follow_up.d61_90, rowOf(got, 'FOUR').follow_up.d90_plus, 'buckets' in rowOf(got, 'FOUR')], [TEN, TEN, TEN, TEN, false]);
+      t('FIN-65 · AU /dues ages in the AU pack months: bills 10, 40, 75 and 120 days late → lt_1m · m1_2 · m2_3 · gt_3m, one each (no Schedule III d90_plus)', rowOf(got, 'FOUR').buckets, { not_due: 0, lt_1m: TEN, m1_2: TEN, m2_3: TEN, gt_3m: TEN });
       t('AU · no credit days anywhere: aged from the bill date (50 late → d31_60), flagged, terms not_set', rowOf(got, 'NODUE_NONE').follow_up, fu({ d31_60: TEN }, 'd31_60', TEN));
-      t('AU · the row carries no second ageing (no `buckets` key)', 'buckets' in rowOf(got, 'FOUR'), false);
+      t('AU · the row\'s months buckets are the unchanged Schedule III set (the /dues pack gap is filed apart) and carry no day keys', [Object.keys(rowOf(got, 'FOUR').buckets).includes('d0_30'), Object.keys(rowOf(got, 'FOUR').buckets).length > 0], [false, true]);
     } else {
       t('IN · no due date, the shop\'s 15 days → d31_60', rowOf(got, 'NODUE_SHOP').follow_up, fu({ d31_60: TEN }, 'd31_60'));
       t('IN · no due date, the party\'s own 45 days over the shop\'s → d0_30', rowOf(got, 'NODUE_OWN').follow_up, fu({ d0_30: TEN }, 'd0_30'));
@@ -216,7 +216,7 @@ async function partRoute(country) {
     t('?side=supplier&finance=1 (Payables): no follow_up_total, a follow_up on every row', [sup.status, 'follow_up_total' in sup.body, (sup.body.parties || []).every((p) => 'follow_up' in p)], [200, false, true]);
     const plain = await q('/dues?side=customer');
     t('without finance=1: no follow_up_total, but every row carries follow_up (W15-94: Receivables and Payables read the same ageing)', ['follow_up_total' in plain.body, (plain.body.parties || []).every((p) => 'follow_up' in p)], [false, true]);
-    t('the follow-up figures and balances are the same with and without the follow-up (nothing moved)', (got.body.parties || []).every((p) => { const o = plain.body.parties.find((x) => x.party_id === p.party_id); return o && JSON.stringify(o.follow_up) === JSON.stringify(p.follow_up) && o.balance_minor === p.balance_minor; }), true);
+    t('the months buckets and balances are the same with and without the follow-up (nothing moved)', (got.body.parties || []).every((p) => { const o = plain.body.parties.find((x) => x.party_id === p.party_id); return o && JSON.stringify(o.buckets) === JSON.stringify(p.buckets) && o.balance_minor === p.balance_minor; }), true);
     who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP };
     const actor = await q('/dues?finance=1&side=customer');
     t('a co-assist never reaches it: ?finance=1 is the owner\'s door (403 OWNER_ONLY)', [actor.status, actor.body.code, 'follow_up_total' in actor.body], [403, 'OWNER_ONLY', false]);
