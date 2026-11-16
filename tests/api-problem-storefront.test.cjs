@@ -882,8 +882,7 @@ async function checkRoutes(port, recording) {
   console.log('\n-- routes/catalogue.js, the public storefront: every refusal is a Problem and keeps its old keys --');
   const tested = {};
   for (const scenario of SCENARIOS) {
-    require('../lib/code-cooldown').resetCooldown(); /* the one-code-a-minute contact cool-down is judged in limiter-paths; here every scenario starts a fresh minute */
-    Object.assign(world, FRESH, scenario.setup);
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup);
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
     const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
@@ -919,8 +918,7 @@ async function checkHiddenShops(port, recording) {
   console.log('\n-- a hidden shop answers exactly as an unknown one, on every door --');
   const unknowns = SCENARIOS.filter((scenario) => /-unknown$/.test(scenario.id));
   for (const scenario of unknowns) {
-    require('../lib/code-cooldown').resetCooldown();
-    Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
     const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
@@ -940,13 +938,11 @@ async function checkOnceOnly(port) {
   for (const id of Object.keys(DOES)) {
     const scenario = SCENARIOS.find((item) => item.id === id);
     const runs = () => statements.filter((sql) => DOES[id].test(sql)).length;
-    require('../lib/code-cooldown').resetCooldown(); /* the one-code-a-minute contact cool-down is judged in limiter-paths; here every scenario starts a fresh minute */
-    Object.assign(world, FRESH, scenario.setup);
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup);
     statements.length = 0;
     await send(port, 'POST', scenario.url, scenario.body, { 'idempotency-key': 'one-' + id });
     const single = runs();
-    require('../lib/code-cooldown').resetCooldown(); /* the yardstick used this contact's minute; the taps are a new ask under a new key */
-    statements.length = 0;
+    require('../lib/code-cooldown').resetCooldown(); statements.length = 0; /* the yardstick used this contact's minute; the taps are a new ask under a new key */
     const tapped = { 'idempotency-key': 'tap-' + id };
     const taps = await Promise.all([1, 2].map(() => send(port, 'POST', scenario.url, scenario.body, tapped)));
     check(id + ': one request does its work (the yardstick)', single > 0, single);
