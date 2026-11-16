@@ -47,7 +47,7 @@ const code = (r) => r.body && r.body.code;
 
 async function business(tag) {
   const bridgeId = 'CB' + RUN + tag;
-  const { rows: [identity] } = await query("INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'AU', 'AUD', $3) RETURNING identity_id, display_name", [bridgeId, 'Card split ' + tag, crypto.randomUUID()]);
+  const { rows: [identity] } = await query("INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'AU', 'AUD', $3) RETURNING identity_id, display_name", [bridgeId, 'Card split ' + tag + ' ' + RUN, bridgeId.toLowerCase()]);
   return { tag, bridgeId, id: identity.identity_id, name: identity.display_name, node: await net.nodeOf(identity.identity_id, { ensure: true }) };
 }
 async function join(parent, member) {
@@ -56,7 +56,7 @@ async function join(parent, member) {
 }
 const ownerOf = (biz) => ({ identity_id: biz.id, bridge_id: biz.bridgeId, identity_type: 'entity', parent_entity_id: null, display_name: biz.name });
 async function person(biz, tag, level) {
-  const { rows: [row] } = await query("INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'AU', 'AUD', $4, $5, true, true, 'accountant') RETURNING identity_id, display_name", [biz.bridgeId + tag, 'Person ' + tag, biz.id, crypto.randomUUID(), level]);
+  const { rows: [row] } = await query("INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'AU', 'AUD', $4, $5, true, true, 'act') RETURNING identity_id, display_name", [biz.bridgeId + tag, 'Person ' + tag + ' ' + RUN, biz.id, (biz.bridgeId + tag).toLowerCase(), level]);
   return { identity_id: row.identity_id, identity_type: 'actor', parent_entity_id: biz.id, bridge_id: biz.bridgeId, display_name: row.display_name };
 }
 let base = '';
