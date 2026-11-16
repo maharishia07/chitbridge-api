@@ -131,6 +131,9 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   ok('GET /dues with no asOf → asOf is the shop\'s day (2026-10-13 IST at 20:00 UTC on the 12th), not the UTC date', dn.status === 200 && dn.body.asOf === '2026-10-13', JSON.stringify(dn.body).slice(0, 200));
   const tbn = await q('GET', '/trial-balance');
   ok('…and /trial-balance with no asOf reads the same day', tbn.status === 200 && tbn.body.asOf === '2026-10-13', JSON.stringify(tbn.body).slice(0, 120));
+  const tbf = await q('GET', '/trial-balance?asOf=2027-03-31'), tbp = await q('GET', '/trial-balance?asOf=2026-09-30');
+  ok('F5: a trial balance asked for the end of the year in progress carries shown_as_at = the shop day (the E1 rule), the figures still as asked', tbf.status === 200 && tbf.body.asOf === '2027-03-31' && tbf.body.shown_as_at === '2026-10-13', JSON.stringify(tbf.body).slice(0, 160));
+  ok('F5: a past as-at day is its own shown_as_at', tbp.status === 200 && tbp.body.shown_as_at === '2026-09-30', JSON.stringify(tbp.body).slice(0, 160));
   CLOCK.reset();
   const tb = await q('GET', '/trial-balance?asOf=2026-09-30');
   ok('GET /trial-balance → { rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor } and it balances',
