@@ -1539,16 +1539,17 @@ router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /bank/log?account&from&to → { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), posted: [{ ref, entry_no, posting_date, made_at, made_by }] (the bank lines already posted, both ref forms), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
+/** GET /bank/log?account&from&to[&marks_limit=0..5000&marks_before=<seq>] → (marks: the newest marks_limit, oldest first, marks_next = the cursor of the next older page or null) { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), posted: [{ ref, entry_no, posting_date, made_at, made_by }] (the bank lines already posted, both ref forms), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
 // @does A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.
 router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req, res) => {
   try {
     const e = ctx(req),
       from = req.query.from ? dateQ(req.query.from) : null,
-      to = req.query.to ? dateQ(req.query.to) : null;
+      to = req.query.to ? dateQ(req.query.to) : null,
+      marksPage = BANK_LOG.marksPageOf(req.query); /* the NEWEST marks, a page of at most 5000; marks_limit=0 reads none (the Bank home) */
     const out = await withEntity(e, async (handle) => {
       const account = await bankAccountOf(handle, e, req.query.account);
-      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to));
+      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to, marksPage));
     });
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
