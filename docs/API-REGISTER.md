@@ -67,7 +67,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/books-grants/practice | books-grants | routes/books-grants.js:63 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
 | GET | /api/books/accounts | books | routes/books.js:353 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/books/assets | books | routes/books.js:2778 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| GET | /api/books/attention | books | routes/books.js:1071 | yes | yes | no | yes | no | no | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/books/attention | books | routes/books.js:1071 | yes | yes | no | yes | yes | no | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/bank/log | books | routes/books.js:1588 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/bank/rail | books | routes/books.js:1507 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/bank/statement-files | books | routes/books.js:1629 | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
@@ -92,7 +92,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/books/packs | books | routes/books.js:2567 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/packs/:id | books | routes/books.js:2607 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/packs/:id/file | books | routes/books.js:2637 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| GET | /api/books/party/:id/bills | books | routes/books.js:1053 | yes | yes | no | yes | no | no | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/books/party/:id/bills | books | routes/books.js:1053 | yes | yes | no | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/party/:id/statement | books | routes/books.js:759 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/books/payments/:id/advice | books | routes/books.js:1480 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/books/periods | books | routes/books.js:2524 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |

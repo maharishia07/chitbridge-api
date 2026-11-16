@@ -5130,7 +5130,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
@@ -7857,7 +7857,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
