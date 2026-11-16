@@ -526,6 +526,7 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "fy_from": "2026-04-01",
     "assets": [
      {
       "code": "1300",
@@ -1986,6 +1987,8 @@
     "total_expense_minor": 170000,
     "profit_minor": -70000,
     "profit_share_bp": -7000,
+    "total_income_share_bp": 10000,
+    "total_expense_share_bp": 17000,
     "period": {
      "preset": "ytd",
      "step": 0,
@@ -2375,6 +2378,7 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "fy_from": "2026-04-01",
     "rows": [
      {
       "code": "1300",

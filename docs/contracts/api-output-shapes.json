@@ -2631,6 +2631,9 @@
               "boolean",
               "null"
             ]
+          },
+          "fy_from": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3593,7 +3596,19 @@
           },
           "period": {},
           "presets": {},
-          "compare": {}
+          "compare": {},
+          "total_income_share_bp": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "total_expense_share_bp": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
         },
         "additionalProperties": false
       },
@@ -3938,6 +3953,9 @@
           },
           "cost_hidden": {
             "type": "boolean"
+          },
+          "fy_from": {
+            "type": "string"
           }
         },
         "additionalProperties": false
