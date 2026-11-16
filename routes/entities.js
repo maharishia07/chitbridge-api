@@ -713,9 +713,24 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     // (which gates the itemised capability nav). Top-level copies kept for direct/API callers + curl. [b55/connector]
     // Resolve the entity's GOVERNANCE from attributes (constitution · installation · basics · allowances · jurisdiction).
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
+    /* ⭐ ONE readBatch trip for the governance stamp AND the books switch (ledger_on, below): two trips before, same rows, same binding. A failed batch falls back to each read on its own. */
+    let stampRows;
+    let ledgerRow;
+    try {
+      const eidBatch = auth.entityOf(req);
+      const govresolve = require('../lib/govresolve');
+      const [stampRead, ledgerRead] = await require('../db').readBatch(eidBatch, null, [
+        { text: govresolve.STAMP_SQL, params: [eidBatch] },
+        { text: require('../lib/books-store').SETTING_SQL, params: [eidBatch] }
+      ]);
+      stampRows = stampRead.rows;
+      ledgerRow = ledgerRead.rows[0] || null;
+    } catch (e) {
+      log.fellBack('entities GET /me: the governance + ledger batch failed — each read goes on its own', e);
+    }
     let governance = null;
     try {
-      governance = await require('../lib/govresolve').resolveEntityGovernance(auth.entityOf(req)); /* by the module, so a test can make it fail */
+      governance = await require('../lib/govresolve').resolveEntityGovernance(auth.entityOf(req), stampRows ? { stampRows } : undefined); /* by the module, so a test can make it fail */
     } catch (e) {
       log.fellBack('entities GET /me: failed — carried on without it', e);
     }
@@ -738,7 +753,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     let ledger_on; /* undefined = UNKNOWN (omitted from the answer): the page then asks the old way — an unreadable switch is never reported "off" */
     try {
       const eidLedger = auth.entityOf(req);
-      ledger_on = await require('../lib/books').ledgerOnBatch(eidLedger); /* lib/books.ledgerOnBatch — the books gate's own row (S.SETTING_SQL) in ONE readBatch trip: no row = false */
+      ledger_on = stampRows ? !!(ledgerRow && ledgerRow.enabled) : await require('../lib/books').ledgerOnBatch(eidLedger); /* the books gate's own row (S.SETTING_SQL): from the batch above, else lib/books.ledgerOnBatch on its own trip; no row = false */
     } catch (e) {
       log.fellBack('entities GET /me: the ledger switch read failed — ledger_on left out (unknown, not off)', e);
     }
