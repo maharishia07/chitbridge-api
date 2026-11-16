@@ -136,6 +136,10 @@ t('advisory: per client; a no-costs client is named not counted; a stage hides o
   const blank = row({ health: { status: 'none', codes: [], cash_days: null, sales_trend_pct: null, loss_months_running: null, receivables_over60_share_pct: null } });
   assert.ok(!H.bandOf([blank], { seat: 'accountant' }).bands.some((x) => x.key === 'advisory'));
 });
+t('the accountant seat lists the oldest waiting query first, no age last, then urgency', () => {
+  const a = row({ name: 'a', queries: { open: 1, on_us: 1, on_client: 0, oldest_days: 3 } }), b = row({ name: 'b', queries: { open: 1, on_us: 1, on_client: 0, oldest_days: 20 } }), c = row({ name: 'c' });
+  assert.deepStrictEqual([a, c, b].sort(H.byOldest).map((x) => x.name), ['b', 'a', 'c']);
+});
 t('statusOf returns codes beside reasons', () => {
   const v = H.statusOf({ cash_days: 3, sales_trend_pct: -30, loss_months_running: 2, receivables_over60_share_pct: 60 });
   assert.deepStrictEqual(v.codes.slice().sort(), ['cash_low', 'late_debtors', 'loss', 'sales_down']);
