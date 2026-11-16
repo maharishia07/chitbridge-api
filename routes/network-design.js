@@ -406,7 +406,7 @@ async function mapLimit(items, limit, fn) {
  */
 async function visibleStores(meRow) {
   /* ⭐ one tree reader (lib/network-membership.treeOf); a failed read throws NETWORK_READ_FAILED — never "not in a network" */
-  const members = (await membership.treeOf(meRow.bridge_id)).concat(await membership.clientsOf(meRow.bridge_id)); /* a firm's clients (agency edges) are listed to the firm only */
+  const members = await membership.treeAndClientsOf(meRow.bridge_id); /* a firm's clients (agency edges) are listed to the firm only */
   if (!members.length) return { members: [], visible: [], truncated: null };
 
   const truncated = members.length > MAX_STORES ? { asked: MAX_STORES, of: members.length } : null;
