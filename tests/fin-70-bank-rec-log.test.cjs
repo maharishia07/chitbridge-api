@@ -64,7 +64,7 @@ function standIn(posted) {
       if (/FROM bank_rec_log/.test(sql)) {
         const kind = /kind = 'mark'/.test(sql) ? 'mark' : 'statement';
         const mine = rows.filter((row) => row.kind === kind && row.entity_id === args[0] && row.account_id === args[1]);
-        return { rows: kind === 'mark' ? mine : mine.slice().reverse() };
+        return { rows: kind === 'mark' ? (/ORDER BY seq DESC/.test(sql) ? mine.slice().reverse() : mine) : mine.slice().reverse() }; /* the marks are read newest first now (l16 W15-100) */
       }
       if (/FROM journal_entry/.test(sql)) return { rows: posted };
       throw new Error('unexpected statement: ' + sql.slice(0, 80));
