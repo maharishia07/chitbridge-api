@@ -53,6 +53,7 @@ stubAuth.entityOf = (req) => req.identity.identity_id;
 stubAuth.forgetKey = () => {};
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: stubAuth };
 require(path.join(ROOT, 'lib', 'network-membership')).treeOf = async () => ['BR-ME', 'BR-OPEN', 'BR-SHUT'];
+require(path.join(ROOT, 'lib', 'network-membership')).treeAndClientsOf = async () => ['BR-ME', 'BR-OPEN', 'BR-SHUT']; /* the store list reads the tree and the firm's clients in one read; same members as the treeOf stand-in above, no clients */
 
 const app = express();
 app.use(express.json());
