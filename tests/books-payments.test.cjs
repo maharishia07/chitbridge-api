@@ -82,7 +82,7 @@ async function supplierBills(X) {
 }
 const counts = (X) => ({ payments: X.T.payments.length, entries: X.T.entries.length, items: X.T.items.length, nos: Array.from(X.T.counters.values()).reduce((t, n) => t + n, 0) });
 /** move every recorded moment: the duplicate rule reads created_at against the real clock (PAY D5: 24 hours) */
-const stamp = (X, iso) => { X.T.payments.forEach((p) => { p.created_at = iso; }); X.T.items.forEach((i) => { i.created_at = iso; }); };
+const stamp = (X, iso) => { X.T.payments.forEach((p) => { p.created_at = iso; p.received_at = require('../lib/books-hooks').dayOf(iso, 'IN'); }); X.T.items.forEach((i) => { i.created_at = iso; }); };
 const NOW = () => new Date().toISOString(), AGO_2D = () => new Date(Date.now() - 2 * 86400000).toISOString();
 const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
 
@@ -143,6 +143,12 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     stamp(X, AGO_2D());
     const old = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
     ok('PAY D5: the same rows two days old → neither W3 nor W4 (a 24-hour window, as written)', codes(old).join() === 'excess', codes(old).join());
+    /* E7 (Fable walk 2026-11-17): rows WRITTEN now but DATED 25 Aug (a seeded or imported receipt) are not a duplicate of today - a duplicate is the shop's same day */
+    stamp(X, NOW());
+    X.T.payments.forEach((p) => { p.received_at = '2020-08-25'; });
+    const backDated = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
+    ok('E7: the same ₹2,000 written now but dated 25 Aug → no W3, no W4 (only the shop day counts)', codes(backDated).join() === 'excess', codes(backDated).join());
+    stamp(X, AGO_2D()); /* leave the rows as the section found them */
   });
 
   /* ═══ 2 · acknowledge ═══ */
