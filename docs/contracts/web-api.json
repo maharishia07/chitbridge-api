@@ -1506,7 +1506,8 @@
      "d90_plus": 118000,
      "worst": "d90_plus",
      "no_terms_minor": 0,
-     "terms": "ok"
+     "terms": "ok",
+     "balance_minor": 118000
     },
      "supplier": null
     },
