@@ -372,7 +372,7 @@
       "fired": true,
       "status": 200,
       "extra": true,
-      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed."
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. REP-73 slice 1 (DB10): the bands (seat, pipeline, advisory) are computed from the same rows in memory; the statement gains fiscal_year in month_rows only; trips unchanged (3)."
     },
     "GET /api/books-grants/log": {
       "file": "books-grants.js",
