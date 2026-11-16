@@ -1055,7 +1055,7 @@ const TILL_CANDIDATES = [
   'measure.js', 'match.js', 'inventory.js',
 ];
 
-const L16 = require('./engine-manifest-l16'); INFRA_LIBS.push(...L16.INFRA); PENDING_LIBS.push(...L16.PENDING); /* the l16 build's lib files */
+const L16 = require('./engine-manifest-l16'); INFRA_LIBS.push(...L16.INFRA); PENDING_LIBS.push(...L16.PENDING); ENGINE_OTHER.push(...L16.ENGINE); /* the l16 build's lib files */
 module.exports = { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS,
   TILL_SHIPPABLE, TILL_CANDIDATES };
 

@@ -1,7 +1,7 @@
 'use strict';
 /**
  * tests/engine-manifest-l16.js — the lib files the l16 build added, classified for engine-boundary.test.js (2026-11-16; kept beside tests/engine-manifest.js because that file's size row may not grow).
- * OWNS      the two lists engine-manifest.js appends to INFRA_LIBS and PENDING_LIBS
+ * OWNS      the three lists engine-manifest.js appends to INFRA_LIBS, PENDING_LIBS and ENGINE_OTHER
  * CALLED BY tests/engine-manifest.js (one line at its foot)
  *
  * INFRA: plumbing — SQL, shaping, doors, files, the Books read pages, the MARK & QUERY doors; none holds a rule of the engines. Seven were split out of grown books files
@@ -48,4 +48,6 @@ const PENDING = [
   'books-return-split.js',
   'books-statement-notes.js'
 ];
-module.exports = { INFRA, PENDING };
+/* ENGINE: adopted from chitbridge-engines, written only by tools/adopt.cjs; reg-timing (the filing dates of a country's returns) arrives with the engines release that carries engines #150, as a need of tax-packs */
+const ENGINE = ['reg-timing.js'];
+module.exports = { INFRA, PENDING, ENGINE };
