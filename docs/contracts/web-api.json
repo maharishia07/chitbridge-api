@@ -1444,6 +1444,10 @@
      }
     ],
     "total_minor": 59000,
+    "needs": {
+     "customer": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
+     "supplier": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 59000 }
+    },
     "payables": {
      "total_minor": 59000
     },
