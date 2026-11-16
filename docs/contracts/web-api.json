@@ -1251,15 +1251,6 @@
       "balance_minor": 118000,
       "oldest_due": "2026-09-15",
       "disputed_minor": 0,
-      "buckets": {
-       "not_due": 0,
-       "lt_6m": 0,
-       "m6_1y": 118000,
-       "y1_2": 0,
-       "y2_3": 0,
-       "gt_3y": 0,
-       "lt_1y": -59000
-      },
       "balance_words": "they owe you ₹1,180",
       "credit_limit_minor": null,
       "credit_limit_from": null,
@@ -1402,9 +1393,6 @@
    },
    "optional": [
     "follow_up_total",
-    "parties[].buckets.lt_1y",
-    "parties[].buckets.lt_6m",
-    "parties[].buckets.m6_1y",
     "parties[].credit_limit_from",
     "parties[].credit_limit_minor",
     "parties[].early",

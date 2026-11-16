@@ -2,10 +2,10 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 663,
+  "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 89,
+  "partial": 91,
   "meets": 574,
   "columns": {
    "strict_input": {
@@ -13,12 +13,12 @@
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 663,
-    "failing": 4
+    "applies": 665,
+    "failing": 6
    },
    "foreign_id_404": {
-    "applies": 207,
-    "failing": 2
+    "applies": 208,
+    "failing": 3
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 663,
+    "applies": 665,
     "failing": 2
    }
   },
@@ -39,12 +39,12 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 287,
+    "applies": 288,
     "failing": 37
    },
    "rate_limited": {
-    "applies": 663,
-    "failing": 498
+    "applies": 665,
+    "failing": 500
    }
   },
   "tolerant_outward": 26,
@@ -193,7 +193,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2679,
+   "line": 2723,
    "hash": "ca4e599fd7932179",
    "does": "A template id in -> we stop it, deleting nothing that it posted -> the stopped template (owner only).",
    "errors": {
@@ -283,7 +283,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "cap-period.js 2/65"
+     "cap-period.js 2/67"
     ]
    },
    "measured": {
@@ -4988,7 +4988,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2734,
+   "line": 2778,
    "hash": "4badb793895664b6",
    "does": "An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).",
    "errors": {
@@ -5078,8 +5078,112 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-period.js 2/65"
+     "cap-period.js 2/67"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/attention",
+   "method": "GET",
+   "path": "/api/books/attention",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 1071,
+   "hash": "039cf95d26052ecc",
+   "does": "A date range (and one kind) in -> we count the entries with no tax invoice, no file, no source and the open queries, or list those behind one -> the counts, or a page of entries.",
+   "errors": {
+    "count": 2,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
+   },
+   "reads": [
+    "books_setting",
+    "identities",
+    "journal_entry",
+    "journal_line",
+    "ledger_account"
+   ],
+   "writes": [],
+   "money": true,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 2,
+    "wire": 3,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -5095,7 +5199,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1544,
+   "line": 1588,
    "hash": "c68e2c0dcf57447f",
    "does": "A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.",
    "errors": {
@@ -5214,7 +5318,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1463,
+   "line": 1507,
    "hash": "ccdf41c48a182c22",
    "does": "A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.",
    "errors": {
@@ -5330,7 +5434,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1585,
+   "line": 1629,
    "hash": "091967083defe1de",
    "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
    "errors": {
@@ -5441,7 +5545,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1603,
+   "line": 1647,
    "hash": "792b435588a22e0d",
    "does": "A kept statement's id in -> we serve its bytes and record who opened it -> the file.",
    "errors": {
@@ -5550,7 +5654,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1164,
+   "line": 1208,
    "hash": "02d95499aee0eabe",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
@@ -5657,7 +5761,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1065,
+   "line": 1109,
    "hash": "89b90f682c6fe97e",
    "does": "A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).",
    "errors": {
@@ -5765,7 +5869,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1794,
+   "line": 1838,
    "hash": "29ab15b5384fcbde",
    "does": "Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.",
    "errors": {
@@ -5877,7 +5981,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2237,
+   "line": 2281,
    "hash": "f419e5ec00191334",
    "does": "Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.",
    "errors": {
@@ -5983,7 +6087,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2411,
+   "line": 2455,
    "hash": "012408655020a240",
    "does": "A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.",
    "errors": {
@@ -6097,7 +6201,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2420,
+   "line": 2464,
    "hash": "7ca455cbd821c7a8",
    "does": "A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.",
    "errors": {
@@ -6320,7 +6424,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 897,
-   "hash": "59c881197609d0c0",
+   "hash": "469b0850184b7604",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
     "count": 3,
@@ -6409,7 +6513,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "59c881197609d0c0"
+    "stale_since": "469b0850184b7604"
    },
    "status": "partial",
    "callers": [
@@ -6443,7 +6547,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1950,
+   "line": 1994,
    "hash": "0e14a98c10067c83",
    "does": "Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.",
    "errors": {
@@ -6532,7 +6636,7 @@
     "wire": 3,
     "screens": [
      "cap-entry.js 1/9",
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -6651,7 +6755,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2817,
+   "line": 2861,
    "hash": "c9bfdc8ac640cf30",
    "does": "Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.",
    "errors": {
@@ -6757,7 +6861,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2867,
+   "line": 2911,
    "hash": "11dc36c151f9ccb7",
    "does": "A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).",
    "errors": {
@@ -6957,7 +7061,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "accounts.html 2/14",
+     "accounts.html 2/16",
      "app.html 2/108",
      "cap-books.js 2/43",
      "cap-move-in.js 2/5",
@@ -7077,7 +7181,7 @@
      "books-grant-api.js 1/15",
      "cap-bank.js 1/8",
      "cap-books.js 1/43",
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -7094,7 +7198,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2187,
+   "line": 2231,
    "hash": "e97275d6b48da495",
    "does": "Nothing in -> we read the latest 20 move-in imports with their match proof -> the list of imports (owner only).",
    "errors": {
@@ -7401,7 +7505,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2523,
+   "line": 2567,
    "hash": "0b00e18ebd04b37c",
    "does": "Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).",
    "errors": {
@@ -7507,7 +7611,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2563,
+   "line": 2607,
    "hash": "b8a117b9eee44b0b",
    "does": "A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).",
    "errors": {
@@ -7615,7 +7719,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2593,
+   "line": 2637,
    "hash": "8c91f2b5a9e11ca7",
    "does": "A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).",
    "errors": {
@@ -7705,6 +7809,107 @@
    "round_trips": {
     "trips": 3,
     "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/party/:id/bills",
+   "method": "GET",
+   "path": "/api/books/party/:id/bills",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 1053,
+   "hash": "d4f24ed4c3801165",
+   "does": "A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.",
+   "errors": {
+    "count": 2,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
+   },
+   "reads": [
+    "books_setting",
+    "identities"
+   ],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 3,
+    "wire": 3,
     "screens": []
    },
    "measured": {
@@ -7841,7 +8046,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1436,
+   "line": 1480,
    "hash": "e3ab88fab430d12a",
    "does": "A payment id in -> we read whether a payment advice was sent to the other party and what may be done next -> the advice state.",
    "errors": {
@@ -7954,7 +8159,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2480,
+   "line": 2524,
    "hash": "dcdfe557f6722d35",
    "does": "Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.",
    "errors": {
@@ -8048,7 +8253,7 @@
     "screens": [
      "books-grant-api.js 2/15",
      "cap-books.js 2/43",
-     "cap-period.js 2/65"
+     "cap-period.js 2/67"
     ]
    },
    "measured": {
@@ -8065,7 +8270,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1109,
+   "line": 1153,
    "hash": "a9487c3d4e5cb4f0",
    "does": "A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.",
    "errors": {
@@ -8170,7 +8375,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2648,
+   "line": 2692,
    "hash": "02293968f8965da5",
    "does": "Nothing in -> we list the recurring entries with their next date and whether one is due -> the list (owner only).",
    "errors": {
@@ -8258,7 +8463,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-period.js 2/65"
+     "cap-period.js 2/67"
     ]
    },
    "measured": {
@@ -8275,7 +8480,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2772,
+   "line": 2816,
    "hash": "991240c38edc7ebd",
    "does": "A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.",
    "errors": {
@@ -8365,7 +8570,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -8593,7 +8798,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2711,
+   "line": 2755,
    "hash": "14517722ba33ac6d",
    "does": "Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.",
    "errors": {
@@ -8678,11 +8883,11 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 7,
+    "trips": 9,
     "wire": 3,
     "screens": [
-     "accounts.html 7/14",
-     "cap-period.js 7/65"
+     "accounts.html 9/16",
+     "cap-period.js 9/67"
     ]
    },
    "measured": {
@@ -8699,7 +8904,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1082,
+   "line": 1126,
    "hash": "8d26f9ee74655c85",
    "does": "An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.",
    "errors": {
@@ -8804,7 +9009,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2462,
+   "line": 2506,
    "hash": "ed20d7411dd0c93e",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
@@ -8891,7 +9096,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -16794,7 +16999,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "accounts.html 3/14",
+     "accounts.html 3/16",
      "cap-folders.js 3/22"
     ]
    },
@@ -16899,7 +17104,7 @@
     "trips": 2,
     "wire": 8,
     "screens": [
-     "accounts.html 2/14",
+     "accounts.html 2/16",
      "cap-folders.js 2/22"
     ]
    },
@@ -30572,7 +30777,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1623,
+   "line": 1667,
    "hash": "448a4e239db6e38d",
    "does": "A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.",
    "errors": {
@@ -30695,7 +30900,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2668,
+   "line": 2712,
    "hash": "86834de38ba48b55",
    "does": "A template id and the fields to change in -> we change only those fields -> the template (owner only).",
    "errors": {
@@ -30785,7 +30990,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -35115,7 +35320,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2799,
+   "line": 2843,
    "hash": "8ed4aab889edbf95",
    "does": "A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).",
    "errors": {
@@ -35206,7 +35411,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -35223,7 +35428,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2801,
+   "line": 2845,
    "hash": "0d7f6505deff8e28",
    "does": "An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).",
    "errors": {
@@ -35314,7 +35519,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -35331,7 +35536,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2744,
+   "line": 2788,
    "hash": "ec64e7e75a7f4870",
    "does": "An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).",
    "errors": {
@@ -35422,7 +35627,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -35439,7 +35644,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2747,
+   "line": 2791,
    "hash": "b98d5afa9caa9e57",
    "does": "An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).",
    "errors": {
@@ -35530,7 +35735,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -35547,7 +35752,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1517,
+   "line": 1561,
    "hash": "78ef04b5ba2af5c5",
    "does": "A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).",
    "errors": {
@@ -35659,7 +35864,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1572,
+   "line": 1616,
    "hash": "4ef958bcd0df474b",
    "does": "A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.",
    "errors": {
@@ -35781,7 +35986,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1530,
+   "line": 1574,
    "hash": "d7def71776e1081d",
    "does": "A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).",
    "errors": {
@@ -36001,7 +36206,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1898,
+   "line": 1942,
    "hash": "6167ef775abb8f3b",
    "does": "A cheque id and deposited, cleared or bounced in -> we move the cheque on in order and post it when it clears -> the new status (editors).",
    "errors": {
@@ -36112,7 +36317,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2760,
+   "line": 2804,
    "hash": "aa64c34142c13a40",
    "does": "A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).",
    "errors": {
@@ -36203,7 +36408,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -36220,7 +36425,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2259,
+   "line": 2303,
    "hash": "cf88afddb1ead2a6",
    "does": "A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.",
    "errors": {
@@ -36328,7 +36533,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2277,
+   "line": 2321,
    "hash": "c5d5fa6c2a416807",
    "does": "A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.",
    "errors": {
@@ -36441,7 +36646,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2804,
+   "line": 2848,
    "hash": "b7bcd4800825658d",
    "does": "A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).",
    "errors": {
@@ -36545,7 +36750,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2757,
+   "line": 2801,
    "hash": "c1ea7f2514047440",
    "does": "A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).",
    "errors": {
@@ -36636,7 +36841,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -36760,7 +36965,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1985,
+   "line": 2029,
    "hash": "48134a84de1b40ea",
    "does": "Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).",
    "errors": {
@@ -36874,7 +37079,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2013,
+   "line": 2057,
    "hash": "2f70495bc3aaf061",
    "does": "An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).",
    "errors": {
@@ -36984,7 +37189,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1973,
+   "line": 2017,
    "hash": "6dee0e503361e670",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
@@ -37094,7 +37299,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2838,
+   "line": 2882,
    "hash": "c4ebc0515a7ea649",
    "does": "A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).",
    "errors": {
@@ -37202,7 +37407,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2848,
+   "line": 2892,
    "hash": "4829899c568430fe",
    "does": "A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).",
    "errors": {
@@ -37310,7 +37515,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2895,
+   "line": 2939,
    "hash": "adb6b2f2e0c4bd50",
    "does": "A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).",
    "errors": {
@@ -37420,7 +37625,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2763,
+   "line": 2807,
    "hash": "4607031cae7020f4",
    "does": "A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).",
    "errors": {
@@ -37511,7 +37716,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -37528,7 +37733,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2765,
+   "line": 2809,
    "hash": "7354916e0b849c3c",
    "does": "A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).",
    "errors": {
@@ -37621,7 +37826,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/65"
+     "cap-period.js 4/67"
     ]
    },
    "measured": {
@@ -37638,7 +37843,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2794,
+   "line": 2838,
    "hash": "b7664234ef423239",
    "does": "A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).",
    "errors": {
@@ -37742,7 +37947,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2796,
+   "line": 2840,
    "hash": "31186e06b5f68eb3",
    "does": "A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).",
    "errors": {
@@ -37947,7 +38152,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2168,
+   "line": 2212,
    "hash": "7cfb1f98c261ebb6",
    "does": "The same file with confirm true in -> we add and merge the parties or items in one transaction and keep a match proof -> the counts and the proof (owner only).",
    "errors": {
@@ -38065,7 +38270,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2111,
+   "line": 2155,
    "hash": "1bc29377d8dddb98",
    "does": "A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).",
    "errors": {
@@ -38172,7 +38377,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2157,
+   "line": 2201,
    "hash": "c69791d823ddb756",
    "does": "The file and the owner's column choices in -> we plan the move-in without writing anything -> what would be added, merged, skipped or held (owner only).",
    "errors": {
@@ -38284,7 +38489,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2061,
+   "line": 2105,
    "hash": "5c6f3ae9b716b501",
    "does": "Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).",
    "errors": {
@@ -38719,7 +38924,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2546,
+   "line": 2590,
    "hash": "bc6fa6d8a5415652",
    "does": "A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).",
    "errors": {
@@ -38826,7 +39031,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2624,
+   "line": 2668,
    "hash": "017694ddf190bb7d",
    "does": "A pack id in -> we record that the owner downloaded and confirmed the pack, and log it -> the pack (owner only).",
    "errors": {
@@ -38940,7 +39145,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1922,
+   "line": 1966,
    "hash": "260df860493ec496",
    "does": "A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).",
    "errors": {
@@ -39051,7 +39256,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1334,
+   "line": 1378,
    "hash": "807e801ffa98eb8c",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
@@ -39172,7 +39377,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1748,
+   "line": 1792,
    "hash": "dc0a781ed49b1cd4",
    "does": "A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).",
    "errors": {
@@ -39280,7 +39485,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1680,
+   "line": 1724,
    "hash": "b43593e9d78f2915",
    "does": "A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).",
    "errors": {
@@ -39384,7 +39589,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1279,
+   "line": 1323,
    "hash": "314ec4a07d1fb7df",
    "does": "A party, amount and mode in -> we work out how the payment would settle the open bills, posting nothing -> a preview with the proposed split and warnings.",
    "errors": {
@@ -39496,7 +39701,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2432,
+   "line": 2476,
    "hash": "fb236ca1918c99be",
    "does": "A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).",
    "errors": {
@@ -39603,7 +39808,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1963,
+   "line": 2007,
    "hash": "ee6954eda3161548",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
@@ -39710,7 +39915,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2657,
+   "line": 2701,
    "hash": "1d48756f1327ea35",
    "does": "A name, an event, a frequency and a next date in -> we save a recurring entry template -> the template (owner only).",
    "errors": {
@@ -39800,7 +40005,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -39817,7 +40022,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2690,
+   "line": 2734,
    "hash": "11a6a7b71155fdca",
    "does": "A template id in -> we post the due day as a journal entry once and move the template on -> what was posted (owner only).",
    "errors": {
@@ -39907,7 +40112,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "cap-period.js 6/65"
+     "cap-period.js 6/67"
     ]
    },
    "measured": {
@@ -39924,7 +40129,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2700,
+   "line": 2744,
    "hash": "aa011dd2d5c2bad2",
    "does": "A template id in -> we skip the due day without posting and move the template on -> the skipped day (owner only).",
    "errors": {
@@ -40014,7 +40219,7 @@
     "trips": 5,
     "wire": null,
     "screens": [
-     "cap-period.js 5/65"
+     "cap-period.js 5/67"
     ]
    },
    "measured": {
@@ -40255,7 +40460,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2027,
+   "line": 2071,
    "hash": "0047b4f33cfb36bb",
    "does": "A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).",
    "errors": {
@@ -40366,7 +40571,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2446,
+   "line": 2490,
    "hash": "83a1dd2a56342b24",
    "does": "A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).",
    "errors": {
@@ -40462,7 +40667,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/65"
+     "cap-period.js 1/67"
     ]
    },
    "measured": {
@@ -66376,7 +66581,7 @@
      "cap-mark.js 0/3",
      "cap-marketing.js 0/5",
      "cap-opening.js 0/13",
-     "cap-period.js 0/65",
+     "cap-period.js 0/67",
      "cap-quotes.js 0/7",
      "cap-register.js 0/23",
      "cap-settings.js 0/21",

@@ -912,9 +912,10 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
     const out = await withEntity(e, async (h) => {
       const chart = await S.accounts(h, e),
         lookup = new Map();
-      /* PERF1: "recorded on or before asOf (the shop's day)" is ONE moment — the start of the shop's next day (books-hooks.dayBounds) — compared per item;
-         it was dayOf() per item, a zone conversion each (≈ 0.6 s of 0.9 s on 24k items at 100k lines) */
+      /* FIN-new-1 (decided by practice: Xero, QuickBooks and SAP age by document date): "as at asOf" is every document DATED on or before asOf, and every payment dated on or before it —
+         the row's own day (party_item.doc_date), never the moment it was recorded. A row with no document date falls back to the shop's day of its recording (one moment compared, PERF1). */
       const cut = Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to);
+      const asOfDay = (item) => (item.date ? String(item.date) <= asOf : new Date(item.created_at).getTime() < cut);
       /* FIN-R1: interest and limit come from the customer's TERMS (finance-terms.resolve: own, else the shop default, else not set) — one grouped read */
       const T = require('../lib/finance-terms');
       /* W15-94: the customer terms are read on EVERY dues read (not only Collections), so a bill with no due date ages by the same credit days on every screen */
@@ -928,7 +929,8 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         const side = role === 'creditors' ? 'payable' : 'receivable',
           sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
-        const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
+        /* GROWTH5Y: "as at today" reads the OPEN documents only (S.openItems — a paid bill and its receipts are not read); a past day reads every row, as a bill paid since was open then */
+        const items = (asOf >= today(req) ? await S.openItems(h, e, a.account_id, asOf) : await S.items(h, e, null, a.account_id)).map(E.itemOf).filter(asOfDay);
         const d = E.dues(items, asOf, side, Object.assign({ pack: B.packOf(req.books) }, role === 'debtors' ? followOpt || noDays : noDays));
         if (role === 'creditors') payableItems = items;
         const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
@@ -953,18 +955,13 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
                 .map((x) => x.due_date || x.date)
                 .filter(Boolean)
                 .sort()[0] || null;
-            const buckets = {};
-            Object.keys(ag.undisputed || {}).forEach((item) => {
-              buckets[item] = sign * ((ag.undisputed[item] || 0) + ((ag.disputed || {})[item] || 0));
-            });
             const disputed = Object.keys(ag.disputed || {}).reduce((total, item) => total + (ag.disputed[item] || 0), 0);
             const row = {
               party_id: pid,
               side: role === 'creditors' ? 'supplier' : 'customer',
               balance_minor: sign * open,
               oldest_due: oldest,
-              disputed_minor: sign * disputed,
-              buckets
+              disputed_minor: sign * disputed
             };
             row.follow_up = E.followRow(d.follow, pid); /* W15-94: the ONE ageing — days past due, both sides, every read */
             if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)));
@@ -995,9 +992,6 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           x.side = 'both';
           if (r.side === 'customer') x.follow_up = r.follow_up; /* a both-sides row ages what the customer half owes (as before) */
           x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
-          Object.keys(r.buckets).forEach((item) => {
-            x.buckets[item] = (x.buckets[item] || 0) + r.buckets[item];
-          });
           if (fin) {
             if (r.interest_minor != null) {
               x.interest_minor = (x.interest_minor || 0) + r.interest_minor;
@@ -1045,6 +1039,56 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...pageExtras(fin && sides.includes('debtors'), payables, out)
       })
     );
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+
+/**
+ * GET /party/:id/bills?side=customer|supplier&state=open|paid|all|part|unpaid&band&sort&dir&page&limit&asOf → { currency, party_id, side, asOf, bills: [{ ref, bill_no, date, due_date, days_overdue (null = not due), band, status, amount_minor, owed_minor,
+ *   disputed, no_terms, entry_id, mark, evidence_flag }], total, page, limit, counts { open, paid, all }, owed_minor, bands, on_account_minor, mark_actions, checks } — W15-107: what a Receivables / Payables row opens to.
+ * Open bills only by default, newest first, a page at a time; paid bills only when asked for. The band and the days late are the ONE ageing (books-engines.billBands). Money is the books' own; a reader who may not see costs gets no supplier bills.
+ */
+// @does A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.
+router.get('/party/:id/bills', auth, noKey, on, ...checked('GET /party/:id/bills'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      id = req.params.id,
+      side = req.query.side === 'supplier' ? 'supplier' : 'customer',
+      asOf = dateQ(req.query.asOf, today(req));
+    if (side === 'supplier' && (await require('../lib/cost').isCostBlind(req, e))) return res.json({ currency: curOf(req), party_id: id, side, asOf, bills: [], total: 0, page: 1, limit: 0, counts: { open: 0, paid: 0, all: 0 }, owed_minor: null, bands: {}, checks: true });
+    res.json(await withEntity(e, (h) => require('../lib/books-party-bills').read(h, e, req, { party: id, side, asOf, pack: B.packOf(req.books), cur: curOf(req), query: req.query })));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+
+/**
+ * GET /attention?from&to[&kind=flag|none|nodoc|query&page&limit] → { from, to, total, no_tax_invoice, no_file, no_source, open_queries, [kind, entries, count, page, limit] } — W15-102: the Day book's evidence states counted on the server over the range
+ * (lib/books-evidence attentionIn, the Day book's own rules), and with `kind` the entries behind one count, newest first, a page at a time. The Day book, Ledgers, BAS, To do and the auditor's view read these counts.
+ */
+// @does A date range (and one kind) in -> we count the entries with no tax invoice, no file, no source and the open queries, or list those behind one -> the counts, or a page of entries.
+router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (req, res) => {
+  try {
+    const e = ctx(req),
+      from = dateQ(req.query.from, today(req)),
+      to = dateQ(req.query.to, from),
+      pg = require('../lib/page-limit').pageArgs({ page: req.query.page, limit: req.query.limit || 25 }, 25, 100);
+    const queryIds = async (h, first, last) => {
+      const door = require('../lib/mark-door');
+      if (!(await require('../lib/schema').hasTable('review_mark'))) return null;
+      await h.query('SAVEPOINT attention_marks'); /* a mark read that fails leaves the queries uncounted (null), never the other counts */
+      let open;
+      try {
+        open = await require('../lib/review-mark').openList(h, 'acc.audit', e, door.ctxOf(req), { from: first, to: last });
+        await h.query('RELEASE SAVEPOINT attention_marks');
+      } catch (err) {
+        await h.query('ROLLBACK TO SAVEPOINT attention_marks').catch(() => {});
+        return null;
+      }
+      return open.open.filter((mark) => mark.class === 'open' && String(mark.posting_date).slice(0, 10) >= first && String(mark.posting_date).slice(0, 10) <= last).map((mark) => String(mark.subject_id));
+    };
+    res.json(await forBooksDoor(req, e, 'attention', await withEntity(e, (h) => Evidence.attentionIn(h, e, { pack: B.packOf(req.books), cur: curOf(req), queryIds }, from, to, req.query.kind, pg))));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
