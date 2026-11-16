@@ -94,6 +94,8 @@ const bill = (X, party, day, no, amount) => X.B.postEntry(X.db, SHOP, { type: 's
     ok('tabs: Needs you is most days late first (99, then 68), each with a why and ONE action', same(tabs.needs.bills.map((b) => b.days_overdue), [99, 68]) && tabs.needs.bills.every((b) => b.why === 'overdue' && b.action === 'pay' && Array.isArray(b.reasons)), JSON.stringify(tabs.needs.bills));
     ok('tabs: Open holds all three, the clean one with no why', tabs.open.total === 3 && tabs.open.bills.filter((b) => !b.why).length === 1, JSON.stringify(tabs.open.bills.map((b) => b.why)));
     ok('tabs: All holds the bills too, tab echoed', tabs.all.tab === 'all' && tabs.all.total === 3);
+    const why = (await q('GET', '/party/' + RAVI + '/bills?side=customer&tab=open&why=overdue')).body;
+    ok('why: a chip on the party row filters to the bills with THAT reason (overdue: 2 of 3; held: none)', why.total === 2 && (await q('GET', '/party/' + RAVI + '/bills?side=customer&why=held')).body.total === 0);
     const none = (await q('GET', '/party/' + MEERA + '/bills?side=customer&tab=needs')).body;
     ok('tabs: a party with nothing wrong has an empty Needs you and its one clean bill folded', none.total === 0 && none.counts.in_order === 1, JSON.stringify(none.counts));
     const old = (await q('GET', '/party/' + RAVI + '/bills?side=customer')).body;
