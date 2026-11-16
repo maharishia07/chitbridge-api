@@ -971,6 +971,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
             const ag = d.ageing.by_party[pid] || { undisputed: {}, disputed: {}, total_minor: 0 };
             const open = Number((d.outstanding.by_party || {})[pid] || 0);
             const docs = docsOf.get(String(pid)) || [];
+            if (open === 0 && !docs.length && !Number(ag.total_minor || 0)) return; /* E15: a party whose bills are all settled owes nothing and holds nothing open: not a row of Who owes whom */
             const oldest =
               docs
                 .map((x) => x.due_date || x.date)
