@@ -5,8 +5,8 @@
   "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 8,
-  "meets": 657,
+  "partial": 6,
+  "meets": 659,
   "columns": {
    "strict_input": {
     "applies": 338,
@@ -4538,11 +4538,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "30a531d14b6aa48a"
+    "signed_off_by_date": "cb-accounting under the coordinator instruction (NOT cb-api: cb-api to confirm) 2026-11-16 l16/integ2c-grantfix-api over 0575a493: diff 0575a493..HEAD read (handler, validation chain, called lib). ACCESS RULE: the gate admits a firm person who may use a grant, but only the owner of the books gets the given list; everyone else gets given:[] and the received side (isOwner, lib/owner). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "books-grant-member.js"
@@ -6508,11 +6507,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f84c44cb16211be1"
+    "signed_off_by_date": "cb-accounting under the coordinator instruction (NOT cb-api: cb-api to confirm) 2026-11-16 l16/integ2c-grantfix-api over 0575a493: diff 0575a493..HEAD read (handler, validation chain, called lib). ADDITIVE contract change kept: party rows keep `buckets` (web main reads it), plus the one ageing follow_up and needs; asOf now ages by DOCUMENT date (DECISIONS 16 Nov). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
