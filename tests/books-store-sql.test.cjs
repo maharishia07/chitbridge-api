@@ -38,6 +38,8 @@ const CALLS = {
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
+  /* l16-scale (b873): a year's carry kept under its key, and the sums that key is made from */
+  yearStamps: [E], carryRead: [E, '2026-27', 'a'.repeat(64)], carryWrite: [E, '2026-27', 'a'.repeat(64), { rows: [], retained_minor: 0, profit_minor: 0 }],
   insertEntry: [E, { entry_no: 'JV/2026-27/000001', posting_date: '2026-04-01', fiscal_year: '2026-27', period: 1, event_type: 'manual', currency: 'INR', total_minor: 1 }],
   insertLines: [E, U, [{ line_no: 1, account_id: U, dr_minor: 1, cr_minor: 0, currency: 'INR' }, { line_no: 2, account_id: U, dr_minor: 0, cr_minor: 1, currency: 'INR' }]],
   addBalances: [E, [{ account_id: U, currency: 'INR', fiscal_year: '2026-27', period: 1, dr_minor: 1, cr_minor: 0, line_count: 1 }]],
