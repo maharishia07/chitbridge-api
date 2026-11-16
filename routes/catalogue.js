@@ -1343,11 +1343,7 @@ router.post(
       if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Verify failed', c0.error) });
       const handle = crHandle(c0.channel, c0.raw, entity);
 
-      const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-           FROM identities WHERE email = $1`,
-        [handle]
-      );
+      const cr = await shopperRow(handle);
       const c = cr.rows[0];
       if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
         return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
@@ -1425,11 +1421,7 @@ router.post(
       if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Verify failed', c0.error) });
       const handle = crHandle(c0.channel, c0.raw, entity);
 
-      const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-         FROM identities WHERE email = $1`,
-        [handle]
-      );
+      const cr = await shopperRow(handle);
       const c = cr.rows[0];
       if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
         return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
@@ -1897,6 +1889,14 @@ router.post(
  * which phones and e-mails are a shop's customers. The row is never told apart from the code; the attempt counting stays in
  * lib/otp verifyOtp, untouched.
  */
+/** SEC-186: a shopper by their stored handle. The owner's sign-in lookup finds the id (ops.signin_candidates), then the row is read BY ID under its own binding with the code through ops.identity_secret: cb_app cannot SELECT otp_code. */
+async function shopperRow(handle) {
+  const found = (await require('../lib/signin-lookup').candidates(query, 'email', handle))[0];
+  if (!found) return { rows: [] };
+  return require('../lib/bound-read').boundRead(query, found.identity_id,
+    `SELECT identity_id, bridge_id, display_name, s.otp_code AS otp_code, s.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts
+       FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [found.identity_id]);
+}
 async function codeHolds(row, typed, names) {
   const verdict = row ? await verifyOtp(query, row, typed, { names }) : { ok: false }; // SEC1: the typed contact, for TESTER_NAMES
   if (!verdict.ok && !verdict.counted) await decoyAttempt(query); /* SEC-139: an unknown contact, a locked row and an expired code spend the round trip a wrong code does, and write no row */
@@ -1910,11 +1910,7 @@ router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify
     const c0 = resolveContact(req.body);
     if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Sign-in failed', c0.error) });
     const handle = crHandle(c0.channel, c0.raw, entity);
-    const cr = await query(
-      `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-         FROM identities WHERE email = $1`,
-      [handle]
-    );
+    const cr = await shopperRow(handle);
     const c = cr.rows[0];
     if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
       return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.SIGN_IN_REFUSED });

@@ -102,7 +102,7 @@ function value(expr, params, row) {
 }
 async function q(sql, params) {
   params = params || [];
-  const s = String(sql).replace(/\s+/g, ' ').trim();
+  const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ').trim();
   let m;
 { const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => Object.values(DB), () => (typeof DOCS !== 'undefined' ? DOCS : [])); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
   if ((m = s.match(/^INSERT INTO signin_events \(([^)]+)\) VALUES/i))) {

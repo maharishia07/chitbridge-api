@@ -3151,8 +3151,8 @@
     },
     "POST /api/catalogue/:bridge_id/support": {
       "file": "catalogue.js",
-      "trips": 12,
-      "wire": 38,
+      "trips": 13,
+      "wire": 39,
       "fired": true,
       "status": 200,
       "fixture_body": {

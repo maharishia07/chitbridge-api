@@ -32,7 +32,7 @@ const t = (name, fn) => cases.push([name, fn]);
 function fakeDb(rows) {
   const table = rows;
   return async (sql, params) => {
-    const s = sql.replace(/\s+/g, ' ');
+    const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ');
     { const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => table); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
     if (/UPDATE identities SET.*otp_code = \$1/.test(s)) {
       const row = table.find((r) => r.identity_id === params[2]);

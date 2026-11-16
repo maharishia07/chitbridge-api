@@ -48,7 +48,7 @@ async function main() {
 
   let got = await lab.send(port, 'GET', '/api/actors');
   check('with the columns: 200 (it answered ' + got.status + ')', got.status === 200 && got.json && got.json.actors.length === 3, got.text.slice(0, 200));
-  check('the SELECT names access_level and whole_entity off the row JSON, with no schema probe round trip (round-trips budget 2)', /->> 'access_level'\) AS access_level, \(to_jsonb\(identities\) -> 'whole_entity'\) AS whole_entity/.test(listSql) && probes === 0, 'probes ' + probes + ' ' + listSql.slice(0, 200));
+  check('the SELECT names access_level and whole_entity off the row JSON, with no schema probe round trip (round-trips budget 2)', /actor_type, hat, can_see_costs, access_level, whole_entity,\s+break_status/.test(listSql) && probes === 0, 'probes ' + probes + ' ' + listSql.slice(0, 200));
   check('a viewer login lists access_level=viewer and whole_entity=true as stored', got.json.actors[0].access_level === 'viewer' && got.json.actors[0].whole_entity === true, JSON.stringify(got.json.actors[0]));
   check('an editor lists editor / false', got.json.actors[1].access_level === 'editor' && got.json.actors[1].whole_entity === false, JSON.stringify(got.json.actors[1]));
 

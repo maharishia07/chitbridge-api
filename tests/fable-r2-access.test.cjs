@@ -164,7 +164,9 @@ async function r2_03() {
   /* and the shopper code's own statement cannot flip an erased account back */
   const seen = [];
   await require(path.join(API, 'lib', 'otp')).spendShopperOtp(async (sql) => (seen.push(sql), { rowCount: 0 }), 'c1', '123456');
-  check('a spent code\'s UPDATE excludes an erased account', /NOT IN \('erased', 'closed'\)/.test(seen[0] || ''), seen);
+  /* SEC-186: the UPDATE lives in the owner's function (migration b874) — the shopper's spend calls it, and its UPDATE carries the exclusion */
+  const fn = require('fs').readFileSync(path.join(API, 'migrations', 'b874_identity_secret_view.sql'), 'utf8').split('CREATE FUNCTION ops.spend_shopper_code')[1] || '';
+  check('a spent code\'s UPDATE excludes an erased account', /ops\.spend_shopper_code/.test(seen[0] || '') && /UPDATE public\.identities[\s\S]*?NOT IN \('erased', 'closed'\)[\s\S]*?\$fn\$/.test(fn), seen);
 }
 
 (async () => {

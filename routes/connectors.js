@@ -927,7 +927,7 @@ router.post(
       )
         return problem(req, res, { status: 400, ...words.nameMismatch() });
       // THE PASSWORD — verify the one-time code against the ENTITY's current code
-      const er = await db(`SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities WHERE identity_id = $1`, [entity_id]);
+      const er = await require('../lib/bound-read').boundRead(db, entity_id, `SELECT identity_id, s.otp_code AS otp_code, s.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [entity_id]); /* SEC-186: the code is read through the owner's view, bound to this shop */
       const chk = await verifyOtp(db, er.rows[0] || {}, req.body.otp);
       if (!chk.ok) return problem(req, res, { status: chk.status || 400, ...words.badCode(chk) });
       // PASSED — reissue, clear the code, audit (who/when into the connector's own config; no migration needed)

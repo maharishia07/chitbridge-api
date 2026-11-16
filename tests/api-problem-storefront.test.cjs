@@ -144,7 +144,11 @@ function rowsFor(sql, params) {
         ]
       : [];
   }
-  if (/otp_code, otp_expires_at, otp_attempts FROM identities WHERE email = \$1/.test(s)) {
+  /* SEC-186: the stored shopper is found by the sign-in lookup, then read BY ID with the code through ops.identity_secret (read here as the same row) */
+  if (/^SELECT \* FROM ops\.signin_candidates\(\$1, \$2\)$/.test(s)) {
+    return world.buyer ? [{ identity_id: BUYER_ID, identity_type: 'customer', parent_entity_id: null, bridge_id: 'BUYER01', display_name: 'Buyer', user_id: null, email: params[1], status: 'active' }] : [];
+  }
+  if (/s\.otp_code AS otp_code, s\.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts FROM identities LEFT JOIN ops\.identity_secret s ON s\.for_identity = identities\.identity_id WHERE identity_id = \$1/.test(s)) {
     return world.buyer
       ? [
           {
@@ -152,14 +156,15 @@ function rowsFor(sql, params) {
             bridge_id: 'BUYER01',
             display_name: 'Buyer',
             otp_code: GOOD_CODE,
+            otp_code_hash: null,
             otp_expires_at: new Date(Date.now() + (world.expired ? -600000 : 600000)).toISOString(),
             otp_attempts: world.attempts
           }
         ]
       : [];
   }
-  /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: one row back = spent now) */
-  if (/AND otp_code = \$2 RETURNING identity_id/.test(s)) return [{ identity_id: BUYER_ID }];
+  /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: spent === true = spent now; the compare is inside ops.spend_shopper_code) */
+  if (/^SELECT ops\.spend_shopper_code\(\$1::uuid, \$2\) AS spent$/.test(s)) return [{ spent: true }];
   /* the operator's governed money (lib/regional currencyFor) */
   if (/SELECT currency_code, country FROM identities WHERE identity_id = \$1/.test(s)) return world.noCurrency ? [{ currency_code: null, country: null }] : world.withdrawnCurrency ? [{ currency_code: 'BGN', country: 'BG' }] : [{ currency_code: 'INR', country: 'IN' }];
   if (/FROM catalogue_adoption/.test(s) && world.adoptionFails) throw new Error(SECRET_SQL);

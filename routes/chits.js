@@ -667,7 +667,7 @@ async function sendMoneyStated(state, req, res) {
 async function sendLab(sendState, req, res) {
   const businessJson = req.body && req.body.business_json;
   if (!istest.isLabChit(businessJson)) return;
-  const identityRow = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [sendState.sender_id]);
+  const identityRow = await query(`SELECT i.population::text AS population FROM identities i WHERE identity_id = $1`, [sendState.sender_id]);
   const population = identityRow.rows[0] && identityRow.rows[0].population != null ? String(identityRow.rows[0].population) : null;
   const sampleAllowed = istest.maySample(population);
   if (!sampleAllowed.ok) return problem(req, res, { status: 409, ...said({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: sampleAllowed.why, message: sampleAllowed.say }, 'CHIT_CONFLICT') });
