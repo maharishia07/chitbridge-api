@@ -383,9 +383,6 @@
   "GET /api/integrations/profile-map": {
    "output_allowlist": true
   },
-  "POST /api/integrations/profile": {
-   "output_allowlist": true
-  },
   "GET /api/till/snapshot": {
    "output_allowlist": true
   },
@@ -1548,6 +1545,9 @@
   "POST /api/books/bank/statements": {
    "strict_input": true
   },
+  "POST /api/books/bank/statement-files": {
+   "strict_input": true
+  },
   "PATCH /api/books/payments/:id": {
    "strict_input": true,
    "idempotent_money_write": true
@@ -1681,6 +1681,9 @@
    "strict_input": true
   },
   "GET /api/books-grants/consent": {
+   "output_allowlist": true
+  },
+  "GET /api/books-grants/practice": {
    "output_allowlist": true
   },
   "POST /api/books-grants": {

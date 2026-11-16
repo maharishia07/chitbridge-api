@@ -338,6 +338,22 @@
     422
    ]
   },
+  "GET /api/books/bank/statement-files": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/bs": {
    "cases": 2,
    "failed": 0,
@@ -388,6 +404,14 @@
   },
   "GET /api/books/dues": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/evidence/:id": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2012,6 +2036,14 @@
   },
   "POST /api/books/bank/marks": {
    "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/bank/statement-files": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
