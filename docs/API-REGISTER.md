@@ -1472,39 +1472,39 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): fiscal_period · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
-### books-actions (unassigned, 6 of 6 with a description)
+### books-actions (cb-accounting, 6 of 6 with a description)
 
-**GET /api/books-actions** · books-actions · unassigned · meets standard
+**GET /api/books-actions** · books-actions · cb-accounting · meets standard
 - does: A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.
 - errors: 3 code(s) [ACTION_NOT_FOR_YOU, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share books-actions-view.js 1/5, books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-actions-view.js, books-grant-member.js · actions: -
 
-**GET /api/books-actions/:id** · books-actions · unassigned · meets standard
+**GET /api/books-actions/:id** · books-actions · cb-accounting · meets standard
 - does: An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).
 - errors: 3 code(s) [ACTION_NOT_FOR_YOU, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share books-actions-view.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-actions-view.js · actions: -
 
-**POST /api/books-actions** · books-actions · unassigned · meets standard
+**POST /api/books-actions** · books-actions · cb-accounting · meets standard
 - does: A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.
 - errors: 4 code(s) [ACTION_FIRM_ONLY, LEDGER_OFF, SIGN_IN_FOR_LEDGER, STORE_MISMATCH] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share books-acting.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-acting.js · actions: -
 
-**POST /api/books-actions/:id/accept** · books-actions · unassigned · meets standard
+**POST /api/books-actions/:id/accept** · books-actions · cb-accounting · meets standard
 - does: An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.
 - errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER, STORE_MISMATCH] · statuses 401, 403, 404, 409, 422, 500, 503 · money y (derived)
 - effect: offline idempotent · round trips 1 (wire 6; share books-actions-view.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-actions-view.js · actions: -
 
-**POST /api/books-actions/:id/return** · books-actions · unassigned · meets standard
+**POST /api/books-actions/:id/return** · books-actions · cb-accounting · meets standard
 - does: An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.
 - errors: 4 code(s) [ACTION_NOT_FOR_YOU, LEDGER_OFF, SIGN_IN_FOR_LEDGER, STORE_MISMATCH] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share books-actions-view.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-actions-view.js · actions: -
 
-**POST /api/books-actions/:id/review** · books-actions · unassigned · meets standard
+**POST /api/books-actions/:id/review** · books-actions · cb-accounting · meets standard
 - does: An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.
 - errors: 4 code(s) [ACTION_FIRM_ONLY, LEDGER_OFF, SIGN_IN_FOR_LEDGER, STORE_MISMATCH] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share books-actions-view.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
@@ -1562,27 +1562,27 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 1 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
-### books-opening (unassigned, 4 of 4 with a description)
+### books-opening (cb-accounting, 4 of 4 with a description)
 
-**GET /api/books/opening** · books-opening · unassigned · meets standard
+**GET /api/books/opening** · books-opening · cb-accounting · meets standard
 - does: Optionally a day in -> we read every live opening line of that day with its ledger, party, bill, who entered it and when -> the saved opening.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null; share cap-opening.js 2/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-opening.js · actions: -
 
-**GET /api/books/opening/years** · books-opening · unassigned · meets standard
+**GET /api/books/opening/years** · books-opening · cb-accounting · meets standard
 - does: Nothing in -> we read each year's opening and carry from the year close, the carried-out total set beside the next opening -> the year strip (read only).
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null; share cap-opening.js 2/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-opening.js · actions: -
 
-**POST /api/books/opening/preview** · books-opening · unassigned · meets standard
+**POST /api/books/opening/preview** · books-opening · cb-accounting · meets standard
 - does: Opening rows and a date in -> we ask the posting engine what it would post, its Difference and what would refuse, writing nothing -> the figures and the refusals (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null; share cap-opening.js 2/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-opening.js · actions: -
 
-**POST /api/books/opening/replace** · books-opening · unassigned · meets standard
+**POST /api/books/opening/replace** · books-opening · cb-accounting · meets standard
 - does: A day, new rows and a reason in -> we reverse that day's opening entries and post the new rows in one transaction, logging each line old to new -> the new entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null; share cap-opening.js 2/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
@@ -3380,33 +3380,33 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 2 (wire 5; share cap-marketing.js 2/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-marketing.js · actions: -
 
-### marks (unassigned, 5 of 5 with a description)
+### marks (cb-accounting, 5 of 5 with a description)
 
-**GET /api/marks** · marks · unassigned · meets standard
+**GET /api/marks** · marks · cb-accounting · meets standard
 - does: An adopter and a list of record ids, or open=1 for the open items -> we read the latest mark of each record (or the open queries with their age and "checked n of m") in one read -> the marks, the words and what you may do.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire null; share cap-mark.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-mark.js · actions: -
 
-**GET /api/marks/:thread_id/messages** · marks · unassigned · meets standard
+**GET /api/marks/:thread_id/messages** · marks · cb-accounting · meets standard
 - does: A thread id in -> we read the marked record's mark, its history and the replies with what you may do -> the conversation, or 404 for a thread that is not these books'.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null; share rail-thread.js 3/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: rail-thread.js · actions: -
 
-**POST /api/marks** · marks · unassigned · meets standard
+**POST /api/marks** · marks · cb-accounting · meets standard
 - does: An adopter, a record, a mark word and (for a Query) the question in -> the auditor sets the mark in one transaction with the grant look and its log row -> the mark; the owner and the adviser are refused.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null; share cap-mark.js 2/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-mark.js · actions: -
 
-**POST /api/marks/:thread_id/messages** · marks · unassigned · meets standard
+**POST /api/marks/:thread_id/messages** · marks · cb-accounting · meets standard
 - does: A thread id and the words in -> the owner or the adviser answers a Query or On hold; the class does not change and nothing leaves the installation -> the message and the mark.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null; share rail-thread.js 2/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: rail-thread.js · actions: -
 
-**POST /api/marks/query** · marks · unassigned · meets standard
+**POST /api/marks/query** · marks · cb-accounting · meets standard
 - does: An adopter and more record ids than a query string carries in a body -> we read the latest mark of each (a read, not a write) -> the marks, the words and what you may do.
 - errors: 1 code(s) [SIGN_IN_FOR_MARKS] · statuses 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)

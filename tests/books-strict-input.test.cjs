@@ -125,7 +125,7 @@ function handlerOf(method, p) {
 /** the names the handler gives the body: b = req.body || {}, body = req.body, the wrapper's (req, e, s, b, by) */
 function bodyNames(handler) {
   const names = new Set(['req.body']);
-  for (const m of handler.matchAll(/(\w+)\s*=\s*(?:\(\s*)?req\.body\b/g)) names.add(m[1]);
+  for (const m of handler.matchAll(/(\w+)\s*=\s*(?:\(\s*)?req\.body\b(?:\s*\|\|\s*\{\s*\})?\s*\)?\s*(?=[;,\n]|$)/gm)) names.add(m[1]); /* an alias IS the body (req.body · req.body || {}), never a value worked out from one of its keys: such a const holds an answer, whose keys are not body keys */
   if (/^route\(/.test(handler) && /\(req, e, s, b, by\)/.test(handler)) names.add('b');
   return [...names];
 }
