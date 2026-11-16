@@ -63,7 +63,7 @@ function grantUserOnly(req, res, next) {
 // @does Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).
 router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('GET /practice'), async (req, res) => {
   try {
-    res.json(await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name }));
+    res.json(await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name, query: req.query }));
   } catch (err) {
     answer(req, res, err);
   }

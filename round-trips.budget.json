@@ -372,7 +372,7 @@
       "fired": true,
       "status": 200,
       "extra": true,
-      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed."
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. MIS 0a (16 Nov): still 3 trips with ?page=&limit= (a page of the worst-first list, band over all clients, same one queryAsEach); SOLD is read inside that one statement from the bounded windows (this year to date and the same dates a year back, 8 months for the trend), never per client trips: sit-grund 150 clients in RESULT-mis-sales."
     },
     "GET /api/books-grants/log": {
       "file": "books-grants.js",
