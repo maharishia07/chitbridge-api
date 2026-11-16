@@ -1731,7 +1731,7 @@ router.post('/bank/statement-files', auth, noKey, editor, on, ...checked('POST /
     statementFail(req, res, err);
   }
 });
-/** GET /bank/statement-files?accounts=<codes>&months=6&to=YYYY-MM[&limit=25&after=<cursor>&q=<search>] (a limit pages the files, newest first: lib/bank-statement-page; the cells and the count always cover the whole window) → { currency, months, accounts: [{ account_id, code, name, label }], cells: [{ account_id, month, missing, file_ids }], files: [{ id, account_id, label, period_from, period_to, name, size, source, overlaps, by_name, by_firm, for_client, added_at, read_at, reads }], older } — the page's own bank list names the accounts; a month with no file reads missing. Two reads. */
+/** GET /bank/statement-files?accounts=<codes>&months=6&to=YYYY-MM[&limit=25&after=<cursor>&q=<search>] (a limit pages the files, newest first: lib/bank-statement-page; the cells and the count always cover the whole window) → { currency, today, months, accounts: [{ account_id, code, name, label }], cells: [{ account_id, month, missing, file_ids }], unexplained: { accounts: [{ account_id, currency, unexplained_minor, to }], by_currency: [{ currency, unexplained_minor, to }], currency, unexplained_minor, to, count } (the newest sign-off of each account: the practice list's own rule), files: [{ id, account_id, label, period_from, period_to, name, size, source, overlaps, by_name, by_firm, for_client, added_at, read_at, reads }], older } — the page's own bank list names the accounts; a month with no file reads missing. Two reads. */
 // @does A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.
 router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/statement-files'), async (req, res) => {
   try {
@@ -1742,10 +1742,10 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
     const out = await withEntity(e, async (handle) => {
       const chart = await S.accounts(handle, e);
       const accounts = asked.map((key) => BANK_LOG.accountIn(chart, key)).filter((item, at, all) => item && all.indexOf(item) === at);
-      if (req.query.limit != null) return BSP.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q });
-      return BSF.list(handle, e, { accounts, chart, months });
+      const box = req.query.limit != null ? await BSP.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q }) : await BSF.list(handle, e, { accounts, chart, months });
+      return Object.assign(box, { unexplained: await BANK_LOG.unexplained(handle, e) }); /* the practice list's own rule (newest sign-off per account, in its currency): one figure per account and per currency, never added across */
     });
-    res.json(Object.assign({ currency: curOf(req) }, out));
+    res.json(Object.assign({ currency: curOf(req), today: today(req) }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
   } catch (err) {
     const box = BSF.verdictOf(err);
     if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) }); /* the box is not set up yet: in words, nothing lost */
