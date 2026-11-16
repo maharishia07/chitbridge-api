@@ -67,7 +67,7 @@ t('figures: the books own sums are read; a mixed-currency client carries none, n
   assert.deepStrictEqual([noCosts.sales_trend_pct, noCosts.gross_margin_pct, noCosts.profit_quarter_minor, noCosts.loss_months_running], [-30, null, null, null]);
 });
 t('the statement is one statement (no second ; outside a literal) with and without marks', () => {
-  [true, false].forEach((marks) => [true, false].forEach((bank) => assert.ok(!/;s*S/.test(P.statement(marks, ['cash'], bank).replace(/'(?:[^']|'')*'/g, '')))));
+  [true, false].forEach((bank) => assert.ok(!/;s*S/.test(P.statement(['cash'], bank).replace(/'(?:[^']|'')*'/g, ''))));
 });
 t('an ended, expired or edge_off grant is not allowed by the look (verdictOf reused)', () => {
   const live = { revoked_at: null, unexpired: true, edge_live: true, preset: 'auditor' }, req = { method: 'GET', listed: true };
