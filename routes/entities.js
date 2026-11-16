@@ -738,7 +738,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     let ledger_on = false;
     try {
       const eidLedger = auth.entityOf(req);
-      const seen = await withEntity(eidLedger, (h) => require('../lib/books').settingOf(h, eidLedger));
+      const seen = await withEntity(eidLedger, (h) => require('../lib/books-store').setting(h, eidLedger)); /* the books gate's own row read (books-store.setting), one statement inside the scope: no SAVEPOINT pair — a missing table throws, caught below, reported off */
       ledger_on = !!(seen && seen.enabled);
     } catch (e) {
       log.fellBack('entities GET /me: the ledger switch read failed — reported off', e);

@@ -1323,6 +1323,7 @@
       "credit_limit_from": null,
       "over_limit": false,
       "last_remind": null,
+      "needs": { "parties": 0, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
       "payable": {
        "total_minor": 59000,
        "buckets": {
@@ -1444,6 +1445,10 @@
      }
     ],
     "total_minor": 59000,
+    "needs": {
+     "customer": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 118000 },
+     "supplier": { "parties": 1, "bills": 1, "disputed": 0, "query": 0, "held": 0, "no_tax_invoice": 0, "no_terms": 0, "overdue": 1, "overdue_minor": 59000 }
+    },
     "payables": {
      "total_minor": 59000
     },
