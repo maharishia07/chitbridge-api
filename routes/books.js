@@ -1122,7 +1122,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
     const out = await withEntity(e, async (h) => {
       const now = await B.profitAndLoss(h, e, from, to);
       let was = null;
-      if (prior) was = await B.profitAndLoss(h, e, prior.from, prior.to).catch(() => null); /* a range that leaves the financial year, or years before the books began: no comparison, said */
+      if (prior) was = await B.profitAndLoss(h, e, prior.from, prior.to).catch(logger.orElse('P&L: the comparison range could not be read — the page shows no comparison', null)); /* a range that leaves the financial year, or years before the books began: no comparison, said */
       return { now, was };
     });
     const pl = out.now,
@@ -1235,7 +1235,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
       };
       const now = await at(asOf);
       const earlier = {};
-      for (const [key, day1] of [['month', R.monthsBefore(asOf, 1)], ['year', R.yearBefore(asOf)]]) earlier[key] = await at(day1).then((x) => Object.assign(x, { as_at: day1 })).catch(() => null);
+      for (const [key, day1] of [['month', R.monthsBefore(asOf, 1)], ['year', R.yearBefore(asOf)]]) earlier[key] = await at(day1).then((x) => Object.assign(x, { as_at: day1 })).catch(logger.orElse('Balance sheet: an earlier day could not be read — its column is left out', null));
       const liabilities = bsTagged(now.liabilities, earlier, headOf),
         equity = bsTagged(now.equity, earlier, headOf),
         assets = bsTagged(now.assets, earlier, headOf);
