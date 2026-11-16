@@ -882,6 +882,7 @@ async function checkRoutes(port, recording) {
   console.log('\n-- routes/catalogue.js, the public storefront: every refusal is a Problem and keeps its old keys --');
   const tested = {};
   for (const scenario of SCENARIOS) {
+    require('../lib/code-cooldown').resetCooldown(); /* the one-code-a-minute contact cool-down is judged in limiter-paths; here every scenario starts a fresh minute */
     Object.assign(world, FRESH, scenario.setup);
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
@@ -918,6 +919,7 @@ async function checkHiddenShops(port, recording) {
   console.log('\n-- a hidden shop answers exactly as an unknown one, on every door --');
   const unknowns = SCENARIOS.filter((scenario) => /-unknown$/.test(scenario.id));
   for (const scenario of unknowns) {
+    require('../lib/code-cooldown').resetCooldown();
     Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
@@ -938,10 +940,12 @@ async function checkOnceOnly(port) {
   for (const id of Object.keys(DOES)) {
     const scenario = SCENARIOS.find((item) => item.id === id);
     const runs = () => statements.filter((sql) => DOES[id].test(sql)).length;
+    require('../lib/code-cooldown').resetCooldown(); /* the one-code-a-minute contact cool-down is judged in limiter-paths; here every scenario starts a fresh minute */
     Object.assign(world, FRESH, scenario.setup);
     statements.length = 0;
     await send(port, 'POST', scenario.url, scenario.body, { 'idempotency-key': 'one-' + id });
     const single = runs();
+    require('../lib/code-cooldown').resetCooldown(); /* the yardstick used this contact's minute; the taps are a new ask under a new key */
     statements.length = 0;
     const tapped = { 'idempotency-key': 'tap-' + id };
     const taps = await Promise.all([1, 2].map(() => send(port, 'POST', scenario.url, scenario.body, tapped)));

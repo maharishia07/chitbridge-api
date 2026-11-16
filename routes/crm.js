@@ -651,10 +651,10 @@ router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties
     const owner = ctx(req),
       id = idOf(req);
     const sent = req.body && typeof req.body === 'object' ? req.body : {};
-    if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY); PV.requireStaffEvidence(sent, bad); /* SEC audit 2026-11-16 */
+    if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY);
     const body = Object.assign({}, sent, { source: 'staff', source_ref: byOf(req) });
     const pref = await withEntity(owner, async (h) => {
-      await mine(h, owner, id);
+      await mine(h, owner, id); PV.checkedPref(sent); PV.requireStaffEvidence(sent, bad); /* SEC audit 2026-11-16: after the party and the words are judged (old answers unchanged), a staff yes needs its evidence */
       return PV.notePref(h, owner, id, body, byOf(req));
     });
     res.status(201).json({ pref });
