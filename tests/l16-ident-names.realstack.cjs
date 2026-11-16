@@ -21,6 +21,7 @@ let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
 const RUN = 'n' + (Date.now() % 1e9).toString(36);
 const B860 = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'RUN-2026-11-14-b860-identities-rls.sql'), 'utf8');
+const GRANT_ARM = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'RUN-2026-11-16-identities-read-grant-party.sql'), 'utf8');
 const names = (map) => JSON.stringify([...map.entries()].map(([id, name]) => name).sort());
 
 (async () => {
@@ -45,26 +46,28 @@ const names = (map) => JSON.stringify([...map.entries()].map(([id, name]) => nam
     const all = [A, B, FIRM, aStaff, bStaff, firmPerson, OLD, oldPerson, C, cPerson];
     const read = (shop, ids) => withEntity(shop, (handle) => S.namesOf(handle, shop, ids));
     const tag = (id) => 'N-' + ({ [A]: 'a', [B]: 'b', [FIRM]: 'firm', [aStaff]: 'as', [bStaff]: 'bs', [firmPerson]: 'fp', [OLD]: 'old', [oldPerson]: 'op', [C]: 'c', [cPerson]: 'cp' }[id]) + '-' + RUN;
-    const stage = async (label) => {
+    const stage = async (label, grantNamesHidden) => {
       const seeA = await read(A, all);
-      ok(label + ' · shop A asking for every id gets its own tree plus the people of its granted firm and of its revoked firm, never B, C or their people', names(seeA) === JSON.stringify([A, aStaff, FIRM, firmPerson, OLD, oldPerson].map(tag).sort()), names(seeA));
-      ok(label + ' · the owner sees the adviser person name on an entry they made (live grant), and a revoked grant still names its past actions', (await read(A, [firmPerson])).get(firmPerson) === tag(firmPerson) && (await read(A, [oldPerson])).get(oldPerson) === tag(oldPerson));
+      ok(label + ' · shop A asking for every id gets its own tree plus the people of its granted firm and of its revoked firm, never B, C or their people', names(seeA) === JSON.stringify((grantNamesHidden ? [A, aStaff] : [A, aStaff, FIRM, firmPerson, OLD, oldPerson]).map(tag).sort()), names(seeA));
+      ok(label + ' · the owner sees the adviser person name on an entry they made (live grant), and a revoked grant still names its past actions', grantNamesHidden ? (await read(A, [firmPerson, oldPerson])).size === 0 : (await read(A, [firmPerson])).get(firmPerson) === tag(firmPerson) && (await read(A, [oldPerson])).get(oldPerson) === tag(oldPerson));
       ok(label + ' · an unrelated shop person stays null for A', (await read(A, [cPerson, C])).size === 0);
       ok(label + ' · shop A cannot read shop B by id, nor B\'s staff', (await read(A, [B, bStaff])).size === 0);
       ok(label + ' · shop B cannot read shop A\'s staff (the other way round)', (await read(B, [aStaff, A])).size === 0);
       /* the auditor's seat: the firm\'s person asks, but the request runs withEntity(the granted client) — the books handle is the client\'s */
       const audit1 = await read(A, [aStaff, firmPerson, bStaff]);
-      ok(label + ' · on client A the firm handle (bound to A) names A people and the firm own people (it holds the grant), not client B staff', names(audit1) === JSON.stringify([tag(aStaff), tag(firmPerson)].sort()), names(audit1));
+      ok(label + ' · on client A the firm handle (bound to A) names A people and the firm own people (it holds the grant), not client B staff', names(audit1) === JSON.stringify((grantNamesHidden ? [tag(aStaff)] : [tag(aStaff), tag(firmPerson)]).sort()), names(audit1));
       const audit2 = await read(B, [aStaff, firmPerson, bStaff]);
       ok(label + ' · the same firm on client B sees B\'s names only', names(audit2) === JSON.stringify([tag(bStaff)]), names(audit2));
       ok(label + ' · a blank shop and a malformed id answer nothing, no error', (await read(A, ['not-a-uuid'])).size === 0 && (await S.namesOf({ query: async () => { throw new Error('no read'); } }, null, [aStaff])).size === 0);
     };
-    await stage('b860 NOT applied');
+    await stage('b860 NOT applied', false);
     await owner.query(B860);
-    await stage('b860 applied (row security on)');
+    await stage('b860 applied, grant-party arm NOT run (the known gap: the firm people read blank, as the table says)', true);
+    await owner.query(GRANT_ARM);
+    await stage('b860 + grant-party arm (the whole of what is to be run)', false);
   } finally {
     try { await owner.query('ALTER TABLE identities NO FORCE ROW LEVEL SECURITY'); await owner.query('ALTER TABLE identities DISABLE ROW LEVEL SECURITY'); } catch (e) { console.log('  RESTORE FAILED: ' + e.message); }
-    for (const p of ['identities_own_tree', 'identities_created_by_me', 'identities_read_counterparty']) { try { await owner.query('DROP POLICY IF EXISTS ' + p + ' ON identities'); } catch (e) { /* nothing to drop */ } }
+    for (const p of ['identities_own_tree', 'identities_created_by_me', 'identities_read_counterparty', 'identities_read_grant_party']) { try { await owner.query('DROP POLICY IF EXISTS ' + p + ' ON identities'); } catch (e) { /* nothing to drop */ } }
     await owner.query('DELETE FROM books_access_grant WHERE grantor_entity = ANY($1::uuid[])', [planted]).catch(() => {});
     try { await owner.query('DELETE FROM identities WHERE identity_id = ANY($1::uuid[]) OR bridge_id LIKE $2', [planted, '%' + RUN + '%']); } catch (e) { console.log('  cleanup failed: ' + e.message); }
     await owner.end();
