@@ -20,6 +20,11 @@ const stub = (rows) => ({ async query(sql, values) { stub.sql = sql; stub.values
     assert.strictEqual(out.accounts[0].unexplained_minor, 35432);
     assert.ok(/DISTINCT ON \(account_id\)/.test(stub.sql) && /kind = 'statement'/.test(stub.sql), 'the newest sign-off per account');
   });
+  await t('R4-1: a pg DATE column arrives as a Date; the day is its calendar day, never "Sat Oct 31" (fixture typed like the driver row)', async () => {
+    const out = await LOG.unexplained(stub([row('a1', new Date(2026, 9, 31), 35432, 'AUD')]), E);
+    assert.strictEqual(out.to, '2026-10-31');
+    assert.ok(/period_to::text AS period_to/.test(stub.sql), 'the read casts the day to text');
+  });
   await t('two currencies: one line each, never one figure', async () => {
     const out = await LOG.unexplained(stub([row('a1', '2026-10-31', 35432, 'AUD'), row('a2', '2026-10-31', -10000, 'USD')]), E);
     assert.strictEqual(out.unexplained_minor, null);
