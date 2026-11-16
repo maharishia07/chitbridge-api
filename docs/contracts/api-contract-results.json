@@ -450,14 +450,6 @@
     422
    ]
   },
-  "GET /api/books/opening/years": {
-   "cases": 1,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "GET /api/books/packs/:id": {
    "cases": 3,
    "failed": 0,

@@ -64,7 +64,7 @@ router.get('/opening', auth, noKey, on, schemaValidate(operationFor('GET /openin
   }
 });
 // @does Nothing in -> we read each year's opening and carry from the year close, the carried-out total set beside the next opening -> the year strip (read only).
-router.get('/opening/years', auth, noKey, on, schemaValidate(operationFor('GET /opening/years')), async (req, res) => {
+router.get('/opening/years', auth, noKey, on, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     res.json(await withEntity(entity, (handle) => O.yearsView(handle, entity)));

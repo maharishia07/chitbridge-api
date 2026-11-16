@@ -1915,6 +1915,18 @@
   },
   "PUT /api/service/:chit_id": {
    "output_allowlist": true
+  },
+  "GET /api/books/opening": {
+   "output_allowlist": true
+  },
+  "GET /api/books/opening/years": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening/preview": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening/replace": {
+   "output_allowlist": true
   }
  }
 }

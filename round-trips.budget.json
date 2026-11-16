@@ -543,6 +543,22 @@
       "basis": "live from sit-in 2026-11-06",
       "extra": true
     },
+    "GET /api/books/opening": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "GET /api/books/opening/years": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
     "GET /api/books/packs": {
       "file": "books.js",
       "trips": 2,
@@ -2897,6 +2913,22 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/opening/preview": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "POST /api/books/opening/replace": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
     },
     "POST /api/books/outbox/retry": {
       "file": "books.js",
