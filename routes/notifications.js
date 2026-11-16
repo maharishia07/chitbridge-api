@@ -6,7 +6,6 @@
 //       (docs/contracts/api-legacy.json); a 500 says only the one generic sentence. The shop is the session's (auth.entityOf), never a body's.
 // CARD  22-channels-capture-and-messaging/notifications-and-the-bell
 const express = require('express');
-const log = require('../lib/logger');
 const counterBill = require('../lib/counter-bill'); // ACC-206 C4: the ONE pick of a bill's total, as SQL
 const router = express.Router();
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
@@ -73,25 +72,35 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
      */
     if (String(req.query.count || '') === '1') {
-      const c = await withEntity(entity_id, (db) =>
-        db.query(
-          `WITH me AS (SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1)
+      /* the marks' news counts since the same watermark, inside this ONE statement (lib/mark-notices newsCte); without mark_notices (b870 not run) or if it fails, the count alone, as before */
+      const countOf = (withNews) =>
+        withEntity(entity_id, (db) =>
+          db.query(
+            `WITH me AS (SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1)${withNews ? ', ' + markNotices.newsCte(limit) : ''}
          SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                    AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
                 count(*)::int AS total,
-                (SELECT seen FROM me) AS seen_at
+                (SELECT seen FROM me) AS seen_at${withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : ''}
            FROM (SELECT x.action, x.created_at
                    FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
                          ${FEED_FROM}) x
                   ORDER BY x.created_at DESC
                   LIMIT $3) d`,
-          [entity_id, caller_id, limit]
-        )
-      );
+            [entity_id, caller_id, limit]
+          )
+        );
+      let c;
+      if (markNotices.absent()) c = await countOf(false);
+      else {
+        try {
+          c = await countOf(true);
+        } catch (err) {
+          markNotices.noteFailure(err);
+          c = await countOf(false);
+        }
+      }
       const r = c.rows[0] || { count: 0, total: 0, seen_at: null };
-      const news = await markNotices.noticesOf(entity_id, limit); /* the marks' news counts since the same watermark */
-      const freshNews = news.filter((n) => !r.seen_at || new Date(n.created_at) > new Date(r.seen_at)).length;
-      return res.json({ count: r.count + freshNews, total: r.total + news.length, seen_at: r.seen_at });
+      return res.json({ count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at });
     }
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
@@ -103,8 +112,11 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     // B1 RLS: the feed reads the caller's OWN state_log copy — cross-party events (status/dispute/void) are already
     // fanned into it by the definers — so it scopes cleanly to withEntity(me). (The `OR action IN (...)` branch is a
     // harmless no-op under RLS, since non-own rows aren't visible anyway.)
-    const result = await withEntity(entity_id, (c) =>
-      c.query(
+    /* ⭐ ONE transaction for the feed, the watermark and the marks' news (4 trips → 2 with the dispute-team read): three withEntity calls were three BEGIN · set_config · COMMIT; the extra reads ride the feed's own handle */
+    let seen = null;
+    let news = [];
+    const result = await withEntity(entity_id, async (c) => {
+      const feedRead = await c.query(
         /**
          * ⚠️ DISTINCT ON, BECAUSE chit_status HOLDS TWO ROWS PER ENTITY ON A SELF-CHIT.
          *
@@ -139,8 +151,12 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       ORDER BY d.created_at DESC
       LIMIT $4`,
         [entity_id, caller_id, dispute_handler, limit]
-      )
-    );
+      );
+      const s = await c.query(`SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]);
+      seen = s.rows[0] && s.rows[0].seen;
+      news = await markNotices.noticesOn(c, limit); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
+      return feedRead;
+    });
 
     /**
      * ⭐ THE BADGE COUNTS WHAT ARRIVED SINCE YOU LAST LOOKED — b157.
@@ -152,15 +168,6 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      * Read through to_jsonb so the column may not exist yet: before b157 every row counts as new, which is
      * exactly what the old behaviour was, so an unmigrated environment is no worse off than it is today.
      */
-    let seen = null;
-    try {
-      const s = await withEntity(entity_id, (c) =>
-        c.query(`SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id])
-      );
-      seen = s.rows[0] && s.rows[0].seen;
-    } catch (e) {
-      log.fellBack('notifications GET /: the read failed — carried on without it', e); /* pre-b157 — leave seen null and every row counts as new */
-    }
     /**
      * ⚠️ MESSAGES ARE NOT COUNTED HERE — they have their own badge now.
      *
@@ -172,7 +179,6 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      * drive the number.
      */
     const countable = (r) => r.action !== 'message_sent';
-    const news = await markNotices.noticesOf(entity_id, limit); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
     const feed = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
     const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length + news.filter((n) => !seen || new Date(n.created_at) > new Date(seen)).length;
     res.json({ notifications: feed, count: fresh, total: result.rows.length + news.length, page: 1, limit, seen_at: seen });
