@@ -3676,6 +3676,12 @@
               },
               "currency": {
                 "type": "string"
+              },
+              "box": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
