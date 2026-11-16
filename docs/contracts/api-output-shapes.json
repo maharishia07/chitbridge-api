@@ -2610,6 +2610,20 @@
           },
           "cost_hidden": {
             "type": "boolean"
+          },
+          "as_at": {},
+          "compare": {},
+          "net_assets_minor": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "net_assets_ok": {
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -3563,7 +3577,16 @@
           },
           "cost_hidden": {
             "type": "boolean"
-          }
+          },
+          "profit_share_bp": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "period": {},
+          "presets": {},
+          "compare": {}
         },
         "additionalProperties": false
       },
