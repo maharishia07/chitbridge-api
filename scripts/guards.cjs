@@ -1026,6 +1026,7 @@ const GUARDS = [
   'itemmatch-corpus-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): the corpus mutation set (was named only in NEEDS_ENGINES)
   'query-shape.test.js', // QA-172 (14 Nov): the per-file query budget (a query inside a loop) and the trigram check; was red and unenrolled
   'acc-176-grants-contract.test.cjs', // ACC-176: the member's grant routes against their contract; the pure rules (end date, purpose, no database = typed 503 in words); the consent words equal the allow-list
+  'books-grants-seats.test.cjs', // frame P0: GET /api/books-grants answers seats and per-row may_use from holdsSeat / mayUseGrant (no second permission rule)
   'mark-offline.test.cjs', // MARK & QUERY (CAP-25): the adopter CI check (no detector, an unmapped word, an empty set, an unknown table or column fail), the core grep fixture (no adopter word in the core), the marks write-door classification (exactly two POST doors), the seal hygiene, the policy forms, the core's refusals with a recording stub
   'message-post.test.cjs', // MARK & QUERY PR1: the one message writer; a mark post is the mark definer only (no chit_message_deliver, no timeline, no CTP)
   'acc-176-grant-classification.test.cjs', // ACC-176: every books GET is classified for an auditor grant (a new GET is born refused); the synthetic auditor is not an owner, a commenter, read-only; the look failing answers 503 //

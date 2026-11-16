@@ -2126,7 +2126,8 @@
         "type": "object",
         "required": [
           "given",
-          "received"
+          "received",
+          "seats"
         ],
         "properties": {
           "given": {
@@ -2198,7 +2199,8 @@
                 "expires_at",
                 "revoked_at",
                 "state",
-                "edge_live"
+                "edge_live",
+                "may_use"
               ],
               "properties": {
                 "grant_id": {
@@ -2233,6 +2235,9 @@
                 },
                 "edge_live": {
                   "type": "boolean"
+                },
+                "may_use": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false,
@@ -2241,6 +2246,12 @@
           },
           "parents": {
             "type": "array"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false,
