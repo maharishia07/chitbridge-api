@@ -5400,7 +5400,7 @@
       "wire": null,
       "fired": true,
       "status": 422,
-      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, the duplicate and overlap read, the byte store insert with its table probe, ONE row plus its event insert in one transaction); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, the duplicate and overlap read, the byte store insert with its table probe, ONE row plus its event insert in one transaction); the offline stub reaches a 422 floor; live measure on sit-au pending; W15-100 adds the PAGED answer (only with ?limit=): the held-accounts group, the window rows, the count, the older count, the page and its read events = 6 statements in the same transaction, never the whole box (not fired by the stub, which sends no limit)",
       "awaiting_client": {
         "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
         "since": "2026-11-15"
