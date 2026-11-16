@@ -146,6 +146,16 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     for (const held of ['/bank/rail', '/party/:id/statement', '/payments/:id/advice', '/compare', '/compare/:id', '/compare/:id/csv', '/packs/:id/file', '/move-in/imports', '/fx-revalue']) assert.ok(!A.ADVISER_EXTRA_READS.has(held), held + ' stays held back from the adviser');
     assert.ok(A.ADVISER_EXTRA_READS.has('/events') && A.ADVISER_EXTRA_READS.has('/status'));
   });
+  await t('W15-85b: the accountant may send if_locked next_open on the bank page own event and payment bodies, and nothing else of it; Reopen (the period unlock) is no adviser door', () => {
+    const bank = (door, body) => A.listedFor('adviser', { method: 'POST', baseUrl: '/api/books', path: door, body: Object.assign({ client_ref: 'bank:abc-1' }, body) });
+    const fee = { kind: 'expense', class: 'bank_charges', amount: 15, paid_from: 'bank', date: '2026-10-06' }, pay = { party_id: MEMBER, direction: 'out', amount_minor: 5000, mode: 'bank', received_at: '2026-10-07', allocate: 'none' };
+    assert.ok(bank('/events', fee) && bank('/payments', pay), 'the bank bodies are listed');
+    assert.ok(bank('/events', Object.assign({ if_locked: 'next_open' }, fee)), 'an event with if_locked next_open is listed');
+    assert.ok(bank('/payments', Object.assign({ if_locked: 'next_open' }, pay)), 'a payment with if_locked next_open is listed');
+    for (const odd of ['always', '', 'open', true, ['next_open']]) assert.ok(!bank('/events', Object.assign({ if_locked: odd }, fee)) && !bank('/payments', Object.assign({ if_locked: odd }, pay)), 'if_locked ' + JSON.stringify(odd) + ' is not the bank page body');
+    assert.ok(!A.listedFor('adviser', { method: 'POST', baseUrl: '/api/books', path: '/periods/2026-27/7/unlock', body: { reason: 'x', client_ref: 'bank:abc-1' } }), 'Reopen is not an adviser door');
+    assert.ok(!A.listedFor('auditor', { method: 'POST', baseUrl: '/api/books', path: '/events', body: Object.assign({ if_locked: 'next_open', client_ref: 'bank:abc-1' }, fee) }), 'the auditor has no write door');
+  });
   console.log(fail ? '\n' + fail + ' failed' : '\nall ok');
   process.exit(fail ? 1 : 0);
 })();
