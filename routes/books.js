@@ -1539,16 +1539,17 @@ router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /bank/log?account&from&to → { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), posted: [{ ref, entry_no, posting_date, made_at, made_by }] (the bank lines already posted, both ref forms), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
+/** GET /bank/log?account&from&to[&marks_limit=0..5000&marks_before=<seq>] → (marks: the newest marks_limit, oldest first, marks_next = the cursor of the next older page or null) { currency, account: { account_id, code, name }, marks (oldest first), statements (newest first), posted: [{ ref, entry_no, posting_date, made_at, made_by }] (the bank lines already posted, both ref forms), exceptions: [{ code: POSTED_NOT_ACCEPTED, entry_no, amount_minor, currency, … }] } — any login with the Ledger on. One transaction. */
 // @does A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.
 router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req, res) => {
   try {
     const e = ctx(req),
       from = req.query.from ? dateQ(req.query.from) : null,
-      to = req.query.to ? dateQ(req.query.to) : null;
+      to = req.query.to ? dateQ(req.query.to) : null,
+      marksPage = BANK_LOG.marksPageOf(req.query); /* the NEWEST marks, a page of at most 5000; marks_limit=0 reads none (the Bank home) */
     const out = await withEntity(e, async (handle) => {
       const account = await bankAccountOf(handle, e, req.query.account);
-      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to));
+      return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to, marksPage));
     });
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
@@ -1558,6 +1559,7 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
 });
 /* ── l16 · THE STATEMENTS BOX (lib/bank-statement-file, b872): a bank statement kept against a bank account and a period; the page's own bank list names the accounts, the page's own reader reads the file (no parse here). ── */
 const BSF = require('../lib/bank-statement-file');
+const BSP = require('../lib/bank-statement-page');
 /** a refusal of the box answers as it is (its own status, code and sentence); anything else is the books' general mapping */
 function statementFail(req, res, err) {
   if (err && err.statementBox) return problem(req, res, { status: err.status, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field, existing_id: err.existing_id } });
@@ -1578,7 +1580,7 @@ router.post('/bank/statement-files', auth, noKey, editor, on, ...checked('POST /
     statementFail(req, res, err);
   }
 });
-/** GET /bank/statement-files?accounts=<codes>&months=6&to=YYYY-MM → { currency, months, accounts: [{ account_id, code, name, label }], cells: [{ account_id, month, missing, file_ids }], files: [{ id, account_id, label, period_from, period_to, name, size, source, overlaps, by_name, by_firm, for_client, added_at, read_at, reads }], older } — the page's own bank list names the accounts; a month with no file reads missing. Two reads. */
+/** GET /bank/statement-files?accounts=<codes>&months=6&to=YYYY-MM[&limit=25&after=<cursor>&q=<search>] (a limit pages the files, newest first: lib/bank-statement-page; the cells and the count always cover the whole window) → { currency, months, accounts: [{ account_id, code, name, label }], cells: [{ account_id, month, missing, file_ids }], files: [{ id, account_id, label, period_from, period_to, name, size, source, overlaps, by_name, by_firm, for_client, added_at, read_at, reads }], older } — the page's own bank list names the accounts; a month with no file reads missing. Two reads. */
 // @does A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.
 router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/statement-files'), async (req, res) => {
   try {
@@ -1588,6 +1590,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
     const out = await withEntity(e, async (handle) => {
       const chart = await S.accounts(handle, e);
       const accounts = asked.map((key) => BANK_LOG.accountIn(chart, key)).filter((item, at, all) => item && all.indexOf(item) === at);
+      if (req.query.limit != null) return BSP.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q });
       return BSF.list(handle, e, { accounts, chart, months });
     });
     res.json(Object.assign({ currency: curOf(req) }, out));
