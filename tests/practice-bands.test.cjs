@@ -23,6 +23,11 @@ t('last FY = the latest whose end is before today; 12 locked and bank to the FY 
   const y = H.yearEndOf(rows(12, 0), rec('2026-06-30'), TODAY);
   assert.deepStrictEqual([y.fy, y.of, y.locked, y.bank_to_end, y.complete, y.first_year], [2026, 12, 12, true, true, false]);
 });
+t('a text fiscal year label (2025-26) is ordered by its end date, not as a number', () => {
+  const lab = (fy, from) => months(from, 12).map((m) => Object.assign({}, m, { fiscal_year: fy }));
+  const y = H.yearEndOf(lab('2025-26', 2026).concat(lab('2026-27', 2027)), rec('2026-06-30'), TODAY);
+  assert.deepStrictEqual([y.fy, y.of, y.complete], ['2025-26', 12, true]);
+});
 t('soft lock counts as locked; an open month is a months blocker', () => {
   assert.strictEqual(H.yearEndOf(months(2026, 12, 'soft_locked'), rec('2026-07-31'), TODAY).complete, true);
   const open = H.yearEndOf(rows(11, 0), rec('2026-06-30'), TODAY);
