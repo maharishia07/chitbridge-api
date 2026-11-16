@@ -802,6 +802,7 @@ const GUARDS = [
   'units-alias.test.js', // QA wave 2: a rename is never a conversion
   'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
   'schedule-apply-claim.test.cjs', // NET-98 critic MUST 3: two readers at one due moment lay a parked patch once (claim: FOR UPDATE SKIP LOCKED + guarded stamp)
+  'onerule-practice-page.test.cjs', // l16 onerule: the practice row equals the client's own page for every fact (months not locked = periodAdvice's rule, bank = unexplainedOf), every seeded client; real-Postgres on the 150-client seed: onerule-practice-page.realstack.cjs
   'net-98-reducers.test.cjs', // NET-98 S1: the pure reducers split out of the view's libs, one definition each (guard); the real-Postgres differential is net-98-differential.realstack.cjs (local stack)
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
   'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
