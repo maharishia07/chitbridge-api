@@ -1,7 +1,7 @@
 // @stage built
 // OWNS  /api/books: the ledger's reads and the period-end writes, every refusal a code + a sentence (fail), never a 500 of prose.
 // CALLED BY server.js (mounted at /api/books), CB Accounts and CB Finance.
-// FLOW  auth → noKey → owner → (the money doors: onceOnly, FIN-63) → on → lib/books-* → the answer; a refusal → fail(res, e)
+// FLOW  (router: the firm's grant front → the areas gate, W15-66) auth → noKey → owner → (the money doors: onceOnly, FIN-63) → on → lib/books-* → the answer; a refusal → fail(res, e)
 // CARD 14-accounting/ledger-accounts-day-book-entries-reverse
 // @stage-note [BOOKS v2] /api/books — the ledger's reads (day book, ledgers, statement, dues, trial balance, P&L, balance
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
@@ -32,7 +32,7 @@ const logger = require('../lib/logger');
  * Money in and out is *_minor (integer minor units) with the currency beside it.
  */
 const express = require('express');
-const router = express.Router(); router.use(require('../middleware/books-grant')); /* ACC-176: a request that names a member's books (X-Books-For) is read-only for a live grant; no header, no effect */
+const router = express.Router(); router.use(require('../middleware/books-grant')); router.use(require('../middleware/books-area-gate')); /* W15-66: staff see the books only through the accounts area the owner opened: the one allow-list of every verb on this mount (and routes/books-money.js), after the firm's grant front */ /* ACC-176: a request that names a member's books (X-Books-For) is read-only for a live grant; no header, no effect */
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const B = require('../lib/books');
@@ -138,6 +138,8 @@ function editor(req, res, next) {
   }
   next();
 }
+/** W15-66: the bank writes need the owner or accounts:work, then the ledger's own level gate (middleware/books-area-gate.bankWriter) */
+const bankWriter = require('../middleware/books-area-gate').bankWriter(editor);
 /**
  * the gate: the shop's ledger must be on, else a quiet 404.
  * ⭐ CS1 (2026-10-12): BEFORE the switch, the COUNTRY — a shop whose country has no regulation pack (or no country, or the setup still to
@@ -1450,7 +1452,7 @@ async function bankAccountOf(handle, e, key) {
 }
 /** POST /bank/marks { account, file_hash?, marks: [{ act: accept|undo|note|attach, key, how?, chits?, ledger?, text?, ref? }] } → { marks: [row], by, at } — editor; insert-only, one transaction. `by` and `at` are the server's. */
 // @does A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).
-router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks'), async (req, res) => {
+router.post('/bank/marks', auth, noKey, bankWriter, on, ...checked('POST /bank/marks'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};
@@ -1463,7 +1465,7 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
 });
 /** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
 // @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
-router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
+router.post('/bank/statements', auth, noKey, bankWriter, on, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};

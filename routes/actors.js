@@ -33,6 +33,7 @@ const actorEmail = async (id) => {
 };
 const devOtp = require('../lib/dev-otp'); // NEVER gate OTP exposure on process.env.DEV_OTP directly
 const identityAuth = require('../lib/identity-auth'); // [capability: sign-in] the one token issuer, entity or coassist
+const areaStore = require('../lib/actor-areas'); // W15-66 — who may open which area, per person
 const accessEvents = require('../lib/access-events'); // b172 — who changed whose access
 const schema = require('../lib/schema'); // b173 — deploy-before-migration column probe
 const access = require('../lib/access'); // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
@@ -503,6 +504,30 @@ async function accessRowBefore(actor_id, entity_id) {
   }
   return beforeRow;
 }
+
+// ── W15-66: areas. GET /areas (anyone reads what they hold; the owner reads everyone) · PATCH /:id/areas (the owner opens, changes or closes one area for one person) — lib/actor-areas.js ──
+// @does Nothing in -> we read which areas of the business you hold (the owner also every person's areas and the people the books closed on) -> the areas, what you hold, the people and the notice.
+router.get('/areas', auth, ...checked('GET /areas'), async (req, res) => {
+  try {
+    res.json(await areaStore.readAreas(req));
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Read failed'));
+  }
+});
+// @does A person, an area (accounts), a level (see, work or none) and a last day in -> we open, change or close that area for them and put it on the access trail -> the area and who gave it (owner only).
+router.patch('/:id/areas', auth, ownerWrite, ...checked('PATCH /:id/areas'), async (req, res) => {
+  try {
+    const done = await areaStore.changeArea(req);
+    if (done.refusal === 'area') return problem(req, res, { status: 400, code: 'AREA_NOT_AVAILABLE', detail: areaStore.NOT_GRANTABLE });
+    if (done.refusal === 'day_invalid') return problem(req, res, { status: 400, code: 'AREA_DATE_INVALID', detail: areaStore.BAD_DAY_WORDS });
+    if (done.refusal === 'day_past') return problem(req, res, { status: 400, code: 'AREA_DATE_PAST', detail: areaStore.PAST_WORDS });
+    if (done.refusal === 'not_migrated') return problem(req, res, { status: 503, code: 'AREAS_NOT_MIGRATED', detail: areaStore.NOT_THERE_WORDS });
+    if (done.refusal === 'gone') return problem(req, res, { status: 404, ...words.coAssistGone() });
+    res.json(done.answer);
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Update failed'));
+  }
+});
 
 // ── PATCH /api/actors/:id ────────────────────────────────────
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).

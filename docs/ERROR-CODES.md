@@ -25,6 +25,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ALREADY_RECORDED | 409 | Already recorded | That is already recorded. | Refresh the list: it is already there. | books | 2026-10-23 |
 | ALREADY_REVERSED | 409 | Already reversed | This entry was already reversed. | Open the reversal to see it. | books | 2026-10-22 |
 | AMBIGUOUS_NAME | 409 | Ambiguous name | More than one business has that name. | Ask your admin for the exact login. | signin | 2026-10-22 |
+| AREAS_NOT_MIGRATED | 503 | Areas not ready | Opening an area for a person arrives after the next update. Until then only the owner and the preset roles see the books. Nothing was changed. | Come back after the update. | people | 2026-11-16 |
+| AREA_DATE_INVALID | 400 | Last day not a date | Give the last day as a date, like 2026-12-31, or leave it empty for no end. | Type the day again. | people | 2026-11-16 |
+| AREA_DATE_PAST | 400 | Last day already past | The last day is already past. Pick today or a later day, or leave it empty for no end. | Choose a later day. | people | 2026-11-16 |
+| AREA_NOT_AVAILABLE | 400 | Area cannot be opened yet | That area cannot be opened for a person yet. Only the accounts can be. | Open the accounts, or wait for the other areas. | people | 2026-11-16 |
 | ASSIST_BAD_REQUEST | 422 | Question not usable | That question could not be used. | Read the sentence shown, fix it and try again. | assist | 2026-10-23 |
 | ASSIST_GATED | 503 | Assistant resting | The assistant is resting for now. | The help library answers instead; try again later. | assist | 2026-10-22 |
 | ASSIST_NOT_CONFIGURED | 503 | Assistant not switched on | The assistant is not switched on here yet. | The help library answers instead. | assist | 2026-10-23 |
@@ -50,6 +54,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
 | BILL_WITHDRAWN | 409 | Bill already withdrawn | That bill was cancelled or rejected, so a credit note cannot be raised against it. | It was already reversed whole. Nothing more to do. | chits | 2026-11-13 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
+| BOOKS_AREA_CLOSED | 403 | Books closed to you | Your access does not include the books. Ask the owner. | Ask the owner to open the accounts for you. | books | 2026-11-16 |
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |

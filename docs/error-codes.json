@@ -389,6 +389,42 @@
    "since": "2026-10-23"
   },
   {
+   "code": "AREAS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Areas not ready",
+   "shopkeeper": "Opening an area for a person arrives after the next update. Until then only the owner and the preset roles see the books. Nothing was changed.",
+   "hint": "Come back after the update.",
+   "owner_area": "people",
+   "since": "2026-11-16"
+  },
+  {
+   "code": "AREA_DATE_INVALID",
+   "status": "400",
+   "title": "Last day not a date",
+   "shopkeeper": "Give the last day as a date, like 2026-12-31, or leave it empty for no end.",
+   "hint": "Type the day again.",
+   "owner_area": "people",
+   "since": "2026-11-16"
+  },
+  {
+   "code": "AREA_DATE_PAST",
+   "status": "400",
+   "title": "Last day already past",
+   "shopkeeper": "The last day is already past. Pick today or a later day, or leave it empty for no end.",
+   "hint": "Choose a later day.",
+   "owner_area": "people",
+   "since": "2026-11-16"
+  },
+  {
+   "code": "AREA_NOT_AVAILABLE",
+   "status": "400",
+   "title": "Area cannot be opened yet",
+   "shopkeeper": "That area cannot be opened for a person yet. Only the accounts can be.",
+   "hint": "Open the accounts, or wait for the other areas.",
+   "owner_area": "people",
+   "since": "2026-11-16"
+  },
+  {
    "code": "ASSIST_BAD_REQUEST",
    "status": "422",
    "title": "Question not usable",
@@ -765,6 +801,15 @@
    "hint": "Try again later.",
    "owner_area": "network",
    "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_AREA_CLOSED",
+   "status": "403",
+   "title": "Books closed to you",
+   "shopkeeper": "Your access does not include the books. Ask the owner.",
+   "hint": "Ask the owner to open the accounts for you.",
+   "owner_area": "books",
+   "since": "2026-11-16"
   },
   {
    "code": "BOOKS_BAD_REQUEST",

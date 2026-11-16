@@ -110,8 +110,9 @@ async function judgeDevice(req, res, decoded) {
 async function actorRow(identity_id) {
   const lvlCols = await schema.hasColumn('identities', 'access_level');
   const costCol = await schema.hasColumn('identities', 'can_see_costs'); // b145 — absent = the reader is cost-blind (fail closed)
+  const areaCol = await schema.hasColumn('identities', 'area_grants'); // b868 (W15-66) — absent = no area grants: the person holds only what their preset opens (lib/areas)
   const found = await boundRead(query, identity_id,
-    `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''}${costCol ? ', can_see_costs' : ''} FROM identities
+    `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''}${costCol ? ', can_see_costs' : ''}${areaCol ? ', area_grants' : ''} FROM identities
      WHERE identity_id = $1 AND identity_type = 'actor'`,
     [identity_id]
   );
@@ -278,6 +279,7 @@ function attachActorRow(identity, actor) {
   identity.access_level = actor.access_level;
   identity.whole_entity = actor.whole_entity === true;
   identity.can_see_costs = actor.can_see_costs === true;
+  identity.area_grants = actor.area_grants && typeof actor.area_grants === 'object' ? actor.area_grants : {}; /* W15-66: the person's OWN area grants from the same row; judged by lib/areas.liveLevel */
 }
 
 const auth = async (req, res, next) => {
