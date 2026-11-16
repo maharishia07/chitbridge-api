@@ -732,6 +732,17 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
      * try/catch so that b166 missing where b165 had run still returned the language. Per-column probes give the
      * same guarantee structurally: `locale_prefs` is selected when it exists whether or not `ui_prefs` does.
      */
+    /* ⭐ ledger_on — is the Ledger switched on for this shop? ONE answer for the boot checks (app · crm · accounts): they used to ask GET /books/health,
+       which answers 404 LEDGER_OFF BY DESIGN for a shop with none, and the browser console showed a red failed request on the first screen. The SAME read
+       the books gate makes (lib/books settingOf; an actor reads its employer's, auth.entityOf). Unreadable = false, never a guess that it is on. */
+    let ledger_on = false;
+    try {
+      const eidLedger = auth.entityOf(req);
+      const seen = await withEntity(eidLedger, (h) => require('../lib/books').settingOf(h, eidLedger));
+      ledger_on = !!(seen && seen.enabled);
+    } catch (e) {
+      log.fellBack('entities GET /me: the ledger switch read failed — reported off', e);
+    }
     const storefront_access = _sfCol ? _me.storefront_access || 'browse' : 'browse';
     const locale_prefs = (_lpCol && _me.locale_prefs) || {};
     const ui_prefs = (_upCol && _me.ui_prefs) || {};
@@ -771,6 +782,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       locale_prefs,
       ui_prefs,
       policy_flags,
+      ledger_on,
       dev_tools: devOtp.mayShowDevTools([result.rows[0].email, result.rows[0].user_id, result.rows[0].bridge_id])
     }); // W1: the web's Build preview strip; the names the tester code is checked against
     /**
