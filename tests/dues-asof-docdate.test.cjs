@@ -46,7 +46,7 @@ const bill = (X, day, no, amount) => X.B.postEntry(X.db, SHOP, { type: 'sale_bil
     ok('asOf 31 Jul: the July bill alone, the 1 Sep receipt not yet counted', jul && jul.balance_minor === 100000, JSON.stringify(jul));
     ok('asOf 30 Jun: nothing yet dated', !jun, JSON.stringify(jun));
     ok('asOf today: 100 + 200 + 400 less the 100 receipt = 600', now && now.balance_minor === 600000, JSON.stringify(now));
-    ok('the answer carries one ageing only (follow_up), no `buckets`', sep && sep.follow_up && !('buckets' in sep), JSON.stringify(sep));
+    ok('the answer carries follow_up (the one ageing) AND the kept additive `buckets` (web main still reads it), both summing to the balance', sep && sep.follow_up && sep.buckets && Object.values(sep.buckets).filter((v) => v > 0).length >= 1, JSON.stringify(sep));
 
     /* the bills of the party: open only, newest first */
     const open = await q('GET', '/party/' + RAVI + '/bills?side=customer');

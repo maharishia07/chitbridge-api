@@ -118,9 +118,9 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
     && has(sm.body.lines[0], ['date', 'what', 'ref', 'source_chit_id', 'dr_minor', 'cr_minor', 'running_minor']), JSON.stringify(sm.body).slice(0, 300));
   const du = await q('GET', '/dues?asOf=2026-09-30');
   const dc = (du.body.parties || []).find((p) => p.party_id === CUST), ds = (du.body.parties || []).find((p) => p.party_id === SUPP);
-  ok('GET /dues → { currency, parties: [{ party_id, party_no, name, balance_minor, oldest_due, disputed_minor, follow_up }] } — ONE ageing, no second `buckets`',
-    du.status === 200 && du.body.currency === 'INR' && dc && has(dc, ['party_id', 'party_no', 'name', 'balance_minor', 'oldest_due', 'disputed_minor', 'follow_up']) && !('buckets' in dc), JSON.stringify(du.body).slice(0, 400));
-  ok('…the customer owes (+1050.00, due 15 Sep, overdue < 6 months); the supplier is owed (−560.00)', dc && dc.balance_minor === 105000 && dc.oldest_due === '2026-09-15' && dc.follow_up.d0_30 === 105000
+  ok('GET /dues → { currency, parties: [{ party_id, party_no, name, balance_minor, oldest_due, disputed_minor, buckets }] }',
+    du.status === 200 && du.body.currency === 'INR' && dc && has(dc, ['party_id', 'party_no', 'name', 'balance_minor', 'oldest_due', 'disputed_minor', 'buckets']), JSON.stringify(du.body).slice(0, 400));
+  ok('…the customer owes (+1050.00, due 15 Sep, overdue < 6 months); the supplier is owed (−560.00)', dc && dc.balance_minor === 105000 && dc.oldest_due === '2026-09-15' && dc.buckets.lt_6m === 105000
     && ds && ds.balance_minor === -56000, JSON.stringify([dc, ds]));
   /* WX-P2P-02 (2026-10-13): with no asOf, "today" is the SHOP's day — 20:00 UTC on 12 Oct is 01:30 IST on the 13th. The items are
      filtered by the shop's day of created_at, so an asOf from the UTC clock left every bill recorded after midnight IST out of
