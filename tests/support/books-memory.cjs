@@ -10,7 +10,6 @@ const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const ymd = (v) => (v ? String(v).slice(0, 10) : null);
-
 /* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */
 const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
   return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
@@ -464,6 +463,7 @@ function create() {
         .map((c) => ({ chit_id: c.chit_id, direction: c.direction, business_json: c.business_json, line_items: c.line_items || [], status: c.status || null, created_at: c.created_at || null,
           party_id: c.party_id || null, party_name: c.party_name || null })).slice(0, limit || 500);
     },
+    SETTING_SQL: require('../../lib/books-store').SETTING_SQL /* the real constant: readBatch rides it, the memory store has no batch */
   };
   return S;
 }
@@ -477,8 +477,8 @@ const fakeDb = {
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
-    /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
-    if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] };
+    if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
+    if (/FROM cb_attachment WHERE chit_id = ANY/.test(t)) return { rows: [] }; /* the evidence behind a books row (lib/books-evidence.attach): no file is held in memory */
     /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */
     if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; }
     /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
@@ -497,5 +497,4 @@ const fakeDb = {
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
-
 module.exports = { create, fakeDb, ZERO, ymd };

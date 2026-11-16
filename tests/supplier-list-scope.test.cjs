@@ -29,6 +29,8 @@ const ALLOWED = [
     why: 'a predicate FRAGMENT, not a statement — GET /relationships/customers and the Home rail count both interpolate it into a query that runs inside withEntity' },
   { file: 'routes/entities.js', has: '(SELECT count(*)::int FROM supplier_list s WHERE s.owner_entity_id = i.identity_id)',
     why: 'the FALLBACK count, used only when ops.f_entity_counts() (b241) is missing or refused — the operator list reads across shops' },
+  { file: 'lib/books-store.js', has: 'LEFT JOIN supplier_list osl ON osl.owner_entity_id = $1',
+    why: 'W15-89b OTHERS_SQL is a FRAGMENT (the other lines of the entry, one sub-select), spliced into entryLines(db, …) whose db is the withEntity handle of the caller — it is not a statement of its own (same shape as NOT_A_SUPPLIER_SQL)' },
 ];
 
 function sources() {
