@@ -108,7 +108,7 @@ function drive(identity, headers, method, routePath) {
   });
   await t('a person without the auditor role is refused (403 BOOKS_GRANT_NOT_FOR_YOU) and no look is made', async () => {
     nextLook = () => { throw new Error('the look must not run'); };
-    for (const who of [{ ...auditorActor, access_level: 'editor' }, { ...auditorActor, whole_entity: false }, { ...auditorActor, can_see_costs: false }, { ...owner, parent_entity_id: MEMBER }]) {
+    for (const who of [{ ...auditorActor, access_level: 'editor', whole_entity: false } /* W12: an editor of the WHOLE entity (the accountant seat) now opens an auditor-role grant, read only; a counter-level editor still does not */, { ...auditorActor, whole_entity: false }, { ...auditorActor, can_see_costs: false }, { ...owner, parent_entity_id: MEMBER }]) {
       const out = await drive(who, { 'x-books-for': MEMBER });
       assert.ok(!out.nexted && out.status === 403 && out.body.code === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(out.body));
     }

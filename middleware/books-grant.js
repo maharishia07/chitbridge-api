@@ -140,16 +140,24 @@ function unclassifiedGets(router) {
 }
 
 /**
- * may this identity use a grant of this role: the firm's OWNER either way; a team member by the firm's own people settings (no new table): the auditor role for a person holding the auditor preset
- * (commenter, whole entity, sees costs), the adviser role for a person who may do the firm's work across every branch (editor, whole entity: the regional preset). A person the firm removed is refused
- * before this runs (middleware/auth re-reads the identity row on every request).
+ * the SEAT a person holds in the firm, by the firm's own people settings (no new table): the firm's OWNER holds both; a team member holds the auditor seat by the auditor preset (commenter, whole entity, sees costs) and the adviser seat
+ * when they may do the firm's work across every branch (editor, whole entity: the regional preset). The ONE place the seats are decided: the practice read (routes/books-grants grantUserOnly) and mayUseGrant both call it.
+ * A person the firm removed is refused before this runs (middleware/auth re-reads the identity row on every request).
  */
-function mayUseGrant(req, role) {
+function holdsSeat(req, role) {
   const holder = req.identity;
   if (!holder || req.api_key) return false;
   if (holder.identity_type !== 'actor') return !holder.parent_entity_id;
   if (role === grants.ADVISER) return holder.access_level === 'editor' && holder.whole_entity === true;
   return holder.access_level === 'commenter' && holder.whole_entity === true && holder.can_see_costs === true;
+}
+
+/**
+ * may this identity open a client's books under a grant of this role: the seat's holder, and (W12) the accountant seat also opens a client's AUDITOR-role grant, read only, since it does the firm's work and may look.
+ * Never more than the grant: the look still needs a live grant row for the role named, the held-back reads and the costs flag come from that row, and a person with neither seat is refused.
+ */
+function mayUseGrant(req, role) {
+  return holdsSeat(req, role) || (role === grants.AUDITOR && holdsSeat(req, grants.ADVISER));
 }
 
 /** the synthetic identity of the member's books for this grant: an auditor (the existing auditor preset, as a value) or an adviser, who acts for the owner (editor level, the owner's gates on the books router) */
@@ -256,4 +264,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });

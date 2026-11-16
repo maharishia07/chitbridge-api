@@ -55,7 +55,7 @@ router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contr
 
 /** who may read the practice: a firm's person who may use a grant (owner, adviser-level or auditor-level person); the roles they may use pick which of a client's grants is read */
 function grantUserOnly(req, res, next) {
-  req.practice_roles = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.mayUseGrant(req, role));
+  req.practice_roles = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.holdsSeat(req, role));
   if (req.practice_roles.length) return next();
   const words = "Only a firm's owner, adviser or auditor can read the practice.";
   return problem(req, res, { status: 403, code: 'BOOKS_GRANT_NOT_FOR_YOU', detail: words, legacy: { error: words, message: words } });

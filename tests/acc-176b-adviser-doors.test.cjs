@@ -67,11 +67,15 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     assert.strictEqual(auditor.acting_preset, 'auditor');
     assert.strictEqual(access.levelOf(auditor), 'commenter');
   });
+  const shopCounter = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: firmOwner.identity_id, access_level: 'commenter', whole_entity: false, can_see_costs: false };
   await t('who may use which grant: the firm\'s owner or a whole-entity editor the adviser; the auditor-preset person the auditor', () => {
     const may = (who, role) => A.mayUseGrant({ identity: who }, role);
     assert.ok(may(firmOwner, 'adviser') && may(maker, 'adviser'));
     assert.ok(!may(auditorPerson, 'adviser') && !may(oneNode, 'adviser'));
-    assert.ok(may(auditorPerson, 'auditor') && !may(maker, 'auditor'));
+    assert.ok(may(auditorPerson, 'auditor'));
+    assert.ok(may(maker, 'auditor'), 'W12: the accountant seat opens an auditor-role grant, read only (the look still needs the grant row)');
+    assert.ok(!may(shopCounter, 'auditor') && !may(shopCounter, 'adviser'), 'W12: a shop counter actor (commenter, one branch) opens nothing');
+    assert.ok(A.holdsSeat({ identity: maker }, 'adviser') && !A.holdsSeat({ identity: maker }, 'auditor'), 'W12: the strict seats stay as they were (the practice seat is read from holdsSeat)');
     assert.ok(!A.mayUseGrant({ identity: maker, api_key: 'k' }, 'adviser'), 'a key is not a person');
   });
   await t('a role header names a row and raises nothing: only auditor or adviser (or none) find a grant', () => {
@@ -89,6 +93,13 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'POST', listed: false }), 'read_only');
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: true }), 'allowed');
     assert.strictEqual(grants.verdictOf(Object.assign(row('adviser'), { revoked_at: new Date() }), { method: 'POST', listed: true }), 'revoked');
+  });
+  await t('W12: the accountant on an auditor-role grant: read only, and a revoked or lapsed grant still blocks', () => {
+    const row = (extra) => Object.assign({ preset: 'auditor', revoked_at: null, unexpired: true, edge_live: true }, extra);
+    assert.strictEqual(grants.verdictOf(row({}), { method: 'GET', listed: true }), 'allowed');
+    assert.strictEqual(grants.verdictOf(row({}), { method: 'POST', listed: true }), 'read_only');
+    assert.strictEqual(grants.verdictOf(row({ revoked_at: new Date() }), { method: 'GET', listed: true }), 'revoked');
+    assert.notStrictEqual(grants.verdictOf(row({ unexpired: false }), { method: 'GET', listed: true }), 'allowed');
   });
   await t('lib/books-action: the body of each kind is read once; what an adviser may not do is refused in words (a party, a bill, too few lines, a bad id, no reason)', () => {
     const refusedAs = (kind, body, code) => assert.throws(() => action.bodyOf(kind, body), (err) => err.code === code && err.status === 422 && typeof err.words === 'string', kind + ' ' + code);
