@@ -1083,7 +1083,8 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
         open = await require('../lib/review-mark').openList(h, 'acc.audit', e, door.ctxOf(req), { from: first, to: last });
         await h.query('RELEASE SAVEPOINT attention_marks');
       } catch (err) {
-        await h.query('ROLLBACK TO SAVEPOINT attention_marks').catch(() => {});
+        await h.query('ROLLBACK TO SAVEPOINT attention_marks').catch(logger.orElse('attention: the rollback after the marks read failed', undefined));
+        logger.fellBack('attention: the marks could not be read — the list is answered without them', err);
         return null;
       }
       return open.open.filter((mark) => mark.class === 'open' && String(mark.posting_date).slice(0, 10) >= first && String(mark.posting_date).slice(0, 10) <= last).map((mark) => String(mark.subject_id));
