@@ -2632,6 +2632,20 @@
               "null"
             ]
           },
+          "term_groups": {},
+          "terms_ok": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "term_cite": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ageing_note": {},
           "fy_from": {
             "type": "string"
           }

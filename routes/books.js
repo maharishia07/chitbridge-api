@@ -1101,7 +1101,7 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
 function flat(lines) {
   const out = [];
   (lines || []).forEach((item) =>
-    (item.accounts || []).forEach((account) => out.push({ code: account.code, name: account.name, amount_minor: account.amount_minor, line: item.label, role: account.role }))
+    (item.accounts || []).forEach((account) => out.push({ code: account.code, name: account.name, amount_minor: account.amount_minor, line: item.label, role: account.role, term: account.term || null }))
   );
   return out;
 }
@@ -1239,6 +1239,13 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         return [...heads.values()];
       };
       const groups = { assets: groupsOf(assets), liabilities: groupsOf(liabilities), equity: groupsOf(equity) };
+      /* l16-country: the sheet's CURRENT / NON-CURRENT split, from the shop's own pack (its `term` per ledger; none → unclassified, said so); the page only prints these sub-totals */
+      const presentation = B.packOf(req.books).presentation || {},
+        termOf = (item) => item.term;
+      const term_groups = { assets: N.termGroups(assets, termOf), liabilities: N.termGroups(liabilities, termOf), equity: N.termGroups(equity, () => 'equity') };
+      const termSum = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
+      const terms_ok = termSum(term_groups.assets) === now.bs.total_assets_minor && termSum(term_groups.liabilities) === now.total_liabilities_minor && termSum(term_groups.equity) === now.total_equity_minor;
+      const ageing_note = await require('../lib/books-statement-ageing').statementAgeing(h, e, chart, B.packOf(req.books), asOf, Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to));
       const sumOf = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
       const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
       const net_assets_minor = now.bs.total_assets_minor - now.total_liabilities_minor;
@@ -1255,6 +1262,10 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         net_assets_minor,
         groups,
         groups_ok,
+        term_groups,
+        terms_ok,
+        term_cite: presentation.termCite || null,
+        ageing_note,
         net_assets_ok: net_assets_minor === now.total_equity_minor /* two carried totals, compared: what the business owns less what it owes is what the owners hold */,
         compare: { month: sides(earlier.month), year: sides(earlier.year) },
         balanced: now.bs.balanced,
