@@ -2624,6 +2624,13 @@
               "boolean",
               "null"
             ]
+          },
+          "groups": {},
+          "groups_ok": {
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         },
         "additionalProperties": false

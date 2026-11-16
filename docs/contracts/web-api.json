@@ -582,6 +582,36 @@
     "profit_to_date_minor": -70000,
     "net_assets_minor": -70000,
     "net_assets_ok": true,
+    "groups_ok": true,
+    "groups": {
+     "assets": [
+      {
+       "code": "1000",
+       "name": "Current Assets",
+       "amount_minor": 118000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "liabilities": [
+      {
+       "code": "2000",
+       "name": "Current Liabilities",
+       "amount_minor": 59000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "equity": [
+      {
+       "code": null,
+       "name": null,
+       "amount_minor": -70000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ]
+    },
     "as_at": {
      "kind": "today",
      "step": 0,

@@ -1224,6 +1224,20 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
       const liabilities = tag(now.liabilities),
         equity = tag(now.equity),
         assets = tag(now.assets);
+      /* a head's subtotal per figure, summed here from the very ledgers it lists (the page never adds); groups_ok compares each side's heads with the side's own carried total */
+      const groupsOf = (list) => {
+        const heads = new Map();
+        list.forEach((item) => {
+          const key = item.group ? item.group.code : '_';
+          const head = heads.get(key) || heads.set(key, { code: item.group ? item.group.code : null, name: item.group ? item.group.name : null, amount_minor: 0, prior_month_minor: 0, prior_year_minor: 0 }).get(key);
+          head.amount_minor += item.amount_minor;
+          ['prior_month_minor', 'prior_year_minor'].forEach((k) => (head[k] = head[k] == null || item[k] == null ? null : head[k] + item[k]));
+        });
+        return [...heads.values()];
+      };
+      const groups = { assets: groupsOf(assets), liabilities: groupsOf(liabilities), equity: groupsOf(equity) };
+      const sumOf = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
+      const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
       const net_assets_minor = now.bs.total_assets_minor - now.total_liabilities_minor;
       const sides = (x) => (x ? { as_at: x.as_at, total_assets_minor: x.bs.total_assets_minor, total_liabilities_minor: x.total_liabilities_minor, total_equity_minor: x.total_equity_minor, net_assets_minor: x.bs.total_assets_minor - x.total_liabilities_minor } : null);
       return {
@@ -1236,6 +1250,8 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         total_liab_equity_minor: now.bs.total_liabilities_minor,
         profit_to_date_minor: now.bs.profit_to_date_minor,
         net_assets_minor,
+        groups,
+        groups_ok,
         net_assets_ok: net_assets_minor === now.total_equity_minor /* two carried totals, compared: what the business owns less what it owes is what the owners hold */,
         compare: { month: sides(earlier.month), year: sides(earlier.year) },
         balanced: now.bs.balanced,

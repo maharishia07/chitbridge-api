@@ -80,6 +80,7 @@ const call = (port, p, method) => new Promise((done) => {
   ok('net assets lead: owned less owed = the owners\' side (two carried totals compared, net_assets_ok)', bs.body.net_assets_ok === true && bs.body.net_assets_minor === bs.body.total_equity_minor, JSON.stringify([bs.body.net_assets_minor, bs.body.total_equity_minor, bs.body.net_assets_ok]));
   const cash = bs.body.assets.find((x) => x.amount_minor === 220000);
   ok('a ledger carries its figure a month ago and a year ago, and the pack\'s heading it sits under', cash && cash.prior_year_minor === 0 && cash.prior_month_minor === 220000 && cash.group && cash.group.name, JSON.stringify(cash));
+  ok('the packs own chart heads carry a subtotal each (this date · a month ago · a year ago) and add up to the carried total of its side (groups_ok)', bs.body.groups_ok === true && bs.body.groups.assets.length >= 1 && bs.body.groups.assets.every((g) => g.name && 'prior_month_minor' in g && 'prior_year_minor' in g), JSON.stringify(bs.body.groups));
   const end = await get('/bs?kind=month&step=-1');
   ok('as at the end of last month, stepped back once: 30 Sep 2026', end.body.as_at.as_at === '2026-09-30' && end.body.as_at.can_next === true, JSON.stringify(end.body.as_at));
   srv.close();
