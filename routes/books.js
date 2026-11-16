@@ -40,6 +40,7 @@ const E = require('../lib/books-engines');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
+const OtherSide = require('../lib/books-other-side'); /* W15-89b: a ledger line's other side (the entry's other ledger, and the party it names) */
 const { marksIn } = require('../lib/mark-embed'); /* MARK & QUERY: the marks of the entries a list serves, in the list's own transaction */
 const ctx = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gates: a route that takes no input has none */
@@ -664,12 +665,13 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
       const a = require('../lib/bank-rec-log').accountIn(chart, key); /* the one reader of an account key: its code, its role or its id */
       if (!a) return null;
       const lo = await B.ledgerOf(h, e, a, party, from, to),
-        open = lo.opening_minor;
+        open = lo.opening_minor,
+        taxRoles = OtherSide.taxRolesOf(B.packOf(req.books)); /* W15-89b: the pack's own tax ledgers stay out of "the other side" */
       /* PERF1: a page (?limit · ?after) reads its entries only; its first running balance = the range's opening + ONE indexed SUM of the lines before
          the cursor (S.pageSums — never the earlier pages read); the range's closing and Σ come from the same SUM, not from the rows on the page */
-      const p = pg && !pg.entries ? await S.entryPage(h, e, from, to, a.account_id, party, Object.assign({ noOpening: !!lo.period0 }, pg)) : null;
+      const p = pg && !pg.entries ? await S.entryPage(h, e, from, to, a.account_id, party, Object.assign({ noOpening: !!lo.period0 }, pg), { others: true }) : null;
       const t = p ? await S.pageSums(h, e, from, to, a.account_id, party, pg.after, !!lo.period0) : null;
-      const rows = (p ? p.rows : await S.entryLines(h, e, from, to, a.account_id, party)).filter(
+      const rows = (p ? p.rows : await S.entryLines(h, e, from, to, a.account_id, party, null, { others: true })).filter(
         (item) => !(lo.period0 && Number(item.period) === 0)
       ); /* period 0 is IN the opening (WX-R2R) */
       const first = t ? open + t.before_dr - t.before_cr : open;
@@ -689,6 +691,8 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
           source_chit_id: item.source_chit_id,
           source: sourceOf(item),
           party_id: item.party_id,
+          party_name: OtherSide.partyNameOf(item.entry_lines) /* W15-89b: who the entry names, read in the same statement */,
+          other: OtherSide.otherOf(item.entry_lines, item, taxRoles) /* W15-89b: the entry's other side: { code, name } · { code: null, name: 'Split', count } · null */,
           dr_minor: Number(item.dr_minor),
           cr_minor: Number(item.cr_minor),
           running_minor: run
@@ -1361,6 +1365,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         received_at: date,
         client_ref,
         by: byOf(req),
+        note_if_moved: b.if_locked === 'next_open', /* W15-85a: the api writes the payment's narration, so it adds the "<Month> locked" note */
         strict_date: b.if_locked !== 'next_open', /* l16 banklock: the owner's own press on a bank line in a locked month; its date stays received_at */
         allocations,
         allocate,

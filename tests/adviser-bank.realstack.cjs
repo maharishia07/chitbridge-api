@@ -182,6 +182,33 @@ async function main() {
       const viaOwner = await call(ownerOf(M1), 'POST', '/api/books/events', { body: fee(10) });
       ok('10 the owner locks the month; the adviser\'s line is refused with the owner\'s own code and sentence', lk.status === 200 && viaAdviser.status === viaOwner.status && viaAdviser.status >= 400 && code(viaAdviser) === code(viaOwner) && (viaAdviser.body.detail || viaAdviser.body.message) === (viaOwner.body.detail || viaOwner.body.message), JSON.stringify([lk.status, viaAdviser, viaOwner]));
       ok('10 nothing was posted in the locked month', (await entries(M1, '%' + ref(9))).length === 0 && (await entries(M1, '%' + ref(10))).length === 0);
+
+      /* 13 W15-85a/b: the month is locked; the accountant (adviser_posts) and the owner each post a line in the NEXT open month, the own day of the line kept, the note "<Month> locked", the firm and grant stamped on the accountant's */
+      const SUP = await business('s'); await withEntity(M1.id, (h) => h.query("INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, nickname) VALUES ($1, $2, 'Metro Trade Supplies')", [M1.id, SUP.id]));
+      const monthWord = new Date(day + 'T00:00:00Z').toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+      const rowsOf = (ref_) => withEntity(M1.id, (h) => h.query('SELECT entry_id, entry_no, posting_date, doc_date, narration, grant_id, by_name, by_firm, created_by FROM journal_entry WHERE entity_id = $1 AND source_ref LIKE $2', [M1.id, ref_])).then((r) => r.rows);
+      const mvA = await adv(A, M1, 'POST', '/events', fee(15, { if_locked: 'next_open' }));
+      const mvAe = await rowsOf('%' + ref(15));
+      ok('13 the accountant: if_locked next_open posts (200), moved, the own day of the line kept as doc_date, the note says "' + monthWord + ' locked"', mvA.status === 200 && mvA.body.moved === true && mvAe.length === 1 && String(mvAe[0].doc_date.toISOString ? mvAe[0].doc_date.toISOString() : mvAe[0].doc_date).slice(0, 10) === day && String(mvAe[0].posting_date.toISOString ? mvAe[0].posting_date.toISOString() : mvAe[0].posting_date).slice(0, 10) > day && new RegExp(monthWord + ' locked$').test(mvAe[0].narration), JSON.stringify([mvA.status, mvA.body, mvAe]));
+      ok('13 …stamped with the grant, her name and the firm', mvAe.length === 1 && mvAe[0].grant_id === g1.body.grant_id && mvAe[0].by_name === A.display_name && mvAe[0].by_firm === P.name && mvAe[0].created_by === A.identity_id, JSON.stringify(mvAe));
+      const mvO = await call(ownerOf(M1), 'POST', '/api/books/events', { body: fee(16, { if_locked: 'next_open' }) });
+      const mvOe = await rowsOf('%' + ref(16));
+      ok('13 the owner: the same press posts the same way, no firm', mvO.status === 200 && mvO.body.moved === true && mvOe.length === 1 && mvOe[0].grant_id === null && mvOe[0].by_firm === null && new RegExp(monthWord + ' locked$').test(mvOe[0].narration), JSON.stringify([mvO.status, mvO.body, mvOe]));
+      const mvP = await adv(A, M1, 'POST', '/payments', { party_id: SUP.id, direction: 'out', amount_minor: 2500, mode: 'bank', received_at: day, allocate: 'none', client_ref: ref(17), if_locked: 'next_open' });
+      const mvPe = await rowsOf('pay:%');
+      ok('13 the accountant payment to a supplier moves too, with the same note from the same helper, stamped', mvP.status === 200 && mvP.body.ok !== false && mvPe.length >= 1 && mvPe.every((r) => new RegExp(monthWord + ' locked$').test(r.narration) && r.grant_id === g1.body.grant_id && r.by_firm === P.name), JSON.stringify([mvP.status, mvP.body, mvPe]));
+      const strictP = await adv(A, M1, 'POST', '/payments', { party_id: SUP.id, direction: 'out', amount_minor: 100, mode: 'bank', received_at: day, allocate: 'none', client_ref: ref(18) });
+      ok('13 without the word a locked month still refuses the accountant payment; a value that is not next_open is not a bank body (403)', strictP.status >= 400 && (await adv(A, M1, 'POST', '/events', fee(19, { if_locked: 'always' }))).status === 403, JSON.stringify(strictP));
+      const unlock = await adv(A, M1, 'POST', '/periods/' + fy + '/' + Number(todayRow.period) + '/unlock', { reason: 'x' });
+      ok('13 Reopen is not for the accountant: unlocking the month through her door is 403, and the month stays locked', unlock.status === 403 && (await adv(A, M1, 'POST', '/events', fee(20))).status >= 400, JSON.stringify(unlock));
+      /* 14 W15-89b: the bank ledger's lines name the other side and the party, read in one statement */
+      const led = (await call(ownerOf(M1), 'GET', '/api/books/ledger/' + bank + '?from=' + day.slice(0, 4) + '-01-01&to=' + day.slice(0, 4) + '-12-31&limit=100')).body;
+      const lines = (led && led.lines) || [];
+      const feeLine = lines.find((x) => x.entry_no === mvOe[0].entry_no), payLine = lines.find((x) => x.entry_no === mvPe[0].entry_no);
+      ok('14 an expense line on the bank ledger says its other side: { code, name } of the expense ledger, no party', feeLine && feeLine.other && feeLine.other.code && feeLine.other.name && feeLine.party_name === null, JSON.stringify(feeLine));
+      ok('14 a payment line says the creditors ledger and the supplier by its nickname', payLine && payLine.other && payLine.other.name && payLine.party_name === 'Metro Trade Supplies', JSON.stringify(payLine));
+      const dayLines = (await call(ownerOf(M1), 'GET', '/api/books/ledger/' + bank + '?from=' + day.slice(0, 4) + '-01-01&to=' + day.slice(0, 4) + '-12-31')).body.lines;
+      ok('14 the unpaged ledger carries the same other side', dayLines.some((x) => x.entry_no === mvOe[0].entry_no && x.other && x.other.code === feeLine.other.code));
     }
   } finally {
     server.close();

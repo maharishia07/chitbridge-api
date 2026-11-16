@@ -83,6 +83,8 @@ function bankWriteBody(req) {
   if (door === '/api/books/bank/marks' || door === '/api/books/bank/statements') return true;
   const body = req.body || {};
   if (!/^bank:[0-9a-z:_-]{1,75}$/i.test(String(body.client_ref || ''))) return false;
+  /* W15-85b: the accountant does the books for the owner, so the line in a locked month may be posted in the next open one (the same if_locked the owner sends; the entry is stamped with the firm and the grant like any adviser write). Only that word: any other value is not the bank page's body. Unlocking a month is NOT a door here: Reopen stays the owner's. */
+  if (body.if_locked !== undefined && body.if_locked !== 'next_open') return false;
   /* the writer resolves the kind and the ref from inner `event`/`type` too (lib/books-manual eventOf): a body that carries any of these keys is not the bank page's body and is refused whole */
   const FOREIGN_EVENT = ['event', 'type', 'lines', 'voucher_type', 'supplier', 'party', 'party_id', 'bill', 'against_ref', 'customer'];
   if (door === '/api/books/payments') return !!body.party_id && !body.party && !body.cheque && String(body.mode || '') !== 'cheque' && !Object.keys(body).some((key) => /^cheque/.test(key)) && !body.against_ref; /* an EXISTING party (never one to make), no cheque */
@@ -252,4 +254,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
