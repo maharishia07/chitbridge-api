@@ -208,11 +208,12 @@ const refused = (code) => (err) => err.statementBox === true && err.code === cod
     assert.strictEqual(A.listedPattern(FILE_PATH), '/bank/statement-files/:id/file');
     assert.strictEqual(A.routeForLog('GET', FILE_PATH), 'GET /bank/statement-files/:id/file', 'the grant log names the pattern, never an id');
   });
-  await t('AUDITOR: lists and downloads under a live grant; adding is refused read-only; a held-back sibling stays held back', () => {
+  await t('AUDITOR: lists and downloads under a live grant; adding is refused read-only; the rail stays held back', () => {
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: A.listedPattern('/bank/statement-files') !== null }), 'allowed');
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: A.listedPattern(FILE_PATH) !== null }), 'allowed');
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'POST', listed: true }), 'read_only');
-    assert.strictEqual(A.listedPattern('/bank/log'), null, 'the bank log is still the adviser\'s, not the auditor\'s');
+    assert.strictEqual(A.listedPattern('/bank/log'), '/bank/log', 'W15-71: the bank log is the auditor read too (marks, who matched, signed months)');
+    assert.strictEqual(A.listedPattern('/bank/rail'), null, 'the rail (party and bank details) stays held back');
   });
   await t('ADVISER: lists, downloads and adds under a live grant; any other POST is not listed', () => {
     assert.strictEqual(grants.verdictOf(row('adviser'), { method: 'POST', listed: A.adviserDoor('POST', '/api/books/bank/statement-files') !== null }), 'allowed');
