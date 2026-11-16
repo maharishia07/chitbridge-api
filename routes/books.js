@@ -1158,6 +1158,7 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
     res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
+      shown_as_at: agedAt(req) /* F5 (17 Nov): the day a heading may say: the earlier of the day asked and the shop's today, the E1 rule (agedAt); the figures still read what was asked */,
       fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
       rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
       total_dr_minor: tb.total_dr_minor,
