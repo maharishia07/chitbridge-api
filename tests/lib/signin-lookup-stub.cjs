@@ -30,7 +30,7 @@ function lookup(rows, kind, key, docs) {
     .map((r) => { const o = {}; COLUMNS.forEach((c) => { o[c] = r[c] === undefined ? null : r[c]; }); return o; });
 }
 function answer(sql, params, allRows, docs) {
-  const s = String(sql).replace(/\s+/g, ' ').trim();
+  const s = require('./secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ').trim();
   let m;
   if (/^SELECT \* FROM ops\.signin_candidates\(\$1, \$2\)$/i.test(s)) return { rows: lookup(allRows(), params[0], params[1], docs ? docs() : []) };
   if ((m = s.match(/^SELECT (.+?) FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\)$/i))) {

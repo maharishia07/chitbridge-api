@@ -340,7 +340,7 @@ const get = (port, p) => new Promise((ok) => {
   /* RAIL-LAB-SRV1 (G1): may_sample is the SERVER's may/why - a live shop (population null = the default, live) is refused with a code and a sentence */
   const LIVE_NO = { ok: false, why: 'live_shop', say: 'This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop.' };
   t('rail: { suppliers, customers, may_sample, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders; may_sample the lab rule', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 1, stuck: 1, state: 'needs_you' });
-  t('rail: the population rides the overdue_days statement (to_jsonb - no failed query before b249, no second identities read)', /to_jsonb\(i\)->>'population'/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
+  t('rail: the population rides the overdue_days statement (a plain column, SEC-186 - no second identities read)', /i\.population::text AS population/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
   /* ⭐ TOUR-FIX1 (Home said 187 in, Tasks › Orders in said 0): the rail and Tasks & Orders answer from ONE reader — the same numbers, asked both ways */
   const wf = await get(port, '/api/work/facts'), wl = await get(port, '/api/work/list?view=orders_in');
   t('rail in / out / tasks === GET /api/work/facts counts (orders_in · orders_out · tasks) === the Orders in list\'s own total', [r.json.in, r.json.out, r.json.tasks, wl.json.total], [wf.json.counts.orders_in, wf.json.counts.orders_out, wf.json.counts.tasks, wf.json.counts.orders_in]);

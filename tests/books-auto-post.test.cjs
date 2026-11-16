@@ -35,7 +35,7 @@ const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-
   const real = dbStub.withEntity;
   dbStub.withEntity = async (e, fn) => fn(Object.assign(Object.create(X.db), {
     query: async (sql, args) => {
-      if (/policy_flags'->'books'->'auto_post'/.test(String(sql))) { if (BROKEN) throw new Error('boom'); return { rows: [{ v: FLAG === undefined ? null : FLAG }] }; }
+      if (/policy_flags\)->'books'->'auto_post'/.test(String(sql))) { if (BROKEN) throw new Error('boom'); return { rows: [{ v: FLAG === undefined ? null : FLAG }] }; }
       return X.db.query(sql, args);
     },
   }));

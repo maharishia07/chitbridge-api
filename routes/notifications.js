@@ -76,7 +76,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       const countOf = (withNews) =>
         withEntity(entity_id, (db) =>
           db.query(
-            `WITH me AS (SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1)${withNews ? ', ' + markNotices.newsCte(limit) : ''}
+            `WITH me AS (SELECT i.notif_seen_at::text AS seen FROM identities i WHERE i.identity_id = $1)${withNews ? ', ' + markNotices.newsCte(limit) : ''}
          SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                    AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
                 count(*)::int AS total,
@@ -152,7 +152,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       LIMIT $4`,
         [entity_id, caller_id, dispute_handler, limit]
       );
-      const s = await c.query(`SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]);
+      const s = await c.query(`SELECT i.notif_seen_at::text AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]);
       seen = s.rows[0] && s.rows[0].seen;
       news = await markNotices.noticesOn(c, limit); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
       return feedRead;
