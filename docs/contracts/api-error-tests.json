@@ -264,7 +264,8 @@
  "GET /api/books-grants/practice": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/books/accounts": [
   401,
@@ -300,9 +301,11 @@
   500
  ],
  "GET /api/books/bank/statement-files": [
+  400,
   401,
   403,
   404,
+  422,
   500,
   503
  ],
@@ -1946,11 +1949,16 @@
   503
  ],
  "POST /api/books/bank/statement-files": [
+  400,
   401,
   403,
   404,
+  409,
+  413,
+  415,
   422,
-  500
+  500,
+  503
  ],
  "POST /api/books/bank/statements": [
   400,

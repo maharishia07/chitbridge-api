@@ -136,6 +136,9 @@
    "bfla_role_check": true,
    "output_allowlist": true
   },
+  "GET /api/books-grants/practice": {
+   "output_allowlist": true
+  },
   "GET /api/books/accounts": {
    "output_allowlist": true
   },
@@ -145,6 +148,17 @@
   "GET /api/books/bank/log": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
+  },
+  "GET /api/books/bank/rail": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/books/bank/statement-files": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "foreign_id_404": true
   },
   "GET /api/books/bs": {
    "output_allowlist": true
@@ -174,6 +188,9 @@
   },
   "GET /api/books/events": {
    "output_allowlist": true
+  },
+  "GET /api/books/evidence/:id": {
+   "foreign_id_404": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true
@@ -935,6 +952,10 @@
   },
   "POST /api/books/bank/marks": {
    "output_allowlist": true
+  },
+  "POST /api/books/bank/statement-files": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/books/bank/statements": {
    "output_allowlist": true
