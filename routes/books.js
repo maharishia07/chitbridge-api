@@ -2624,8 +2624,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
     res.json({
       fiscal_year: st.fiscal_year,
       closed: st.closed,
-      can_close: st.can_close && !st.closed,
-      can_close_if_lodged: st.can_close_if_lodged && !st.closed, /* only the returns stand in the way: POST with returns_lodged closes it */
+      can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
       months: st.months,
       next: st.next
