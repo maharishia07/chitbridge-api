@@ -35848,6 +35848,7 @@
         "required": [
           "fiscal_year",
           "closed",
+          "returns_lodged",
           "can_close",
           "can_close_if_lodged",
           "refusals",
@@ -35859,6 +35860,9 @@
             "type": "string"
           },
           "closed": {
+            "type": "boolean"
+          },
+          "returns_lodged": {
             "type": "boolean"
           },
           "can_close": {

@@ -4856,10 +4856,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 3,
+    "trips": 4,
     "wire": 10,
     "screens": [
-     "books-practice.js 3/3"
+     "books-practice.js 4/4"
     ]
    },
    "measured": {
@@ -8941,7 +8941,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2619,
-   "hash": "fca266b517ae5685",
+   "hash": "b377ffc8ae9050c8",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
     "count": 1,
@@ -9015,7 +9015,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fca266b517ae5685"
+    "stale_since": "b377ffc8ae9050c8"
    },
    "status": "partial",
    "callers": [
@@ -40354,7 +40354,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2603,
-   "hash": "155034bf1683c857",
+   "hash": "8336b63c81b73203",
    "does": "A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).",
    "errors": {
     "count": 4,
@@ -40436,7 +40436,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "155034bf1683c857"
+    "stale_since": "8336b63c81b73203"
    },
    "status": "partial",
    "callers": [
@@ -66340,7 +66340,7 @@
      "books-grant-drill.js 0/0",
      "books-grant-member.js 0/5",
      "books-grant-view.js 0/0",
-     "books-practice.js 0/3",
+     "books-practice.js 0/4",
      "cap-admin.js 0/118",
      "cap-assist.js 0/2",
      "cap-bank-sheet.js 0/7",
