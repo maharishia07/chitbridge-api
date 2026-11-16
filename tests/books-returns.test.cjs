@@ -89,10 +89,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('G1 is GST inclusive: sales 300.00 + 1A 30.00', box(r, 'G1').amount_minor, 33000);
   const net = moved(AU, 'gst_collected', '2026-07-01', '2026-09-30', 'cr') - moved(AU, 'gst_paid', '2026-07-01', '2026-09-30', 'dr');
   ok('⭐ BAS 1A − 1B = the GST ledgers\' net movement for the quarter, summed from the journal lines themselves (' + net + ')', net === box(r, '1A').amount_minor - box(r, '1B').amount_minor && net === -2000, 'lines say ' + net);
-  eq('every box names the ledgers it counts: 1A → 2200 GST collected · 1B → 2210 GST paid · 9 → both', [box(r, '1A').accounts.map((a) => a.code), box(r, '1B').accounts.map((a) => a.code), box(r, '9').accounts.map((a) => a.code), box(r, '1A').roles],
+  eq('every box names the ledgers it counts: 1A → 2200 GST collected · 1B → 2210 GST paid · 9 → both', [box(r, '1A').accounts.map((a) => a.code), box(r, '1B').accounts.map((a) => a.code), box(r, '9').accounts.map((a) => a.code).sort(), box(r, '1A').roles],
     [['2200'], [codeOfRole(AU, 'gst_paid')], ['2200', codeOfRole(AU, 'gst_paid')], ['gst_collected']]);
   ok('the ledger names ride with the codes', box(r, '1A').accounts[0].name === 'GST collected' && box(r, 'G1').accounts.some((a) => a.code === codeOfRole(AU, 'sales')), JSON.stringify(box(r, '1A').accounts));
   eq('W15-91: the return carries the credit claimed with no tax invoice (P1, 550.00 gross, no file) — the Day book flag, one purchase, its 50.00 GST = the whole of 1B; the figures above are untouched', [r.body.unsupported_input.count, r.body.unsupported_input.tax_minor, r.body.unsupported_input.currency, r.body.unsupported_input.tax_minor === box(r, '1B').amount_minor, r.body.unsupported_input.from, r.body.unsupported_input.to, r.body.unsupported_input.box], [1, 5000, 'AUD', true, '2026-07-01', '2026-09-30', '1B']);
+  /* ACC-357 (W15-103b): each box carries what EACH ledger adds, largest first, top 10 + n more; the ledgers' sum is the box (two carried totals compared, never recomputed) */
+  eq('ACC-357: 9 carries both ledgers with THEIR amounts (2200 = +30.00 the GST on sales, gst_paid = -50.00), largest first, split_ok', [box(r, '9').accounts.map((a) => a.code + ':' + a.amount_minor), box(r, '9').accounts_n, box(r, '9').accounts_more_n, box(r, '9').split_ok], [[codeOfRole(AU, 'gst_paid') + ':-5000', '2200:3000'], 2, 0, true]);
+  ok('ACC-357: every box of the return has its ledgers summing to it (split_ok) - G1 too, sales + its GST', r.body.boxes.every((b) => b.split_ok === true), JSON.stringify(r.body.boxes.map((b) => [b.code, b.split_ok])));
+  eq('ACC-357: the money at risk - 9 is a refund of 20.00; without the 50.00 claimed it is 30.00 to pay, carried with the claim', [r.body.unsupported_input.net_if_unclaimed_minor, r.body.net_minor], [3000, -2000]);
   ok('the notes say Simpler BAS; the cite is the ATO page', r.body.notes.some((n) => /Simpler BAS/.test(n)) && /ato.gov.au/.test(r.body.cite), JSON.stringify(r.body.notes));
 
   r = await q('GET', '/returns?simpler=0');
@@ -149,8 +153,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   const netAE = moved(AE, 'output_vat', '2026-02-01', '2026-04-30', 'cr') - moved(AE, 'input_vat', '2026-02-01', '2026-04-30', 'dr');
   ok('⭐ Box 14 = the VAT ledgers\' net movement for the period, summed from the journal lines (' + netAE + ')', netAE === box(r, 14).tax_minor);
   ok('the FTA\'s boxes (2 · 6 · 7) are null and say why; Box 15 is the shop\'s choice', [2, 6, 7].every((n) => box(r, n).amount_minor === null && /not read from the ledgers/.test(box(r, n).note)) && box(r, 15).tax_minor === null);
-  eq('Box 1 opens Sales, Sales returns and Output VAT; Box 14 opens the three VAT ledgers in the form\'s order (due tax, then recoverable)', [box(r, 1).accounts.map((a) => a.code), box(r, 14).accounts.map((a) => a.name)],
-    [[codeOfRole(AE, 'sales'), codeOfRole(AE, 'sales_returns'), '2200'], ['Output VAT', 'VAT due under reverse charge', 'Input VAT']]);
+  eq('Box 1 opens Sales, Sales returns and Output VAT; Box 14 opens the three VAT ledgers in the form\'s order (due tax, then recoverable)', [box(r, 1).accounts.map((a) => a.code).sort(), box(r, 14).accounts.map((a) => a.name).sort()],
+    [[codeOfRole(AE, 'sales'), codeOfRole(AE, 'sales_returns'), '2200'].sort(), ['Output VAT', 'VAT due under reverse charge', 'Input VAT'].sort()]);
   ok('the seven Emirates ride along for the picker; the notes say the Emirate basis and the Box 9 basis; the cite is the FTA guide', r.body.emirates.length === 7 && r.body.notes.some((n) => /Dubai/.test(n)) && r.body.notes.some((n) => /VAT-exclusive/.test(n)) && /FTA VAT Returns guide/.test(r.body.cite));
   r = await q('GET', '/returns?stagger=1&emirate=Doha');
   ok('a bad Emirate is refused in the pack\'s words (422)', r.status === 422 && /one of Abu Dhabi, Dubai/.test(r.body.message), JSON.stringify(r.body));

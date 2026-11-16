@@ -1133,6 +1133,7 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
     res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
+      fy_from: fyStart(req, asOf) /* the year the as-at day is in: what a line's entries are read from */,
       rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
@@ -1150,14 +1151,29 @@ function flat(lines) {
   );
   return out;
 }
-/** GET /pl?from&to → { currency, income: [{ code, name, amount_minor }], expense: [...], profit_minor } (inside one financial year) */
+/** GET /pl?from&to | ?preset&step&compare → { currency, income, expense, profit_minor, profit_share_bp, by_line (each head and ledger: prior_minor, change_bp, share_bp), period, presets, compare } (inside one financial year; ACC-357: the same range last year beside it) */
 // @does A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
 router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
   try {
     const e = ctx(req),
-      to = dateQ(req.query.to, today(req)),
-      from = dateQ(req.query.from, fyStart(req, to));
-    const pl = await withEntity(e, (h) => B.profitAndLoss(h, e, from, to));
+      R = require('../lib/books-report-period'),
+      day = today(req),
+      fyMonth = Number(fyStart(req, day).slice(5, 7));
+    /* ACC-357 (W15-118): a preset (This year to date · Last month · Quarter · Last year) stepped with ‹ ›, the pack's own year; or any from/to — and always the same range last year beside it (or the span before, ?compare=period) */
+    const picked = req.query.preset ? R.periodOf({ preset: req.query.preset, step: req.query.step }, day, fyMonth) : null;
+    const to = picked ? picked.to : dateQ(req.query.to, day),
+      from = picked ? picked.from : dateQ(req.query.from, fyStart(req, to)),
+      how = ['year', 'period', 'none'].includes(req.query.compare) ? req.query.compare : 'year';
+    const prior = how === 'none' ? null : R.priorOf({ from, to }, how);
+    const out = await withEntity(e, async (h) => {
+      const now = await B.profitAndLoss(h, e, from, to);
+      let was = null;
+      if (prior) was = await B.profitAndLoss(h, e, prior.from, prior.to).catch(logger.orElse('P&L: the comparison range could not be read — the page shows no comparison', null)); /* a range that leaves the financial year, or years before the books began: no comparison, said */
+      return { now, was };
+    });
+    const pl = out.now,
+      was = out.was;
+    const withCompare = (lines, side) => R.compareLines(lines, was && (side === 'income' ? was.income : was.expenses), pl.total_income_minor, was ? was.total_income_minor : null);
     res.json(await forBooksDoor(req, e, 'pl', {
       currency: curOf(req),
       from,
@@ -1167,7 +1183,13 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       total_income_minor: pl.total_income_minor,
       total_expense_minor: pl.total_expenses_minor,
       profit_minor: pl.profit_minor,
-      by_line: { income: pl.income, expense: pl.expenses }
+      profit_share_bp: R.shareOf(pl.profit_minor, pl.total_income_minor),
+      total_income_share_bp: R.shareOf(pl.total_income_minor, pl.total_income_minor),
+      total_expense_share_bp: R.shareOf(pl.total_expenses_minor, pl.total_income_minor),
+      by_line: { income: withCompare(pl.income, 'income'), expense: withCompare(pl.expenses, 'expense') },
+      period: Object.assign({ preset: picked ? picked.preset : 'custom', step: picked ? picked.step : 0, can_next: picked ? picked.can_next : false }, { from, to }),
+      presets: R.PRESETS.map(([id, label]) => ({ id, label })),
+      compare: was ? { how, from: prior.from, to: prior.to, total_income_minor: was.total_income_minor, total_expense_minor: was.total_expenses_minor, profit_minor: was.profit_minor, income_change_bp: R.changeOf(pl.total_income_minor, was.total_income_minor), expense_change_bp: R.changeOf(pl.total_expenses_minor, was.total_expenses_minor), profit_change_bp: R.changeOf(pl.profit_minor, was.profit_minor) } : null
     }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1204,36 +1226,90 @@ function sched3(balanceSheet, order) {
     diff = assets.total_minor - equity.total_minor;
   return { equity_and_liabilities: equity, assets: assets, balanced: diff === 0, difference_minor: diff };
 }
-/** GET /bs?asOf → { currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
+/** GET /bs: each ledger of one side with its figure at each earlier day, by code (a ledger new since then reads 0, an earlier day that could not be read says null), and its heading */
+function bsTagged(list, earlier, headOf) {
+  return list.map((item) => {
+    const was = (key) => {
+      const side = earlier[key];
+      if (!side) return null;
+      const hit = [].concat(side.assets, side.liabilities, side.equity).find((x) => (x.code || x.role) === (item.code || item.role));
+      return hit ? hit.amount_minor : 0;
+    };
+    return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null });
+  });
+}
+/** GET /bs: a head's subtotal per figure, summed here from the very ledgers it lists (the page never adds) */
+function bsGroupsOf(list) {
+  const heads = new Map();
+  list.forEach((item) => {
+    const key = item.group ? item.group.code : '_';
+    const head = heads.get(key) || heads.set(key, { code: item.group ? item.group.code : null, name: item.group ? item.group.name : null, amount_minor: 0, prior_month_minor: 0, prior_year_minor: 0 }).get(key);
+    head.amount_minor += item.amount_minor;
+    ['prior_month_minor', 'prior_year_minor'].forEach((k) => (head[k] = head[k] == null || item[k] == null ? null : head[k] + item[k]));
+  });
+  return [...heads.values()];
+}
+/** GET /bs?asOf | ?kind&step → { as_at, net_assets_minor, net_assets_ok, compare: { month, year }, each ledger: prior_month_minor · prior_year_minor · group; currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 // @does An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
 router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
   try {
     const e = ctx(req),
-      asOf = dateQ(req.query.asOf, today(req));
+      R = require('../lib/books-report-period'),
+      day = today(req),
+      fyMonth = Number(fyStart(req, day).slice(5, 7));
+    /* ACC-357 (W15-119): "as at" a day, or a kind (today · month end · year end) stepped with ‹ ›; the prior month and the prior year beside it, in ONE view (beyond QuickBooks, which cannot) */
+    const picked = req.query.kind ? R.asAtOf({ kind: req.query.kind, step: req.query.step }, day, fyMonth) : null;
+    const asOf = picked ? picked.as_at : dateQ(req.query.asOf, day);
     const out = await withEntity(e, async (h) => {
-      const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books)); /* undefined until the entity-type decision is taken → Schedule III */
       const chart = await S.accounts(h, e),
-        nature = new Map(chart.map((item) => [String(item.code), item.nature]));
-      const left = flat(bs.liabilities),
-        notes = N.netOfByRole((B.packOf(req.books).presentation || {}).taxNetting, chart),
-        liabilities = N.withNetOf(left.filter((item) => item.code && nature.get(String(item.code)) !== 'equity'), notes),
-        equity = left.filter((item) => !item.code || nature.get(String(item.code)) === 'equity');
+        nature = new Map(chart.map((item) => [String(item.code), item.nature])),
+        byCode = new Map(chart.map((item) => [String(item.code), item])),
+        notes = N.netOfByRole((B.packOf(req.books).presentation || {}).taxNetting, chart);
+      /* the heading a ledger sits under: the pack's own top group of the chart (never a word of ours) */
+      const headOf = (code) => {
+        let item = byCode.get(String(code));
+        while (item && item.parent_code && byCode.get(String(item.parent_code))) item = byCode.get(String(item.parent_code));
+        return item && item.code ? { code: String(item.code), name: item.name } : null;
+      };
+      const at = async (day0) => {
+        const bs = await B.balanceSheet(h, e, day0, B.entityBasisOf(req.books)); /* undefined until the entity-type decision is taken → Schedule III */
+        const left = flat(bs.liabilities),
+          liabilities = N.withNetOf(left.filter((item) => item.code && nature.get(String(item.code)) !== 'equity'), notes),
+          equity = left.filter((item) => !item.code || nature.get(String(item.code)) === 'equity');
+        return { bs, assets: N.withNetOf(flat(bs.assets), notes), liabilities, equity, total_liabilities_minor: N.totalOf(liabilities), total_equity_minor: N.totalOf(equity) };
+      };
+      const now = await at(asOf);
+      const earlier = {};
+      for (const [key, day1] of [['month', R.monthsBefore(asOf, 1)], ['year', R.yearBefore(asOf)]]) earlier[key] = await at(day1).then((x) => Object.assign(x, { as_at: day1 })).catch(logger.orElse('Balance sheet: an earlier day could not be read — its column is left out', null));
+      const liabilities = bsTagged(now.liabilities, earlier, headOf),
+        equity = bsTagged(now.equity, earlier, headOf),
+        assets = bsTagged(now.assets, earlier, headOf);
+      const groups = { assets: bsGroupsOf(assets), liabilities: bsGroupsOf(liabilities), equity: bsGroupsOf(equity) };
+      const sumOf = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
+      const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
+      const net_assets_minor = now.bs.total_assets_minor - now.total_liabilities_minor;
+      const sides = (x) => (x ? { as_at: x.as_at, total_assets_minor: x.bs.total_assets_minor, total_liabilities_minor: x.total_liabilities_minor, total_equity_minor: x.total_equity_minor, net_assets_minor: x.bs.total_assets_minor - x.total_liabilities_minor } : null);
       return {
-        assets: N.withNetOf(flat(bs.assets), notes),
+        assets,
         liabilities,
         equity,
-        total_liabilities_minor: N.totalOf(liabilities),
-        total_equity_minor: N.totalOf(equity),
-        total_assets_minor: bs.total_assets_minor,
-        total_liab_equity_minor: bs.total_liabilities_minor,
-        profit_to_date_minor: bs.profit_to_date_minor,
-        balanced: bs.balanced,
-        by_line: { assets: bs.assets, liabilities: bs.liabilities },
-        schedule_iii: sched3(bs, Object.keys(B.packOf(req.books).sch3 || {}))
+        total_liabilities_minor: now.total_liabilities_minor,
+        total_equity_minor: now.total_equity_minor,
+        total_assets_minor: now.bs.total_assets_minor,
+        total_liab_equity_minor: now.bs.total_liabilities_minor,
+        profit_to_date_minor: now.bs.profit_to_date_minor,
+        net_assets_minor,
+        groups,
+        groups_ok,
+        net_assets_ok: net_assets_minor === now.total_equity_minor /* two carried totals, compared: what the business owns less what it owes is what the owners hold */,
+        compare: { month: sides(earlier.month), year: sides(earlier.year) },
+        balanced: now.bs.balanced,
+        by_line: { assets: now.bs.assets, liabilities: now.bs.liabilities },
+        schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}))
       };
     });
-    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf }, out)));
+    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
