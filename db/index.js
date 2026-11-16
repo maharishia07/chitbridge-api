@@ -182,8 +182,8 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
 const RLS_READ_WIDE = ['catalogue_source', 'standard_source', 'product_container', 'media_blobs', 'network_revoked', 'membership_certificate', 'registry_entry', 'registry_cursor', 'registry_change'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.filter((t) => !RLS_READ_WIDE.includes(t)).join('|') + ')\\b', 'i');
 /* the read-wide tables are exempt for READS only: a statement that writes (INSERT/UPDATE/DELETE/MERGE/TRUNCATE anywhere in it, a CTE write included) is checked against the full list */
-const RLS_ALL_RE = new RegExp('\b(' + RLS_TENANT_TABLES.join('|') + ')\b', 'i');
-const RLS_WRITE_RE = /b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE)b/i;
+const RLS_ALL_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
+const RLS_WRITE_RE = /\b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i;
 
 function rlsGuardMode() {
   const explicit = (process.env.RLS_GUARD || '').toLowerCase();
