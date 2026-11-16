@@ -40,6 +40,7 @@ const E = require('../lib/books-engines');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
+const Needs = require('../lib/books-needs'); /* who needs you, and why: the one list of reasons (W15-114) */
 const OtherSide = require('../lib/books-other-side'); /* W15-89b: a ledger line's other side (the entry's other ledger, and the party it names) */
 const { marksIn } = require('../lib/mark-embed'); /* MARK & QUERY: the marks of the entries a list serves, in the list's own transaction */
 const ctx = (req) => auth.entityOf(req);
@@ -624,7 +625,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
       }
       const rawOf = new Map();
       for (const l of lines) (rawOf.get(l.entry_id) || rawOf.set(l.entry_id, []).get(l.entry_id)).push(l);
-      await Evidence.attach(h, entries.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref, entry: x, lines: rawOf.get(x.entry_id) })), { pack: B.packOf(req.books), cur: curOf(req), flag: true }); /* ASA 500: each entry vouches to its source; ONE read of the page's files */
+      await Evidence.attach(h, entries.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref, source: x.source, entry: x, lines: rawOf.get(x.entry_id) })), { pack: B.packOf(req.books), cur: curOf(req), flag: true }); /* ASA 500: each entry vouches to its source; ONE read of the page's files */
       const answered = await LiveBill.markReverseAnswers(h, e, entries);
       markSide = await marksIn(h, req, 'acc.audit', entries.map((item) => item.entry_id));
       if (markSide) for (const item of entries) item.mark = markSide.byId[String(item.entry_id)] || null;
@@ -943,6 +944,14 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           if (!docsOf.has(p)) docsOf.set(p, []);
           docsOf.get(p).push(x);
         });
+        /* W15-114: who needs you, and why — ONE read per side (lib/books-needs: the flag, the open marks, the bill's own age), the party's counts beside its balance */
+        const entryOfRef = new Map(items.filter((item) => item.ref === item.against_ref && item.entry_id).map((item) => [String(item.ref), item.entry_id]));
+        const everyDoc = [...docsOf.values()].reduce((all, docs) => all.concat(docs), []);
+        const billAge = E.billBands(everyDoc, asOf, role === 'debtors' ? (followOpt || noDays).creditDaysOf : noDays.creditDaysOf, side);
+        const needs = await Needs.partyNeeds(h, e, req, { pack: B.packOf(req.books), cur: curOf(req), supplier: role === 'creditors' }, everyDoc.map((doc) => ({
+          ref: doc.ref, party: doc.party, entry_id: entryOfRef.get(String(doc.ref)) || null, owed_minor: doc.outstanding_minor, disputed: !!((d.outstanding.by_ref[doc.ref] || doc).disputed),
+          no_terms: !!(billAge[doc.ref] && billAge[doc.ref].no_terms), days_overdue: billAge[doc.ref] ? billAge[doc.ref].days_late : null
+        })));
         Object.keys(d.ageing.by_party || {})
           .concat(Object.keys(d.outstanding.by_party || {}))
           .forEach((pid) => {
@@ -964,6 +973,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
               disputed_minor: sign * disputed
             };
             row.follow_up = E.followRow(d.follow, pid); /* W15-94: the ONE ageing — days past due, both sides, every read */
+            row.needs = Object.assign(Needs.empty(), needs.by_party.get(String(pid)) || {});
             if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)));
             lookup.set(pid + '|' + role, row);
           });
@@ -989,6 +999,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         else {
           x.balance_minor += r.balance_minor;
           x.disputed_minor += r.disputed_minor;
+          Object.keys(r.needs).forEach((key) => (x.needs[key] = (x.needs[key] || 0) + r.needs[key])); /* a party on both lists: what needs you on either */
           x.side = 'both';
           if (r.side === 'customer') x.follow_up = r.follow_up; /* a both-sides row ages what the customer half owes (as before) */
           x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
@@ -1036,7 +1047,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
     });
     res.json(
       await forReader(req, e, {
-        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...pageExtras(fin && sides.includes('debtors'), payables, out)
+        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...pageExtras(fin && sides.includes('debtors'), payables, out)
       })
     );
   } catch (err) {
@@ -1064,7 +1075,7 @@ router.get('/party/:id/bills', auth, noKey, on, ...checked('GET /party/:id/bills
 });
 
 /**
- * GET /attention?from&to[&kind=flag|none|nodoc|query&page&limit] → { from, to, total, no_tax_invoice, no_file, no_source, open_queries, [kind, entries, count, page, limit] } — W15-102: the Day book's evidence states counted on the server over the range
+ * GET /attention?from&to[&kind=flag|none|nodoc|query|needs&page&limit] → { from, to, total, no_tax_invoice, no_file, no_source, open_queries, needs, [kind, entries, count, page, limit] } — W15-102: the Day book's evidence states counted on the server over the range
  * (lib/books-evidence attentionIn, the Day book's own rules), and with `kind` the entries behind one count, newest first, a page at a time. The Day book, Ledgers, BAS, To do and the auditor's view read these counts.
  */
 // @does A date range (and one kind) in -> we count the entries with no tax invoice, no file, no source and the open queries, or list those behind one -> the counts, or a page of entries.
@@ -1075,18 +1086,8 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
       to = dateQ(req.query.to, from),
       pg = require('../lib/page-limit').pageArgs({ page: req.query.page, limit: req.query.limit || 25 }, 25, 100);
     const queryIds = async (h, first, last) => {
-      const door = require('../lib/mark-door');
-      if (!(await require('../lib/schema').hasTable('review_mark'))) return null;
-      await h.query('SAVEPOINT attention_marks'); /* a mark read that fails leaves the queries uncounted (null), never the other counts */
-      let open;
-      try {
-        open = await require('../lib/review-mark').openList(h, 'acc.audit', e, door.ctxOf(req), { from: first, to: last });
-        await h.query('RELEASE SAVEPOINT attention_marks');
-      } catch (err) {
-        await h.query('ROLLBACK TO SAVEPOINT attention_marks').catch(() => {});
-        return null;
-      }
-      return open.open.filter((mark) => mark.class === 'open' && String(mark.posting_date).slice(0, 10) >= first && String(mark.posting_date).slice(0, 10) <= last).map((mark) => String(mark.subject_id));
+      const open = await Needs.openMarks(h, e, req, first, last); /* the marks module's own read, one place (W15-116): null = marking is off or unreadable, the queries stay uncounted */
+      return open && open.filter((mark) => mark.class === 'open' && mark.posting_date >= first && mark.posting_date <= last).map((mark) => mark.subject_id);
     };
     res.json(await forBooksDoor(req, e, 'attention', await withEntity(e, (h) => Evidence.attentionIn(h, e, { pack: B.packOf(req.books), cur: curOf(req), queryIds }, from, to, req.query.kind, pg))));
   } catch (err) {
