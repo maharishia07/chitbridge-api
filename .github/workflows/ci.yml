@@ -92,6 +92,14 @@ jobs:
       - name: scripts/guards.cjs
         working-directory: chitbridge-api
         run: node scripts/guards.cjs --junit test-results/guards.xml
+      # l16 guards (16 Nov): the offline tests the l16 build added, enrolled here and not in the GUARDS list because scripts/guards.cjs is held at its file-size row (filesize.baseline.json).
+      # Each is offline (no DB, no network) and exits 1 on a failed check; a name here is a name every-test-is-enrolled counts as run.
+      - name: l16 offline tests
+        working-directory: chitbridge-api
+        run: |
+          for t in acc-176b-books-for-elsewhere.test.cjs acc-new-1-ledger-mid-year-opening.test.cjs ageing-one-answer.test.cjs api-problem-marks.test.cjs books-carry.test.cjs books-expense-bill-tax.test.cjs books-ledger-on.test.cjs books-locked-month-move.test.cjs books-needs.test.cjs books-other-side.test.cjs books-periods-scale.test.cjs books-report-compare.test.cjs books-statement-notes.test.cjs doc-date-day.test.cjs dues-asof-docdate.test.cjs l16-bank-log-marks.test.cjs l16-statement-page.test.cjs mark-notices.test.cjs me-ledger-on.test.cjs open-items.test.cjs practice-health.test.cjs; do
+            node "tests/$t" || { echo "::error::tests/$t failed"; exit 1; }
+          done
       # ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). The gate went green on every push and the test board read 0 results.
       # The guards now write JUnit keyed by the board's own case key; this posts it with the ONE poster we have
       # (chitbridge-web/e2e/post-results.cjs, already checked out above), on a key minted with the `testing` scope.

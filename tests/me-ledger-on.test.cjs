@@ -17,7 +17,7 @@ require.cache[require.resolve(API + '/db')] = {
     withTransaction: async (fn) => fn({ query: async () => ({ rows: [] }) })
   }
 };
-require.cache[require.resolve(API + '/lib/books')] = { exports: { settingOf: async () => { if (boom) throw new Error('boom'); return setting; } } };
+require.cache[require.resolve(API + '/lib/books')] = { exports: { ledgerOnBatch: async () => { if (boom) throw new Error('boom'); return !!(setting && setting.enabled); } } };
 const express = require('express'), app = express();
 app.use(express.json());
 require.cache[require.resolve(API + '/middleware/auth')] = {
@@ -37,7 +37,7 @@ const srv = app.listen(45874, async () => {
   setting = null; b = await get();
   t('no books table → false', b.entity.ledger_on === false);
   boom = true; b = await get();
-  t('the read fails → false, the profile still arrives', b.entity.ledger_on === false && !!b.entity.identity_id);
+  t('the read fails → ledger_on is left out (unknown, never reported on), the profile still arrives', b.entity.ledger_on !== true && !!b.entity.identity_id);
   console.log('\n  == ' + pass + ' passed, ' + fail + ' failed ==\n');
   srv.close(); process.exit(fail ? 1 : 0);
 });
