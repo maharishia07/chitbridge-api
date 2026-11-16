@@ -55,7 +55,7 @@ const E = '11111111-1111-4111-8111-111111111111';
   t('no other file reads DAY_KINDS or SOLD_ROLES', hits, []);
   t('the store does not export them either', [S.DAY_KINDS, S.SOLD_ROLES, S.TENDER_ROLES], [undefined, undefined, undefined]);
   /* (4) the practice statement shares the fragment, bounded */
-  const text = P.statement(false, ['cash'], false);
+  const text = P.statement(['cash'], false);
   const frag = S.soldEntriesSql('$1::uuid', { from: "(date_trunc('month', $2::date) - interval '4 months')", to: "(date_trunc('month', $2::date) - interval '1 day')" });
   t('the practice statement holds the shared SOLD fragment, bounded by today', [text.includes(frag), /sm AS \(/.test(text)], [true, true]);
   t('the base statement reads only the 4 closed months of sales; year on year is its own statement for the page, two bounded ranges, never the whole book', [/interval '4 months'/.test(text), /fs AS/.test(text), P.yoyDates('2026-11-17', 7), P.YOY_STATEMENT.includes('h.posting_date >= $2::date') && P.YOY_STATEMENT.includes('h.posting_date <= $5::date')], [true, false, ['2026-07-01', '2026-11-17', '2025-07-01', '2025-11-17'], true]);

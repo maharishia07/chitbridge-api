@@ -83,7 +83,7 @@ t('the multi-row look insert has one row per client in both shapes', () => {
   grants.writeLogRows(tx, false, rows, 'f', { actor: 'a', pattern: 'GET /practice' }, { status: 200, outcome: 'allowed' });
   grants.writeLogRows(tx, true, rows, 'f', { actor: 'a', actor_name: 'N', pattern: 'GET /practice' }, { status: 200, outcome: 'allowed' });
   assert.strictEqual((seen[0].text.match(/\(\$/g) || []).length, 2); assert.strictEqual(seen[0].params.length, 16);
-  assert.strictEqual(seen[1].params.length, 19);
+  assert.strictEqual(seen[1].params.length, 20);
 });
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
