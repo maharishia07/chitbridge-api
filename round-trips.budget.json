@@ -645,11 +645,11 @@
     },
     "GET /api/books/todo": {
       "file": "books.js",
-      "trips": 7,
+      "trips": 9,
       "wire": 3,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-grund 2026-11-16 (8 cold with the evidence_gaps line; was 7)"
     },
     "GET /api/books/trial-balance": {
       "file": "books.js",
@@ -5474,6 +5474,22 @@
       "status": 200,
       "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
       "extra": true
+    },
+    "GET /api/books/attention": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api, 8-year rig 2026-11-16 (two reads: the flag candidates, the counts; the list kinds add none)"
+    },
+    "GET /api/books/party/:id/bills": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api 2026-11-16 (3 cold: chart + items + terms; 2 warm; the marks and evidence read ride the list transaction)"
     }
   }
 }

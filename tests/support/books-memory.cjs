@@ -253,8 +253,8 @@ function create() {
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
     /* the same rule as lib/books-store openItems, in memory: the rows of a document that does not net to nothing, and the other rows of the allocations touching it */
-    async openItems(db, e, account) {
-      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account), sum = {};
+    async openItems(db, e, account, asOf) {
+      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || String(i.doc_date).slice(0, 10) <= asOf)), sum = {};
       rows.forEach((i) => { sum[i.against_ref] = (sum[i.against_ref] || 0) + i.amount_minor; });
       const open = new Set(Object.keys(sum).filter((k) => sum[k] !== 0)), pairs = new Set(rows.filter((i) => i.ref !== i.against_ref && open.has(i.against_ref)).map((i) => i.ref));
       return clone(rows.filter((i) => open.has(i.against_ref) || pairs.has(i.ref)));

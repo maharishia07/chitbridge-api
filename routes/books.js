@@ -930,7 +930,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
         /* GROWTH5Y: "as at today" reads the OPEN documents only (S.openItems — a paid bill and its receipts are not read); a past day reads every row, as a bill paid since was open then */
-        const items = (asOf >= today(req) ? await S.openItems(h, e, a.account_id) : await S.items(h, e, null, a.account_id)).map(E.itemOf).filter(asOfDay);
+        const items = (asOf >= today(req) ? await S.openItems(h, e, a.account_id, asOf) : await S.items(h, e, null, a.account_id)).map(E.itemOf).filter(asOfDay);
         const d = E.dues(items, asOf, side, Object.assign({ pack: B.packOf(req.books) }, role === 'debtors' ? followOpt || noDays : noDays));
         if (role === 'creditors') payableItems = items;
         const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
