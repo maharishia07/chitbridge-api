@@ -526,13 +526,20 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "fy_from": "2026-04-01",
     "assets": [
      {
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "amount_minor": 118000,
       "line": "Trade receivables",
-      "role": "debtors"
+      "role": "debtors",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      }
      }
     ],
     "liabilities": [
@@ -542,6 +549,12 @@
       "amount_minor": 59000,
       "line": "Trade payables",
       "role": "creditors",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      },
       "net_of": [
        { "code": "2200", "name": "Output CGST" },
        { "code": "2210", "name": "Input CGST" }
@@ -554,7 +567,13 @@
       "name": "Profit for the year to date",
       "amount_minor": -70000,
       "line": "Reserves and surplus",
-      "role": "profit_to_date"
+      "role": "profit_to_date",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      }
      }
     ],
     "total_liabilities_minor": 188000,
@@ -562,6 +581,54 @@
     "total_assets_minor": 118000,
     "total_liab_equity_minor": 118000,
     "profit_to_date_minor": -70000,
+    "net_assets_minor": -70000,
+    "net_assets_ok": true,
+    "groups_ok": true,
+    "groups": {
+     "assets": [
+      {
+       "code": "1000",
+       "name": "Current Assets",
+       "amount_minor": 118000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "liabilities": [
+      {
+       "code": "2000",
+       "name": "Current Liabilities",
+       "amount_minor": 59000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "equity": [
+      {
+       "code": null,
+       "name": null,
+       "amount_minor": -70000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ]
+    },
+    "as_at": {
+     "kind": "today",
+     "step": 0,
+     "as_at": "2027-03-31",
+     "can_next": false
+    },
+    "compare": {
+     "month": {
+      "as_at": "2027-02-28",
+      "total_assets_minor": 0,
+      "total_liabilities_minor": 0,
+      "total_equity_minor": 0,
+      "net_assets_minor": 0
+     },
+     "year": null
+    },
     "balanced": true,
     "by_line": {
      "assets": [
@@ -1924,6 +1991,33 @@
     "total_income_minor": 100000,
     "total_expense_minor": 170000,
     "profit_minor": -70000,
+    "profit_share_bp": -7000,
+    "total_income_share_bp": 10000,
+    "total_expense_share_bp": 17000,
+    "period": {
+     "preset": "ytd",
+     "step": 0,
+     "can_next": false,
+     "from": "2026-04-01",
+     "to": "2027-03-31"
+    },
+    "presets": [
+     {
+      "id": "ytd",
+      "label": "This year to date"
+     }
+    ],
+    "compare": {
+     "how": "year",
+     "from": "2025-04-01",
+     "to": "2026-03-31",
+     "total_income_minor": 0,
+     "total_expense_minor": 0,
+     "profit_minor": 0,
+     "income_change_bp": null,
+     "expense_change_bp": null,
+     "profit_change_bp": null
+    },
     "by_line": {
      "income": [
       {
@@ -1931,12 +2025,19 @@
        "label": "Revenue from operations",
        "side": "income",
        "amount_minor": 100000,
+       "prior_minor": 0,
+       "change_bp": null,
+       "share_bp": 10000,
        "accounts": [
         {
          "code": "4000",
          "role": "sales",
          "name": "Sales",
-         "amount_minor": 100000
+         "amount_minor": 100000,
+         "prior_minor": 0,
+         "change_bp": null,
+         "share_bp": 10000,
+         "prior_share_bp": null
         }
        ]
       }
@@ -1947,12 +2048,19 @@
        "label": "Purchases of stock-in-trade",
        "side": "expense",
        "amount_minor": 50000,
+       "prior_minor": 0,
+       "change_bp": null,
+       "share_bp": 10000,
        "accounts": [
         {
          "code": "5000",
          "role": "purchases",
          "name": "Purchases",
-         "amount_minor": 50000
+         "amount_minor": 50000,
+         "prior_minor": 0,
+         "change_bp": null,
+         "share_bp": 10000,
+         "prior_share_bp": null
         }
        ]
       }
@@ -2106,9 +2214,14 @@
       "accounts": [
        {
         "code": "4000",
-        "name": "Sales"
+        "name": "Sales",
+        "amount_minor": 11000,
+        "tax_minor": 1000
        }
       ],
+      "accounts_n": 1,
+      "accounts_more_n": 0,
+      "split_ok": true,
       "note": "GST-exclusive (the ledgers hold all GST paid in one account)"
      }
     ],
@@ -2270,6 +2383,7 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "fy_from": "2026-04-01",
     "rows": [
      {
       "code": "1300",
