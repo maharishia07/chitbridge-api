@@ -2598,12 +2598,12 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /year/:fy/close → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
+/** POST /year/:fy/close { returns_lodged?: true — the owner says this year's returns were lodged outside the books, so none is re-prepared (PAST-YEARS; recorded on every month and in the change log) } → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
 // @does A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req));
+    const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req), { returnsLodged: (req.body || {}).returns_lodged === true });
     if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
     const message = r.refusals.map((x) => x.why).join(' '),
       legacy = { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals };
@@ -2614,7 +2614,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, refusals, months, next } — what a close would say, nothing written */
+/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
@@ -2625,6 +2625,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
       fiscal_year: st.fiscal_year,
       closed: st.closed,
       can_close: st.can_close && !st.closed,
+      can_close_if_lodged: st.can_close_if_lodged && !st.closed, /* only the returns stand in the way: POST with returns_lodged closes it */
       refusals: st.closed ? [] : st.refusals,
       months: st.months,
       next: st.next

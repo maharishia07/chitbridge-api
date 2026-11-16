@@ -83,7 +83,7 @@ function drive(identity, headers, method, routePath) {
     assert.deepStrictEqual([...A.GRANT_READS].filter((p) => p in A.GRANT_HELD_BACK), []);
   });
   await t('7 owner-only reads and every route with party contact or bank details are held back', () => {
-    for (const held of ['/packs', '/packs/:id', '/packs/:id/file', '/assets', '/recurring', '/move-in/imports', '/party/:id/statement', '/payments/:id/advice', '/compare', '/compare/:id/csv', '/todo', '/events']) {
+    for (const held of ['/packs', '/packs/:id', '/packs/:id/file', '/assets', '/recurring', '/move-in/imports', '/party/:id/bills', '/payments/:id/advice', '/compare', '/compare/:id/csv', '/todo', '/events']) {
       assert.ok(!A.GRANT_READS.has(held), held + ' must not be open to an auditor');
       assert.ok(held in A.GRANT_HELD_BACK, held + ' must carry a reason');
     }
