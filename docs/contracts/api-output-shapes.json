@@ -2560,7 +2560,12 @@
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
-              }
+              },
+              "seat": {
+                "type": "string"
+              },
+              "bands": {},
+              "pipeline": {}
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -2586,6 +2591,23 @@
           },
           "has_more": {
             "type": "boolean"
+          },
+          "words": {
+            "type": "object",
+            "required": [
+              "ready",
+              "done"
+            ],
+            "properties": {
+              "ready": {
+                "type": "string"
+              },
+              "done": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           }
         },
         "additionalProperties": false,
@@ -3935,7 +3957,8 @@
           },
           "payables": {},
           "follow_up_total": {},
-          "needs": {}
+          "needs": {},
+          "aged_totals": {}
         },
         "additionalProperties": false
       },
@@ -4556,7 +4579,12 @@
           "periods"
         ],
         "properties": {
-          "periods": {}
+          "periods": {},
+          "under_review": {},
+          "years": {},
+          "books_start": {},
+          "lock_date": {},
+          "gaps": {}
         },
         "additionalProperties": false
       },
@@ -4646,7 +4674,8 @@
               "number",
               "null"
             ]
-          }
+          },
+          "gross_profit": {}
         },
         "additionalProperties": false
       },
