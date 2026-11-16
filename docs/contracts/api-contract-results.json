@@ -338,6 +338,22 @@
     422
    ]
   },
+  "GET /api/books/bank/statement-files": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/bs": {
    "cases": 2,
    "failed": 0,
@@ -394,6 +410,14 @@
     422
    ]
   },
+  "GET /api/books/evidence/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/fx-rates": {
    "cases": 2,
    "failed": 0,
@@ -412,6 +436,22 @@
   },
   "GET /api/books/ledger/:account": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/opening": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/opening/years": {
+   "cases": 1,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2018,6 +2058,14 @@
     422
    ]
   },
+  "POST /api/books/bank/statement-files": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/bank/statements": {
    "cases": 3,
    "failed": 0,
@@ -2204,6 +2252,22 @@
   },
   "POST /api/books/opening": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/opening/preview": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/opening/replace": {
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

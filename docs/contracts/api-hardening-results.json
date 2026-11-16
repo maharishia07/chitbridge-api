@@ -178,7 +178,7 @@
   "GET /api/entities/populations": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 404"
    }
   },
   "PUT /api/entities/populations/:code/desk": {
@@ -187,7 +187,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/entities/populations": {
@@ -196,13 +196,13 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/entities/mis": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/entities/entitlements": {
@@ -853,7 +853,7 @@
   "GET /api/events/stats": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/offers/kinds": {
@@ -1008,7 +1008,8 @@
   },
   "POST /api/integrations/profile": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/till/snapshot": {
@@ -1880,7 +1881,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "why": "not reached: answered 503"
    }
   },
   "POST /api/identity/documents/:scheme/code": {
@@ -3675,7 +3676,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 503"
    }
   },
   "POST /api/channels/:id/template-approve": {
@@ -3684,7 +3685,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 503"
    }
   },
   "POST /api/channels/:id/revoke": {
@@ -3693,7 +3694,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 503"
    }
   },
   "DELETE /api/channels/:id": {
@@ -4060,6 +4061,16 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
+  "GET /api/books/evidence/:id": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": {
     "pass": false,
@@ -4159,6 +4170,31 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/bank/statement-files": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/bank/statement-files": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "PATCH /api/books/payments/:id": {
@@ -4684,6 +4720,36 @@
     "why": "not reached: answered 404"
    }
   },
+  "POST /api/books/opening/preview": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/opening/replace": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/opening": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/opening/years": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "POST /api/books/money-check/resolve": {
    "strict_input": {
     "pass": true
@@ -4748,6 +4814,11 @@
    "output_allowlist": {
     "pass": false,
     "why": "the answer holds leak_canary, a column the answer schema does not list"
+   }
+  },
+  "GET /api/books-grants/practice": {
+   "output_allowlist": {
+    "pass": true
    }
   },
   "POST /api/books-grants": {

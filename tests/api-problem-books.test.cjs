@@ -213,7 +213,24 @@ const SHOP_TERMS = { credit_days: 30, credit_limit_minor: null, interest: null, 
 const PAID = { party_id: PARTY, amount_minor: 1000, mode: 'cash' };
 const PAYMENT_PATCH = (recorded) => ({ books: { recordPayment: async () => recorded, paymentOutcome: async () => OUTCOME, adviceFor: async () => ADVICE(true) }, store: { adviceReady: async () => true, payment: async () => PAY_ROW } });
 const ADVICE_PATCH_READY = (sendOk, set) => ({ store: { payment: async () => PAY_ROW, adviceReady: async () => true, setAdvice: async () => set, adviceStates: async () => ({ [CHIT]: 'sent' }) }, books: { adviceFor: async () => ADVICE(sendOk) } });
+const OPENING_REFUSAL = (words, code) => Object.assign(new Error(words), { code, refused: true });
+const OPENING_PREVIEW = { currency: 'INR', date: DAY, debit_minor: 1000, credit_minor: 0, difference_minor: 1000, side: 'cr', bills: [], refusals: [], can_save: false };
+const OPENING_SAVED = { date: DAY, dates: [DAY], currency: 'INR', pinned: [], entries: [], lines: [], suspense_minor: 0 };
+const OPENING_CHANGE = { rows: [{ code: '1500', dr_minor: 1000 }, { code: '3000', cr_minor: 1000 }], date: DAY, reason: 'typing slip', client_ref: 'grid:c1' };
 const WRITES_READY = [
+  /* l16: the opening balances page (routes/books-opening.js): the library's answers stand in, the route's own gates, schema and refusal mapping run for real */
+  X('opening-preview', 'POST /api/books/opening/preview', 200, { body: { rows: [{ code: '1500', dr_minor: 1000 }] }, patch: { opening: { previewOpening: async () => OPENING_PREVIEW } } }),
+  X('opening-preview-date', 'POST /api/books/opening/preview', 400, { body: { rows: [{ code: '1500', dr_minor: 1000 }], date: '31-12-2026' } }),
+  X('opening-preview-currency', 'POST /api/books/opening/preview', 409, { body: { rows: [{ code: '1500', dr_minor: 1000 }], currency: 'XXX' } }),
+  X('opening-preview-party', 'POST /api/books/opening/preview', 404, { body: { rows: [{ code: '1300', dr_minor: 1000 }] }, patch: { opening: { previewOpening: async () => { throw OPENING_REFUSAL('Not found', 'BOOKS_NOT_FOUND'); } } } }),
+  X('opening-replace', 'POST /api/books/opening/replace', 200, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => ({ ok: true, entry_id: ENTRY, entry_no: 'JV/2026-27/000002', posting_date: DAY, reversed: ['MJ/2026-27/000001'], changes: 2 }) } } }),
+  X('opening-replace-reason', 'POST /api/books/opening/replace', 400, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw OPENING_REFUSAL('A change to the opening balances needs a reason.', 'BOOKS_BAD_REQUEST'); } } } }),
+  X('opening-replace-nothing', 'POST /api/books/opening/replace', 404, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw OPENING_REFUSAL('No opening balances are saved on 2026-07-01 to change.', 'BOOKS_NOT_FOUND'); } } } }),
+  X('opening-replace-same', 'POST /api/books/opening/replace', 409, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw Object.assign(new Error('Nothing changed: these opening balances are already saved as JV/2026-27/000001.'), { status: 409 }); } } } }),
+  X('opening-replace-out', 'POST /api/books/opening/replace', 422, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw OPENING_REFUSAL('The opening balances are out by 36. Add equity or fix a line; nothing was changed.', 'OPENING_NOT_BALANCED'); } } } }),
+  X('opening-saved', 'GET /api/books/opening', 200, { patch: { opening: { savedOpening: async () => OPENING_SAVED } } }),
+  X('opening-saved-date', 'GET /api/books/opening', 400, { url: MOUNT + '/opening?date=31-12-2026' }),
+  X('opening-years', 'GET /api/books/opening/years', 200, { patch: { opening: { yearsView: async () => ({ currency: 'INR', years: [] }) } } }),
   /* ACC-206 B: closing an overridden sale's open item (routes/books-money.js) — one insert in the change log */
   X('money-resolved', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'Customer checked the bill' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: false }), logChange: async () => undefined } } }),
   X('money-resolve-already', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'again' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: true }) } } }),
@@ -467,7 +484,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -722,6 +739,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-opening.js')) }); /* l16: the opening balances page's doors, its own file under the same mount */
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();

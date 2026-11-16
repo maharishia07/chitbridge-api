@@ -143,10 +143,8 @@
    "output_allowlist": true
   },
   "GET /api/books/bank/log": {
-   "output_allowlist": true
-  },
-  "GET /api/books/bank/rail": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "GET /api/books/bs": {
    "output_allowlist": true
