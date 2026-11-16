@@ -110,7 +110,7 @@ function extras(tools) {
   const executes = (answer) => ({ run: { execute: answer } });
   const built = async () => ({ created: [], updated: [], invited: [], failedInvites: [] });
   const sqlState = (code) => async () => { throw Object.assign(new Error('pg ' + code), { code }); };
-  const members = (rows) => ({ membership: { treeOf: async () => rows } });
+  const members = (rows) => ({ membership: { treeOf: async () => rows, treeAndClientsOf: async () => rows } }); /* the store list reads the tree and the firm's clients in one (treeAndClientsOf); the availability search reads the tree alone */
   const unread = Object.assign(new Error('The tree could not be read'), { code: 'NETWORK_READ_FAILED', status: 503 });
   const store = (more) => Object.assign({ identity_id: A, bridge_id: 'AAAA2222', display_name: 'Shop A', purpose: 'Head office', city: 'Pune', lat: null, lng: null, currency_code: 'INR', service_km: null, dispatch_days: null, ship_within_days: null, ship_beyond_days: null, sort_order: null, catalogue_visibility: 'public', plan: null, params_override: {} }, more);
   const stores = answering(/FROM identities\s+WHERE bridge_id = ANY/, [store(), store({ identity_id: C, bridge_id: 'CCCC4444', display_name: 'Shop C', city: 'Goa', sort_order: 1 }), store({ identity_id: B, bridge_id: 'BBBB3333', display_name: 'Closed', catalogue_visibility: 'private' })]);
@@ -182,7 +182,7 @@ function extras(tools) {
     X('stores-account-unread', 'GET ' + DES + '/stores', 404, {}),
     X('stores-no-network', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: own }, patch: members([]) }),
     X('stores-listed', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: firstOf(stores, own) }, patch: members(['AAAA2222', 'CCCC4444', 'BBBB3333']) }),
-    X('stores-tree-unread', 'GET ' + DES + '/stores', 503, { setup: { sqlRows: own }, patch: { membership: { treeOf: async () => { throw unread; } } } }),
+    X('stores-tree-unread', 'GET ' + DES + '/stores', 503, { setup: { sqlRows: own }, patch: { membership: { treeAndClientsOf: async () => { throw unread; } } } }),
     X('stores-db-fails', 'GET ' + DES + '/stores', 500, { setup: failing }),
     /* S34: the nullable columns of identities held as null AND as set (the DDL: purpose, city, currency_code, lat, lng, sort_order allow NULL), and every key an answer may carry */
     X('design-none-yet', 'GET ' + DES, 200, { setup: { sqlRows: answering(/FROM network_design/, []) } }),
