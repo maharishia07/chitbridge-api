@@ -35,17 +35,26 @@ const names = (map) => JSON.stringify([...map.entries()].map(([id, name]) => nam
     };
     const A = await plant('entity', null, 'a'), B = await plant('entity', null, 'b'), FIRM = await plant('entity', null, 'firm');
     const aStaff = await plant('customer', A, 'as'), bStaff = await plant('customer', B, 'bs'), firmPerson = await plant('customer', FIRM, 'fp');
-    const all = [A, B, FIRM, aStaff, bStaff, firmPerson];
+    const OLD = await plant('entity', null, 'old'), oldPerson = await plant('customer', OLD, 'op'), C = await plant('entity', null, 'c'), cPerson = await plant('customer', C, 'cp');
+    const grant = async (grantee, revoked) => {
+      const row = async (preset) => owner.query(`INSERT INTO books_access_grant (grantor_entity, grantee_entity, preset, purpose, granted_by, granted_at, expires_at, revoked_at) VALUES ($1, $2, $3, 'names test', $1, now() - interval '2 day', now() + interval '30 day', $4)`, [A, grantee, preset, revoked ? new Date() : null]);
+      try { await row('adviser'); } catch (e) { await row('auditor'); }
+    };
+    await grant(FIRM, false); /* the firm holds a grant on A; OLD held one that was revoked; C holds none; nobody holds one on B */
+    await grant(OLD, true);
+    const all = [A, B, FIRM, aStaff, bStaff, firmPerson, OLD, oldPerson, C, cPerson];
     const read = (shop, ids) => withEntity(shop, (handle) => S.namesOf(handle, shop, ids));
-    const tag = (id) => 'N-' + ({ [A]: 'a', [B]: 'b', [FIRM]: 'firm', [aStaff]: 'as', [bStaff]: 'bs', [firmPerson]: 'fp' }[id]) + '-' + RUN;
+    const tag = (id) => 'N-' + ({ [A]: 'a', [B]: 'b', [FIRM]: 'firm', [aStaff]: 'as', [bStaff]: 'bs', [firmPerson]: 'fp', [OLD]: 'old', [oldPerson]: 'op', [C]: 'c', [cPerson]: 'cp' }[id]) + '-' + RUN;
     const stage = async (label) => {
       const seeA = await read(A, all);
-      ok(label + ' · shop A asking for six ids gets its own name and its own staff, nothing else', names(seeA) === JSON.stringify([tag(A), tag(aStaff)].sort()), names(seeA));
+      ok(label + ' · shop A asking for every id gets its own tree plus the people of its granted firm and of its revoked firm, never B, C or their people', names(seeA) === JSON.stringify([A, aStaff, FIRM, firmPerson, OLD, oldPerson].map(tag).sort()), names(seeA));
+      ok(label + ' · the owner sees the adviser person name on an entry they made (live grant), and a revoked grant still names its past actions', (await read(A, [firmPerson])).get(firmPerson) === tag(firmPerson) && (await read(A, [oldPerson])).get(oldPerson) === tag(oldPerson));
+      ok(label + ' · an unrelated shop person stays null for A', (await read(A, [cPerson, C])).size === 0);
       ok(label + ' · shop A cannot read shop B by id, nor B\'s staff', (await read(A, [B, bStaff])).size === 0);
       ok(label + ' · shop B cannot read shop A\'s staff (the other way round)', (await read(B, [aStaff, A])).size === 0);
       /* the auditor's seat: the firm\'s person asks, but the request runs withEntity(the granted client) — the books handle is the client\'s */
       const audit1 = await read(A, [aStaff, firmPerson, bStaff]);
-      ok(label + ' · an auditor of client A (handle bound to A) sees A\'s names only — not the firm\'s own person, not client B\'s staff', names(audit1) === JSON.stringify([tag(aStaff)]), names(audit1));
+      ok(label + ' · on client A the firm handle (bound to A) names A people and the firm own people (it holds the grant), not client B staff', names(audit1) === JSON.stringify([tag(aStaff), tag(firmPerson)].sort()), names(audit1));
       const audit2 = await read(B, [aStaff, firmPerson, bStaff]);
       ok(label + ' · the same firm on client B sees B\'s names only', names(audit2) === JSON.stringify([tag(bStaff)]), names(audit2));
       ok(label + ' · a blank shop and a malformed id answer nothing, no error', (await read(A, ['not-a-uuid'])).size === 0 && (await S.namesOf({ query: async () => { throw new Error('no read'); } }, null, [aStaff])).size === 0);
@@ -56,6 +65,7 @@ const names = (map) => JSON.stringify([...map.entries()].map(([id, name]) => nam
   } finally {
     try { await owner.query('ALTER TABLE identities NO FORCE ROW LEVEL SECURITY'); await owner.query('ALTER TABLE identities DISABLE ROW LEVEL SECURITY'); } catch (e) { console.log('  RESTORE FAILED: ' + e.message); }
     for (const p of ['identities_own_tree', 'identities_created_by_me', 'identities_read_counterparty']) { try { await owner.query('DROP POLICY IF EXISTS ' + p + ' ON identities'); } catch (e) { /* nothing to drop */ } }
+    await owner.query('DELETE FROM books_access_grant WHERE grantor_entity = ANY($1::uuid[])', [planted]).catch(() => {});
     try { await owner.query('DELETE FROM identities WHERE identity_id = ANY($1::uuid[]) OR bridge_id LIKE $2', [planted, '%' + RUN + '%']); } catch (e) { console.log('  cleanup failed: ' + e.message); }
     await owner.end();
   }
