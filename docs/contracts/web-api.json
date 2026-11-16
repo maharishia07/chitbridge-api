@@ -2506,6 +2506,7 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "shown_as_at": "2027-03-31",
     "fy_from": "2026-04-01",
     "rows": [
      {
