@@ -55,9 +55,9 @@ of file each thing is; this says what already does the job.
 | 54 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 54 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 51 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
+| 51 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 51 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 50 | `read` | `cap-print.js` |  |
-| 50 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 50 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 49 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 49 | `live` | `receivables.js` | the allocations that still count: |
@@ -66,9 +66,9 @@ of file each thing is; this says what already does the job.
 | 46 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 45 | `rules` | `docnumber.js` | the rule set for a country — |
 | 44 | `host` | `chit-sheet.js` |  |
+| 44 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today); `marks` false = review_mark not migrated, |
 | 44 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 43 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 43 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today); `marks` false = review_mark not migrated, |
 | 43 | `gate` | `country-setup.js` | gate(h, entity): |
 | 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 41 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
