@@ -1205,6 +1205,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       total_income_minor: pl.total_income_minor,
       total_expense_minor: pl.total_expenses_minor,
       profit_minor: pl.profit_minor,
+      gross_profit: R.grossOf(flat(pl.income), flat(pl.expenses), curOf(req)) /* W18: sales less the cost of sales by account role; null when the period has no sales account */,
       profit_share_bp: R.shareOf(pl.profit_minor, pl.total_income_minor, curOf(req)),
       total_income_share_bp: R.shareOf(pl.total_income_minor, pl.total_income_minor, curOf(req)),
       total_expense_share_bp: R.shareOf(pl.total_expenses_minor, pl.total_income_minor, curOf(req)),
@@ -2647,7 +2648,7 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, setting, taxStates, trail } = await withEntity(e, async (h) => {
+    const { rows, figures, setting, taxStates, trail, marks } = await withEntity(e, async (h) => {
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
       const figures = await S.periodFigures(h, e, null); /* every year: the books start and the lock line are read across years, whatever year the page asks */
@@ -2656,16 +2657,20 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
       const withSales = figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
       const pls = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
       withSales.forEach((item, n) => { item.sales_minor = Number(pls[n].total_income_minor || 0); });
-      return { rows: all, figures, setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy) };
+      const marks = req.query.marks ? await require('../db').trySavepoint(h, () => require('../lib/books-period-choices').checkedByMonth(h, e, all, figures), null) : null; /* a read that fails inside the transaction is rolled back to its savepoint: the picker then names no count. ?marks=1: each month's checked n of m (review-mark's rule, one read) */
+      return { rows: all, figures, setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy), marks };
     });
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));
     /* ACC-204: the tax periods of every year the rows hold, each with its form, so a month's lock advice names the period it ends in */
     const taxPeriods = [].concat(...Array.from(taxStates.values()).map((state) => state.periods.map((item) => Object.assign({ form: state.form }, item))));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json(Object.assign({
-      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting), taxPeriods, trail).filter((item) => !fy || item.fiscal_year === fy)
-    }, B.booksLockLine(dated, figures))); /* W22: books_start · lock_date · gaps, the one lock line */
+    const day = require('../lib/books-hooks').dayOf(CLOCK.now(), setting),
+      PC = require('../lib/books-period-choices'),
+      advised = B.periodAdvice(dated, figures, day, taxPeriods, trail);
+    /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
+    const shown = req.query.marks ? PC.withChecked(advised, marks) : advised;
+    res.json(Object.assign({ under_review: PC.underReview(dated, day), years: PC.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, B.booksLockLine(dated, figures))); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

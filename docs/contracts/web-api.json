@@ -1985,6 +1985,23 @@
   "GET /api/books/periods": {
    "status": 200,
    "example": {
+    "under_review": {
+     "fy": "2026-27",
+     "from": "2026-04-01",
+     "to": "2027-03-31"
+    },
+    "years": [
+     {
+      "fy": "2026-27",
+      "from": "2026-04-01",
+      "to": "2027-03-31",
+      "months": 12,
+      "locked": 0,
+      "entries": 0,
+      "checked": null,
+      "of": null
+     }
+    ],
     "periods": [
      {
       "entity_id": "11111111-1111-4111-8111-111111111111",
@@ -2014,7 +2031,9 @@
        }
       },
       "open_below_locked": true,
-      "lock_trail": []
+      "lock_trail": [],
+      "checked": 0,
+      "of": 0
      }
     ]
    },
@@ -2022,13 +2041,21 @@
     "periods[].return",
     "periods[].lock.first",
     "periods[].reopen.first",
-    "periods[].open_below_locked"
+    "periods[].open_below_locked",
+    "periods[].checked",
+    "periods[].of",
+    "years[].checked",
+    "years[].of"
    ],
    "also_optional": [
     "periods[].return",
     "periods[].lock.first",
     "periods[].reopen.first",
-    "periods[].open_below_locked"
+    "periods[].open_below_locked",
+    "periods[].checked",
+    "periods[].of",
+    "years[].checked",
+    "years[].of"
    ]
   },
   "GET /api/books/pl": {
@@ -2058,6 +2085,11 @@
     "total_income_minor": 100000,
     "total_expense_minor": 170000,
     "profit_minor": -70000,
+    "gross_profit": {
+     "sales_minor": 100000,
+     "cost_of_sales_minor": 50000,
+     "gross_profit_minor": 50000
+    },
     "profit_share_bp": -7000,
     "total_income_share_bp": 10000,
     "total_expense_share_bp": 17000,
