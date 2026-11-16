@@ -62,6 +62,14 @@ const bill = (X, day, no, amount) => X.B.postEntry(X.db, SHOP, { type: 'sale_bil
     const dues = await q('GET', '/dues?side=customer');
     const row = (dues.body.parties || []).find((p) => p.party_id === RAVI);
     ok('the party row\'s follow_up band equals the bills\' band total (one ageing)', row && row.follow_up.d61_90 === open.body.bands.d61_90, JSON.stringify([row && row.follow_up, open.body.bands]));
+    /* E1: a page asking for the end of the year in progress is aged as at the shop's today (16 Nov), never 30 Jun 2027 (where the 10 Aug bill, 324 days late, fell in 90+) */
+    const fut = await q('GET', '/dues?side=customer&asOf=2027-06-30'), futRow = (fut.body.parties || []).find((p) => p.party_id === RAVI);
+    ok('E1: dues asked as at 30 Jun 2027 answers asOf = the shop day 2026-11-16', fut.body.asOf === '2026-11-16', String(fut.body.asOf));
+    ok('E1: the 10 Aug bill (200000) is still in 61-90 as at today, the 10 Nov bill (400000) not due, nothing in 90+', futRow && futRow.follow_up.d61_90 === 200000 && !(futRow.follow_up.d90_plus > 0) && futRow.balance_minor === 600000, JSON.stringify(futRow && futRow.follow_up));
+    const futBills = await q('GET', '/party/' + RAVI + '/bills?side=customer&asOf=2027-06-30');
+    ok('E1: the party bills too (asOf 2026-11-16, 68 days late)', futBills.body.asOf === '2026-11-16' && futBills.body.bills[1].days_overdue === 68, JSON.stringify([futBills.body.asOf, futBills.body.bills && futBills.body.bills[1]]));
+    const past = await q('GET', '/dues?side=customer&asOf=2026-09-30');
+    ok('E1: a past day stays as asked', past.body.asOf === '2026-09-30', String(past.body.asOf));
   } finally {
     srv.close();
   }
