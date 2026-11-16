@@ -42,12 +42,18 @@ function ownerOrGrantUser(req, res, next) {
   if (grantUser) return next();
   return memberOnly(req, res, next);
 }
+/** the seats this person holds and, per received grant, whether they may open it: the decision the server already takes (holdsSeat, mayUseGrant), printed so the web never guesses it (a second rule would drift) */
+function seatAnswer(req, received) {
+  const seats = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.holdsSeat(req, role));
+  return { seats, received: (received || []).map((row) => ({ ...row, may_use: frontMiddleware.mayUseGrant(req, grants.roleOf(row.preset)) })) };
+}
+router.seatAnswer = seatAnswer;
 // @does Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).
 router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contract.checked('GET /'), async (req, res) => {
   try {
     const listed = await grants.list(entityOf(req));
     /* ONE rule: only the owner of the books sees the grants the shop GAVE; a firm's person (adviser or auditor level) gets the received side only, whatever the grant row says */
-    res.json(isOwner(req) ? listed : { given: [], received: listed.received });
+    res.json({ ...(isOwner(req) ? listed : { given: [], received: listed.received }), ...seatAnswer(req, listed.received) });
   } catch (err) {
     answer(req, res, err);
   }
