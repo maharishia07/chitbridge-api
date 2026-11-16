@@ -1689,6 +1689,9 @@
   "GET /api/books-grants/consent": {
    "output_allowlist": true
   },
+  "GET /api/books-grants": {
+   "output_allowlist": true
+  },
   "GET /api/books-grants/practice": {
    "output_allowlist": true
   },
