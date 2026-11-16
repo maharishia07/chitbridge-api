@@ -8832,6 +8832,36 @@
       "error": "Group sum failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -8880,6 +8910,36 @@
       "error": "MIS failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -8895,6 +8955,36 @@
      "fixture": {
       "error": "Reconcile failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -23459,6 +23549,36 @@
      "status": 422,
      "body_keys": {},
      "fixture": {}
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access does not include the reports. Ask the owner.",
+      "message": "Your access does not include the reports. Ask the owner.",
+      "code": "BOOKS_AREA_CLOSED",
+      "may": false,
+      "why": "Your access does not include the reports. Ask the owner.",
+      "type": "https://chitbridge.com/problems/books_area_closed",
+      "title": "Closed to you",
+      "status": 403,
+      "detail": "Your access does not include the reports. Ask the owner.",
+      "hint": "Ask the owner to open it for you.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -71290,8 +71410,8 @@
       "title": "Area cannot be opened yet",
       "status": 400,
       "code": "AREA_NOT_AVAILABLE",
-      "detail": "That area cannot be opened for a person yet. Only the accounts can be.",
-      "hint": "Open the accounts, or wait for the other areas.",
+      "detail": "That area cannot be opened for a person yet. Only the accounts, the reports and the finance figures can be.",
+      "hint": "Open the accounts, the reports or the finance figures.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -71299,8 +71419,8 @@
       "title": "Area cannot be opened yet",
       "status": 400,
       "code": "AREA_NOT_AVAILABLE",
-      "detail": "That area cannot be opened for a person yet. Only the accounts can be.",
-      "hint": "Open the accounts, or wait for the other areas.",
+      "detail": "That area cannot be opened for a person yet. Only the accounts, the reports and the finance figures can be.",
+      "hint": "Open the accounts, the reports or the finance figures.",
       "request_id": "req-test"
      }
     },

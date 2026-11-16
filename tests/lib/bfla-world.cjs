@@ -18,6 +18,8 @@ const PEOPLE = {
   /* ACC-229: the reader gate (owner, or a whole-entity login that may see money): a viewer (not whole-entity) is the lower role; the entity itself passes without a DB read */
   reader: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'entity' } },
   owner: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' }, needed: { identity_type: 'entity' } },
+  /* W15-66: the bank writes (middleware/books-area-gate.bankWriter): the owner, or a person who holds accounts:work AND the ledger's editor level; an editor without the area is the lower role */
+  'accounts-work': { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' }, needed: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor', area_grants: { accounts: { level: 'work', until: null } } } },
   editor: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' } }
 };
 

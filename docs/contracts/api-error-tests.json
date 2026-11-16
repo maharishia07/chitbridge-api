@@ -639,6 +639,7 @@
  ],
  "GET /api/chits/rollup": [
   401,
+  403,
   422,
   500
  ],
@@ -885,6 +886,7 @@
  ],
  "GET /api/folders/groupsum": [
   401,
+  403,
   422,
   500
  ],
@@ -900,10 +902,12 @@
  "GET /api/folders/mis": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/folders/reconcile": [
   401,
+  403,
   422,
   500
  ],

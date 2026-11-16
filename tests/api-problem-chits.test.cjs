@@ -58,6 +58,8 @@ const OTHER = '33333333-3333-4333-8333-333333333333';
 const STAFF_ID = '44444444-4444-4444-8444-444444444444';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test shop', bridge_id: 'TESTSHOP' };
 const STAFF = { identity_id: STAFF_ID, parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', display_name: 'Test staff', bridge_id: 'TESTSHOP' };
+/* W15-66: the same person once the owner has opened the reports for them (the rollup is the reports area's); without it the answer is the 403 of the staff-asks world */
+const STAFF_REPORTS = Object.assign({}, STAFF, { area_grants: { reports: { level: 'see', until: null } } });
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "chit_header" does not exist -- SELECT secret FROM vault';
 const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false, till: null, moved: null };
@@ -316,7 +318,7 @@ const EXTRAS = [
   X('inbox-filter-invalid', 'GET ' + C + '/inbox', 400, { url: C + '/inbox?date_from=2026-02-30' }),
   X('sent-filter-invalid', 'GET ' + C + '/sent', 400, { url: C + '/sent?assigned_to=nobody' }),
   X('folder-filter-invalid', 'GET ' + C + '/folder', 400, { url: C + '/folder?view=archive&date_to=junk' }),
-  X('rollup-cost-blind', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state', setup: { who: STAFF, sqlRows: answeringAll([[/AS n$|::int AS n\s/m, [{ n: 1 }]], [/AS members/, [{ key: 'pending', chits: 2, total_value: '360.00', members: [{ total_value: '360', purpose: 'order', sender_entity_id: OTHER, all_recipients: CHIT_ROW.all_recipients, business_json: {} }] }]]]) } }),
+  X('rollup-cost-blind', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state', setup: { who: STAFF_REPORTS, sqlRows: answeringAll([[/AS n$|::int AS n\s/m, [{ n: 1 }]], [/AS members/, [{ key: 'pending', chits: 2, total_value: '360.00', members: [{ total_value: '360', purpose: 'order', sender_entity_id: OTHER, all_recipients: CHIT_ROW.all_recipients, business_json: {} }] }]]]) } }),
   /* RAIL-147: the same cost-blind co-assist WRITES — on a bill received (a cost-side chit by its document kind) a price he sends is refused 403 COST_BLIND and nothing is written; a
      quantity-only amend is recorded with the stored price kept (the answer's line carries no price); a reprice is refused; the rule and the keys are tests/rail147-amend-cost-gate.test.cjs ── */
   X('amend-cost-blind-sets-price', 'POST ' + C + '/:chit_id/amend', 403, { body: { edits: [{ line_index: 0, line_id: PARTY, line: { particulars: 'Rice', quantity: 2, unit: 'kg', price: 99 }, reason_code: 'misread_by_ai' }] }, setup: { who: STAFF, sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/SELECT ch\.purpose, ch\.sender_entity_id/, [SIDE_ROW_BILL]], [/FROM chit_line WHERE/, [PRICED_LINE_ROW]]]) } }),

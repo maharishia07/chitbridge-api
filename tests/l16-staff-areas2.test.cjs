@@ -136,6 +136,16 @@ const asReq = (identity, extra) => Object.assign({ method: 'GET', path: '/x', he
     assert.ok(!gate.mayCrmMoney(asReq(grant(counter, 'reports'))), 'reports alone does not open party dues');
     assert.ok(gate.mayCrmMoney(asReq(auditor)));
   });
+  await t('ONE wording: every closed-door sentence is the register sentence of BOOKS_AREA_CLOSED with the area named, and the AREA_NOT_AVAILABLE row says what the route sends', () => {
+    const list = require(path.join(API, 'docs', 'error-codes.json')).codes;
+    const row = list.find((one) => one.code === 'BOOKS_AREA_CLOSED');
+    assert.ok(row, 'BOOKS_AREA_CLOSED is registered');
+    assert.strictEqual(row.shopkeeper, gate.closedWords('this part of the business'), 'the register sentence is the template');
+    assert.deepStrictEqual(Object.keys(gate.AREA_WORDS).sort(), [...areas.GRANTABLE].sort());
+    for (const area of areas.GRANTABLE) assert.ok(/^Your access does not include .+\. Ask the owner\.$/.test(gate.AREA_WORDS[area]), area + ' is the template with its own words');
+    const taken = list.find((one) => one.code === 'AREA_NOT_AVAILABLE');
+    assert.strictEqual(taken.shopkeeper, require(path.join(API, 'lib', 'actor-areas.js')).NOT_GRANTABLE, 'the register sentence is the constant the route sends');
+  });
   console.log('\n' + pass + ' ok, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();

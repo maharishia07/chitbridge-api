@@ -72,6 +72,8 @@ const SHOP = '11111111-1111-4111-8111-111111111111';
 const PARTY = '22222222-2222-4222-8222-222222222222';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test shop' };
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
+/* W15-66: the same person once the owner has opened the reports for them (the folder sums are the reports area's); without it the answer is the 403 of the staff-asks world */
+const STAFF_REPORTS = Object.assign({}, STAFF, { area_grants: { reports: { level: 'see', until: null } } });
 const SECRET_SQL = 'relation "folder" does not exist -- SELECT secret FROM vault';
 const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false };
 const world = Object.assign({}, FRESH);
@@ -288,7 +290,7 @@ const SWEEP_2 = [
   X('level-set', 'PUT ' + F + '/inventory/:code', 200, { url: F + '/inventory/RT-4090', body: { msg: 'none' } }),
   X('message-kept', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { kept: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ marked_count: '1' }]) } }),
   /* RAIL-146g: a co-assist without can_see_costs reads the sum of the sales only, with cost_hidden: the closed groupsum shape holds the blind answer too */
-  X('groupsum-cost-blind', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=task', setup: { who: STAFF, sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }] }]) }, patch: withChits(CHITS) })
+  X('groupsum-cost-blind', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=task', setup: { who: STAFF_REPORTS, sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }] }]) }, patch: withChits(CHITS) })
 ];
 /**
  * K-1 (B2): a value no column can hold, and an id that is shaped like one but is none. A NUL byte in a folder's or a rule's text is a 400 in plain words; a 36-character run of dashes in a query or
@@ -426,6 +428,8 @@ const EXTRAS = [
   X('card-answers', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [] }) } } } }),
   /* the card answers lib/home-facts.js gives: { lines, figures?, state } (withState fills state), and the rail card's own keys (suppliers, customers, may_sample, in, out, tasks, stuck, state) - every root key of every card, so the closed shape names them all */
   X('card-answers-lines-figures-state', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [{ text: '3 bills today', value: 3, tone: 'dn', at: '2026-11-11T09:00:00Z', money: { amount: 100, currency: 'INR' } }], figures: { bills: 3 }, state: 'needs_you' }) } } } }),
+  /* W15-66: a card of a closed area is a 200 with nothing on it and the sentence why (Home draws every card): `closed` and `why` are in the closed shape or the filter would cut them */
+  X('card-closed-to-staff', 'GET /api/facts/:card', 200, { url: '/api/facts/finance', setup: { who: STAFF }, patch: { home: { BUILD: { finance: async () => { throw new Error('a closed card is never built'); } } } } }),
   X('rail-card-answers', 'GET /api/facts/:card', 200, { url: '/api/facts/rail', patch: { home: { BUILD: { rail: async () => ({ suppliers: 2, customers: 5, may_sample: { ok: true }, in: 1, out: 2, tasks: 0, stuck: 0, state: 'in_use' }) } } } }),
   /* pricing */
   X('no-lines', 'POST /api/pricing/price', 400, { setup: { who: OWNER }, body: {} }),

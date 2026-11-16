@@ -228,6 +228,10 @@ const INFRA_LIBS = [
   'party-contact.js',
   /* CRM-247/248 (2026-11-09): the one SQL predicate for a deleted party (hidden_at). Decides no money, tax or rule. */
   'party-live.js',
+  /* W15-66 (2026-11-16): who may open which area of the business for a person: the grant judgement (areas), the owner's read and change of it (actor-areas) and the table of the doors an area closes (books-areas). Decides no money, tax or rule: it says who may SEE a figure. */
+  'actor-areas.js',
+  'areas.js',
+  'books-areas.js',
   /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
      the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
      No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */

@@ -6663,6 +6663,12 @@
           },
           "stuck": {
             "type": "number"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": "string"
           }
         },
         "additionalProperties": false,

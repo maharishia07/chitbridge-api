@@ -2,9 +2,9 @@
  "about": "Evidence for the hardening columns proved by the area tests worlds (tests/api-problem-<area>.test.cjs --write, each writes only its own routes). The generator writes api-hardening-evidence.json; tools/api-register.cjs reads the union. Never by hand.",
  "routes": {
   "DELETE /api/actors/:id/pin": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "DELETE /api/books/recurring/:id": {
    "output_allowlist": true,
@@ -136,8 +136,8 @@
    "output_allowlist": true
   },
   "GET /api/books-grants/log": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "GET /api/books/accounts": {
    "output_allowlist": true
@@ -766,17 +766,18 @@
    "output_allowlist": true
   },
   "PATCH /api/actors/:id": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/actors/:id/areas": {
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/books-grants/:id": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/books/payments/:id": {
    "output_allowlist": true,
@@ -869,13 +870,13 @@
    "foreign_id_404": true
   },
   "POST /api/actors": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/actors/:id/otp": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/actors/login": {
    "output_allowlist": true
@@ -908,12 +909,12 @@
    "foreign_id_404": true
   },
   "POST /api/books-grants": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books-grants/:id/revoke": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books/accounts": {
    "output_allowlist": true
@@ -936,10 +937,12 @@
    "foreign_id_404": true
   },
   "POST /api/books/bank/marks": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books/bank/statements": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books/check": {
    "output_allowlist": true,
@@ -1802,19 +1805,19 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PUT /api/actors/:id/status": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PUT /api/actors/:id/tasks/route": {
-   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true,
@@ -1827,8 +1830,8 @@
    "output_allowlist": true
   },
   "PUT /api/actors/settings": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PUT /api/assist/catalogue-source": {
    "bfla_role_check": true

@@ -20,8 +20,10 @@ const { classOf, needs, OWNER, ENFORCED_AREAS, CRM_MONEY_AREAS } = require('../l
 const AREA = 'accounts';
 const ENFORCED = ENFORCED_AREAS;
 const CLOSED = 'BOOKS_AREA_CLOSED';
+/** the ONE wording of a closed door: every area's sentence is this one with its own words for the area (docs/ERROR-CODES.md BOOKS_AREA_CLOSED says it with 'this part of the business'; tests/l16-staff-areas2.test.cjs holds the two together) */
+const closedWords = (what) => 'Your access does not include ' + what + '. Ask the owner.';
 /** what a closed door says (the screen shows it as is; the code is the word a screen branches on) */
-const CLOSED_WORDS = 'Your access does not include the books. Ask the owner.';
+const CLOSED_WORDS = closedWords('the books');
 const NO_WORK_WORDS = 'Your access to the books is read only. Ask the owner.';
 const KEY_WORDS = 'Sign in as a person to use the ledger.';
 
@@ -63,12 +65,12 @@ function gateOf(signIn) {
  */
 function bankWriter(editor) {
   const gate = (req, res, next) => (isOwner(req) || areas.holds(req.identity, AREA, 'work') ? editor(req, res, next) : refuse(req, res, CLOSED, areas.holds(req.identity, AREA, 'see') ? NO_WORK_WORDS : CLOSED_WORDS));
-  gate.roleGate = 'editor'; /* tools/api-reported.cjs: a route carrying this gate is role-gated (bfla_role_check) */
+  gate.roleGate = 'accounts-work'; /* tools/api-reported.cjs: a route carrying this gate is role-gated (bfla_role_check); its two people are in tests/lib/bfla-world.cjs */
   return gate;
 }
 
 /** what a closed door of each area says (the screen shows it as is) */
-const AREA_WORDS = Object.freeze({ accounts: CLOSED_WORDS, reports: 'Your access does not include the reports. Ask the owner.', finance: 'Your access does not include the finance figures. Ask the owner.' });
+const AREA_WORDS = Object.freeze({ accounts: CLOSED_WORDS, reports: closedWords('the reports'), finance: closedWords('the finance figures') });
 const wordsOf = (area) => AREA_WORDS[area] || CLOSED_WORDS;
 
 /** may this request read the area: the owner · an API key, which is how a till device signs in (a key has its own scope gates and was never asked here) · a person who holds it */
@@ -88,4 +90,4 @@ const closedCard = (area) => ({ lines: [], state: 'not_started', closed: true, w
 /** may this person see the shop's party money (dues, late-dues count, unbilled) on the CRM screens: the owner, or one of the two money areas */
 const mayCrmMoney = (req) => isOwner(req) || !!req.api_key || CRM_MONEY_AREAS.some((area) => areas.holds(req.identity, area, 'see'));
 
-module.exports = Object.assign(gateOf(auth), { gateOf, bankWriter, areaDoor, cardClosed, closedCard, mayCrmMoney, AREA_WORDS, decide, verdictFor, ENFORCED, CLOSED, CLOSED_WORDS, NO_WORK_WORDS, KEY_WORDS });
+module.exports = Object.assign(gateOf(auth), { gateOf, bankWriter, areaDoor, cardClosed, closedCard, mayCrmMoney, AREA_WORDS, closedWords, decide, verdictFor, ENFORCED, CLOSED, CLOSED_WORDS, NO_WORK_WORDS, KEY_WORDS });

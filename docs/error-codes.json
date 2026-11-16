@@ -419,8 +419,8 @@
    "code": "AREA_NOT_AVAILABLE",
    "status": "400",
    "title": "Area cannot be opened yet",
-   "shopkeeper": "That area cannot be opened for a person yet. Only the accounts can be.",
-   "hint": "Open the accounts, or wait for the other areas.",
+   "shopkeeper": "That area cannot be opened for a person yet. Only the accounts, the reports and the finance figures can be.",
+   "hint": "Open the accounts, the reports or the finance figures.",
    "owner_area": "people",
    "since": "2026-11-16"
   },
@@ -805,9 +805,9 @@
   {
    "code": "BOOKS_AREA_CLOSED",
    "status": "403",
-   "title": "Books closed to you",
-   "shopkeeper": "Your access does not include the books. Ask the owner.",
-   "hint": "Ask the owner to open the accounts for you.",
+   "title": "Closed to you",
+   "shopkeeper": "Your access does not include this part of the business. Ask the owner.",
+   "hint": "Ask the owner to open it for you.",
    "owner_area": "books",
    "since": "2026-11-16"
   },

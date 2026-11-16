@@ -646,6 +646,12 @@
   "POST /api/actors": {
    "strict_input": true
   },
+  "GET /api/actors/areas": {
+   "output_allowlist": true
+  },
+  "PATCH /api/actors/:id/areas": {
+   "strict_input": true
+  },
   "PATCH /api/actors/:id": {
    "strict_input": true,
    "output_allowlist": true
@@ -1668,9 +1674,6 @@
   "GET /api/books-grants/consent": {
    "output_allowlist": true
   },
-  "GET /api/books-grants": {
-   "output_allowlist": true
-  },
   "POST /api/books-grants": {
    "strict_input": true
   },
@@ -1692,7 +1695,8 @@
    "strict_input": true
   },
   "POST /api/books-actions/:id/accept": {
-   "strict_input": true
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "GET /api/facts/rail/chits": {
    "output_allowlist": true

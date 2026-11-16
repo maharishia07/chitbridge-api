@@ -1610,6 +1610,14 @@
     400
    ]
   },
+  "PATCH /api/actors/:id/areas": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PATCH /api/books-grants/:id": {
    "cases": 8,
    "failed": 0,
