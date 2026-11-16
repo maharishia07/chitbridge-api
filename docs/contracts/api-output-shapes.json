@@ -35837,6 +35837,7 @@
           "fiscal_year",
           "closed",
           "can_close",
+          "can_close_if_lodged",
           "refusals",
           "months",
           "next"
@@ -35849,6 +35850,9 @@
             "type": "boolean"
           },
           "can_close": {
+            "type": "boolean"
+          },
+          "can_close_if_lodged": {
             "type": "boolean"
           },
           "refusals": {
