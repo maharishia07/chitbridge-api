@@ -108,7 +108,8 @@ function extras(tools) {
   const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more));
   const failing = { db: 'fail' };
   const at = (tail) => ACT + tail;
-  const when = (pattern, run) => (sql, params) => (pattern.test(sql) ? run(sql, params) : null);
+  /* SEC-186 (b874): a credential read joins ops.identity_secret; the pattern meets the statement as it was or as it is, so the scene holds before and after the SQL runs */
+  const when = (pattern, run) => (sql, params) => (pattern.test(sql) || pattern.test(require('./secret-sql.cjs').unsecret(sql)) ? run(sql, params) : null);
   const row = (pattern, one) => answering(pattern, [one || PERSON_ROW]);
   const rowsOf = (pattern, list) => answering(pattern, list);
   const sqlState = (code, message, more) => () => {

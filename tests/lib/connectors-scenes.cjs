@@ -51,7 +51,7 @@ function stubRows(spec) {
   const mine = (params) => params[0] === ACTOR && params[1] === s.owner && s.actor;
   let heldHash = null; /* the hash the door just claimed with: a duplicate holds the SAME body unless a scene gives `held` */
   return (sql, params) => {
-    const text = String(sql).replace(/\s+/g, ' ').trim();
+    const text = require('./secret-sql.cjs').unsecret(String(sql).replace(/\s+/g, ' ').trim()); /* SEC-186 (b874): the code is read through ops.identity_secret; unsecret() gives the statement as it was, so one scene meets the code before and after the SQL runs */
     const hit = s.raise.find(([pattern]) => pattern.test(text));
     if (hit) throw pgError(hit[1], hit[2]);
     if (/SELECT capabilities FROM identities/.test(text)) return answer([{ capabilities: s.caps }]);
@@ -72,7 +72,7 @@ function stubRows(spec) {
     if (/SELECT identity_id, display_name, connector_type, site, connector_config, last_seen FROM identities/.test(text)) return answer(mine(params) ? [s.actor] : []);
     if (/SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at/.test(text)) return answer([Object.assign({ status: 'active', created_at: STAMP, connection_count: '1' }, s.actor)]);
     if (/SELECT email, display_name FROM identities/.test(text)) return answer(s.email === null ? [{ email: null, display_name: 'Mayur' }] : [{ email: s.email, display_name: 'Mayur' }]);
-    if (/SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities/.test(text)) return answer([s.otpRow || { identity_id: SHOP, otp_code: '482910', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 0 }]);
+    if (/SELECT identity_id, otp_code,(?: otp_code_hash,)? otp_expires_at, otp_attempts FROM identities/.test(text)) return answer([s.otpRow || { identity_id: SHOP, otp_code: '482910', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 0 }]);
     if (/INSERT INTO connector_receipt/.test(text)) { heldHash = params[5]; return answer(s.duplicate ? [] : [{ receipt_id: 'r-new' }]); }
     if (/SELECT receipt_id, outcome, chit_id, payload_hash, received_at FROM connector_receipt/.test(text)) return answer([Object.assign({ receipt_id: 'r-first', outcome: 'processed', chit_id: 'c-first', payload_hash: heldHash, received_at: STAMP }, s.held)]);
     if (/FROM connector_receipt WHERE actor_id/.test(text)) return answer(s.receipts);
