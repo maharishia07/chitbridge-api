@@ -2563,6 +2563,18 @@
           },
           "own_trade": {
             "type": "boolean"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "has_more": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,

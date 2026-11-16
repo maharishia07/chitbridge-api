@@ -60,7 +60,7 @@ function grantUserOnly(req, res, next) {
   const words = "Only a firm's owner, adviser or auditor can read the practice.";
   return problem(req, res, { status: 403, code: 'BOOKS_GRANT_NOT_FOR_YOU', detail: words, legacy: { error: words, message: words } });
 }
-// @does Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).
+// @does Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).
 router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('GET /practice'), async (req, res) => {
   try {
     res.json(await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name, query: req.query }));

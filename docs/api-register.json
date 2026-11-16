@@ -4771,13 +4771,14 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 64,
-   "hash": "da491c048e5aa03e",
-   "does": "Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).",
+   "hash": "ec82d79720a7df09",
+   "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 2,
     "statuses": [
      401,
      403,
+     422,
      500,
      503
     ],
@@ -4821,6 +4822,7 @@
    "declared": [
     401,
     403,
+    422,
     500,
     503
    ],
