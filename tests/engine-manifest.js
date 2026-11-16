@@ -594,7 +594,7 @@ const INFRA_LIBS = [
   'bank-statement-file.js', 'bank-statement-page.js', // the Bank page's statements box: file, event and page (storage + SQL)
   'bill-checks.js',        // what stands behind each open bill: its amount, day, mark and evidence state (a read)
   'books-evidence.js',     // the evidence behind a books row and the door that serves its file
-  'books-lock-note.js', 'books-stray-tax.js', 'books-cashflow-return.js', 'books-needs.js', 'books-open-items.js', 'books-other-side.js', 'books-party-bills.js', 'books-practice.js', // Books read/shape modules (reads over the shop's own books)
+  'books-lock-note.js', 'books-stray-tax.js', 'books-cashflow-return.js', 'books-bill-bands.js', 'books-needs.js', 'books-open-items.js', 'books-other-side.js', 'books-party-bills.js', 'books-practice.js', // Books read/shape modules (reads over the shop's own books)
   'mark-adopters.js', 'mark-detect.js', 'mark-door.js', 'mark-embed.js', 'mark-notices.js', 'mark-policies.js', 'marks-contract.js', 'review-mark.js', // MARK & QUERY: the reviewer's mark, its door, its notices and contract
   'message-post.js',       // one message row for a chit or a mark
   'practice-health.js',    // the practice (adviser) health read
