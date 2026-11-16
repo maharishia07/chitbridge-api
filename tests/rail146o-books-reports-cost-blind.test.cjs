@@ -102,7 +102,7 @@ async function asReader(reader) {
     await q('POST', '/enable', {});
     await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-09', currency: 'INR', party: RAVI, source_chit_id: 'c0000000-0000-4000-8000-00000000000e', source_ref: 'chit:e', by_rate: [{ rate: 0, taxable: 118000, cgst: 0, sgst: 0, igst: 0 }] });
     await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-09', currency: 'INR', party: ANAND, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:k', by_rate: [{ rate: 0, taxable: 4242500, cgst: 0, sgst: 0, igst: 0 }] });
-    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh', area_grants: { accounts: { level: 'work', until: null } } };
     out.pl = await q('GET', '/pl?from=2026-04-01&to=2026-10-30');
     out.tb = await q('GET', '/trial-balance?asOf=2026-10-30');
     out.bs = await q('GET', '/bs?asOf=2026-10-30');

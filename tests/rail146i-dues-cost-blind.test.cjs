@@ -149,7 +149,7 @@ async function partBooks() {
     t('owner | both sides priced: Ravi owes ₹1,180, the shop owes Anand ₹42,425; total is the net', [owner.status, rowOf(owner, RAVI).balance_minor, rowOf(owner, ANAND).balance_minor, owner.body.total_minor, flagReads], [200, 118000, -4242500, 118000 - 4242500, 0]);
     t('owner | no marker', JSON.stringify([owner.body, ownerSup.body]).includes('cost_hidden'), false);
 
-    who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP };
+    who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP, area_grants: { accounts: { level: 'see', until: null } } }; /* W15-66: the owner opened the accounts for this person: the cost-blind rules below are what he then reads */
     flag = true; flagReads = 0;
     const allowed = await q('/dues');
     t('cost-allowed actor | byte-identical to the owner; can_see_costs read ONCE', [JSON.stringify(allowed.body) === JSON.stringify(owner.body), flagReads], [true, 1]);

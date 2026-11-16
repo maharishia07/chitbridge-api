@@ -216,6 +216,9 @@ async function partRoute(country) {
     t('without finance=1 the answer is the old one: no follow_up, no follow_up_total', ['follow_up_total' in plain.body, (plain.body.parties || []).some((p) => 'follow_up' in p)], [false, false]);
     t('the months buckets and balances are the same with and without the follow-up (nothing moved)', (got.body.parties || []).every((p) => { const o = plain.body.parties.find((x) => x.party_id === p.party_id); return o && JSON.stringify(o.buckets) === JSON.stringify(p.buckets) && o.balance_minor === p.balance_minor; }), true);
     who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP };
+    const staff = await q('/dues?finance=1&side=customer');
+    t('W15-66 a co-assist with no area is closed out of the books before it: 403 BOOKS_AREA_CLOSED, no follow-up', [staff.status, staff.body.code, 'follow_up_total' in staff.body], [403, 'BOOKS_AREA_CLOSED', false]);
+    who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP, area_grants: { accounts: { level: 'see', until: null } } }; /* the owner opened the accounts (see) for this person */
     const actor = await q('/dues?finance=1&side=customer');
     t('a co-assist never reaches it: ?finance=1 is the owner\'s door (403 OWNER_ONLY)', [actor.status, actor.body.code, 'follow_up_total' in actor.body], [403, 'OWNER_ONLY', false]);
   } finally {

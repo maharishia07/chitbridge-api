@@ -183,11 +183,14 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
     });
     await ta('who may: a viewer (not whole-entity) is refused with the sentence; the shop\'s auditor (whole entity, sees money) may', async () => {
       Object.assign(WHO, { identity_id: 'abababab-0000-4000-8000-000000000001', identity_type: 'actor', parent_entity_id: SHOP, whole_entity: false });
+      const closed = await q('GET', '/compare'); /* W15-66: a person with no area is closed out of the books before the comparison's own gate */
+      assert.strictEqual(closed.status, 403); assert.strictEqual(closed.body.code, 'BOOKS_AREA_CLOSED');
+      Object.assign(WHO, { area_grants: { accounts: { level: 'see', until: null } } }); /* the owner opened the accounts (see) for this person */
       const no = await q('GET', '/compare');
       assert.strictEqual(no.status, 403); assert.match(no.body.message, /owner or the shop's auditor/);
       const C0 = require('../lib/cost'), keep = C0.canRead; C0.canRead = async () => true; WHO.whole_entity = true;
       try { assert.strictEqual((await q('GET', '/compare/' + id)).status, 200); } finally { C0.canRead = keep; }
-      Object.assign(WHO, { identity_id: SHOP, identity_type: 'entity', parent_entity_id: undefined, whole_entity: undefined });
+      Object.assign(WHO, { identity_id: SHOP, identity_type: 'entity', parent_entity_id: undefined, whole_entity: undefined, area_grants: undefined });
     });
     await ta('before the books comparison update runs: GET /compare says so (ready false, Load greyed with the sentence); a load answers 503 in words — never a 500', async () => {
       X.T.compareReady = false;

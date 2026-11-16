@@ -20,7 +20,8 @@ const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(
 
 const SHOPS = { IN: 'bbbbbbbb-1111-4111-8111-240240240240', AU: 'bbbbbbbb-2222-4111-8111-240240240240' };
 const NAMES = { IN: 'Mayur Bhavan', AU: 'Bondi Grocer' };
-const AUDITOR = { identity_id: 'bbbbbbbb-4444-4111-8111-240240240240', identity_type: 'actor' };
+/* W15-66: the auditor is a person who keeps books: a comment-only login the owner opened the accounts for (see) */
+const AUDITOR = { identity_id: 'bbbbbbbb-4444-4111-8111-240240240240', identity_type: 'actor', access_level: 'commenter', area_grants: { accounts: { level: 'see', until: null } } };
 let WHO = null;
 const authStub = Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,

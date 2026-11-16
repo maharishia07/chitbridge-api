@@ -11,6 +11,8 @@ const H = require('./books-harness.cjs');
 const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222', SUPP = '33333333-3333-4333-8333-333333333333';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Mayur Bhavan' };
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor' };
+/* W15-66: a person the owner opened the accounts for (see): staff with no area see no books at all */
+const BOOKKEEPER = Object.assign({}, STAFF, { identity_id: '44444444-4444-4444-8444-444444444445', access_level: 'editor', area_grants: { accounts: { level: 'see', until: null } } });
 let WHO = OWNER;
 const authStub = Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
@@ -39,7 +41,7 @@ async function rig(shopRow) {
   const en = await q('POST', '/enable', {});
   if (!en.body.ok) throw new Error('could not enable the ledger: ' + JSON.stringify(en.body));
   X.T.parties.push({ owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 });
-  return { X, q, srv, SHOP, CUST, SUPP, asOwner: () => { WHO = OWNER; }, asStaff: () => { WHO = STAFF; }, close: () => srv.close() };
+  return { X, q, srv, SHOP, CUST, SUPP, asOwner: () => { WHO = OWNER; }, asStaff: () => { WHO = STAFF; }, asBookkeeper: () => { WHO = BOOKKEEPER; }, close: () => srv.close() };
 }
 /** a ledger the shop adds for one employee, under Loans & Advances (Asset) — through the real POST /accounts */
 async function addStaffLedger(R, name) {

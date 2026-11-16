@@ -150,7 +150,8 @@ const { ok, eq, done } = counter();
   ok('…and the golden rules in words', g.body.golden.personal.dr === 'Dr the receiver' && g.body.golden.nominal.cr === 'Cr incomes and gains');
   const dnGrid = g.body.events.find((e) => e.kind === 'debit_note');
   ok('R106 · the grid offers the debit note (Debit note voucher, supplier + bill + lines required) and its reasons as a pick', dnGrid && dnGrid.voucher === 'Debit note' && dnGrid.fields.filter((f) => f.required).map((f) => f.key).join() === 'supplier,against_ref,lines' && g.body.picks.debit_reason.join() === 'rate,returned,other', JSON.stringify(dnGrid));
-  R.asStaff(); ok('a co-assist may read the grid', (await q('GET', '/events')).status === 200); R.asOwner();
+  R.asStaff(); const closedGrid = await q('GET', '/events'); ok('W15-66 staff with no area read no grid: 403 BOOKS_AREA_CLOSED', closedGrid.status === 403 && closedGrid.body.code === 'BOOKS_AREA_CLOSED', JSON.stringify(closedGrid.body));
+  R.asBookkeeper(); ok('a co-assist the owner opened the accounts for may read the grid', (await q('GET', '/events')).status === 200); R.asOwner();
 
   /* ── ACC-260: every party id an owner's door carries in its body is a party of THIS shop; a stranger's is answered as an unknown id (404 NOT_FOUND, nothing written) ── */
   {

@@ -97,7 +97,7 @@ async function asReader(reader) {
       (await q('POST', '/payments', { party_id: ANAND, direction: 'out', currency: 'INR', mode: 'cheque', cheque_no: '000123', cheque_date: '2026-10-29', amount_minor: CHQ_OUT, received_at: '2026-10-29', client_ref: 'n-out', allocate: 'oldest_first', acknowledge: ['excess'] })).status,
       (await q('POST', '/payments', { party_id: RAVI, direction: 'in', currency: 'INR', mode: 'cheque', cheque_no: '000456', cheque_date: '2026-10-29', amount_minor: 150000, received_at: '2026-10-29', client_ref: 'n-in', allocate: 'oldest_first', acknowledge: ['excess'] })).status
     ];
-    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh', area_grants: { accounts: { level: 'work', until: null } } };
     const reads = [];
     const step = async (name, method, p, body, base) => {
       flagReads = 0;

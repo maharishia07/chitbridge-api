@@ -62,6 +62,9 @@ const call = (port, method, p) => new Promise((done) => {
 
   const RAIL = require(path.join(H.API, 'lib', 'rail'));
   WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+  const noArea = await q('/bank/rail?from=2026-10-01&to=2026-10-31');
+  eq('W15-66 · a person with no area is closed out of the bank rail: 403 BOOKS_AREA_CLOSED', [noArea.status, noArea.body.code], [403, 'BOOKS_AREA_CLOSED']);
+  WHO = Object.assign({}, WHO, { area_grants: { accounts: { level: 'see', until: null } } }); /* the owner opened the accounts for this person */
   const v = await q('/bank/rail?from=2026-10-01&to=2026-10-31');
   eq('2 · a viewer reads the same chits; its Ask is refused read_only with the rail\'s sentence', [v.status, v.body.rail_chits.length, v.body.may.ask], [200, 2, { ok: false, why: 'read_only', say: RAIL.say('read_only') }]);
   WHO = Object.assign({}, WHO, { access_level: 'commenter' });

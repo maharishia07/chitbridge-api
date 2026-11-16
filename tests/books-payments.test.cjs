@@ -20,6 +20,7 @@
  * CARD      16-finance/payments
  */
 'use strict';
+const GRANT = { accounts: { level: 'work', until: null } }; /* W15-66: the owner opened the accounts (work) for the people below, so the books' own level gates (the rail's ladder) are what answers */
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const path = require('path');
@@ -448,11 +449,11 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       const td = (await q('GET', '/todo')).body.find((x) => x.kind === 'money_unbalanced');
       ok('To-do money_unbalanced lists the overridden sale with step, amount, who, when and why', td && td.count === 1 && td.items[0].chit_id === BILL('7') && td.items[0].step === 'gross' && td.items[0].unexplained_minor === 5000 && td.items[0].why === 'checked by hand', JSON.stringify(td));
       const before = WHO;
-      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor', area_grants: GRANT };
       const viewer = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'fine' });
       WHO = before;
       ok('a VIEWER cannot resolve it (403 in the rail\'s words); the item stays', viewer.status === 403 && (await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced'), JSON.stringify(viewer.body));
-      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh', area_grants: GRANT };
       const noNote = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed' });
       ok('"confirmed" with no reason is a 400 (the person says why)', noNote.status === 400, JSON.stringify(noNote.body));
       const done = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'Customer checked the bill' });
@@ -667,25 +668,25 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     const c1 = await q('PATCH', '/payments/' + r4.body.payment.payment_id, { advice_chit_id: CH2 });
     ok('…and the PATCH refuses the same way (409 CHEQUE_HELD)', c1.status === 409 && c1.body.code === 'CHEQUE_HELD', JSON.stringify(c1.body));
     /* ── who may: a viewer reads, says nothing (the rail engine's ladder) ── */
-    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor', area_grants: GRANT };
     const gv = await q('GET', '/payments/' + payId + '/advice');
     const RAIL = require(path.join(H.API, 'lib', 'rail'));
     eq('a viewer: may.send_advice / share_advice refused read_only, in the rail engine\'s own sentence; the words still name the shop (not the person)', [gv.status, gv.body.may.send_advice, gv.body.may.share_advice.why, /^Chola Auto Care paid you/.test(gv.body.words)],
       [200, { ok: false, why: 'read_only', say: RAIL.say('read_only') }, 'read_only', true]);
     const pvw = await q('PATCH', '/payments/' + offId, { advice_shared_at: true });
-    eq('…and the PATCH says 403 with the same word', [pvw.status, pvw.body.why, pvw.body.message], [403, 'read_only', RAIL.say('read_only')]);
+    eq('…and the PATCH is the owner\'s alone since W15-66 (payments are owner only): 403 OWNER_ONLY, nothing changed', [pvw.status, pvw.body.code, pvw.body.message], [403, 'OWNER_ONLY', 'Only the owner may do this.']);
     /* WX-P2P-15 (2026-10-13): a view-only co-assist RECORDED a payment on the real stack — the write itself must answer the ladder's word, nothing written */
     const before = (await q('GET', '/dues')).body;
     const pvp = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'viewer-pay', acknowledge: ACK });
-    eq('a viewer: POST /payments is 403 read_only in the rail engine\'s sentence (the preview stays a read)', [pvp.status, pvp.body.why, pvp.body.message, (await q('POST', '/payments/preview', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR' })).status],
-      [403, 'read_only', RAIL.say('read_only'), 200]);
+    eq('a viewer: POST /payments is 403 OWNER_ONLY (payments are the owner\'s alone since W15-66; the rail ladder\'s read_only word sits behind it) (the preview stays a read)', [pvp.status, pvp.body.code, pvp.body.message, (await q('POST', '/payments/preview', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR' })).status],
+      [403, 'OWNER_ONLY', 'Only the owner may do this.', 200]);
     ok('…and nothing was written (the dues read the same)', JSON.stringify((await q('GET', '/dues')).body) === JSON.stringify(before));
     const pvc = await q('POST', '/parties/' + TT + '/dispute', { against_ref: 'x', disputed: true, side: 'supplier' });
-    ok('…a dispute from a viewer is refused the same way', pvc.status === 403 && pvc.body.why === 'read_only', JSON.stringify(pvc.body));
-    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'commenter', display_name: 'Auditor' };
+    ok('…a dispute from a viewer granted work is refused (403): the books door says the access is read only (a View-only level caps the grant at see)', pvc.status === 403 && pvc.body.code === 'BOOKS_AREA_CLOSED' && /read only/.test(pvc.body.detail), JSON.stringify(pvc.body));
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'commenter', display_name: 'Auditor', area_grants: GRANT };
     const pcm = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'commenter-pay', acknowledge: ACK });
-    eq('a commenter: 403 comment_only, its own sentence', [pcm.status, pcm.body.why, pcm.body.message], [403, 'comment_only', RAIL.say('comment_only')]);
-    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    eq('a commenter: POST /payments is 403 OWNER_ONLY (payments are the owner\'s alone since W15-66)', [pcm.status, pcm.body.code, pcm.body.message], [403, 'OWNER_ONLY', 'Only the owner may do this.']);
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh', area_grants: GRANT };
     ok('an editor co-assist may (as record is allowed to a co-assist)', (await q('GET', '/payments/' + payId + '/advice')).body.may.send_advice.why === 'already_sent' && (await q('GET', '/payments/' + offId + '/advice')).body.may.share_advice.ok === true);
     WHO = OWNER;
     /* ── b285 not run yet: words, never a 500 ── */

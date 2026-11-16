@@ -105,6 +105,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   r = await q('GET', '/returns?period=2031-Q9');
   ok('an unknown period name falls back to the latest ended, never a 500', r.status === 200 && r.body.period.period === '2026-Q1');
   WHO = STAFF; r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
+  ok('W15-66 a co-assist with no area is closed out of the books first: 403 BOOKS_AREA_CLOSED, no return', r.status === 403 && r.body.code === 'BOOKS_AREA_CLOSED', String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 160));
+  WHO = Object.assign({}, STAFF, { area_grants: { accounts: { level: 'see', until: null } } }); r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer'); /* the owner opened the accounts (see) for this person: the return's own gate then answers */
   ok('a co-assist who is not whole-entity is refused (403, the return code, in words)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /owner or the shop's auditor may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body));
 
   /* ── ACC-229: the shop's auditor READS the return. The REAL lib/cost.canRead runs: it reads identities.can_see_costs from the (stubbed) table, never a flag on the preset ── */
@@ -112,7 +114,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   const CAN = {}; const realQuery = X.db.query;
   X.db.query = async (t, p) => /SELECT can_see_costs FROM identities WHERE identity_id = [$]1/.test(String(t)) ? { rows: p[0] in CAN ? [{ can_see_costs: CAN[p[0]] }] : [] } : realQuery(t, p);
   const actor = (n, extra) => Object.assign({ identity_id: '5555555' + n + '-0000-4000-8000-000000000000', parent_entity_id: AU, identity_type: 'actor', whole_entity: true }, extra || {});
-  const AUDITOR = actor(1), REPORTS = actor(2), EDITOR = actor(3, { whole_entity: false, access_level: 'editor' }), VIEWER = actor(4, { whole_entity: false, access_level: 'viewer' }), NOROW = actor(5);
+  const SEE = { accounts: { level: 'see', until: null } }; /* W15-66: the owner opened the accounts (see) for the people whose own return gate this block proves */
+  const AUDITOR = actor(1, { access_level: 'commenter', can_see_costs: true }), REPORTS = actor(2, { access_level: 'commenter', can_see_costs: false }), EDITOR = actor(3, { whole_entity: false, access_level: 'editor', area_grants: SEE }), VIEWER = actor(4, { whole_entity: false, access_level: 'viewer', area_grants: SEE }), NOROW = actor(5, { area_grants: SEE });
   CAN[AUDITOR.identity_id] = true; CAN[REPORTS.identity_id] = false; CAN[EDITOR.identity_id] = true; CAN[VIEWER.identity_id] = false;   /* NOROW has no identity row: fails closed */
   const as = async (who) => { WHO = who;  try { return await q('GET', '/returns'); } finally { WHO = owner(AU, 'Bondi Grocer'); } };
   r = await as(AUDITOR);
@@ -123,7 +126,7 @@ const call = (port, method, p, body) => new Promise((done) => {
     ok('ACC-229 ' + name + ': 403 BOOKS_RETURN_READ_NOT_ALLOWED in words', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
   }
   WHO = Object.assign({}, owner(AU, 'Bondi Grocer'), { via_key: 'k' }); r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
-  ok('ACC-229 a key-bearer is refused (403)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED', String(r.status));
+  ok('ACC-229 a key-bearer is refused (403): since W15-66 the books door says so first (SIGN_IN_FOR_LEDGER), before the return gate is reached', r.status === 403 && r.body.code === 'SIGN_IN_FOR_LEDGER', String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 120));
   r = await as(AUDITOR); WHO = AUDITOR; const close = await q('POST', '/gst/close', { fy: '2026-27', period: '2026-Q1' }); WHO = owner(AU, 'Bondi Grocer');
   ok('ACC-229 the auditor still cannot close or pay GST (POST /gst/close stays owner only: 403 OWNER_ONLY)', close.status === 403 && close.body.code === 'OWNER_ONLY', String(close.status) + ' ' + JSON.stringify(close.body).slice(0, 120));
   X.db.query = realQuery;

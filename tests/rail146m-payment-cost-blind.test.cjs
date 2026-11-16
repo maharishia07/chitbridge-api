@@ -81,7 +81,7 @@ async function asReader(reader) {
     await q('POST', '/enable', {});
     await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-09', currency: 'INR', party: RAVI, source_chit_id: 'c0000000-0000-4000-8000-00000000000e', source_ref: 'chit:e', by_rate: [{ rate: 0, taxable: 1180, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
     await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-01', currency: 'INR', party: ANAND, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:k', by_rate: [{ rate: 0, taxable: SUP_BILL / 100, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
-    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh', area_grants: { accounts: { level: 'work', until: null } } };
     for (const [side, party, amount] of [['in', RAVI, 200000], ['out', ANAND, SUP_PAY]]) {
       const pay = { party_id: party, direction: side, currency: 'INR', mode: 'cash', amount_minor: amount, allocate: 'oldest_first' };
       const reads = [];
@@ -91,8 +91,18 @@ async function asReader(reader) {
         reads.push(flagReads);
       };
       await step('preview', 'POST', '/payments/preview', pay);
-      await step('record', 'POST', '/payments', Object.assign({ received_at: '2026-10-30', client_ref: 'r146j-' + side, acknowledge: ['excess'] }, pay));
-      const id = out[side + '.record'].body.payment && out[side + '.record'].body.payment.payment_id;
+      const recordBody = Object.assign({ received_at: '2026-10-30', client_ref: 'r146j-' + side, acknowledge: ['excess'] }, pay);
+      /* W15-66: payments are the OWNER's alone (record, propose, confirm). A reader who is not the owner is refused at the books door (403 OWNER_ONLY) on those, so the payment the advice read needs is made by the owner first; the three refused doors are still asked, and still answer */
+      let madeBy = null;
+      if (reader !== 'owner') {
+        const keep = who.current;
+        who.current = { identity_id: SHOP, identity_type: 'entity' };
+        madeBy = await q('POST', '/payments', recordBody);
+        who.current = keep;
+      }
+      await step('record', 'POST', '/payments', recordBody);
+      const paid = (madeBy || out[side + '.record']).body.payment;
+      const id = paid && paid.payment_id;
       await step('propose', 'POST', '/payments/' + id + '/propose', {});
       await step('advice', 'GET', '/payments/' + id + '/advice');
       await step('again', 'POST', '/payments', Object.assign({ received_at: '2026-10-30', client_ref: 'r146j-' + side + '-2' }, pay));
@@ -133,16 +143,21 @@ function partDoors() {
   const allowed = run('allowed'),
     blind = run('blind'),
     closed = run('closed');
-  const DOORS = ['preview', 'record', 'propose', 'advice', 'again'];
   t('owner | the supplier record is what the brief says leaked: words, settled figure, advance and balance', [owner['out.record'].status, owner['out.record'].body.outcome.balance_minor, owner['out.record'].body.outcome.applied_minor, /₹/.test(owner['out.record'].body.outcome.words)], [200, SUP_ADVANCE, SUP_BILL, true]);
   t('owner | the second supplier payment is a 409 ALREADY_PAID (same_again)', [owner['out.again'].status, owner['out.again'].body.code], [409, 'ALREADY_PAID']);
   t('owner | no marker anywhere, and can_see_costs is never read', [JSON.stringify(owner).includes('cost_hidden'), owner['in.reads'].concat(owner['out.reads'])], [false, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]);
+  const READ = ['preview', 'advice'],
+    OWNER_ONLY_DOORS = ['record', 'propose', 'again'];
+  const ownerOnly = (answer) => [answer.status, answer.body.code];
   for (const side of ['in', 'out'])
-    for (const door of DOORS) t('cost-allowed | ' + side + ' · ' + door + ': byte-identical to the owner', JSON.stringify(allowed[side + '.' + door]) === JSON.stringify(owner[side + '.' + door]), true);
-  t('cost-allowed | a customer payment reads no flag; a supplier payment reads it ONCE per request', [allowed['in.reads'], allowed['out.reads']], [[0, 0, 0, 0, 0], [1, 1, 1, 1, 1]]);
-  for (const door of DOORS) t('blind | in · ' + door + ': a customer payment is byte-identical to the owner (R1)', JSON.stringify(blind['in.' + door]) === JSON.stringify(owner['in.' + door]), true);
-  t('blind | a customer payment reads no flag; a supplier payment reads it ONCE per request', [blind['in.reads'], blind['out.reads']], [[0, 0, 0, 0, 0], [1, 1, 1, 1, 1]]);
-  for (const door of DOORS) {
+    for (const door of READ) t('cost-allowed | ' + side + ' · ' + door + ': byte-identical to the owner', JSON.stringify(allowed[side + '.' + door]) === JSON.stringify(owner[side + '.' + door]), true);
+  for (const reader of [['cost-allowed', allowed], ['blind', blind], ['fail-closed', closed]])
+    for (const side of ['in', 'out'])
+      for (const door of OWNER_ONLY_DOORS) t('W15-66 · ' + reader[0] + ' | ' + side + ' · ' + door + ': payments are the owner alone (403 OWNER_ONLY), nothing recorded', ownerOnly(reader[1][side + '.' + door]), [403, 'OWNER_ONLY']);
+  t('cost-allowed | a customer payment reads no flag; a supplier payment reads it ONCE per request where it is read (the three owner-only doors are refused before any read)', [allowed['in.reads'], allowed['out.reads']], [[0, 0, 0, 0, 0], [1, 0, 0, 1, 0]]);
+  for (const door of READ) t('blind | in · ' + door + ': a customer payment is byte-identical to the owner (R1)', JSON.stringify(blind['in.' + door]) === JSON.stringify(owner['in.' + door]), true);
+  t('blind | a customer payment reads no flag; a supplier payment reads it ONCE per request where it is read', [blind['in.reads'], blind['out.reads']], [[0, 0, 0, 0, 0], [1, 0, 0, 1, 0]]);
+  for (const door of READ) {
     const mine = blind['out.' + door],
       theirs = owner['out.' + door];
     /* a refused advice verdict reads in the owner's own refusal shape ({ ok: false, why, say } · share: null — GET /payments/:id/advice documents both) */
@@ -151,16 +166,10 @@ function partDoors() {
     t('blind | out · ' + door + ': cost_hidden at the root', mine.body.cost_hidden, true);
     noLeak('blind | out · ' + door, mine.body);
   }
-  const rec = blind['out.record'].body;
-  t('blind | out · record: the outcome keeps which bill was settled; every figure and sentence is null', rec.outcome, { words: null, settled: [{ against_ref: owner['out.record'].body.outcome.settled[0].against_ref, bill_no: null, amount_minor: null }], applied_minor: null, on_account_minor: null, balance_minor: null, balance_words: null });
-  t('blind | out · record: the payment and its entry number stand; the allocation keeps its count', [rec.payment, rec.posted.entry_no, rec.allocation.items, rec.allocation.allocated_minor], [owner['out.record'].body.payment, owner['out.record'].body.posted.entry_no, owner['out.record'].body.allocation.items, null]);
-  t('blind | out · record + advice: neither send nor share (the advice names the bill\'s figure)', [rec.advice.may.send_advice.why, rec.advice.may.share_advice.ok, rec.advice.words, rec.advice.share, blind['out.advice'].body.may.send_advice.why, blind['out.advice'].body.body], ['cost_blind', false, null, null, 'cost_blind', null]);
   const pre = blind['out.preview'].body;
   t('blind | out · preview: the bills to settle by number and date; nothing they cost, nothing left over', [pre.proposal.map((r) => [r.against_ref, r.due_date, r.open_minor, r.apply_minor]), pre.open_minor, pre.on_account_minor, pre.words], [owner['out.preview'].body.proposal.map((r) => [r.against_ref, r.due_date, null, null]), null, null, null]);
   t('blind | out · preview: the warning codes stand, their figures and words go', pre.warnings.map((w) => [w.code, w.over_minor, w.over_words, w.words]), owner['out.preview'].body.warnings.map((w) => [w.code, null, null, null]));
-  const again = blind['out.again'].body;
-  t('blind | out · 409: the title alone is said; the warnings keep their codes and entry numbers', [again.detail, again.message, again.warnings.map((w) => [w.code, w.entry_no, w.words])], [owner['out.again'].body.error, owner['out.again'].body.error, owner['out.again'].body.warnings.map((w) => [w.code, w.entry_no, null])]);
-  t('fail-closed | no can_see_costs row: the supplier payment hides as for a blind reader (200, not a refusal)', [closed['out.record'].status, closed['out.record'].body.outcome.balance_minor, closed['out.record'].body.cost_hidden], [200, null, true]);
+  t('fail-closed | no can_see_costs row: the supplier preview hides as for a blind reader (200, not a refusal)', [closed['out.preview'].status, closed['out.preview'].body.cost_hidden], [200, true]);
 }
 
 (async () => {
