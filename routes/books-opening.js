@@ -48,7 +48,7 @@ router.post('/opening/replace', auth, owner, on, schemaValidate(operationFor('PO
     const entity = auth.entityOf(req),
       body = req.body || {};
     const out = await withEntity(entity, (handle) => O.replaceOpening(handle, entity, { rows: body.rows, date: dayOf(req), currency: currencyOf(req), reason: body.reason, client_ref: body.client_ref, by: byOf(req) }));
-    res.json({ ok: out.ok, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, reversed: out.reversed, changes: out.changes });
+    res.json({ ok: out.ok, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, reversed: out.reversed, changes: out.changes, changed: out.changed });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
