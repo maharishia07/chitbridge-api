@@ -102,6 +102,8 @@ const SELF_SCOPED_EXACT = [
   /* MARK & QUERY: setting a mark and answering in its thread are for the people the ADOPTER names (an auditor is a commenter), not for the hat: routes/marks.js asks lib/mark-policies on every call. Exact doors, nothing else under /marks. */
   [/^[/]marks[/]?$/, 'set a mark: the adopter policy decides who (the auditor); the hat cannot see the body'],
   [/^[/]marks[/](query|[^/]+[/]messages)[/]?$/, 'a read with ids in a body, and a reply in a mark thread: the adopter policy decides who'],
+  /* E11 (Fable multi-role walk 2026-11-17): the live-update ticket is read-shaped. It mints a one-time 60 s ticket for the CALLER'S OWN entity stream (routes/events.js: the entity is the caller's, never a body or path id; lib/events subscribes that id and the shared board only) and writes no record. A read-only seat (the auditor's commenter level) was refused 403 on every page and so had no live push, a stale view. Exact door, nothing else under /events. */
+  [/^[/]events[/]ticket[/]?$/, 'the live-update ticket: reads, writes no record, carries only the caller own entity events'],
   [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
   /* ⭐ the assistant's READ-SHAPED posts only — each answers a question and writes nothing (routes/assist.js,
      checked 2026-09-28). A new /assist route is gated until somebody adds it here on purpose. */

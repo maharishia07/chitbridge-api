@@ -64,6 +64,16 @@ console.log('\n── Fail closed: a path nobody thought about ──');
 check('view_only on an endpoint invented tomorrow', { path: '/something-new/x', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 check('a prefix that only LOOKS self-scoped', { path: '/assistant-impersonation', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 
+/* E11: the read-only seat (auditor = commenter, a viewer) may mint the live-update ticket; nothing else under /events, no look-alike path */
+console.log('\n── E11: the live-update ticket is read-shaped, exact door ──');
+for (const hat of ['view_only', 'audit']) {
+  check('E11 ' + hat + ' POST /events/ticket', { path: '/events/ticket', identity: { identity_type: 'actor', hat } }, true);
+  check('E11 ' + hat + ' POST /events/ticket/', { path: '/events/ticket/', identity: { identity_type: 'actor', hat } }, true);
+  check('E11 ' + hat + ' look-alike /events/ticket/x stays gated', { path: '/events/ticket/x', identity: { identity_type: 'actor', hat } }, false);
+  check('E11 ' + hat + ' other write under /events stays gated', { path: '/events/stats', identity: { identity_type: 'actor', hat } }, false);
+  check('E11 ' + hat + ' look-alike /events/tickets stays gated', { path: '/events/tickets', identity: { identity_type: 'actor', hat } }, false);
+}
+
 /**
  * ⚠️⚠️ THE CASES THAT CAUGHT THE ONE REAL BUG. Every check above passed while the gate was still reading
  * `req.path` — which, inside a mounted router, is relative to the mount: `/me/prefs/ui`, not
