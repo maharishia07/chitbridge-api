@@ -121,7 +121,7 @@ function answer(text, params) {
   /* REP-52: the rows books-store.entryLines answers — one row per LINE with its account role (the card sums lines by role; the `tenders` jsonb is the Day book column's) */
   if (/COUNT\(DISTINCT h\.entry_id\) AS n FROM journal_line/.test(sql)) return { rows: [{ n: F.bankPosted || 0 }] };
   if (/SELECT min(h.posting_date)::text AS day FROM journal_entry/.test(sql)) return { rows: [{ day: F.booksDay ? todayKey : null }] };
-  if (/FROM journal_line l JOIN journal_entry h/.test(sql)) { const lines = F.booksDay ? [
+  if (/FROM journal_line l JOIN journal_entry h|GROUP BY x.day/.test(sql)) { const lines = F.booksDay ? [
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'cash', dr_minor: 40000, cr_minor: 0, line_no: 1 },   /* a day, closed once (reversed below) */
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 40000, line_no: 2 },
     { entry_id: 'r1', event_type: 'reversal', covers: null, reverses_entry_id: 'd1', source_chit_id: null, account_role: 'cash', dr_minor: 0, cr_minor: 40000, line_no: 1 },
