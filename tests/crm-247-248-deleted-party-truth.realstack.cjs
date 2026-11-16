@@ -72,7 +72,7 @@ const one = async (sql, args) => (await pg.query(sql, args)).rows[0];
       ['followup', (id) => j('/api/crm/followups', { method: 'POST', token: A.token, body: { party_id: id, what: 'ring', due_at: day } }), 'C'],
       ['interaction', (id) => j('/api/crm/parties/' + id + '/interactions', { method: 'POST', token: A.token, body: { kind: 'note', body: 'after delete' } }), 'C'],
       ['prefs-get', (id) => j('/api/crm/parties/' + id + '/contact-prefs', { token: A.token }), 'C'],
-      ['prefs-post', (id) => j('/api/crm/parties/' + id + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true } }), 'C']
+      ['prefs-post', (id) => j('/api/crm/parties/' + id + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' } }), 'C']
     ];
     for (const [id, fn, who] of doors) {
       await kase('D-' + id, 'a deleted ' + (who === 'C' ? 'customer' : 'supplier') + ' is answered like a stranger on ' + id, async () => {

@@ -12260,7 +12260,9 @@
           "channel": "whatsapp",
           "purpose": "marketing",
           "allowed": true,
-          "basis": "consent"
+          "basis": "consent",
+          "source": "staff",
+          "note": "said yes at the counter"
         }
       }
     },

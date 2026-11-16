@@ -56,7 +56,7 @@ D.extra = async (sql, p) => {
     return { rows: page.length ? page.map((r) => Object.assign({}, head, r)) : [Object.assign({ request_id: null }, head)] };
   }
   /* the send gate (G2 · CO1-GATE): the newest row for one (channel, purpose), by party id or by the phone's digits */
-  const newest = (xs) => xs.slice().sort((a, b) => Date.parse(b.noted_at) - Date.parse(a.noted_at)).slice(0, 1);
+  const newest = (xs) => PV.standing(xs.slice().sort((a, b) => Date.parse(b.noted_at) - Date.parse(a.noted_at))).slice(0, 1);   /* the SQL's standingSql, in JS: a customer's own no outranks a later staff yes */
   if (/^SELECT channel, purpose, allowed, basis, withdrawn_at(, pref_id, noted_at)?(, to_jsonb.* AS source_ref)? FROM party_contact_pref WHERE owner_entity_id = \$1 AND party_id = \$2 AND channel = \$3 AND purpose = \$4/.test(sql)) {
     return { rows: newest(T.prefs.filter((r) => r.owner === p[0] && r.party_id === p[1] && r.channel === p[2] && r.purpose === p[3])) };
   }
@@ -67,7 +67,7 @@ D.extra = async (sql, p) => {
   if (/^SELECT DISTINCT ON \(party_id, channel, purpose\)/.test(sql)) {   /* G1 · G5: the newest row per (party, channel, purpose) */
     if (!T.have.party_contact_pref) { const e = new Error('relation "party_contact_pref" does not exist'); e.code = '42P01'; throw e; }
     const seen = new Set(), out = [];
-    T.prefs.filter((r) => r.owner === p[0] && (p.length < 2 || r.party_id === p[1])).slice().reverse().forEach((r) => { const k = r.party_id + r.channel + r.purpose; if (!seen.has(k)) { seen.add(k); out.push(r); } });
+    PV.standing(T.prefs.filter((r) => r.owner === p[0] && (p.length < 2 || r.party_id === p[1])).slice().reverse()).forEach((r) => { const k = r.party_id + r.channel + r.purpose; if (!seen.has(k)) { seen.add(k); out.push(r); } });
     return { rows: out };
   }
   if (/^WITH last AS \(SELECT DISTINCT ON \(party_id, channel\) party_id, allowed FROM party_contact_pref/.test(sql)) {   /* G3: the marketing card */
@@ -94,7 +94,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
   console.log('\n-- before the migrations --');
   await ita('b306 not run: GET and POST contact-prefs answer 503 PRIVACY_NOT_MIGRATED, in plain words — nothing written', async () => {
     T.have.party_contact_pref = false; PV.forget();
-    for (const r of [await t.get(prefs()), await t.post(prefs(), { channel: 'whatsapp', purpose: 'marketing', allowed: true })]) {
+    for (const r of [await t.get(prefs()), await t.post(prefs(), { channel: 'whatsapp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' })]) {
       assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(!/b306/.test(r.body.message) && /after the next update/.test(r.body.message));
     }
     assert.strictEqual(T.prefs.length, 0); T.have.party_contact_pref = true; PV.forget();
@@ -112,7 +112,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
   });
   await ita('a yes to offers on WhatsApp → 201; basis defaults to consent; who noted it is kept; offers on WhatsApp now allowed, e-mail still not', async () => {
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
-    const r = await t.post(prefs(), { channel: 'WhatsApp', purpose: 'marketing', allowed: true }); t.as('E1');
+    const r = await t.post(prefs(), { channel: 'WhatsApp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' }); t.as('E1');
     assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(r.body.pref.basis, 'consent'); assert.strictEqual(r.body.pref.noted_by, 'A1');
     const g = (await t.get(prefs())).body; assert.strictEqual(g.may.whatsapp.marketing.may, true); assert.strictEqual(g.may.email.marketing.may, false);
   });
@@ -131,7 +131,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
   });
   await ita('refused in words: legitimate use as the basis for offers, an unknown channel, no yes/no', async () => {
     const n = T.prefs.length;
-    for (const [b, why] of [[{ channel: 'email', purpose: 'marketing', allowed: true, basis: 'legitimate_use' }, 'consent'], [{ channel: 'fax', purpose: 'service', allowed: true }, 'Channel'], [{ channel: 'email', purpose: 'service' }, 'yes or no']]) {
+    for (const [b, why] of [[{ channel: 'email', purpose: 'marketing', allowed: true, basis: 'legitimate_use', source: 'staff', note: 'said yes at the counter' }, 'consent'], [{ channel: 'fax', purpose: 'service', allowed: true }, 'Channel'], [{ channel: 'email', purpose: 'service' }, 'yes or no']]) {
       const r = await t.post(prefs(), b); assert.strictEqual(r.status, 400, JSON.stringify(r.body)); assert.ok(new RegExp(why).test(r.body.message), r.body.message);
     }
     assert.strictEqual(T.prefs.length, n);
@@ -208,7 +208,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
   D.cust.push(Object.assign(row({ party_id: P(3), display_name: 'Meena', phone: '+91 98400 11111' }), { customer_type: 'entity', added_via: 'manual', txn_count: 2, segment: 'regular' }));
   const P3 = '/parties/' + P(3);
   await t.post(P3 + '/contact-prefs', { channel: 'phone', purpose: 'service', allowed: false });
-  await t.post(P3 + '/contact-prefs', { channel: 'whatsapp', purpose: 'marketing', allowed: true });
+  await t.post(P3 + '/contact-prefs', { channel: 'whatsapp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' });
   await ita('G0: every verdict carries a code the screen branches on — CONSENT · LEGITIMATE_USE · NO_CONSENT · CONSENT_WITHDRAWN · SAID_NO · OPTED_OUT', () => {
     const m = PV.mayMessage;
     assert.strictEqual(m([], 'email', 'marketing').code, 'NO_CONSENT');
@@ -369,14 +369,37 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
   await ita('CMP-42: staff cannot write "self" or "reply" (400 in words, no row); with no source, or "staff", the row says staff and carries the actor’s id', async () => {
     asStaff(); const n = T.prefs.length;
     for (const source of ['self', 'reply']) {
-      const r = await t.post(P5, { channel: 'email', purpose: 'marketing', allowed: true, source, source_ref: 'x' });
+      const r = await t.post(P5, { channel: 'email', purpose: 'marketing', allowed: true, source, note: 'n1', source_ref: 'x' });
       assert.strictEqual(r.status, 400, source + ': ' + JSON.stringify(r.body)); assert.ok(/as staff/.test(r.body.message), r.body.message);
     }
     assert.strictEqual(T.prefs.length, n, 'a refused write adds no row');
-    const a = await t.post(P5, { channel: 'email', purpose: 'marketing', allowed: true });
-    const b = await t.post(P5, { channel: 'sms', purpose: 'marketing', allowed: true, source: 'staff', source_ref: 'someone-else' });
+    const a = await t.post(P5, { channel: 'email', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' });
+    const b = await t.post(P5, { channel: 'sms', purpose: 'marketing', allowed: true, note: 'said yes by phone', source: 'staff', source_ref: 'someone-else' });
     t.as('E1');
     for (const r of [a, b]) { assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(r.body.pref.source, 'staff'); assert.strictEqual(r.body.pref.source_ref, 'A7', 'the actor, not a name the caller typed'); assert.strictEqual(r.body.pref.noted_by, 'A7'); }
+  });
+  await ita('SEC audit 2026-11-16: the customer’s own withdrawal outranks a later staff yes (gate, may map, list); a staff yes needs source + note; the customer’s own new yes lifts it', async () => {
+    D.cust.push(Object.assign(row({ party_id: P(6), display_name: 'Meena', phone: '+91 98400 66666' }), { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'regular' }));
+    const P6 = '/parties/' + P(6) + '/contact-prefs', ev = { source: 'staff', note: 'said yes at the counter' };
+    asStaff();
+    const noEvidence = await t.post(P6, { channel: 'sms', purpose: 'marketing', allowed: true });
+    assert.strictEqual(noEvidence.status, 400, 'a staff yes with no source and note is refused: ' + JSON.stringify(noEvidence.body));
+    assert.strictEqual((await t.post(P6, { channel: 'sms', purpose: 'marketing', allowed: true, source: 'staff' })).status, 400, 'a source without a note is refused');
+    assert.strictEqual((await t.post(P6, Object.assign({ channel: 'sms', purpose: 'marketing', allowed: true }, ev))).status, 201);
+    t.as('E1');
+    /* the customer withdraws on their own (source self, written by the one shopper path), then staff writes a yes */
+    T.prefs.push({ pref_id: uid(), owner: 'E1', party_id: P(6), channel: 'sms', purpose: 'marketing', allowed: false, basis: 'consent', source: 'self', source_ref: P(6), noted_by: P(6), noted_at: new Date(clock += 1000).toISOString(), withdrawn_at: new Date(clock).toISOString() });
+    asStaff(); assert.strictEqual((await t.post(P6, Object.assign({ channel: 'sms', purpose: 'marketing', allowed: true }, ev))).status, 201, 'staff may still write it down'); t.as('E1');
+    const g = await PV.gate({ query: async (q, a) => (await D.extra(String(q).replace(/\s+/g, ' ').trim(), a)) || { rows: [] } }, 'E1', { party_id: P(6) }, 'sms', 'marketing');
+    assert.strictEqual(g.may, false, 'the withdrawal stands over the staff yes: ' + JSON.stringify(g)); assert.strictEqual(g.code, PV.CODES.WITHDRAWN);
+    const got = (await t.get(P6)).body; assert.strictEqual(got.may.sms.marketing.may, false, 'the may map says no too');
+    assert.ok(got.history.filter((h) => h.channel === 'sms').length >= 3, 'every row stays as proof');
+    /* the customer’s own new yes lifts it */
+    T.prefs.push({ pref_id: uid(), owner: 'E1', party_id: P(6), channel: 'sms', purpose: 'marketing', allowed: true, basis: 'consent', source: 'self', source_ref: P(6), noted_by: P(6), noted_at: new Date(clock += 1000).toISOString(), withdrawn_at: null });
+    assert.strictEqual((await t.get(P6)).body.may.sms.marketing.may, true, 'only the customer’s own yes lifts it');
+    /* a staff NO always stands */
+    asStaff(); await t.post(P6, { channel: 'sms', purpose: 'marketing', allowed: false }); t.as('E1');
+    assert.strictEqual((await t.get(P6)).body.may.sms.marketing.may, false);
   });
   await ita('CMP-42: the shopper’s own answer (POST /me/consent) is the one writer of "self", with the shopper as its source_ref', async () => {
     const r = await pcall('POST', '/api/privacy/me/consent', { channel: 'whatsapp', purpose: 'marketing', allowed: true }, shopperTok);

@@ -208,7 +208,7 @@ function extras() {
     X('prefs-with-history', 'GET ' + C + '/parties/:id/contact-prefs', 200, { world: (W) => { W.prefRows.push({ pref_id: '20000000-0000-4000-8000-000000000001', owner: SHOP, party_id: A.chola, channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent', notice_version: null, noted_by: SHOP, noted_at: '2026-10-01T00:00:00.000Z', withdrawn_at: null }); } }),
     X('prefs-unknown', 'GET ' + C + '/parties/:id/contact-prefs', 404, at('/parties/' + A.unknown + '/contact-prefs')),
     X('prefs-not-migrated', 'GET ' + C + '/parties/:id/contact-prefs', 503, { setup: { world: { prefs: false } } }),
-    X('prefs-noted', 'POST ' + C + '/parties/:id/contact-prefs', 201, { body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent' } }),
+    X('prefs-noted', 'POST ' + C + '/parties/:id/contact-prefs', 201, { body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent', source: 'staff', note: 'said yes at the counter' } }),
     X('prefs-no-answer', 'POST ' + C + '/parties/:id/contact-prefs', 400, { body: { channel: 'whatsapp', purpose: 'marketing' } }),
     X('prefs-bad-channel', 'POST ' + C + '/parties/:id/contact-prefs', 400, { body: { channel: 'pigeon', purpose: 'marketing', allowed: true } }),
     X('prefs-offers-without-consent', 'POST ' + C + '/parties/:id/contact-prefs', 400, { body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'legitimate_use' } }),

@@ -629,7 +629,7 @@ const onceOnly = idempotency.requireKey({
     return typed.error ? null : typed.channel + ' ' + typed.raw;
   }
 });
-
+const codeCooldown = require('../lib/code-cooldown').codeCooldown(resolveContact); /* SEC audit 2026-11-16: one code per contact a minute, both doors */
 // ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's members into ONE store. The
 //    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
 //    The customer SEARCHES products by category (= the line of business); they never see the internal tree,
@@ -1191,7 +1191,7 @@ router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fiel
 router.post(
   '/:bridge_id/order/start',
   doorCheck('POST /:bridge_id/order/start'), // strict input; identifier (phone|email) validated in-handler via resolveContact
-  onceOnly,
+  onceOnly, codeCooldown,
   async (req, res) => {
     try {
       const entity = await shopFor(req);
@@ -1291,7 +1291,7 @@ router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/pre
  * differs. [[feedback-no-duplicate-functions]]
  */
 // @does A shopper's phone or email and name for one shop -> we send a code to prove who is asking for support -> a code-sent message.
-router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), async (req, res) => {
+router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), codeCooldown, async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
