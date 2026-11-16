@@ -25,7 +25,7 @@ function stub(pageRows) {
     async query(sql, values) {
       log.push({ sql, values });
       if (/GROUP BY account_id/.test(sql)) return { rows: [{ account_id: A1.account_id, label: '..77' }] };
-      if (/^SELECT id, account_id, period_from::text/.test(sql)) return { rows: pageRows.map((r) => ({ id: r.id, account_id: r.account_id, period_from: r.period_from, period_to: r.period_to, overlaps: r.overlaps })) };
+      if (/^SELECT id, account_id, name, period_from::text/.test(sql)) return { rows: pageRows.map((r) => ({ id: r.id, account_id: r.account_id, name: r.name, period_from: r.period_from, period_to: r.period_to, overlaps: r.overlaps })) };
       if (/NOT \(period_from/.test(sql)) return { rows: [{ n: '7' }] };
       if (/^SELECT count\(\*\) AS n/.test(sql)) return { rows: [{ n: String(pageRows.length) }] };
       if (PAGE.test(sql)) return { rows: pageRows.slice(0, Number(/LIMIT (\d+)/.exec(sql)[1])) };
@@ -55,7 +55,9 @@ function stub(pageRows) {
     assert.strictEqual(out.total, 3);
     assert.strictEqual(out.older, 7);
     assert.strictEqual(out.accounts[0].label, '..77');
-    assert.ok(out.cells.every((cell) => 'overlaps' in cell && 'newest_id' in cell));
+    const nov = out.cells.find((cell) => cell.month === '2026-11');
+    assert.deepStrictEqual([nov.newest_id, nov.newest_name, nov.newest_to], [rows[0].id, 'f3.csv', '2026-11-20'], 'the cell names its newest file, to open it without reading the list');
+    assert.ok(out.cells.every((cell) => 'overlaps' in cell && 'newest_id' in cell && 'newest_name' in cell && 'newest_to' in cell));
     assert.ok(db.log.some((q) => /ORDER BY period_to DESC, seq DESC LIMIT 3/.test(q.sql)), 'asks for size + 1 to know whether more exist');
     assert.ok(db.log.every((q) => /period_from <=|GROUP BY/.test(q.sql) || /file_id = ANY/.test(q.sql)), 'every statement is the window, a group or the page events: none reads the whole box');
   });
