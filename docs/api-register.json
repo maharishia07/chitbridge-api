@@ -37056,7 +37056,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2130,
-   "hash": "6dee0e503361e670",
+   "hash": "d65be6a204c7f578",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
     "count": 3,
@@ -37130,7 +37130,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body keys if_locked/input_tax_minor/output_tax_minor/tax_invoice; the owner gate also passes the adviser bank write set by middleware from the live grant row (never from the request); everyone else still 403 OWNER_ONLY. 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Idempotent by contra:<client_ref>. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39612,7 +39612,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2120,
-   "hash": "ee6954eda3161548",
+   "hash": "9ade9b932b7b1ab5",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -39685,7 +39685,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body keys as POST /events; writes nothing; an adviser may call it (listed in ADVISER_DOORS). 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Writes nothing. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
