@@ -47,7 +47,7 @@ function extras(tools) {
   /* the statements the feed runs, answered by their shape */
   const feedRows = answering(/SELECT \* FROM \(\s+SELECT DISTINCT ON/, FEED);
   const badge = (one) => answering(/WITH me AS/, [one]);
-  const seenRead = (when) => answering(/^SELECT to_jsonb\(i\)->>'notif_seen_at' AS seen FROM identities i/, [{ seen: when }]);
+  const seenRead = (when) => answering(/^SELECT i.notif_seen_at::text AS seen FROM identities i/, [{ seen: when }]);
   const handler = answering(/dispute_handler_actor_id/, [{ dispute_handler_actor_id: STAFF.identity_id }]);
   const marked = answering(/notif_mark_seen\(\)/, [{ at: NOW }]);
   const feed = (when) => firstOf(handler, feedRows, seenRead(when));
@@ -96,7 +96,7 @@ function extras(tools) {
     X('feed-limit-asked-twice', 'GET ' + NO, 200, { url: NO + '?limit=5&limit=6', setup: { sqlRows: feed(SEEN_AT) } }),
     X('feed-of-staff', 'GET ' + NO, 200, { setup: { who: STAFF, sqlRows: feed(SEEN_AT) } }),
     X('feed-empty', 'GET ' + NO, 200, {}),
-    X('feed-seen-read-fails-carries-on', 'GET ' + NO, 200, { setup: { sqlRows: firstOf(handler, feedRows, raising(/^SELECT to_jsonb\(i\)->>'notif_seen_at' AS seen FROM identities i/, '42703')) } }),
+    X('feed-seen-read-fails-carries-on', 'GET ' + NO, 200, { setup: { sqlRows: firstOf(handler, feedRows, raising(/^SELECT i.notif_seen_at::text AS seen FROM identities i/, '42703')) } }),
     X('badge-counted', 'GET ' + NO, 200, { url: NO + '?count=1', setup: { sqlRows: badge({ count: 2, total: 3, seen_at: SEEN_AT }) } }),
     X('badge-nothing-counted', 'GET ' + NO, 200, { url: NO + '?count=1' }),
     X('badge-count-asked-twice-is-the-feed', 'GET ' + NO, 200, { url: NO + '?count=1&count=1', setup: { sqlRows: feed(SEEN_AT) } }),
