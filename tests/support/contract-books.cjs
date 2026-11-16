@@ -219,6 +219,7 @@ async function captureBooks() {
     await q('GET', '/todo', null, '/todo');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
+    await q('POST', '/year/2026-27/close', { returns_lodged: true }, '/year/:fy/close');   /* PAST-YEARS: the owner's word that the returns were lodged outside the books (a closed year answers duplicate) */
 
     /* ── PR1 the parallel-run compare: the list, a Tally XML read at once, a Tally CSV's columns guessed, a snapshot kept (and the same part again → 409), the compare ── */
     const px = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'parallel-run', f), 'utf8');
