@@ -27,8 +27,8 @@ ok('› is not offered at the running period (can_next false); ‹ makes it so',
 eq('any range vs the same days last year (29 Feb safe)', [R.priorOf({ from: '2028-02-29', to: '2028-03-31' }, 'year'), R.priorOf({ from: '2026-07-01', to: '2026-09-30' }, 'period')], [{ from: '2027-02-28', to: '2027-03-31' }, { from: '2026-03-31', to: '2026-06-30' }]);
 eq('as at: month end · year end · stepped', [R.asAtOf({ kind: 'month' }, T, 7).as_at, R.asAtOf({ kind: 'year' }, T, 7).as_at, R.asAtOf({ kind: 'month', step: -1 }, T, 7).as_at], ['2026-10-31', '2026-06-30', '2026-09-30']);
 eq('prior month of a month end stays a month end; prior year keeps the day', [R.monthsBefore('2026-03-31', 1), R.yearBefore('2026-11-16')], ['2026-02-28', '2025-11-16']);
-eq('change in basis points of the earlier figure (+20.00%), none against nothing; share of income (12.50%)', [R.changeOf(12000, 10000), R.changeOf(5, 0), R.shareOf(2500, 20000)], [2000, null, 1250]);
-eq('half away from zero, both signs', [R.changeOf(10001, 30000), R.changeOf(-10001, 30000)], [-6666, -13334]);
+eq('change in basis points of the earlier figure (+20.00%), none against nothing; share of income (12.50%)', [R.changeOf(12000, 10000, 'AUD'), R.changeOf(5, 0, 'AUD'), R.shareOf(2500, 20000, 'AUD')], [2000, null, 1250]);
+eq('half away from zero, both signs', [R.changeOf(10001, 30000, 'AUD'), R.changeOf(-10001, 30000, 'AUD')], [-6666, -13334]);
 
 const AU = 'aaaaaaaa-1111-4111-8111-111111111111';
 const WHO = { identity_id: AU, identity_type: 'entity', display_name: 'Bondi Grocer' };
@@ -68,7 +68,7 @@ const call = (port, p, method) => new Promise((done) => {
   ok('the sales ledger carries this year 2,000.00, last year 0, no percent against nothing, 100.00% of income (10000 bp) — all the servers own', head && head.accounts[0].prior_minor === 0 && head.accounts[0].change_bp === null && head.accounts[0].share_bp === 10000, JSON.stringify(head));
   ok('every head carries prior_minor · change_bp · share_bp, and the profit its share of income', pl.body.by_line.income.every((x) => 'prior_minor' in x && 'change_bp' in x && 'share_bp' in x) && pl.body.profit_share_bp === 10000, JSON.stringify([pl.body.profit_share_bp, pl.body.compare]));
   /* the matching of a ledger to its earlier figure, by code, with hand figures (a ledger new since then reads 0) */
-  const lines = R.compareLines([{ line: 'revenue', amount_minor: 3000, accounts: [{ code: '4000', amount_minor: 2000 }, { code: '4010', amount_minor: 1000 }] }], [{ line: 'revenue', amount_minor: 1600, accounts: [{ code: '4000', amount_minor: 1600 }] }], 3000, 1600);
+  const lines = R.compareLines([{ line: 'revenue', amount_minor: 3000, accounts: [{ code: '4000', amount_minor: 2000 }, { code: '4010', amount_minor: 1000 }] }], [{ line: 'revenue', amount_minor: 1600, accounts: [{ code: '4000', amount_minor: 1600 }] }], 3000, 1600, 'AUD');
   eq('compareLines: 4000 was 16.00 → +25.00% and 66.67% of income; 4010 is new → 0, no percent; the head +87.50%', [lines[0].accounts[0].prior_minor, lines[0].accounts[0].change_bp, lines[0].accounts[0].share_bp, lines[0].accounts[1].prior_minor, lines[0].accounts[1].change_bp, lines[0].change_bp], [1600, 2500, 6667, 0, null, 8750]);
   const none = await get('/pl?preset=ytd&compare=none');
   ok('?compare=none → no comparison, the figures unchanged', none.body.compare === null && none.body.total_income_minor === pl.body.total_income_minor);
