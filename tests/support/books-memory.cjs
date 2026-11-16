@@ -160,6 +160,19 @@ function create() {
                  dr_minor: l.dr_minor, cr_minor: l.cr_minor, currency: l.currency, reversed_by: rv ? rv.entry_no : null, reversed_narration: rv ? rv.narration : null };
       }).filter((l) => l.posting_date >= from && l.posting_date <= to);
     },
+    /* l16-scale: what each year's month rows add up to (the carry key's stamp); dr and cr as text, as Postgres sums a bigint */
+    async yearStamps(db, e) {
+      const by = new Map();
+      T.balances.forEach((b) => {
+        if (b.entity_id !== e) return;
+        const y = by.get(b.fiscal_year) || { fiscal_year: b.fiscal_year, n: 0, dr: 0, cr: 0, lines: 0 };
+        y.n += 1; y.dr += b.dr_minor; y.cr += b.cr_minor; y.lines += b.line_count; by.set(b.fiscal_year, y);
+      });
+      return [...by.values()].sort((a, b) => String(a.fiscal_year).localeCompare(String(b.fiscal_year))).map((y) => Object.assign(y, { dr: String(y.dr), cr: String(y.cr), lines: String(y.lines) }));
+    },
+    /* b873 year_carry is a cache the memory store does not keep: nothing kept, nothing written, the books recompute (the real table is proved in the l16-scale realstack) */
+    async carryRead() { return null; },
+    async carryWrite() { return false; },
     async years(db, e) { return Array.from(new Set(Array.from(T.balances.values()).filter((b) => b.entity_id === e).map((b) => b.fiscal_year))).sort(); },
     /* ── the four writes ── */
     async insertEntry(db, e, h) {
