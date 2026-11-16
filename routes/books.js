@@ -2641,7 +2641,7 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
     const { rows, figures, setting, taxStates, trail } = await withEntity(e, async (h) => {
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
-      const figures = await S.periodFigures(h, e, fy);
+      const figures = await S.periodFigures(h, e, null); /* every year: the books start and the lock line are read across years, whatever year the page asks */
       /* ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
       const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
       const withSales = figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
@@ -2654,9 +2654,9 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
     /* ACC-204: the tax periods of every year the rows hold, each with its form, so a month's lock advice names the period it ends in */
     const taxPeriods = [].concat(...Array.from(taxStates.values()).map((state) => state.periods.map((item) => Object.assign({ form: state.form }, item))));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json({
+    res.json(Object.assign({
       periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting), taxPeriods, trail).filter((item) => !fy || item.fiscal_year === fy)
-    });
+    }, B.booksLockLine(dated, figures))); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
