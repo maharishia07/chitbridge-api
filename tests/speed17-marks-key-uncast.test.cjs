@@ -16,7 +16,8 @@ const a = A.adopterOf('acc.audit');
 const texts = { nowSql: detect.nowSql(a), cleared: RM.coverageSql(a).cleared };
 for (const [name, sql] of Object.entries(texts)) {
   assert(!/entry_id::text\s*=/.test(sql), name + ' casts the key column to text');
-  assert(/s\.entry_id\s*=\s*(ANY|CASE)/.test(sql), name + ' compares the bare uuid key');
+  assert(/s\.entry_id\s*=\s*(ANY\(|l\.subject_key)/.test(sql), name + ' compares the bare uuid key');
+  assert(!/s\.entry_id\s*=\s*CASE/.test(sql), name + ' casts inside the join condition (not leakproof under row security: no index condition); cast in a SELECT list');
   assert(/~ '\^\[0-9a-f\]\{8\}/.test(sql), name + ' lost the uuid-shape guard (a non-uuid id would raise)');
 }
 const plain = { subject: Object.assign({}, a.subject, { id_type: undefined }), change: a.change };
