@@ -2066,9 +2066,8 @@ router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req
     if (bad.length)
       return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.');
     /* ⭐ IM1: the entry itself is lib/books postOpening — the move-in importer posts a trial balance and the open bills through the same door */
-    const out = await withEntity(e, (h) =>
-      B.postOpening(h, e, { rows, date: dateQ(b.date, fyStart(req, today(req))), currency: cur, client_ref: b.client_ref, by: byOf(req) })
-    );
+    const opening = { rows, date: dateQ(b.date, fyStart(req, today(req))), currency: cur, client_ref: b.client_ref, by: byOf(req) };
+    const out = await withEntity(e, (h) => (b.require_balanced === true ? require('../lib/books-opening').postTyped(h, e, opening) : B.postOpening(h, e, opening))); /* l16: the page's save checks its bills and refuses a difference */
     res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note, suspense_minor: out.suspense_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -2907,5 +2906,5 @@ module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
 /* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
-module.exports.gates = { noKey, editor, on };
+module.exports.gates = { noKey, editor, on, owner };
 module.exports.alreadyPaid = alreadyPaid;

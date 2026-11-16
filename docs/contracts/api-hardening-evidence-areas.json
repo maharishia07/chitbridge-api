@@ -143,10 +143,8 @@
    "output_allowlist": true
   },
   "GET /api/books/bank/log": {
-   "output_allowlist": true
-  },
-  "GET /api/books/bank/rail": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "GET /api/books/bs": {
    "output_allowlist": true
@@ -1916,6 +1914,18 @@
    "output_allowlist": true
   },
   "PUT /api/service/:chit_id": {
+   "output_allowlist": true
+  },
+  "GET /api/books/opening": {
+   "output_allowlist": true
+  },
+  "GET /api/books/opening/years": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening/preview": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening/replace": {
    "output_allowlist": true
   }
  }

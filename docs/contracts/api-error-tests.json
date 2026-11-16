@@ -290,6 +290,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "GET /api/books/bank/statement-files": [
@@ -362,6 +363,11 @@
   404,
   500
  ],
+ "GET /api/books/evidence/:id": [
+  401,
+  404,
+  500
+ ],
  "GET /api/books/fx-rates": [
   401,
   403,
@@ -387,6 +393,19 @@
   500
  ],
  "GET /api/books/move-in/imports": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/opening": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/opening/years": [
   401,
   403,
   404,
@@ -2094,6 +2113,24 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/books/opening/preview": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/books/opening/replace": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
   500
  ],
  "POST /api/books/outbox/retry": [
