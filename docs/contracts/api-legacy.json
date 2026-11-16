@@ -30070,11 +30070,11 @@
      "scenario": "request-bad-type",
      "status": 400,
      "body_keys": {
-      "error": "type must be governance or commercial",
+      "error": "type must be governance, commercial or agency",
       "code": "BAD_TYPE"
      },
      "fixture": {
-      "error": "type must be governance or commercial",
+      "error": "type must be governance, commercial or agency",
       "code": "BAD_TYPE"
      }
     },
