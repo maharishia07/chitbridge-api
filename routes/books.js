@@ -1390,6 +1390,13 @@ async function forPayer(req, e, kind, direction, answer) {
 async function forBooksDoor(req, e, kind, answer, opt) {
   return (await require('../lib/cost').isCostBlind(req, e)) ? require('../lib/dues-view').blindBooks(kind, answer, opt) : answer;
 }
+/** B3: a kept bank statement shows every supplier payment, so a reader without can_see_costs is refused (403 COST_BLIND) — the SAME ONE test /bank/rail asks (lib/cost.isCostBlind, fail-closed; a grant's can_see_costs rides the acting identity). true = answered. */
+async function costBlindStops(req, res, e) {
+  if (!(await require('../lib/cost').isCostBlind(req, e))) return false;
+  const said = require('../lib/cost').costBlindBody([]).message;
+  problem(req, res, { status: 403, code: 'COST_BLIND', detail: said, legacy: { error: 'Not permitted', message: said } });
+  return true;
+}
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
 function alreadyPaid(res, err) {
   /* FIN-53: the title follows the list — "Already paid?" for the same money twice, "More than is owed" for W1/W2 alone (books.warningTitle) */
@@ -1682,6 +1689,7 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
       from = req.query.from ? dateQ(req.query.from) : null,
       to = req.query.to ? dateQ(req.query.to) : null,
       marksPage = BANK_LOG.marksPageOf(req.query); /* the NEWEST marks, a page of at most 5000; marks_limit=0 reads none (the Bank home) */
+    if (await costBlindStops(req, res, e)) return;
     const out = await withEntity(e, async (handle) => {
       const account = await bankAccountOf(handle, e, req.query.account);
       return Object.assign({ account: { account_id: account.account_id, code: account.code, name: account.name } }, await BANK_LOG.read(handle, e, account, from, to, marksPage));
@@ -1730,6 +1738,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
     const e = ctx(req),
       months = BSF.windowOf(req.query, today(req)),
       asked = String(req.query.accounts || '').split(',').map((item) => item.trim()).filter(Boolean).slice(0, 60);
+    if (await costBlindStops(req, res, e)) return;
     const out = await withEntity(e, async (handle) => {
       const chart = await S.accounts(handle, e);
       const accounts = asked.map((key) => BANK_LOG.accountIn(chart, key)).filter((item, at, all) => item && all.indexOf(item) === at);
@@ -1749,6 +1758,7 @@ router.get('/bank/statement-files/:id/file', auth, noKey, on, ...checked('GET /b
   try {
     const e = ctx(req),
       id = String(req.params.id);
+    if (await costBlindStops(req, res, e)) return;
     if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such statement.');
     const out = await BSF.open(withEntity, e, id, req.query.use === 'read' ? 'read' : 'download', stampOfReq(req));
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such statement in this shop.');
