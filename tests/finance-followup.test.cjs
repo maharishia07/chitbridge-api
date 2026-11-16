@@ -217,6 +217,15 @@ async function partRoute(country) {
     const plain = await q('/dues?side=customer');
     t('without finance=1: no follow_up_total, but every row carries follow_up (W15-94: Receivables and Payables read the same ageing)', ['follow_up_total' in plain.body, (plain.body.parties || []).every((p) => 'follow_up' in p)], [false, true]);
     t('the months buckets and balances are the same with and without the follow-up (nothing moved)', (got.body.parties || []).every((p) => { const o = plain.body.parties.find((x) => x.party_id === p.party_id); return o && JSON.stringify(o.buckets) === JSON.stringify(p.buckets) && o.balance_minor === p.balance_minor; }), true);
+    /* W21 · the aged table's total row per side, on the plain read a firm's view uses (no finance=1): hand-computed, 3 parties across the buckets */
+    t('W21 · plain customer read: aged_totals.customer = the finance page total, the supplier side null (not asked for, never 0)', [plain.body.aged_totals.customer, plain.body.aged_totals.supplier], [got.body.follow_up_total, null]);
+    t('W21 · FOUR (4 bills 10/40/75/120 days late), E31 (31 late) and PART (part-paid 40-day bill): every bucket sum = the party balance (400000 · 100000 · 40000)',
+      ['FOUR', 'E31', 'PART'].map((key) => Object.keys(ZERO).reduce((total, k) => total + rowOf(plain, key).follow_up[k], 0) === rowOf(plain, key).balance_minor), [true, true, true]);
+    t('W21 · FOUR spans d0_30 · d31_60 · d61_90 · d90_plus one each; E31 is d31_60; PART d31_60 40000', [rowOf(plain, 'FOUR').follow_up, rowOf(plain, 'E31').follow_up.d31_60, rowOf(plain, 'PART').follow_up.d31_60], [COMMON[P.FOUR], TEN, 40000]);
+    const subLedger = (side) => all.filter((x) => x.side === side).reduce((total, x) => total + x.amount_minor, 0);
+    t('W21 · the customer total the table sits under = the debtors sub-ledger (every receivable item summed: bills less receipts), the figure the TB debtors account carries', plain.body.total_minor, subLedger('receivable'));
+    const supOnly = await q('/dues?side=supplier');
+    t('W21 · supplier side: BOTH (70000, 40 late) → d31_60, SUP (50000, 96 late) → d90_plus; total = 120000 = the creditors sub-ledger shown positive', [supOnly.body.aged_totals.supplier.d31_60, supOnly.body.aged_totals.supplier.d90_plus, supOnly.body.aged_totals.customer, Math.abs(subLedger('payable')) === 120000], [70000, 50000, null, true]);
     who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP };
     const actor = await q('/dues?finance=1&side=customer');
     t('a co-assist never reaches it: ?finance=1 is the owner\'s door (403 OWNER_ONLY)', [actor.status, actor.body.code, 'follow_up_total' in actor.body], [403, 'OWNER_ONLY', false]);

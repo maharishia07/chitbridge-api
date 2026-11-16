@@ -1497,6 +1497,19 @@
     "payables": {
      "total_minor": 59000
     },
+    "aged_totals": {
+     "customer": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok"
+    },
+     "supplier": null
+    },
     "follow_up_total": {
      "not_due": 0,
      "d0_30": 0,

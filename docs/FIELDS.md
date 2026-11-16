@@ -750,6 +750,7 @@ Every key is DERIVED by `lib/books-engines.followUp / followRow / followTotal` o
 | `follow_up.worst` | `'d0_30'` · `'d31_60'` · `'d61_90'` · `'d90_plus'` or null | The oldest late bucket holding money; null when nothing is late. The screen words the Age column from this CODE. |
 | `follow_up.no_terms_minor` · `.terms` | integer · `'ok'` | `'not_set'` | A bill with no due date is aged from its date + the party's credit days (own, else the shop's; `CBReceivables.dueDate`). With none anywhere it is aged from its BILL DATE, counted here and `terms` says `not_set` (the screen says "Set your credit days"). This differs on purpose from `oldest_due` and the Schedule III buckets, which age such a bill from its date silently. |
 | `follow_up_total` | the same keys as `follow_up` | The page's customer rows added key by key; null with `total_minor` for a cost-blind reader of a page that hides a purchase-side row. |
+| `aged_totals` | `{ customer, supplier }`, each the same keys as `follow_up` or null | W21 (2026-11-16 aged table, firm's Who owes whom): the total row per side — `books-engines.followTotal` over that side's rows, on the plain read too (no finance=1). A side the read did not ask for is null, never zero; for a cost-blind reader `supplier` keeps its keys with every value null. |
 
 ## Leads from a CSV · POST /api/crm/leads/import (CB CRM L3, 2026-10-12)
 

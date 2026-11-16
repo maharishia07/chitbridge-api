@@ -883,9 +883,14 @@ function termsReaders(financeTerms, terms) {
   const creditDaysOf = (pid) => financeTerms.resolve(terms.shop, terms.by_party.get(String(pid)) || {}).credit_days.value;
   return { effOf, followOpt: terms ? { creditDaysOf } : null };
 }
+/** W21: the aged table's total row per side, the SAME followTotal over the SAME follow_up (days past due: not_due · d0_30 · d31_60 · d61_90 · d90_plus); a side not asked for is null, never a zero */
+function agedTotals(rows, sides) {
+  const one = (want, role) => (sides.includes(role) ? E.followTotal(rows.filter((row) => row.side === want)) : null);
+  return { customer: one('customer', 'debtors'), supplier: one('supplier', 'creditors') };
+}
 /** what sits beside the parties on the page: the Payables total (F4) and, on a Collections read, the follow-up total (FIN-72: what customers owe, by days late — a supplier row adds nothing) — nothing else is added */
-function pageExtras(collections, payables, rows) {
-  return Object.assign({}, payables ? { payables } : {}, collections ? { follow_up_total: E.followTotal(rows.filter((row) => row.side !== 'supplier')) } : {});
+function pageExtras(collections, payables, rows, sides) {
+  return Object.assign({}, payables ? { payables } : {}, collections ? { follow_up_total: E.followTotal(rows.filter((row) => row.side !== 'supplier')) } : {}, { aged_totals: agedTotals(rows, sides) });
 }
 /** RAIL-146i: the /dues answer for THIS reader — ONE can_see_costs read (lib/cost.isCostBlind, fail-closed); an actor without it sees no supplier-side money (lib/dues-view R1-R6); the owner's bytes are untouched */
 async function forReader(req, e, answer) {
@@ -1057,7 +1062,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
     });
     res.json(
       await forReader(req, e, {
-        currency: curOf(req), asOf, parties: out, total_minor: MO.sumMinor(out, curOf(req), (item) => item.balance_minor), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...pageExtras(fin && sides.includes('debtors'), payables, out)
+        currency: curOf(req), asOf, parties: out, total_minor: MO.sumMinor(out, curOf(req), (item) => item.balance_minor), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...pageExtras(fin && sides.includes('debtors'), payables, out, sides)
       })
     );
   } catch (err) {
