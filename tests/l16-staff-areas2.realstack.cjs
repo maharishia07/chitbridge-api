@@ -30,6 +30,8 @@ const OPEN_CARDS = ['till', 'counters', 'account', 'orders', 'operations', 'disp
 const MONEY_CARDS = { accounts: 'accounts', compare: 'accounts', reports: 'reports', finance: 'finance' };
 const DOOR_ROUTES = { reports: ['/api/chits/rollup', '/api/folders/groupsum?scope=task', '/api/folders/reconcile', '/api/folders/mis'], accounts: ['/api/till/invoice-lease/report'] };
 const OPEN_ROUTES = ['/api/chits/inbox', '/api/chits/sent', '/api/crm/parties'];
+/** the CRM list answers differently per person on every head (the may block, the cost mask), so it is judged by its money keys, not by a hash against the owner */
+const CRM = '/api/crm/parties';
 
 async function business(tag) {
   const bridgeId = 'CB' + RUN + tag;
@@ -116,7 +118,7 @@ async function main() {
       }
     }
     for (const [who, granted] of [['gReports', 'reports'], ['gFinance', 'finance'], ['gAccounts', 'accounts']]) {
-      for (const route of routes) {
+      for (const route of routes.filter((one) => one !== CRM)) {
         const needs = area(route);
         const r = got[who][route];
         if (needs === granted || !needs) ok('2 ' + who + ' ' + route + ': the same status and the same answer as the owner', r.status === owner[route].status && hash(r.text) === hash(owner[route].text), r.status + ' vs ' + owner[route].status);
@@ -124,8 +126,9 @@ async function main() {
       }
     }
     for (const who of ['auditor', 'reportsMis', 'regional']) {
-      ok('3 ' + who + ' reads every route as the owner does (same statuses and answers)', routes.every((route) => got[who][route].status === owner[route].status && hash(got[who][route].text) === hash(owner[route].text)), routes.filter((route) => got[who][route].status !== owner[route].status).join(' '));
+      ok('3 ' + who + ' reads every route as the owner does (same statuses and answers)', routes.filter((route) => route !== CRM).every((route) => got[who][route].status === owner[route].status && hash(got[who][route].text) === hash(owner[route].text)) && 'dues_overdue' in ((got[who][CRM].body || {}).alerts || {}), routes.filter((route) => got[who][route].status !== owner[route].status).join(' '));
     }
+    for (const [who, keeps] of [['gAccounts', true], ['gFinance', true], ['gReports', false]]) ok('4c ' + who + ' ' + (keeps ? 'keeps' : 'does not get') + ' the party dues and the late-dues count', got[who][CRM].status === 200 && ('dues_overdue' in (got[who][CRM].body.alerts || {})) === keeps, got[who][CRM].text.slice(0, 200));
     const sam = got.counter['/api/crm/parties'];
     ok('4 the party list stays for Counter staff and carries no dues_overdue and no party dues', sam.status === 200 && Array.isArray(sam.body.parties) && !('dues_overdue' in (sam.body.alerts || {})) && sam.body.parties.every((party) => !('dues' in party) && !('unbilled' in party)), sam.text.slice(0, 300));
     ok('4b the owner still sees alerts.dues_overdue', owner['/api/crm/parties'].status === 200 && 'dues_overdue' in (owner['/api/crm/parties'].body.alerts || {}), owner['/api/crm/parties'].text.slice(0, 300));
