@@ -2389,7 +2389,8 @@
             "required": [
               "source",
               "help",
-              "watch"
+              "watch",
+              "yoy_stale_days"
             ],
             "properties": {
               "source": {
@@ -2440,6 +2441,9 @@
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
+              },
+              "yoy_stale_days": {
+                "type": "number"
               }
             },
             "additionalProperties": false,
