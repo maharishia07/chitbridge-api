@@ -1,6 +1,7 @@
 {
-  "_about": "HAND-WRITTEN expected totals for three sample months of tools/seed/mis-history.json (AUD, whole dollars and cents), for cb-business to check against the books later. SOLD = the Day book's tax-inclusive figure (walk-in days + the one tax-inclusive credit sale); the 330.00 sale of the 20th is posted and REVERSED, so it is in no total. Working: month = days x daily x 1.1 + 220.00.",
+  "_about": "HAND-WRITTEN expected totals for three sample months of tools/seed/mis-history.json and mis-history-84.json (the last 26 months are identical; AUD, whole dollars and cents), for the profile 'grocer' of tools/seed/mis-profiles.json, for cb-business to check against the books later. SOLD = the Day book's tax-inclusive figure (walk-in days + the one tax-inclusive credit sale); the 330.00 sale of the 20th is posted and REVERSED, so it is in no total. Working: month = days x daily x 1.1 + 220.00. PURCHASES: two suppliers each bill on the 6th and the 13th, cost 55% of the month's walk-in takings split in two, whole dollars (days x daily x 0.55 / 2, rounded) — Feb 2025 2 x 2,695 = 5,390; Dec 2025 2 x 5,072 = 10,144; Oct 2026 2 x 4,220 = 8,440 (ex GST; GST 10% on top). entries = every entry the shop's own plan posts that month.",
   "currency": "AUD",
+  "profile": "grocer",
   "months": {
     "2025-02": {
       "note": "slowest month; 28 days x 350 = 9,800.00 ex GST",
@@ -8,7 +9,8 @@
       "net_sales_ex_gst": 10000,
       "gst_collected": 1000,
       "rent_expense": 2000,
-      "entries": 32
+      "purchases_ex_gst": 5390,
+      "entries": 37
     },
     "2025-12": {
       "note": "best month; 31 days x 595 = 18,445.00 ex GST",
@@ -16,16 +18,18 @@
       "net_sales_ex_gst": 18645,
       "gst_collected": 1864.5,
       "rent_expense": 2000,
-      "entries": 35
+      "purchases_ex_gst": 10144,
+      "entries": 40
     },
     "2026-10": {
-      "note": "last closed month; 31 days x 495 = 15,345.00 ex GST; last year Oct 2025 = 15,735.50 so +8.7%",
+      "note": "last month of the 84 (the 26-month file too); 31 days x 495 = 15,345.00 ex GST; last year Oct 2025 = 15,735.50 so +8.7%; no customer receipt (the last two months stay open)",
       "sold_incl_gst": 17099.5,
       "net_sales_ex_gst": 15545,
       "gst_collected": 1554.5,
       "rent_expense": 2000,
-      "entries": 35
+      "purchases_ex_gst": 8440,
+      "entries": 39
     }
   },
-  "entries_note": "entries per month = one walk-in day entry per day + 4 (the inclusive sale, the reversed sale, its reversal, the rent expense): 28+4, 31+4, 31+4"
+  "entries_note": "entries per month = one walk-in day entry per day + 4 (the inclusive sale, the reversed sale, its reversal, the rent expense) + 2 supplier bills + 2 supplier payments (day 27, the bills 30+ days old) + 1 customer receipt (day 25; none in the last two months): 28+4+2+2+1 = 37, 31+4+2+2+1 = 40, 31+4+2+2+0 = 39"
 }
