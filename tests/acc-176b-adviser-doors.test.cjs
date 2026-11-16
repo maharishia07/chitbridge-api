@@ -145,6 +145,9 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     for (const route of A.ADVISER_EXTRA_READS) { assert.ok(route in A.GRANT_HELD_BACK, route + ' is held back from the auditor'); assert.ok(!A.GRANT_READS.has(route), route + ' is not on the auditor list'); }
     for (const held of ['/bank/rail', '/party/:id/statement', '/payments/:id/advice', '/compare', '/compare/:id', '/compare/:id/csv', '/packs/:id/file', '/move-in/imports', '/fx-revalue']) assert.ok(!A.ADVISER_EXTRA_READS.has(held), held + ' stays held back from the adviser');
     assert.ok(A.ADVISER_EXTRA_READS.has('/events') && A.ADVISER_EXTRA_READS.has('/status'));
+    /* l16 fable2 R2-3: the accountant seat's Day book reads the evidence counts (no 403); the auditor's list does not carry it; the FX preview stays closed to both (the page does not ask) */
+    const door = (role, p) => A.listedFor(role, { method: 'GET', baseUrl: '/api/books', path: p });
+    assert.ok(door('adviser', '/attention') && !door('auditor', '/attention') && !door('adviser', '/fx-revalue') && !door('auditor', '/fx-revalue'), '/attention: adviser reads, auditor not; /fx-revalue: neither');
   });
   await t('W15-85b: the accountant may send if_locked next_open on the bank page own event and payment bodies, and nothing else of it; Reopen (the period unlock) is no adviser door', () => {
     const bank = (door, body) => A.listedFor('adviser', { method: 'POST', baseUrl: '/api/books', path: door, body: Object.assign({ client_ref: 'bank:abc-1' }, body) });

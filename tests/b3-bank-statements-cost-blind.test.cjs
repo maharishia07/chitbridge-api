@@ -34,7 +34,7 @@ const DOORS = ['/bank/statement-files?accounts=1500', '/bank/statement-files/' +
 
   const refused = async (label, who) => {
     WHO = who; reached = 0;
-    for (const d of DOORS) { const r = await q(d); ok(label + ' · ' + d.split('?')[0].replace(FILE, ':id') + ' → 403 COST_BLIND, nothing read', r.status === 403 && r.body.code === 'COST_BLIND' && reached === 0, JSON.stringify([r.status, r.body.code, reached])); }
+    for (const d of DOORS) { const r = await q(d); ok(label + ' · ' + d.split('?')[0].replace(FILE, ':id') + ' → 403 COST_BLIND, nothing read, its own sentence (no "to send: .")', r.status === 403 && r.body.code === 'COST_BLIND' && reached === 0 && r.body.message === 'Your access does not include costs, so the bank statements are hidden.' && !/to send/.test(JSON.stringify(r.body)), JSON.stringify([r.status, r.body.code, reached])); }
   };
   const allowed = async (label, who) => {
     WHO = who;

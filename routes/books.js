@@ -1393,7 +1393,7 @@ async function forBooksDoor(req, e, kind, answer, opt) {
 /** B3: a kept bank statement shows every supplier payment, so a reader without can_see_costs is refused (403 COST_BLIND) — the SAME ONE test /bank/rail asks (lib/cost.isCostBlind, fail-closed; a grant's can_see_costs rides the acting identity). true = answered. */
 async function costBlindStops(req, res, e) {
   if (!(await require('../lib/cost').isCostBlind(req, e))) return false;
-  const said = require('../lib/cost').costBlindBody([]).message;
+  const said = require('../lib/cost').COST_BLIND_READ_SAY;
   problem(req, res, { status: 403, code: 'COST_BLIND', detail: said, legacy: { error: 'Not permitted', message: said } });
   return true;
 }
