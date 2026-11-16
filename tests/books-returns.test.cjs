@@ -92,6 +92,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('every box names the ledgers it counts: 1A → 2200 GST collected · 1B → 2210 GST paid · 9 → both', [box(r, '1A').accounts.map((a) => a.code), box(r, '1B').accounts.map((a) => a.code), box(r, '9').accounts.map((a) => a.code), box(r, '1A').roles],
     [['2200'], [codeOfRole(AU, 'gst_paid')], ['2200', codeOfRole(AU, 'gst_paid')], ['gst_collected']]);
   ok('the ledger names ride with the codes', box(r, '1A').accounts[0].name === 'GST collected' && box(r, 'G1').accounts.some((a) => a.code === codeOfRole(AU, 'sales')), JSON.stringify(box(r, '1A').accounts));
+  eq('W15-91: the return carries the credit claimed with no tax invoice (P1, 550.00 gross, no file) — the Day book flag, one purchase, its 50.00 GST = the whole of 1B; the figures above are untouched', [r.body.unsupported_input.count, r.body.unsupported_input.tax_minor, r.body.unsupported_input.currency, r.body.unsupported_input.tax_minor === box(r, '1B').amount_minor, r.body.unsupported_input.from, r.body.unsupported_input.to, r.body.unsupported_input.box], [1, 5000, 'AUD', true, '2026-07-01', '2026-09-30', '1B']);
   ok('the notes say Simpler BAS; the cite is the ATO page', r.body.notes.some((n) => /Simpler BAS/.test(n)) && /ato.gov.au/.test(r.body.cite), JSON.stringify(r.body.notes));
 
   r = await q('GET', '/returns?simpler=0');

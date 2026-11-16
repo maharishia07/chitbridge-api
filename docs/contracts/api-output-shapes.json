@@ -3658,6 +3658,33 @@
           "emirates": {},
           "staggers": {
             "type": "object"
+          },
+          "unsupported_input": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "number"
+              },
+              "tax_minor": {
+                "type": "number"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "box": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
