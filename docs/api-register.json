@@ -13518,7 +13518,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 123,
-   "hash": "73ca148ca5dcf438",
+   "hash": "28ce62896a2aa11e",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
     "count": 0,
@@ -13591,7 +13591,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-16 l16/staff-areas3-api (W15-66 slices 1+2, 13 columns read in the row): read: dues and unbilled leave for a person without accounts or finance (shutMoney, keys removed only); closed shape still holds",
+    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-16 l16/staff-areas3-api (W15-66 slices 1+2, 13 columns read in the row): read: dues and unbilled leave for a person without accounts or finance (shutMoney, keys removed only); closed shape still holds; re-signed after the closed shape made dues optional (a person without accounts or finance gets the record with no dues key, found by api-problem-crm red before the shape edit)",
     "lifecycle": "stable"
    },
    "status": "meets standard",

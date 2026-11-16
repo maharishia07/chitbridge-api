@@ -90,7 +90,7 @@ async function partTwo() {
   WR.unbilledByParty = async (ctx) => { seen.push(!!ctx.blind); return new Map([[P(2), ctx.blind ? { n: 1, minor: null, currency: 'INR', cost_hidden: true } : { n: 1, minor: Math.round(SECRET.sup1 * 100), currency: 'INR' }]]); };
   const unbilledOf = (r) => r.body.parties.find((p) => p.party_id === P(2)).unbilled;
 
-  stub.as('E1', { identity: { identity_id: 'A7', identity_type: 'actor', parent_entity_id: 'E1' } });
+  stub.as('E1', { identity: { identity_id: 'A7', identity_type: 'actor', parent_entity_id: 'E1', area_grants: { finance: { level: 'see', until: null } } /* W15-66: party money is the accounts or finance area's; this test is about cost, not area */ } });
   flag = false; flagReads = 0; seen = [];
   let r = await stub.get('/parties');
   t('blind actor | 200, unbilled is the hidden shape', [r.status, unbilledOf(r)], [200, { n: 1, minor: null, currency: 'INR', cost_hidden: true }]);
