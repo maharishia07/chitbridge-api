@@ -116,6 +116,13 @@
    "app.html",
    "attach-ui.js"
   ],
+  "GET /api/books-actions": [
+   "books-actions-view.js",
+   "books-grant-member.js"
+  ],
+  "GET /api/books-actions/:id": [
+   "books-actions-view.js"
+  ],
   "GET /api/books-grants": [
    "books-grant-api.js",
    "books-grant-member.js"
@@ -126,7 +133,11 @@
   "GET /api/books-grants/log": [
    "books-grant-member.js"
   ],
+  "GET /api/books-grants/practice": [
+   "books-practice.js"
+  ],
   "GET /api/books/accounts": [
+   "cap-bank-sheet.js",
    "cap-bank.js",
    "cap-books.js",
    "cap-entry.js"
@@ -135,11 +146,18 @@
    "cap-period.js"
   ],
   "GET /api/books/bank/log": [
+   "cap-bank-home.js",
    "cap-bank-store.js"
   ],
   "GET /api/books/bank/rail": [
    "cap-bank.js",
    "cap-books.js"
+  ],
+  "GET /api/books/bank/statement-files": [
+   "cap-bank-statements.js"
+  ],
+  "GET /api/books/bank/statement-files/:id/file": [
+   "cap-bank-statements.js"
   ],
   "GET /api/books/bs": [
    "books-grant-api.js",
@@ -171,6 +189,9 @@
    "cap-entry.js",
    "cap-period.js"
   ],
+  "GET /api/books/evidence/:id": [
+   "cap-evidence.js"
+  ],
   "GET /api/books/fx-rates": [
    "cap-fx.js"
   ],
@@ -186,6 +207,7 @@
    "index.html"
   ],
   "GET /api/books/ledger/:account": [
+   "books-grant-api.js",
    "cap-bank.js",
    "cap-books.js",
    "cap-period.js"
@@ -204,7 +226,8 @@
   ],
   "GET /api/books/periods": [
    "books-grant-api.js",
-   "cap-books.js"
+   "cap-books.js",
+   "cap-period.js"
   ],
   "GET /api/books/pl": [
    "books-grant-api.js",
@@ -360,6 +383,7 @@
   ],
   "GET /api/chits/unread": [
    "app.html",
+   "cap-bank-sheet.js",
    "cap-folders.js",
    "cap-mis.js"
   ],
@@ -397,6 +421,7 @@
    "cap-finance-terms.js"
   ],
   "GET /api/crm/parties/:id": [
+   "cap-books.js",
    "cap-crm-groups-window.js",
    "cap-crm-record.js"
   ],
@@ -541,6 +566,7 @@
    "authority-forms.html"
   ],
   "GET /api/governance/country-setup": [
+   "cap-bank-sheet.js",
    "cap-country.js"
   ],
   "GET /api/governance/instruments": [
@@ -605,6 +631,12 @@
   ],
   "GET /api/marketing/came-back": [
    "cap-marketing.js"
+  ],
+  "GET /api/marks": [
+   "cap-mark.js"
+  ],
+  "GET /api/marks/:thread_id/messages": [
+   "rail-thread.js"
   ],
   "GET /api/network-design": [
    "cap-network.js",
@@ -818,9 +850,6 @@
   "GET /api/work/list": [
    "cap-tasks.js"
   ],
-  "GET /health": [
-   "books-grant-member.js"
-  ],
   "PATCH /api/actors/:id": [
    "cap-employees.js",
    "cap-workforce.js",
@@ -949,6 +978,18 @@
    "app.html",
    "attach-ui.js"
   ],
+  "POST /api/books-actions": [
+   "books-acting.js"
+  ],
+  "POST /api/books-actions/:id/accept": [
+   "books-actions-view.js"
+  ],
+  "POST /api/books-actions/:id/return": [
+   "books-actions-view.js"
+  ],
+  "POST /api/books-actions/:id/review": [
+   "books-actions-view.js"
+  ],
   "POST /api/books-grants": [
    "books-grant-member.js"
   ],
@@ -956,7 +997,9 @@
    "books-grant-member.js"
   ],
   "POST /api/books/accounts": [
-   "cap-books.js"
+   "cap-bank-sheet.js",
+   "cap-books.js",
+   "cap-entry.js"
   ],
   "POST /api/books/accruals": [
    "cap-period.js"
@@ -972,6 +1015,9 @@
   ],
   "POST /api/books/bank/marks": [
    "cap-bank-store.js"
+  ],
+  "POST /api/books/bank/statement-files": [
+   "cap-bank-statements.js"
   ],
   "POST /api/books/bank/statements": [
    "cap-bank-store.js"
@@ -1044,6 +1090,7 @@
    "cap-finance-pay.js"
   ],
   "POST /api/books/payments": [
+   "cap-bank-post.js",
    "cap-books.js"
   ],
   "POST /api/books/payments/preview": [
@@ -1384,6 +1431,12 @@
   "POST /api/kyb/field": [
    "know-your-business.html"
   ],
+  "POST /api/marks": [
+   "cap-mark.js"
+  ],
+  "POST /api/marks/:thread_id/messages": [
+   "rail-thread.js"
+  ],
   "POST /api/network-design/build": [
    "cap-network.js",
    "screens.js"
@@ -1718,11 +1771,18 @@
    "accounts-shell.js",
    "app.html",
    "bank-demo.html",
+   "bank-lines.js",
+   "bank-preview-ui.js",
+   "books-acting.js",
+   "books-actions-view.js",
+   "books-grant-drill.js",
    "books-grant-member.js",
    "books-grant-view.js",
+   "books-practice.js",
    "cap-admin.js",
    "cap-assist.js",
-   "cap-bank.js",
+   "cap-bank-sheet.js",
+   "cap-bank-statements.js",
    "cap-books.js",
    "cap-catalogue.js",
    "cap-compare.js",
@@ -1737,8 +1797,10 @@
    "cap-crm.js",
    "cap-dispute.js",
    "cap-employees.js",
+   "cap-evidence.js",
    "cap-finance-cheques.js",
    "cap-finance-returns.js",
+   "cap-mark.js",
    "cap-marketing.js",
    "cap-period.js",
    "cap-quotes.js",
@@ -1751,6 +1813,7 @@
    "core.js",
    "country-profiles.js",
    "promo.html",
+   "rail-thread.js",
    "shop-privacy.js",
    "till.html",
    "ui-standard.html",

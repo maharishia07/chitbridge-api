@@ -2,23 +2,23 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 656,
+  "routes": 659,
   "no_does": 0,
   "not_started": 0,
-  "partial": 74,
-  "meets": 582,
+  "partial": 84,
+  "meets": 575,
   "columns": {
    "strict_input": {
-    "applies": 335,
+    "applies": 336,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 656,
-    "failing": 1
+    "applies": 659,
+    "failing": 3
    },
    "foreign_id_404": {
-    "applies": 206,
-    "failing": 1
+    "applies": 207,
+    "failing": 2
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 656,
+    "applies": 659,
     "failing": 2
    }
   },
@@ -39,12 +39,12 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 286,
+    "applies": 287,
     "failing": 37
    },
    "rate_limited": {
-    "applies": 656,
-    "failing": 491
+    "applies": 659,
+    "failing": 494
    }
   },
   "tolerant_outward": 26,
@@ -193,8 +193,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2594,
-   "hash": "cfb3861b51567380",
+   "line": 2677,
+   "hash": "ca4e599fd7932179",
    "does": "A template id in -> we stop it, deleting nothing that it posted -> the stopped template (owner only).",
    "errors": {
     "count": 2,
@@ -272,7 +272,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cfb3861b51567380"
+    "stale_since": "ca4e599fd7932179"
    },
    "status": "partial",
    "callers": [
@@ -283,7 +283,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "cap-period.js 2/63"
+     "cap-period.js 2/65"
     ]
    },
    "measured": {
@@ -4329,12 +4329,18 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-actions-view.js",
+    "books-grant-member.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 6,
-    "screens": []
+    "screens": [
+     "books-actions-view.js 1/5",
+     "books-grant-member.js 1/5"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -4432,12 +4438,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-actions-view.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 6,
-    "screens": []
+    "screens": [
+     "books-actions-view.js 1/5"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -4544,7 +4554,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "books-grant-api.js 1/14",
+     "books-grant-api.js 1/15",
      "books-grant-member.js 1/5"
     ]
    },
@@ -4843,12 +4853,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-practice.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 3,
     "wire": 10,
-    "screens": []
+    "screens": [
+     "books-practice.js 3/3"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -4864,7 +4878,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 350,
+   "line": 353,
    "hash": "8eaeaedd397a7084",
    "does": "Nothing in -> we read the shop's chart of accounts, leaving out parked rows of a corrected country -> the accounts with code, name, group and nature.",
    "errors": {
@@ -4942,6 +4956,7 @@
    },
    "status": "meets standard",
    "callers": [
+    "cap-bank-sheet.js",
     "cap-bank.js",
     "cap-books.js",
     "cap-entry.js"
@@ -4951,9 +4966,10 @@
     "trips": 4,
     "wire": 3,
     "screens": [
+     "cap-bank-sheet.js 4/7",
      "cap-bank.js 4/8",
-     "cap-books.js 4/43",
-     "cap-entry.js 4/8"
+     "cap-books.js 4/44",
+     "cap-entry.js 4/9"
     ]
    },
    "measured": {
@@ -4970,8 +4986,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2649,
-   "hash": "a6a2a1e5c63b59ec",
+   "line": 2732,
+   "hash": "4badb793895664b6",
    "does": "An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).",
    "errors": {
     "count": 2,
@@ -5049,7 +5065,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a6a2a1e5c63b59ec"
+    "stale_since": "4badb793895664b6"
    },
    "status": "partial",
    "callers": [
@@ -5060,7 +5076,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-period.js 2/63"
+     "cap-period.js 2/65"
     ]
    },
    "measured": {
@@ -5077,7 +5093,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1514,
+   "line": 1544,
    "hash": "598eff2b76ca4cf2",
    "does": "A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.",
    "errors": {
@@ -5169,6 +5185,7 @@
    },
    "status": "meets standard",
    "callers": [
+    "cap-bank-home.js",
     "cap-bank-store.js"
    ],
    "offline": "online-only",
@@ -5176,6 +5193,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
+     "cap-bank-home.js 6/6",
      "cap-bank-store.js 6/14"
     ]
    },
@@ -5193,8 +5211,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1433,
-   "hash": "ab6a86bc5a6eda88",
+   "line": 1463,
+   "hash": "ccdf41c48a182c22",
    "does": "A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.",
    "errors": {
     "count": 2,
@@ -5279,7 +5297,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ab6a86bc5a6eda88"
+    "stale_since": "ccdf41c48a182c22"
    },
    "status": "partial",
    "callers": [
@@ -5292,7 +5310,227 @@
     "wire": 3,
     "screens": [
      "cap-bank.js 2/8",
-     "cap-books.js 2/43"
+     "cap-books.js 2/44"
+    ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/bank/statement-files",
+   "method": "GET",
+   "path": "/api/books/bank/statement-files",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 1583,
+   "hash": "2ce590244326a2e0",
+   "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
+   "errors": {
+    "count": 2,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
+   },
+   "reads": [
+    "books_setting",
+    "identities",
+    "ledger_account"
+   ],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": false,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [
+    "cap-bank-statements.js"
+   ],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 5,
+    "wire": null,
+    "screens": [
+     "cap-bank-statements.js 5/20"
+    ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/bank/statement-files/:id/file",
+   "method": "GET",
+   "path": "/api/books/bank/statement-files/:id/file",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 1600,
+   "hash": "792b435588a22e0d",
+   "does": "A kept statement's id in -> we serve its bytes and record who opened it -> the file.",
+   "errors": {
+    "count": 2,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
+   },
+   "reads": [
+    "bank_statement_file",
+    "books_setting",
+    "identities"
+   ],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": false,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [
+    "cap-bank-statements.js"
+   ],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 7,
+    "wire": null,
+    "screens": [
+     "cap-bank-statements.js 7/20"
     ]
    },
    "measured": {
@@ -5309,8 +5547,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1145,
-   "hash": "70123dfc64f713b5",
+   "line": 1164,
+   "hash": "02d95499aee0eabe",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
     "count": 1,
@@ -5384,10 +5622,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, cost-blind nulls and cost_hidden documented in api-output-shapes and web-api, twin web fixture byte-equal) 2026-11-12 PR#1166 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "02d95499aee0eabe"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -5397,8 +5636,8 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "books-grant-api.js 2/14",
-     "cap-books.js 2/43"
+     "books-grant-api.js 2/15",
+     "cap-books.js 2/44"
     ]
    },
    "measured": {
@@ -5415,7 +5654,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1046,
+   "line": 1065,
    "hash": "89b90f682c6fe97e",
    "does": "A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).",
    "errors": {
@@ -5523,7 +5762,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1708,
+   "line": 1791,
    "hash": "29ab15b5384fcbde",
    "does": "Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.",
    "errors": {
@@ -5545,6 +5784,7 @@
     "books_setting",
     "customer_list",
     "identities",
+    "journal_entry",
     "ledger_account",
     "party_item",
     "supplier_list"
@@ -5617,7 +5857,7 @@
     "trips": 5,
     "wire": 3,
     "screens": [
-     "cap-books.js 5/43"
+     "cap-books.js 5/44"
     ]
    },
    "measured": {
@@ -5634,7 +5874,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2152,
+   "line": 2235,
    "hash": "f419e5ec00191334",
    "does": "Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.",
    "errors": {
@@ -5740,7 +5980,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2326,
+   "line": 2409,
    "hash": "012408655020a240",
    "does": "A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.",
    "errors": {
@@ -5854,7 +6094,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2335,
+   "line": 2418,
    "hash": "7ca455cbd821c7a8",
    "does": "A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.",
    "errors": {
@@ -5963,8 +6203,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 561,
-   "hash": "47b56c79ccc02a19",
+   "line": 572,
+   "hash": "bc883146048426a1",
    "does": "A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.",
    "errors": {
     "count": 1,
@@ -6037,7 +6277,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
@@ -6046,7 +6286,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "47b56c79ccc02a19"
+    "stale_since": "bc883146048426a1"
    },
    "status": "partial",
    "callers": [
@@ -6058,8 +6298,8 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "books-grant-api.js 2/14",
-     "cap-books.js 2/43"
+     "books-grant-api.js 2/15",
+     "cap-books.js 2/44"
     ]
    },
    "measured": {
@@ -6076,8 +6316,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 882,
-   "hash": "1e733e8c918ada78",
+   "line": 897,
+   "hash": "59c881197609d0c0",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
     "count": 3,
@@ -6164,10 +6404,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "59c881197609d0c0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -6179,8 +6420,8 @@
     "trips": 3,
     "wire": 3,
     "screens": [
-     "books-grant-api.js 3/14",
-     "cap-books.js 3/43",
+     "books-grant-api.js 3/15",
+     "cap-books.js 3/44",
      "cap-finance-pay.js 3/5",
      "cap-finance.js 3/4"
     ]
@@ -6199,7 +6440,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1864,
+   "line": 1947,
    "hash": "0e14a98c10067c83",
    "does": "Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.",
    "errors": {
@@ -6287,8 +6528,8 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-entry.js 1/8",
-     "cap-period.js 1/63"
+     "cap-entry.js 1/9",
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -6305,7 +6546,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 723,
+   "line": 738,
    "hash": "d53c47b9df22dc3c",
    "does": "A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.",
    "errors": {
@@ -6337,7 +6578,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
@@ -6384,7 +6625,9 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "cap-evidence.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": null,
@@ -6405,7 +6648,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2732,
+   "line": 2815,
    "hash": "c9bfdc8ac640cf30",
    "does": "Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.",
    "errors": {
@@ -6511,8 +6754,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2782,
-   "hash": "a32dc803b608880a",
+   "line": 2865,
+   "hash": "11dc36c151f9ccb7",
    "does": "A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).",
    "errors": {
     "count": 3,
@@ -6593,7 +6836,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a32dc803b608880a"
+    "stale_since": "11dc36c151f9ccb7"
    },
    "status": "partial",
    "callers": [
@@ -6621,7 +6864,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 298,
+   "line": 301,
    "hash": "a2a71e15be56dd5f",
    "does": "Nothing in -> we read the health of the books: postings still waiting to reach the ledger, the to-do counts and the year's checks -> one health summary.",
    "errors": {
@@ -6713,7 +6956,7 @@
     "screens": [
      "accounts.html 2/14",
      "app.html 2/108",
-     "cap-books.js 2/43",
+     "cap-books.js 2/44",
      "cap-move-in.js 2/5",
      "crm.html 2/2",
      "index.html 2/2"
@@ -6733,8 +6976,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 642,
-   "hash": "dbb84e6eb019cfa9",
+   "line": 654,
+   "hash": "d9323446407508a1",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
     "count": 1,
@@ -6814,10 +7057,11 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "dbb84e6eb019cfa9"
+    "stale_since": "d9323446407508a1"
    },
    "status": "partial",
    "callers": [
+    "books-grant-api.js",
     "cap-bank.js",
     "cap-books.js",
     "cap-period.js"
@@ -6827,9 +7071,10 @@
     "trips": 1,
     "wire": 3,
     "screens": [
+     "books-grant-api.js 1/15",
      "cap-bank.js 1/8",
-     "cap-books.js 1/43",
-     "cap-period.js 1/63"
+     "cap-books.js 1/44",
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -6846,8 +7091,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2102,
-   "hash": "22ab825e98742bea",
+   "line": 2185,
+   "hash": "e97275d6b48da495",
    "does": "Nothing in -> we read the latest 20 move-in imports with their match proof -> the list of imports (owner only).",
    "errors": {
     "count": 2,
@@ -6923,7 +7168,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "22ab825e98742bea"
+    "stale_since": "e97275d6b48da495"
    },
    "status": "partial",
    "callers": [],
@@ -6947,8 +7192,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2438,
-   "hash": "ddfbd73dde7f8251",
+   "line": 2521,
+   "hash": "0b00e18ebd04b37c",
    "does": "Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).",
    "errors": {
     "count": 2,
@@ -7025,7 +7270,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ddfbd73dde7f8251"
+    "stale_since": "0b00e18ebd04b37c"
    },
    "status": "partial",
    "callers": [
@@ -7036,7 +7281,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-books.js 2/43"
+     "cap-books.js 2/44"
     ]
    },
    "measured": {
@@ -7053,8 +7298,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2478,
-   "hash": "8d364561c4f6ad54",
+   "line": 2561,
+   "hash": "b8a117b9eee44b0b",
    "does": "A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).",
    "errors": {
     "count": 2,
@@ -7133,7 +7378,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8d364561c4f6ad54"
+    "stale_since": "b8a117b9eee44b0b"
    },
    "status": "partial",
    "callers": [
@@ -7144,7 +7389,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -7161,8 +7406,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2508,
-   "hash": "fa69052ed1e681c4",
+   "line": 2591,
+   "hash": "8c91f2b5a9e11ca7",
    "does": "A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).",
    "errors": {
     "count": 3,
@@ -7243,7 +7488,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fa69052ed1e681c4"
+    "stale_since": "8c91f2b5a9e11ca7"
    },
    "status": "partial",
    "callers": [],
@@ -7267,7 +7512,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 744,
+   "line": 759,
    "hash": "3562c34153943e3a",
    "does": "A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.",
    "errors": {
@@ -7370,7 +7615,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -7387,7 +7632,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1406,
+   "line": 1436,
    "hash": "e3ab88fab430d12a",
    "does": "A payment id in -> we read whether a payment advice was sent to the other party and what may be done next -> the advice state.",
    "errors": {
@@ -7500,7 +7745,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2395,
+   "line": 2478,
    "hash": "dcdfe557f6722d35",
    "does": "Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.",
    "errors": {
@@ -7584,15 +7829,17 @@
    "status": "partial",
    "callers": [
     "books-grant-api.js",
-    "cap-books.js"
+    "cap-books.js",
+    "cap-period.js"
    ],
    "offline": "online-only",
    "round_trips": {
     "trips": 2,
     "wire": 3,
     "screens": [
-     "books-grant-api.js 2/14",
-     "cap-books.js 2/43"
+     "books-grant-api.js 2/15",
+     "cap-books.js 2/44",
+     "cap-period.js 2/65"
     ]
    },
    "measured": {
@@ -7609,7 +7856,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1090,
+   "line": 1109,
    "hash": "a9487c3d4e5cb4f0",
    "does": "A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.",
    "errors": {
@@ -7696,8 +7943,8 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "books-grant-api.js 2/14",
-     "cap-books.js 2/43"
+     "books-grant-api.js 2/15",
+     "cap-books.js 2/44"
     ]
    },
    "measured": {
@@ -7714,8 +7961,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2563,
-   "hash": "6bc5ae11a3184f14",
+   "line": 2646,
+   "hash": "02293968f8965da5",
    "does": "Nothing in -> we list the recurring entries with their next date and whether one is due -> the list (owner only).",
    "errors": {
     "count": 2,
@@ -7791,7 +8038,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6bc5ae11a3184f14"
+    "stale_since": "02293968f8965da5"
    },
    "status": "partial",
    "callers": [
@@ -7802,7 +8049,7 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "cap-period.js 2/63"
+     "cap-period.js 2/65"
     ]
    },
    "measured": {
@@ -7819,8 +8066,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2687,
-   "hash": "d11f85dc896848ec",
+   "line": 2770,
+   "hash": "991240c38edc7ebd",
    "does": "A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.",
    "errors": {
     "count": 2,
@@ -7896,10 +8143,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, all pass; ACC-229: new gate returnReader (owner or whole-entity + can_see_costs auditor, same test as compare), 403 BOOKS_RETURN_READ_NOT_ALLOWED registered, 403 sentence changed with the same legacy keys error+message re-frozen, key-bearer still refused, POST gst/close stays owner only) 2026-11-13",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "991240c38edc7ebd"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
@@ -7908,7 +8156,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/63"
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -7925,8 +8173,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 179,
-   "hash": "f506200580bffbb8",
+   "line": 182,
+   "hash": "e38faea687d4b1a1",
    "does": "Nothing in -> we read whether the shop's books are switched on and whether its country allows them -> the switch state, walk-in grain and country verdict (owner only).",
    "errors": {
     "count": 1,
@@ -7999,7 +8247,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f506200580bffbb8"
+    "stale_since": "e38faea687d4b1a1"
    },
    "status": "partial",
    "callers": [
@@ -8027,7 +8275,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 232,
+   "line": 235,
    "hash": "ead8b943a45d6da0",
    "does": "Optional party and side in -> we read the credit limit, interest and early-pay terms of one customer or supplier, else the shop default -> those terms.",
    "errors": {
@@ -8136,7 +8384,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2626,
+   "line": 2709,
    "hash": "14517722ba33ac6d",
    "does": "Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.",
    "errors": {
@@ -8225,7 +8473,7 @@
     "wire": 3,
     "screens": [
      "accounts.html 7/14",
-     "cap-period.js 7/63"
+     "cap-period.js 7/65"
     ]
    },
    "measured": {
@@ -8242,7 +8490,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1063,
+   "line": 1082,
    "hash": "8d26f9ee74655c85",
    "does": "An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.",
    "errors": {
@@ -8329,8 +8577,8 @@
     "trips": 2,
     "wire": 3,
     "screens": [
-     "books-grant-api.js 2/14",
-     "cap-books.js 2/43"
+     "books-grant-api.js 2/15",
+     "cap-books.js 2/44"
     ]
    },
    "measured": {
@@ -8347,7 +8595,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2377,
+   "line": 2460,
    "hash": "ed20d7411dd0c93e",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
@@ -8434,7 +8682,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/63"
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -10109,7 +10357,7 @@
      "app.html 1/108",
      "authority-forms.html 1/30",
      "cap-admin.js 1/118",
-     "cap-books.js 1/43",
+     "cap-books.js 1/44",
      "cap-chit2.js 1/15",
      "cap-crm-chits.js 1/3",
      "cap-crm-record.js 1/8",
@@ -10122,7 +10370,7 @@
      "chit-sheet.js 1/2",
      "core.js 1/57",
      "intake.html 1/5",
-     "rail-thread.js 1/2",
+     "rail-thread.js 1/7",
      "screen-id.js 1/5",
      "tasks.html 1/2",
      "till.html 1/133"
@@ -10653,7 +10901,7 @@
      "cap-dispute.js 1/5",
      "cap-intake.js 1/6",
      "core.js 1/57",
-     "rail-thread.js 1/2",
+     "rail-thread.js 1/7",
      "screens.js 1/6"
     ]
    },
@@ -12678,6 +12926,7 @@
    "status": "meets standard",
    "callers": [
     "app.html",
+    "cap-bank-sheet.js",
     "cap-folders.js",
     "cap-mis.js"
    ],
@@ -12687,6 +12936,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
+     "cap-bank-sheet.js 0/7",
      "cap-folders.js 0/22",
      "cap-mis.js 0/3"
     ]
@@ -13701,6 +13951,7 @@
    },
    "status": "meets standard",
    "callers": [
+    "cap-books.js",
     "cap-crm-groups-window.js",
     "cap-crm-record.js"
    ],
@@ -13709,6 +13960,7 @@
     "trips": 1,
     "wire": 14,
     "screens": [
+     "cap-books.js 1/44",
      "cap-crm-groups-window.js 1/4",
      "cap-crm-record.js 1/8"
     ]
@@ -18256,6 +18508,7 @@
    },
    "status": "meets standard",
    "callers": [
+    "cap-bank-sheet.js",
     "cap-country.js"
    ],
    "offline": "online-only",
@@ -18263,6 +18516,7 @@
     "trips": 2,
     "wire": 7,
     "screens": [
+     "cap-bank-sheet.js 2/7",
      "cap-country.js 2/12"
     ]
    },
@@ -21266,12 +21520,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "cap-mark.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": null,
-    "screens": []
+    "screens": [
+     "cap-mark.js 1/3"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -21367,12 +21625,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "rail-thread.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 3,
     "wire": null,
-    "screens": []
+    "screens": [
+     "rail-thread.js 3/7"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -22632,7 +22894,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/108",
-     "cap-books.js 1/43",
+     "cap-books.js 1/44",
      "cap-employees.js 1/5",
      "cap-tasks.js 1/7",
      "employees.html 1/1",
@@ -29772,16 +30034,12 @@
     "lifecycle": "stable"
    },
    "status": "meets standard",
-   "callers": [
-    "books-grant-member.js"
-   ],
+   "callers": [],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 1,
-    "screens": [
-     "books-grant-member.js 1/5"
-    ]
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -30103,7 +30361,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1537,
+   "line": 1620,
    "hash": "448a4e239db6e38d",
    "does": "A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.",
    "errors": {
@@ -30226,8 +30484,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2583,
-   "hash": "ce39ec917910e0db",
+   "line": 2666,
+   "hash": "86834de38ba48b55",
    "does": "A template id and the fields to change in -> we change only those fields -> the template (owner only).",
    "errors": {
     "count": 2,
@@ -30305,7 +30563,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ce39ec917910e0db"
+    "stale_since": "86834de38ba48b55"
    },
    "status": "partial",
    "callers": [
@@ -30316,7 +30574,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/63"
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -31887,7 +32145,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
-     "cap-books.js 0/43",
+     "cap-books.js 0/44",
      "cap-crm-record.js 0/8"
     ]
    },
@@ -32001,7 +32259,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
-     "cap-books.js 0/43",
+     "cap-books.js 0/44",
      "cap-crm-record.js 0/8",
      "cap-suppliers.js 0/5",
      "core.js 0/57"
@@ -33958,12 +34216,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-acting.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 6,
-    "screens": []
+    "screens": [
+     "books-acting.js 1/1"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -34064,12 +34326,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-actions-view.js"
+   ],
    "offline": "idempotent",
    "round_trips": {
     "trips": 1,
     "wire": 6,
-    "screens": []
+    "screens": [
+     "books-actions-view.js 1/5"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -34170,12 +34436,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-actions-view.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 6,
-    "screens": []
+    "screens": [
+     "books-actions-view.js 1/5"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -34276,12 +34546,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "books-actions-view.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 6,
-    "screens": []
+    "screens": [
+     "books-actions-view.js 1/5"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -34515,8 +34789,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 380,
-   "hash": "bc89097e6f57ccd0",
+   "line": 383,
+   "hash": "89eebb71d19839c6",
    "does": "A name and a parent account in -> we add a new account to the chart and log it -> the new account (owner only).",
    "errors": {
     "count": 2,
@@ -34598,18 +34872,22 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bc89097e6f57ccd0"
+    "stale_since": "89eebb71d19839c6"
    },
    "status": "partial",
    "callers": [
-    "cap-books.js"
+    "cap-bank-sheet.js",
+    "cap-books.js",
+    "cap-entry.js"
    ],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-bank-sheet.js 1/7",
+     "cap-books.js 1/44",
+     "cap-entry.js 1/9"
     ]
    },
    "measured": {
@@ -34626,8 +34904,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2714,
-   "hash": "260acafdd8db7b61",
+   "line": 2797,
+   "hash": "8ed4aab889edbf95",
    "does": "A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -34706,7 +34984,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "260acafdd8db7b61"
+    "stale_since": "8ed4aab889edbf95"
    },
    "status": "partial",
    "callers": [
@@ -34717,7 +34995,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -34734,8 +35012,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2716,
-   "hash": "4abf73004ec185af",
+   "line": 2799,
+   "hash": "0d7f6505deff8e28",
    "does": "An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -34814,7 +35092,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4abf73004ec185af"
+    "stale_since": "0d7f6505deff8e28"
    },
    "status": "partial",
    "callers": [
@@ -34825,7 +35103,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -34842,8 +35120,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2659,
-   "hash": "be43a6f45f99aeb9",
+   "line": 2742,
+   "hash": "ec64e7e75a7f4870",
    "does": "An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).",
    "errors": {
     "count": 2,
@@ -34922,7 +35200,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "be43a6f45f99aeb9"
+    "stale_since": "ec64e7e75a7f4870"
    },
    "status": "partial",
    "callers": [
@@ -34933,7 +35211,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -34950,8 +35228,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2662,
-   "hash": "b44d6ccf0a6972d1",
+   "line": 2745,
+   "hash": "b98d5afa9caa9e57",
    "does": "An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -35030,7 +35308,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b44d6ccf0a6972d1"
+    "stale_since": "b98d5afa9caa9e57"
    },
    "status": "partial",
    "callers": [
@@ -35041,7 +35319,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -35058,8 +35336,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1487,
-   "hash": "326f428057b548f6",
+   "line": 1517,
+   "hash": "78ef04b5ba2af5c5",
    "does": "A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).",
    "errors": {
     "count": 2,
@@ -35140,10 +35418,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 FIN-70 (PR#1310, batch G): new insert-only door, nothing existing changed; read the route and lib/bank-rec-log; all 13 machine columns read yes; refusals in words (404 account, 409 currency, 503 not set up, 400 date); trips are hand counts, SIT measure pending",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "78ef04b5ba2af5c5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-store.js"
    ],
@@ -35163,14 +35442,136 @@
    }
   },
   {
+   "key": "POST /api/books/bank/statement-files",
+   "method": "POST",
+   "path": "/api/books/bank/statement-files",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 1570,
+   "hash": "4ef958bcd0df474b",
+   "does": "A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.",
+   "errors": {
+    "count": 2,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     409,
+     413,
+     415,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
+   },
+   "reads": [
+    "bank_statement_file",
+    "books_setting",
+    "cb_attachment",
+    "identities",
+    "ledger_account"
+   ],
+   "writes": [
+    "bank_statement_file",
+    "cb_attachment"
+   ],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": false,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    413,
+    415,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [
+    "cap-bank-statements.js"
+   ],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 8,
+    "wire": null,
+    "screens": [
+     "cap-bank-statements.js 8/20"
+    ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "POST /api/books/bank/statements",
    "method": "POST",
    "path": "/api/books/bank/statements",
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1500,
-   "hash": "c044f9e33e62bc07",
+   "line": 1530,
+   "hash": "d7def71776e1081d",
    "does": "A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).",
    "errors": {
     "count": 2,
@@ -35255,10 +35656,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 FIN-70 (PR#1310, batch G): new insert-only door, nothing existing changed; read the route and lib/bank-rec-log; all 13 machine columns read yes; refusals in words (404 account, 409 currency, 503 not set up, 400 date); trips are hand counts, SIT measure pending",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d7def71776e1081d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-store.js"
    ],
@@ -35284,8 +35686,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 330,
-   "hash": "361d51ffa642f526",
+   "line": 333,
+   "hash": "adc92f10bd9c66c2",
    "does": "Nothing in -> we run the books' self-check for this shop now -> what it found (owner only).",
    "errors": {
     "count": 2,
@@ -35364,7 +35766,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "361d51ffa642f526"
+    "stale_since": "adc92f10bd9c66c2"
    },
    "status": "partial",
    "callers": [],
@@ -35388,7 +35790,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1812,
+   "line": 1895,
    "hash": "6167ef775abb8f3b",
    "does": "A cheque id and deposited, cleared or bounced in -> we move the cheque on in order and post it when it clears -> the new status (editors).",
    "errors": {
@@ -35482,7 +35884,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -35499,8 +35901,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2675,
-   "hash": "7b8538937baf0c2f",
+   "line": 2758,
+   "hash": "aa64c34142c13a40",
    "does": "A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -35579,7 +35981,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7b8538937baf0c2f"
+    "stale_since": "aa64c34142c13a40"
    },
    "status": "partial",
    "callers": [
@@ -35590,7 +35992,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -35607,7 +36009,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2174,
+   "line": 2257,
    "hash": "cf88afddb1ead2a6",
    "does": "A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.",
    "errors": {
@@ -35715,7 +36117,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2192,
+   "line": 2275,
    "hash": "c5d5fa6c2a416807",
    "does": "A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.",
    "errors": {
@@ -35828,8 +36230,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2719,
-   "hash": "6d67997db653480a",
+   "line": 2802,
+   "hash": "b7bcd4800825658d",
    "does": "A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -35908,7 +36310,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6d67997db653480a"
+    "stale_since": "b7bcd4800825658d"
    },
    "status": "partial",
    "callers": [],
@@ -35932,8 +36334,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2672,
-   "hash": "529f1c8e284d8f01",
+   "line": 2755,
+   "hash": "c1ea7f2514047440",
    "does": "A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -36012,7 +36414,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "529f1c8e284d8f01"
+    "stale_since": "c1ea7f2514047440"
    },
    "status": "partial",
    "callers": [
@@ -36023,7 +36425,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -36040,8 +36442,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 191,
-   "hash": "36fb8469420bdf73",
+   "line": 194,
+   "hash": "772cc8d07f8a5626",
    "does": "Optional walk-in grain in -> we check the country allows books, switch the shop's books on and lay the chart of accounts -> the opened setting (owner only).",
    "errors": {
     "count": 1,
@@ -36119,7 +36521,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "36fb8469420bdf73"
+    "stale_since": "772cc8d07f8a5626"
    },
    "status": "partial",
    "callers": [
@@ -36147,8 +36549,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1899,
-   "hash": "518c60dbc465f68d",
+   "line": 1982,
+   "hash": "48134a84de1b40ea",
    "does": "Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -36233,7 +36635,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "518c60dbc465f68d"
+    "stale_since": "48134a84de1b40ea"
    },
    "status": "partial",
    "callers": [
@@ -36244,7 +36646,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -36261,8 +36663,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1927,
-   "hash": "8fbc68f5d8f3f295",
+   "line": 2010,
+   "hash": "2f70495bc3aaf061",
    "does": "An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).",
    "errors": {
     "count": 3,
@@ -36343,7 +36745,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8fbc68f5d8f3f295"
+    "stale_since": "2f70495bc3aaf061"
    },
    "status": "partial",
    "callers": [
@@ -36354,7 +36756,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-entry.js 1/8"
+     "cap-entry.js 1/9"
     ]
    },
    "measured": {
@@ -36371,8 +36773,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1887,
-   "hash": "5c84d94a4b7e2456",
+   "line": 1970,
+   "hash": "6dee0e503361e670",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
     "count": 3,
@@ -36451,7 +36853,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5c84d94a4b7e2456"
+    "stale_since": "6dee0e503361e670"
    },
    "status": "partial",
    "callers": [
@@ -36463,8 +36865,8 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-bank-post.js 1/1",
-     "cap-entry.js 1/8"
+     "cap-bank-post.js 1/2",
+     "cap-entry.js 1/9"
     ]
    },
    "measured": {
@@ -36481,8 +36883,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2753,
-   "hash": "6cc86ef8717ab80c",
+   "line": 2836,
+   "hash": "c4ebc0515a7ea649",
    "does": "A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).",
    "errors": {
     "count": 3,
@@ -36561,7 +36963,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6cc86ef8717ab80c"
+    "stale_since": "c4ebc0515a7ea649"
    },
    "status": "partial",
    "callers": [
@@ -36589,8 +36991,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2763,
-   "hash": "e00c832e1bb3f019",
+   "line": 2846,
+   "hash": "4829899c568430fe",
    "does": "A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).",
    "errors": {
     "count": 3,
@@ -36669,7 +37071,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e00c832e1bb3f019"
+    "stale_since": "4829899c568430fe"
    },
    "status": "partial",
    "callers": [
@@ -36697,8 +37099,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2810,
-   "hash": "87763d3168bed672",
+   "line": 2893,
+   "hash": "adb6b2f2e0c4bd50",
    "does": "A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).",
    "errors": {
     "count": 3,
@@ -36779,7 +37181,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "87763d3168bed672"
+    "stale_since": "adb6b2f2e0c4bd50"
    },
    "status": "partial",
    "callers": [
@@ -36807,8 +37209,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2678,
-   "hash": "8413c0bce073ceaf",
+   "line": 2761,
+   "hash": "4607031cae7020f4",
    "does": "A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).",
    "errors": {
     "count": 2,
@@ -36887,7 +37289,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8413c0bce073ceaf"
+    "stale_since": "4607031cae7020f4"
    },
    "status": "partial",
    "callers": [
@@ -36898,7 +37300,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -36915,8 +37317,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2680,
-   "hash": "0ac3344f84d6efbe",
+   "line": 2763,
+   "hash": "7354916e0b849c3c",
    "does": "A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -36997,7 +37399,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0ac3344f84d6efbe"
+    "stale_since": "7354916e0b849c3c"
    },
    "status": "partial",
    "callers": [
@@ -37008,7 +37410,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 4/63"
+     "cap-period.js 4/65"
     ]
    },
    "measured": {
@@ -37025,8 +37427,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2709,
-   "hash": "a42cc9296ba85ab7",
+   "line": 2792,
+   "hash": "b7664234ef423239",
    "does": "A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -37105,7 +37507,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a42cc9296ba85ab7"
+    "stale_since": "b7664234ef423239"
    },
    "status": "partial",
    "callers": [],
@@ -37129,8 +37531,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2711,
-   "hash": "9383485f889d3c0b",
+   "line": 2794,
+   "hash": "31186e06b5f68eb3",
    "does": "A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -37209,7 +37611,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9383485f889d3c0b"
+    "stale_since": "31186e06b5f68eb3"
    },
    "status": "partial",
    "callers": [],
@@ -37334,8 +37736,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2083,
-   "hash": "162e17787d719524",
+   "line": 2166,
+   "hash": "7cfb1f98c261ebb6",
    "does": "The same file with confirm true in -> we add and merge the parties or items in one transaction and keep a match proof -> the counts and the proof (owner only).",
    "errors": {
     "count": 2,
@@ -37424,7 +37826,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "162e17787d719524"
+    "stale_since": "7cfb1f98c261ebb6"
    },
    "status": "partial",
    "callers": [
@@ -37452,8 +37854,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2026,
-   "hash": "499ed74420d427f5",
+   "line": 2109,
+   "hash": "1bc29377d8dddb98",
    "does": "A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).",
    "errors": {
     "count": 2,
@@ -37531,7 +37933,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "499ed74420d427f5"
+    "stale_since": "1bc29377d8dddb98"
    },
    "status": "partial",
    "callers": [
@@ -37559,8 +37961,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2072,
-   "hash": "018d391b9d936e57",
+   "line": 2155,
+   "hash": "c69791d823ddb756",
    "does": "The file and the owner's column choices in -> we plan the move-in without writing anything -> what would be added, merged, skipped or held (owner only).",
    "errors": {
     "count": 2,
@@ -37643,7 +38045,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "018d391b9d936e57"
+    "stale_since": "c69791d823ddb756"
    },
    "status": "partial",
    "callers": [
@@ -37671,8 +38073,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1975,
-   "hash": "fc963df8f720aa70",
+   "line": 2058,
+   "hash": "9651c6e839b9d5ae",
    "does": "Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -37758,7 +38160,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fc963df8f720aa70"
+    "stale_since": "9651c6e839b9d5ae"
    },
    "status": "partial",
    "callers": [
@@ -37769,7 +38171,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -37786,8 +38188,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 338,
-   "hash": "c3a42e61825391c7",
+   "line": 341,
+   "hash": "be471dad6c870f21",
    "does": "Nothing in -> we try again every posting that was waiting to reach the books -> how many were tried, posted and still waiting (owner only).",
    "errors": {
     "count": 2,
@@ -37865,7 +38267,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c3a42e61825391c7"
+    "stale_since": "be471dad6c870f21"
    },
    "status": "partial",
    "callers": [
@@ -37876,7 +38278,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -37893,8 +38295,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2461,
-   "hash": "eabbaf78dbfe22dd",
+   "line": 2544,
+   "hash": "bc6fa6d8a5415652",
    "does": "A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).",
    "errors": {
     "count": 2,
@@ -37972,7 +38374,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "eabbaf78dbfe22dd"
+    "stale_since": "bc6fa6d8a5415652"
    },
    "status": "partial",
    "callers": [
@@ -37983,7 +38385,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -38000,8 +38402,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2539,
-   "hash": "0b8c9c367caafef5",
+   "line": 2622,
+   "hash": "017694ddf190bb7d",
    "does": "A pack id in -> we record that the owner downloaded and confirmed the pack, and log it -> the pack (owner only).",
    "errors": {
     "count": 3,
@@ -38086,7 +38488,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0b8c9c367caafef5"
+    "stale_since": "017694ddf190bb7d"
    },
    "status": "partial",
    "callers": [
@@ -38097,7 +38499,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -38114,7 +38516,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1836,
+   "line": 1919,
    "hash": "260df860493ec496",
    "does": "A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).",
    "errors": {
@@ -38225,8 +38627,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1305,
-   "hash": "ba71659b802d820b",
+   "line": 1334,
+   "hash": "807e801ffa98eb8c",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
     "count": 2,
@@ -38314,11 +38716,13 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1158 (independent review after money critic: strict whole-number minor units, DATE_INVALID not dropped, direction in/out asked, UUID asked, balance_words on dues; FIN-83 test values added, bite red; 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "807e801ffa98eb8c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
+    "cap-bank-post.js",
     "cap-books.js"
    ],
    "offline": "idempotent",
@@ -38326,7 +38730,8 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43"
+     "cap-bank-post.js 1/2",
+     "cap-books.js 1/44"
     ]
    },
    "measured": {
@@ -38343,7 +38748,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1662,
+   "line": 1745,
    "hash": "dc0a781ed49b1cd4",
    "does": "A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).",
    "errors": {
@@ -38451,7 +38856,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1594,
+   "line": 1677,
    "hash": "b43593e9d78f2915",
    "does": "A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).",
    "errors": {
@@ -38555,8 +38960,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1254,
-   "hash": "955da4c294c0b894",
+   "line": 1279,
+   "hash": "314ec4a07d1fb7df",
    "does": "A party, amount and mode in -> we work out how the payment would settle the open bills, posting nothing -> a preview with the proposed split and warnings.",
    "errors": {
     "count": 2,
@@ -38635,10 +39040,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#732 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "314ec4a07d1fb7df"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js"
@@ -38648,7 +39054,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-books.js 1/43",
+     "cap-books.js 1/44",
      "cap-finance-pay.js 1/5"
     ]
    },
@@ -38666,8 +39072,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2347,
-   "hash": "4e2a6177d7baee1b",
+   "line": 2430,
+   "hash": "fb236ca1918c99be",
    "does": "A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).",
    "errors": {
     "count": 2,
@@ -38749,7 +39155,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4e2a6177d7baee1b"
+    "stale_since": "fb236ca1918c99be"
    },
    "status": "partial",
    "callers": [],
@@ -38773,8 +39179,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1877,
-   "hash": "3fca01f8fa96d261",
+   "line": 1960,
+   "hash": "ee6954eda3161548",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -38852,7 +39258,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3fca01f8fa96d261"
+    "stale_since": "ee6954eda3161548"
    },
    "status": "partial",
    "callers": [
@@ -38863,7 +39269,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-entry.js 1/8"
+     "cap-entry.js 1/9"
     ]
    },
    "measured": {
@@ -38880,8 +39286,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2572,
-   "hash": "1256d53109614b37",
+   "line": 2655,
+   "hash": "1d48756f1327ea35",
    "does": "A name, an event, a frequency and a next date in -> we save a recurring entry template -> the template (owner only).",
    "errors": {
     "count": 2,
@@ -38959,7 +39365,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1256d53109614b37"
+    "stale_since": "1d48756f1327ea35"
    },
    "status": "partial",
    "callers": [
@@ -38970,7 +39376,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/63"
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -38987,8 +39393,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2605,
-   "hash": "99d3c74789b9da06",
+   "line": 2688,
+   "hash": "11a6a7b71155fdca",
    "does": "A template id in -> we post the due day as a journal entry once and move the template on -> what was posted (owner only).",
    "errors": {
     "count": 2,
@@ -39066,7 +39472,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "99d3c74789b9da06"
+    "stale_since": "11a6a7b71155fdca"
    },
    "status": "partial",
    "callers": [
@@ -39077,7 +39483,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "cap-period.js 6/63"
+     "cap-period.js 6/65"
     ]
    },
    "measured": {
@@ -39094,8 +39500,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2615,
-   "hash": "412cf13fb674f729",
+   "line": 2698,
+   "hash": "aa011dd2d5c2bad2",
    "does": "A template id in -> we skip the due day without posting and move the template on -> the skipped day (owner only).",
    "errors": {
     "count": 2,
@@ -39173,7 +39579,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "412cf13fb674f729"
+    "stale_since": "aa011dd2d5c2bad2"
    },
    "status": "partial",
    "callers": [
@@ -39184,7 +39590,7 @@
     "trips": 5,
     "wire": null,
     "screens": [
-     "cap-period.js 5/63"
+     "cap-period.js 5/65"
     ]
    },
    "measured": {
@@ -39201,8 +39607,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 205,
-   "hash": "4406fa7ebc5ca9cc",
+   "line": 208,
+   "hash": "1ea4858dc379e1c2",
    "does": "Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).",
    "errors": {
     "count": 2,
@@ -39283,7 +39689,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4406fa7ebc5ca9cc"
+    "stale_since": "1ea4858dc379e1c2"
    },
    "status": "partial",
    "callers": [
@@ -39311,8 +39717,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 275,
-   "hash": "5731b71d03691a2e",
+   "line": 278,
+   "hash": "370842219fcc2995",
    "does": "A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).",
    "errors": {
     "count": 3,
@@ -39395,7 +39801,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5731b71d03691a2e"
+    "stale_since": "370842219fcc2995"
    },
    "status": "partial",
    "callers": [
@@ -39425,8 +39831,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1941,
-   "hash": "9197aa04450f4429",
+   "line": 2024,
+   "hash": "0047b4f33cfb36bb",
    "does": "A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -39512,7 +39918,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9197aa04450f4429"
+    "stale_since": "0047b4f33cfb36bb"
    },
    "status": "partial",
    "callers": [],
@@ -39536,8 +39942,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2361,
-   "hash": "6d3327ee8f31892d",
+   "line": 2444,
+   "hash": "83a1dd2a56342b24",
    "does": "A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).",
    "errors": {
     "count": 4,
@@ -39621,7 +40027,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6d3327ee8f31892d"
+    "stale_since": "83a1dd2a56342b24"
    },
    "status": "partial",
    "callers": [
@@ -39632,7 +40038,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-period.js 1/63"
+     "cap-period.js 1/65"
     ]
    },
    "measured": {
@@ -42838,7 +43244,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "rail-thread.js 0/2"
+     "rail-thread.js 0/7"
     ]
    },
    "measured": {
@@ -51961,12 +52367,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "cap-mark.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 2,
     "wire": null,
-    "screens": []
+    "screens": [
+     "cap-mark.js 2/3"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -52064,12 +52474,16 @@
     "lifecycle": null
    },
    "status": "partial",
-   "callers": [],
+   "callers": [
+    "rail-thread.js"
+   ],
    "offline": "online-only",
    "round_trips": {
     "trips": 2,
     "wire": null,
-    "screens": []
+    "screens": [
+     "rail-thread.js 2/7"
+    ]
    },
    "measured": {
     "server_ms_p50": null,
@@ -56236,7 +56650,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
-     "cap-bank-post.js 0/1",
+     "cap-bank-post.js 0/2",
      "cap-crm-record.js 0/8",
      "cap-crm.js 0/9"
     ]
@@ -56453,8 +56867,8 @@
     "wire": 0,
     "screens": [
      "app.html 0/108",
-     "cap-bank-post.js 0/1",
-     "cap-books.js 0/43",
+     "cap-bank-post.js 0/2",
+     "cap-books.js 0/44",
      "cap-crm-record.js 0/8",
      "cap-crm.js 0/9",
      "cap-suppliers.js 0/5"
@@ -65449,11 +65863,18 @@
     "accounts-shell.js",
     "app.html",
     "bank-demo.html",
+    "bank-lines.js",
+    "bank-preview-ui.js",
+    "books-acting.js",
+    "books-actions-view.js",
+    "books-grant-drill.js",
     "books-grant-member.js",
     "books-grant-view.js",
+    "books-practice.js",
     "cap-admin.js",
     "cap-assist.js",
-    "cap-bank.js",
+    "cap-bank-sheet.js",
+    "cap-bank-statements.js",
     "cap-books.js",
     "cap-catalogue.js",
     "cap-compare.js",
@@ -65468,8 +65889,10 @@
     "cap-crm.js",
     "cap-dispute.js",
     "cap-employees.js",
+    "cap-evidence.js",
     "cap-finance-cheques.js",
     "cap-finance-returns.js",
+    "cap-mark.js",
     "cap-marketing.js",
     "cap-period.js",
     "cap-quotes.js",
@@ -65482,6 +65905,7 @@
     "core.js",
     "country-profiles.js",
     "promo.html",
+    "rail-thread.js",
     "shop-privacy.js",
     "till.html",
     "ui-standard.html",
@@ -65495,12 +65919,19 @@
      "accounts-shell.js 0/2",
      "app.html 0/108",
      "bank-demo.html 0/0",
+     "bank-lines.js 0/0",
+     "bank-preview-ui.js 0/0",
+     "books-acting.js 0/1",
+     "books-actions-view.js 0/5",
+     "books-grant-drill.js 0/0",
      "books-grant-member.js 0/5",
      "books-grant-view.js 0/0",
+     "books-practice.js 0/3",
      "cap-admin.js 0/118",
      "cap-assist.js 0/2",
-     "cap-bank.js 0/8",
-     "cap-books.js 0/43",
+     "cap-bank-sheet.js 0/7",
+     "cap-bank-statements.js 0/20",
+     "cap-books.js 0/44",
      "cap-catalogue.js 0/13",
      "cap-compare.js 0/6",
      "cap-country.js 0/12",
@@ -65514,10 +65945,12 @@
      "cap-crm.js 0/9",
      "cap-dispute.js 0/5",
      "cap-employees.js 0/5",
+     "cap-evidence.js 0/0",
      "cap-finance-cheques.js 0/1",
      "cap-finance-returns.js 0/6",
+     "cap-mark.js 0/3",
      "cap-marketing.js 0/5",
-     "cap-period.js 0/63",
+     "cap-period.js 0/65",
      "cap-quotes.js 0/7",
      "cap-register.js 0/23",
      "cap-settings.js 0/21",
@@ -65528,6 +65961,7 @@
      "core.js 0/57",
      "country-profiles.js 0/0",
      "promo.html 0/18",
+     "rail-thread.js 0/7",
      "shop-privacy.js 0/0",
      "till.html 0/133",
      "ui-standard.html 0/0",
@@ -65632,7 +66066,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-books.js 1/43",
+     "cap-books.js 1/44",
      "chit-sheet.js 1/2"
     ]
    },
