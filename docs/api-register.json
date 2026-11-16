@@ -210,10 +210,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -4890,8 +4887,6 @@
     ]
    },
    "reads": [
-    "books_setting",
-    "identities",
     "ledger_account"
    ],
    "writes": [],
@@ -5002,10 +4997,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -5108,10 +5100,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": true,
    "actions": [],
@@ -5216,7 +5205,6 @@
    "reads": [
     "bank_rec_log",
     "books_payment",
-    "books_setting",
     "identities",
     "journal_entry",
     "journal_line",
@@ -5332,7 +5320,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "chit_detail",
     "chit_header",
     "chit_status",
@@ -5450,8 +5437,6 @@
     ]
    },
    "reads": [
-    "books_setting",
-    "identities",
     "ledger_account"
    ],
    "writes": [],
@@ -5561,9 +5546,7 @@
     ]
    },
    "reads": [
-    "bank_statement_file",
-    "books_setting",
-    "identities"
+    "bank_statement_file"
    ],
    "writes": [],
    "money": false,
@@ -5667,9 +5650,7 @@
     ]
    },
    "reads": [
-    "books_setting",
     "customer_list",
-    "identities",
     "journal_entry",
     "journal_line",
     "ledger_account",
@@ -5781,10 +5762,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -6000,9 +5978,7 @@
     ]
    },
    "reads": [
-    "books_compare_part",
-    "books_setting",
-    "identities"
+    "books_compare_part"
    ],
    "writes": [],
    "money": false,
@@ -6108,7 +6084,6 @@
    },
    "reads": [
     "books_compare_part",
-    "books_setting",
     "chit_header",
     "chit_status",
     "identities",
@@ -6222,7 +6197,6 @@
    },
    "reads": [
     "books_compare_part",
-    "books_setting",
     "chit_header",
     "chit_status",
     "identities",
@@ -6327,7 +6301,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "chit_header",
     "chit_status",
     "customer_list",
@@ -6444,7 +6417,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "customer_list",
     "identities",
     "journal_entry",
@@ -6562,10 +6534,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -6668,9 +6637,7 @@
     ]
    },
    "reads": [
-    "books_setting",
     "cb_attachment",
-    "identities",
     "journal_entry"
    ],
    "writes": [],
@@ -6774,10 +6741,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -6882,10 +6846,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -6987,9 +6948,7 @@
     ]
    },
    "reads": [
-    "books_outbox",
-    "books_setting",
-    "identities"
+    "books_outbox"
    ],
    "writes": [],
    "money": false,
@@ -7100,7 +7059,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "chit_header",
     "chit_status",
     "identities",
@@ -7214,10 +7172,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -7521,9 +7476,7 @@
     ]
    },
    "reads": [
-    "books_pack",
-    "books_setting",
-    "identities"
+    "books_pack"
    ],
    "writes": [],
    "money": false,
@@ -7627,9 +7580,7 @@
     ]
    },
    "reads": [
-    "books_pack",
-    "books_setting",
-    "identities"
+    "books_pack"
    ],
    "writes": [],
    "money": false,
@@ -7735,10 +7686,7 @@
      "PACK_NO_FILE"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -7839,9 +7787,7 @@
     ]
    },
    "reads": [
-    "books_setting",
     "customer_list",
-    "identities",
     "journal_line",
     "party_item",
     "supplier_list"
@@ -7948,7 +7894,6 @@
    "reads": [
     "account_balance",
     "books_payment",
-    "books_setting",
     "chit_detail",
     "chit_disputes",
     "chit_header",
@@ -8069,7 +8014,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "chit_disputes",
     "chit_header",
     "chit_status",
@@ -8180,7 +8124,6 @@
    },
    "reads": [
     "books_change_log",
-    "books_setting",
     "fiscal_period",
     "identities",
     "journal_entry"
@@ -8288,10 +8231,7 @@
      "LEDGER_OFF"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -8394,10 +8334,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -8499,10 +8436,7 @@
      "LEDGER_OFF"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -8602,10 +8536,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -8708,8 +8639,7 @@
    },
    "reads": [
     "books_change_log",
-    "books_setting",
-    "identities"
+    "books_setting"
    ],
    "writes": [],
    "money": true,
@@ -8814,10 +8744,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -8919,10 +8846,7 @@
      "LEDGER_OFF"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -9025,9 +8949,7 @@
     ]
    },
    "reads": [
-    "books_setting",
-    "fiscal_period",
-    "identities"
+    "fiscal_period"
    ],
    "writes": [],
    "money": false,
@@ -15405,7 +15327,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 522,
-   "hash": "86357d6569be0d66",
+   "hash": "5f757b785fd77a76",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
     "count": 0,
@@ -15479,7 +15401,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "86357d6569be0d66"
+    "stale_since": "5f757b785fd77a76"
    },
    "status": "partial",
    "callers": [
@@ -30799,7 +30721,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "chit_disputes",
     "chit_header",
     "chit_status",
@@ -30915,10 +30836,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35218,8 +35136,6 @@
     ]
    },
    "reads": [
-    "books_setting",
-    "identities",
     "ledger_account"
    ],
    "writes": [
@@ -35331,10 +35247,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35438,10 +35351,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35545,10 +35455,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35652,10 +35559,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35761,7 +35665,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "identities",
     "ledger_account"
    ],
@@ -35877,7 +35780,6 @@
    },
    "reads": [
     "bank_statement_file",
-    "books_setting",
     "cb_attachment",
     "identities",
     "ledger_account"
@@ -35997,7 +35899,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "identities",
     "ledger_account"
    ],
@@ -36108,10 +36009,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36213,7 +36111,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "identities",
     "journal_entry"
    ],
@@ -36322,10 +36219,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36431,10 +36325,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36541,9 +36432,7 @@
     ]
    },
    "reads": [
-    "books_compare_part",
-    "books_setting",
-    "identities"
+    "books_compare_part"
    ],
    "writes": [
     "books_compare_part"
@@ -36650,10 +36539,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36753,10 +36639,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36969,8 +36852,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
-    "identities",
     "journal_entry",
     "ledger_account"
    ],
@@ -37081,10 +36962,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37189,10 +37067,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37298,10 +37173,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37405,10 +37277,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37513,10 +37382,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37620,10 +37486,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37728,10 +37591,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": true,
    "actions": [],
@@ -37836,10 +37696,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -37939,10 +37796,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -38145,7 +37999,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "catalogue_items",
     "customer_list",
     "identities",
@@ -38260,10 +38113,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -38367,7 +38217,6 @@
     ]
    },
    "reads": [
-    "books_setting",
     "catalogue_items",
     "customer_list",
     "identities",
@@ -38480,7 +38329,6 @@
    },
    "reads": [
     "account_balance",
-    "books_setting",
     "customer_list",
     "identities",
     "journal_entry",
@@ -38804,10 +38652,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -38910,10 +38755,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -39019,9 +38861,7 @@
     ]
    },
    "reads": [
-    "books_pack",
-    "books_setting",
-    "identities"
+    "books_pack"
    ],
    "writes": [
     "books_change_log",
@@ -39131,7 +38971,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "identities",
     "journal_entry"
    ],
@@ -39242,7 +39081,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "chit_disputes",
     "chit_header",
     "chit_status",
@@ -39362,7 +39200,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "identities",
     "journal_entry",
     "party_item"
@@ -39470,7 +39307,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "chit_header",
     "identities"
    ],
@@ -39574,9 +39410,7 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
     "chit_header",
-    "identities",
     "journal_entry"
    ],
    "writes": [],
@@ -39684,9 +39518,7 @@
     ]
    },
    "reads": [
-    "books_setting",
-    "fiscal_period",
-    "identities"
+    "fiscal_period"
    ],
    "writes": [
     "books_change_log",
@@ -39789,10 +39621,7 @@
      "SIGN_IN_FOR_LEDGER"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -39895,10 +39724,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": true,
    "actions": [],
@@ -40001,10 +39827,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -40107,10 +39930,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -40213,10 +40033,7 @@
      "OWNER_ONLY"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [
     "books_change_log",
     "books_setting"
@@ -40324,10 +40141,7 @@
      "TERMS_NOT_MIGRATED"
     ]
    },
-   "reads": [
-    "books_setting",
-    "identities"
-   ],
+   "reads": [],
    "writes": [
     "books_setting"
    ],
@@ -40439,8 +40253,6 @@
    },
    "reads": [
     "books_payment",
-    "books_setting",
-    "identities",
     "journal_entry"
    ],
    "writes": [
@@ -40548,9 +40360,7 @@
     ]
    },
    "reads": [
-    "books_setting",
-    "fiscal_period",
-    "identities"
+    "fiscal_period"
    ],
    "writes": [
     "books_change_log",

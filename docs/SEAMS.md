@@ -40,7 +40,7 @@ of file each thing is; this says what already does the job.
 | 62 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 62 | `count` | `money-check.js` | the count /health reads |
 | 61 | `pack` | `books-store.js` |  |
-| 59 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 60 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 59 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 59 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 57 | `view` | `books-payables.js` | group: |
@@ -133,7 +133,7 @@ of file each thing is; this says what already does the job.
 | 24 | `form` | `accounts-shell.js` |  |
 | 24 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 24 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
-| 24 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
+| 24 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 24 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |

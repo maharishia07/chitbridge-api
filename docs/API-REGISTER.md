@@ -954,61 +954,61 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A template id in -> we stop it, deleting nothing that it posted -> the stopped template (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 6; share cap-period.js 2/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/accounts** · books · cb-accounting · meets standard
 - does: Nothing in -> we read the shop's chart of accounts, leaving out parked rows of a corrected country -> the accounts with code, name, group and nature.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 500 · money y (derived)
 - effect: offline online-only · round trips 4 (wire 3; share cap-bank-sheet.js 4/7, cap-bank.js 4/8, cap-books.js 4/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities, ledger_account · writes (derived): - · callers: cap-bank-sheet.js, cap-bank.js, cap-books.js, cap-entry.js, cap-opening.js · actions: -
+- reads (derived): ledger_account · writes (derived): - · callers: cap-bank-sheet.js, cap-bank.js, cap-books.js, cap-entry.js, cap-opening.js · actions: -
 
 **GET /api/books/assets** · books · cb-accounting · meets standard
 - does: An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-period.js 2/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/attention** · books · cb-accounting · meets standard
 - does: A date range (and one kind) in -> we count the entries with no tax invoice, no file, no source and the open queries, or list those behind one -> the counts, or a page of entries.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/bank/log** · books · cb-accounting · partial
 - does: A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 6 (wire null; share cap-bank-home.js 6/6, cap-bank-store.js 6/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): bank_rec_log, books_payment, books_setting, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank-home.js, cap-bank-store.js · actions: -
+- reads (derived): bank_rec_log, books_payment, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank-home.js, cap-bank-store.js · actions: -
 
 **GET /api/books/bank/rail** · books · cb-accounting · partial
 - does: A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-bank.js 2/8, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, chit_detail, chit_header, chit_status, customer_list, identities, supplier_list · writes (derived): - · callers: cap-bank.js, cap-books.js · actions: -
+- reads (derived): chit_detail, chit_header, chit_status, customer_list, identities, supplier_list · writes (derived): - · callers: cap-bank.js, cap-books.js · actions: -
 
 **GET /api/books/bank/statement-files** · books · cb-accounting · partial
 - does: A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 5 (wire null; share cap-bank-statements.js 5/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities, ledger_account · writes (derived): - · callers: cap-bank-statements.js · actions: -
+- reads (derived): ledger_account · writes (derived): - · callers: cap-bank-statements.js · actions: -
 
 **GET /api/books/bank/statement-files/:id/file** · books · cb-accounting · partial
 - does: A kept statement's id in -> we serve its bytes and record who opened it -> the file.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 7 (wire null; share cap-bank-statements.js 7/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): bank_statement_file, books_setting, identities · writes (derived): - · callers: cap-bank-statements.js · actions: -
+- reads (derived): bank_statement_file · writes (derived): - · callers: cap-bank-statements.js · actions: -
 
 **GET /api/books/bs** · books · cb-accounting · meets standard
 - does: An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3; share books-grant-api.js 2/15, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, party_tax_id, supplier_list · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
+- reads (derived): customer_list, journal_entry, journal_line, ledger_account, party_item, party_tax_id, supplier_list · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
 
 **GET /api/books/cashflow** · books · cb-accounting · meets standard
 - does: A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-finance-cash.js 2/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-finance-cash.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-finance-cash.js · actions: -
 
 **GET /api/books/cheques** · books · cb-accounting · meets standard
 - does: Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.
@@ -1020,265 +1020,265 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 3; share cap-compare.js 3/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_compare_part, books_setting, identities · writes (derived): - · callers: cap-compare.js · actions: -
+- reads (derived): books_compare_part · writes (derived): - · callers: cap-compare.js · actions: -
 
 **GET /api/books/compare/:id** · books · cb-accounting · meets standard
 - does: A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_compare_part, books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-compare.js · actions: -
+- reads (derived): books_compare_part, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-compare.js · actions: -
 
 **GET /api/books/compare/:id/csv** · books · cb-accounting · meets standard
 - does: A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_compare_part, books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: - · actions: -
+- reads (derived): books_compare_part, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/daybook** · books · cb-accounting · meets standard
 - does: A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3; share books-grant-api.js 2/15, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
+- reads (derived): chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
 
 **GET /api/books/dues** · books · cb-accounting · meets standard
 - does: Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 3 (wire 3; share books-grant-api.js 3/15, cap-books.js 3/43, cap-finance-pay.js 3/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, party_tax_id, supplier_list · writes (derived): - · callers: books-grant-api.js, cap-books.js, cap-finance-pay.js, cap-finance.js · actions: -
+- reads (derived): books_payment, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, party_tax_id, supplier_list · writes (derived): - · callers: books-grant-api.js, cap-books.js, cap-finance-pay.js, cap-finance.js · actions: -
 
 **GET /api/books/events** · books · cb-accounting · meets standard
 - does: Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/9, cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js, cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-entry.js, cap-period.js · actions: -
 
 **GET /api/books/evidence/:id** · books · cb-accounting · partial
 - does: A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-evidence.js 4/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, cb_attachment, identities, journal_entry · writes (derived): - · callers: cap-evidence.js · actions: -
+- reads (derived): cb_attachment, journal_entry · writes (derived): - · callers: cap-evidence.js · actions: -
 
 **GET /api/books/fx-rates** · books · cb-accounting · meets standard
 - does: Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 3; share cap-fx.js 3/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/health** · books · cb-accounting · meets standard
 - does: Nothing in -> we read the health of the books: postings still waiting to reach the ledger, the to-do counts and the year's checks -> one health summary.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share accounts.html 2/16, app.html 2/108, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_outbox, books_setting, identities · writes (derived): - · callers: accounts.html, app.html, cap-books.js, cap-move-in.js, crm.html, index.html · actions: -
+- reads (derived): books_outbox · writes (derived): - · callers: accounts.html, app.html, cap-books.js, cap-move-in.js, crm.html, index.html · actions: -
 
 **GET /api/books/ledger/:account** · books · cb-accounting · meets standard
 - does: An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share books-grant-api.js 1/15, cap-bank.js 1/8, cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: books-grant-api.js, cap-bank.js, cap-books.js, cap-period.js · actions: -
+- reads (derived): chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: books-grant-api.js, cap-bank.js, cap-books.js, cap-period.js · actions: -
 
 **GET /api/books/move-in/imports** · books · cb-accounting · meets standard
 - does: Nothing in -> we read the latest 20 move-in imports with their match proof -> the list of imports (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/packs** · books · cb-accounting · meets standard
 - does: Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_pack, books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
+- reads (derived): books_pack · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/packs/:id** · books · cb-accounting · meets standard
 - does: A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_pack, books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
+- reads (derived): books_pack · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/packs/:id/file** · books · cb-accounting · meets standard
 - does: A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, PACK_NO_FILE] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/party/:id/bills** · books · cb-accounting · meets standard
 - does: A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, customer_list, identities, journal_line, party_item, supplier_list · writes (derived): - · callers: - · actions: -
+- reads (derived): customer_list, journal_line, party_item, supplier_list · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/party/:id/statement** · books · cb-accounting · meets standard
 - does: A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): account_balance, books_payment, books_setting, chit_detail, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list, year_carry · writes (derived): bank_rec_log, year_carry · callers: cap-books.js · actions: -
+- reads (derived): account_balance, books_payment, chit_detail, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list, year_carry · writes (derived): bank_rec_log, year_carry · callers: cap-books.js · actions: -
 
 **GET /api/books/payments/:id/advice** · books · cb-accounting · meets standard
 - does: A payment id in -> we read whether a payment advice was sent to the other party and what may be done next -> the advice state.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share rail-advice.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, supplier_list · writes (derived): - · callers: rail-advice.js · actions: -
+- reads (derived): books_payment, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, supplier_list · writes (derived): - · callers: rail-advice.js · actions: -
 
 **GET /api/books/periods** · books · cb-accounting · meets standard
 - does: Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3; share books-grant-api.js 2/15, cap-books.js 2/43, cap-period.js 2/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_change_log, books_setting, fiscal_period, identities, journal_entry · writes (derived): - · callers: books-grant-api.js, cap-books.js, cap-period.js · actions: -
+- reads (derived): books_change_log, fiscal_period, identities, journal_entry · writes (derived): - · callers: books-grant-api.js, cap-books.js, cap-period.js · actions: -
 
 **GET /api/books/pl** · books · cb-accounting · meets standard
 - does: A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share books-grant-api.js 2/15, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
+- reads (derived): - · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
 
 **GET /api/books/recurring** · books · cb-accounting · meets standard
 - does: Nothing in -> we list the recurring entries with their next date and whether one is due -> the list (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-period.js 2/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/returns** · books · cb-accounting · meets standard
 - does: A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.
 - errors: 2 code(s) [BOOKS_RETURN_READ_NOT_ALLOWED, LEDGER_OFF] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/status** · books · cb-accounting · meets standard
 - does: Nothing in -> we read whether the shop's books are switched on and whether its country allows them -> the switch state, walk-in grain and country verdict (owner only).
 - errors: 1 code(s) [OWNER_ONLY] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 6; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-admin.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/books/terms** · books · cb-accounting · meets standard
 - does: Optional party and side in -> we read the credit limit, interest and early-pay terms of one customer or supplier, else the shop default -> those terms.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-crm-record.js 2/8, cap-finance-terms.js 2/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_change_log, books_setting, identities · writes (derived): - · callers: cap-crm-record.js, cap-finance-terms.js · actions: -
+- reads (derived): books_change_log, books_setting · writes (derived): - · callers: cap-crm-record.js, cap-finance-terms.js · actions: -
 
 **GET /api/books/todo** · books · cb-accounting · meets standard
 - does: Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 9 (wire 3; share accounts.html 9/16, cap-period.js 9/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: accounts.html, cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: accounts.html, cap-period.js · actions: -
 
 **GET /api/books/trial-balance** · books · cb-accounting · meets standard
 - does: An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share books-grant-api.js 2/15, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
+- reads (derived): - · writes (derived): - · callers: books-grant-api.js, cap-books.js · actions: -
 
 **GET /api/books/year/:fy/status** · books · cb-accounting · meets standard
 - does: A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, fiscal_period, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): fiscal_period · writes (derived): - · callers: cap-period.js · actions: -
 
 **PATCH /api/books/payments/:id** · books · cb-accounting · meets standard
 - does: A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.
 - errors: 4 code(s) [ADVICE_EXISTS, BOOKS_NOT_MIGRATED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 409, 422, 500, 503 · money y (derived)
 - effect: offline idempotent · round trips 1 (wire 3; share rail-advice.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, supplier_list · writes (derived): books_payment · callers: rail-advice.js · actions: -
+- reads (derived): books_payment, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, supplier_list · writes (derived): books_payment · callers: rail-advice.js · actions: -
 
 **PATCH /api/books/recurring/:id** · books · cb-accounting · meets standard
 - does: A template id and the fields to change in -> we change only those fields -> the template (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/accounts** · books · cb-accounting · meets standard
 - does: A name and a parent account in -> we add a new account to the chart and log it -> the new account (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-bank-sheet.js 1/7, cap-books.js 1/43, cap-entry.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities, ledger_account · writes (derived): books_change_log, ledger_account · callers: cap-bank-sheet.js, cap-books.js, cap-entry.js · actions: -
+- reads (derived): ledger_account · writes (derived): books_change_log, ledger_account · callers: cap-bank-sheet.js, cap-books.js, cap-entry.js · actions: -
 
 **POST /api/books/accruals** · books · cb-accounting · meets standard
 - does: A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/accruals/:ref/reverse** · books · cb-accounting · meets standard
 - does: An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/assets** · books · cb-accounting · meets standard
 - does: An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/assets/:id/dispose** · books · cb-accounting · meets standard
 - does: An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/bank/marks** · books · cb-accounting · meets standard
 - does: A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-bank-store.js 4/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities, ledger_account · writes (derived): bank_rec_log · callers: cap-bank-store.js · actions: -
+- reads (derived): identities, ledger_account · writes (derived): bank_rec_log · callers: cap-bank-store.js · actions: -
 
 **POST /api/books/bank/statement-files** · books · cb-accounting · partial
 - does: A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 409, 413, 415, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 8 (wire null; share cap-bank-statements.js 8/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): bank_statement_file, books_setting, cb_attachment, identities, ledger_account · writes (derived): bank_statement_file, cb_attachment · callers: cap-bank-statements.js · actions: -
+- reads (derived): bank_statement_file, cb_attachment, identities, ledger_account · writes (derived): bank_statement_file, cb_attachment · callers: cap-bank-statements.js · actions: -
 
 **POST /api/books/bank/statements** · books · cb-accounting · meets standard
 - does: A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 409, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-bank-store.js 4/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities, ledger_account · writes (derived): bank_rec_log · callers: cap-bank-store.js · actions: -
+- reads (derived): identities, ledger_account · writes (derived): bank_rec_log · callers: cap-bank-store.js · actions: -
 
 **POST /api/books/check** · books · cb-accounting · meets standard
 - does: Nothing in -> we run the books' self-check for this shop now -> what it found (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 10 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/cheques/:id/status** · books · cb-accounting · meets standard
 - does: A cheque id and deposited, cleared or bounced in -> we move the cheque on in order and post it when it clears -> the new status (editors).
 - errors: 1 code(s) [LEDGER_OFF] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: cap-books.js · actions: -
+- reads (derived): books_payment, identities, journal_entry · writes (derived): party_item · callers: cap-books.js · actions: -
 
 **POST /api/books/closing-stock** · books · cb-accounting · meets standard
 - does: A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/compare/preflight** · books · cb-accounting · meets standard
 - does: A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.
 - errors: 4 code(s) [BOOKS_BAD_REQUEST, COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-compare.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-compare.js · actions: -
 
 **POST /api/books/compare/snapshots** · books · cb-accounting · meets standard
 - does: A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.
 - errors: 4 code(s) [BOOKS_BAD_REQUEST, COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_compare_part, books_setting, identities · writes (derived): books_compare_part · callers: cap-compare.js · actions: -
+- reads (derived): books_compare_part · writes (derived): books_compare_part · callers: cap-compare.js · actions: -
 
 **POST /api/books/contra** · books · cb-accounting · meets standard
 - does: A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/depreciation/run** · books · cb-accounting · meets standard
 - does: A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/enable** · books · cb-accounting · meets standard
 - does: Optional walk-in grain in -> we check the country allows books, switch the shop's books on and lay the chart of accounts -> the opened setting (owner only).
@@ -1290,187 +1290,187 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 409, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, identities, journal_entry, ledger_account · writes (derived): party_item · callers: cap-books.js · actions: -
+- reads (derived): books_payment, journal_entry, ledger_account · writes (derived): party_item · callers: cap-books.js · actions: -
 
 **POST /api/books/entries/:id/reverse** · books · cb-accounting · meets standard
 - does: An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).
 - errors: 3 code(s) [ALREADY_REVERSED, LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-entry.js · actions: -
 
 **POST /api/books/events** · books · cb-accounting · meets standard
 - does: A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-bank-post.js 1/2, cap-entry.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-bank-post.js, cap-entry.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-bank-post.js, cap-entry.js · actions: -
 
 **POST /api/books/fx-rates** · books · cb-accounting · meets standard
 - does: A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/fx-rates/import** · books · cb-accounting · meets standard
 - does: A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/gst/close** · books · cb-accounting · meets standard
 - does: A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/gst/pay** · books · cb-accounting · meets standard
 - does: A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 409, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips 4 (wire null; share cap-period.js 4/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/loans** · books · cb-accounting · meets standard
 - does: A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/loans/:ref/emi** · books · cb-accounting · meets standard
 - does: A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/move-in/import** · books · cb-accounting · meets standard
 - does: The same file with confirm true in -> we add and merge the parties or items in one transaction and keep a match proof -> the counts and the proof (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): customer_list, identities, supplier_list · callers: cap-move-in.js · actions: -
+- reads (derived): catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): customer_list, identities, supplier_list · callers: cap-move-in.js · actions: -
 
 **POST /api/books/move-in/preflight** · books · cb-accounting · meets standard
 - does: A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-move-in.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-move-in.js · actions: -
 
 **POST /api/books/move-in/preview** · books · cb-accounting · meets standard
 - does: The file and the owner's column choices in -> we plan the move-in without writing anything -> what would be added, merged, skipped or held (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): - · callers: cap-move-in.js · actions: -
+- reads (derived): catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): - · callers: cap-move-in.js · actions: -
 
 **POST /api/books/opening** · books · cb-accounting · meets standard
 - does: Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-opening.js 1/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): account_balance, books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list · writes (derived): - · callers: cap-opening.js · actions: -
+- reads (derived): account_balance, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list · writes (derived): - · callers: cap-opening.js · actions: -
 
 **POST /api/books/outbox/retry** · books · cb-accounting · meets standard
 - does: Nothing in -> we try again every posting that was waiting to reach the books -> how many were tried, posted and still waiting (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/packs** · books · cb-accounting · meets standard
 - does: A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/packs/:id/ack** · books · cb-accounting · meets standard
 - does: A pack id in -> we record that the owner downloaded and confirmed the pack, and log it -> the pack (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, PACK_NO_FILE] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_pack, books_setting, identities · writes (derived): books_change_log, books_pack · callers: cap-books.js · actions: -
+- reads (derived): books_pack · writes (derived): books_change_log, books_pack · callers: cap-books.js · actions: -
 
 **POST /api/books/parties/:id/dispute** · books · cb-accounting · meets standard
 - does: A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).
 - errors: 1 code(s) [LEDGER_OFF] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-finance-pay.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: cap-finance-pay.js · actions: -
+- reads (derived): books_payment, identities, journal_entry · writes (derived): party_item · callers: cap-finance-pay.js · actions: -
 
 **POST /api/books/payments** · books · cb-accounting · meets standard
 - does: A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips 1 (wire 3; share cap-bank-post.js 1/2, cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, party_item, supplier_list · writes (derived): books_payment, state_log · callers: cap-bank-post.js, cap-books.js · actions: -
+- reads (derived): books_payment, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, party_item, supplier_list · writes (derived): books_payment, state_log · callers: cap-bank-post.js, cap-books.js · actions: -
 
 **POST /api/books/payments/:id/confirm** · books · cb-accounting · meets standard
 - does: A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips 5 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, identities, journal_entry, party_item · writes (derived): party_item, state_log · callers: - · actions: -
+- reads (derived): books_payment, identities, journal_entry, party_item · writes (derived): party_item, state_log · callers: - · actions: -
 
 **POST /api/books/payments/:id/propose** · books · cb-accounting · meets standard
 - does: A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, chit_header, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): books_payment, chit_header, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/payments/preview** · books · cb-accounting · meets standard
 - does: A party, amount and mode in -> we work out how the payment would settle the open bills, posting nothing -> a preview with the proposed split and warnings.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43, cap-finance-pay.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, chit_header, identities, journal_entry · writes (derived): - · callers: cap-books.js, cap-finance-pay.js · actions: -
+- reads (derived): books_payment, chit_header, journal_entry · writes (derived): - · callers: cap-books.js, cap-finance-pay.js · actions: -
 
 **POST /api/books/periods/:fy/:p/:act** · books · cb-accounting · meets standard
 - does: A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, fiscal_period, identities · writes (derived): books_change_log, fiscal_period · callers: - · actions: -
+- reads (derived): fiscal_period · writes (derived): books_change_log, fiscal_period · callers: - · actions: -
 
 **POST /api/books/preview** · books · cb-accounting · meets standard
 - does: A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-entry.js · actions: -
 
 **POST /api/books/recurring** · books · cb-accounting · meets standard
 - does: A name, an event, a frequency and a next date in -> we save a recurring entry template -> the template (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/recurring/:id/post** · books · cb-accounting · meets standard
 - does: A template id in -> we post the due day as a journal entry once and move the template on -> what was posted (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 6 (wire null; share cap-period.js 6/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/recurring/:id/skip** · books · cb-accounting · meets standard
 - does: A template id in -> we skip the due day without posting and move the template on -> the skipped day (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 5 (wire null; share cap-period.js 5/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/setting** · books · cb-accounting · meets standard
 - does: Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share accounts-shell.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): books_change_log, books_setting · callers: accounts-shell.js · actions: -
+- reads (derived): - · writes (derived): books_change_log, books_setting · callers: accounts-shell.js · actions: -
 
 **POST /api/books/terms** · books · cb-accounting · meets standard
 - does: A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, TERMS_NOT_MIGRATED] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-finance-cheques.js 1/1, cap-finance-terms.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, identities · writes (derived): books_setting · callers: cap-finance-cheques.js, cap-finance-terms.js · actions: -
+- reads (derived): - · writes (derived): books_setting · callers: cap-finance-cheques.js, cap-finance-terms.js · actions: -
 
 **POST /api/books/write-off** · books · cb-accounting · meets standard
 - does: A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 409, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: - · actions: -
+- reads (derived): books_payment, journal_entry · writes (derived): party_item · callers: - · actions: -
 
 **POST /api/books/year/:fy/close** · books · cb-accounting · meets standard
 - does: A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 - errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, PERIOD_RETURN_OPEN, YEAR_CLOSE_REFUSED] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, fiscal_period, identities · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
+- reads (derived): fiscal_period · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
 ### books-actions (unassigned, 6 of 6 with a description)
 
