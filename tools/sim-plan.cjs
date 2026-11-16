@@ -89,4 +89,103 @@ function countOf(plan) {
   return c;
 }
 
-module.exports = { rng, planDays, countOf, dayAdd, RATES };
+/**
+ * MIS showcase: the same plan shape for a back-dated HISTORY of whole months from a data file (tools/seed/mis-history.json, 26 months · mis-history-84.json, 84), `months` of it from its `start`.
+ * No random draw: every day has ONE walk-in takings figure (the month's daily_ex_gst x the shop profile's scale, whole dollars), so a month's total is hand-computable
+ * (days x daily x 1.1 + the inclusive sale). A PROFILE (tools/seed/mis-profiles.json) varies the shop: size, trade mix (cost of goods, suppliers), a slide, how fast it pays.
+ *   historyDays(table, months, profile) → { start, last, months, profile, days: [{ day, walkin: taxable, inclusive, reversed, rent, buys: [{ s, taxable }], pays: [{ s, cents }], receipt: cents | null }], owing: { ap: [cents per supplier], ar: cents } }
+ * PURCHASES: each month supplier s bills on day 6 + 7s (cost_pct of the month's walk-in takings, split evenly, whole dollars); on day 27 the shop pays pay_ratio of the
+ * bills 30+ days old (oldest first); the customer pays cust_ratio of what it owes on day 25, except in the last two months (left open). What is left is `owing`.
+ */
+const cents = (n) => Math.round(n * 100);
+const DEFAULT_PROFILE = { scale: 1, slide_pct: 0, cost_pct: 55, suppliers: ['Harbour Wholesale', 'Southern Supplies'], pay_ratio: 1, cust_ratio: 1 };
+const sumOf = (list) => list.reduce((a, b) => a + b, 0);
+function historyDays(table, months, profile) {
+  const keys = Object.keys(table.daily_ex_gst);
+  const n = Number(months || keys.length);
+  if (!(n >= 1 && n <= keys.length)) throw new Error('months is 1..' + keys.length + ' (the data file holds ' + keys.length + ')');
+  if (keys[0] !== table.start.slice(0, 7)) throw new Error('the data file must begin in its start month');
+  const prof = Object.assign({}, DEFAULT_PROFILE, profile || {}),
+    rate = table.gst_rate,
+    days = [],
+    bills = prof.suppliers.map(() => []) /* per supplier [{ day, left }]: the bill's gross in cents, what is still owed */,
+    owed = []; /* the customer's open sales, cents */
+  keys.slice(0, n).forEach((key, ix) => {
+    const length = new Date(Date.UTC(+key.slice(0, 4), +key.slice(5), 0)).getUTCDate();
+    const daily = Math.max(1, Math.round(table.daily_ex_gst[key] * prof.scale * (1 - (prof.slide_pct / 100) * (Math.max(0, ix - (n - 24)) / 12)))); /* a struggling shop slides slide_pct a year over its last two years */
+    for (let d = 1; d <= length; d++) {
+      const row = { day: key + '-' + String(d).padStart(2, '0'), walkin: daily, inclusive: null, reversed: null, rent: null, buys: [], pays: [], receipt: null };
+      if (d === table.inclusive_sale.day) {
+        const total = table.inclusive_sale.price_incl_gst;
+        row.inclusive = { total, taxable: Math.round((total * 100) / (1 + rate / 100)) / 100 }; /* the price the customer saw includes GST; the books split it */
+        owed.push(cents(total));
+      }
+      if (d === table.reversed_sale.day) row.reversed = { taxable: table.reversed_sale.taxable };
+      if (d === table.rent.day) row.rent = table.rent.amount;
+      prof.suppliers.forEach((name, s) => {
+        if (d === 6 + 7 * s) {
+          const taxable = Math.max(1, Math.round((daily * length * prof.cost_pct) / 100 / prof.suppliers.length));
+          row.buys.push({ s, taxable });
+          bills[s].push({ day: row.day, left: cents(taxable) + Math.round((cents(taxable) * rate) / 100) });
+        }
+        if (d === 27) {
+          const eligible = bills[s].filter((b) => b.left > 0 && dayAdd(b.day, 30) <= row.day);
+          let pay = Math.round(sumOf(eligible.map((b) => b.left)) * prof.pay_ratio);
+          if (pay > 0) {
+            row.pays.push({ s, cents: pay });
+            for (const b of eligible) {
+              const take = Math.min(b.left, pay);
+              b.left -= take;
+              pay -= take;
+            }
+          }
+        }
+      });
+      if (d === 25 && ix <= n - 3) {
+        let pay = Math.round(sumOf(owed) * prof.cust_ratio);
+        if (pay > 0) {
+          row.receipt = pay;
+          for (let i = 0; i < owed.length && pay > 0; i++) {
+            const take = Math.min(owed[i], pay);
+            owed[i] -= take;
+            pay -= take;
+          }
+        }
+      }
+      days.push(row);
+    }
+  });
+  return { start: table.start, last: days[days.length - 1].day, months: n, profile: prof, days, owing: { ap: bills.map((list) => sumOf(list.map((b) => b.left))), ar: sumOf(owed) } };
+}
+/** what the books must hold per month, in whole cents (integer sums; no float drift): { 'YYYY-MM': { sold, net, gst, rent, buys, buys_gst, entries } } — SOLD is tax-inclusive, the reversed sale is in none of it */
+function historyExpect(plan, rate) {
+  const out = {};
+  for (const d of plan.days) {
+    const m = out[d.day.slice(0, 7)] || (out[d.day.slice(0, 7)] = { sold: 0, net: 0, gst: 0, rent: 0, buys: 0, buys_gst: 0, entries: 0 });
+    const gst = Math.round((cents(d.walkin) * rate) / 100);
+    m.net += cents(d.walkin);
+    m.gst += gst;
+    m.sold += cents(d.walkin) + gst;
+    m.entries += 1;
+    if (d.inclusive) {
+      m.net += cents(d.inclusive.taxable);
+      m.gst += cents(d.inclusive.total) - cents(d.inclusive.taxable);
+      m.sold += cents(d.inclusive.total);
+      m.entries += 1;
+    }
+    if (d.reversed) m.entries += 2; /* the sale and its reversal: posted, then cancelled out */
+    if (d.rent) {
+      m.rent += cents(d.rent);
+      m.entries += 1;
+    }
+    for (const b of d.buys) {
+      m.buys += cents(b.taxable);
+      m.buys_gst += Math.round((cents(b.taxable) * rate) / 100);
+      m.entries += 1;
+    }
+    m.entries += d.pays.length + (d.receipt ? 1 : 0);
+  }
+  return out;
+}
+
+module.exports = { rng, planDays, countOf, dayAdd, RATES, historyDays, historyExpect, DEFAULT_PROFILE };
