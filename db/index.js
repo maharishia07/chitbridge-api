@@ -178,9 +178,12 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
 /* READ-WIDE BY POLICY, so a context-free READ is the design and not a forgotten withEntity: catalogue_source and standard_source (SELECT USING (true); only the owner writes: b855, b865),
    product_container and media_blobs (everyone reads; b855), and the five platform network tables of b790 (no entity column; cb_app policy USING (true)). Listed in RLS_TENANT_TABLES so the
    baseline test sees them, left out of the runtime tripwire so it does not warn on every legitimate read. Their writes stay fenced by the policies themselves, and the offline scan in
-   tests/rls-context.test.cjs names each file that reads them, with the reason. */
+   tests/rls-context.test.cjs names each file that reads them, with the reason. The exemption is for READS only (RLS_WRITE_RE below): a bare write still trips the guard. */
 const RLS_READ_WIDE = ['catalogue_source', 'standard_source', 'product_container', 'media_blobs', 'network_revoked', 'membership_certificate', 'registry_entry', 'registry_cursor', 'registry_change'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.filter((t) => !RLS_READ_WIDE.includes(t)).join('|') + ')\\b', 'i');
+/* the read-wide tables are exempt for READS only: a statement that writes (INSERT/UPDATE/DELETE/MERGE/TRUNCATE anywhere in it, a CTE write included) is checked against the full list */
+const RLS_ALL_RE = new RegExp('\b(' + RLS_TENANT_TABLES.join('|') + ')\b', 'i');
+const RLS_WRITE_RE = /b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE)b/i;
 
 function rlsGuardMode() {
   const explicit = (process.env.RLS_GUARD || '').toLowerCase();
@@ -193,7 +196,7 @@ function rlsGuardMode() {
 function rlsGuardCheck(text) {
   const mode = rlsGuardMode();
   if (mode === 'off') return;
-  const m = RLS_TENANT_RE.exec(text);
+  const m = (RLS_WRITE_RE.test(text) ? RLS_ALL_RE : RLS_TENANT_RE).exec(text);
   if (!m) return;
   const msg = `[RLS-GUARD] tenant table "${m[1]}" queried via context-free query() — route must use `
     + `withEntity(entityId, db => db.query(...)). SQL: ${text.replace(/\s+/g, ' ').trim().substring(0, 140)}`;
@@ -460,4 +463,4 @@ const queryAsEach = async (ids, text, paramsOf) => {
 };
 query.as = queryAs;
 query.asEach = queryAsEach;
-module.exports = { bootWaitMs, query, queryAs, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { bootWaitMs, query, queryAs, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };
