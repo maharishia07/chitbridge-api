@@ -77,6 +77,18 @@ function stub(all) {
     assert.strictEqual(out.marks[0].line_key, 'k1');
     assert.strictEqual(out.marks_next, null);
   });
+  await t('exceptions are UNKNOWN (null), not "every posted line", when the marks read are not the whole log: limit 0, a truncated page, an older page', async () => {
+    const none = await BRL.read(stub(six), E, ACCOUNT, null, null, { limit: 0 });
+    assert.strictEqual(none.exceptions, null, 'limit 0 reads no marks');
+    const first = await BRL.read(stub(six), E, ACCOUNT, null, null);
+    assert.ok(first.marks_next !== null);
+    assert.strictEqual(first.exceptions, null, 'a truncated page');
+    const older = await BRL.read(stub(six), E, ACCOUNT, null, null, { limit: 5000, before: first.marks_next });
+    assert.strictEqual(older.marks_next, null);
+    assert.strictEqual(older.exceptions, null, 'an older page has not seen the newer accepts');
+    const whole = await BRL.read(stub(marksOf(30)), E, ACCOUNT, null, null);
+    assert.ok(Array.isArray(whole.exceptions), 'the whole log is counted: an array');
+  });
   await t('the options are validated in words: a limit 0 to 5000, a cursor a whole number', () => {
     assert.throws(() => BRL.marksPageOf({ marks_limit: '5001' }), (err) => err.code === 'MARKS_LIMIT_INVALID' && err.status === 400);
     assert.throws(() => BRL.marksPageOf({ marks_before: 'abc' }), (err) => err.code === 'MARKS_CURSOR_INVALID' && err.status === 400);
