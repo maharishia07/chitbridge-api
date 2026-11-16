@@ -363,6 +363,8 @@ const GUARDS = [
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
   'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
+  'books-past-years.test.cjs', // past years: a closed year opens read-only, can_close_if_lodged, period.state (past-years lane)
+  'past-years-auditor-party.test.cjs', // past years: the auditor party sees the closed years
   'books-card-split.test.cjs', // ⭐ BB-04: a card settlement net of the acquirer's fee posts Dr bank · Dr bank charges · (Dr tax) · Cr card; refusals in words (needs the engines src: BOOKS_ENGINES_SRC or the sibling chitbridge-engines)
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
