@@ -94,6 +94,15 @@ function create() {
       });
       return Array.from(out.values());
     },
+    async taxedOnlyLines(db, e, from, to, taxRole, roles) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (!ls.some((l) => acct(l).role === taxRole)) return;
+        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
+    },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {
       const live = (r) => T.entries.find((x) => x.entity_id === e && x.source_ref === 'chit:' + r.chit_id && !x.reverses_entry_id && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));

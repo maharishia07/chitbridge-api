@@ -92,6 +92,7 @@ const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
+const supplyKind = require('../lib/supply-kind'); /* ACC-new-2: a supply kind the shop pack does not define is refused SUPPLY_KIND_UNKNOWN (422), never posted to plain sales */
 const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
@@ -569,6 +570,7 @@ const SEND_STEPS = [
   sendIssued,
   sendPaper,
   sendCashStep,
+  sendSupplyKind,
   sendBridge,
   sendCopyPolicy,
   sendPromote,
@@ -1903,6 +1905,23 @@ async function sendCashStep(sendState, req, res) {
   return problem(req, res, {
     status: 400,
     ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
+}
+
+/**
+ * ⭐ ACC-new-2 (l16-accfix) — a supply kind the shop's pack does not define is refused by name: 422 SUPPLY_KIND_UNKNOWN with the kinds the pack does define
+ * (lib/supply-kind). Before this an AE shop's `gst_free` (the AU word) fell to the plain sales ledger with no VAT and VAT201 box 1 carried it. Its own step,
+ * outside any try, because a refusal must reach the counter. A draft or a chit with no invoice: nothing.
+ */
+async function sendSupplyKind(sendState, req, res) {
+  const { sender_id, business_json, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.invoice) return;
+  const refusal = supplyKind.refusalOf({ country: await countryOfEntity(sender_id), business_json });
+  if (!refusal) return;
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 422,
+    ...said({ error: 'Supply kind not known', code: refusal.code, field: refusal.field, message: refusal.why, line: refusal.line, kind: refusal.kind, kinds: refusal.kinds }, 'CHIT_BAD_REQUEST')
   });
 }
 
@@ -7183,6 +7202,7 @@ module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-d
 module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.cjs runs the credit gate with a mismatch and an owner override */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
+module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */

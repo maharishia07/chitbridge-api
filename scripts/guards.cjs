@@ -366,6 +366,9 @@ const GUARDS = [
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
+  'acc-new-4-year-gate.test.cjs', // ⭐ l16-accfix API-new-1 / CTY-new-1: the year-close refusal carries period_codes beside the labels (the code POST /gst/close takes); AE's gate fires without a stagger (every month covered by a closed tax period)
+  'acc-new-1-box9.test.cjs', // ⭐ l16-accfix ACC-new-1: VAT201 box 9 counts only entries that carried recoverable VAT (hand 750.00 vs 1,062.50), a reversal nets away; AU G11 unchanged
+  'acc-new-2-supply-kind.test.cjs', // ⭐ l16-accfix ACC-new-2: a supply kind the pack does not define is 422 SUPPLY_KIND_UNKNOWN listing the pack's kinds (AU, AE, IN)
   'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
   'acc-331-currency-cells.test.cjs', // ⭐ CUR-1 (ACC-331/332): a bill's payment parts and lines and a journal's lines name the document's currency or none; 409 CURRENCY_MISMATCH naming the field
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
