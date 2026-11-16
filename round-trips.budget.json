@@ -372,7 +372,8 @@
       "fired": true,
       "status": 200,
       "extra": true,
-      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed."
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. MIS 0b/0c (l17): PLUS per client one withEntity (BEGIN, set_config, openCount 2 reads, coverage 3 reads, the on_us read when a query is open, COMMIT) = 9 trips a client, read on sit-grund 16 Nov: 6 statements at 150 clients before, 1,356 after; a firm with no client stays 3.",
+      "per_client_trips": 9
     },
     "GET /api/books-grants/log": {
       "file": "books-grants.js",
