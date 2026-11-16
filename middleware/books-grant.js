@@ -45,6 +45,8 @@ const GRANT_HELD_BACK = {
   '/packs/:id/file': 'a file download (no export)',
   '/recurring': 'owner schedule',
   '/todo': 'owner to-do list',
+  '/attention': 'who needs the owner and why: the owner own to-do, with party names (held back like /todo; open to an auditor only after cb-finance agrees)',
+  '/party/:id/bills': 'one party own bills with the party name: party data (held back like the party statement; open to an auditor only after cb-finance agrees)',
   '/assets': 'owner register',
   '/fx-revalue': 'a preview that reads like a write'
 };
