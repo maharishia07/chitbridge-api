@@ -66,6 +66,12 @@ const bill = (X, party, day, no, amount) => X.B.postEntry(X.db, SHOP, { type: 's
   ok('partyNeeds: a flag read that fails is rolled back to its savepoint and logged; the other reasons still count, the list still answers', same(down.reasons.get('B3'), ['query', 'overdue']) && same(down.reasons.get('B1'), ['overdue']) && queries.some((q) => /ROLLBACK TO SAVEPOINT needs_flag/.test(q)));
   Evidence.flaggedAmong = realFlag; Needs.openMarks = realMarks;
 
+  /* a walk-in day has no chit of its own but is SOURCED (the counter bills it covers): evidence.doc carries it, so it is never "no source" */
+  const day = { item: {}, chit_id: null, source: { chit_id: null, count: 7 } }, none = { item: {}, chit_id: null, source: null }, one = { item: {}, chit_id: 'c1', ref: 'S-1', source: { chit_id: 'c1', count: null } };
+  await Evidence.attach({ query: async () => ({ rows: [] }) }, [day, none, one].filter((x) => !x.chit_id), { flag: false });
+  ok('walk-in day: the source is carried (covers 7), not null', day.item.evidence.doc && day.item.evidence.doc.covers === 7 && day.item.evidence.doc.chit_id === null, JSON.stringify(day.item.evidence));
+  ok('no chit and no source: still no source (doc null)', none.item.evidence.doc === null);
+
   /* ── the routes ── */
   if (!H.enginesSrc().dir) { console.log('SKIP: ' + H.enginesSrc().why); process.exit(1); }
   const X = H.load({ auth });
