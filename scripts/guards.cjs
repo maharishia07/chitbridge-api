@@ -1023,6 +1023,7 @@ const GUARDS = [
   'message-post.test.cjs', // MARK & QUERY PR1: the one message writer; a mark post is the mark definer only (no chit_message_deliver, no timeline, no CTP)
   'acc-176-grant-classification.test.cjs', // ACC-176: every books GET is classified for an auditor grant (a new GET is born refused); the synthetic auditor is not an owner, a commenter, read-only; the look failing answers 503 //
   'l16-statement-box.test.cjs', // l16 Statements box (b872): the ONE hash, refusals in words, duplicate and overlap by dates, the account by month grid, the grant doors (owner, adviser, auditor read-only, ended grant)
+  'b3-bank-statements-cost-blind.test.cjs', // B3: a cost-blind reader gets 403 COST_BLIND on the bank statement files list, the file download and /bank/log (the one lib/cost.isCostBlind),
   'l16-audbank.test.cjs', // l16 audbank (W15-71, W15-97): the auditor reads the bank log, every books write route refuses the auditor seat, a month opens newest first
   'acc-176b-adviser-doors.test.cjs', // ACC-176b: every books-actions route is an adviser door or the owner's accept (a new one is born refused); no direct adviser write; the synthetic adviser is an editor, never an owner; who may use which grant
   'every-test-is-enrolled.test.cjs', // U1 (8 Nov, the guard): U1 (8 Nov): every tests/*.test.(js|cjs) is run by a CI job or is on a named, ratcheted known list; the api half of the map measure tests_not_in_ci
