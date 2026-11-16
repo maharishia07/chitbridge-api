@@ -124,9 +124,11 @@ function partOne() {
   const f = E.dues(usd, ASOF, 'receivable', { pack: IN_PACK, creditDaysOf: () => null }), fr = E.followRow(f.follow, P.FOUR);
   t('a USD-only party: d31_60 holds the whole 8325000 and the keys add to its balance', [fr.d31_60, Object.keys(ZERO).reduce((total, key) => total + fr[key], 0) === f.outstanding.by_party[P.FOUR]], [8325000, true]);
 
-  /* the supplier side answers no follow-up */
+  /* W15-94: the supplier side answers the SAME days-past-due ageing (one reader, both sides) */
   const pay = E.dues(commonItems().filter((x) => x.side === 'payable'), ASOF, 'payable', { pack: IN_PACK, creditDaysOf: () => null });
-  t('the supplier side: no `follow`, however it is called', pay.follow, undefined);
+  const payRow = E.followRow(pay.follow, Object.keys(pay.follow.ageing.by_party)[0]);
+  t('the supplier side: `follow` is the same engine set, bucket keys and a total that adds up', [pay.follow.ageing.side, Object.keys(ZERO).every((key) => key in payRow), Object.keys(ZERO).reduce((total, key) => total + payRow[key], 0) === pay.follow.ageing.by_party[Object.keys(pay.follow.ageing.by_party)[0]].total_minor], ['payable', true, true]);
+  t('and never an Other bucket: every aged rupee sits in one of the five keys', pay.follow.ageing.bucket_keys, ['not_due', 'd0_30', 'd31_60', 'd61_90', 'd90_plus']);
 
   /* the page total */
   const rows = Object.keys(COMMON).map((pid) => ({ follow_up: COMMON[pid] }));
@@ -207,13 +209,13 @@ async function partRoute(country) {
 
     /* both sides: the supplier row has no follow_up; a party on both lists keeps the customer half */
     const both = await q('/dues?finance=1');
-    t('supplier-only row: no follow_up key at all (Payables has its own view)', rowOf(both, 'SUP') && 'follow_up' in rowOf(both, 'SUP'), false);
+    t('supplier-only row: carries follow_up too (W15-94: one ageing on every row)', rowOf(both, 'SUP') && 'follow_up' in rowOf(both, 'SUP'), true);
     t('a party on both lists: side both, balance the NET (100000 − 70000 = 30000), follow_up the customer half', [rowOf(both, 'BOTH').side, rowOf(both, 'BOTH').balance_minor, rowOf(both, 'BOTH').follow_up], ['both', 30000, COMMON[P.BOTH]]);
     t('the both-sides page total is the customer rows\' follow-up (a supplier adds nothing)', both.body.follow_up_total, got.body.follow_up_total);
     const sup = await q('/dues?finance=1&side=supplier');
-    t('?side=supplier&finance=1 (Payables): no follow_up_total, no follow_up on any row', [sup.status, 'follow_up_total' in sup.body, (sup.body.parties || []).some((p) => 'follow_up' in p)], [200, false, false]);
+    t('?side=supplier&finance=1 (Payables): no follow_up_total, a follow_up on every row', [sup.status, 'follow_up_total' in sup.body, (sup.body.parties || []).every((p) => 'follow_up' in p)], [200, false, true]);
     const plain = await q('/dues?side=customer');
-    t('without finance=1 the answer is the old one: no follow_up, no follow_up_total', ['follow_up_total' in plain.body, (plain.body.parties || []).some((p) => 'follow_up' in p)], [false, false]);
+    t('without finance=1: no follow_up_total, but every row carries follow_up (W15-94: Receivables and Payables read the same ageing)', ['follow_up_total' in plain.body, (plain.body.parties || []).every((p) => 'follow_up' in p)], [false, true]);
     t('the months buckets and balances are the same with and without the follow-up (nothing moved)', (got.body.parties || []).every((p) => { const o = plain.body.parties.find((x) => x.party_id === p.party_id); return o && JSON.stringify(o.buckets) === JSON.stringify(p.buckets) && o.balance_minor === p.balance_minor; }), true);
     who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP };
     const actor = await q('/dues?finance=1&side=customer');
@@ -235,7 +237,7 @@ function partBlind() {
   const blind = DV.blindDuesAnswer(page);
   t('a both-sides row: follow_up null (the customer half is not shown alone, as the balance is not)', blind.parties.find((r) => r.party_id === 'b').follow_up, null);
   t('the customer row keeps its follow_up, untouched (same reference)', blind.parties.find((r) => r.party_id === 'c') === cust && cust.follow_up.d31_60 === TEN, true);
-  t('a supplier row gains no follow_up key', 'follow_up' in blind.parties.find((r) => r.party_id === 's'), false);
+  t('a supplier row that carries follow_up goes null too (W15-94: every row has one)', blind.parties.find((r) => r.party_id === 's').follow_up === undefined || blind.parties.find((r) => r.party_id === 's').follow_up === null, true);
   t('the page: total_minor null AND follow_up_total null together, cost_hidden', [blind.total_minor, blind.follow_up_total, blind.cost_hidden], [null, null, true]);
   t('the owner\'s object was not changed', [page.follow_up_total.d31_60, both.follow_up.d0_30], [TEN, TEN]);
   const custOnly = { currency: 'INR', asOf: ASOF, parties: [cust], total_minor: 100000, follow_up_total: fu({ d31_60: TEN }, 'd31_60') };

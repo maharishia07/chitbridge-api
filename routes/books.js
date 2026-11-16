@@ -877,9 +877,9 @@ function termsReaders(financeTerms, terms) {
   const creditDaysOf = (pid) => financeTerms.resolve(terms.shop, terms.by_party.get(String(pid)) || {}).credit_days.value;
   return { effOf, followOpt: terms ? { creditDaysOf } : null };
 }
-/** what sits beside the parties on the page: the Payables total (F4) and, on a Collections read, the follow-up total (FIN-72) — nothing else is added */
+/** what sits beside the parties on the page: the Payables total (F4) and, on a Collections read, the follow-up total (FIN-72: what customers owe, by days late — a supplier row adds nothing) — nothing else is added */
 function pageExtras(collections, payables, rows) {
-  return Object.assign({}, payables ? { payables } : {}, collections ? { follow_up_total: E.followTotal(rows) } : {});
+  return Object.assign({}, payables ? { payables } : {}, collections ? { follow_up_total: E.followTotal(rows.filter((row) => row.side !== 'supplier')) } : {});
 }
 /** RAIL-146i: the /dues answer for THIS reader — ONE can_see_costs read (lib/cost.isCostBlind, fail-closed); an actor without it sees no supplier-side money (lib/dues-view R1-R6); the owner's bytes are untouched */
 async function forReader(req, e, answer) {
@@ -913,8 +913,10 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       const cut = Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to);
       /* FIN-R1: interest and limit come from the customer's TERMS (finance-terms.resolve: own, else the shop default, else not set) — one grouped read */
       const T = require('../lib/finance-terms');
-      const terms = fin && sides.includes('debtors') ? await T.customerTerms(h, e) : null;
+      /* W15-94: the customer terms are read on EVERY dues read (not only Collections), so a bill with no due date ages by the same credit days on every screen */
+      const terms = sides.includes('debtors') ? await T.customerTerms(h, e) : null;
       const { effOf, followOpt } = termsReaders(T, terms);
+      const noDays = { creditDaysOf: () => null }; /* a supplier's bill is aged by its own due date (the books write one), never by the shop's customer terms */
       let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role);
@@ -923,7 +925,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
         const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
-        const d = E.dues(items, asOf, side, Object.assign({ pack: B.packOf(req.books) }, followOpt));
+        const d = E.dues(items, asOf, side, Object.assign({ pack: B.packOf(req.books) }, role === 'debtors' ? followOpt || noDays : noDays));
         if (role === 'creditors') payableItems = items;
         const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
         /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
@@ -960,7 +962,8 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
               disputed_minor: sign * disputed,
               buckets
             };
-            if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)), { follow_up: E.followRow(d.follow, pid) });
+            row.follow_up = E.followRow(d.follow, pid); /* W15-94: the ONE ageing — days past due, both sides, every read */
+            if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)));
             lookup.set(pid + '|' + role, row);
           });
       }
@@ -986,6 +989,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           x.balance_minor += r.balance_minor;
           x.disputed_minor += r.disputed_minor;
           x.side = 'both';
+          if (r.side === 'customer') x.follow_up = r.follow_up; /* a both-sides row ages what the customer half owes (as before) */
           x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
           Object.keys(r.buckets).forEach((item) => {
             x.buckets[item] = (x.buckets[item] || 0) + r.buckets[item];
@@ -1256,7 +1260,7 @@ function alreadyPaid(res, err) {
 
 /**
  * POST /payments/preview { party_id, direction, amount_minor, currency, allocate?: 'oldest_first'|'none' } — NO WRITE (M26, SPEC-payments §4.1)
- * → { currency, party: { party_id, name }, open_minor, proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }],
+ * → { currency, party: { party_id, name }, open_minor, proposal: [{ against_ref, bill_no, due_date, open_minor, due_minor, apply_minor, disputed }],
  *     apply_minor, on_account_minor, skipped, warnings: [{ code, words, entry_no? }], words }
  * The proposal is B.proposeFor (the one function /propose and the one-call record use); the warnings are the duplicate rule
  * (PAY D5: W1–W4, 24 h). The web paints them; it composes none of the words.
@@ -1271,6 +1275,8 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
       const who = await partyOf(h, e, q.party),
         name = who.name;
       const prop = await B.proposeFor(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, currency: q.cur });
+      /* W15-95 / W15-96: `checks: true` (the bill list under a party, the Pay confirm) adds each open bill's own amount, its mark and its evidence flag — the Day book's own sources */
+      const marking = (req.body || {}).checks === true ? await require('../lib/bill-checks').attach(h, e, req, prop, { pack: B.packOf(req.books), cur: curOf(req) }) : null;
       const warnings = await B.duplicateWarnings(
         h,
         e,
@@ -1289,10 +1295,12 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
         skipped: prop.skipped,
         why: prop.why,
         warnings,
-        words: B.previewWords(prop, name, q.direction)
+        words: B.previewWords(prop, name, q.direction),
+        mark_actions: marking ? marking.mark_actions : undefined,
+        checks: marking ? true : undefined /* says the rows below carry the bill checks, so a caller never mistakes an older answer for "every bill paid" */
       };
     });
-    res.json(await forPayer(req, e, 'preview', q.direction, { currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words }));
+    res.json(await forPayer(req, e, 'preview', q.direction, { currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words, ...(out.checks ? { mark_actions: out.mark_actions, checks: true } : {}) }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
