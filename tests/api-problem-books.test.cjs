@@ -168,6 +168,14 @@ const ENTRY = '33333333-3333-4333-8333-333333333333';
 const ENTRY2 = '55555555-5555-4555-8555-555555555555';
 const CHIT = '99999999-9999-4999-8999-999999999999';
 const DAY = '2026-09-30';
+/** l16 Needs you: the evidence counts of a range (and the entries behind one), and a party's bills page: what the real readers answer, handed over whole (the stand-in db cannot seat the ledger rows they read) */
+const ATTENTION_COUNTS = { from: DAY, to: DAY, total: 3, no_tax_invoice: 1, no_file: 1, no_source: 0, open_queries: null, needs: 1 };
+const ATTENTION_ENTRIES = Object.assign({}, ATTENTION_COUNTS, { kind: 'needs', entries: [{ entry_id: PARTY, entry_no: 'EX-1', posting_date: DAY, event_type: 'expense', narration: 'Rent', total_minor: 10000 }], count: 1, page: 1, limit: 25 });
+const ATTENTION_PATCH = (answer) => ({ evidence: { attentionIn: async () => answer } });
+const BILL_LATE = { ref: 'INV-1', bill_no: 'B-101', date: DAY, due_date: DAY, amount_minor: 50000, owed_minor: 30000, status: 'part', days_overdue: 12, band: '1-30', no_terms: false, disputed: false, reasons: ['no_tax_invoice', 'overdue'], why: 'no_tax_invoice', action: 'attach', entry_id: PARTY, chit_id: PARTY, mark: 'query', evidence_flag: 'no_tax_invoice' };
+const BILL_QUIET = { ref: 'INV-2', bill_no: null, date: null, due_date: null, amount_minor: 20000, owed_minor: 20000, status: 'unpaid', days_overdue: null, band: null, no_terms: true, disputed: false, reasons: [], why: null, action: null, entry_id: null, chit_id: null, mark: null, evidence_flag: null };
+const PARTY_BILLS = { currency: 'INR', party_id: PARTY, side: 'customer', asOf: DAY, tab: 'needs', why: null, state: 'open', band: null, sort: 'urgent', bills: [BILL_LATE, BILL_QUIET], counts: { needs: 1, open: 2, paid: 0, all: 2, in_order: 1 }, owed_minor: 50000, bands: { '1-30': 30000 }, on_account_minor: 0, mark_actions: null, checks: true, total: 2, page: 1, limit: 25 };
+const BILLS_PATCH = { books: { knownParty: async () => true }, partybills: { read: async () => PARTY_BILLS } };
 const PAY_ROW = { payment_id: PARTY, party_id: PARTY, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cheque', reference: null, cheque_no: '1', cheque_bank: 'B', cheque_date: DAY, received_at: DAY, status: 'received', advice_chit_id: null, advice_shared_at: null };
 const JOURNAL = { ok: true, entry_id: ENTRY, entry_no: 'MJ/2026-27/1', posting_date: DAY, doc_date: DAY, moved: null, lines: 2, items: 0, note: null }; /* writeJournal :452 */
 const JOURNAL_MOVED = Object.assign({}, JOURNAL, { doc_date: '2026-09-28', moved: { from: '2026-09-28', to: DAY }, items: 1, note: 'Posted on the first open day.' });
@@ -359,14 +367,6 @@ const BANK_RECORD = [
   X('bank-statement-date-not-a-day', 'POST /api/books/bank/statements', 400, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendStatement: async () => { throw Object.assign(new Error('period_from is a date, YYYY-MM-DD.'), { code: 'DATE_INVALID', refused: true, status: 400, field: 'period_from' }); } } } }),
   X('bank-log-date-not-a-day', 'GET /api/books/bank/log', 400, { url: MOUNT + '/bank/log?account=1510&from=not-a-day', patch: { brl: { accountIn: () => BANK_ACCOUNT } } })
 ];
-/** l16 Needs you: the evidence counts of a range (and the entries behind one), and a party's bills page: what the real readers answer, handed over whole (the stand-in db cannot seat the ledger rows they read) */
-const ATTENTION_COUNTS = { from: DAY, to: DAY, total: 3, no_tax_invoice: 1, no_file: 1, no_source: 0, open_queries: null, needs: 1 };
-const ATTENTION_ENTRIES = Object.assign({}, ATTENTION_COUNTS, { kind: 'needs', entries: [{ entry_id: PARTY, entry_no: 'EX-1', posting_date: DAY, event_type: 'expense', narration: 'Rent', total_minor: 10000 }], count: 1, page: 1, limit: 25 });
-const ATTENTION_PATCH = (answer) => ({ evidence: { attentionIn: async () => answer } });
-const BILL_LATE = { ref: 'INV-1', bill_no: 'B-101', date: DAY, due_date: DAY, amount_minor: 50000, owed_minor: 30000, status: 'part', days_overdue: 12, band: '1-30', no_terms: false, disputed: false, reasons: ['no_tax_invoice', 'overdue'], why: 'no_tax_invoice', action: 'attach', entry_id: PARTY, chit_id: PARTY, mark: 'query', evidence_flag: 'no_tax_invoice' };
-const BILL_QUIET = { ref: 'INV-2', bill_no: null, date: null, due_date: null, amount_minor: 20000, owed_minor: 20000, status: 'unpaid', days_overdue: null, band: null, no_terms: true, disputed: false, reasons: [], why: null, action: null, entry_id: null, chit_id: null, mark: null, evidence_flag: null };
-const PARTY_BILLS = { currency: 'INR', party_id: PARTY, side: 'customer', asOf: DAY, tab: 'needs', why: null, state: 'open', band: null, sort: 'urgent', bills: [BILL_LATE, BILL_QUIET], counts: { needs: 1, open: 2, paid: 0, all: 2, in_order: 1 }, owed_minor: 50000, bands: { '1-30': 30000 }, on_account_minor: 0, mark_actions: null, checks: true, total: 2, page: 1, limit: 25 };
-const BILLS_PATCH = { books: { knownParty: async () => true }, partybills: { read: async () => PARTY_BILLS } };
 const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
   X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
