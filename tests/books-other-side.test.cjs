@@ -22,6 +22,14 @@ t('the tax line is left out: rent with its tax is still the one ledger Rent', ()
   const taxed = [L(1, '6300', 'Rent', 90909, 0), L(2, '2310', 'Tax paid', 9091, 0, { tax: true }), L(3, '1010', 'Bank', 0, 100000)];
   assert.deepStrictEqual(O.otherOf(taxed, taxed[2]), { code: '6300', name: 'Rent' });
 });
+t('the pack own tax ledgers (any country's names) stay out: a bill's tax line, found by its role, is not a second ledger', () => {
+  const roles = O.taxRolesOf({ taxLedgers: { gst: { input: 'gst_paid', output: 'gst_collected' }, vat: { input: 'vat_in', rcm: 'vat_rcm' } } });
+  assert.deepStrictEqual([...roles].sort(), ['gst_collected', 'gst_paid', 'vat_in', 'vat_rcm']);
+  const bill = [L(1, '6030', 'Electricity', 22000, 0, { role: 'electricity' }), L(2, '2210', 'GST paid', 2200, 0, { role: 'gst_paid' }), L(3, '1500', 'Bank', 0, 24200, { role: 'bank' })];
+  assert.deepStrictEqual(O.otherOf(bill, bill[2], roles), { code: '6030', name: 'Electricity' });
+  assert.deepStrictEqual(O.otherOf(bill, bill[2]), { code: null, name: 'Split', count: 2 }, 'without the pack it cannot tell, and says Split');
+  assert.strictEqual(O.taxRolesOf(null).size, 0);
+});
 t('several ledgers: Split, with how many', () => {
   const split = [L(1, '6300', 'Rent', 60000, 0), L(2, '6400', 'Power', 40000, 0), L(3, '1010', 'Bank', 0, 100000)];
   assert.deepStrictEqual(O.otherOf(split, split[2]), { code: null, name: 'Split', count: 2 });
