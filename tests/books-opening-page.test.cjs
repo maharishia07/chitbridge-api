@@ -37,7 +37,7 @@ async function run(country) {
   X.T.parties.push({ owner: SHOP, party_id: CUST, party_no: 'P-00001', name: 'Ravi Stores', customer: true, credit_days: 10 });
   const D = S.start;
   const bills = (extra) => [
-    { code: C.debtors, party_id: CUST, dr_minor: 330000, bill_ref: 'INV-1', due_date: '2026-07-31' },
+    { code: C.debtors, party_id: CUST, dr_minor: 330000, bill_ref: 'INV-1', bill_date: '2026-06-20', due_date: '2026-07-31' },
     { code: C.debtors, party_id: CUST, dr_minor: 110000 + (extra || 0), bill_ref: 'INV-2', due_date: '2026-08-15' },
     { code: C.creditors, party_id: SUPP, cr_minor: 220000, bill_ref: 'B-9', due_date: '2026-08-01' }
   ];
@@ -69,7 +69,7 @@ async function run(country) {
   const save = await q('POST', '/opening', { date: D, rows: grid({ equity: 1434050 }).filter((r) => !r.control), client_ref: 'grid:A', require_balanced: true });
   wrap.ok('   Save with the Difference at 0 → 200, an entry, nothing in Suspense', save.status === 200 && /^JV\//.test(save.body.entry_no) && save.body.suspense_minor === 0, JSON.stringify(save.body));
   const saved = await call('GET', '/opening?date=' + D);
-  wrap.ok('   GET /opening shows every line with ledger, bill, due, who and when', saved.status === 200 && saved.body.lines.length === 7 && saved.body.lines.some((l) => l.bill_ref === 'INV-2' && l.due_date === '2026-08-15' && l.dr_minor === 110000) && saved.body.entries.length === 1 && saved.body.entries[0].source.kind === 'typed' && saved.body.entries[0].at, JSON.stringify(saved.body.lines.length) + JSON.stringify(saved.body.entries));
+  wrap.ok('   GET /opening shows every line with ledger, bill, due, who and when', saved.status === 200 && saved.body.lines.length === 7 && saved.body.lines.some((l) => l.bill_ref === 'INV-1' && l.bill_date === '2026-06-20' && l.bill_ref !== 'x' || l.bill_ref === 'INV-2' && l.due_date === '2026-08-15' && l.dr_minor === 110000) && saved.body.entries.length === 1 && saved.body.entries[0].source.kind === 'typed' && saved.body.entries[0].at, JSON.stringify(saved.body.lines.length) + JSON.stringify(saved.body.entries));
   wrap.ok('   the grid is told which ledgers to pin, from the pack: bank, debtors, creditors, equity and the pack tax ledgers', [C.bank, C.debtors, C.creditors, C.capital, C.taxPaid, C.taxCollected].every((code) => saved.body.pinned.some((p) => p.code === code)), JSON.stringify(saved.body.pinned));
   const asSaved = await call('POST', '/opening/preview', { rows: grid({ equity: 1434050 }), date: D });
   wrap.ok('   the same rows previewed as a NEW opening name the entry that already holds them', asSaved.body.can_save === false && asSaved.body.refusals.some((r) => /already posted/.test(r.why)), JSON.stringify(asSaved.body.refusals));
@@ -98,6 +98,10 @@ async function run(country) {
   /* a bill stays open through replace (the probe the critic asked for) */
   const keep = await call('POST', '/opening/replace', { date: D, rows: grid({ bank: 1230450, equity: 1430450 }).map((r) => (r.code === C.taxPaid ? Object.assign({}, r, { dr_minor: 25000 }) : r)).map((r) => (r.code === C.capital ? Object.assign({}, r, { cr_minor: 1435450 }) : r)), client_ref: 'grid:E', reason: 'tax paid corrected' });
   wrap.ok('   replace where the bills stay open: INV-1, INV-2, B-9 are re-opened, not refused as already open', keep.status === 200 && keep.body.changes === 2, JSON.stringify(keep.body));
+  const lastRows = (await call('GET', '/opening?date=' + D)).body.lines;
+  wrap.ok('   the saved bill shows its own date (INV-1 dated 2026-06-20)', lastRows.some((l) => l.bill_ref === 'INV-1' && l.bill_date === '2026-06-20'), JSON.stringify(lastRows.filter((l) => l.bill_ref)));
+  const dateOnly = await call('POST', '/opening/replace', { date: D, rows: grid({ bank: 1230450, equity: 1435450 }).map((r) => (r.code === C.taxPaid ? Object.assign({}, r, { dr_minor: 25000 }) : r.bill_ref === 'INV-2' ? Object.assign({}, r, { bill_date: '2026-06-25' }) : r)), client_ref: 'grid:G', reason: 'bill dated' });
+  wrap.ok('   changing only the bill date is a change: 200, logged with the reason', dateOnly.status === 200 && X.T.changes.some((c) => c.table_name === 'opening' && /INV-2/.test(c.field) && /2026-06-25/.test(c.new) && /bill dated/.test(c.new)), JSON.stringify(dateOnly.body));
   /* Move in's several entries on one day all show */
   const second = await q('POST', '/opening', { date: D, rows: [{ code: C.bank, dr_minor: 5000 }, { code: C.capital, cr_minor: 5000 }], client_ref: 'movein:2' });
   const shown = await call('GET', '/opening?date=' + D);
