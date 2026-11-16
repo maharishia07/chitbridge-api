@@ -121,6 +121,13 @@ t('the auditor seat opens the pipeline, the accountant seat opens On us today; s
   keys.forEach((k) => assert.strictEqual(tile(a, 'on_us', k), tile(c, 'on_us', k), k));
   assert.deepStrictEqual(keys.map((k) => tile(c, 'on_us', k)), [1, 1, 1, 1, 1]);
 });
+t('A3P rank 6: the entries-to-check tile counts the work (entries) beside the clients behind; clients with nothing to check add 0', () => {
+  const rs = [row({ to_check: 4 }), row({ to_check: 6 }), row({ to_check: 0 }), row({})];
+  const tile = H.bandOf(rs, { seat: 'accountant' }).bands.find((x) => x.key === 'on_us').tiles.find((x) => x.key === 'to_check');
+  assert.deepStrictEqual([tile.n, tile.entries], [2, 10]);
+  const none = H.bandOf([row({})], { seat: 'accountant' }).bands.find((x) => x.key === 'on_us').tiles.find((x) => x.key === 'to_check');
+  assert.deepStrictEqual([none.n, none.entries], [0, 0]);
+});
 t('seatOf: auditor if the roles list holds auditor; an adviser-only list is accountant', () => {
   assert.strictEqual(H.seatOf(['adviser', 'auditor']), 'auditor');
   assert.strictEqual(H.seatOf(['auditor']), 'auditor');
