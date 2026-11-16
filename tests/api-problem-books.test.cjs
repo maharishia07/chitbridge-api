@@ -367,7 +367,36 @@ const BANK_RECORD = [
   X('bank-statement-date-not-a-day', 'POST /api/books/bank/statements', 400, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendStatement: async () => { throw Object.assign(new Error('period_from is a date, YYYY-MM-DD.'), { code: 'DATE_INVALID', refused: true, status: 400, field: 'period_from' }); } } } }),
   X('bank-log-date-not-a-day', 'GET /api/books/bank/log', 400, { url: MOUNT + '/bank/log?account=1510&from=not-a-day', patch: { brl: { accountIn: () => BANK_ACCOUNT } } })
 ];
-const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, [
+/** l16 harden: the evidence file, the bank rail leg and the statements box. What the real readers answer is handed over whole (the stand-in db cannot seat a document, a chit or a kept file); the refusals the box raises are its own (BSF.refuse, as lib/bank-statement-file throws them) */
+const BSF = require(path.join(HERE, 'lib', 'bank-statement-file'));
+const EVIDENCE_PATCH = { evidence: { isEvidence: async () => true }, storage: { getBlob: async () => ({ name: 'bill.pdf', mime: 'application/pdf', size: 4, data: Buffer.from('%PDF') }) } };
+const RAIL_PATCH = {
+  store: { bankRailChits: async () => [{ chit_id: PARTY, direction: 'in', status: 'sealed', created_at: DAY + 'T05:00:00.000Z', party_id: PARTY, party_name: 'Asha Stores', business_json: { kind: 'payment_advice', currency: 'INR' }, line_items: [{ ref_chit_id: PARTY, bill_no: 'B-101', applied_minor: 50000 }] }], parties: async () => [{ party_id: PARTY, name: 'Asha Stores', nickname: null, on_rail: true }] },
+  bankopen: { openDocuments: async () => ({ parties: [{ id: PARTY, name: 'Asha Stores', kind: 'customer' }], open_items: [{ ref: 'INV-1', bill_no: 'B-101', party: PARTY, side: 'receivable', open_minor: 50000, currency: 'INR', due_date: DAY }] }) }
+};
+const SF_READY = { schema: { hasTable: async () => true } }; /* the box's tables exist in the worlds that look for a file, so an unknown or another shop's id reaches the read and is the one 404 */
+const SF_FILE = { id: PARTY, account_id: PARTY, label: '..1234', period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR', name: 'oct.csv', size: 120, mime: 'text/csv', kind: 'csv', source: 'owner', overlaps: false, by_name: 'Test shop', by_firm: null, for_client: false, added_at: DAY + 'T05:00:00.000Z', read_at: null, reads: 0 };
+const SF_LIST = { months: ['2026-10', '2026-11'], accounts: [{ account_id: PARTY, code: '1510', name: 'Bank', label: '..1234' }], cells: [{ account_id: PARTY, month: '2026-10', missing: false, file_ids: [PARTY] }, { account_id: PARTY, month: '2026-11', missing: true, file_ids: [] }], files: [SF_FILE], older: 0 };
+const SF_BODY = { account: '1510', name: 'oct.csv', text: 'a,b', sha256: 'a'.repeat(64), period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR' };
+const SF_ADD = (answer) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => answer } });
+const SF_REFUSES = (reason, code, status, more) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => { throw Object.assign(BSF.refuse(reason, code, status), more || {}); } } });
+const BOX_ROWS = [
+  X('evidence-read', 'GET /api/books/evidence/:id', 200, { patch: EVIDENCE_PATCH }),
+  X('rail-read', 'GET /api/books/bank/rail', 200, { patch: RAIL_PATCH }),
+  X('statement-files-read', 'GET /api/books/bank/statement-files', 200, { url: MOUNT + '/bank/statement-files?accounts=1510&months=2', patch: { bsf: { list: async () => SF_LIST } } }),
+  X('statement-files-paged', 'GET /api/books/bank/statement-files', 200, { url: MOUNT + '/bank/statement-files?accounts=1510&months=2&limit=25', patch: { bsp: { list: async () => Object.assign({ total: 1, next: null }, SF_LIST) } } }),
+  X('statement-files-months-too-many', 'GET /api/books/bank/statement-files', 400, { url: MOUNT + '/bank/statement-files?accounts=1510&months=99' }),
+  X('statement-files-months-asked-twice', 'GET /api/books/bank/statement-files', 422, { url: MOUNT + '/bank/statement-files?months=3&months=4' }),
+  X('statement-file-bytes', 'GET /api/books/bank/statement-files/:id/file', 200, { patch: { bsf: { open: async () => ({ file: { name: 'oct.csv', mime: 'text/csv', data: Buffer.from('a,b') } }) } }, inWorlds: SF_READY }),
+  X('statement-file-bytes-lost', 'GET /api/books/bank/statement-files/:id/file', 503, { patch: { bsf: { open: async () => { throw BSF.refuse('The kept file could not be opened. Nothing was lost; try again in a minute.', 'FILE_NOT_OPENED', 503); } } } }),
+  X('statement-file-kept', 'POST /api/books/bank/statement-files', 201, { body: SF_BODY, patch: SF_ADD({ file: SF_FILE, overlaps: [{ id: PARTY, name: 'sep.csv', period_from: '2026-09-15', period_to: '2026-10-05' }], words: 'Kept. It overlaps 1 other statement of this account.' }) }),
+  X('statement-file-period-missing', 'POST /api/books/bank/statement-files', 400, { body: SF_BODY, patch: SF_REFUSES('Which day does the statement start? The file must say, as YYYY-MM-DD.', 'PERIOD_NEEDED', 400) }),
+  X('statement-file-already-in-box', 'POST /api/books/bank/statement-files', 409, { body: SF_BODY, patch: SF_REFUSES('Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.', 'ALREADY_IN_BOX', 409, { existing_id: PARTY }) }),
+  X('statement-file-too-large', 'POST /api/books/bank/statement-files', 413, { body: SF_BODY, patch: SF_REFUSES('That file is over 6 MB, which is more than a statement should be.', 'FILE_TOO_LARGE', 413) }),
+  X('statement-file-wrong-type', 'POST /api/books/bank/statement-files', 415, { body: SF_BODY, patch: SF_REFUSES('Only CSV, JSON or TXT statements can be kept here.', 'FILE_TYPE_NOT_KEPT', 415) }),
+  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) })
+];
+const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
   X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
   X('returns-from-rail-other-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP('AU') } } }),
@@ -497,7 +526,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);

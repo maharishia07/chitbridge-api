@@ -369,10 +369,10 @@
       "file": "books-grants.js",
       "trips": 3,
       "wire": 10,
-      "fired": false,
+      "fired": true,
       "status": 200,
       "extra": true,
-      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Measure on SIT with 150 clients."
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed."
     },
     "GET /api/books-grants/log": {
       "file": "books-grants.js",
@@ -5490,6 +5490,14 @@
       "fired": true,
       "status": 422,
       "basis": "live from the sit-grund throwaway api 2026-11-16 (3 cold: chart + items + terms; 2 warm; the marks and evidence read ride the list transaction)"
+    },
+    "GET /api/books/evidence/:id": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 harden hand count by reading the code path (no run: the books setting and country gate, the evidence test in one transaction, the document read in one transaction, the byte store read; a look under a grant adds none here); the offline stub reaches a 422 floor; live measure pending"
     }
   }
 }

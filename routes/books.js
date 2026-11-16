@@ -1137,7 +1137,7 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
     res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
-      fy_from: fyStart(req, asOf) /* the year the as-at day is in: what a line's entries are read from */,
+      fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
       rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
@@ -1686,9 +1686,12 @@ router.get('/bank/log', auth, noKey, on, ...checked('GET /bank/log'), async (req
 /* ── l16 · THE STATEMENTS BOX (lib/bank-statement-file, b872): a bank statement kept against a bank account and a period; the page's own bank list names the accounts, the page's own reader reads the file (no parse here). ── */
 const BSF = require('../lib/bank-statement-file');
 const BSP = require('../lib/bank-statement-page');
-/** a refusal of the box answers as it is (its own status, code and sentence); anything else is the books' general mapping */
+/** a refusal of the box as a verdict: its code and the line the box wrote (BSF.verdictOf), with the old {error, message, field, existing_id} keys beside it; the exception's own text is never sent */
+const statementBody = (box) => ({ code: box.code, detail: box.line, legacy: { code: box.code, error: box.line, message: box.line, field: box.field, existing_id: box.existing_id } });
+/** a refusal of the box answers as its verdict (its own status, code and written line); anything else is the books' general mapping */
 function statementFail(req, res, err) {
-  if (err && err.statementBox) return problem(req, res, { status: err.status, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field, existing_id: err.existing_id } });
+  const box = BSF.verdictOf(err);
+  if (box) return problem(req, res, Object.assign({ status: box.status }, statementBody(box)));
   return problem(req, res, refusalOf(err, req));
 }
 /** the writer's stamp from the SESSION and the live grant (never the body): { user, name, firm, grant_id } */
@@ -1703,6 +1706,11 @@ router.post('/bank/statement-files', auth, noKey, editor, on, ...checked('POST /
     const account = await withEntity(e, (handle) => bankAccountOf(handle, e, body.account));
     res.status(201).json(await BSF.add(withEntity, e, account, curOf(req), body, stampOfReq(req)));
   } catch (err) {
+    const box = BSF.verdictOf(err); /* the box's own refusals that are not a bad question, each with its status named here: the same file twice, a file over 6 MB, a type that is no statement, the box not ready or the file not kept */
+    if (box && box.status === 409) return problem(req, res, { status: 409, ...statementBody(box) });
+    if (box && box.status === 413) return problem(req, res, { status: 413, ...statementBody(box) });
+    if (box && box.status === 415) return problem(req, res, { status: 415, ...statementBody(box) });
+    if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) });
     statementFail(req, res, err);
   }
 });
@@ -1721,6 +1729,8 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
     });
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
+    const box = BSF.verdictOf(err);
+    if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) }); /* the box is not set up yet: in words, nothing lost */
     statementFail(req, res, err);
   }
 });
@@ -1735,6 +1745,8 @@ router.get('/bank/statement-files/:id/file', auth, noKey, on, ...checked('GET /b
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such statement in this shop.');
     require('../lib/attachment-send').sendBlob(res, out.file, { cache: 'private, no-store' });
   } catch (err) {
+    const box = BSF.verdictOf(err);
+    if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) }); /* the box is not set up yet, or the bytes could not be opened: in words, nothing lost */
     statementFail(req, res, err);
   }
 });
