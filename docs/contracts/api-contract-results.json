@@ -314,6 +314,14 @@
     422
    ]
   },
+  "GET /api/books-grants/practice": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/assets": {
    "cases": 2,
    "failed": 0,

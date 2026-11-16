@@ -367,12 +367,12 @@
     },
     "GET /api/books-grants/practice": {
       "file": "books-grants.js",
-      "trips": 3,
+      "trips": 4,
       "wire": 10,
       "fired": true,
       "status": 200,
       "extra": true,
-      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. MIS 0b/0c (l17): PLUS per client ONE readBatch (BEGIN, the binding, review-mark open-count read, coverage reads, the on_us read, and the now-reads of both id sets, COMMIT as one message) = 1 trip a client, 6 clients at once (MARK_WORKERS). Read on sit-grund 16 Nov at 150 clients: 6 statements before the marks, 1,356 with a withEntity per client (9 a client), 156 now (6 + 150); a firm with no client stays 3.",
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. MIS 0b/0c (l17): PLUS per client ONE readBatch (BEGIN, the binding, review-mark open-count read, coverage reads, the on_us read, and the now-reads of both id sets, COMMIT as one message) = 1 trip a client, 6 clients at once (MARK_WORKERS). Read on sit-grund 16 Nov at 150 clients: 6 statements before the marks, 1,356 with a withEntity per client (9 a client), 156 now (6 + 150); a firm with no client stays 3. MIS 0a (16 Nov): PLUS 1 trip (ONE more queryAsEach for the year on year of the page clients only, the verdict never needs it); SOLD for the trend is read inside the one statement over the last 4 closed months, never one trip per client.",
       "per_client_trips": 1
     },
     "GET /api/books-grants/log": {

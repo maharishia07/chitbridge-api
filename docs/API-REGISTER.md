@@ -1531,8 +1531,8 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - reads (derived): - · writes (derived): - · callers: books-grant-member.js · actions: -
 
 **GET /api/books-grants/practice** · books-grants · cb-accounting · partial
-- does: Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).
-- errors: 2 code(s) [BOOKS_GRANT_NOT_FOR_YOU, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 500, 503 · money n (derived)
+- does: Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).
+- errors: 2 code(s) [BOOKS_GRANT_NOT_FOR_YOU, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 3 (wire 10; share books-practice.js 3/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-practice.js · actions: -
 

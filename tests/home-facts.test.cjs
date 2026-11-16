@@ -43,6 +43,22 @@ const todayKey = H.dayOf(new Date(), 'IN');
 const SHUT_AT = new Date().toISOString();
 const F = { booksBills: false, c2open: false, booksDay: false, crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
 const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_json: { summary: { period: 'day', key, till: { id: 'C1' }, summarised_at: new Date().toISOString(), totals: { count: 12, returns: 0, gross: 4400, refunds: 79.5, expenseCount: 0, expenses: 0, total: 4320.5, by: {} } } } });
+/** the rows soldByDay's ONE statement answers, folded from the stand-in's line rows: one posting day (today), SOLD and TAKEN by role, the reversed entries and the reversals out, bills per entry (a closing names its covers) */
+function foldDay(lines) {
+  const reversed = new Set(lines.filter((l) => l.reverses_entry_id).map((l) => String(l.reverses_entry_id))), kinds = ['walkin_day', 'sale_bill', 'credit_given', 'return'];
+  const tender = ['cash', 'upi', 'card', 'bank'], by = new Map();
+  for (const l of lines) {
+    if (l.reverses_entry_id || reversed.has(String(l.entry_id)) || kinds.indexOf(l.event_type) < 0) continue;
+    const x = by.get(l.entry_id) || { sold: 0, taken: 0, bills: l.covers != null ? l.covers : l.event_type === 'return' ? 0 : 1 };
+    const net = l.dr_minor - l.cr_minor;
+    if (tender.indexOf(l.account_role) >= 0 || l.account_role === 'debtors') x.sold += net;
+    if (tender.indexOf(l.account_role) >= 0) x.taken += net;
+    by.set(l.entry_id, x);
+  }
+  if (!by.size) return [];
+  const all = [...by.values()], add = (k) => all.reduce((t, x) => t + x[k], 0);
+  return [{ day: todayKey, sold: add('sold'), taken: add('taken'), bills: add('bills'), cur_lo: 'INR', cur_hi: 'INR' }];
+}
 function chits() {
   if (F.chits === 'many') return Array.from({ length: 5000 }, (_, i) => ({ chit_id: 'x' + i, direction: 'received', current_status: 'completed', created_at: new Date(Date.now() - 40 * DAYS), open_disputes: 0 }));
   const d = (n) => new Date(Date.now() - n * DAYS);
@@ -104,7 +120,8 @@ function answer(text, params) {
   if (/FROM supplier_list sl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('s1'), party('s2'), party('s3', { merged_into: 's1' }), party('b1')] }; }
   /* REP-52: the rows books-store.entryLines answers — one row per LINE with its account role (the card sums lines by role; the `tenders` jsonb is the Day book column's) */
   if (/COUNT\(DISTINCT h\.entry_id\) AS n FROM journal_line/.test(sql)) return { rows: [{ n: F.bankPosted || 0 }] };
-  if (/FROM journal_line l JOIN journal_entry h/.test(sql)) return { rows: F.booksDay ? [
+  if (/SELECT min(h.posting_date)::text AS day FROM journal_entry/.test(sql)) return { rows: [{ day: F.booksDay ? todayKey : null }] };
+  if (/FROM journal_line l JOIN journal_entry h|GROUP BY x.day/.test(sql)) { const lines = F.booksDay ? [
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'cash', dr_minor: 40000, cr_minor: 0, line_no: 1 },   /* a day, closed once (reversed below) */
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 40000, line_no: 2 },
     { entry_id: 'r1', event_type: 'reversal', covers: null, reverses_entry_id: 'd1', source_chit_id: null, account_role: 'cash', dr_minor: 0, cr_minor: 40000, line_no: 1 },
@@ -122,7 +139,8 @@ function answer(text, params) {
     { entry_id: 'lt', event_type: 'walkin_day', covers: null, source_chit_id: 's5', account_role: 'cash', dr_minor: 2000, cr_minor: 0, line_no: 1 },
     { entry_id: 'lt', event_type: 'walkin_day', covers: null, source_chit_id: 's5', account_role: 'sales', dr_minor: 0, cr_minor: 2000, line_no: 2 },
     { entry_id: 'py', event_type: 'payment_in', covers: null, source_chit_id: 's6', account_role: 'cash', dr_minor: 4000, cr_minor: 0, line_no: 1 },
-    { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
+    { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [];
+    return { rows: /GROUP BY x.day/.test(sql) ? foldDay(lines) : lines }; }
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
   if (/FROM chit_disputes WHERE entity_id = [$]1 AND status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };

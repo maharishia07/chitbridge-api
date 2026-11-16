@@ -248,28 +248,23 @@ function create() {
     async relabelPeriods(db, e, fromFy, rows) {
       (rows || []).forEach((r) => { const p = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fromFy && Number(x.period) === Number(r.period)); if (p) Object.assign(p, { fiscal_year: r.fiscal_year, start_date: r.start_date, end_date: r.end_date }); });
     },
-    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
-    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
-    async soldByDay(db, e) {
-      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
-      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
-        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
-        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
-        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
+    /* REP-48: the in-memory twin of soldByDay (same shape, bounds, mixed rule) — held to the real SQL by tests/sold-one-rule.test.cjs; the kinds and roles are written here as plain lists so no other file names the real constants */
+    async soldByDay(db, e, bound) {
+      const kinds = ['walkin_day', 'sale_bill', 'credit_given', 'return'], tenders = ['cash', 'upi', 'card', 'bank'], soldRoles = tenders.concat('debtors');
+      const days = new Map(), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {};
+      T.entries.filter((h) => h.entity_id === e && kinds.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
+        const day = ymd(h.posting_date);
+        if ((bound && bound.from && day < bound.from) || (bound && bound.to && day > bound.to)) return;
+        const lines = T.lines.filter((l) => l.entry_id === h.entry_id && soldRoles.indexOf(acct(l).role) >= 0);
+        const d = days.get(day) || { day, sold: 0, taken: 0, bills: 0, cur: new Set() };
+        lines.forEach((l) => { const net = (l.dr_minor || 0) - (l.cr_minor || 0); d.sold += net; if (tenders.indexOf(acct(l).role) >= 0) d.taken += net; d.cur.add(l.currency || 'INR'); });
+        d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(day, d);
       });
-      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
+      const money = (d, k) => (d.cur.size > 1 ? { minor: null, currency: '*mixed*' } : { minor: d[k], currency: [...d.cur][0] || null });
+      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day)).map((d) => ({ day: d.day, sold: money(d, 'sold'), taken: money(d, 'taken'), bills: d.bills }));
     },
-    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
-    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
-    async soldByDay(db, e) {
-      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
-      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
-        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
-        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
-        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
-      });
-      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
-    },
+    soldEntriesSql: require('../../lib/books-store').soldEntriesSql,
+    async soldFrom(db, e) { const k = ['walkin_day', 'sale_bill', 'credit_given', 'return']; const d = T.entries.filter((h) => h.entity_id === e && k.indexOf(h.event_type) >= 0).map((h) => ymd(h.posting_date)).sort(); return d[0] || null; },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
