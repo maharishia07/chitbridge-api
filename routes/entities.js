@@ -738,7 +738,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     let ledger_on; /* undefined = UNKNOWN (omitted from the answer): the page then asks the old way — an unreadable switch is never reported "off" */
     try {
       const eidLedger = auth.entityOf(req);
-      ledger_on = await withEntity(eidLedger, (h) => require('../lib/books').ledgerOn(h, eidLedger)); /* lib/books.ledgerOn — the books gate's own read (settingOf): no row = false */
+      ledger_on = await require('../lib/books').ledgerOnBatch(eidLedger); /* lib/books.ledgerOnBatch — the books gate's own row (S.SETTING_SQL) in ONE readBatch trip: no row = false */
     } catch (e) {
       log.fellBack('entities GET /me: the ledger switch read failed — ledger_on left out (unknown, not off)', e);
     }
