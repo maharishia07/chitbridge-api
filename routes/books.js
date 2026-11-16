@@ -1428,7 +1428,8 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
         name = who.name;
       const prop = await B.proposeFor(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, currency: q.cur });
       /* W15-95 / W15-96: `checks: true` (the bill list under a party, the Pay confirm) adds each open bill's own amount, its mark and its evidence flag — the Day book's own sources */
-      const marking = (req.body || {}).checks === true ? await require('../lib/bill-checks').attach(h, e, req, prop, { pack: B.packOf(req.books), cur: curOf(req) }) : null;
+      const checksAsked = (req.body || {}).checks === true,
+        billChecks = checksAsked ? await require('../lib/bill-checks').attach(h, e, req, prop, { pack: B.packOf(req.books), cur: curOf(req) }) : null;
       const warnings = await B.duplicateWarnings(
         h,
         e,
@@ -1448,8 +1449,8 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
         why: prop.why,
         warnings,
         words: B.previewWords(prop, name, q.direction),
-        mark_actions: marking ? marking.mark_actions : undefined,
-        checks: marking ? true : undefined /* says the rows below carry the bill checks, so a caller never mistakes an older answer for "every bill paid" */
+        mark_actions: billChecks ? billChecks.mark_actions : undefined,
+        checks: billChecks ? true : undefined /* says the rows below carry the bill checks, so a caller never mistakes an older answer for "every bill paid" */
       };
     });
     res.json(await forPayer(req, e, 'preview', q.direction, { currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words, ...(out.checks ? { mark_actions: out.mark_actions, checks: true } : {}) }));
