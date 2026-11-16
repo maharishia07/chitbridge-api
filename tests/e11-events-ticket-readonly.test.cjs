@@ -56,3 +56,4 @@ it('the route binds the ticket to the caller\'s entity only: ticketFor is never 
 });
 
 console.log('\n  ' + pass + ' passed');
+process.exit(process.exitCode || 0); /* the heartbeat timers hold the loop open */
