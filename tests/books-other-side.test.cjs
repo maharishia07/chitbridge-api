@@ -22,7 +22,7 @@ t('the tax line is left out: rent with its tax is still the one ledger Rent', ()
   const taxed = [L(1, '6300', 'Rent', 90909, 0), L(2, '2310', 'Tax paid', 9091, 0, { tax: true }), L(3, '1010', 'Bank', 0, 100000)];
   assert.deepStrictEqual(O.otherOf(taxed, taxed[2]), { code: '6300', name: 'Rent' });
 });
-t('the pack own tax ledgers (any country's names) stay out: a bill's tax line, found by its role, is not a second ledger', () => {
+t('the tax ledgers of the pack (any country names) stay out: a bill tax line, found by its role, is not a second ledger', () => {
   const roles = O.taxRolesOf({ taxLedgers: { gst: { input: 'gst_paid', output: 'gst_collected' }, vat: { input: 'vat_in', rcm: 'vat_rcm' } } });
   assert.deepStrictEqual([...roles].sort(), ['gst_collected', 'gst_paid', 'vat_in', 'vat_rcm']);
   const bill = [L(1, '6030', 'Electricity', 22000, 0, { role: 'electricity' }), L(2, '2210', 'GST paid', 2200, 0, { role: 'gst_paid' }), L(3, '1500', 'Bank', 0, 24200, { role: 'bank' })];
