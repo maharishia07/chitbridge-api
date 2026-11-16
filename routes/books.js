@@ -1192,6 +1192,14 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
     /* ACC-357 (W15-119): "as at" a day, or a kind (today · month end · year end) stepped with ‹ ›; the prior month and the prior year beside it, in ONE view (beyond QuickBooks, which cannot) */
     const picked = req.query.kind ? R.asAtOf({ kind: req.query.kind, step: req.query.step }, day, fyMonth) : null;
     const asOf = picked ? picked.as_at : dateQ(req.query.asOf, day);
+    if (req.query.ageing === 'only') {
+      /* the Schedule III ageing alone (pack-driven; null when the shop's pack has no such note), the same read the sheet used to carry */
+      const only = await withEntity(e, async (h) => {
+        const chart = await S.accounts(h, e);
+        return require('../lib/books-statement-ageing').statementAgeing(h, e, chart, B.packOf(req.books), asOf, Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to));
+      });
+      return res.json(await forBooksDoor(req, e, 'bs', { currency: curOf(req), asOf, ageing_note: only }));
+    }
     const out = await withEntity(e, async (h) => {
       const chart = await S.accounts(h, e),
         nature = new Map(chart.map((item) => [String(item.code), item.nature])),
@@ -1245,7 +1253,8 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
       const term_groups = { assets: N.termGroups(assets, termOf), liabilities: N.termGroups(liabilities, termOf), equity: N.termGroups(equity, () => 'equity') };
       const termSum = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
       const terms_ok = termSum(term_groups.assets) === now.bs.total_assets_minor && termSum(term_groups.liabilities) === now.total_liabilities_minor && termSum(term_groups.equity) === now.total_equity_minor;
-      const ageing_note = await require('../lib/books-statement-ageing').statementAgeing(h, e, chart, B.packOf(req.books), asOf, Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to));
+      /* l16-country 5-year check: the ageing schedule reads every open item (as /dues does) — measured 2-3 s at 29,000 items — so the sheet answers WITHOUT it and the page asks for it with ?ageing=only */
+      const ageing_note = null;
       const sumOf = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
       const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
       const net_assets_minor = now.bs.total_assets_minor - now.total_liabilities_minor;
