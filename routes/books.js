@@ -35,7 +35,7 @@ const express = require('express');
 const router = express.Router(); router.use(require('../middleware/books-grant')); /* ACC-176: a request that names a member's books (X-Books-For) is read-only for a live grant; no header, no effect */
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
-const B = require('../lib/books');
+const B = require('../lib/books'), N = require('../lib/books-statement-notes');
 const E = require('../lib/books-engines');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
@@ -1092,7 +1092,7 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
 function flat(lines) {
   const out = [];
   (lines || []).forEach((item) =>
-    (item.accounts || []).forEach((account) => out.push({ code: account.code, name: account.name, amount_minor: account.amount_minor, line: item.label }))
+    (item.accounts || []).forEach((account) => out.push({ code: account.code, name: account.name, amount_minor: account.amount_minor, line: item.label, role: account.role }))
   );
   return out;
 }
@@ -1159,12 +1159,18 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
       asOf = dateQ(req.query.asOf, today(req));
     const out = await withEntity(e, async (h) => {
       const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books)); /* undefined until the entity-type decision is taken → Schedule III */
-      const nature = new Map((await S.accounts(h, e)).map((item) => [String(item.code), item.nature]));
-      const left = flat(bs.liabilities);
+      const chart = await S.accounts(h, e),
+        nature = new Map(chart.map((item) => [String(item.code), item.nature]));
+      const left = flat(bs.liabilities),
+        notes = N.netOfByRole((B.packOf(req.books).presentation || {}).taxNetting, chart),
+        liabilities = N.withNetOf(left.filter((item) => item.code && nature.get(String(item.code)) !== 'equity'), notes),
+        equity = left.filter((item) => !item.code || nature.get(String(item.code)) === 'equity');
       return {
-        assets: flat(bs.assets),
-        liabilities: left.filter((item) => item.code && nature.get(String(item.code)) !== 'equity'),
-        equity: left.filter((item) => !item.code || nature.get(String(item.code)) === 'equity'),
+        assets: N.withNetOf(flat(bs.assets), notes),
+        liabilities,
+        equity,
+        total_liabilities_minor: N.totalOf(liabilities),
+        total_equity_minor: N.totalOf(equity),
         total_assets_minor: bs.total_assets_minor,
         total_liab_equity_minor: bs.total_liabilities_minor,
         profit_to_date_minor: bs.profit_to_date_minor,

@@ -531,7 +531,8 @@
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "amount_minor": 118000,
-      "line": "Trade receivables"
+      "line": "Trade receivables",
+      "role": "debtors"
      }
     ],
     "liabilities": [
@@ -539,7 +540,12 @@
       "code": "2100",
       "name": "Suppliers (Sundry Creditors)",
       "amount_minor": 59000,
-      "line": "Trade payables"
+      "line": "Trade payables",
+      "role": "creditors",
+      "net_of": [
+       { "code": "2200", "name": "Output CGST" },
+       { "code": "2210", "name": "Input CGST" }
+      ]
      }
     ],
     "equity": [
@@ -547,9 +553,12 @@
       "code": null,
       "name": "Profit for the year to date",
       "amount_minor": -70000,
-      "line": "Reserves and surplus"
+      "line": "Reserves and surplus",
+      "role": "profit_to_date"
      }
     ],
+    "total_liabilities_minor": 188000,
+    "total_equity_minor": -70000,
     "total_assets_minor": 118000,
     "total_liab_equity_minor": 118000,
     "profit_to_date_minor": -70000,
@@ -629,6 +638,7 @@
     }
    },
    "optional": [
+    "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -1863,7 +1873,8 @@
       "code": "4000",
       "name": "Sales",
       "amount_minor": 100000,
-      "line": "Revenue from operations"
+      "line": "Revenue from operations",
+      "role": "sales"
      }
     ],
     "expense": [
@@ -1871,7 +1882,8 @@
       "code": "5000",
       "name": "Purchases",
       "amount_minor": 50000,
-      "line": "Purchases of stock-in-trade"
+      "line": "Purchases of stock-in-trade",
+      "role": "purchases"
      }
     ],
     "total_income_minor": 100000,
