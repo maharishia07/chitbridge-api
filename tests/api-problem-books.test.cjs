@@ -168,6 +168,14 @@ const ENTRY = '33333333-3333-4333-8333-333333333333';
 const ENTRY2 = '55555555-5555-4555-8555-555555555555';
 const CHIT = '99999999-9999-4999-8999-999999999999';
 const DAY = '2026-09-30';
+/** l16 Needs you: the evidence counts of a range (and the entries behind one), and a party's bills page: what the real readers answer, handed over whole (the stand-in db cannot seat the ledger rows they read) */
+const ATTENTION_COUNTS = { from: DAY, to: DAY, total: 3, no_tax_invoice: 1, no_file: 1, no_source: 0, open_queries: null, needs: 1 };
+const ATTENTION_ENTRIES = Object.assign({}, ATTENTION_COUNTS, { kind: 'needs', entries: [{ entry_id: PARTY, entry_no: 'EX-1', posting_date: DAY, event_type: 'expense', narration: 'Rent', total_minor: 10000 }], count: 1, page: 1, limit: 25 });
+const ATTENTION_PATCH = (answer) => ({ evidence: { attentionIn: async () => answer } });
+const BILL_LATE = { ref: 'INV-1', bill_no: 'B-101', date: DAY, due_date: DAY, amount_minor: 50000, owed_minor: 30000, status: 'part', days_overdue: 12, band: '1-30', no_terms: false, disputed: false, reasons: ['no_tax_invoice', 'overdue'], why: 'no_tax_invoice', action: 'attach', entry_id: PARTY, chit_id: PARTY, mark: 'query', evidence_flag: 'no_tax_invoice' };
+const BILL_QUIET = { ref: 'INV-2', bill_no: null, date: null, due_date: null, amount_minor: 20000, owed_minor: 20000, status: 'unpaid', days_overdue: null, band: null, no_terms: true, disputed: false, reasons: [], why: null, action: null, entry_id: null, chit_id: null, mark: null, evidence_flag: null };
+const PARTY_BILLS = { currency: 'INR', party_id: PARTY, side: 'customer', asOf: DAY, tab: 'needs', why: null, state: 'open', band: null, sort: 'urgent', bills: [BILL_LATE, BILL_QUIET], counts: { needs: 1, open: 2, paid: 0, all: 2, in_order: 1 }, owed_minor: 50000, bands: { '1-30': 30000 }, on_account_minor: 0, mark_actions: null, checks: true, total: 2, page: 1, limit: 25 };
+const BILLS_PATCH = { books: { knownParty: async () => true }, partybills: { read: async () => PARTY_BILLS } };
 const PAY_ROW = { payment_id: PARTY, party_id: PARTY, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cheque', reference: null, cheque_no: '1', cheque_bank: 'B', cheque_date: DAY, received_at: DAY, status: 'received', advice_chit_id: null, advice_shared_at: null };
 const JOURNAL = { ok: true, entry_id: ENTRY, entry_no: 'MJ/2026-27/1', posting_date: DAY, doc_date: DAY, moved: null, lines: 2, items: 0, note: null }; /* writeJournal :452 */
 const JOURNAL_MOVED = Object.assign({}, JOURNAL, { doc_date: '2026-09-28', moved: { from: '2026-09-28', to: DAY }, items: 1, note: 'Posted on the first open day.' });
@@ -293,6 +301,11 @@ const WRITES_READY = [
   X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: true, supplier: false, ledgered: false }) }) } }),
   X('statement-ledgered-only', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: false, supplier: false, ledgered: true }) }) } }),
   X('statement-stranger', 'GET /api/books/party/:id/statement', 404, {}),
+  /* l16 Needs you: the evidence counts, the entries behind a count, a party's bills; a party that is not this shop's is the one 404 (S35, the own id is the first row) */
+  X('attention-counts', 'GET /api/books/attention', 200, { patch: ATTENTION_PATCH(ATTENTION_COUNTS) }),
+  X('attention-entries', 'GET /api/books/attention', 200, { url: MOUNT + '/attention?kind=needs&page=1&limit=25', patch: ATTENTION_PATCH(ATTENTION_ENTRIES) }),
+  X('bills-of-a-party', 'GET /api/books/party/:id/bills', 200, { patch: BILLS_PATCH }),
+  X('bills-of-a-stranger', 'GET /api/books/party/:id/bills', 404, {}),
   /* S35 (Wave M · M3): the own id of a route whose other worlds (unknown, foreign) run the real code over the stand-in db; inWorlds is what those worlds keep too */
   X('compare-read', 'GET /api/books/compare/:id', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
   X('compare-read-csv', 'GET /api/books/compare/:id/csv', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
@@ -484,7 +497,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);

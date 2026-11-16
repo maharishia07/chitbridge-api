@@ -277,6 +277,12 @@
   404,
   500
  ],
+ "GET /api/books/attention": [
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/books/bank/log": [
   400,
   401,
@@ -428,6 +434,12 @@
   403,
   404,
   409,
+  500
+ ],
+ "GET /api/books/party/:id/bills": [
+  401,
+  403,
+  404,
   500
  ],
  "GET /api/books/party/:id/statement": [
