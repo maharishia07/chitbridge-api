@@ -112,6 +112,7 @@ t('shape adds stage, stage_blocker, year_end, to_check and withheld', () => {
   const s = P.shape(src({}), grant(true), null, TODAY);
   assert.deepStrictEqual([s.stage, s.stage_blocker, s.year_end.fy, s.to_check, s.health.withheld], ['complete', null, 2026, 6, { costs: null, currencies: null }]);
   assert.ok(Array.isArray(s.health.codes));
+  assert.deepStrictEqual(s.stages_reached, ['books_in', 'complete']);
 });
 t('withheld says costs for a grant without costs and currencies for a mixed client', () => {
   assert.strictEqual(P.shape(src({}), grant(false), null, TODAY).health.withheld.costs, 'costs');
