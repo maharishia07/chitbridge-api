@@ -329,6 +329,12 @@ jobs:
           CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/sec-185-identities-rls.realstack.cjs
+      - name: l16 ident - the books name readers (namesOf) under identities row security - own tree, granted and revoked firm people, nobody else; b860 off, on, and with the grant-party arm; real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/l16-ident-names.realstack.cjs
       - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
         env:
           API_BASE: http://127.0.0.1:3000
