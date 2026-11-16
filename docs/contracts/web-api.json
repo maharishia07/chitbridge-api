@@ -2038,6 +2038,7 @@
        }
       },
       "open_below_locked": true,
+      "before_books": true,
       "lock_trail": [],
       "checked": 0,
       "of": 0
@@ -2052,6 +2053,9 @@
     "periods[].checked",
     "periods[].of",
     "periods[].before_books",
+    "books_start",
+    "lock_date",
+    "gaps",
     "years[].checked",
     "years[].of"
    ],
@@ -2063,6 +2067,9 @@
     "periods[].checked",
     "periods[].of",
     "periods[].before_books",
+    "books_start",
+    "lock_date",
+    "gaps",
     "years[].checked",
     "years[].of"
    ]
