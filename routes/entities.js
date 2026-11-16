@@ -717,14 +717,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     let stampRows;
     let ledgerRow;
     try {
-      const eidBatch = auth.entityOf(req);
-      const govresolve = require('../lib/govresolve');
-      const [stampRead, ledgerRead] = await require('../db').readBatch(eidBatch, null, [
-        { text: govresolve.STAMP_SQL, params: [eidBatch] },
-        { text: require('../lib/books-store').SETTING_SQL, params: [eidBatch] }
-      ]);
-      stampRows = stampRead.rows;
-      ledgerRow = ledgerRead.rows[0] || null;
+      ({ stampRows, ledgerRow } = await require('../lib/govresolve').stampAndLedgerOf(auth.entityOf(req))); /* the reads live in the lib: this route holds no statement */
     } catch (e) {
       log.fellBack('entities GET /me: the governance + ledger batch failed — each read goes on its own', e);
     }
