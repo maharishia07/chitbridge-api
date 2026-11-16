@@ -1,0 +1,31 @@
+{
+  "_about": "HAND-WRITTEN expected totals for three sample months of tools/seed/mis-history.json (AUD, whole dollars and cents), for cb-business to check against the books later. SOLD = the Day book's tax-inclusive figure (walk-in days + the one tax-inclusive credit sale); the 330.00 sale of the 20th is posted and REVERSED, so it is in no total. Working: month = days x daily x 1.1 + 220.00.",
+  "currency": "AUD",
+  "months": {
+    "2025-02": {
+      "note": "slowest month; 28 days x 350 = 9,800.00 ex GST",
+      "sold_incl_gst": 11000,
+      "net_sales_ex_gst": 10000,
+      "gst_collected": 1000,
+      "rent_expense": 2000,
+      "entries": 32
+    },
+    "2025-12": {
+      "note": "best month; 31 days x 595 = 18,445.00 ex GST",
+      "sold_incl_gst": 20509.5,
+      "net_sales_ex_gst": 18645,
+      "gst_collected": 1864.5,
+      "rent_expense": 2000,
+      "entries": 35
+    },
+    "2026-10": {
+      "note": "last closed month; 31 days x 495 = 15,345.00 ex GST; last year Oct 2025 = 15,735.50 so +8.7%",
+      "sold_incl_gst": 17099.5,
+      "net_sales_ex_gst": 15545,
+      "gst_collected": 1554.5,
+      "rent_expense": 2000,
+      "entries": 35
+    }
+  },
+  "entries_note": "entries per month = one walk-in day entry per day + 4 (the inclusive sale, the reversed sale, its reversal, the rent expense): 28+4, 31+4, 31+4"
+}

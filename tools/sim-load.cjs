@@ -46,6 +46,12 @@
  *   --scale    10k | 50k | 100k (PERF1): after the plan, grow the shop to that many journal lines (+ 500 customers · ≤ 5,000 open items · 10,000
  *              products) in the open year after it, then time every hot read 20× — p50 / p95 · rows · X-DB-Trips (tools/sim-scale.cjs).
  *              --scale-reads: time only (the shop already grown) · --scale-only <word>: only the reads whose name has it. Use with --start 2023-04-01 so the plan's years end before the grown one.
+ *   --months N MIS showcase step 1: instead of the random three-year plan, N months (1..26) of BACK-DATED DEMO HISTORY from tools/seed/mis-history.json (--history <file> to use another),
+ *              posted straight into the BOOKS (the one writer, lib/books.postEntry; never the till, no chit): a walk-in day entry for every day, one tax-inclusive credit sale and one
+ *              reversed sale a month, rent; months locked up to two months before the last. Every entry's source_ref starts 'demo:', the shop's name ends ' - demo'
+ *              (--name, default 'Simulated Stores'), every line is the pack's currency (AUD for --country AU). ADD ONLY: --fresh is refused with --months. The proof compares each month's SOLD
+ *              (books-store.soldByDay, the Day book) with the plan's integer-cent sums and with tools/seed/mis-history-expected.json (hand-written, 3 months).
+ *              --dry (or DRY=1): print the plan and the expected months and stop (no database touched).
  *   --start    the first financial year's first day (default 2026-<the pack's first month>-01). WX-O2C: `--start 2023-04-01` ends the three
  *              years on 2026-03-31, so TODAY sits in an open year after them — a walk's own bills are then the newest, in an unlocked month.
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
@@ -102,6 +108,10 @@ const FRESH = hasFlag('fresh'),
   SCHEMA_ONLY = hasFlag('schema-only'),
   SCHEMA = hasFlag('schema') || SCHEMA_ONLY;
 const START_ARG = arg('start', '');
+const MONTHS = Number(arg('months', 0)),
+  DRY = hasFlag('dry') || process.env.DRY === '1',
+  HISTORY_FILE = arg('history', path.join(__dirname, 'seed', 'mis-history.json')),
+  NAME = String(arg('name', 'Simulated Stores')) + (MONTHS && !/ - demo$/.test(String(arg('name', 'Simulated Stores'))) ? ' - demo' : '');
 const SCALE = arg('scale', ''),
   SCALE_READS = hasFlag('scale-reads'); /* PERF1: tools/sim-scale.cjs — grow the shop to 10k · 50k · 100k journal lines, then time the reads */
 if (SCALE && !require('./sim-scale.cjs').TARGETS[SCALE]) {
@@ -117,10 +127,11 @@ const die = (message, code) => {
   process.exit(code || 3);
 };
 const localCheck = localOnly(DB);
-if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
-if (!localCheck.ok) die(localCheck.why);
-if (!SCHEMA_ONLY && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die("--shop is the shop's user id: 3–20 letters or digits, starting with a letter (e.g. simstores)");
-if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
+if (!DB && !DRY) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
+if (!DRY && !localCheck.ok) die(localCheck.why);
+if (MONTHS && FRESH) die('--months adds shops and entries; it never removes any (--fresh is refused)');
+if (!SCHEMA_ONLY && !(DRY && !SHOP) && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die("--shop is the shop's user id: 3–20 letters or digits, starting with a letter (e.g. simstores)");
+if (!MONTHS && !(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
 /* ── the three simulated shops, one per registered pack (CX0): ONLY what the pack does not say — a sample tax number that passes the pack's
    own check, the street, the city's clock offset and IANA zone, the phone. Currency · fiscal year · heads · rate menu come from the pack. */
 const SHOPS = {
@@ -158,8 +169,10 @@ const PACK = require(path.join(API, 'lib', 'regulation')).packFor(
 if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
 /* ⭐ WX-R2R: the shop's CALENDAR is the pack's (IN an April year · AU a July year · AE a January year) — the plan starts on the pack's
    first month; one reader for the bill series, the month close and the proof (lib/accounts-packs fiscalYearOf · periodOf · fyRange below). */
-const START = String(START_ARG || '2026-' + String(PACK.fiscalYear.startMonth).padStart(2, '0') + '-01');
-if (!/^\d{4}-\d{2}-01$/.test(START) || Number(START.slice(5, 7)) !== PACK.fiscalYear.startMonth)
+const HIST = MONTHS ? JSON.parse(require('fs').readFileSync(HISTORY_FILE, 'utf8')) : null;
+if (HIST && HIST.country !== COUNTRY) die('the history file is for ' + HIST.country + ', --country is ' + COUNTRY);
+const START = MONTHS ? HIST.start : String(START_ARG || '2026-' + String(PACK.fiscalYear.startMonth).padStart(2, '0') + '-01');
+if (!/^\d{4}-\d{2}-01$/.test(START) || (!MONTHS && Number(START.slice(5, 7)) !== PACK.fiscalYear.startMonth))
   die(
     "--start is a financial year's first day for " +
       COUNTRY +
@@ -169,10 +182,19 @@ if (!/^\d{4}-\d{2}-01$/.test(START) || Number(START.slice(5, 7)) !== PACK.fiscal
       String(PACK.fiscalYear.startMonth).padStart(2, '0') +
       '-01'
   );
-const PLAN = PLAN_LIB.planDays({ start: START, years: YEARS, seed: SEED });
-const WANT = PLAN_LIB.countOf(PLAN);
-const MARK =
-  'sim/seed-' +
+const PLAN = MONTHS ? PLAN_LIB.historyDays(HIST, MONTHS) : PLAN_LIB.planDays({ start: START, years: YEARS, seed: SEED });
+const HEXPECT = MONTHS ? PLAN_LIB.historyExpect(PLAN, HIST.gst_rate) : null;
+if (MONTHS && DRY) {
+  /* the dry plan: what would be posted per shop, nothing connected */
+  const total = Object.keys(HEXPECT).reduce((acc, k) => ({ entries: acc.entries + HEXPECT[k].entries, sold: acc.sold + HEXPECT[k].sold }), { entries: 0, sold: 0 });
+  console.log('DRY plan · ' + COUNTRY + ' ' + HIST.currency + ' · ' + MONTHS + ' months ' + PLAN.start + ' to ' + PLAN.last + ' · ' + PLAN.days.length + ' days · ' + total.entries + ' entries per shop · SOLD ' + (total.sold / 100).toFixed(2));
+  for (const k of Object.keys(HEXPECT)) console.log('  ' + k + '  SOLD ' + (HEXPECT[k].sold / 100).toFixed(2) + '  net ' + (HEXPECT[k].net / 100).toFixed(2) + '  GST ' + (HEXPECT[k].gst / 100).toFixed(2) + '  rent ' + (HEXPECT[k].rent / 100).toFixed(2) + '  entries ' + HEXPECT[k].entries);
+  process.exit(0);
+}
+const WANT = MONTHS ? null : PLAN_LIB.countOf(PLAN);
+const MARK = MONTHS
+  ? 'sim/mis-history/months-' + MONTHS + '/from-' + START
+  : 'sim/seed-' +
   SEED +
   '/years-' +
   YEARS +
@@ -511,7 +533,7 @@ async function scaleThen(shopId) {
   CLOCK.set(AT(PLAN.start, 9, 0));
 
   /* 1 · the shop — register is also sign-in (the code is the dev one) */
-  must(await callApi('/api/entities/register', { method: 'POST', body: { email: EMAIL, display_name: 'Simulated Stores', user_id: SHOP } }), 'shop register');
+  must(await callApi('/api/entities/register', { method: 'POST', body: { email: EMAIL, display_name: NAME, user_id: SHOP } }), 'shop register');
   const verified = must(await callApi('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: LOGIN_CODE } }), 'shop verify (is DEV_OTP armed?)');
   const token = verified.b.token;
   shopId = String((verified.b.entity && verified.b.entity.identity_id) || (verified.b.identity && verified.b.identity.identity_id) || '');
@@ -584,13 +606,13 @@ async function scaleThen(shopId) {
     CUST = (parties.find((item) => item.display_name === CUSTOMER) || {}).identity_id;
   if (!SUPP || !CUST) die('the parties were not minted: ' + JSON.stringify({ sup: supplier.b, cus: customer.b }).slice(0, 300));
   let counters = must(await callApi('/api/counters', { token }), 'counters').b.counters || [];
-  if (!counters.some((item) => item.id === TILL))
+  if (!MONTHS && !counters.some((item) => item.id === TILL))
     counters = counters.concat([must(await callApi('/api/counters', { method: 'POST', token, body: { name: 'Counter 1' } }), 'add counter').b.counter]);
   const have = must(await callApi('/api/products?limit=500', { token }), 'list products').b;
   const rows = have.items || have.products || have.rows || [];
   const byName = new Map(rows.map((x) => [String((x.item_data || x).name || '').toLowerCase(), x.item_id || x.id]));
   const ITEMS = [];
-  for (const [rate, name, unit, price, category, hsn] of SHELF) {
+  for (const [rate, name, unit, price, category, hsn] of MONTHS ? [] : SHELF) {
     const baseRate = rateOf(rate);
     let id = byName.get(name.toLowerCase());
     if (!id) {
@@ -674,7 +696,11 @@ async function scaleThen(shopId) {
       else note(periodYear + ' closed · ' + bills + ' bills so far · ' + Math.round((Date.now() - started) / 1000) + 's');
     }
   };
-  for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
+  if (MONTHS) {
+    const made = await require('./sim-history.cjs').load({ API, path, PLAN, HIST, PACK, CURRENCY, TILL, taxRow, AT, dayAdd, callApi, books, closeMonth, drain, CLOCK, CUST, shopId, token, months: MONTHS });
+    bills = made.entries;
+    expenses = made.rent;
+  } else for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
     const row = PLAN.days[dayIx],
       text = row.day;
     CLOCK.set(AT(text, 9, 0));
@@ -776,7 +802,7 @@ async function scaleThen(shopId) {
     }
   }
   CLOCK.set(AT(dayAdd(PLAN.last, 1), 9, 0));
-  await closeMonth(PLAN.last);
+  if (!MONTHS) await closeMonth(PLAN.last); /* the history leaves its last two months open (loadHistory) */
   await drain();
   CLOCK.reset();
   note(
@@ -807,6 +833,7 @@ async function scaleThen(shopId) {
 
 /* ── the proof: SQL over what was written (reads only) ──────────────────────────────────────────────────────────── */
 async function proof(shopId, quiet) {
+  if (MONTHS) return require('./sim-history.cjs').prove({ API, path, HEXPECT, CURRENCY, months: MONTHS, pool, sql, here: __dirname }, shopId, quiet);
   const out = [];
   const line = (ok, name, detail) => {
     out.push(ok);

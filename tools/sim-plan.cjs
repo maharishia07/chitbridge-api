@@ -83,4 +83,57 @@ function countOf(plan) {
   return c;
 }
 
-module.exports = { rng, planDays, countOf, dayAdd, RATES };
+/**
+ * MIS showcase step 1: the same plan shape for a back-dated HISTORY of whole months from a data file (tools/seed/mis-history.json), `months` of it from its `start`.
+ * No random draw: every day has ONE walk-in takings figure (the month's daily_ex_gst), so a month's total is hand-computable (days x daily x 1.1 + the inclusive sale).
+ *   historyDays(table, months) → { start, last, months, days: [{ day, walkin: taxable, inclusive: { total, taxable } | null, reversed: { taxable } | null, rent: amount | null }] }
+ */
+const cents = (n) => Math.round(n * 100);
+function historyDays(table, months) {
+  const keys = Object.keys(table.daily_ex_gst);
+  const n = Number(months || keys.length);
+  if (!(n >= 1 && n <= keys.length)) throw new Error('months is 1..' + keys.length + ' (the data file holds ' + keys.length + ')');
+  if (keys[0] !== table.start.slice(0, 7)) throw new Error('the data file must begin in its start month');
+  const rate = table.gst_rate,
+    days = [];
+  for (const key of keys.slice(0, n)) {
+    const length = new Date(Date.UTC(+key.slice(0, 4), +key.slice(5), 0)).getUTCDate();
+    for (let d = 1; d <= length; d++) {
+      const row = { day: key + '-' + String(d).padStart(2, '0'), walkin: table.daily_ex_gst[key], inclusive: null, reversed: null, rent: null };
+      if (d === table.inclusive_sale.day) {
+        const total = table.inclusive_sale.price_incl_gst;
+        row.inclusive = { total, taxable: Math.round((total * 100) / (1 + rate / 100)) / 100 }; /* the price the customer saw includes GST; the books split it */
+      }
+      if (d === table.reversed_sale.day) row.reversed = { taxable: table.reversed_sale.taxable };
+      if (d === table.rent.day) row.rent = table.rent.amount;
+      days.push(row);
+    }
+  }
+  return { start: table.start, last: days[days.length - 1].day, months: n, days };
+}
+/** what the books must hold per month, in whole cents (integer sums; no float drift): { 'YYYY-MM': { sold, net, gst, rent, entries } } — SOLD is tax-inclusive, the reversed sale is in none of it */
+function historyExpect(plan, rate) {
+  const out = {};
+  for (const d of plan.days) {
+    const m = out[d.day.slice(0, 7)] || (out[d.day.slice(0, 7)] = { sold: 0, net: 0, gst: 0, rent: 0, entries: 0 });
+    const gst = Math.round((cents(d.walkin) * rate) / 100);
+    m.net += cents(d.walkin);
+    m.gst += gst;
+    m.sold += cents(d.walkin) + gst;
+    m.entries += 1;
+    if (d.inclusive) {
+      m.net += cents(d.inclusive.taxable);
+      m.gst += cents(d.inclusive.total) - cents(d.inclusive.taxable);
+      m.sold += cents(d.inclusive.total);
+      m.entries += 1;
+    }
+    if (d.reversed) m.entries += 2; /* the sale and its reversal: posted, then cancelled out */
+    if (d.rent) {
+      m.rent += cents(d.rent);
+      m.entries += 1;
+    }
+  }
+  return out;
+}
+
+module.exports = { rng, planDays, countOf, dayAdd, RATES, historyDays, historyExpect };
