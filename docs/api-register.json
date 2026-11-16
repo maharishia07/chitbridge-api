@@ -7161,7 +7161,7 @@
    "owner_agent": "unassigned",
    "file": "routes/books-opening.js",
    "line": 57,
-   "hash": "e159129555b9e08a",
+   "hash": "6381e99c59d91c03",
    "does": "Optionally a day in -> we read every live opening line of that day with its ledger, party, bill, who entered it and when -> the saved opening.",
    "errors": {
     "count": 2,

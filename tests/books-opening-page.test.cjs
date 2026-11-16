@@ -70,6 +70,7 @@ async function run(country) {
   wrap.ok('   Save with the Difference at 0 → 200, an entry, nothing in Suspense', save.status === 200 && /^JV\//.test(save.body.entry_no) && save.body.suspense_minor === 0, JSON.stringify(save.body));
   const saved = await call('GET', '/opening?date=' + D);
   wrap.ok('   GET /opening shows every line with ledger, bill, due, who and when', saved.status === 200 && saved.body.lines.length === 7 && saved.body.lines.some((l) => l.bill_ref === 'INV-1' && l.bill_date === '2026-06-20' && l.bill_ref !== 'x' || l.bill_ref === 'INV-2' && l.due_date === '2026-08-15' && l.dr_minor === 110000) && saved.body.entries.length === 1 && saved.body.entries[0].source.kind === 'typed' && saved.body.entries[0].at, JSON.stringify(saved.body.lines.length) + JSON.stringify(saved.body.entries));
+  wrap.eq('   a new page is told the ledger first day as its start date', saved.body.default_date, D);
   wrap.ok('   the grid is told which ledgers to pin, from the pack: bank, debtors, creditors, equity and the pack tax ledgers', [C.bank, C.debtors, C.creditors, C.capital, C.taxPaid, C.taxCollected].every((code) => saved.body.pinned.some((p) => p.code === code)), JSON.stringify(saved.body.pinned));
   const asSaved = await call('POST', '/opening/preview', { rows: grid({ equity: 1434050 }), date: D });
   wrap.ok('   the same rows previewed as a NEW opening name the entry that already holds them', asSaved.body.can_save === false && asSaved.body.refusals.some((r) => /already posted/.test(r.why)), JSON.stringify(asSaved.body.refusals));

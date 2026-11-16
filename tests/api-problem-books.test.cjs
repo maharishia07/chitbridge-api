@@ -215,7 +215,7 @@ const PAYMENT_PATCH = (recorded) => ({ books: { recordPayment: async () => recor
 const ADVICE_PATCH_READY = (sendOk, set) => ({ store: { payment: async () => PAY_ROW, adviceReady: async () => true, setAdvice: async () => set, adviceStates: async () => ({ [CHIT]: 'sent' }) }, books: { adviceFor: async () => ADVICE(sendOk) } });
 const OPENING_REFUSAL = (words, code) => Object.assign(new Error(words), { code, refused: true });
 const OPENING_PREVIEW = { currency: 'INR', date: DAY, debit_minor: 1000, credit_minor: 0, difference_minor: 1000, side: 'cr', bills: [], refusals: [], can_save: false };
-const OPENING_SAVED = { date: DAY, dates: [DAY], currency: 'INR', pinned: [], entries: [], lines: [], suspense_minor: 0 };
+const OPENING_SAVED = { date: DAY, dates: [DAY], default_date: DAY, currency: 'INR', pinned: [], entries: [], lines: [], suspense_minor: 0 };
 const OPENING_CHANGE = { rows: [{ code: '1500', dr_minor: 1000 }, { code: '3000', cr_minor: 1000 }], date: DAY, reason: 'typing slip', client_ref: 'grid:c1' };
 const WRITES_READY = [
   /* l16: the opening balances page (routes/books-opening.js): the library's answers stand in, the route's own gates, schema and refusal mapping run for real */
