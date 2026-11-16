@@ -5,8 +5,8 @@
   "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 6,
-  "meets": 659,
+  "partial": 7,
+  "meets": 658,
   "columns": {
    "strict_input": {
     "applies": 338,
@@ -15207,7 +15207,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2458,
+   "line": 2457,
    "hash": "30f43a715550a15a",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -15398,7 +15398,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 522,
-   "hash": "c60576f19e229a49",
+   "hash": "86357d6569be0d66",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
     "count": 0,
@@ -15470,10 +15470,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (polish1 ledger_on: one additive boolean inside entity, false when off or unreadable, never a guess; the read is now books-store.setting inside the one withEntity scope with no savepoint pair, so the round-trips test measures 5, budget kept at 5; FIELDS.md row exists at 'GET /api/entities/me . entity.ledger_on'; 13 columns true in the row)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "86357d6569be0d66"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "avatar.js",
@@ -15517,7 +15518,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 894,
+   "line": 893,
    "hash": "f12cd611fc9dc327",
    "does": "Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.",
    "errors": {
@@ -15615,7 +15616,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1772,
+   "line": 1771,
    "hash": "ca8c0be09551b5a0",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
@@ -15822,7 +15823,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1655,
+   "line": 1654,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -15923,7 +15924,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1517,
+   "line": 1516,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -16022,7 +16023,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1500,
+   "line": 1499,
    "hash": "daf7f3e6e7033f84",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -16407,7 +16408,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1322,
+   "line": 1321,
    "hash": "c8f3bac19aea5610",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
@@ -31411,7 +31412,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1291,
+   "line": 1290,
    "hash": "4ba9104804d71d4e",
    "does": "A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.",
    "errors": {
@@ -31513,7 +31514,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 866,
+   "line": 865,
    "hash": "efa0652b1d0f4de7",
    "does": "Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.",
    "errors": {
@@ -31613,7 +31614,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 859,
+   "line": 858,
    "hash": "667cb4fea86280f3",
    "does": "A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.",
    "errors": {
@@ -31823,7 +31824,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 988,
+   "line": 987,
    "hash": "36d96019f03985c5",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
@@ -49342,7 +49343,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1745,
+   "line": 1744,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -66996,7 +66997,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1711,
+   "line": 1710,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -67102,7 +67103,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1628,
+   "line": 1627,
    "hash": "b0e5f4d41975080d",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {

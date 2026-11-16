@@ -26,8 +26,8 @@ of file each thing is; this says what already does the job.
 | 78 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 77 | `list` | `cap-settings.js` |  |
 | 75 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
-| 75 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 74 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 74 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 73 | `register` | `regulation.js` | register(pack) → the pack — |
 | 72 | `items` | `books-store.js` | PERF1: |
 | 71 | `record` | `access-events.js` |  |
