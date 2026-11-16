@@ -554,7 +554,7 @@ function pageQ(query) {
   if (ids.length) return { entries: ids.slice(0, S.PAGE_MAX) };
   if (query.limit == null && query.after == null && query.page == null) return null;
   const match = /^(\d{4}-\d{2}-\d{2})\|(.{1,60})$/.exec(String(query.after || ''));
-  /* l16-scale: ?order=desc reads the pages NEWEST first (the Day book); the default stays oldest first (every Ledger keeps it: its running balance runs from the opening) */
+  /* l16-scale: ?order=desc reads the pages NEWEST first (the Day book, and a Ledger asked for its newest lines: those carry no running balance); the default stays oldest first (the Ledgers page keeps it: its running balance runs from the opening) */
   return { limit: pageLimit.limitOf(query.limit, S.PAGE_DEFAULT, S.PAGE_MAX), after: match ? { date: match[1], no: match[2] } : null, page: pageLimit.pageOf(query.page), desc: String(query.order || '').toLowerCase() === 'desc' };
 }
 const cursorOf = (next) => (next ? next.date + '|' + next.no : null);
@@ -670,7 +670,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
         taxRoles = OtherSide.taxRolesOf(B.packOf(req.books)); /* W15-89b: the pack's own tax ledgers stay out of "the other side" */
       /* PERF1: a page (?limit · ?after) reads its entries only; its first running balance = the range's opening + ONE indexed SUM of the lines before
          the cursor (S.pageSums — never the earlier pages read); the range's closing and Σ come from the same SUM, not from the rows on the page */
-      const p = pg && !pg.entries ? await S.entryPage(h, e, from, to, a.account_id, party, Object.assign({ noOpening: !!lo.period0 }, pg, { desc: false }), { others: true }) : null;
+      const p = pg && !pg.entries ? await S.entryPage(h, e, from, to, a.account_id, party, Object.assign({ noOpening: !!lo.period0 }, pg), { others: true }) : null;
       const t = p ? await S.pageSums(h, e, from, to, a.account_id, party, pg.after, !!lo.period0) : null;
       const rows = (p ? p.rows : await S.entryLines(h, e, from, to, a.account_id, party, null, { others: true })).filter(
         (item) => !(lo.period0 && Number(item.period) === 0)
@@ -696,7 +696,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
           other: OtherSide.otherOf(item.entry_lines, item, taxRoles) /* W15-89b: the entry's other side: { code, name } · { code: null, name: 'Split', count } · null */,
           dr_minor: Number(item.dr_minor),
           cr_minor: Number(item.cr_minor),
-          running_minor: run
+          running_minor: pg && pg.desc ? null : run /* l16-scale: a newest-first page carries no running balance (it runs oldest first from the opening); the range closing_minor stays */
         };
       });
       const base = {
@@ -714,7 +714,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {
-            page_opening_minor: first,
+            page_opening_minor: pg.desc ? undefined : first,
             total: t.entries,
             page: pg.page,
             limit: p.limit,

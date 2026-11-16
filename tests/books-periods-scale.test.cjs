@@ -65,6 +65,14 @@ async function fromLines(from, to) {
   ok('newest first: the cursor reads "before it" and both the page and the lines run DESC', /\(p\.posting_date, p\.entry_no\) < /.test(newest) && /ORDER BY p\.posting_date DESC, p\.entry_no DESC/.test(newest) && /ORDER BY h\.posting_date DESC, h\.entry_no DESC, l\.line_no/.test(newest));
   ok('oldest first (the default, and every Ledger): the cursor reads "after it" and nothing is DESC', /\(p\.posting_date, p\.entry_no\) > /.test(oldest) && !/DESC/.test(oldest.replace(/ORDER BY[^`]*REVERSALS/g, '')) );
 
+  console.log('══ a Ledger asked for its newest lines (order=desc) ══');
+  const route = require('fs').readFileSync(path.join(__dirname, '..', 'routes', 'books.js'), 'utf8');
+  ok('the ledger route hands order=desc on to the page (it is not forced oldest first)', /Object\.assign\(\{ noOpening: !!lo\.period0 \}, pg\), \{ others: true \}/.test(route) && !/desc: false/.test(route));
+  ok('a newest-first ledger page carries no running balance and no page opening; the oldest-first page still does', /running_minor: pg && pg\.desc \? null : run/.test(route) && /page_opening_minor: pg\.desc \? undefined : first/.test(route));
+  const seenLedger = [];
+  await S.entryPage({ query: async (text) => { seenLedger.push(text); return { rows: [] }; } }, ENT, '2026-04-01', '2026-04-30', '22222222-2222-4222-8222-222222222222', null, { limit: 10, desc: true, noOpening: true }, { others: true });
+  ok('the newest 10 lines of one ledger: the account is fenced and the page runs DESC', /ORDER BY p\.posting_date DESC, p\.entry_no DESC/.test(seenLedger[0]) && /q\.account_id = \$4/.test(seenLedger[0]));
+
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })().catch((error) => { console.error(error); process.exit(1); });
