@@ -5,8 +5,8 @@
   "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 94,
-  "meets": 571,
+  "partial": 90,
+  "meets": 575,
   "columns": {
    "strict_input": {
     "applies": 338,
@@ -5734,11 +5734,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0abecdf536aa0aab"
+    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (ACC-357 8f4f8652 read in full: ?kind/?step query, as_at, net_assets_minor/net_assets_ok, compare.month/year, per-ledger prior_month_minor/prior_year_minor/group are additive keys, the old keys and asOf unchanged; a failed earlier-day read answers null not a guess; _bp joins _minor in the cost-blind rule so cost-blind readers get no percentages; the e220a454 bsTagged/bsGroupsOf split and the 9f3cf182 catch log are behaviour-neutral; 13 columns true in the row; FIELDS.md has no rows for the report keys, same as profit_minor and total_assets_minor, they are held by api-output-shapes and web-api: cb-docs follow-up)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -8357,11 +8356,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "307e701f6faf54ba"
+    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (ACC-357 8f4f8652 read in full: ?preset/?step/?compare query values checked by the route contract, from/to unchanged and still default to the financial year; additive profit_share_bp, period, presets, compare and per-line prior_minor/change_bp/share_bp; a prior range outside the books reads as no comparison, said; cost-blind nulls the _bp keys with the figures; the 9f3cf182 catch now logs, same answer; 13 columns true in the row; report keys have no FIELDS rows, cb-docs follow-up)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -8992,11 +8990,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0a1f7fb42b51237e"
+    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (handler body unchanged; the hash moved with the books.js file and lib/dues-view.js MONEY_KEY now /_(minor|bp)$/, which for the trial balance changes nothing because it carries no _bp key; cost-blind nulls dr/cr as before; 13 columns true in the row)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -15420,7 +15417,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 522,
-   "hash": "8c363f4cdef0f075",
+   "hash": "c60576f19e229a49",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
     "count": 0,
@@ -15492,11 +15489,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8c363f4cdef0f075"
+    "signed_off_by_date": "cb-api 2026-11-16 re-sign l16/integ2c-api (polish1 ledger_on: one additive boolean inside entity, false when off or unreadable, never a guess; the read is now books-store.setting inside the one withEntity scope with no savepoint pair, so the round-trips test measures 5, budget kept at 5; FIELDS.md row exists at 'GET /api/entities/me . entity.ledger_on'; 13 columns true in the row)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "avatar.js",
