@@ -56,19 +56,51 @@ console.log('\nREP-73 · bandOf, seat, bands');
 const row = (o) => Object.assign({ name: 'x', books_on: true, stage: 'books_in', year_end: { fy: 2026, complete: false }, bank: { state: 'none' }, health: { status: 'good', codes: [], cash_days: 90, sales_trend_pct: 1, loss_months_running: 0, receivables_over60_share_pct: 0 }, queries: { open: 0, on_us: 0, on_client: 0 }, bas: { due_in_days: null }, months_unlocked: 0, to_check: 0, checked: { n: 0, of: 0 }, grant: { ends_in_days: 200, can_see_costs: true }, action_count: 0 }, o);
 const done = (extra) => row(Object.assign({ stage: 'complete', year_end: { fy: 2026, complete: true } }, extra));
 const pipe = (band) => Object.fromEntries(band.pipeline.map((s) => [s.key, s.n]));
-t('the pipeline counts Books in and Complete; Checked, Ready and Lodged are absent, not 0', () => {
+t('the pipeline counts Books in, Complete and a real-0 Lodged; Checked and Ready are absent (no coverage input), not 0', () => {
   const b = H.bandOf([row({}), done(), done()], { seat: 'auditor' });
-  assert.deepStrictEqual(pipe(b), { books_in: 3, complete: 2 });
+  assert.deepStrictEqual(pipe(b), { books_in: 3, complete: 2, lodged: 0 });
 });
 t('Complete is hidden when no client has a year end; a real 0 is drawn when one has', () => {
   assert.deepStrictEqual(pipe(H.bandOf([row({ year_end: null })], { seat: 'auditor' })), { books_in: 1 });
-  assert.deepStrictEqual(pipe(H.bandOf([row({})], { seat: 'auditor' })), { books_in: 1, complete: 0 });
+  assert.deepStrictEqual(pipe(H.bandOf([row({})], { seat: 'auditor' })), { books_in: 1, complete: 0, lodged: 0 });
 });
-t('Lodged is hidden in slice 1 even when a row is lodged; its client still counts at or beyond Complete', () => {
-  const lodged = row({ stage: 'lodged', year_end: { fy: 2026, complete: false, lodged: true } });
-  const b = H.bandOf([lodged, done(), row({})], { seat: 'auditor' });
-  assert.ok(!('lodged' in pipe(b)));
-  assert.strictEqual(pipe(b).complete, [lodged, done(), row({})].filter((x) => H.reached(x, 'complete')).length);
+t('Checked and Ready are drawn only when a client has the FY coverage input; Lodged is drawn with a year end and is not a subset of Ready', () => {
+  assert.ok(!('checked' in pipe(H.bandOf([done()], { seat: 'auditor' }))));
+  const ck = (extra, q) => row({ stage: extra, queries: { open: q || 0, on_us: 0, on_client: 0 }, year_end: { fy: 2026, complete: true, checked: true } });
+  const lodged = row({ stage: 'lodged', queries: { open: 3, on_us: 0, on_client: 3 }, year_end: { fy: 2026, complete: false, checked: false, lodged: true } });
+  const rs = [ck('ready'), ck('checked', 1), done({ year_end: { fy: 2026, complete: true, checked: false } }), lodged, row({})];
+  const p = pipe(H.bandOf(rs, { seat: 'auditor' }));
+  assert.deepStrictEqual(p, { books_in: 5, complete: 4, checked: 3, ready: 2, lodged: 1 });
+  assert.strictEqual(rs.filter((x) => H.reached(x, 'ready')).length, p.ready);
+});
+t('stageOf: lodged first; checked and no open query is ready; open query keeps it at checked', () => {
+  const y = { complete: true, checked: true };
+  assert.strictEqual(H.stageOf(r({ year_end: y, queries: { open: 0 } })), 'ready');
+  assert.strictEqual(H.stageOf(r({ year_end: y, queries: { open: 2 } })), 'checked');
+  assert.strictEqual(H.stageOf(r({ year_end: { complete: true, checked: false } })), 'complete');
+  assert.strictEqual(H.stageOf(r({ year_end: { complete: true, checked: true, lodged: true }, queries: { open: 5 } })), 'lodged');
+});
+t('yearEndOf: Checked = every FY entry cleared; the 5000 cap and a shortfall are not checked; no coverage is null', () => {
+  const y = (c) => H.yearEndOf(rows(12, 0), rec('2026-06-30'), TODAY, c);
+  assert.strictEqual(y({ checked: 40, of: 40 }).checked, true);
+  assert.strictEqual(y({ checked: 39, of: 40 }).checked, false);
+  assert.strictEqual(y({ checked: 5000, of: 5000, capped: true }).checked, false);
+  assert.strictEqual(y({ checked: 0, of: 0 }).checked, false);
+  assert.strictEqual(y(null).checked, null);
+  assert.strictEqual(y({ checked: 39, of: 40 }).blocker, 'checked');
+  assert.strictEqual(y({ checked: 40, of: 40 }).start, '2025-07-01');
+});
+t('yearEndOf: lodged is howClosed over the FY (all 12 closed by the year close with the lodged words)', () => {
+  const closed = (lodged) => months(2026, 12).map((m) => Object.assign(m, { reason: 'Year close 2026' + (lodged ? ' — returns lodged outside the books' : '') }));
+  assert.strictEqual(H.yearEndOf(closed(true), rec('2026-06-30'), TODAY).lodged, true);
+  assert.strictEqual(H.yearEndOf(closed(false), rec('2026-06-30'), TODAY).lodged, false);
+  assert.strictEqual(H.yearEndOf(months(2026, 12), rec('2026-06-30'), TODAY).lodged, false);
+});
+t('queries waiting over 14 days: drawn when any client has an age; counts waiting_over_14', () => {
+  const none = H.bandOf([row({})], { seat: 'accountant' }).bands.find((x) => x.key === 'on_us').tiles;
+  assert.ok(!none.some((x) => x.key === 'queries_over_14'));
+  const rs = [row({ queries: { open: 1, on_us: 1, on_client: 0, oldest_days: 20, waiting_over_14: true } }), row({ queries: { open: 1, on_us: 1, on_client: 0, oldest_days: 3, waiting_over_14: false } })];
+  assert.strictEqual(H.bandOf(rs, { seat: 'accountant' }).bands.find((x) => x.key === 'on_us').tiles.find((x) => x.key === 'queries_over_14').n, 1);
 });
 t('the auditor seat opens the pipeline, the accountant seat opens On us today; same numbers', () => {
   const rs = [row({ queries: { open: 1, on_us: 1, on_client: 0 }, months_unlocked: 2, to_check: 4, bank: { state: 'unexplained' }, bas: { due_in_days: 5 } }), row({})];
