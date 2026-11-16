@@ -2563,6 +2563,18 @@
           },
           "own_trade": {
             "type": "boolean"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "has_more": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,
@@ -12260,7 +12272,9 @@
           "channel": "whatsapp",
           "purpose": "marketing",
           "allowed": true,
-          "basis": "consent"
+          "basis": "consent",
+          "source": "staff",
+          "note": "said yes at the counter"
         }
       }
     },
@@ -35834,7 +35848,9 @@
         "required": [
           "fiscal_year",
           "closed",
+          "returns_lodged",
           "can_close",
+          "can_close_if_lodged",
           "refusals",
           "months",
           "next"
@@ -35846,7 +35862,13 @@
           "closed": {
             "type": "boolean"
           },
+          "returns_lodged": {
+            "type": "boolean"
+          },
           "can_close": {
+            "type": "boolean"
+          },
+          "can_close_if_lodged": {
             "type": "boolean"
           },
           "refusals": {

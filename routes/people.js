@@ -39,7 +39,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       {
         text: `SELECT i.identity_id, i.display_name, i.actor_key, i.user_id, i.actor_role, i.phone, i.hat, i.break_status,
               i.can_see_costs, i.current_task_count, i.last_active_at, i.delegate_actor_id,
-              (to_jsonb(i)->>'access_level') AS access_level, ((to_jsonb(i)->>'whole_entity')::boolean) AS whole_entity,
+              (i.access_level::text) AS access_level, ((i.whole_entity::text)::boolean) AS whole_entity,
               i.email, (i.email IS NOT NULL AND i.email <> '') AS has_email,
               e.user_id AS entity_handle, e.country AS entity_country,
               ci.at AS code_at, ci.by_name AS code_by, ci.channel AS code_channel

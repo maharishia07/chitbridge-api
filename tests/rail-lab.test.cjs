@@ -35,7 +35,7 @@ const ROWS = {
 };
 function rows(s, p, ctx) {
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
-  if (/to_jsonb\(i\)->>'population' AS population FROM identities i WHERE identity_id = \$1/.test(s)) { ctx.popReads = (ctx.popReads || 0) + 1; return [{ population: ctx.population === undefined ? null : ctx.population }]; }
+  if (/i\.population::text AS population FROM identities i WHERE identity_id = \$1/.test(s)) { ctx.popReads = (ctx.popReads || 0) + 1; return [{ population: ctx.population === undefined ? null : ctx.population }]; }
   if (/SELECT self_copy_pref, currency_code FROM identities/.test(s)) return [{ self_copy_pref: null, currency_code: 'INR' }];
   if (/FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\)/.test(s)) return (p[0] || []).map((id) => ROWS[id]).filter(Boolean);
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p[0]]; return r ? [r] : []; }

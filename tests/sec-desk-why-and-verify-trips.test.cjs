@@ -33,13 +33,15 @@ const NIL = '00000000-0000-0000-0000-000000000000';
 const world = { buyer: false, attempts: 0, expired: false, throwOnRouting: false };
 const statements = [];
 const rowsFor = (sql, params) => {
-  const s = String(sql).replace(/\s+/g, ' ').trim();
+  const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ').trim();
   statements.push({ s, params });
   if (world.throwOnRouting) throw new Error(SECRET);
   if (/FROM identities WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) return [{ identity_id: SHOP, display_name: 'Shop S', bridge_id: 'shop-s', user_id: 'shop-s', currency_code: 'INR', business_status: 'active', population: 'live' }];
-  if (/otp_code, otp_expires_at, otp_attempts FROM identities WHERE email = \$1/.test(s)) {
+  /* SEC-186: the stored shopper is found by the sign-in lookup (ops.signin_candidates), then read BY ID with the code through ops.identity_secret (the stand-in reads the view as the same row) */
+  if (/^SELECT \* FROM ops\.signin_candidates\(\$1, \$2\)$/.test(s)) return world.buyer ? [{ identity_id: BUYER, identity_type: 'customer', parent_entity_id: null, bridge_id: 'BUYER01', display_name: 'Buyer', user_id: null, email: params[1], status: 'active' }] : [];
+  if (/otp_code, otp_code_hash, otp_expires_at, otp_attempts FROM identities WHERE identity_id = \$1/.test(s)) {
     const expires = new Date(Date.now() + (world.expired ? -600000 : 600000)).toISOString();
-    return world.buyer ? [{ identity_id: BUYER, bridge_id: 'BUYER01', display_name: 'Buyer', otp_code: '654321', otp_expires_at: expires, otp_attempts: world.attempts }] : [];
+    return world.buyer ? [{ identity_id: BUYER, bridge_id: 'BUYER01', display_name: 'Buyer', otp_code: '654321', otp_code_hash: null, otp_expires_at: expires, otp_attempts: world.attempts }] : [];
   }
   return [];
 };
@@ -105,7 +107,7 @@ const shape = (s) => String(s).replace(/"request_id":"[^"]*"/g, '"request_id":"-
     statements.length = 0;
     const r = await post(base, '/api/catalogue/shop-s/login/verify', body);
     const after = statements.filter((x) => !/idempotency/.test(x.s));
-    const tail = after.slice(after.findIndex((x) => /FROM identities WHERE email = \$1/.test(x.s)) + 1);
+    const tail = after.slice(after.reduce((last, x, i) => (/signin_candidates|otp_code_hash, otp_expires_at, otp_attempts FROM identities WHERE identity_id/.test(x.s) ? i : last), -1) + 1);
     out[name] = { status: r.status, raw: shape(r.raw), updates: tail.filter((x) => /^UPDATE/.test(x.s)), trips: tail.length };
   }
   server.close();

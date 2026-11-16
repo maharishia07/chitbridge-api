@@ -115,6 +115,20 @@ it('limits that already existed are unchanged: auth 30/15min, catalogue 60/15min
   assert.ok(lim('POST', '/api/ctp/deliver').some((o) => o.max === 120 && o.windowMs === 60000));
 });
 
+it('SEC audit 2026-11-16: order/start and support/start have a per-CONTACT cool-down - one code per contact a minute, the same key from any address, a different contact its own', () => {
+  for (const p of ['/api/catalogue/:bridge_id/order/start', '/api/catalogue/:bridge_id/support/start']) {
+    const cool = limitersFor(find('POST', p)).map((e) => e.fn.__limiter).find((o) => o.max === 1 && o.windowMs === 60000);
+    assert.ok(cool, p + ' has no one-per-minute contact cool-down');
+    const req = (ip, phone, bridge) => ({ ip, path: p.replace(':bridge_id', bridge || 'shop1').replace('/api/catalogue', ''), params: { bridge_id: bridge || 'shop1' }, body: { phone } });
+    assert.strictEqual(cool.keyGenerator(req('1.1.1.1', '+91 98400 11111')), cool.keyGenerator(req('9.9.9.9', '9840011111')), 'the same phone from another address is the same key');
+    assert.notStrictEqual(cool.keyGenerator(req('1.1.1.1', '9840011111')), cool.keyGenerator(req('1.1.1.1', '9840022222')), 'another contact has its own');
+    assert.strictEqual(cool.skip(req('1.1.1.1', 'junk')), true, 'a contact that does not parse is not counted');
+  }
+  const a = limitersFor(find('POST', '/api/catalogue/:bridge_id/order/start')).map((e) => e.fn.__limiter).find((o) => o.max === 1);
+  const b = limitersFor(find('POST', '/api/catalogue/:bridge_id/support/start')).map((e) => e.fn.__limiter).find((o) => o.max === 1);
+  assert.strictEqual(a, b, 'one limiter, used by both doors - no second one');
+});
+
 it('signed-in traffic is not throttled by the new limiters: renew / logout / sessions stay outside the auth budget', () => {
   ['POST /api/signin/renew', 'POST /api/signin/logout'].forEach((k) => {
     const l = find(k.split(' ')[0], k.split(' ')[1]);

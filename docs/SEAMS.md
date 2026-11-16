@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 182 | `list` | `amend.js` |  |
+| 183 | `list` | `amend.js` |  |
 | 159 | `rows` | `crm.js` | still in them: |
 | 141 | `read` | `bank-rec-log.js` |  |
 | 138 | `words` | `variant.browser.js` |  |
@@ -20,14 +20,14 @@ of file each thing is; this says what already does the job.
 | 92 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 88 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 88 | `next` | `dayopen.js` | the next thing to do — |
-| 81 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 81 | `entry` | `books-store.js` |  |
+| 82 | `catalogue` | `books-manual.js` | GET /events → the grid. |
+| 82 | `entry` | `books-store.js` |  |
 | 79 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 78 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 77 | `list` | `cap-settings.js` |  |
+| 76 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 75 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 75 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 75 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 73 | `register` | `regulation.js` | register(pack) → the pack — |
 | 72 | `items` | `books-store.js` | PERF1: |
 | 71 | `record` | `access-events.js` |  |
@@ -81,10 +81,10 @@ of file each thing is; this says what already does the job.
 | 39 | `shell` | `pick.js` |  |
 | 39 | `changes` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
+| 39 | `note` | `dbwatch.js` |  |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `closeModal` | `app.html` |  |
 | 38 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 38 | `note` | `dbwatch.js` |  |
 | 37 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 36 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 36 | `owner` | `books.js` |  |
@@ -96,6 +96,7 @@ of file each thing is; this says what already does the job.
 | 33 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 33 | `sheet` | `cap-employees.js` |  |
 | 33 | `view` | `country-ready.js` |  |
+| 33 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `mine` | `crm.js` | `opt.removedOk`: |
 | 32 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
@@ -103,18 +104,17 @@ of file each thing is; this says what already does the job.
 | 32 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 32 | `sentence` | `one-person.js` |  |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
-| 32 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 32 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 31 | `modal` | `app.html` |  |
 | 31 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 30 | `load` | `books-grant-view.js` |  |
 | 30 | `entries` | `books-store.js` |  |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
+| 30 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 30 | `governance` | `home-facts.js` |  |
 | 30 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 29 | `money` | `cart.js` |  |
 | 29 | `guard` | `amend.js` | would disturb what has gone out. |
-| 29 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 29 | `group` | `identity.js` | again in a different costume. |
 | 28 | `opts` | `cap-stock.js` | the options the stock list is mounted with |
 | 28 | `names` | `shortcuts.js` |  |

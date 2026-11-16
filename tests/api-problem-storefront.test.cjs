@@ -144,7 +144,11 @@ function rowsFor(sql, params) {
         ]
       : [];
   }
-  if (/otp_code, otp_expires_at, otp_attempts FROM identities WHERE email = \$1/.test(s)) {
+  /* SEC-186: the stored shopper is found by the sign-in lookup, then read BY ID with the code through ops.identity_secret (read here as the same row) */
+  if (/^SELECT \* FROM ops\.signin_candidates\(\$1, \$2\)$/.test(s)) {
+    return world.buyer ? [{ identity_id: BUYER_ID, identity_type: 'customer', parent_entity_id: null, bridge_id: 'BUYER01', display_name: 'Buyer', user_id: null, email: params[1], status: 'active' }] : [];
+  }
+  if (/s\.otp_code AS otp_code, s\.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts FROM identities LEFT JOIN ops\.identity_secret s ON s\.for_identity = identities\.identity_id WHERE identity_id = \$1/.test(s)) {
     return world.buyer
       ? [
           {
@@ -152,14 +156,15 @@ function rowsFor(sql, params) {
             bridge_id: 'BUYER01',
             display_name: 'Buyer',
             otp_code: GOOD_CODE,
+            otp_code_hash: null,
             otp_expires_at: new Date(Date.now() + (world.expired ? -600000 : 600000)).toISOString(),
             otp_attempts: world.attempts
           }
         ]
       : [];
   }
-  /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: one row back = spent now) */
-  if (/AND otp_code = \$2 RETURNING identity_id/.test(s)) return [{ identity_id: BUYER_ID }];
+  /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: spent === true = spent now; the compare is inside ops.spend_shopper_code) */
+  if (/^SELECT ops\.spend_shopper_code\(\$1::uuid, \$2\) AS spent$/.test(s)) return [{ spent: true }];
   /* the operator's governed money (lib/regional currencyFor) */
   if (/SELECT currency_code, country FROM identities WHERE identity_id = \$1/.test(s)) return world.noCurrency ? [{ currency_code: null, country: null }] : world.withdrawnCurrency ? [{ currency_code: 'BGN', country: 'BG' }] : [{ currency_code: 'INR', country: 'IN' }];
   if (/FROM catalogue_adoption/.test(s) && world.adoptionFails) throw new Error(SECRET_SQL);
@@ -882,7 +887,7 @@ async function checkRoutes(port, recording) {
   console.log('\n-- routes/catalogue.js, the public storefront: every refusal is a Problem and keeps its old keys --');
   const tested = {};
   for (const scenario of SCENARIOS) {
-    Object.assign(world, FRESH, scenario.setup);
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup);
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
     const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
@@ -918,7 +923,7 @@ async function checkHiddenShops(port, recording) {
   console.log('\n-- a hidden shop answers exactly as an unknown one, on every door --');
   const unknowns = SCENARIOS.filter((scenario) => /-unknown$/.test(scenario.id));
   for (const scenario of unknowns) {
-    Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
     const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
@@ -938,11 +943,11 @@ async function checkOnceOnly(port) {
   for (const id of Object.keys(DOES)) {
     const scenario = SCENARIOS.find((item) => item.id === id);
     const runs = () => statements.filter((sql) => DOES[id].test(sql)).length;
-    Object.assign(world, FRESH, scenario.setup);
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup);
     statements.length = 0;
     await send(port, 'POST', scenario.url, scenario.body, { 'idempotency-key': 'one-' + id });
     const single = runs();
-    statements.length = 0;
+    require('../lib/code-cooldown').resetCooldown(); statements.length = 0; /* the yardstick used this contact's minute; the taps are a new ask under a new key */
     const tapped = { 'idempotency-key': 'tap-' + id };
     const taps = await Promise.all([1, 2].map(() => send(port, 'POST', scenario.url, scenario.body, tapped)));
     check(id + ': one request does its work (the yardstick)', single > 0, single);

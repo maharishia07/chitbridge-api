@@ -444,7 +444,7 @@ router.delete('/followups/:id', auth, noKey, ...checked('DELETE /followups/:id')
   try {
     const owner = ctx(req),
       id = idOf(req);
-    const gone = await withEntity(owner, (h) => F.remove(h, owner, id));
+    const gone = await withEntity(owner, (h) => F.remove(h, owner, id, { by: byOf(req), isOwner: isOwner(req) }));
     if (!gone) return problem(req, res, { status: 404, ...noSuchFollowup() });
     res.json({ ok: true });
   } catch (e) {
@@ -671,7 +671,7 @@ router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties
     if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY);
     const body = Object.assign({}, sent, { source: 'staff', source_ref: byOf(req) });
     const pref = await withEntity(owner, async (h) => {
-      await mine(h, owner, id);
+      await mine(h, owner, id); PV.checkedPref(sent); PV.requireStaffEvidence(sent, bad); /* SEC audit 2026-11-16: after the party and the words are judged (old answers unchanged), a staff yes needs its evidence */
       return PV.notePref(h, owner, id, body, byOf(req));
     });
     res.status(201).json({ pref });

@@ -720,7 +720,7 @@ router.put(
       if (req.identity.identity_type !== 'actor') {
         return problem(req, res, { status: 400, ...words.onlyActorsChangePin() });
       }
-      const actor = await db(`SELECT pin_hash, pin_attempts, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
+      const actor = await db(`SELECT s.pin_hash AS pin_hash, pin_attempts, pin_locked_at FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [identity_id]);
       if (actor.rows.length === 0) {
         return problem(req, res, { status: 404, ...words.actorGone() });
       }
@@ -822,7 +822,7 @@ router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSA
 
 /* ACC-237: the level and the reach for the list's SELECT, so the owner sees a viewer / commenter login is read-only. Read off the row's JSON: a database before b173 (no such column)
    answers null here instead of failing, with NO probe round trip (lib/schema hasColumn would be a 3rd statement on a cold process; the otp_code_hash read in the list is the same pattern) */
-const LEVEL_COLUMNS = " (to_jsonb(identities) ->> 'access_level') AS access_level, (to_jsonb(identities) -> 'whole_entity') AS whole_entity,";
+const LEVEL_COLUMNS = " access_level, whole_entity,";
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
@@ -858,11 +858,11 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
            delegate_actor_id, last_assigned_at,
            /* SEC2: NEVER the code. Any signed-in colleague reads this list, and it carried every pending first code
               (otp_code). The screen only needs to know which of three states the sign-in is in. */
-           CASE WHEN pin_hash IS NOT NULL THEN 'set'
-                WHEN (otp_code IS NOT NULL OR (to_jsonb(identities) ->> 'otp_code_hash') IS NOT NULL) AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
+           CASE WHEN s.has_pin THEN 'set'
+                WHEN s.has_code AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
                 ELSE 'none' END AS pin_state,
            site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
-         FROM identities
+         FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id
          WHERE ${where}
          ORDER BY
            CASE break_status

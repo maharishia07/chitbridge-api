@@ -1,0 +1,10 @@
+{
+  "_about": "MIS showcase: the small table that makes the demo shops differ (tools/sim-load.cjs --profile <name>; read by tools/sim-plan.cjs historyDays). scale = a multiple of the data file's daily takings (whole dollars); slide_pct = a struggling shop's yearly slide; cost_pct = the cost of goods as a share of the month's walk-in takings, split over the suppliers (the trade mix); pay_ratio = the share of bills 30+ days old it pays on day 27 (under 1 = bills left owing); cust_ratio = the share its credit customer pays on day 25; bank_diff_minor = a signed bank statement for the last closed month that differs from the books by that amount (AUD cents). All AUD and DEMO. 'grocer' is the shop tools/seed/mis-history-expected.json is hand-written for.",
+  "profiles": {
+    "grocer": { "scale": 1, "cost_pct": 55, "suppliers": ["Harbour Wholesale", "Southern Produce"], "pay_ratio": 1, "cust_ratio": 1 },
+    "cafe": { "scale": 0.65, "cost_pct": 38, "suppliers": ["Bean Roasters", "Dairy Fresh", "Corner Bakery"], "pay_ratio": 1, "cust_ratio": 1 },
+    "clothing": { "scale": 1.5, "cost_pct": 50, "suppliers": ["Pacific Apparel", "Metro Textiles"], "pay_ratio": 0.9, "cust_ratio": 0.9 },
+    "hardware-struggling": { "scale": 0.6, "slide_pct": 18, "cost_pct": 68, "suppliers": ["Tradie Supplies", "Bolt and Timber"], "pay_ratio": 0.55, "cust_ratio": 0.5 },
+    "pharmacy-bankdiff": { "scale": 1.2, "cost_pct": 60, "suppliers": ["Wellness Distributors", "Care Wholesale"], "pay_ratio": 1, "cust_ratio": 1, "bank_diff_minor": -3500 }
+  }
+}

@@ -5,8 +5,8 @@
   "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 13,
-  "meets": 652,
+  "partial": 24,
+  "meets": 641,
   "columns": {
    "strict_input": {
     "applies": 338,
@@ -296,7 +296,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2006,
+   "line": 2002,
    "hash": "a60976f3208018cd",
    "does": "A signed-in shopper and a document id -> we delete their own copy of that document, leaving the shop's copy alone -> ok and the deleted id, or not-found.",
    "errors": {
@@ -1037,7 +1037,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 443,
-   "hash": "4684ff50ad88ec07",
+   "hash": "b5c87eae67d33d01",
    "does": "A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.",
    "errors": {
     "count": 0,
@@ -1111,10 +1111,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b5c87eae67d33d01"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm.js"
    ],
@@ -2503,7 +2504,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 830,
-   "hash": "287a514679431eba",
+   "hash": "8c7e443e919cd6ff",
    "does": "Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.",
    "errors": {
     "count": 0,
@@ -2571,10 +2572,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8c7e443e919cd6ff"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -4771,13 +4773,14 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 64,
-   "hash": "da491c048e5aa03e",
-   "does": "Nothing in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books, one look logged per client -> the rule, the band of counts and the clients (a firm's person only; live grants only).",
+   "hash": "ec82d79720a7df09",
+   "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 2,
     "statuses": [
      401,
      403,
+     422,
      500,
      503
     ],
@@ -4821,6 +4824,7 @@
    "declared": [
     401,
     403,
+    422,
     500,
     503
    ],
@@ -4852,10 +4856,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 3,
+    "trips": 4,
     "wire": 10,
     "screens": [
-     "books-practice.js 3/3"
+     "books-practice.js 4/4"
     ]
    },
    "measured": {
@@ -8937,7 +8941,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2619,
-   "hash": "ed20d7411dd0c93e",
+   "hash": "b377ffc8ae9050c8",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
     "count": 1,
@@ -9009,10 +9013,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b377ffc8ae9050c8"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
@@ -9702,7 +9707,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1984,
+   "line": 1980,
    "hash": "fd244df69e65d2b2",
    "does": "A signed-in shopper's page request -> we list the documents they themselves attached to orders -> a page of their documents.",
    "errors": {
@@ -9797,7 +9802,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1957,
+   "line": 1953,
    "hash": "a2a86a8787fc122a",
    "does": "A signed-in shopper's page request -> we read their own copies of orders and offers placed, with the shop's status -> a page of their orders.",
    "errors": {
@@ -10084,7 +10089,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2107,
+   "line": 2103,
    "hash": "6aa1a26163f26d86",
    "does": "A product id from the signed-in shop -> we read the enquiry messages on that product that it is part of -> a page of messages, empty if none.",
    "errors": {
@@ -22790,7 +22795,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
    "line": 61,
-   "hash": "a7e57a3b8c99117e",
+   "hash": "bed0667f941aca2b",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 1,
@@ -22863,7 +22868,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a7e57a3b8c99117e"
+    "stale_since": "bed0667f941aca2b"
    },
    "status": "partial",
    "callers": [
@@ -23149,7 +23154,7 @@
    "owner_agent": "cb-people",
    "file": "routes/people.js",
    "line": 29,
-   "hash": "fab2df1560045606",
+   "hash": "1c168cf8af5c1029",
    "does": "Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.",
    "errors": {
     "count": 0,
@@ -23219,10 +23224,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1c168cf8af5c1029"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -37056,7 +37062,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2130,
-   "hash": "6dee0e503361e670",
+   "hash": "d65be6a204c7f578",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
     "count": 3,
@@ -37130,7 +37136,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body keys if_locked/input_tax_minor/output_tax_minor/tax_invoice; the owner gate also passes the adviser bank write set by middleware from the live grant row (never from the request); everyone else still 403 OWNER_ONLY. 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Idempotent by contra:<client_ref>. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39612,7 +39618,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2120,
-   "hash": "ee6954eda3161548",
+   "hash": "9ade9b932b7b1ab5",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -39685,7 +39691,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body keys as POST /events; writes nothing; an adviser may call it (listed in ADVISER_DOORS). 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Writes nothing. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40348,7 +40354,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2603,
-   "hash": "83a1dd2a56342b24",
+   "hash": "8336b63c81b73203",
    "does": "A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).",
    "errors": {
     "count": 4,
@@ -40428,10 +40434,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8336b63c81b73203"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
@@ -41256,7 +41263,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1906,
-   "hash": "9d34219e5166cb7b",
+   "hash": "6784eb1ff8c91d8b",
    "does": "A shopper's contact and the code we sent -> we check the code for that shop -> a sign-in token and name, or a refusal.",
    "errors": {
     "count": 3,
@@ -41331,10 +41338,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-security (independent re-sign at stage 2b, not the builder) 2026-11-09 PR#1064: handler and contract re-read; one 400 sentence for unknown contact, wrong, expired-lock; code spent on use; 5-miss lock + catalogue limiter; names_clear, sentence_plain, backward_compatible pass; residual: unknown contact skips the attempt UPDATE (ms timing, follow-up)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6784eb1ff8c91d8b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -41360,8 +41368,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1414,
-   "hash": "f640389f83a89f58",
+   "line": 1410,
+   "hash": "1dd39ca501d11f0e",
    "does": "A shopper's code and cart, once only -> we check the code, re-price every line from the shop's catalogue and place the order as a chit, adding the buyer as a customer -> the chit id, summary and a token.",
    "errors": {
     "count": 6,
@@ -41460,10 +41468,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1dd39ca501d11f0e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -41591,7 +41600,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1334,
-   "hash": "81696fd76afddafd",
+   "hash": "25de7ad252e512c5",
    "does": "A shopper's contact, the code and what went wrong -> we check the code and raise a support ticket to the shop under its own routing -> sent, the ticket reference and who it was routed to.",
    "errors": {
     "count": 4,
@@ -41669,15 +41678,16 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "25de7ad252e512c5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 12,
-    "wire": 38,
+    "trips": 13,
+    "wire": 39,
     "screens": []
    },
    "measured": {
@@ -41794,7 +41804,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2133,
+   "line": 2129,
    "hash": "24dba1567f46a613",
    "does": "A product id and a question from the signed-in shop -> we deliver it to the product's owner as an enquiry message and ring their bell -> the message id and time, or not-found.",
    "errors": {
@@ -42008,7 +42018,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2029,
+   "line": 2025,
    "hash": "04d82b7cd22d9b8a",
    "does": "Photos of a price list or shelf from the signed-in shop -> we ask the AI to read item names and prices off them, proposing and never saving -> the suggested items to confirm.",
    "errors": {
@@ -46539,7 +46549,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 903,
-   "hash": "5c5dd3f7f0c7925f",
+   "hash": "66e32d9a89bc6d65",
    "does": "A connector id, its name retyped and the one-time code e-mailed to the owner (key admins only) -> we issue a fresh key and void the old one -> the new key once.",
    "errors": {
     "count": 0,
@@ -46613,10 +46623,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "66e32d9a89bc6d65"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-connector.js"
    ],
@@ -47801,7 +47812,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 666,
-   "hash": "ec220e59bf3fda06",
+   "hash": "e3f8180ed3e9269b",
    "does": "A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.",
    "errors": {
     "count": 0,
@@ -47873,10 +47884,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1156 (independent review: CMP-42 staff door writes source staff and actor id, refuses self/reply in words, shopper door the one writer of self; web caller sends no source; bite proven; 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e3f8180ed3e9269b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -65133,7 +65145,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 704,
-   "hash": "2cc704f2d6675973",
+   "hash": "bd579cf63d188d3c",
    "does": "Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.",
    "errors": {
     "count": 0,
@@ -65206,10 +65218,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-06 PR#843 re-sign (PPL-30)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bd579cf63d188d3c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -66327,7 +66340,7 @@
      "books-grant-drill.js 0/0",
      "books-grant-member.js 0/5",
      "books-grant-view.js 0/0",
-     "books-practice.js 0/3",
+     "books-practice.js 0/4",
      "cap-admin.js 0/118",
      "cap-assist.js 0/2",
      "cap-bank-sheet.js 0/7",

@@ -31,7 +31,7 @@ let row;
 const READ_THEN_WRITE = /^UPDATE identities SET pin_attempts = \$2(, pin_locked_at = NOW\(\))? WHERE identity_id = \$1$/;
 
 const stubDb = async (sql, args) => {
-  const s = String(sql).replace(/\s+/g, ' ');
+  const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ');
   queries.push(s);
   await new Promise(setImmediate); // a real round trip: other requests run between two statements
   const counted = pinCount.answer(s, args, () => row);

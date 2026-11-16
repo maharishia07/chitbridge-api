@@ -26,7 +26,7 @@ const RUN = 'mk' + (Date.now() % 1e10).toString(36);
 const API_DIR = path.join(__dirname, '..');
 let pg = null,
   refusedShop = null; /* the first shop: its one send was refused for the missing token */
-const pref = async (shop, id, allowed) => ok(await j('/api/crm/parties/' + id + '/contact-prefs', { method: 'POST', token: shop.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed } }), 'pref');
+const pref = async (shop, id, allowed) => ok(await j('/api/crm/parties/' + id + '/contact-prefs', { method: 'POST', token: shop.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed, source: 'staff', note: 'said yes at the counter' } }), 'pref');
 const rowsFor = async (shop, phone) => (await pg.query('SELECT status, reason FROM channel_outbound WHERE entity_id = $1 AND to_ref = $2', [shop.entity, phone])).rows;
 /** every .js file under routes/ and lib/ whose text matches — a static scan (How = S in the case list) */
 const scan = (re) => ['routes', 'lib'].flatMap((d) => fs.readdirSync(path.join(API_DIR, d)).filter((f) => f.endsWith('.js')).map((f) => [d + '/' + f, fs.readFileSync(path.join(API_DIR, d, f), 'utf8')])).filter(([, t]) => re.test(t)).map(([f]) => f);

@@ -350,7 +350,7 @@ const INFRA_LIBS = [
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
   'books-reconcile.js',
-  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js',
+  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
@@ -560,8 +560,8 @@ const INFRA_LIBS = [
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
-  'limiter-key.js',       // SEC-79: the limiters' bucket key (verified token id, else address); request plumbing, no business rule
-  'rate-limit.js',        // API-16: the one limiter factory and its 429 problem+json answer; request plumbing, no business rule
+  'limiter-key.js', 'rate-limit.js', 'code-cooldown.js', // SEC-79 the limiters' bucket key · API-16 the one limiter factory (429 problem+json) · SEC audit 2026-11-16 one shopper code per contact a minute; request plumbing, no business rule
+  'consent-standing.js',  // SEC audit 2026-11-16: which consent row stands (the customer's withdrawal outranks a staff yes); consent rows and SQL, no money or tax - beside privacy.js
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders

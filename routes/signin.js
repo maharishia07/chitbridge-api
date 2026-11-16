@@ -42,7 +42,7 @@ const identityAuth = require('../lib/identity-auth');
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
 const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read and written under its own binding
 const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
-const { OTP_HASH_COL } = require('../lib/otp');
+const { SECRET_COLS, WITH_SECRET } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { rateLimit } = require('../lib/rate-limit'); // the one limiter factory (429 problem+json RATE_LIMITED)
 const { intFromEnv } = require('../lib/limits');
@@ -650,7 +650,7 @@ async function verify(req, res) {
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups (a handle is unique whatever type owns it) — but ACCOUNTS only (SEC-130) */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
+                    ${SECRET_COLS}, pin_attempts, pin_locked_at, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
     let rows;
     if (email) rows = await accountsTypedAs('email', email, COLS);
     else if (handle) rows = await accountsTypedAs('handle', handle, COLS);
@@ -928,9 +928,9 @@ async function actorLogin(req, res) {
     const actor = await boundRead(query, parent_entity.identity_id, 
       `SELECT identity_id, bridge_id, display_name, actor_key,
               actor_role, actor_type, break_status,
-              otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, max_tasks,
-              pin_hash, pin_attempts, pin_locked_at
-       FROM identities
+              ${SECRET_COLS}, otp_expires_at, otp_attempts, max_tasks,
+              pin_attempts, pin_locked_at
+       FROM identities ${WITH_SECRET}
        WHERE actor_key = $1
        AND parent_entity_id = $2
        AND identity_type = 'actor'`,
