@@ -36,7 +36,7 @@ const dayOf = (req) => dateQ(req.body && req.body.date, require('../lib/shop-clo
 router.post('/opening/preview', auth, owner, on, schemaValidate(operationFor('POST /opening/preview')), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const answer = await withEntity(entity, (handle) => O.previewOpening(handle, entity, { rows: (req.body || {}).rows, date: dayOf(req), currency: currencyOf(req) }));
+    const answer = await withEntity(entity, (handle) => O.previewOpening(handle, entity, { rows: (req.body || {}).rows, date: dayOf(req), currency: currencyOf(req), replace: (req.body || {}).replace === true }));
     res.json(answer);
   } catch (err) {
     problem(req, res, refusalOf(err, req));
