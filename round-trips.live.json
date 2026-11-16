@@ -884,6 +884,24 @@
    "status": 200,
    "basis": "live from sit-au 2026-11-11",
    "at": "2026-11-11"
+  },
+  "GET /api/books/year/:fy/status": {
+   "trips": 2,
+   "status": 200,
+   "basis": "live from sit-grund throwaway api 2026-11-16 (84-month AU shop, 8 years of BAS periods, 7 closed; warm call, the first cold call reads 4-6; unchanged from the l16 head 0a826712)",
+   "at": "2026-11-16"
+  },
+  "POST /api/books/year/:fy/close": {
+   "trips": 2,
+   "status": 200,
+   "basis": "live from sit-grund throwaway api 2026-11-16 (84-month AU shop, 8 years of BAS periods, 7 closed; warm call, the first cold call reads 4-6; unchanged from the l16 head 0a826712)",
+   "at": "2026-11-16"
+  },
+  "GET /api/books/returns?period=": {
+   "trips": 2,
+   "status": 200,
+   "basis": "live from sit-grund throwaway api 2026-11-16 (84-month AU shop, 8 years of BAS periods, 7 closed; warm call, the first cold call reads 4-6; unchanged from the l16 head 0a826712)",
+   "at": "2026-11-16"
   }
  },
  "_about": "Live counts of the routes the harness reached (tools/live-trips.cjs, SPD-39): measured[route] = { trips, status, basis, at }; routes[route] carries the same trips for tests/round-trips-all.test.cjs."
