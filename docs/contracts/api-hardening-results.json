@@ -4087,6 +4087,22 @@
     "why": "not reached: answered 404"
    }
   },
+  "GET /api/books/party/:id/bills": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "GET /api/books/attention": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/books/cashflow": {
    "output_allowlist": {
     "pass": false,
